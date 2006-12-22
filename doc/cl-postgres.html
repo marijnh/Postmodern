@@ -1,0 +1,348 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+    <title>Cl-postgres reference manual</title>
+    <link rel="stylesheet" type="text/css" href="style.css"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  </head>
+
+  <body>
+
+    <h1>Cl-postgres reference manual</h1>
+
+    <p>The cl-postgres module implements a rather low-level interface
+    for communicating with a <a
+    href="http://postgresql.org">PostgreSQL</a> database server. It is
+    part of the <a href="index.html">postmodern</a> library, but can
+    be used on its own.</p>
+
+    <h2>Contents</h2>
+
+    <ol>
+      <li><a href="#connecting">Connecting</a></li>
+      <li><a href="#querying">Querying</a></li>
+      <li><a href="#row-readers">Row readers</a></li>
+      <li><a href="#conditions">Conditions</a></li>
+      <li><a href="#index">Symbol-index</a></li>
+    </ol>
+
+    <h2><a name="connecting">Connecting</a></h2>
+
+    <p class="def">
+      <span>class</span>
+      <a name="database-connection"></a>
+      database-connection
+    </p>
+
+    <p class="desc">Objects of this type represent database
+    connections.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="open-database"></a>
+      open-database (database user password host &amp;optional (port 5432))
+      <br/>&#8594; database-connection
+    </p>
+
+    <p class="desc">Create and open a connection for the specified
+    server, database, and user.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="close-database"></a>
+      close-database (database-connection)
+    </p>
+
+    <p class="desc">Close a database connection. It is advisable to
+    call this on connections when you are done with them. Otherwise
+    the open socket will stick around until it is garbage collected,
+    and no one will tell the database server that we are done
+    with it.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="reopen-database"></a>
+      reopen-database (database-connection)
+    </p>
+
+    <p class="desc">Re-establish a database connection for a
+    previously closed connection object. (Calling this on a connection
+    that is still open is harmless.)</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="database-open-p"></a>
+      database-open-p (database-connection)
+      <br/>&#8594; boolean
+    </p>
+
+    <p class="desc">Test whether a database connection is still
+    open.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="connection-meta"></a>
+      connection-meta (database-connection)
+      <br/>&#8594; hash-table
+    </p>
+
+    <p class="desc">This method provides access to a hash table that
+    is associated with the current database connection. When the
+    connection is closed and re-opened this hash table is reset. The
+    most obvious use for this is for storing information about the
+    prepared statements that have been parsed for this connection.</p>
+
+    <h2><a name="querying">Querying</a></h2>
+
+    <p class="def">
+      <span>function</span>
+      <a name="exec-query"></a>
+      exec-query (database-connection query &amp;optional (row-reader '<a href="#ignore-row-reader"><code>ignore-row-reader</code></a>))
+      <br/>&#8594; result
+    </p>
+
+    <p class="desc">Sends the given query to the given connection, and
+    interprets the results (if there are any) with the given <a
+    href="#row-readers">row-reader</a>.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="prepare-query"></a>
+      prepare-query (database-connection name query)
+    </p>
+
+    <p class="desc">Parse and plan the given query, and store it under
+    the given name. Note that prepared statements are per-connection,
+    so they can only be executed through the same connection that
+    prepared them.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="exec-prepared"></a>
+      exec-prepared (database-connection name parameters &amp;optional (row-reader '<a href="#ignore-row-reader"><code>ignore-row-reader</code></a>))
+      <br/>&#8594; result
+    </p>
+
+    <p class="desc">Execute the prepared statement by the given name.
+    Parameters should be given as a list of strings, which should
+    contain values in a form that PostgreSQL can make sense of. String
+    values should not be escaped. The result of the executing the
+    statement, if any, is interpreted by the given row reader, and
+    returned.</p>
+
+    <h2><a name="row-readers">Row readers</a></h2>
+
+    <p>Row readers are methods for reading the results of queries.
+    Roughly, they are functions that perform the iteration over the
+    rows and cells in the result, and do <em>something</em> with the
+    returned values.</p>
+
+    <p>Cl-postgres knows about the commonly used PostgreSQL data
+    types, and will interpret them as the corresponding Lisp value.
+    This table shows the mapping:</p>
+
+    <table>
+      <thead>
+        <tr><td>PostgreSQL</td><td>Lisp</td></tr>
+      </thead>
+      <tbody>
+        <tr><td>smallint</td><td>integer</td></tr>
+        <tr><td>integer</td><td>integer</td></tr>
+        <tr><td>bigint</td><td>integer</td></tr>
+        <tr><td>numeric</td><td>ratio</td></tr>
+        <tr><td>real</td><td>float</td></tr>
+        <tr><td>double precision</td><td>double-float</td></tr>
+        <tr><td>boolean</td><td>boolean</td></tr>
+        <tr><td>varchar</td><td>string</td></tr>
+        <tr><td>text</td><td>string</td></tr>
+        <tr><td>bytea</td><td>(vector (unsigned-byte 8))</td></tr>
+        <tr><td>date</td><td><a href="simple-date.html#date"><code>date</code></a></td></tr>
+        <tr><td>timestamp</td><td><a href="simple-date.html#timestamp"><code>timestamp</code></a></td></tr>
+        <tr><td>interval</td><td><a href="simple-date.html#interval"><code>interval</code></a></td></tr>
+      </tbody>
+    </table>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="row-reader"></a>
+      row-reader ((fields) &amp;body body)
+      <br/>&#8594; function
+    </p>
+
+    <p class="desc">Creates a row-reader, using the given name for the
+    variable. Inside the body this variable refers to a vector of
+    field descriptions. On top of that, two local functions are bound,
+    <code>next-row</code> and <code>next-field</code>. The first will
+    start reading the next row in the result, and returns a boolean
+    indicating whether there is another row. The second will read and
+    return one field, and should be passed the corresponding field
+    description from the fields argument as a parameter.</p>
+
+    <p class="desc">A row reader should take care to iterate over all
+    the rows in a result, and within each row iterate over all the
+    fields. This means it should contain an outer loop that calls
+    <code>next-row</code>, and every time <code>next-row</code>
+    returns <code>T</code> it should iterate over the fields vector
+    and call <code>next-field</code> for every field.</p>
+
+    <p class="desc">The definition of <a
+    href="#list-row-reader"><code>list-row-reader</code></a> should
+    give you an idea what a row reader looks like:</p>
+
+    <pre class="desc code">
+(row-reader (fields)
+  (loop :while (next-row)
+        :collect (loop :for field :across fields
+                       :collect (next-field field))))</pre>
+
+    <p class="desc">Obviously, row readers should <em>not</em> do
+    things with the database connection like, say, close it or start a
+    new query, since it still reading out the results from the current
+    query.</p>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="def-row-reader"></a>
+      def-row-reader (name (fields) &amp;body body)
+    </p>
+
+    <p class="desc">The <code>defun</code>-like variant of <a
+    href="#row-reader"><code>row-reader</code></a>: creates a row
+    reader and gives it a top-level function name.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="field-name"></a>
+      field-name (field)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">This can be used to get information about the
+    fields read by a row reader. Given a field description, it returns
+    the name the database associated with this column.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="field-type"></a>
+      field-type (field)
+      <br/>&#8594; oid
+    </p>
+
+    <p class="desc">This extracts the PostgreSQL <a
+    href="http://www.postgresql.org/docs/8.2/interactive/datatype-oid.html">OID</a>
+    associated with this column. You can, if you really want to, query
+    the pg_types table to find out more about the types denoted by
+    OIDs.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="list-row-reader"></a>
+      list-row-reader (socket fields)
+      <br/>&#8594; list
+    </p>
+
+    <p class="desc">A row reader that builds a list of lists from the
+    query results.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="alist-row-reader"></a>
+      alist-row-reader (socket fields)
+      <br/>&#8594; alist
+    </p>
+
+    <p class="desc">A row reader that returns a list of alists, which
+    associate column names with values.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="ignore-row-reader"></a>
+      ignore-row-reader (socket fields)
+    </p>
+
+    <p class="desc">A row reader that completely ignores the result of
+    a query.</p>
+
+    <h2><a name="conditions">Conditions</a></h2>
+
+    <p>Opening or querying a database may raise errors. Cl-postgres
+    will wrap the errors that the server returns in a lisp condition,
+    and raise conditions of the same type when it detects some problem
+    itself. Socket errors are let through as they are.</p>
+
+    <p class="def">
+      <span>condition</span>
+      <a name="database-error"></a>
+      database-error
+    </p>
+
+    <p class="desc">The type of database-related conditions.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="database-error-message"></a>
+      database-error-message (database-error)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">A short message associated with this error.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="database-error-detail"></a>
+      database-error-detail (database-error)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">A longer description of the problem, or
+    <code>NIL</code> if none is available.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="database-error-code"></a>
+      database-error-code (database-error)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">The error code PostgreSQL associated with this
+    error, if any.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="database-error-query"></a>
+      database-error-query (database-error)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">The query that led to this error, or
+    <code>NIL</code> if no query was involved.</p>
+
+    <h2><a name="index">Symbol-index</a></h2>
+
+    <ul>
+      <li><a href="#alist-row-reader">alist-row-reader</a></li>
+      <li><a href="#close-database">close-database</a></li>
+      <li><a href="#connection-meta">connection-meta</a></li>
+      <li><a href="#database-connection">database-connection</a></li>
+      <li><a href="#database-error">database-error</a></li>
+      <li><a href="#database-error-code">database-error-code</a></li>
+      <li><a href="#database-error-detail">database-error-detail</a></li>
+      <li><a href="#database-error-message">database-error-message</a></li>
+      <li><a href="#database-error-query">database-error-query</a></li>
+      <li><a href="#database-open-p">database-open-p</a></li>
+      <li><a href="#def-row-reader">def-row-reader</a></li>
+      <li><a href="#exec-prepared">exec-prepared</a></li>
+      <li><a href="#exec-query">exec-query</a></li>
+      <li><a href="#field-name">field-name</a></li>
+      <li><a href="#field-type">field-type</a></li>
+      <li><a href="#ignore-row-reader">ignore-row-reader</a></li>
+      <li><a href="#list-row-reader">list-row-reader</a></li>
+      <li><a href="#row-reader">next-field</a></li>
+      <li><a href="#row-reader">next-row</a></li>
+      <li><a href="#open-database">open-database</a></li>
+      <li><a href="#prepare-query">prepare-query</a></li>
+      <li><a href="#reopen-database">reopen-database</a></li>
+      <li><a href="#row-reader">row-reader</a></li>
+    </ul>
+  </body>
+</html>

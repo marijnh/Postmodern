@@ -1,0 +1,357 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+    <title>Postmodern</title>
+    <link rel="stylesheet" type="text/css" href="style.css"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  </head>
+
+  <body>
+
+    <h1>Postmodern</h1>
+
+    <p>Postmodern is a Common Lisp library for interacting with <a
+    href="http://www.postgresql.org">PostgreSQL</a> databases.
+    Features are:</p>
+
+    <ul>
+      <li>Efficient communication with the database server without
+      need for foreign libraries.</li>
+      <li>Support for UTF-8 on Unicode-aware Lisp implementations</li>
+      <li>A lispy syntax for expressing SQL queries</li>
+      <li>Convenient support for prepared statements and stored
+      procedures</li>
+      <li>Defclass-like definition of tables and associated accessor
+      classes</li>
+    </ul>
+
+    <p>The biggest differences between this library and <a
+    href="http://clsql.b9.com/">CLSQL</a>/CommonSQL are that
+    postmodern has no intention of being portable across different SQL
+    implementations (it embraces non-standard Postgres features), and
+    approaches extensions like lispy SQL and database access objects
+    in a quite different way. This library was written because the
+    CLSQL approach did not really work for me, your mileage may
+    vary.</p>
+
+    <h2>Contents</h2>
+
+    <ol>
+      <li><a href="#dependencies">Dependencies</a></li>
+      <li><a href="#license">License</a></li>
+      <li><a href="#download">Download and installation</a></li>
+      <li><a href="#support">Support and mailing lists</a></li>
+      <li><a href="#quickstart">Quickstart</a></li>
+      <li><a href="#reference">Reference</a></li>
+      <li><a href="#caveats">Caveats and to-do's</a></li>
+    </ol>
+
+    <h2><a name="dependencies"></a>Dependencies</h2>
+
+    <p>The library depends on <a
+    href="http://cliki.net/trivial-sockets">trivial-sockets</a>, <a
+    href="http://www.cliki.net/CL-MD5">md5</a>, <a
+    href="http://common-lisp.net/project/ieee-floats">ieee-floats</a>,
+    <a
+    href="http://common-lisp.net/project/trivial-utf-8">trivial-utf-8</a>
+    if you want Unicode support, and <a
+    href="http://common-lisp.net/project/bordeaux-threads">bordeaux-threads</a>
+    if you want thread-safe connection pools.</p>
+
+    <p>Postmodern itself is split into 4 different parts, some of
+    which can be used independantly. <a
+    href="simple-data.html">Simple-date</a> is a very basic
+    implementation of date and time objects, used to support storing
+    and retrieving time-related SQL types. <a
+    href="cl-postgres.html">Cl-postgres</a> is the low-level library
+    used for interfacing with a PostgreSQL server over a socket. <a
+    href="s-sql.html">S-SQL</a> is used to compile s-expressions to
+    strings of SQL code, doing as much as possible of the work at
+    compile time. Finally, <a href="postmodern.html">postmodern</a>
+    itself is the library that tries to put all these things together
+    into a convenient programming interface.</p>
+
+    <h2><a name="license"></a>License</h2>
+
+    <p>Postmodern is released under a BSD-like license. Which
+    approximately means you can use the code in whatever way you like,
+    except for passing it off as your own or releasing a modified
+    version without indication that it is not the original.</p>
+
+    <h2><a name="download"></a>Download and installation</h2>
+
+    <p>The latest release of postmodern can be downloaded from <a
+    href="http://common-lisp.net/project/postmodern/postmodern.tgz">http://common-lisp.net/project/postmodern/postmodern.tgz</a>,
+    or installed with <a
+    href="http://www.cliki.net/ASDF-Install">asdf-install</a>.</p>
+
+    <p>A <a href="http://www.darcs.net/">darcs</a> repository with the
+    most recent changes can be checked out with:</p>
+
+    <pre>&gt; darcs get http://common-lisp.net/project/postmodern/darcs/postmodern</pre>
+
+    <p>Or look at the code <a
+    href="http://common-lisp.net/cgi-bin/darcsweb/darcsweb.cgi?r=postmodern-postmodern;a=summary">online</a>.</p>
+
+    <h2><a name="support"></a>Support and mailing lists</h2>
+
+    <p>The <a
+    href="http://common-lisp.net/mailman/listinfo/postmodern-devel">postmodern-devel</a>
+    mailing list can be used for questions, discussion, bug-reports,
+    patches, or anything else relating to this library.</p>
+
+    <h2><a name="quickstart"></a>Quickstart</h2>
+
+    <p>This quickstart is intended to give you a feel of the way
+    coding with postmodern works. Further details about the workings
+    of the library can be found in the <a href="#reference">reference
+    manual</a>.</p>
+
+    <p>Assuming you have already installed it, first load &amp; use
+    the system:</p>
+
+    <pre class="code">
+(asdf:oos 'asdf:load-op :postmodern)
+(use-package :postmodern)</pre>
+
+    <p>If you have a PostgreSQL server running on localhost, with a
+    database called 'testdb' on it, which is accessible for user
+    'foucault' with password 'surveiller', you can connect like
+    this:</p>
+
+    <pre class="code">
+(connect-toplevel "testdb" "foucault" "surveiller" "localhost")</pre>
+
+    <p>Which will establish a connection to be used by all code,
+    except for that wrapped in a <a
+    href="postmodern.html#with-database"><code>with-database</code></a>
+    form, which takes the same arguments but only establishes the
+    connection locally.</p>
+
+    <p>Now for a basic sanity test:</p>
+
+    <pre class="code">
+(query "select 22, 'Folie et déraison', 4.5")
+;; => ((22 "Folie et déraison" 9/2))</pre>
+
+    <p>That should work. But, this being Lisp, we really hate to use
+    languages with so little parentheses in our programs:</p>
+
+    <pre class="code">
+(query (:select 22 "Folie et déraison" 4.5))
+;; => ((22 "Folie et déraison" 9/2))</pre>
+
+    <p>In truth, parentheses aren't the decisive reason for this
+    alternate syntax. The nice thing is that you can feed lisp values
+    directly into your query like this, without converting them to
+    strings yourself. Queries like the one above, with only constants
+    in them, get converted to strings entirely at compile time. When
+    you add for example a variable or an expression, only the static
+    part of the query gets built at compile time, and the dynamic
+    parts are inserted at run time. Like this:</p>
+
+    <pre class="code">
+(defun database-powered-addition (a b)
+  (query (:select (:+ a b)) :single))
+(database-powered-addition 1030 204)
+;; => 1234</pre>
+
+    <p>That last argument, <code>:single</code>, indicates that we
+    want the result not as a list of lists (for the result rows), but
+    as a single value, since we know we are only selecting one value.
+    Some other options are <code>:rows</code>, <code>:row</code>,
+    <code>:column</code>, <code>:alists</code>, and
+    <code>:none</code>. Their precise effect is documented in the <a
+    href="postmodern.html#query">reference manual</a>.</p>
+
+    <p>You do not have to pull in the whole result of a query at once,
+    you can also iterate over it with the <a
+    href="postmodern.html#doquery"><code>doquery</code></a> macro:</p>
+
+    <pre class="code">
+(doquery (:select 'x 'y :from 'some-imaginary-table) (x y)
+  (format t "On this row, x = ~A and y = ~A.~%" x y))</pre>
+
+    <p>Now let us define a table.</p>
+
+    <pre class="code">
+(deftable test-data ()
+  ((field1 :type integer)
+   (field2 :type (or string db-null))
+   (field3 :type (numeric 10 3)))
+   (:indices field1 field3))
+
+(create-table 'test-data)</pre>
+
+    <p>This will add a table named test_data (on the SQL side, from
+    Lisp you can approach it as <code>test-data</code>), with one
+    integer (32-bit signed) column, one column of type text, which may
+    be null, and one of type numeric(10, 3). The table will have
+    indices on field1 and field3, with the one on field1 being the
+    primary index because it comes first in the index list.</p>
+
+    <p>You might notice that this <a
+    href="postmodern.html#deftable"><code>deftable</code></a> form
+    looks quite a lot like a <code>defclass</code>. You can use it
+    like that too:</p>
+
+    <pre class="code">
+(deftable test-data ()
+  ((field1 :type integer :initarg :field1 :accessor field1)
+   (field2 :type (or string db-null) :initform :null :accessor field2)
+   (field3 :type (numeric 10 3) :initarg :field3 :accessor field3))
+  (:indices field1 field3)
+  (:class-name test-data))</pre>
+
+    <p>Adding a <code>:class-name</code> option will result in the
+    definition of an accessor class (dao is the term postmodern uses,
+    which means either 'Database Access Object' or 'The Way'). This
+    class has a slot for every column in the table, and has methods
+    for storing or retrieving instances to and from the database.</p>
+
+    <pre class="code">
+(make-instance 'test-data :field1 44 :field3 99.9)
+;; => #&lt;TEST-DATA {ABD4E89}&gt;
+(save-dao *)
+(field3 (get-dao 'test-data 44))
+;; => 999/10</pre>
+
+    <p><a href="postmodern.html#save-dao"><code>save-dao</code></a>
+    will save a dao, calling <a
+    href="postmodern.html#insert-dao"><code>insert-dao</code></a> if
+    no rows with the same primary key exist, or <a
+    href="postmodern.html#insert-dao"><code>insert-dao</code></a> if
+    there is such a row. <a
+    href="postmodern.html#get-dao"><code>get-dao</code></a> takes one
+    argument for every column in the primary index of this table, and
+    will return a dao if a column with those values exists.</p>
+
+    <p>The reason you get back a ratio (<code>999/10</code>) instead
+    of the float you initially fed the object is because field3 is of
+    type numeric, which is a fixed-precision type, not floating
+    point.</p>
+
+    <p>To demonstrate a bit more of the S-SQL syntax, here is the
+    query the utility function <a
+    href="postmodern.html#list-tables"><code>list-tables</code></a>.
+    uses to get a list of the tables in a database:</p>
+
+    <pre class="code">
+(sql (:select 'relname :from 'pg-catalog.pg-class
+      :inner-join 'pg-catalog.pg-namespace :on (:= 'relnamespace 'pg-namespace.oid)
+      :where (:and (:= 'relkind "r")
+                   (:not-in 'nspname (:set "pg_catalog" "pg_toast"))
+                   (:pg-catalog.pg-table-is-visible 'pg-class.oid))))
+;; => "(SELECT relname FROM pg_catalog.pg_class 
+;;      INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
+;;      WHERE ((relkind = 'r') and (nspname NOT IN ('pg_catalog', 'pg_toast'))
+;;             and pg_catalog.pg_table_is_visible(pg_class.oid)))"</pre>
+
+    <p><a href="s-sql.html#sql"><code>sql</code></a> is a macro that
+    will simply compile a query, it can be useful for seeing how your
+    queries are expanded or if you want to do something unexpected
+    with them.</p>
+
+    <p>As you probably guessed, lists starting with keywords are used
+    to express SQL commands and operators (lists starting with
+    something else will be evaluated and then inserted into the
+    query). Quoted symbols name columns or tables (keywords can also
+    be used but might introduce ambiguities). The syntax supports
+    subqueries, multiple joins, stored procedures, etc. See the S-SQL
+    <a href="s-sql.html">reference manual</a> for a complete
+    treatment.</p>
+
+    <p>Finally, here is an example of the use of prepared
+    statements:</p>
+
+    <pre class="code">
+(defprepared select-things
+  (:select 'field2 'field3 :from 'test-data :where (:= 'field1 '$1))
+  :alists)
+(select-things 44)
+;; => (((:FIELD2 . :NULL) (:FIELD3 . 999/10)))</pre>
+
+    <p>The <a
+    href="postmodern.html#defprepared"><code>defprepared</code></a>
+    macro creates a function that takes the same amount of arguments
+    as there are <code>$X</code> placeholders in the given query. The
+    query will only be parsed and planned once (per database
+    connection), which can be faster, especially for complex
+    queries.</p>
+
+    <pre class="code">
+(disconnect-toplevel)</pre>
+
+    <h2><a name="reference"></a>Reference</h2>
+
+    <p>The reference manuals for the different components of
+    postmodern are kept in separate files. For using the library in
+    the most straighforward way, you only really need to read the <a
+    href="postmodern.html">postmodern reference</a> and glance over
+    the <a href="s-sql.html">S-SQL reference</a>. The <a
+    href="simple-date.html">simple-date</a> reference explains the
+    time-related data types used by postmodern, and the <a
+    href="cl-postgres.html">cl-postgres reference</a> might be useful
+    if you just want a low-level library for talking to a PostgreSQL
+    server.</p>
+
+    <ul>
+      <li><a href="postmodern.html">Postmodern</a></li>
+      <li><a href="s-sql.html">S-SQL</a></li>
+      <li><a href="simple-date.html">Simple-date</a></li>
+      <li><a href="cl-postgres.html">Cl-postgres</a></li>
+    </ul>
+
+    <h2><a name="caveats"></a>Caveats and to-do's</h2>
+
+    <h3>Timezones</h3>
+
+    <p><a href="simple-date.html">Simple-date</a> currently has no
+    concept of time zones. This means that using it is rather
+    error-prone, and if you really need your time-keeping to be
+    reliable and/or universal you should either not use the types it
+    provides or think really hard about the way you handle time
+    zones.</p>
+
+    <p>This is definitely something that should be fixed in a future
+    version, but doing so in a portable way might be tricky.</p>
+
+    <h3>Portability</h3>
+
+    <p>For this first release, only minimal testing has been done for
+    compatibility with the various CL implementations and PostgreSQL
+    versions. Hopefully, I'll soon be able to determine any
+    compatibility issues and document them here.</p>
+
+    <p>The library will definitely not work for PostgreSQL versions
+    older than 7.4 (it uses a client/server protocol that was
+    introduced then). So far the only Lisp implementations that have
+    been tested are SBCL and CLISP.</p>
+
+    <h3>Things that should be implemented</h3>
+
+    <p>Support for foreign keys and constraints should be added to the
+    <a href="s-sql.html#create-table"><code>:create-table</code></a>
+    and <a href="postmodern.html#deftable"><code>deftable</code></a>
+    syntax. This shouldn't be hard and I'll probably get around to it
+    soon.</p>
+
+    <p>It would be a neat feature if <a
+    href="postmodern.html#table-description"><code>table-description</code></a>
+    would return a nicer representation of field types (Lisp type
+    expressions). Some attempt could be made to add a function that
+    compares a table's representation in the database with the
+    corresponding table structure as defined by a <a
+    href="postmodern.html#deftable"><code>deftable</code></a>, and
+    automatically (interactively) writes the queries needed to update
+    the table in the database.</p>
+
+    <p>Functions for adding sequences, stored procedures, and views to
+    the templates that <a
+    href="postmodern.html#deftable"><code>deftable</code></a>-style
+    tables are currently stored in would make these a viable way to
+    define and store database schemas.</p>
+
+  </body>
+
+</html>

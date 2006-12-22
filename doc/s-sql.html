@@ -1,0 +1,454 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+    <title>S-SQL reference manual</title>
+    <link rel="stylesheet" type="text/css" href="style.css"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  </head>
+
+  <body>
+
+    <h1>S-SQL reference manual</h1>
+
+    <p>This is the reference manual for the S-SQL component of the <a
+    href="index.html">postmodern</a> library.</p>
+
+    <p>S-SQL provides a lispy syntax for SQL queries, and knows how to
+    convert various lisp types to their textual SQL representation. It
+    takes care to do as much of the work as possible at compile-time,
+    so that at runtime a string concatenation is all that is needed to
+    produce the final SQL query.</p>
+
+    <h2>Contents</h2>
+
+    <ol>
+      <li><a href="#interface">Interface</a></li>
+      <li><a href="#types">SQL Types</a></li>
+      <li><a href="#syntax">SQL Syntax</a></li>
+      <li><a href="#index">Symbol-index</a></li>
+    </ol>
+
+    <h2><a name="interface"></a>Interface</h2>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="sql"></a>
+      sql (form)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">Convert the given form (a list starting with a
+    keyword) to an SQL query string at compile time, according to the
+    rules described <a href="#syntax">here</a>.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="sql-compile"></a>
+      sql-compile (form)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">This is the run-time variant of the <a
+    href="#sql"><code>sql</code></a> macro. It converts the given list
+    to an SQL query, with the same rules except that symbols in this
+    list do not have to be quoted to be interpreted as
+    identifiers.</p>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="enable-sql-syntax"></a>
+      enable-sql-syntax (&amp;optional (char #\Q))
+    </p>
+
+    <p class="desc">Modifies the current readtable to add a #Q syntax
+    that is read as <code>(sql ...)</code>. The character to use can
+    be overridden by passing an argument.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="sql-escape-string"></a>
+      sql-escape-string (string)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc"><a
+    href="http://www.postgresql.org/docs/8.2/interactive/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS">Escapes</a>
+    a string for inclusion in a PostgreSQL query.</p>
+
+    <p class="def">
+      <span>variable</span>
+      <a name="*escape-sql-names-p*"></a>
+      *escape-sql-names-p*
+    </p>
+
+    <p class="desc">Determines whether double quotes are added around
+    column, table, and function names in queries. This can be useful
+    to prevent these names from clashing with reserved words (user,
+    from, etc.). Default value is <code>NIL</code>.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="sql-type-name"></a>
+      sql-type-name (type)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">Create the SQL equivalent of the given Lisp type,
+    if one is known. See <a href="#types">types</a>.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="to-sql-name"></a>
+      to-sql-name (symbol)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">Convert a symbol to a name that can be used as an
+    SQL identifier by converting all non-alphanumeric characters to
+    underscores. Also lowercases the name to make queries look a bit
+    less hideous.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="from-sql-name"></a>
+      from-sql-name (string)
+      <br/>&#8594; keyword
+    </p>
+
+    <p class="desc">Convert a string that represents an SQL identifier
+    to a keyword by uppercasing it and converting the underscores to
+    dashes.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="sql-ize"></a>
+      sql-ize (value)
+      <br/>&#8594; (values string needs-escaping)
+    </p>
+
+    <p class="desc">Convert a Lisp value to its textual
+    <em>unescaped</em> SQL representation. Returns a second value
+    indicating whether this value should be escaped (with <a
+    href="#sql-escape-string"><code>sql-escape-string</code></a>)
+    before being put into a query.</p>
+
+    <p class="desc">You can define <code>sql-ize</code> methods for
+    your own datatypes if you want to be able to use them in S-SQL
+    queries.</p>
+
+    <h2><a name="types"></a>SQL Types</h2>
+
+    <p>S-SQL knows the SQL equivalents to a number of Lisp types, and
+    defines some extra types that can be used to denote other SQL
+    types. The following table shows the correspondence:</p>
+
+    <table>
+      <thead>
+        <tr><td>Lisp type</td><td>SQL type</td></tr>
+      </thead>
+      <tbody>
+        <tr><td>smallint</td><td>smallint</td></tr>
+        <tr><td>integer</td><td>integer</td></tr>
+        <tr><td>bigint</td><td>bigint</td></tr>
+        <tr><td>(numeric X Y)</td><td>numeric(X, Y)</td></tr>
+        <tr><td>float, real</td><td>real</td></tr>
+        <tr><td>double-float, double-precision</td><td>double-precision</td></tr>
+        <tr><td>string, text</td><td>text</td></tr>
+        <tr><td>(string X), (varchar X)</td><td>varchar(X)</td></tr>
+        <tr><td>boolean</td><td>boolean</td></tr>
+        <tr><td>bytea</td><td>bytea</td></tr>
+        <tr><td><a href="simple-date.html#date">date</a></td><td>date</td></tr>
+        <tr><td><a href="simple-date.html#timestamp">timestamp</a></td><td>timestamp</td></tr>
+        <tr><td><a href="simple-date.html#interval">interval</a></td><td>interval</td></tr>
+      </tbody>
+    </table>
+
+    <h2><a name="syntax"></a>SQL Syntax</h2>
+
+    <p>An S-SQL form is converted to a query through the following rules:</p>
+
+    <ul>
+      <li>Lists starting with a keyword are operators. They are
+      expanded as described below if they are known, otherwise they
+      are expanded in the standard way: <code>operator(arguments,
+      ...)</code></li>
+      <li>Quoted symbols or keywords are interpreted as names of
+      columns or tables, and converted to strings with <a
+      href="#to-sql-name"><code>to-sql-name</code></a>.</li>
+      <li>Anything else is evaluated and the resulting Lisp value is
+      converted to its textual SQL representation (or an error is
+      raised when there is no rule for converting objects of this
+      type). Self-quoting atoms may be converted to strings at
+      compile-time.</li>
+    </ul>
+
+    <p>The following operators are defined:</p>
+
+    <p class="def"><span>sql-op</span> <a name="infix"></a>:+, :*, :&amp;, :|, :and,
+    :or, :=, :/, :!=, :$lt;, :&gt;, :&lt;=, :&gt;=, :^, :union,
+    :intersect, :except (&amp;rest args)</p>
+
+    <p class="desc">These are expanded as infix operators. When
+    meaningful, they allow more than two arguments. <code>:-</code>
+    can also be used as a unary operator to negate a value. Note that
+    the arguments to <code>:union</code>, <code>:intersect</code>, and
+    <code>:except</code> should be queries (<code>:select</code>
+    forms).</p>
+
+    <p class="def"><span>sql-op</span> <a name="unary"></a>:~, :not (arg)</p>
+
+    <p class="desc">Unary operators for bitwise and logical
+    negation.</p>
+
+    <p class="def"><span>sql-op</span> <a name="desc"></a>:desc (column)</p>
+
+    <p class="desc">Used to invert the meaning of an operator in a <a
+    href="#order-by"><code>:order-by</code></a> clause.</p>
+
+    <p class="def"><span>sql-op</span> <a name="as"></a>:as (form name)</p>
+
+    <p class="desc">Assigns a name to a column or table in a <a
+    href="#select"><code>:select</code></a> form.</p>
+
+    <p class="def"><span>sql-op</span> <a name="exists"></a>:exists (query)</p>
+
+    <p class="desc">The EXISTS operator. Takes a query as an argument,
+    and returns true or false depending on whether that query returns
+    any rows.</p>
+
+    <p class="def"><span>sql-op</span> <a name="is-null"></a>:is-null (arg)</p>
+
+    <p class="desc">Test whether a value is null.</p>
+
+    <p class="def"><span>sql-op</span> <a name="in"></a>:in (value set)</p>
+   
+    <p class="desc">Test whether a value is in a set of values.</p>
+
+    <p class="def"><span>sql-op</span> <a name="not-in"></a>:not-in (value set)</p>
+
+    <p class="desc">Inverse of the above.</p>
+
+    <p class="def"><span>sql-op</span> <a name="set"></a>:set (&amp;rest elements)</p>
+
+    <p class="desc">Denote a set of values. This one has two
+    interfaces. When the elements are known at compile-time, they can
+    be given as multiple arguments to the operator. When they are not,
+    a single argument that evaulates to a list should be used.</p>
+
+    <p class="def"><span>sql-op</span> <a name="dot"></a>:dot (&amp;rest names)</p>
+
+    <p class="desc">Can be used to combine multiple names into a name
+    of the form A.B to refer to a column in a table, or a table in a
+    schema. Note that you calso just use a symbol with a dot in
+    it.</p>
+
+    <p class="def"><span>sql-op</span> <a name="type"></a>:type (form type)</p>
+
+    <p class="desc">Add a type declaration to a value, as in in
+    "4.3::real". The second argument is not evaluated normally, but
+    put through <a
+    href="#sql-type-name"><code>sql-type-name</code></a> to get a type
+    identifier.</p>
+
+    <p class="def"><span>sql-op</span> <a name="raw"></a>:raw (string)</p>
+
+    <p class="desc">Insert a string as-is into the query. This can be
+    useful for doing things that the syntax does not support, or to
+    re-use parts of a query across multiple queries:</p>
+
+    <pre class="code desc">
+(let* ((test (sql (:and (:= 'foo 22) (:not-null 'bar))))
+       (rows (query (:select '* :from 'baz :where (:raw test)))))
+  (query (:delete-from 'baz :where (:raw test)))
+  (do-stuff rows))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="select"></a>:select (&amp;rest args)</p>
+
+    <p class="desc">Creates a select query. The arguments are split on
+    the keywords found among them. The first group of them is
+    interpreted as the expressions that should be selected, then
+    follows the optional keyword <code>:from</code>, followed by at
+    least on table name and then any numer of join statements. Join
+    statements start with one of <code>:left-join</code>,
+    <code>:right-join</code>, <code>:inner-join</code>, or
+    <code>:outer-join</code>, then a table name, then the keyword
+    <code>:on</code>, and then a form. After that an optional
+    <code>:where</code> followed by a single form may follow. And
+    finally <code>:group-by</code> and <code>:having</code> can
+    optionally be specified. The first takes any number of arguments,
+    and the second only one. An example:</p>
+
+    <pre class="code desc">
+(:select (:+ 'field-1 100) 'field-5
+   :from (:as 'my-table 'x)
+   :left-join 'your-table :on (:= 'x.field-2 'your-table.field-1)
+   :where (:not-null 'a.field-3))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="limit"></a>:limit (query limit &amp;optional to)</p>
+
+    <p class="desc">In S-SQL limit is not part of the select operator,
+    but an extra operator that is applied to a query (this works out
+    better when limiting the union or intersection of multiple
+    queries, same for sorting). It limits the number of results to the
+    amount given as the second argument, or when three arguments are
+    given it returns the results between the two given numbers.</p>
+
+    <p class="def"><span>sql-op</span> <a name="order-by"></a>:order-by (query &amp;rest exprs)</p>
+
+    <p class="desc">Order the results of a query by the given
+    expressions. See <a href="#desc"><code>:desc</code></a> for when
+    you want to invert an ordering.</p>
+
+    <p class="def"><span>sql-op</span> <a name="function"></a>:function (name (&amp;rest
+    arg-typess) return-type stability body)</p>
+
+    <p class="desc">Create a stored procedure. The argument and return
+    types are interpreted as type names and not evaluated. Stability
+    should be one of <code>:immutable</code>, <code>:stable</code>, or
+    <code>:volatile</code> (see <a
+    href="http://www.postgresql.org/docs/8.2/interactive/sql-createfunction.html">the
+    Postgres manual</a>). For example, a function that gets foobars by
+    id:</p>
+
+    <pre class="desc code">
+(:function 'get-foobar (integer) foobar :stable (:select '* :from 'foobar :where (:= 'id '$1)))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="insert-into"></a>:insert-into (table &amp;rest rest)</p>
+
+    <p class="desc">Insert a row into a table. When the second
+    argument is <code>:set</code>, the other arguments should be
+    alternating field names and values, otherwise it should be a <a
+    href="#select"><code>:select</code></a> form that will produce the
+    values to be inserted. Example:</p>
+
+    <pre class="code desc">
+(:insert-into 'my-table :set 'field-1 42 'field-2 "foobar")</pre>
+
+    <p class="def"><span>sql-op</span> <a name="update"></a>:update (table &amp;rest rest)</p>
+
+    <p class="desc">Update values in a table. After the table name
+    there should follow a number of alternating field names and
+    values, like for <a
+    href="#insert-into"><code>:insert-into</code></a>, and then an
+    optional <code>:where</code> keyword followed by the
+    condition.</p>
+
+    <p class="def"><span>sql-op</span> <a name="delete-from"></a>:delete-from (table &amp;key where)</p>
+
+    <p class="desc">Delete rows from the named table where the given
+    condition holds.</p>
+
+    <p class="def"><span>sql-op</span> <a name="create-table"></a>:create-table (name &amp;rest args)</p>
+
+    <p class="desc">Create a new table. After the table name a number
+    of column definitions follow, which are lists in the form (name
+    type null) that specify the name, type, and whether the column can
+    be NULL. After this an optional <code>:primary-key</code> keyword
+    followed by one or more field names follows. Example:</p>
+
+    <pre class="code desc">
+(:create-table 'my-table
+  ('field-1 integer nil)      
+  ('field-2 text t)
+  :primary-key 'field-1)</pre>
+
+    <p class="def"><span>sql-op</span> <a name="drop-table"></a>:drop-table (name)</p>
+
+    <p class="desc">Drops the named table.</p>
+
+    <p class="def"><span>sql-op</span> <a
+    name="create-index"></a>:create-index (name &amp;rest args)</p>
+
+    <p class="desc">Create an index on a table. After the name of the
+    index the keyword <code>:on</code> should follow, with the table
+    name after it. Then the keyword <code>:fields</code>, followed by
+    one or more column names.</p>
+
+    <p class="def"><span>sql-op</span> <a
+    name="create-unique-index"></a>:create-unique-index (name
+    &amp;rest args)</p>
+
+    <p class="desc">Works like <a
+    href="#create-index"><code>:create-index</code></a>, except that
+    the index created is unique.</p>
+
+    <p class="def"><span>sql-op</span><a
+    name="create-sequence"></a>:create-sequence (name &amp;key
+    increment min-value max-value start cache cycle)</p>
+
+    <p class="desc">Create a sequence with the given name. The rest of
+    the arguments control the way the sequence selects values.</p>
+
+    <p class="def"><span>sql-op</span><a
+    name="drop-sequence"></a>:drop-sequence (name)</p>
+
+    <p class="desc">Drop a sequence.</p>
+
+    <h2><a name="index"></a>Symbol-index</h2>
+
+    <ul>
+      <li><a href="#infix">:+</a></li>
+      <li><a href="#unary">:-</a></li>
+      <li><a href="#infix">:*</a></li>
+      <li><a href="#infix">:&amp;</a></li>
+      <li><a href="#infix">:|</a></li>
+      <li><a href="#infix">:=</a></li>
+      <li><a href="#infix">:/</a></li>
+      <li><a href="#infix">:!=</a></li>
+      <li><a href="#infix">:&lt;</a></li>
+      <li><a href="#infix">:&gt;</a></li>
+      <li><a href="#infix">:&lt;=</a></li>
+      <li><a href="#infix">:&gt;=</a></li>
+      <li><a href="#infix">:^</a></li>
+      <li><a href="#unary">:~</a></li>
+      <li><a href="#infix">:and</a></li>
+      <li><a href="#as">:as</a></li>
+      <li><a href="#types">bytea</a></li>
+      <li><a href="#types">bigint</a></li>
+      <li><a href="#create-index">:create-index</a></li>
+      <li><a href="#create-sequence">:create-sequence</a></li>
+      <li><a href="#create-table">:create-table</a></li>
+      <li><a href="#create-unique-index">:create-unique-index</a></li>
+      <li><a href="#delete-from">:delete-from</a></li>
+      <li><a href="#desc">:desc</a></li>
+      <li><a href="#dot">:dot</a></li>
+      <li><a href="#types">double-precision</a></li>
+      <li><a href="#drop-index">:drop-index</a></li>
+      <li><a href="#drop-sequence">:drop-sequence</a></li>
+      <li><a href="#drop-table">:drop-table</a></li>
+      <li><a href="#enable-s-sql-syntax">enable-s-sql-syntax</a></li>
+      <li><a href="#*escape-sql-names-p*">*escape-sql-names-p*</a></li>
+      <li><a href="#infix">:except</a></li>
+      <li><a href="#exists">:exists</a></li>
+      <li><a href="#from-sql-name">from-sql-name</a></li>
+      <li><a href="#function">:function</a></li>
+      <li><a href="#in">:in</a></li>
+      <li><a href="#insert-into">:insert-into</a></li>
+      <li><a href="#infix">:intersect</a></li>
+      <li><a href="#is-null">:is-null</a></li>
+      <li><a href="#limit">:limit</a></li>
+      <li><a href="#not">:not</a></li>
+      <li><a href="#not-in">:not-in</a></li>
+      <li><a href="#types">numeric</a></li>
+      <li><a href="#infix">:or</a></li>
+      <li><a href="#order-by">:order-by</a></li>
+      <li><a href="#raw">:raw</a></li>
+      <li><a href="#types">real</a></li>
+      <li><a href="#select">:select</a></li>
+      <li><a href="#set">:set</a></li>
+      <li><a href="#types">smallint</a></li>
+      <li><a href="#sql">sql</a></li>
+      <li><a href="#sql-compile">sql-compile</a></li>
+      <li><a href="#sql-escape-string">sql-escape-string</a></li>
+      <li><a href="#sql-ize">sql-ize</a></li>
+      <li><a href="#sql-type-name">sql-type-name</a></li>
+      <li><a href="#types">text</a></li>
+      <li><a href="#to-sql-name">to-sql-name</a></li>
+      <li><a href="#type">:type</a></li>
+      <li><a href="#infix">:union</a></li>
+      <li><a href="#update">:update</a></li>
+      <li><a href="#types">varchar</a></li>
+    </ul>
+
+  </body>
+</html>

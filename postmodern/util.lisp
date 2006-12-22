@@ -1,0 +1,117 @@
+(in-package :postmodern)
+
+(defun to-identifier (name)
+  "Used to allow both strings and symbols as identifier - converts
+symbols to string with the S-SQL rules."
+  (if (stringp name)
+      name
+      (to-sql-name name)))
+
+(defun sequence-next (sequence)
+  "Shortcut for getting the next value from a sequence."
+  (query (:select (:nextval (if (stringp sequence) sequence (to-identifier sequence)))) :single))
+
+(defmacro make-list-query (relkind)
+  "Helper macro for the functions that list tables, sequences, and
+views."
+  `(sql (:select 'relname :from 'pg-catalog.pg-class
+         :inner-join 'pg-catalog.pg-namespace :on (:= 'relnamespace 'pg-namespace.oid)
+         :where (:and (:= 'relkind ,relkind)
+                 (:not-in 'nspname (:set "pg_catalog" "pg_toast"))
+                 (:pg-catalog.pg-table-is-visible 'pg-class.oid)))))
+
+(defmacro make-exists-query (relkind name)
+  "Helper macro for the functions that check whether an object
+exists."
+  `(sql (:select (:exists (:select 1 :from 'pg-catalog.pg-class
+                                   :where (:and (:= 'relkind ,relkind)
+                                                (:= 'relname (to-identifier ,name))))))))
+
+(defun list-tables (&optional strings-p)
+  "Return a list of the tables in a database. Turn them into keywords
+if strings-p is not true."
+  (let ((result (query (make-list-query "r") :column)))
+    (if strings-p result (mapcar 'from-sql-name result))))
+(defun table-exists-p (table)
+  "Check whether a table exists. Takes either a string or a symbol for
+the table name."
+  (query (make-exists-query "r" table) :single))
+
+(defun list-sequences (&optional strings-p)
+  "Return a list of the sequences in a database. Turn them into
+keywords if strings-p is not true."
+  (let ((result (query (make-list-query "S") :column)))
+    (if strings-p result (mapcar 'from-sql-name result))))
+(defun sequence-exists-p (sequence)
+  "Check whether a sequence exists. Takes either a string or a symbol
+for the sequence name."
+  (query (make-exists-query "S" sequence) :single))
+
+(defun list-views (&optional strings-p)
+  "Return a list of the views in a database. Turn them into keywords
+if strings-p is not true."
+  (let ((result (query (make-list-query "v") :column)))
+    (if strings-p result (mapcar 'from-sql-name result))))
+(defun view-exists-p (view)
+  "Check whether a view exists. Takes either a string or a symbol for
+the view name."
+  (query (make-exists-query "v" view) :single))
+
+(defun table-description (table)
+  "Return a list of (name type null-allowed) lists for the fields of a
+table."
+  (query (:select 'attname 'typname (:not 'attnotnull)
+                  :from 'pg-catalog.pg-attribute
+                  :inner-join 'pg-catalog.pg-type :on (:= 'pg-type.oid 'atttypid)
+                  :inner-join 'pg-catalog.pg-class :on (:and (:= 'pg-class.oid 'attrelid)
+                                                             (:= 'pg-class.relname (to-identifier table)))
+                  :where (:> 'attnum 0))))
+
+(defun begin-transaction ()
+  "Start a database transaction."
+  (execute "BEGIN"))
+
+(defun abort-transaction ()
+  "Abort a database transaction."
+  (execute "ABORT"))
+
+(defun commit-transaction ()
+  "Commit a database transaction."
+  (execute "COMMIT"))
+
+(defmacro with-transaction (&body body)
+  "Execute body within a transaction. Abort the transaction when a
+condition is raised, and commit it when the body finishes normally.
+\(Note that you can still use \(abort-transaction) to abort
+manually)."
+  (let ((ok (gensym)))
+    `(let ((,ok nil))
+      (unwind-protect
+           (prog1 (progn
+                    (begin-transaction)
+                    ,@body)
+             (commit-transaction)
+             (setf ,ok t))
+        (unless ,ok
+          (abort-transaction))))))
+
+;;; Copyright (c) 2006 Marijn Haverbeke
+;;;
+;;; This software is provided 'as-is', without any express or implied
+;;; warranty. In no event will the authors be held liable for any
+;;; damages arising from the use of this software.
+;;;
+;;; Permission is granted to anyone to use this software for any
+;;; purpose, including commercial applications, and to alter it and
+;;; redistribute it freely, subject to the following restrictions:
+;;;
+;;; 1. The origin of this software must not be misrepresented; you must
+;;;    not claim that you wrote the original software. If you use this
+;;;    software in a product, an acknowledgment in the product
+;;;    documentation would be appreciated but is not required.
+;;;
+;;; 2. Altered source versions must be plainly marked as such, and must
+;;;    not be misrepresented as being the original software.
+;;;
+;;; 3. This notice may not be removed or altered from any source
+;;;    distribution.

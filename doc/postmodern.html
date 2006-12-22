@@ -1,0 +1,613 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+    <title>Postmodern reference manual</title>
+    <link rel="stylesheet" type="text/css" href="style.css"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  </head>
+
+  <body>
+
+    <h1>Postmodern reference manual</h1>
+
+    <p>This is the reference manual for the component named
+    postmodern, which is part of a <a href="index.html">library</a> of
+    the same name.</p>
+
+    <p>Note that this package also exports the whole <a
+    href="simple-date.html">simple-date</a> interface, the <a
+    href="cl-postgres.html#database-connection"><code>database-connection</code></a>
+    and <a
+    href="cl-postgres.html#database-error"><code>database-error</code></a>
+    types from <a href="cl-postgres.html">cl-postgres</a>, and a few
+    operators from <a href="s-sql.html">S-SQL</a>.</p>
+
+    <p><a href="#query"><code>query</code></a>, <a
+    href="#execute"><code>execute</code></a>, and any other function
+    that would logically need to communicate with the database will
+    raise a condition of the type <a
+    href="cl-postgres.html#conditions"><code>database-error</code></a>
+    when something goes wrong. On top of that, conditions thrown by
+    the underlying socket library (<a
+    href="http://cliki.net/trivial-sockets">trivial-sockets</a> at
+    this moment) may be raised when something goes wrong with the
+    connection (most likely when establishing a new connection).</p>
+
+    <h2>Contents</h2>
+
+    <ol>
+      <li><a href="#connecting">Connecting</a></li>
+      <li><a href="#querying">Querying</a></li>
+      <li><a href="#inspect">Inspecting the database</a></li>
+      <li><a href="#tables">Tables and Daos</a></li>
+      <li><a href="#index">Symbol-index</a></li>
+    </ol>
+
+    <h2><a name="connecting"></a>Connecting</h2>
+
+    <p class="def">
+      <span>class</span>
+      <a name="database-connection"></a>
+      database-connection
+    </p>
+
+    <p class="desc">Objects of this type represent database connections.</p>
+
+    <p class="def">
+      <a name="connect"></a>
+      <span>function</span>
+      connect (database user password host &amp;key (port 5432) pooled-p)
+      <br/>&#8594; database-connection
+    </p>
+
+    <p class="desc">Create a new database connection for the given
+    user and database. Port will default to 5432, which is where most
+    PostgreSQL server are running. If pooled-p is true, a connection
+    will be taken from a pool of connections of this type, if one is
+    available there, and when the connection is disconnected it will
+    be put back into this pool instead.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="disconnect"></a>
+      disconnect (database-connection)
+    </p>
+
+    <p class="desc">Disconnects a normal database connection, or moves
+    a pooled connection into the pool.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="connected-p"></a>
+      connected-p (database-connection)
+      <br/>&#8594; boolean
+    </p>
+
+    <p class="desc">Returns a boolean indicating whether the given
+    connection is still connected to the server.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="reconnect"></a>
+      reconnect (database-connection)
+    </p>
+
+    <p class="desc">Reconnect a disconnected database connection. This
+    is not allowed for pooled connections, after they are disconnected
+    they might be in use by some other process, and should no longer
+    be used.</p>
+
+    <p class="def">
+      <span>variable</span>
+      <a name="*database*"></a>
+      *database*
+    </p>
+    
+    <p class="desc">Special variable holding the current database.
+    Most functions and macros operating on a database assume this
+    contains a connected database.</p>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="with-connection"></a>
+      with-connection ((database user password host &amp;key (port 5432) pooled-p) &amp;body body)
+    </p>
+
+    <p class="desc">Evaluates body with <a
+    href="#*database*"><code>*database*</code></a> bound to a
+    connection as specified by the arguments.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="connect-toplevel"></a>
+      connect-toplevel  (database user password host &amp;key (port 5432))
+    </p>
+
+    <p class="desc">Set <a
+    href="#*database*"><code>*database*</code></a> to a new
+    connection. Use this if you only need one connection, or if you
+    want a connection for debugging from the REPL.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="disconnect-toplevel"></a>
+      disconnect-toplevel ()
+    </p>
+
+    <p class="desc">Disconnect <a
+    href="#*database*"><code>*database*</code></a>.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="clear-connection-pool"></a>
+      clear-connection-pool ()
+    </p>
+
+    <p class="desc">Disconnect and remove all connections in the connection pool.</p>
+
+    <h2><a name="querying"></a>Querying</h2>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="query"></a>
+      query (query &amp;optional (format :rows))
+      <br/>&#8594; result
+    </p>
+
+    <p class="desc">Execute the given query, and return the results in
+    the format specified. <code>query</code> can be either a string or
+    an <a href="s-sql.html">S-SQL</a> form (list starting with a
+    keyword), and format is one of the following:</p>
+    
+    <table class="desc">
+      <tr><td><code>:none</code></td><td>Ignore the result values.</td></tr>
+      <tr><td><code>:lists</code>, <code>:rows</code></td><td>Return a
+      list of lists, each list containing the values for a
+      row.</td></tr>
+      <tr><td><code>:list</code>, <code>:row</code></td><td>Return a
+      single row as a list.</td></tr>
+      <tr><td><code>:alists</code></td><td>Return a list of alists which map column
+      names to values,with the names represented as
+      keywords.</td></tr>
+      <tr><td><code>:alist</code></td><td>Return a single row as an alist.</td></tr>
+      <tr><td><code>:str-alists</code></td><td>Like :alists, but use the original
+      column names.</td></tr>
+      <tr><td><code>:str-alist</code></td><td>Return a single row as an alist, with
+      strings fornames.</td></tr>
+      <tr><td><code>:column</code></td><td>Return a single column as a list.</td></tr>
+      <tr><td><code>:single</code></td><td>Return a single value.</td></tr>
+    </table>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="execute"></a>
+      execute (query)
+    </p>
+
+    <p class="desc">Like <a href="#query"><code>query</code></a>
+    called with <code>format</code> :none.</p>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="doquery"></a>
+      doquery (query (&amp;rest names) &amp;body body)
+    </p>
+
+    <p class="desc">Execute the given query, iterating over the rows
+    in the result. The body will be executed with the values in the
+    row bound to the symbols given in <code>names</code>.</p>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="prepare"></a>
+      prepare (query &amp;optional (format :rows))
+      <br/>&#8594; function
+    </p>
+
+    <p class="desc">Creates a function that can be used as the
+    interface to a prepared statement. The given query (either a
+    string or an <a href="s-sql.html">S-SQL</a> form) may contain
+    placeholders, which look like <code>$1</code>, <code>$2</code>,
+    etc. The resulting function takes one argument for every
+    placeholder in the query, executes the prepared query, and returns
+    the result in the format specified (allowed formats are the same
+    as for <a href="#query"><code>query</code></a>).</p>
+
+    <p class="desc">For queries that have to be run very often,
+    especially when they are complex, it may help performance if the
+    server only has to plan them once. See <a
+    href="http://www.postgresql.org/docs/8.2/interactive/sql-prepare.html">the
+    PostgreSQL manual</a> for details.</p>
+
+    <p class="desc">In some cases, the server will complain about not
+    being able to deduce the type of the arguments in a statement. In
+    that case you should add type declarations (either with the
+    <code>::</code> syntax or with S-SQL's <a
+    href="s-sql.html#type"><code>:type</code></a> construct) to help it
+    out.</p>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="defprepared"></a>
+      defprepared (name query &amp;optional (format :rows))
+    </p>
+
+    <p class="desc">This is the <code>defun</code>-style variant of <a
+    href="#prepare"><code>prepare</code></a>. It will define a
+    top-level function for the prepared statement.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="begin-transaction"></a>
+      begin-transaction ()
+    </p>
+
+    <p class="desc">Start a database transaction.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="commit-transaction"></a>
+      commit-transaction ()
+    </p>
+
+    <p class="desc">Commit the current database transaction.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="abort-transaction"></a>
+      abort-transaction ()
+    </p>
+
+    <p class="desc">Rollback the current database transaction.</p>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="with-transaction"></a>
+      with-transaction (&amp;body body)
+    </p>
+
+    <p class="desc">Execute the body within a transaction. Abort the
+    transaction when a condition is raised, and commit it when the
+    body finishes normally. (Note that you can still use <a
+    href="#abort-transaction"><code>abort-transaction</code></a> to
+    abort manually).</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="sequence-next"></a>
+      sequence-next (sequence)
+      <br/>&#8594; integer
+    </p>
+    
+    <p class="desc">Get the next value from a sequence. The sequence
+    identifier can be either a string or a symbol, in the latter case
+    it will be converted to a string with <a
+    href="s-sql.html">S-SQL</a> rules.</p>
+
+    <h2><a name="inspect"></a>Inspecting the database</h2>
+
+    <p class="def">
+      <span>function</span>
+      <a name="list-tables"></a>
+      list-tables (&amp;optional strings-p)
+      <br/>&#8594; list
+    </p>
+
+    <p class="desc">Returns a list of the tables in the current
+    database. When <code>strings-p</code> is true, the names will be
+    given as strings, otherwise as keywords.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="table-exists-p"></a>
+      table-exists-p (name)
+      <br/>&#8594; boolean
+    </p>
+
+    <p class="desc">Tests whether a table with the given name
+    exists. The name can be either a string or a symbol.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="table-description"></a>
+      table-description (name)
+      <br/>&#8594; list
+    </p>
+
+    <p class="desc">Returns a list of the fields in the named table.
+    Each field is represented by a list of three elements: the field
+    name, the type, and a boolean indicating whether the field may be
+    null.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="list-sequences"></a>
+      list-sequences (&amp;optional strings-p)
+      <br/>&#8594; list
+    </p>
+
+    <p class="desc">Returns a list of the sequences in the current
+    database. When <code>strings-p</code> is true, the names will be
+    given as strings, otherwise as keywords.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="sequence-exists-p"></a>
+      sequence-exists-p (name)
+      <br/>&#8594; boolean
+    </p>
+
+    <p class="desc">Tests whether a sequence with the given name
+    exists. The name can be either a string or a symbol.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="list-views"></a>
+      list-views (&amp;optional strings-p)
+      <br/>&#8594; list
+    </p>
+
+    <p class="desc">Returns a list of the views in the current
+    database. When <code>strings-p</code> is true, the names will be
+    given as strings, otherwise as keywords.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="view-exists-p"></a>
+      view-exists-p (name)
+      <br/>&#8594; boolean
+    </p>
+
+    <p class="desc">Tests whether a view with the given name exists.
+    The name can be either a string or a symbol.</p>
+
+    <h2><a name="tables"></a>Tables and Daos</h2>
+
+    <p>Postmodern contains a system for defining and creating tables
+    from Lisp code. A table can belong to one or more templates
+    (schemas), and there are functions for creating all tables in a
+    template. There is also the option to create accessor classes
+    (daos) for the tables, which provide a convenient way to approach
+    table rows.</p>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="deftable"></a>
+      deftable (name templates fields &amp;rest options)
+    </p>
+
+    <p class="desc">Store a table structure under the given name, in
+    the given templates, or in the nil template when no template names
+    are given. Fields are <code>defclass</code>-like slot declarations
+    which must at least have a :type declared. The type can be any
+    type that <a href="s-sql.html">S-SQL</a> understands, and a type
+    like <code>(or integer db-null)</code> can be used to indicate
+    that the field may have NULL values.</p>
+
+    <p class="desc">All extra options that <code>defclass</code>
+    supports are allowed, in addition to: <code>:auto-id</code> to
+    give the table an id column and a sequence for creating its ids,
+    <code>:class-name</code> for the name of a dao class for this
+    table, and <code>:indices</code> for the indices that should be
+    created for this table. Indices can be single fields or lists of
+    fields. The first index is used as primary key
+    (<code>:auto-id</code> adds an index on the id).</p>
+
+    <p class="desc">Example:</p>
+
+    <pre class="code desc">
+(deftable person (my-database-template)
+  ((name :type string :initarg :name :accessor person-name)
+   (birth-date :type (or db-null date) :initarg :age :initform :null :accessor person-age)
+   (score :type bigint :initform 0 :accessor person-score))
+  (:class-name person)
+  (:indices name score))</pre>
+
+    <p class="def">
+      <span>type</span>
+      <a name="db-null"></a>
+      db-null
+    </p>
+
+    <p class="desc">This is a type of which only the keyword
+    <code>:null</code> is a member. It is used to represent NULL
+    values from the database.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="create-table"></a>
+      create-table (table &amp;optional template)
+    </p>
+
+    <p class="desc">Create a defined table and its indices in the
+    database.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="drop-table"></a>
+      drop-table (table &amp;optional template)
+    </p>
+
+    <p class="desc">Drop a defined table.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="reset-table"></a>
+      reset-table  (table &amp;optional template)
+    </p>
+
+    <p class="desc">Drop and re-create a defined table.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="create-template"></a>
+      create-template (&amp;optional template)
+    </p>
+
+    <p class="desc">Create all the tables in a template (default is
+    the nil template).</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="clear-template"></a>
+      clear-template (&amp;optional template)
+    </p>
+
+    <p class="desc">Drop all tables that are part of the given
+    template.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="next-id"></a>
+      next-id (table &amp;optional template)
+      <br/>&#8594; integer
+    </p>
+
+    <p class="desc">Get the next id for a table with automatic
+    ids.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="dao-exists-p"></a>
+      dao-exists-p (dao)
+      <br/>&#8594; boolean
+    </p>
+
+    <p class="desc">Test whether a row with the same primary key as
+    the given dao exists in the database.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="get-dao"></a>
+      get-dao (type &amp;rest args)
+      <br/>&#8594; dao
+    </p>
+
+    <p class="desc">Select the dao object from the row that has the
+    given primary key values, or <code>NIL</code> if no such row
+    exists.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="select-dao"></a>
+      select-dao (type &amp;optional (test t))
+      <br/>&#8594; list
+    </p>
+
+    <p class="desc">Select dao objects for the rows in the associated
+    table for which the given test holds.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="query-dao"></a>
+      query-dao (type query)
+      <br/>&#8594; list
+    </p>
+
+    <p class="desc">Execute the given query (which can be either a
+    string or an <a href="s-sql.html">S-SQL</a> expression) and return
+    the result as daos of the given type. The fields returned by the
+    query must match the slots of the dao, both in type and in
+    order.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="get-id"></a>
+      get-id (dao)
+      <br/>&#8594; integer
+    </p>
+
+    <p class="desc">Get the id for a dao that refers to a table that
+    has automatic ids.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="insert-dao"></a>
+      insert-dao (dao)
+    </p>
+
+    <p class="desc">Insert the given dao object into the database.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="update-dao"></a>
+      update-dao (dao)
+    </p>
+
+    <p class="desc">Update the representation of the given dao in the
+    database with the values in the object.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="save-dao"></a>
+      save-dao (dao)
+    </p>
+
+    <p class="desc">Save a dao to the database. Will insert it if no
+    row with the dao's primary key values already exists, and update
+    otherwise.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="delete-dao"></a>
+      delete-dao (dao)
+    </p>
+
+    <p class="desc">Delete the given dao from the database.</p>
+
+    <h2><a name="index"></a>Symbol-index</h2>
+
+    <ul>
+      <li><a href="#abort-transaction">abort-transaction</a></li>
+      <li><a href="#begin-transaction">begin-transaction</a></li>
+      <li><a href="#clear-connection-pool">clear-connection-pool</a></li>
+      <li><a href="#clear-template">clear-template</a></li>
+      <li><a href="#commit-transaction">commit-transaction</a></li>
+      <li><a href="#connect">connect</a></li>
+      <li><a href="#connect-toplevel">connect-toplevel</a></li>
+      <li><a href="#connected-p">connected-p</a></li>
+      <li><a href="#create-table">create-table</a></li>
+      <li><a href="#create-template">create-template</a></li>
+      <li><a href="#dao-exists-p">dao-exists-p</a></li>
+      <li><a href="#*database*">*database*</a></li>
+      <li><a href="#database-connection">database-connection</a></li>
+      <li><a href="cl-postgres.html#database-error">database-error</a></li>
+      <li><a href="cl-postgres.html#database-error-code">database-error-code</a></li>
+      <li><a href="cl-postgres.html#database-error-detail">database-error-detail</a></li>
+      <li><a href="cl-postgres.html#database-error-query">database-error-query</a></li>
+      <li><a href="cl-postgres.html#database-error-message">database-error-message</a></li>
+      <li><a href="#db-null">db-null</a></li>
+      <li><a href="#defprepared">defprepared</a></li>
+      <li><a href="#deftable">deftable</a></li>
+      <li><a href="#delete-dao">delete-dao</a></li>
+      <li><a href="#disconnect">disconnect</a></li>
+      <li><a href="#disconnect-toplevel">disconnect-toplevel</a></li>
+      <li><a href="#doquery">doquery</a></li>
+      <li><a href="#drop-table">drop-table</a></li>
+      <li><a href="#execute">execute</a></li>
+      <li><a href="#get-dao">get-dao</a></li>
+      <li><a href="#get-id">get-id</a></li>
+      <li><a href="#insert-dao">insert-dao</a></li>
+      <li><a href="#list-sequences">list-sequences</a></li>
+      <li><a href="#list-tables">list-tables</a></li>
+      <li><a href="#list-views">list-views</a></li>
+      <li><a href="#next-id">next-id</a></li>
+      <li><a href="#prepare">prepare</a></li>
+      <li><a href="#query">query</a></li>
+      <li><a href="#query-dao">query-dao</a></li>
+      <li><a href="#reconnect">reconnect</a></li>
+      <li><a href="#reset-table">reset-table</a></li>
+      <li><a href="#save-dao">save-dao</a></li>
+      <li><a href="#select-dao">select-dao</a></li>
+      <li><a href="#sequence-exists-p">sequence-exists-p</a></li>
+      <li><a href="#sequence-next">sequence-next</a></li>
+      <li><a href="#table-description">table-description</a></li>
+      <li><a href="#table-exists-p">table-exists-p</a></li>
+      <li><a href="#update-dao">update-dao</a></li>
+      <li><a href="#view-exists-p">view-exists-p</a></li>
+      <li><a href="#with-connection">with-connection</a></li>
+      <li><a href="#with-transaction">with-transaction</a></li>
+    </ul>
+
+  </body>
+</html>
