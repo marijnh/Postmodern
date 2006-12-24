@@ -124,7 +124,7 @@
 
     <p>Which will establish a connection to be used by all code,
     except for that wrapped in a <a
-    href="postmodern.html#with-database"><code>with-database</code></a>
+    href="postmodern.html#with-connection"><code>with-connection</code></a>
     form, which takes the same arguments but only establishes the
     connection locally.</p>
 
@@ -220,7 +220,7 @@
     will save a dao, calling <a
     href="postmodern.html#insert-dao"><code>insert-dao</code></a> if
     no rows with the same primary key exist, or <a
-    href="postmodern.html#insert-dao"><code>insert-dao</code></a> if
+    href="postmodern.html#update-dao"><code>update-dao</code></a> if
     there is such a row. <a
     href="postmodern.html#get-dao"><code>get-dao</code></a> takes one
     argument for every column in the primary index of this table, and
