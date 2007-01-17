@@ -57,7 +57,7 @@ message definitions themselves stay readable."
 (defun md5-password (password user salt)
   "Apply the hashing that PostgreSQL expects to a password."
   (flet ((md5-and-hex (sequence)
-           (let ((bytes (md5sum-sequence sequence)))
+           (let ((bytes (md5:md5sum-sequence sequence)))
              (string-downcase 
               (with-output-to-string (result)
                 (loop :for byte :across bytes

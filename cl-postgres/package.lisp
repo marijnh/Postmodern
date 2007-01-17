@@ -1,5 +1,5 @@
 (defpackage :cl-postgres
-  (:use :common-lisp :md5 :trivial-sockets :simple-date)
+  (:use :common-lisp :simple-date)
   (:export :database-error
            :database-error-message
            :database-error-code

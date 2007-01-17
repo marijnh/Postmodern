@@ -10,7 +10,7 @@
   #-(or sb-unicode unicode)nil)
 
 (defsystem :cl-postgres
-  :depends-on (:md5 :trivial-sockets :ieee-floats :simple-date
+  :depends-on (:md5 :usocket :ieee-floats :simple-date
                     . #.(if *unicode* '(:trivial-utf-8)))
   :components 
   ((:module :cl-postgres

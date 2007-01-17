@@ -39,9 +39,10 @@ currently connected."
 (defun initiate-connection (conn)
   "Check whether a connection object is connected, try to connect it
 if it isn't."
-  (let ((socket (open-stream (connection-host conn)
-                             (connection-port conn)
-                             :element-type '(unsigned-byte 8)))
+  (let ((socket (usocket:socket-stream
+                 (usocket:socket-connect (connection-host conn)
+                                         (connection-port conn)
+                                         :element-type '(unsigned-byte 8))))
         (finished nil))
     (unwind-protect
          (setf (slot-value conn 'meta) nil
