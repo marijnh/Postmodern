@@ -60,7 +60,7 @@
 
 (test table
   (with-test-connection
-    (execute (:create-table 'test-data ('a integer) ('b real) ('c text t) :primary-key 'a))
+    (execute (:create-table 'test-data ('a integer) ('b real) ('c (or text db-null)) :primary-key 'a))
     (is (table-exists-p 'test-data))
     (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
     (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null))

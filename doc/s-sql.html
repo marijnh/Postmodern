@@ -163,6 +163,16 @@
       </tbody>
     </table>
 
+    <p class="def">
+      <span>type</span>
+      <a name="db-null"></a>
+      db-null
+    </p>
+
+    <p class="desc">This is a type of which only the keyword
+    <code>:null</code> is a member. It is used to represent NULL
+    values from the database.</p>
+
     <h2><a name="syntax"></a>SQL Syntax</h2>
 
     <p>An S-SQL form is converted to a query through the following rules:</p>
@@ -342,9 +352,11 @@
 
     <p class="desc">Create a new table. After the table name a number
     of column definitions follow, which are lists in the form (name
-    type null) that specify the name, type, and whether the column can
-    be NULL. After this an optional <code>:primary-key</code> keyword
-    followed by one or more field names follows. Example:</p>
+    type) that specify the name and type of the column. Use a type
+    like <code>(or db-null integer)</code> to specify a column that
+    may have NULL values. After this an optional
+    <code>:primary-key</code> keyword followed by one or more field
+    names follows. Example:</p>
 
     <pre class="code desc">
 (:create-table 'my-table
@@ -409,6 +421,7 @@
       <li><a href="#create-sequence">:create-sequence</a></li>
       <li><a href="#create-table">:create-table</a></li>
       <li><a href="#create-unique-index">:create-unique-index</a></li>
+      <li><a href="#db-null">db-null</a></li>
       <li><a href="#delete-from">:delete-from</a></li>
       <li><a href="#desc">:desc</a></li>
       <li><a href="#dot">:dot</a></li>

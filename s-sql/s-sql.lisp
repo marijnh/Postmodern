@@ -8,6 +8,7 @@
            :bytea
            :text
            :varchar
+           :db-null
            :sql-type-name
            :sql-escape-string
            :from-sql-name
@@ -146,6 +147,11 @@ characters other than #\-)"
   'string)
 (deftype varchar (length)
   `(string ,length))
+
+(deftype db-null ()
+  "Type for representing NULL values. Use like \(or integer db-null)
+for declaring a type to be an integer that may be null."
+  '(eql :null))
 
 ;; For types integer and real, the Lisp type isn't quite the same as
 ;; the SQL type. Close enough though.
@@ -486,18 +492,25 @@ to runtime. Used to create stored procedures."
   `("DELETE FROM " ,@(sql-expand table) ,@(if where (cons " WHERE " (sql-expand where)) ())))
 
 (def-sql-op :create-table (name &rest args)
-  (split-on-keywords ((fields *) (primary-key * ?)) (cons :fields args)
-    `("CREATE TABLE " ,@(sql-expand name) " ("
-      ,@(loop :for ((name type null) . rest) :on fields
-              :append (sql-expand name)
-              :collect " "
-              :collect (to-type-name type)
-              :if (not null)
-              :collect " NOT NULL"
-              :if rest
-              :collect ", ")
-      ,@(when primary-key `(", PRIMARY KEY(" ,@(sql-expand-list primary-key) ")"))
-      ")")))
+  (flet ((dissect-type (type)
+           (if (and (consp type) (eq (car type) 'or) (member 'db-null type) (= (length type) 3))
+               (if (eq (second type) 'db-null)
+                   (list (third type) t)
+                   (list (second type) t))
+               (list type nil))))
+    (split-on-keywords ((fields *) (primary-key * ?)) (cons :fields args)
+      `("CREATE TABLE " ,@(sql-expand name) " ("
+        ,@(loop :for ((name type) . rest) :on fields
+                :for (type-name type-null) = (dissect-type type)
+                :append (sql-expand name)
+                :collect " "
+                :collect (to-type-name type-name)
+                :if (not type-null)
+                :collect " NOT NULL"
+                :if rest
+                :collect ", ")
+        ,@(when primary-key `(", PRIMARY KEY(" ,@(sql-expand-list primary-key) ")"))
+        ")"))))
 
 (def-sql-op :drop-table (name)
   `("DROP TABLE " ,@(sql-expand name)))

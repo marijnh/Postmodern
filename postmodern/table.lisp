@@ -2,8 +2,7 @@
 
 (defclass table-field ()
   ((name :initarg :name :accessor table-field-name)
-   (type :initarg :type :accessor table-field-type)
-   (null :initarg :null :accessor table-field-null))
+   (type :initarg :type :accessor table-field-type))
   (:documentation "Representation of a table field."))
 
 (defclass table ()
@@ -42,23 +41,12 @@
               (template template) template-table))
     (setf (gethash name template-table) value)))
 
-(deftype db-null ()
-  "Type for representing NULL values. Use like \(or integer db-null)
-for declaring a type to be an integer that may be null."
-  '(eql :null))
-
 (defun extract-field (slot)
   "Transform a list of defclass-style slot declarations to a list of
 table-field objects."
-  (flet ((dissect-type (type)
-           (if (and (consp type) (eq (car type) 'or) (member 'db-null type) (= (length type) 3))
-               (if (eq (second type) 'db-null)
-                   (values (third type) t)
-                   (values (second type) t))
-               (values type nil))))
-    (multiple-value-bind (type null) (dissect-type (or (getf (cdr slot) :type)
-                                                       (error "No type specified for slot ~A." (car slot))))
-      (make-instance 'table-field :name (car slot) :type type :null null))))
+  (make-instance 'table-field :name (car slot)
+                 :type (or (getf (cdr slot) :type)
+                           (error "No type specified for slot ~A." (car slot)))))
 
 (defun initialize-row-reader (table)
   "Initialize the row-reader for this table to a reader that collects
@@ -210,8 +198,7 @@ holds."
         `(:create-table ,(table-name table)
           ,@(mapcar (lambda (field)
                       (list (table-field-name field)
-                            (table-field-type field)
-                            (table-field-null field)))
+                            (table-field-type field)))
                     (table-fields table))
           :primary-key ,@(car (table-indices table)))))
       (dolist (index (cdr (table-indices table)))
