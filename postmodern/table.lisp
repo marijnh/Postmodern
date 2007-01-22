@@ -2,6 +2,7 @@
 
 (defclass table-field ()
   ((name :initarg :name :accessor table-field-name)
+   (sql-name :initarg :sql-name :accessor table-field-sql-name)
    (type :initarg :type :accessor table-field-type))
   (:documentation "Representation of a table field."))
 
@@ -44,7 +45,7 @@
 (defun extract-field (slot)
   "Transform a list of defclass-style slot declarations to a list of
 table-field objects."
-  (make-instance 'table-field :name (car slot)
+  (make-instance 'table-field :name (car slot) :sql-name (to-sql-name (car slot))
                  :type (or (getf (cdr slot) :type)
                            (error "No type specified for slot ~A." (car slot)))))
 
@@ -60,11 +61,18 @@ values from the query."
       (loop :while (next-row)
             :collect
             (let ((instance (allocate-instance (find-class class-name))))
-              (loop :for query-field :across query-fields
-                    :for table-field :in table-fields
-                    :do (setf (slot-value instance (table-field-name table-field))
-                              (next-field query-field)))
-              instance)))))
+              (flet ((relevant-field (probable-field name)
+                       (or (and (string= (table-field-sql-name probable-field) name)
+                                probable-field)
+                           (find-if (lambda (field) (string= (table-field-sql-name field) name))
+                                    table-fields)
+                           (error "Field ~A does not exist in defined table ~A." name (table-name table)))))
+                (loop :for query-field :across query-fields
+                      :for table-field :in table-fields
+                      :do (setf (slot-value instance (table-field-name (relevant-field table-field 
+                                                                                       (field-name query-field))))
+                                (next-field query-field)))
+                instance))))))
 
 (defgeneric dao-exists-p (dao)
   (:documentation "Return a boolean indicating whether the given dao
@@ -142,7 +150,7 @@ index is used as primary key (:auto-id adds an index on the id)."
                 (defmethod update-dao ((dao ,class))
                   (execute (:update ',name
                                     :set ,@(set-fields 'dao (remove-if (lambda (f) (member f (car indices)))
-                                                                          (mapcar 'car fields)))
+                                                                       (mapcar 'car fields)))
                                     :where ,(primary-key-test 'dao))))
                 (defmethod delete-dao ((dao ,class))
                   (execute (:delete-from ',name :where ,(primary-key-test 'dao))))
