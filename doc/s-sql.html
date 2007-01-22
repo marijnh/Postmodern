@@ -210,6 +210,17 @@
     <p class="desc">Unary operators for bitwise and logical
     negation.</p>
 
+    <p class="def"><span>sql-op</span> <a name="regexp"></a>:~, :~*, :!~, :!~* (string pattern)</p>
+
+    <p class="desc">Regular expression matching operators. The
+    exclamation mark means 'does not match', the asteriks makes the
+    match case-insensitive.</p>
+
+    <p class="def"><span>sql-op</span> <a name="like"></a>:like, :ilike (string pattern)</p>
+
+    <p class="desc">Simple SQL string matching operators
+    (<code>:ilike</code> is case-insensitive).</p>
+
     <p class="def"><span>sql-op</span> <a name="desc"></a>:desc (column)</p>
 
     <p class="desc">Used to invert the meaning of an operator in a <a
@@ -413,6 +424,9 @@
       <li><a href="#infix">:&gt;=</a></li>
       <li><a href="#infix">:^</a></li>
       <li><a href="#unary">:~</a></li>
+      <li><a href="#regexp">:!~</a></li>
+      <li><a href="#regexp">:!~*</a></li>
+      <li><a href="#regexp">:~*</a></li>
       <li><a href="#infix">:and</a></li>
       <li><a href="#as">:as</a></li>
       <li><a href="#types">bytea</a></li>
@@ -435,10 +449,12 @@
       <li><a href="#exists">:exists</a></li>
       <li><a href="#from-sql-name">from-sql-name</a></li>
       <li><a href="#function">:function</a></li>
+      <li><a href="#like">:ilike</a></li>
       <li><a href="#in">:in</a></li>
       <li><a href="#insert-into">:insert-into</a></li>
       <li><a href="#infix">:intersect</a></li>
       <li><a href="#is-null">:is-null</a></li>
+      <li><a href="#like">:like</a></li>
       <li><a href="#limit">:limit</a></li>
       <li><a href="#not">:not</a></li>
       <li><a href="#not-in">:not-in</a></li>

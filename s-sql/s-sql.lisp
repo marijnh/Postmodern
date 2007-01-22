@@ -361,15 +361,17 @@ strings and forms that evaluate to strings."
                   (expand-infix-op ,(string-downcase (symbol-name op)) ,allow-unary args)))
               ops)))
 (def-infix-ops t :+ :* :& :|\|| :and :or :union)
-(def-infix-ops nil := :/ :!= :< :> :<= :>= :^ :intersect :except)
+(def-infix-ops nil := :/ :!= :< :> :<= :>= :^ :intersect :except :~* :!~ :!~* :like :ilike)
 
 (def-sql-op :- (first &rest rest)
   (if rest
       (expand-infix-op "-" nil (cons first rest))
       `("(-" ,@(sql-expand first) ")")))
       
-(def-sql-op :~ (arg)
-  `("(~" ,@(sql-expand arg) ")"))
+(def-sql-op :~ (first &rest rest)
+  (if rest
+      (expand-infix-op "-" nil (cons first rest))
+      `("(~" ,@(sql-expand first) ")")))
 
 (def-sql-op :not (arg)
   `("(not " ,@(sql-expand arg) ")"))
