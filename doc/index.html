@@ -37,6 +37,7 @@
     <h2>Contents</h2>
 
     <ol>
+      <li><a href="#news">News</a></li>
       <li><a href="#dependencies">Dependencies</a></li>
       <li><a href="#license">License</a></li>
       <li><a href="#download">Download and installation</a></li>
@@ -45,6 +46,18 @@
       <li><a href="#reference">Reference</a></li>
       <li><a href="#caveats">Caveats and to-do's</a></li>
     </ol>
+
+    <h2><a name="news"></a>News</h2>
+
+    <p class="news"><em>23-01-2007:</em> <a
+    href="http://common-lisp.net/project/postmodern/postmodern-0.21.tgz">Version
+    .21</a> released, which mostly corrects minor mistakes. The syntax
+    of <a
+    href="s-sql.html#create-table"><code>:create-table</code></a> was
+    changed: it no longer takes a <code>nil</code>/<code>t</code>
+    value to indicate whether a column can be null, but uses the same
+    <code>(or db-null type)</code> notation as <a
+    href="postmodern.html#deftable"><code>deftable</code></a>.</p>
 
     <h2><a name="dependencies"></a>Dependencies</h2>
 
@@ -318,10 +331,10 @@
 
     <h3>Portability</h3>
 
-    <p>For this first release, only minimal testing has been done for
-    compatibility with the various CL implementations and PostgreSQL
-    versions. Hopefully, I'll soon be able to determine any
-    compatibility issues and document them here.</p>
+    <p>So far, only minimal testing has been done for compatibility
+    with the various CL implementations and PostgreSQL versions. No
+    compatibility problems have been reported yet, when anything comes
+    up it will be documented here.</p>
 
     <p>The library will definitely not work for PostgreSQL versions
     older than 7.4 (it uses a client/server protocol that was

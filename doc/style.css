@@ -23,6 +23,11 @@ code {
   font-size: 13pt;
 }
 
+p.news {
+  text-indent: -3em;
+  padding-left: 3em;
+}
+
 pre.code {
   margin: 0 16px;
   padding: 7px;
