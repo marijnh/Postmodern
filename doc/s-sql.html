@@ -371,8 +371,8 @@
 
     <pre class="code desc">
 (:create-table 'my-table
-  ('field-1 integer nil)      
-  ('field-2 text t)
+  ('field-1 integer)
+  ('field-2 (or db-null text))
   :primary-key 'field-1)</pre>
 
     <p class="def"><span>sql-op</span> <a name="drop-table"></a>:drop-table (name)</p>
