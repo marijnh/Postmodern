@@ -122,3 +122,23 @@
       (is (table-exists-p 'test-data))
       (clear-template 'my-template)
       (is (not (table-exists-p 'test-data))))))
+
+(test transaction
+  (with-test-connection
+    (execute (:create-table 'test-data ('value integer)))
+    (ignore-errors
+      (with-transaction ()
+        (execute (:insert-into 'test-data :set 'value 2))
+        (error "no wait")))
+    (is (length (query (:select '* :from 'test-data))) 0)
+    (ignore-errors
+      (with-transaction (transaction)
+        (execute (:insert-into 'test-data :set 'value 2))
+        (commit-transaction transaction)
+        (error "no wait!!")))
+    (is (length (query (:select '* :from 'test-data))) 1)
+    (with-transaction (transaction)
+      (execute (:insert-into 'test-data :set 'value 44))
+      (abort-transaction transaction))
+    (is (length (query (:select '* :from 'test-data))) 1)
+    (execute (:drop-table 'test-data))))

@@ -237,40 +237,32 @@
     top-level function for the prepared statement.</p>
 
     <p class="def">
-      <span>function</span>
-      <a name="begin-transaction"></a>
-      begin-transaction ()
+      <span>macro</span>
+      <a name="with-transaction"></a>
+      with-transaction ((&amp;optional name) &amp;body body)
     </p>
 
-    <p class="desc">Start a database transaction.</p>
+    <p class="desc">Execute the given body within a database
+    transaction, committing it when the body exits normally, and
+    aborting otherwise. An optional name can be given to the
+    transaction, which can be used to force a commit or abort before
+    the body unwinds.</p>
 
     <p class="def">
       <span>function</span>
       <a name="commit-transaction"></a>
-      commit-transaction ()
+      commit-transaction (transaction)
     </p>
 
-    <p class="desc">Commit the current database transaction.</p>
+    <p class="desc">Commit the given database transaction.</p>
 
     <p class="def">
       <span>function</span>
       <a name="abort-transaction"></a>
-      abort-transaction ()
+      abort-transaction (transaction)
     </p>
 
-    <p class="desc">Rollback the current database transaction.</p>
-
-    <p class="def">
-      <span>macro</span>
-      <a name="with-transaction"></a>
-      with-transaction (&amp;body body)
-    </p>
-
-    <p class="desc">Execute the body within a transaction. Abort the
-    transaction when a condition is raised, and commit it when the
-    body finishes normally. (Note that you can still use <a
-    href="#abort-transaction"><code>abort-transaction</code></a> to
-    abort manually).</p>
+    <p class="desc">Roll back the given database transaction.</p>
 
     <p class="def">
       <span>function</span>
@@ -549,7 +541,6 @@
 
     <ul>
       <li><a href="#abort-transaction">abort-transaction</a></li>
-      <li><a href="#begin-transaction">begin-transaction</a></li>
       <li><a href="#clear-connection-pool">clear-connection-pool</a></li>
       <li><a href="#clear-template">clear-template</a></li>
       <li><a href="#commit-transaction">commit-transaction</a></li>

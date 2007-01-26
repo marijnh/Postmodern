@@ -67,33 +67,39 @@ table."
                                                              (:= 'pg-class.relname (to-identifier table)))
                   :where (:> 'attnum 0))))
 
-(defun begin-transaction ()
-  "Start a database transaction."
-  (execute "BEGIN"))
+(defclass transaction-handle ()
+  ((open-p :initform t :accessor transaction-open-p)
+   (connection :initform *database* :accessor transaction-connection))
+  (:documentation "Simple box type for storing the status and the
+associated database connection of a transaction. When open-p is nil,
+the transaction has been aborted or committed."))
 
-(defun abort-transaction ()
-  "Abort a database transaction."
-  (execute "ABORT"))
-
-(defun commit-transaction ()
-  "Commit a database transaction."
-  (execute "COMMIT"))
-
-(defmacro with-transaction (&body body)
-  "Execute body within a transaction. Abort the transaction when a
-condition is raised, and commit it when the body finishes normally.
-\(Note that you can still use \(abort-transaction) to abort
-manually)."
-  (let ((ok (gensym)))
-    `(let ((,ok nil))
+(defmacro with-transaction ((&optional name) &body body)
+  "Execute the body within a database transaction, committing when the
+body exits normally, and aborting otherwise. An optional name can be
+given to the transaction, which can be used to force a commit or abort
+before the body unwinds."
+  (let ((name (or name (gensym))))
+    `(let ((,name (make-instance 'transaction-handle)))
+      (execute "BEGIN")
       (unwind-protect
-           (prog1 (progn
-                    (begin-transaction)
-                    ,@body)
-             (commit-transaction)
-             (setf ,ok t))
-        (unless ,ok
-          (abort-transaction))))))
+           (prog1 (progn ,@body)
+             (commit-transaction ,name))
+        (abort-transaction ,name)))))
+
+(defun abort-transaction (transaction)
+  "Immediately abort an open transaction."
+  (when (transaction-open-p transaction)
+    (let ((*database* (transaction-connection transaction)))
+      (execute "ABORT"))
+    (setf (transaction-open-p transaction) nil)))
+
+(defun commit-transaction (transaction)
+  "Immediately commit an open transaction."
+  (when (transaction-open-p transaction)
+    (let ((*database* (transaction-connection transaction)))
+      (execute "COMMIT"))
+    (setf (transaction-open-p transaction) nil)))
 
 ;;; Copyright (c) 2006 Marijn Haverbeke
 ;;;

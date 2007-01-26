@@ -11,8 +11,7 @@
    :sequence-next :list-sequences :sequence-exists-p
    :list-tables :table-exists-p :table-description
    :list-views :view-exists-p
-   :begin-transaction :commit-transaction :abort-transaction
-   :with-transaction
+   :with-transaction :commit-transaction :abort-transaction
    :deftable :get-id :next-id :db-null
    :dao-exists-p :query-dao :select-dao :get-dao
    :save-dao :insert-dao :update-dao :delete-dao
