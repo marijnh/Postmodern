@@ -41,6 +41,7 @@ p.def {
 }
 
 p.def span {
+  color: #555555;
   font-weight: bold;
   font-family: tahoma, arial, sans-serif;
   font-size: .8em;
@@ -58,8 +59,24 @@ table {
   border-collapse: collapse;
 }
 
+tr + tr {
+  border-top: 1px solid #88BB99;
+}
+
+thead tr {
+  border-bottom: 2px solid #88BB99;
+}
+
+td + td, th + th {
+  border-left: 2px solid #88BB99;
+}
+
+th {
+  text-align: left;
+  padding: 2px 5px;
+}
+
 td {
-  border: 1px solid #88BB99;
   padding: 2px 5px;
   vertical-align: top;
 }
