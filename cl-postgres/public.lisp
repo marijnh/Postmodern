@@ -8,6 +8,7 @@
    (password :initarg :password :reader connection-password)
    (socket :initarg :socket :accessor connection-socket)
    (meta :initform nil)
+   (available :initform t :accessor connection-available)
    (timestamp-format :initform :float
                      :accessor connection-timestamp-format))
   (:documentation "Representatino of a database connection. Contains
@@ -73,12 +74,28 @@ anything with it."
     (terminate-connection (connection-socket connection)))
   (values))
 
+(defmacro with-availability (connection &body body)
+  "This is used to prevent a row-reader from recursively calling some
+query function. Because the connection is still returning results from
+the previous query when a row-reading is being executed, starting
+another query will not work as expected \(or at all, in general). This
+might also raise an error when you are using a single database
+connection from multiple threads, but you should not do that at all."
+  (let ((connection-name (gensym)))
+    `(let ((,connection-name ,connection))
+      (when (not (connection-available ,connection-name))
+        (error 'database-error :message "This connection is still processing another query."))
+      (setf (connection-available ,connection-name) nil)
+      (unwind-protect (progn ,@body)
+        (setf (connection-available ,connection-name) t)))))
+
 (defun exec-query (connection query &optional (row-reader 'ignore-row-reader))
   "Execute a query string and apply the given row-reader to the
 result."
   (ensure-connection connection)
   (let ((*timestamp-format* (connection-timestamp-format connection)))
-    (send-query (connection-socket connection) query row-reader)))
+    (with-availability connection
+      (send-query (connection-socket connection) query row-reader))))
 
 (defun prepare-query (connection name query)
   "Prepare a query string and store it under the given name."
@@ -91,8 +108,9 @@ result."
 apply a row-reader to the result."
   (ensure-connection connection)
   (let ((*timestamp-format* (connection-timestamp-format connection)))
-    (send-execute (connection-socket connection)
-                  name parameters row-reader)))
+    (with-availability connection
+      (send-execute (connection-socket connection)
+                    name parameters row-reader))))
 
 ;; A row-reader that returns a list of (field-name . field-value)
 ;; alist for the returned rows.
