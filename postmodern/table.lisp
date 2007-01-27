@@ -204,11 +204,10 @@ holds."
       (execute
        (sql-compile
         `(:create-table ,(table-name table)
-          ,@(mapcar (lambda (field)
-                      (list (table-field-name field)
-                            (table-field-type field)))
+          ,(mapcar (lambda (field)
+                     (list (table-field-name field) :type (table-field-type field)))
                     (table-fields table))
-          :primary-key ,@(car (table-indices table)))))
+          (:primary-key ,@(car (table-indices table))))))
       (dolist (index (cdr (table-indices table)))
         (execute (sql-compile `(:create-index (:raw ,(index-name index))
                                 :on ,(table-name table)

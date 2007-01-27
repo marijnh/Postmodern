@@ -359,21 +359,91 @@
     <p class="desc">Delete rows from the named table where the given
     condition holds.</p>
 
-    <p class="def"><span>sql-op</span> <a name="create-table"></a>:create-table (name &amp;rest args)</p>
+    <p class="def"><span>sql-op</span> <a name="create-table"></a>:create-table (name (&amp;rest columns) &amp;rest options)</p>
 
-    <p class="desc">Create a new table. After the table name a number
-    of column definitions follow, which are lists in the form (name
-    type) that specify the name and type of the column. Use a type
-    like <code>(or db-null integer)</code> to specify a column that
-    may have NULL values. After this an optional
-    <code>:primary-key</code> keyword followed by one or more field
-    names follows. Example:</p>
+    <p class="desc">Create a new table. After the table name a list of
+    column definitions follows, which are lists that start with a
+    name, followed by one or more of the following keyword
+    arguments:</p>
+
+    <div class="desc"><dl>
+      <dt><code>:type</code></dt>
+      <dd>This one is required. It specifies the type of the column.
+      Use a type like <code>(or db-null integer)</code> to specify a
+      column that may have NULL values.</dd>
+      <dt><code>:default</code></dt>
+      <dd>Provides a default value for the field.</dd>
+      <dt><code>:unique</code></dt>
+      <dd>If this argument is non-nil, the values of the column must
+      be unique.</dd>
+      <dt><code>:primary-key</code></dt>
+      <dd>When non-nil, the column is a primary key of the table.</dd>
+      <dt><code>:check</code></dt>
+      <dd>Adds a constraint to this column. The value provided for
+      this argument must be an S-SQL expression that returns a boolean
+      value. It can refer to other columns in the table if
+      needed.</dd>
+      <dt><code>:references</code></dt>
+      <dd>Adds a foreign key constraint to this table. The argument
+      provided must be a list of the form <code>(target &amp;optional
+      on-delete on-update)</code>. When target is a symbol, it names
+      the table to whose primary key this constraint refers. When it
+      is a list, its first element is the table, and its second
+      element the column within that table that the key refers to.
+      <code>on-delete</code> and <code>on-update</code> can be used to
+      specify the actions that must be taken when the row that this
+      key refers to is deleted or changed. Allowed values are
+      <code>:restrict</code>, <code>:set-null</code>,
+      <code>:set-default</code>, <code>:cascade</code>, and
+      <code>:no-action</code>.</dd>
+    </dl></div>
+
+    <p class="desc">After the list of columns, zero or more extra
+    options can be specified. These are lists starting with one of the
+    following keywords:</p>
+
+    <div class="desc"><dl>
+      <dt><code>:check</code></dt>
+      <dd>Adds a constraint to the table. Takes a single S-SQL
+      expression that produces a boolean as its argument.</dd>
+      <dt><code>:primary-key</code></dt>
+      <dd>Specifies a primary key for the table. The arguments to this
+      option are the names of the columns that this key consists
+      of.</dd>
+      <dt><code>:unique</code></dt>
+      <dd>Adds a unique constraint to a group of columns. Again, the
+      arguments are a list of symbols that indicate the relevant
+      columns.</dd>
+      <dt><code>:foreign-key</code></dt>
+      <dd>Create a foreign key. The arguments should have the form
+      <code>(columns target &amp;optional on-delete on-update)</code>,
+      where <code>columns</code> is a list of columns that are used by
+      this key, while the rest of the arguments have the same meaning
+      as they have in the <code>:references</code> option for
+      columns.</dd>
+    </dl></div>
+
+    <p class="desc">Note that, unlike most other operators,
+    <code>:create-table</code> expects most of its arguments to be
+    <em>unquoted</em> symbols. The exception to this is the value of
+    <code>:check</code> constraints: These must be normal S-SQL
+    expressions, which means that any column names they contain should
+    be quoted. When programatically generating table definitions,
+    <code><a href="#sql-compile">sql-compile</a></code> is usually
+    more practical than the <code><a href="#sql">sql</a></code>
+    macro.</p>
+
+    <p class="desc">Here is an example of a <code>:create-table</code>
+    form:</p>
 
     <pre class="code desc">
-(:create-table 'my-table
-  ('field-1 integer)
-  ('field-2 (or db-null text))
-  :primary-key 'field-1)</pre>
+(:create-table enemy
+  ((name :type string :primary-key t)
+   (age :type integer :check (:> 'age 12))
+   (address :type (or db-null string) :references (important-addresses :cascade :cascade))
+   (fatal-weakness :type text :default "None")
+   (identifying-color :type (string 20) :unique t))
+  (:foreign-key (identifying-color) (colors name)))</pre>
 
     <p class="def"><span>sql-op</span> <a name="drop-table"></a>:drop-table (name)</p>
 

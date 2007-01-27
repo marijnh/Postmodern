@@ -287,10 +287,14 @@ to strings \(which will form an SQL query when concatenated)."
 
 (defun sql-expand-list (elts &optional (sep ", "))
   "Expand a list of elements, adding a separator in between them."
-  (loop :for elt :on elts
-        :append (sql-expand (car elt))
-        :if (cdr elt)
-        :collect sep))
+  (loop :for (elt . rest) :on elts
+        :append (sql-expand elt)
+        :if rest :collect sep))
+
+(defun sql-expand-names (names &optional (sep ", "))
+  (loop :for (name . rest) :on names
+        :collect (to-sql-name name)
+        :if rest :collect sep))
 
 (defun reduce-strings (list)
   "Join adjacent strings in a list, leave other values intact."
@@ -328,7 +332,7 @@ to strings \(which will form an SQL query when concatenated)."
 takes a character to use instead of #\\Q."
   (set-dispatch-macro-character #\# char 's-sql-reader))
 
-;; Definitions of sql operations
+;; Definitions of sql operators
 
 (defgeneric expand-sql-op (op args)
   (:documentation "For overriding expansion of operators. Default is
@@ -416,6 +420,8 @@ strings and forms that evaluate to strings."
 (def-sql-op :raw (sql)
   (list sql))
 
+;; Selecting and manipulating
+
 (defun expand-joins (args)
   "Helper for the select operator. Turns the part following :from into
 the proper SQL syntax for joining tables."
@@ -493,26 +499,66 @@ to runtime. Used to create stored procedures."
 (def-sql-op :delete-from (table &key where)
   `("DELETE FROM " ,@(sql-expand table) ,@(if where (cons " WHERE " (sql-expand where)) ())))
 
-(def-sql-op :create-table (name &rest args)
-  (flet ((dissect-type (type)
-           (if (and (consp type) (eq (car type) 'or) (member 'db-null type) (= (length type) 3))
-               (if (eq (second type) 'db-null)
-                   (list (third type) t)
-                   (list (second type) t))
-               (list type nil))))
-    (split-on-keywords ((fields *) (primary-key * ?)) (cons :fields args)
-      `("CREATE TABLE " ,@(sql-expand name) " ("
-        ,@(loop :for ((name type) . rest) :on fields
-                :for (type-name type-null) = (dissect-type type)
-                :append (sql-expand name)
-                :collect " "
-                :collect (to-type-name type-name)
-                :if (not type-null)
-                :collect " NOT NULL"
-                :if rest
-                :collect ", ")
-        ,@(when primary-key `(", PRIMARY KEY(" ,@(sql-expand-list primary-key) ")"))
-        ")"))))
+;; Data definition
+
+(def-sql-op :create-table (name (&rest columns) &rest options)
+  (labels ((dissect-type (type)
+             (if (and (consp type) (eq (car type) 'or) (member 'db-null type) (= (length type) 3))
+                 (if (eq (second type) 'db-null)
+                     (values (third type) t)
+                     (values (second type) t))
+                 (values type nil)))
+           (reference-action (action)
+             (case action
+               (:restrict "RESTRICT")
+               (:set-null "SET NULL")
+               (:set-default "SET DEFAULT")
+               (:cascade "CASCADE")
+               (:no-action "NO ACTION")
+               (t (error "Unsupported action for foreign key: ~A" action))))
+           (build-foreign (target on-delete on-update)
+             `(" REFERENCES "
+               ,@(if (consp target)
+                     `(,(to-sql-name (car target)) "(" ,@(sql-expand-names (cdr target)) ")")
+                     `(,(to-sql-name target)))
+               " ON DELETE " ,(reference-action on-delete)
+               " ON UPDATE " ,(reference-action on-update)))
+           (expand-column (column-name args)
+             `(,(to-sql-name column-name) " "
+               ,@(let ((type (or (getf args :type)
+                                 (error "No type specified for column ~A." column-name))))
+                   (multiple-value-bind (type null) (dissect-type type)
+                     `(,(to-type-name type) ,(when (not null) " NOT NULL"))))
+               ,@(loop :for (option value) :on args :by #'cddr
+                       :append (case option
+                                 (:default `(" DEFAULT " ,@(sql-expand value)))
+                                 (:primary-key (when value `(" PRIMARY KEY")))
+                                 (:unique (when value `(" UNIQUE")))
+                                 (:check `(" CHECK " ,@(sql-expand value)))
+                                 (:references
+                                  (destructuring-bind (target &optional (on-delete :restrict) (on-update :restrict)) value
+                                    (build-foreign target on-delete on-update)))
+                                 (:type ())
+                                 (t (error "Unknown column option: ~A." option))))))
+           (expand-option (option args)
+             (case option
+               (:check `("CHECK " ,@(sql-expand (car args))))
+               (:primary-key `("PRIMARY KEY (" ,@(sql-expand-names args) ")"))
+               (:unique `("UNIQUE (" ,@(sql-expand-names args) ")"))
+               (:foreign-key 
+                (destructuring-bind (columns target &optional (on-delete :restrict) (on-update :restrict)) args
+                  `("FOREIGN KEY (" ,@(sql-expand-names columns) ")"
+                    ,@(build-foreign target on-delete on-update)))))))
+    (when (null columns)
+      (error "No columns defined for table ~A." name))
+    `("CREATE TABLE " ,(to-sql-name name) " ("
+      ,@(loop :for ((column-name . args) . rest) :on columns
+              :append (expand-column column-name args)
+              :if rest :collect ", ")
+      ,@(loop :for ((option . args) . rest) :on options
+              :collect ", "
+              :append (expand-option option args))
+      ")")))
 
 (def-sql-op :drop-table (name)
   `("DROP TABLE " ,@(sql-expand name)))
@@ -533,7 +579,8 @@ to runtime. Used to create stored procedures."
   `("DROP INDEX " ,@(sql-expand name)))
 
 (def-sql-op :create-sequence (name &key increment min-value max-value start cache cycle)
-  `("CREATE SEQUENCE " ,@(sql-expand name) ,@(when increment `(" INCREMENT " ,@(sql-expand increment)))
+  `("CREATE SEQUENCE " ,@(sql-expand name)
+    ,@(when increment `(" INCREMENT " ,@(sql-expand increment)))
     ,@(when min-value `(" MINVALUE " ,@(sql-expand min-value)))
     ,@(when max-value `(" MAXVALUE " ,@(sql-expand max-value)))
     ,@(when start `(" START " ,@(sql-expand start)))

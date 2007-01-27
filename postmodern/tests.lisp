@@ -60,7 +60,7 @@
 
 (test table
   (with-test-connection
-    (execute (:create-table 'test-data ('a integer) ('b real) ('c (or text db-null)) :primary-key 'a))
+    (execute (:create-table test-data ((a :type integer :primary-key t) (b :type real) (c :type (or text db-null))) (:unique c)))
     (is (table-exists-p 'test-data))
     (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
     (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null))
@@ -125,7 +125,7 @@
 
 (test transaction
   (with-test-connection
-    (execute (:create-table 'test-data ('value integer)))
+    (execute (:create-table test-data ((value :type integer))))
     (ignore-errors
       (with-transaction ()
         (execute (:insert-into 'test-data :set 'value 2))
