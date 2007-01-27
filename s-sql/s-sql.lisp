@@ -374,7 +374,7 @@ strings and forms that evaluate to strings."
       
 (def-sql-op :~ (first &rest rest)
   (if rest
-      (expand-infix-op "-" nil (cons first rest))
+      (expand-infix-op "~" nil (cons first rest))
       `("(~" ,@(sql-expand first) ")")))
 
 (def-sql-op :not (arg)
