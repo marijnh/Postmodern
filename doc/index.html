@@ -49,6 +49,17 @@
 
     <h2><a name="news"></a>News</h2>
 
+    <p class="news"><em>27-01-2007:</em> <a
+    href="http://common-lisp.net/project/postmodern/postmodern-0.22.tgz">Version
+    .22</a>. Another change to <a
+    href="s-sql.html#create-table"><code>:create-table</code></a>,
+    this time to add support for constraints and a few other things
+    that the plain-SQL version lets you specify. The approach to
+    transactions (see <a
+    href="postmodern.html#with-transaction"><code>with-transaction</code></a>)
+    was also changed. The old approach was actually incorrect, now it
+    should be more robust.</p>
+
     <p class="news"><em>23-01-2007:</em> <a
     href="http://common-lisp.net/project/postmodern/postmodern-0.21.tgz">Version
     .21</a> released, which mostly corrects minor mistakes. The syntax
@@ -343,11 +354,11 @@
 
     <h3>Things that should be implemented</h3>
 
-    <p>Support for foreign keys and constraints should be added to the
-    <a href="s-sql.html#create-table"><code>:create-table</code></a>
-    and <a href="postmodern.html#deftable"><code>deftable</code></a>
-    syntax. This shouldn't be hard and I'll probably get around to it
-    soon.</p>
+    <p>Support for foreign keys and constraints should be added to <a
+    href="postmodern.html#deftable"><code>deftable</code></a>. This
+    will make code that automatically creates or alters tables quite a
+    bit more complex: it will have to take care not to violate any
+    contraints, which can be tricky in PostgreSQL.</p>
 
     <p>It would be a neat feature if <a
     href="postmodern.html#table-description"><code>table-description</code></a>
