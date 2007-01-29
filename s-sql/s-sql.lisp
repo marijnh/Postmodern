@@ -528,7 +528,7 @@ to runtime. Used to create stored procedures."
                ,@(let ((type (or (getf args :type)
                                  (error "No type specified for column ~A." column-name))))
                    (multiple-value-bind (type null) (dissect-type type)
-                     `(,(to-type-name type) ,(when (not null) " NOT NULL"))))
+                     `(,(to-type-name type) ,@(when (not null) '(" NOT NULL")))))
                ,@(loop :for (option value) :on args :by #'cddr
                        :append (case option
                                  (:default `(" DEFAULT " ,@(sql-expand value)))
