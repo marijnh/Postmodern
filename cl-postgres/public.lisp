@@ -106,6 +106,8 @@ result."
 (defun exec-prepared (connection name parameters &optional (row-reader 'ignore-row-reader))
   "Execute a previously prepared query with the given parameters,
 apply a row-reader to the result."
+  (declare (type list parameters)
+           (type string name))
   (ensure-connection connection)
   (let ((*timestamp-format* (connection-timestamp-format connection)))
     (with-availability connection

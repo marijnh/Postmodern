@@ -150,14 +150,19 @@
     <p class="def">
       <span>macro</span>
       <a name="query"></a>
-      query (query &amp;optional (format :rows))
+      query (query &amp;rest args/format)
       <br/>&#8594; result
     </p>
 
-    <p class="desc">Execute the given query, and return the results in
-    the format specified. <code>query</code> can be either a string or
-    an <a href="s-sql.html">S-SQL</a> form (list starting with a
-    keyword), and format is one of the following:</p>
+    <p class="desc">Execute the given query, which can be either a
+    string or an <a href="s-sql.html">S-SQL</a> form (list starting
+    with a keyword). If the query contains placeholders
+    (<code>$1</code>, <code>$2</code>, etc) their values can be given
+    as extra arguments. If one of these arguments is a keyword, it
+    will not be used as a query argument, but will determine the
+    format in which the results are returned instead. Any of the
+    following formats can be used, with the default being
+    <code>:rows</code>:</p>
     
     <table class="desc">
       <tr><td><code>:none</code></td><td>Ignore the result values.</td></tr>
@@ -181,10 +186,10 @@
     <p class="def">
       <span>macro</span>
       <a name="execute"></a>
-      execute (query)
+      execute (query &amp;rest args)
     </p>
 
-    <p class="desc">Like <a href="#query"><code>query</code></a>
+    <p class="desc">Like <a href="#query"><code>query</code></a>, but
     called with <code>format</code> :none.</p>
 
     <p class="def">

@@ -41,18 +41,27 @@ looks like an S-SQL query."
       `(sql ,query)
       query))
 
-(defmacro query (query &optional (format :rows))
-  "Execute a query, and return the results in the format specified."
-  (multiple-value-bind (reader single-row) (result-style format)
-    (let ((base `(exec-query *database*
-                  ,(real-query query) ',reader)))
-      (if single-row
-          `(car ,base)
-          base))))
+(defmacro query (query &rest args/format)
+  "Execute a query, optionally with arguments to put in the place of
+$X elements. If one of the arguments is a keyword, it specifies the
+format in which the results should be returned."
+  (let* ((format :rows)
+         (args (loop :for arg :in args/format
+                     :if (keywordp arg) :do (setf format arg)
+                     :else :collect arg)))
+    (multiple-value-bind (reader single-row) (result-style format)
+      (let ((base (if args
+                      `(progn
+                        (prepare-query *database* "" ,(real-query query))
+                        (exec-prepared *database* "" (mapcar 'sql-ize (list ,@args)) ',reader))
+                      `(exec-query *database* ,(real-query query) ',reader))))
+        (if single-row
+            `(car ,base)
+            base)))))
 
-(defmacro execute (query)
+(defmacro execute (query &rest args)
   "Execute a query, ignore the results."
-  `(query ,query :none))
+  `(query ,query ,@args :none))
 
 (defmacro doquery (query (&rest names) &body body)
   "Iterate over the rows in the result of a query, binding the given
