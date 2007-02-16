@@ -26,7 +26,7 @@
 
    ;; Condition type from cl-postgres
    :database-error :database-error-message :database-error-code
-   :database-error-detail :database-error-query
+   :database-error-detail :database-error-query :database-connection-lost
 
    ;; Full simple-date interface
    :date :encode-date :decode-date :day-of-week

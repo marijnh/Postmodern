@@ -1,6 +1,7 @@
 (defpackage :cl-postgres
   (:use :common-lisp :simple-date)
   (:export :database-error
+           :database-connection-lost
            :database-error-message
            :database-error-code
            :database-error-detail

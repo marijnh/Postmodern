@@ -317,6 +317,19 @@
     <p class="desc">The query that led to this error, or
     <code>NIL</code> if no query was involved.</p>
 
+    <p class="def">
+      <span>condition</span>
+      <a name="database-connection-lost"></a>
+      database-connection-lost
+    </p>
+
+    <p class="desc">Subtype of <a
+    href="#database-error"><code>database-error</code></a>. An error
+    of this type is signaled when a query is given to a connection
+    object that is no longer connected. Always provides a
+    <code>:reconnect</code> restart, which will cause the library to
+    make an attempt to restore the connection.</p>
+
     <h2><a name="index">Symbol-index</a></h2>
 
     <ul>
@@ -324,6 +337,7 @@
       <li><a href="#close-database">close-database</a></li>
       <li><a href="#connection-meta">connection-meta</a></li>
       <li><a href="#database-connection">database-connection</a></li>
+      <li><a href="#database-connection-lost">database-connection-lost</a></li>
       <li><a href="#database-error">database-error</a></li>
       <li><a href="#database-error-code">database-error-code</a></li>
       <li><a href="#database-error-detail">database-error-detail</a></li>

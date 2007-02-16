@@ -61,12 +61,14 @@ if it isn't."
   (unless (database-open-p conn)
     (initiate-connection conn)))
 
+(define-condition database-connection-lost (database-error) ())
+
 (defun ensure-connection (conn)
   "Used to make sure a connection object is connected before doing
 anything with it."
   (unless (database-open-p conn)
-    (restart-case (error 'database-error :message "Connection to database server lost.")
-      (reconnect () :report "Try to reconnect." (initiate-connection conn)))))
+    (restart-case (error 'database-connection-lost :message "Connection to database server lost.")
+      (:reconnect () :report "Try to reconnect." (initiate-connection conn)))))
 
 (defun close-database (connection)
   "Gracefully disconnect a database connection."
@@ -89,30 +91,45 @@ connection from multiple threads, but you should not do that at all."
       (unwind-protect (progn ,@body)
         (setf (connection-available ,connection-name) t)))))
 
+(defmacro shoot-stream-on-error (stream &body body)
+  "When, inside the body, an error occurs regarding the given stream,
+make sure the stream gets closed so that the next time this connection
+is used, we can see right away that it needs to be reconnected."
+  (let ((stream-name (gensym)))
+    `(let ((,stream-name ,stream))
+      (handler-case (progn ,@body)
+        (stream-error (e)
+          (when (eq ,stream-name (stream-error-stream e))
+            (close ,stream-name :abort t))
+          (error e))))))
+
 (defun exec-query (connection query &optional (row-reader 'ignore-row-reader))
   "Execute a query string and apply the given row-reader to the
 result."
-  (ensure-connection connection)
-  (let ((*timestamp-format* (connection-timestamp-format connection)))
-    (with-availability connection
-      (send-query (connection-socket connection) query row-reader))))
+  (shoot-stream-on-error (connection-socket connection)
+    (ensure-connection connection)
+    (let ((*timestamp-format* (connection-timestamp-format connection)))
+      (with-availability connection
+        (send-query (connection-socket connection) query row-reader)))))
 
 (defun prepare-query (connection name query)
   "Prepare a query string and store it under the given name."
-  (ensure-connection connection)
-  (send-parse (connection-socket connection) name query)
-  (values))
+  (shoot-stream-on-error (connection-socket connection)
+    (ensure-connection connection)
+    (send-parse (connection-socket connection) name query)
+    (values)))
 
 (defun exec-prepared (connection name parameters &optional (row-reader 'ignore-row-reader))
   "Execute a previously prepared query with the given parameters,
 apply a row-reader to the result."
   (declare (type list parameters)
            (type string name))
-  (ensure-connection connection)
-  (let ((*timestamp-format* (connection-timestamp-format connection)))
-    (with-availability connection
-      (send-execute (connection-socket connection)
-                    name parameters row-reader))))
+  (shoot-stream-on-error (connection-socket connection)
+    (ensure-connection connection)
+    (let ((*timestamp-format* (connection-timestamp-format connection)))
+      (with-availability connection
+        (send-execute (connection-socket connection)
+                      name parameters row-reader)))))
 
 ;; A row-reader that returns a list of (field-name . field-value)
 ;; alist for the returned rows.
