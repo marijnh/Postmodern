@@ -49,6 +49,16 @@
 
     <h2><a name="news"></a>News</h2>
 
+    <p class="news"><em>16-03-2007:</em> <a
+    href="http://common-lisp.net/project/postmodern/postmodern-0.24.tgz">Version
+    .24</a>: Fixes <a
+    href="cl-postgres.html#database-connection-lost"><code>:reconnect</code></a>
+    restarts, add varargs to <a
+    href="postmodern.html#query"><code>query</code></a> and <a
+    href="postmodern.html#execute"><code>execute</code></a>. Fixes a
+    bug that caused connections to go out of sync when the server sent
+    warnings.</p>
+
     <p class="news"><em>29-01-2007:</em> <a
     href="http://common-lisp.net/project/postmodern/postmodern-0.23.tgz">Version
     .23</a>: Fixes a few embarassing bugs in the previous release.</p>
@@ -353,8 +363,9 @@
 
     <p>The library will definitely not work for PostgreSQL versions
     older than 7.4 (it uses a client/server protocol that was
-    introduced then). So far the only Lisp implementations that have
-    been tested are SBCL and CLISP.</p>
+    introduced then). On versions prior to 8.1, retrieving the <a
+    href="simple-date.html">simple-date</a> classes is buggy, because
+    their binary representation was changed.</p>
 
     <h3>Things that should be implemented</h3>
 
