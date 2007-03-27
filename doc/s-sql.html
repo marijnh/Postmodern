@@ -305,14 +305,14 @@
    :left-join 'your-table :on (:= 'x.field-2 'your-table.field-1)
    :where (:not-null 'a.field-3))</pre>
 
-    <p class="def"><span>sql-op</span> <a name="limit"></a>:limit (query limit &amp;optional to)</p>
+    <p class="def"><span>sql-op</span> <a name="limit"></a>:limit (query amount &amp;optional offset)</p>
 
     <p class="desc">In S-SQL limit is not part of the select operator,
     but an extra operator that is applied to a query (this works out
     better when limiting the union or intersection of multiple
     queries, same for sorting). It limits the number of results to the
-    amount given as the second argument, or when three arguments are
-    given it returns the results between the two given numbers.</p>
+    amount given as the second argument, and optionally offsets the
+    result by the amount given as the third argument.</p>
 
     <p class="def"><span>sql-op</span> <a name="order-by"></a>:order-by (query &amp;rest exprs)</p>
 

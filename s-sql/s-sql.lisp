@@ -453,8 +453,8 @@ the proper SQL syntax for joining tables."
       ,@(if having (cons " HAVING " (sql-expand (car having))) ())
       ")")))
 
-(def-sql-op :limit (form from &optional to)
-  `("(" ,@(sql-expand form) " LIMIT " ,@(sql-expand from) ,@(if to (cons ", " (sql-expand to)) ()) ")"))
+(def-sql-op :limit (form amount &optional offset)
+  `("(" ,@(sql-expand form) " LIMIT " ,@(sql-expand amount) ,@(if offset (cons " OFFSET " (sql-expand offset)) ()) ")"))
 
 (def-sql-op :order-by (form &rest fields)
   `("(" ,@(sql-expand form) " ORDER BY " ,@(sql-expand-list fields) ")"))
