@@ -93,12 +93,17 @@ database-error condition."
              :detail (or (get-field #\D) (get-field #\H))
              :position (get-field #\p)))))
 
+(define-condition postgresql-warning (simple-warning)
+  ())
+
 (defun get-warning (socket)
   "Read a warning from the socket and emit it."
   (let ((data (read-byte-delimited socket)))
     (flet ((get-field (char)
              (cdr (assoc char data))))
-      (warn "Postgres warning: ~A~@[~%~A~]" (get-field #\M) (or (get-field #\D) (get-field #\H))))))
+      (warn 'postgresql-warning
+            :format-control "Postgres warning: ~A~@[~%~A~]"
+            :format-arguments (list (get-field #\M) (or (get-field #\D) (get-field #\H)))))))
 
 (defun authenticate (socket user password database)
   "Try to initiate a connection. Caller should close the socket if

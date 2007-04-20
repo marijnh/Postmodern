@@ -23,6 +23,7 @@
            :next-field
            :list-row-reader
            :alist-row-reader
+           :postgresql-warning
            :ignore-row-reader))
 
 (in-package :cl-postgres)
