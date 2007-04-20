@@ -52,6 +52,14 @@
     (is (equal (exec-prepared connection "test" '("42" "99") 'list-row-reader)
                '((42 99))))))
 
+(test blob
+  (with-test-connection
+    (let* ((str "foobar42")
+           (bytes (coerce #(102 111 111 98 97 114 52 50) '(vector (unsigned-byte 8)))))
+      (prepare-query connection "test" "select $1::varchar, $2::bytea")
+      (is (equalp (exec-prepared connection "test" (list str bytes) 'list-row-reader)
+                  (list (list str bytes)))))))
+
 (test recover-error
   (with-test-connection
     (signals database-error
