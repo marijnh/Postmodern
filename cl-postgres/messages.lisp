@@ -111,33 +111,61 @@ indicating binary and 0 indicating plain text."
 
 ;; This one was a bit too complex to put into define-message format,
 ;; so it does everything by hand.
-(defun bind-message (socket name formats parameters)
+(defun bind-message (socket name result-formats parameters)
   "Bind a prepared statement, ask for the given formats, and pass the
-given parameters \(as text)."
+given parameters, that can be either string or byte vector.
+\(vector \(unsigned-byte 8)) parameters will be sent as binary data, useful
+for binding data for binary long object columns."
   (declare (type stream socket)
            (type string name)
-           (type vector formats)
+           (type vector result-formats)
            (type list parameters)
            #.*optimize*)
-  (let ((n-params (length parameters))
-        (param-sizes (mapcar '#.*string-byte-length* parameters))
-        (n-formats (length formats)))
-    (declare (type (unsigned-byte 16) n-params n-formats)
-             (type list param-sizes))
+  (let* ((n-params (length parameters))
+         (param-formats (make-array n-params :element-type 'fixnum))
+         (param-sizes (make-array n-params :element-type 'fixnum))
+         (n-result-formats (length result-formats)))
+    (declare (type (unsigned-byte 16) n-params n-result-formats))
+    (loop for param :in parameters
+          for idx :from 0
+          do (if (or (eq param :null)
+                     (eq param nil))
+                 (progn
+                   (setf (aref param-formats idx) 0)
+                   (setf (aref param-sizes idx) 0))
+                 (etypecase param
+                   ((vector (unsigned-byte 8))
+                    (setf (aref param-formats idx) 1)
+                    (setf (aref param-sizes idx) (length param)))
+                   (string
+                    (setf (aref param-formats idx) 0)
+                    (setf (aref param-sizes idx) (#.*string-byte-length* param))))))
     (write-uint1 socket #.(char-code #\B))
-    (write-uint4 socket (+ 12 (length name) (* 2 n-formats) (* 4 n-params)
-                           (loop :for size fixnum :in param-sizes
+    (write-uint4 socket (+ 12
+                           (length name)
+                           (* 2 n-params)   ;; Input formats
+                           (* 2 n-result-formats)
+                           (* 4 n-params)
+                           (loop :for size fixnum :across param-sizes
                                  :sum size)))
-    (write-uint1 socket 0) ;; Name of the portal
-    (write-str socket name) ;; Name of the prepared statement
-    (write-uint2 socket 0) ;; Number of parameter format specs
-    (write-uint2 socket n-params) ;; Number of parameter specifications
-    (loop :for param string :in parameters
-          :for size fixnum :in param-sizes
-          :do (write-uint4 socket size)
-          :do (#.*write-string* param socket))
-    (write-uint2 socket n-formats) ;; Number of result format specifications
-    (loop :for format :across formats  ;; Result formats
+    (write-uint1 socket 0)                  ;; Name of the portal
+    (write-str socket name)                 ;; Name of the prepared statement
+    (write-uint2 socket n-params)           ;; Number of parameter format specs
+    (loop :for format :across param-formats ;; Param formats (text/binary)
+          :do (write-uint2 socket format))
+    (write-uint2 socket n-params)           ;; Number of parameter specifications
+    (loop :for param :in parameters
+          :for size fixnum :across param-sizes
+          :do (if (or (eq param :null)
+                      (eq param nil))
+                  (write-uint4 socket -1)   ;; -1 size means SQL NULL
+                  (progn
+                    (write-uint4 socket size)
+                    (etypecase param
+                      ((vector (unsigned-byte 8)) (write-sequence param socket))
+                      (string (#.*write-string* param socket))))))
+    (write-uint2 socket n-result-formats)   ;; Number of result formats
+    (loop :for format :across result-formats ;; Result formats (text/binary)
           :do (write-uint2 socket (if format 1 0)))))
 
 ;; Describe the anonymous portal, so we can find out what kind of
