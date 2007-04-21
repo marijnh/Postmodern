@@ -22,6 +22,7 @@
            #:next-row
            #:next-field
            #:list-row-reader
+           #:vector-row-reader
            #:alist-row-reader
            #:postgresql-warning
            #:ignore-row-reader))

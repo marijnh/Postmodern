@@ -145,6 +145,18 @@ apply a row-reader to the result."
         :collect (loop :for field :across fields
                        :collect (next-field field))))
 
+;; Row-reader that returns a vector of vectors.
+(def-row-reader vector-row-reader (fields)
+  (let ((rows (make-array 1 :adjustable t :fill-pointer 0)))
+    (loop :for row = (make-array (length fields))
+          :while (next-row)
+          :do (progn
+                (loop :for field :across fields
+                      :for idx :upfrom 0
+                      :do (setf (aref row idx) (next-field field)))
+                (vector-push-extend row rows)))
+    rows))
+
 ;; Row-reader that discards the query results.
 (def-row-reader ignore-row-reader (fields)
   (loop :while (next-row)
