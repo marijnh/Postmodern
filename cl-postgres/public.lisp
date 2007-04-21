@@ -148,8 +148,8 @@ apply a row-reader to the result."
 ;; Row-reader that discards the query results.
 (def-row-reader ignore-row-reader (fields)
   (loop :while (next-row)
-        :collect (loop :for field :across fields
-                       :do (next-field field)))
+        :do (loop :for field :across fields
+                  :do (next-field field)))
   (values))
 
 ;;; Copyright (c) 2006 Marijn Haverbeke
