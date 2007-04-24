@@ -33,7 +33,7 @@ of the given type."
         (size-name (gensym))
         (length-used 0))
     (flet ((read-type (type &optional modifier)
-             (case type
+             (ecase type
                (bytes `(read-bytes ,stream-name (- ,size-name ,length-used)))
                (string `(#.*read-string* ,stream-name :byte-length (- ,size-name ,length-used)))
                (uint2s `(let* ((size (/ (- ,size-name ,length-used) 2))

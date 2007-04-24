@@ -115,7 +115,7 @@ this raises a condition."
      (message-case socket
        ;; Authentication message
        (#\R (let ((type (read-uint4 socket)))
-              (case type
+              (ecase type
                 (0 (return))
                 (2 (error 'database-error :message "Unsupported Kerberos authentication requested."))
                 (3 (plain-password-message socket password)
