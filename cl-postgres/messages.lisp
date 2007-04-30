@@ -146,7 +146,7 @@ for binding data for binary long object columns."
                            (* 2 n-params)   ;; Input formats
                            (* 2 n-result-formats)
                            (* 4 n-params)
-                           (loop :for size fixnum :across param-sizes
+                           (loop :for size :of-type fixnum :across param-sizes
                                  :sum size)))
     (write-uint1 socket 0)                  ;; Name of the portal
     (write-str socket name)                 ;; Name of the prepared statement

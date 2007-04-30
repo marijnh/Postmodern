@@ -30,7 +30,7 @@ is reached or the given amount of bytes have been read."
     (declare (type stream stream)
              (type string string)
              #.*optimize*)
-    (loop :for char character :across string
+    (loop :for char :of-type character :across string
           :do (write-byte (char-code char) stream))))
 
 ;; These are used to synthesize reader and writer names for integer
@@ -138,7 +138,7 @@ when UTF-8 support is enabled."
   "Skip a null-terminated string."
   (declare (type stream socket)
            #.*optimize*)
-  (loop :for char fixnum = (read-byte socket)
+  (loop :for char :of-type fixnum = (read-byte socket)
         :until (zerop char)))
 
 ;;; Copyright (c) 2006 Marijn Haverbeke

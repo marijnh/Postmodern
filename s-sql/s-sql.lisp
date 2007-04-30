@@ -255,7 +255,7 @@ whether the string should be escaped before being put into a query.")
   "Escape an array of octets in PostgreSQL's horribly inefficient
 textual format for binary data."
   (with-output-to-string (out)
-    (loop :for byte fixnum :across bytes
+    (loop :for byte :of-type fixnum :across bytes
           :do (if (or (< byte 32) (> byte 126) (= byte 39) (= byte 92))
                   (format out "\\~3,'0o" byte)
                   (princ (code-char byte) out)))))
