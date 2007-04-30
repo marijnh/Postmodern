@@ -1,23 +1,23 @@
 (defpackage :s-sql
   (:use :common-lisp)
-  (:export :smallint
-           :bigint
-           :numeric
-           :real
-           :double-precision
-           :bytea
-           :text
-           :varchar
-           :db-null
-           :sql-type-name
-           :sql-escape-string
-           :from-sql-name
-           :to-sql-name
-           :sql-ize
-           :*escape-sql-names-p*
-           :sql
-           :sql-compile
-           :enable-s-sql-syntax))
+  (:export #:smallint
+           #:bigint
+           #:numeric
+           #:real
+           #:double-precision
+           #:bytea
+           #:text
+           #:varchar
+           #:db-null
+           #:sql-type-name
+           #:sql-escape-string
+           #:from-sql-name
+           #:to-sql-name
+           #:sql-ize
+           #:*escape-sql-names-p*
+           #:sql
+           #:sql-compile
+           #:enable-s-sql-syntax))
 
 (in-package :s-sql)
 

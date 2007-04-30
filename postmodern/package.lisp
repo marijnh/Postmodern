@@ -2,39 +2,39 @@
   (:use :common-lisp :s-sql :cl-postgres :simple-date)
   (:nicknames :pomo)
   (:export 
-   :connect :disconnect :reconnect :with-connection
-   :*database* :connected-p :database-connection
-   :connect-toplevel :disconnect-toplevel
-   :clear-connection-pool
-   :query :execute :doquery
-   :prepare :defprepared
-   :sequence-next :list-sequences :sequence-exists-p
-   :list-tables :table-exists-p :table-description
-   :list-views :view-exists-p
-   :with-transaction :commit-transaction :abort-transaction
-   :deftable :get-id :next-id :db-null
-   :dao-exists-p :query-dao :select-dao :get-dao
-   :save-dao :insert-dao :update-dao :delete-dao
-   :create-table :drop-table :reset-table
-   :create-template :clear-template
+   #:connect #:disconnect #:reconnect #:with-connection
+   #:*database* #:connected-p #:database-connection
+   #:connect-toplevel #:disconnect-toplevel
+   #:clear-connection-pool
+   #:query #:execute #:doquery
+   #:prepare #:defprepared
+   #:sequence-next #:list-sequences #:sequence-exists-p
+   #:list-tables #:table-exists-p #:table-description
+   #:list-views #:view-exists-p
+   #:with-transaction #:commit-transaction #:abort-transaction
+   #:deftable #:get-id #:next-id #:db-null
+   #:dao-exists-p #:query-dao #:select-dao #:get-dao
+   #:save-dao #:insert-dao #:update-dao #:delete-dao
+   #:create-table #:drop-table #:reset-table
+   #:create-template #:clear-template
 
    ;; Reduced S-SQL interface
-   :sql :sql-compile
-   :smallint :bigint :numeric :real :double-precision
-   :bytea :text :varchar
-   :*escape-sql-names-p* :sql-escape-string
+   #:sql #:sql-compile
+   #:smallint #:bigint #:numeric #:real #:double-precision
+   #:bytea #:text #:varchar
+   #:*escape-sql-names-p* #:sql-escape-string
 
    ;; Condition type from cl-postgres
-   :database-error :database-error-message :database-error-code
-   :database-error-detail :database-error-query :database-connection-lost
+   #:database-error #:database-error-message #:database-error-code
+   #:database-error-detail #:database-error-query #:database-connection-lost
 
    ;; Full simple-date interface
-   :date :encode-date :decode-date :day-of-week
-   :timestamp :encode-timestamp :decode-timestamp
-   :timestamp-to-universal-time :universal-time-to-timestamp
-   :interval :encode-interval :decode-interval
-   :time-add :time-subtract
-   :time= :time> :time< :time<= :time>=))
+   #:date #:encode-date #:decode-date #:day-of-week
+   #:timestamp #:encode-timestamp #:decode-timestamp
+   #:timestamp-to-universal-time #:universal-time-to-timestamp
+   #:interval #:encode-interval #:decode-interval
+   #:time-add #:time-subtract
+   #:time= #:time> #:time< #:time<= #:time>=))
 
 (in-package :postmodern)
 
