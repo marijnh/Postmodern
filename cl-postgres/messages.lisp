@@ -155,7 +155,7 @@ for binding data for binary long object columns."
           :do (write-uint2 socket format))
     (write-uint2 socket n-params)           ;; Number of parameter specifications
     (loop :for param :in parameters
-          :for size fixnum :across param-sizes
+          :for size :of-type fixnum :across param-sizes
           :do (if (or (eq param :null)
                       (eq param nil))
                   (write-uint4 socket -1)   ;; -1 size means SQL NULL
