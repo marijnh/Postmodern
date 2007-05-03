@@ -68,16 +68,27 @@ is reached or the given amount of bytes have been read."
 (defmacro integer-writer (bytes) ;; No signed version needed for now
   "Create a function to write integers to a binary stream."
   (let ((bits (* 8 bytes)))
-    `(defun ,(integer-writer-name bytes nil) (socket value)
-      (declare (type stream socket)
-               (type (unsigned-byte ,bits) value)
-               #.*optimize*)
-      ,@(if (= bytes 1)
-            `((write-byte value socket))
-            (loop :for byte :from (1- bytes) :downto 0
-                  :collect `(write-byte (ldb (byte 8 ,(* byte 8)) value)
-                             socket)))
-      (values))))
+    `(progn
+      (defun ,(integer-writer-name bytes nil) (socket value)
+        (declare (type stream socket)
+                 (type (unsigned-byte ,bits) value)
+                 #.*optimize*)
+        ,@(if (= bytes 1)
+              `((write-byte value socket))
+              (loop :for byte :from (1- bytes) :downto 0
+                    :collect `(write-byte (ldb (byte 8 ,(* byte 8)) value)
+                               socket)))
+        (values))
+      (defun ,(integer-writer-name bytes t) (socket value)
+        (declare (type stream socket)
+                 (type (signed-byte ,bits) value)
+                 #.*optimize*)
+        ,@(if (= bytes 1)
+              `((write-byte (ldb (byte 8 0) value) socket))
+              (loop :for byte :from (1- bytes) :downto 0
+                    :collect `(write-byte (ldb (byte 8 ,(* byte 8)) value)
+                               socket)))
+        (values)))))
 
 ;; All the instances of the above that we need.
 

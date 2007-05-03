@@ -158,7 +158,7 @@ for binding data for binary long object columns."
           :for size :of-type fixnum :across param-sizes
           :do (if (or (eq param :null)
                       (eq param nil))
-                  (write-uint4 socket -1)   ;; -1 size means SQL NULL
+                  (write-int4 socket -1)   ;; -1 size means SQL NULL
                   (progn
                     (write-uint4 socket size)
                     (etypecase param
