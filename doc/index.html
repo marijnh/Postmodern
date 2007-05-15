@@ -49,6 +49,14 @@
 
     <h2><a name="news"></a>News</h2>
 
+    <p class="news"><em>15-05-2007:</em> <a
+    href="http://common-lisp.net/project/postmodern/postmodern-1.00.tgz">Version
+    1.00</a>: A few minor bugfixes and tweaks, most notably a fix that
+    makes Postmodern work on LispWorks. Since the stream of bug
+    reports seems to have more or less dried up, I bumped the version
+    number up to 1, and this release should not be considered a beta
+    version anymore.</p>
+
     <p class="news"><em>16-03-2007:</em> <a
     href="http://common-lisp.net/project/postmodern/postmodern-0.24.tgz">Version
     .24</a>: Fixes <a
@@ -344,22 +352,26 @@
 
     <h3>Timezones</h3>
 
-    <p><a href="simple-date.html">Simple-date</a> currently has no
-    concept of time zones. This means that using it is rather
-    error-prone, and if you really need your time-keeping to be
-    reliable and/or universal you should either not use the types it
-    provides or think really hard about the way you handle time
-    zones.</p>
+    <p><a href="simple-date.html">Simple-date</a> has no concept of
+    time zones. This means that using it is rather error-prone, and if
+    you really need your time-keeping to be reliable and/or universal
+    you should either not use the types it provides or think really
+    hard about the way you handle time zones.</p>
 
-    <p>This is definitely something that should be fixed in a future
-    version, but doing so in a portable way might be tricky.</p>
+    <p>I was going to fix this by combining my code with stuff from <a
+    href="http://www.common-lisp.net/project/local-time">local-time</a>,
+    but ran out of motivation. If you really need a reliable time
+    datatype, you could consider finishing this.</p>
 
     <h3>Portability</h3>
 
-    <p>So far, only minimal testing has been done for compatibility
-    with the various CL implementations and PostgreSQL versions. No
-    compatibility problems have been reported yet, when anything comes
-    up it will be documented here.</p>
+    <p>The Lisp code in Postmodern is theoretically portable across
+    implementations, and seems to work on all major ones. I am not
+    actively testing against new releases or obscure implementations,
+    but if you run into problems you are welcome to contact me through
+    the <a
+    href="http://common-lisp.net/mailman/listinfo/postmodern-devel">mailing
+    list</a>, and we can try to solve them.</p>
 
     <p>The library will definitely not work for PostgreSQL versions
     older than 7.4 (it uses a client/server protocol that was
