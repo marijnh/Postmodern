@@ -200,7 +200,7 @@ holds."
   "Create a defined table and its indices in the database."
   (let ((table (table! table template)))
     (flet ((index-name (fields)
-             (format nil "~A~{_~A~}_index" (to-sql-name (table-name table)) fields)))
+             (format nil "~A~{_~A~}_index" (to-sql-name (table-name table)) (mapcar #'to-sql-name fields))))
       (execute
        (sql-compile
         `(:create-table ,(table-name table)
