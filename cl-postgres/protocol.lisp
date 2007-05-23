@@ -209,14 +209,24 @@ states \(which are not supported)."
   "Try to re-synchronize a connection by sending a sync message if it
 hasn't already been sent, and then looking for a ReadyForQuery
 message."
-  (unless sync-sent
-    (sync-message socket)
-    (force-output socket))
-  (loop :while (open-stream-p socket)
-        :do (message-case socket
-              (#\Z (read-uint1 socket)
-                   (return))
-              (t :skip))))
+  (let ((ok nil))
+    (unwind-protect
+         (progn
+           (unless sync-sent
+             (sync-message socket)
+             (force-output socket))
+           ;; TODO initiate timeout on the socket read, signal timeout error
+           (loop :named syncing
+                 :while (open-stream-p socket)
+                 :do (message-case socket
+                       (#\Z (read-uint1 socket)
+                            (setf ok t)
+                            (return-from syncing))
+                       (t (values)))))
+      (unless ok
+        ;; if we can't sync, make sure the socket is shot
+        ;; (e.g. a timeout, or aborting execution with a restart from sldb)
+        (ensure-socket-is-closed socket)))))
 
 (defmacro with-syncing (&body body)
   "Macro to wrap a block in a handler that will try to re-sync the
@@ -225,11 +235,14 @@ at all, only used right below here."
   `(let ((sync-sent nil)
          (ok nil))
     (handler-case
-      (unwind-protect (prog1 (progn ,@body) (setf ok t))
+      (unwind-protect
+           (multiple-value-prog1
+               (progn ,@body)
+             (setf ok t))
         (unless ok
           (try-to-sync socket sync-sent)))
       (end-of-file (c)
-        (close socket)
+        (ensure-socket-is-closed socket)
         (error c)))))
 
 (defun send-query (socket query row-reader)

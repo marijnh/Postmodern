@@ -53,7 +53,7 @@ if it isn't."
                (connection-socket conn) socket
                finished t)
       (unless finished
-        (close socket)))
+        (ensure-socket-is-closed socket)))
     (values)))
 
 (defun reopen-database (conn)

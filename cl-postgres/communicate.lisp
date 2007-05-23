@@ -152,6 +152,14 @@ when UTF-8 support is enabled."
   (loop :for char :of-type fixnum = (read-byte socket)
         :until (zerop char)))
 
+(defun ensure-socket-is-closed (socket &key abort)
+  (when (open-stream-p socket)
+    (handler-case
+        (close socket :abort abort)
+      (error (error)
+        (warn "Ignoring the error which happened while trying to close PostgreSQL socket: ~A" error)))))
+
+
 ;;; Copyright (c) 2006 Marijn Haverbeke
 ;;;
 ;;; This software is provided 'as-is', without any express or implied
