@@ -125,8 +125,7 @@ index is used as primary key (:auto-id adds an index on the id)."
       (when (eq auto-id t)
         (setf auto-id 'id))
       (when auto-id
-        (push `(,auto-id :type integer :initform (sequence-next ',auto-id-sequence-name)
-                :initarg ,(intern (symbol-name auto-id) :keyword) :reader get-id)
+        (push `(,auto-id :type integer :initarg ,(intern (symbol-name auto-id) :keyword) :accessor get-id)
               fields)
         (push (list auto-id) indices))
       (unless indices
@@ -142,10 +141,17 @@ index is used as primary key (:auto-id adds an index on the id)."
           (declare (ignorable row-reader))
           ,@(mapcar (lambda (sch) `(setf (table ',name ',sch) table)) (or templates (list nil)))
           ,@(when class 
-              `((defmethod dao-exists-p ((dao ,class))
+              `(,@(when auto-id
+                    `((defmethod initialize-instance :after ((dao ,class) &key defer-id &allow-other-keys)
+                        (when (and (not (slot-boundp dao ',auto-id)) (not defer-id))
+                          (setf (slot-value dao ',auto-id) (sequence-next ',auto-id-sequence-name))))))
+                (defmethod dao-exists-p ((dao ,class))
                   (query (:select (:exists (:select 1 :from ',name :where ,(primary-key-test 'dao))))
                          :single))
                 (defmethod insert-dao ((dao ,class))
+                  ,@(when auto-id
+                      `((unless (slot-boundp dao ',auto-id)
+                          (setf (slot-value dao ',auto-id) (sequence-next ',auto-id-sequence-name)))))
                   (execute (:insert-into ',name :set ,@(set-fields 'dao (mapcar 'car fields)))))
                 (defmethod update-dao ((dao ,class))
                   (execute (:update ',name

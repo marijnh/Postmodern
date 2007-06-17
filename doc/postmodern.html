@@ -400,6 +400,16 @@
   (:class-name person)
   (:indices name score))</pre>
 
+    <p class="desc">When instances of classed defined in this way are
+    created using <code>make-instance</code>, a <code>:defer-id</code>
+    keyword argument can be given to prevent the object from
+    immediately getting an automatic id generated for it. This can be
+    useful when, for some reason, you find yourself creating lots of
+    objects that never end up being saved in the database. When such
+    an object still does not have an id when it is inserted (the slot
+    for the id is unbound), it will be assigned an id at this
+    time.</p>
+
     <p class="def">
       <span>function</span>
       <a name="create-table"></a>
