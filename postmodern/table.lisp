@@ -174,7 +174,7 @@ index is used as primary key (:auto-id adds an index on the id)."
 
 (defun save-dao (dao)
   "Save a dao: update it when it already exists, insert it otherwise."
-  (if (dao-exists-p dao)
+  (if (and (slot-boundp dao 'id) (dao-exists-p dao))
       (update-dao dao)
       (insert-dao dao)))
 
