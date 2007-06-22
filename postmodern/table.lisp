@@ -146,8 +146,9 @@ index is used as primary key (:auto-id adds an index on the id)."
                         (when (and (not (slot-boundp dao ',auto-id)) (not defer-id))
                           (setf (slot-value dao ',auto-id) (sequence-next ',auto-id-sequence-name))))))
                 (defmethod dao-exists-p ((dao ,class))
-                  (query (:select (:exists (:select 1 :from ',name :where ,(primary-key-test 'dao))))
-                         :single))
+                  (and ,(if auto-id `(slot-boundp dao ',auto-id) t)
+                       (query (:select (:exists (:select 1 :from ',name :where ,(primary-key-test 'dao))))
+                              :single)))
                 (defmethod insert-dao ((dao ,class))
                   ,@(when auto-id
                       `((unless (slot-boundp dao ',auto-id)
@@ -174,7 +175,7 @@ index is used as primary key (:auto-id adds an index on the id)."
 
 (defun save-dao (dao)
   "Save a dao: update it when it already exists, insert it otherwise."
-  (if (and (slot-boundp dao 'id) (dao-exists-p dao))
+  (if (dao-exists-p dao)
       (update-dao dao)
       (insert-dao dao)))
 
