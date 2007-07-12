@@ -186,9 +186,25 @@ states \(which are not supported)."
            #.*optimize*)
   (loop
    (message-case socket
-     ;; CommandComplete - skip command tag for now
-     (#\C (skip-str socket)
-          (return-from look-for-row nil))
+     ;; CommandComplete
+     (#\C (let ((command-tag (read-str socket)))
+            (macrolet ((match (&rest cases)
+                         `(progn
+                           ,@(loop :for case :in cases
+                                   :append (destructuring-bind (prefixes &rest body) case
+                                             (loop :for prefix :in (if (consp prefixes) prefixes (list prefixes))
+                                                   collect `(when (eql (mismatch command-tag ,prefix)
+                                                                       ,(length prefix))
+                                                             (let ((start-offset ,(length prefix)))
+                                                               (return-from look-for-row
+                                                                 (values (progn ,@body)))))))))))
+              (match (("DELETE " "UPDATE " "MOVE " "FETCH " "COPY ")
+                      (parse-integer command-tag :start start-offset))
+                     ("INSERT "
+                      (parse-integer (subseq command-tag
+                                             (1+ (position #\Space command-tag
+                                                           :start start-offset))))))
+              (return-from look-for-row nil))))
      ;; CopyInResponse
      (#\G (read-uint1 socket)
           (skip-bytes socket (* 2 (read-uint2 socket))) ;; The field formats
@@ -335,14 +351,13 @@ to the result."
       (message-case socket
         ;; BindComplete
         (#\2))
-      (let ((result))
-        (if row-description
-            (setf result (funcall row-reader socket row-description))
-            (look-for-row socket)) ;; Skip messages until CommandComplete
+      (multiple-value-prog1
+          (if row-description
+              (funcall row-reader socket row-description)
+              (look-for-row socket))
         (message-case socket
           ;; ReadyForQuery, skipping transaction status
-          (#\Z (read-uint1 socket)))
-        result))))
+          (#\Z (read-uint1 socket)))))))
 
 (defun build-row-reader (function-form fields body)
   "Helper for the following two macros."
