@@ -213,7 +213,7 @@ states \(which are not supported)."
      ;; CopyOutResponse
      (#\H (read-uint1 socket)
           (skip-bytes socket (* 2 (read-uint2 socket))) ;; The field formats
-          (error 'database-error :message "Copy-in not supported."))
+          (error 'database-error :message "Copy-out not supported."))
       ;; DataRow
      (#\D (skip-bytes socket 2)
           (return-from look-for-row t))
