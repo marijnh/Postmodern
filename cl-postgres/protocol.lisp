@@ -70,8 +70,9 @@ Cases for error and warning messages are always added."
                                            `((skip-bytes ,socket-name (- ,size-name 4)))
                                            (cdr clause))))
                                  clauses)
-                       ,@(unless t-found `((t (close ,socket-name)
-                                            (error 'protocol-error
+                       ,@(unless t-found
+                                 `((t (ensure-socket-is-closed ,socket-name)
+                                      (error 'protocol-error
                                              :message (format nil "Unexpected message received: ~A"
                                                               (code-char ,char-name))))))))))
           (,iter-name))))))

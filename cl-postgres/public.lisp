@@ -100,7 +100,7 @@ is used, we can see right away that it needs to be reconnected."
       (handler-case (progn ,@body)
         (stream-error (e)
           (when (eq ,stream-name (stream-error-stream e))
-            (close ,stream-name :abort t))
+            (ensure-socket-is-closed ,stream-name))
           (error e))))))
 
 (defun exec-query (connection query &optional (row-reader 'ignore-row-reader))
