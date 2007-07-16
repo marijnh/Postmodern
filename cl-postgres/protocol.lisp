@@ -90,9 +90,15 @@ database-error condition."
   (let ((data (read-byte-delimited socket)))
     (flet ((get-field (char)
              (cdr (assoc char data))))
-      (error 'database-error :code (get-field #\C) :message (get-field #\M)
-             :detail (or (get-field #\D) (get-field #\H))
-             :position (get-field #\p)))))
+      (let ((code (get-field #\C)))
+        ;; These are the errors "ADMIN SHUTDOWN" and "CRASH SHUTDOWN",
+        ;; in which case the server will close the connection right
+        ;; away.
+        (when (or (string= code "57P01") (string= code "57P02"))
+          (ensure-socket-is-closed socket))
+        (error 'database-error :code code :message (get-field #\M)
+               :detail (or (get-field #\D) (get-field #\H))
+               :position (get-field #\p))))))
 
 (define-condition postgresql-warning (simple-warning)
   ())
@@ -220,24 +226,25 @@ copy-in/copy-out states \(which are not supported)."
   "Try to re-synchronize a connection by sending a sync message if it
 hasn't already been sent, and then looking for a ReadyForQuery
 message."
-  (let ((ok nil))
-    (unwind-protect
-         (progn
-           (unless sync-sent
-             (sync-message socket)
-             (force-output socket))
-           ;; TODO initiate timeout on the socket read, signal timeout error
-           (loop :named syncing
-                 :while (open-stream-p socket)
-                 :do (message-case socket
-                       (#\Z (read-uint1 socket)
-                            (setf ok t)
-                            (return-from syncing))
-                       (t (values)))))
-      (unless ok
-        ;; if we can't sync, make sure the socket is shot
-        ;; (e.g. a timeout, or aborting execution with a restart from sldb)
-        (ensure-socket-is-closed socket)))))
+  (when (open-stream-p socket)
+    (let ((ok nil))
+      (unwind-protect
+           (progn
+             (unless sync-sent
+               (sync-message socket)
+               (force-output socket))
+             ;; TODO initiate timeout on the socket read, signal timeout error
+             (loop :named syncing
+                :while (open-stream-p socket)
+                :do (message-case socket
+                      (#\Z (read-uint1 socket)
+                           (setf ok t)
+                           (return-from syncing))
+                      (t (values)))))
+        (unless ok
+          ;; if we can't sync, make sure the socket is shot
+          ;; (e.g. a timeout, or aborting execution with a restart from sldb)
+          (ensure-socket-is-closed socket))))))
 
 (defmacro with-syncing (&body body)
   "Macro to wrap a block in a handler that will try to re-sync the
