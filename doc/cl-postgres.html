@@ -103,7 +103,9 @@
 
     <p class="desc">Sends the given query to the given connection, and
     interprets the results (if there are any) with the given <a
-    href="#row-readers">row-reader</a>.</p>
+    href="#row-readers">row-reader</a>. If the database returns
+    information about the amount of rows effected, this is returned as
+    a second value.</p>
 
     <p class="def">
       <span>function</span>
@@ -128,7 +130,8 @@
     contain values in a form that PostgreSQL can make sense of. String
     values should not be escaped. The result of the executing the
     statement, if any, is interpreted by the given row reader, and
-    returned.</p>
+    returned. Again, the number or effected rows is optionally
+    returned as a second value.</p>
 
     <h2><a name="row-readers">Row readers</a></h2>
 

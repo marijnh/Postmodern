@@ -177,34 +177,28 @@ array of field-description objects."
   (terminate-message socket)
   (close socket))
 
+;; This is a hacky way to communicate the amount of effected rows up
+;; from look-for-row to the send-execute or send-query that (directly
+;; or indirectly) called it.
+(defparameter *effected-rows* nil)
+
 (defun look-for-row (socket)
   "Read server messages until either a new row can be read, or there
 are no more results. Return a boolean indicating whether any more
-results are available. Also handle getting out of copy-in/copy-out
-states \(which are not supported)."
+results are available, and, if available, stores the amount of
+effected rows in *effected-rows*. Also handle getting out of
+copy-in/copy-out states \(which are not supported)."
   (declare (type stream socket)
            #.*optimize*)
   (loop
    (message-case socket
      ;; CommandComplete
-     (#\C (let ((command-tag (read-str socket)))
-            (macrolet ((match (&rest cases)
-                         `(progn
-                           ,@(loop :for case :in cases
-                                   :append (destructuring-bind (prefixes &rest body) case
-                                             (loop :for prefix :in (if (consp prefixes) prefixes (list prefixes))
-                                                   collect `(when (eql (mismatch command-tag ,prefix)
-                                                                       ,(length prefix))
-                                                             (let ((start-offset ,(length prefix)))
-                                                               (return-from look-for-row
-                                                                 (values (progn ,@body)))))))))))
-              (match (("DELETE " "UPDATE " "MOVE " "FETCH " "COPY ")
-                      (parse-integer command-tag :start start-offset))
-                     ("INSERT "
-                      (parse-integer (subseq command-tag
-                                             (1+ (position #\Space command-tag
-                                                           :start start-offset))))))
-              (return-from look-for-row nil))))
+     (#\C (let* ((command-tag (read-str socket))
+                 (space (position #\Space command-tag :from-end t)))
+            (when space
+              (setf *effected-rows* (parse-integer command-tag :junk-allowed t
+                                                   :start (1+ space))))
+            (return-from look-for-row nil)))
      ;; CopyInResponse
      (#\G (read-uint1 socket)
           (skip-bytes socket (* 2 (read-uint2 socket))) ;; The field formats
@@ -261,6 +255,18 @@ at all, only used right below here."
         (ensure-socket-is-closed socket)
         (error c)))))
 
+(defmacro returning-effected-rows (value &body body)
+  "Computes a value, then runs a body, then returns, as multiple
+values, that value and the amount of effected rows, if any (see
+*effected rows*)."
+  (let ((value-name (gensym)))
+    `(let* ((*effected-rows* nil)
+            (,value-name ,value))
+       ,@body
+       (if *effected-rows*
+           (values ,value-name *effected-rows*)
+           ,value-name))))
+
 (defun send-query (socket query row-reader)
   "Send a query to the server, and apply the given row-reader to the
 results."
@@ -293,14 +299,13 @@ results."
       (message-case socket
         ;; BindComplete
         (#\2))
-      (let ((result))
-        (if row-description
-            (setf result (funcall row-reader socket row-description))
-            (look-for-row socket))
+      (returning-effected-rows
+          (if row-description
+              (funcall row-reader socket row-description)
+              (look-for-row socket))
         (message-case socket
            ;; ReadyForQuery, skipping transaction status
-          (#\Z (read-uint1 socket)))
-        result))))
+          (#\Z (read-uint1 socket)))))))
 
 (defun send-parse (socket name query)
   "Send a parse command to the server, giving it a name."
@@ -351,7 +356,7 @@ to the result."
       (message-case socket
         ;; BindComplete
         (#\2))
-      (multiple-value-prog1
+      (returning-effected-rows
           (if row-description
               (funcall row-reader socket row-description)
               (look-for-row socket))
