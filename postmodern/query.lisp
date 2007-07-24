@@ -16,22 +16,21 @@
   (loop :while (next-row)
         :collect (next-field (elt fields 0))))
 
-(defun result-style (style)
-  "Translates keywords identifying result styles to the row-reader
+(defparameter *result-styles*
+  '((:none ignore-row-reader nil)
+    (:lists list-row-reader nil)
+    (:list list-row-reader t)
+    (:rows list-row-reader nil)
+    (:row list-row-reader t)
+    (:alists symbol-alist-row-reader nil)
+    (:alist symbol-alist-row-reader t)
+    (:str-alists alist-row-reader nil)
+    (:str-alist alist-row-reader t)
+    (:column column-row-reader nil)
+    (:single column-row-reader t))
+  "Mapping from keywords identifying result styles to the row-reader
 that should be used and whether all values or only one value should be
-returned."
-  (ecase style
-    (:none (values 'ignore-row-reader nil))
-    (:lists (values 'list-row-reader nil))
-    (:list (values 'list-row-reader t))
-    (:rows (values 'list-row-reader nil))
-    (:row (values 'list-row-reader t))
-    (:alists (values 'symbol-alist-row-reader nil))
-    (:alist (values 'symbol-alist-row-reader t))
-    (:str-alists (values 'alist-row-reader nil))
-    (:str-alist (values 'alist-row-reader t))
-    (:column (values 'column-row-reader nil))
-    (:single (values 'column-row-reader t))))
+returned.")
 
 (defun real-query (query)
   "Used for supporting both plain string queries and S-SQL constructs.
@@ -43,13 +42,13 @@ looks like an S-SQL query."
 
 (defmacro query (query &rest args/format)
   "Execute a query, optionally with arguments to put in the place of
-$X elements. If one of the arguments is a keyword, it specifies the
-format in which the results should be returned."
+$X elements. If one of the arguments is a known result style, it
+specifies the format in which the results should be returned."
   (let* ((format :rows)
          (args (loop :for arg :in args/format
-                     :if (keywordp arg) :do (setf format arg)
+                     :if (assoc arg *result-styles*) :do (setf format arg)
                      :else :collect arg)))
-    (multiple-value-bind (reader single-row) (result-style format)
+    (destructuring-bind (reader single-row) (cdr (assoc format *result-styles*))
       (let ((base (if args
                       `(progn
                         (prepare-query *database* "" ,(real-query query))

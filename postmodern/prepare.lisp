@@ -15,7 +15,8 @@
 
 (defun generate-prepared (function-form query format)
   "Helper macro for the following two functions."
-  (multiple-value-bind (reader single-row) (result-style format)
+  (destructuring-bind (reader single-row) (or (cdr (assoc format *result-styles*))
+                                              (error "~S is not a valid result style." format))
     (let ((base `(exec-prepared *database* (symbol-name statement-id)
                   (mapcar 'sql-ize params) ',reader)))
       `(let ((statement-id (next-statement-id)))
