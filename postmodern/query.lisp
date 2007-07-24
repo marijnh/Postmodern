@@ -40,6 +40,11 @@ looks like an S-SQL query."
       `(sql ,query)
       query))
 
+(defun car-of-first-value (first &rest rest)
+  "Helper function for truncating the first value of multiple returned
+values, without messing with the rest of the values."
+  (apply 'values (cons (car first) rest)))
+
 (defmacro query (query &rest args/format)
   "Execute a query, optionally with arguments to put in the place of
 $X elements. If one of the arguments is a known result style, it
@@ -55,7 +60,7 @@ specifies the format in which the results should be returned."
                         (exec-prepared *database* "" (mapcar 'sql-ize (list ,@args)) ',reader))
                       `(exec-query *database* ,(real-query query) ',reader))))
         (if single-row
-            `(car ,base)
+            `(multiple-value-call 'car-of-first-value ,base)
             base)))))
 
 (defmacro execute (query &rest args)
