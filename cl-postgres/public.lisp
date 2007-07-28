@@ -106,6 +106,7 @@ is used, we can see right away that it needs to be reconnected."
 (defun exec-query (connection query &optional (row-reader 'ignore-row-reader))
   "Execute a query string and apply the given row-reader to the
 result."
+  (check-type query string)
   (shoot-stream-on-error (connection-socket connection)
     (ensure-connection connection)
     (let ((*timestamp-format* (connection-timestamp-format connection)))
@@ -114,6 +115,8 @@ result."
 
 (defun prepare-query (connection name query)
   "Prepare a query string and store it under the given name."
+  (check-type query string)
+  (check-type name string)
   (shoot-stream-on-error (connection-socket connection)
     (ensure-connection connection)
     (send-parse (connection-socket connection) name query)
@@ -122,8 +125,8 @@ result."
 (defun exec-prepared (connection name parameters &optional (row-reader 'ignore-row-reader))
   "Execute a previously prepared query with the given parameters,
 apply a row-reader to the result."
-  (declare (type list parameters)
-           (type string name))
+  (check-type name string)
+  (check-type parameters list)
   (shoot-stream-on-error (connection-socket connection)
     (ensure-connection connection)
     (let ((*timestamp-format* (connection-timestamp-format connection)))
