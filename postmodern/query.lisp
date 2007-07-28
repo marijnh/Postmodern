@@ -55,9 +55,9 @@ specifies the format in which the results should be returned."
                      :else :collect arg)))
     (destructuring-bind (reader single-row) (cdr (assoc format *result-styles*))
       (let ((base (if args
-                      `(progn
+                      `(let ((args (mapcar 'sql-ize (list ,@args))))
                         (prepare-query *database* "" ,(real-query query))
-                        (exec-prepared *database* "" (mapcar 'sql-ize (list ,@args)) ',reader))
+                        (exec-prepared *database* "" args ',reader))
                       `(exec-query *database* ,(real-query query) ',reader))))
         (if single-row
             `(multiple-value-call 'car-of-first-value ,base)
