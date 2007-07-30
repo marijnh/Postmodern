@@ -195,16 +195,17 @@ name.")
 
 (defun sql-escape-string (string)
   "Escape string data so it can be used in a query."
-  (with-output-to-string (out)
-    (princ #\' out)
-    (loop :for char :across string
-          :do (princ (case char
-                       (#\' "''")
-                       ;; Turn off postgres' backslash behaviour to
-                       ;; prevent unexpected strangeness.
-                       (#\\ "\\\\")
-                       (t char)) out))
-    (princ #\' out)))
+  (let ((*print-pretty* nil))
+    (with-output-to-string (out)
+      (princ #\' out)
+      (loop :for char :across string
+            :do (princ (case char
+                         (#\' "''")
+                         ;; Turn off postgres' backslash behaviour to
+                         ;; prevent unexpected strangeness.
+                         (#\\ "\\\\")
+                         (t char)) out))
+      (princ #\' out))))
 
 (defgeneric sql-ize (arg)
   (:documentation "Turn a lisp value into a string containing its SQL
@@ -254,11 +255,16 @@ whether the string should be escaped before being put into a query.")
 (defun escape-bytes (bytes)
   "Escape an array of octets in PostgreSQL's horribly inefficient
 textual format for binary data."
-  (with-output-to-string (out)
-    (loop :for byte :of-type fixnum :across bytes
-          :do (if (or (< byte 32) (> byte 126) (= byte 39) (= byte 92))
-                  (format out "\\~3,'0o" byte)
-                  (princ (code-char byte) out)))))
+  (let ((*print-pretty* nil))
+    (with-output-to-string (out)
+      (loop :for byte :of-type fixnum :across bytes
+            :do (if (or (< byte 32) (> byte 126) (= byte 39) (= byte 92))
+                    (progn
+                      (princ #\\ out)
+                      (princ (digit-char (ldb (byte 3 6) byte) 8) out)
+                      (princ (digit-char (ldb (byte 3 3) byte) 8) out)
+                      (princ (digit-char (ldb (byte 3 0) byte) 8) out))
+                    (princ (code-char byte) out))))))
 
 (defun sql-ize-escaped (value)
   "Get the representation of a Lisp value so that it can be used in a
