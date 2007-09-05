@@ -5,8 +5,8 @@
   (defun read-ascii-string (stream &key null-terminated byte-length)
     "Read an ascii-string from a byte stream, until either a null byte
 is reached or the given amount of bytes have been read."
-    (declare (type stream stream)
-             (type fixnum byte-length)
+   (declare (type stream stream)
+            (type (or null fixnum) byte-length)
              #.*optimize*)
     (let ((bytes-read 0)
           (string (make-array 64 :element-type 'character
