@@ -436,19 +436,21 @@ the proper SQL syntax for joining tables."
       (error "Empty :from clause in select"))
     (when (is-join (car args))
       (error ":from clause starts with a join: ~A" args))
-    (loop :for table :on args
-          :for first = t :then nil
-          :append (cond ((is-join (car table))
-                         (destructuring-bind (join name on clause) (subseq table 0 4)
-                           (setf table (cdddr table))
-                           (unless (and (eq on :on) clause)
-                             (error "Incorrect join form in select."))
-                           `(" " ,(ecase join
-                                         (:left-join "LEFT") (:right-join "RIGHT")
-                                         (:inner-join "INNER") (:cross-join "CROSS"))
-                             " JOIN " ,@(sql-expand name)
-                             " ON " ,@(sql-expand clause))))
-                         (t `(,@(if first () '(", ")) ,@(sql-expand (car table))))))))
+    (let ((rest args))
+      (loop :while rest
+            :for first = t :then nil
+            :append (cond ((is-join (car rest))
+                           (destructuring-bind (join name on clause) (subseq rest 0 4)
+                              (setf rest (nthcdr 4 rest))
+                              (unless (and (eq on :on) clause)
+                                (error "Incorrect join form in select."))
+                              `(" " ,(ecase join
+                                        (:left-join "LEFT") (:right-join "RIGHT")
+                                        (:inner-join "INNER") (:cross-join "CROSS"))
+                                " JOIN " ,@(sql-expand name)
+                                " ON " ,@(sql-expand clause))))
+                          (t (prog1 `(,@(if first () '(", ")) ,@(sql-expand (car rest)))
+                               (setf rest (cdr rest)))))))))
 
 (def-sql-op :select (&rest args)
   (split-on-keywords ((vars *) (from * ?) (where ?) (group-by * ?) (having ?)) (cons :vars args)
