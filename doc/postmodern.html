@@ -115,7 +115,38 @@
 
     <p class="desc">Evaluates body with <a
     href="#*database*"><code>*database*</code></a> bound to a
-    connection as specified by the arguments.</p>
+    connection as specified by the arguments. The <a
+    href="#with-connection*"><code>with-connection*</code></a> form is
+    often more practical, but this one is left for backward
+    compatibility (and as a monument to the author's general ineptness
+    as a library designer).</p>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="with-connection*"></a>
+      with-connection* (spec &amp;body body)
+    </p>
+
+    <p class="desc">Like <a
+    href="#with-connection"><code>with-connection</code></a>, but the
+    connection specification is evaluated, so you can take it from a
+    variable, or dynamically build it in some other way.</p>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="call-with-connection"></a>
+      call-with-connection (spec thunk)
+    </p>
+
+    <p class="desc">The functional backend to <a
+    href="#with-connection"><code>with-connection</code></a> and <a
+    href="#with-connection*"><code>with-connection*</code></a>. Binds
+    <a href="#*database*"><code>*database*</code></a> to a new
+    connection as specified by <code>spec</code>, which should be a
+    list that <a href="#connect"><code>connect</code></a> can be
+    applied to, and runs the zero-argument function given as second
+    argument in the new environment. When the function returns or
+    throws, the new connection is disconnected.</p>
 
     <p class="def">
       <span>function</span>
@@ -560,6 +591,7 @@
 
     <ul>
       <li><a href="#abort-transaction">abort-transaction</a></li>
+      <li><a href="#call-with-connection">call-with-connection</a></li>
       <li><a href="#clear-connection-pool">clear-connection-pool</a></li>
       <li><a href="#clear-template">clear-template</a></li>
       <li><a href="#commit-transaction">commit-transaction</a></li>
@@ -606,6 +638,7 @@
       <li><a href="#update-dao">update-dao</a></li>
       <li><a href="#view-exists-p">view-exists-p</a></li>
       <li><a href="#with-connection">with-connection</a></li>
+      <li><a href="#with-connection*">with-connection*</a></li>
       <li><a href="#with-transaction">with-transaction</a></li>
     </ul>
 

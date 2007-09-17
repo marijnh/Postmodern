@@ -55,11 +55,23 @@ if it is a pooled connection."))
     (disconnect *database*))
   (setf *database* nil))
 
+(defun call-with-connection (spec thunk)
+  "Binds *database* to a new connection, as specified by the spec
+argument, which should be a list of arguments that can be passed to
+connect, and runs the function given as a second argument with that
+database."
+  (let ((*database* (apply #'connect spec)))
+    (unwind-protect (funcall thunk)
+      (disconnect *database*))))
+
 (defmacro with-connection ((database user password host &key (port 5432) pooled-p) &body body)
   "Binds *database* to a new connection and runs body in that scope."
-  `(let ((*database* (connect ,database ,user ,password ,host :port ,port :pooled-p ,pooled-p)))
-    (unwind-protect (progn ,@body)
-      (disconnect *database*))))
+  `(call-with-connection (list ,database ,user ,password ,host :port ,port :pooled-p ,pooled-p)
+      (lambda () ,@body)))
+
+(defmacro with-connection* (spec &body body)
+  "Like with-connection, but evaluate the specification list."
+  `(call-with-connection spec (lambda () ,@body)))
 
 (defparameter *connection-pools* (make-hash-table :test 'equal)
   "Maps pool specifiers to lists of pooled connections.")

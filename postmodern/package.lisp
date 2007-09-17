@@ -3,6 +3,7 @@
   (:nicknames :pomo)
   (:export 
    #:connect #:disconnect #:reconnect #:with-connection
+   #:call-with-connection #:with-connection*
    #:*database* #:connected-p #:database-connection
    #:connect-toplevel #:disconnect-toplevel
    #:clear-connection-pool
