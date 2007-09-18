@@ -71,7 +71,7 @@ database."
 
 (defmacro with-connection* (spec &body body)
   "Like with-connection, but evaluate the specification list."
-  `(call-with-connection spec (lambda () ,@body)))
+  `(call-with-connection ,spec (lambda () ,@body)))
 
 (defparameter *connection-pools* (make-hash-table :test 'equal)
   "Maps pool specifiers to lists of pooled connections.")
