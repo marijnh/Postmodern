@@ -54,14 +54,21 @@ message definitions themselves stay readable."
 (define-message plain-password-message #\p (password)
   (string password))
 
+(defun bytes-to-hex-string (bytes)
+  "Convert an array of 0-255 numbers into the corresponding string of
+\(lowercase) hex codes."
+  (let ((digits "0123456789abcdef")
+	(result (make-string (* (length bytes) 2))))
+    (loop :for byte :across bytes
+	  :for pos :from 0 :by 2
+	  :do (setf (char result pos) (aref digits (ldb (byte 4 4) byte))
+		    (char result (1+ pos)) (aref digits (ldb (byte 4 0) byte))))
+    result))
+
 (defun md5-password (password user salt)
   "Apply the hashing that PostgreSQL expects to a password."
   (flet ((md5-and-hex (sequence)
-           (let ((bytes (md5:md5sum-sequence sequence)))
-             (string-downcase 
-              (with-output-to-string (result)
-                (loop :for byte :across bytes
-                   :do (format result "~2,'0X" byte)))))))
+	   (bytes-to-hex-string (md5:md5sum-sequence sequence))))
     (let* ((pass1 (md5-and-hex (concatenate 'string password user)))
            (pass2 (md5-and-hex (concatenate '(vector (unsigned-byte 8) *) (#.*string-bytes* pass1) salt))))
       (concatenate 'string "md5" pass2))))
