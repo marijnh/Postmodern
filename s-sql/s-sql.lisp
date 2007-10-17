@@ -440,8 +440,8 @@ the proper SQL syntax for joining tables."
       (loop :while rest
             :for first = t :then nil
             :append (cond ((is-join (car rest))
-                           (destructuring-bind (join name on clause) (subseq rest 0 4)
-                              (setf rest (nthcdr 4 rest))
+                           (destructuring-bind (join name on clause &rest left) rest
+                              (setf rest left)
                               (unless (and (eq on :on) clause)
                                 (error "Incorrect join form in select."))
                               `(" " ,(ecase join
