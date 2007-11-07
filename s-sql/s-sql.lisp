@@ -73,7 +73,7 @@ errors."
 are divided by keywords, which are interned with the name of the
 non-keyword symbols in words, and bound to these symbols. After the
 naming symbols, a ? can be used to indicate this argument group is
-optional, and an + to indicate it can consist of more than one
+optional, and an * to indicate it can consist of more than one
 element."
   (let ((alist (gensym)))
     `(let* ((,alist (split-on-keywords% ',words ,form))
