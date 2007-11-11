@@ -43,32 +43,41 @@ is reached or the given amount of bytes have been read."
   (defun integer-writer-name (bytes signed)
     (intern (format nil "WRITE-~AINT~A" (if signed "" "U") bytes))))
 
-(defmacro integer-reader (bytes signed)
+(defmacro integer-reader (bytes)
   "Create a function to read integers from a binary stream."
-  (let* ((bits (* bytes 8))
-         (return-form (if signed
-                          `(if (logbitp ,(1- bits) result)
-                            (dpb result (byte ,(1- bits) 0) -1)
-                            result)
-                          `result)))
-    `(defun ,(integer-reader-name bytes signed) (socket)
-      (declare (type stream socket)
-               #.*optimize*)
-      ,(if (= bytes 1)
-           `(let ((result (the fixnum (read-byte socket))))
-             (declare (type (unsigned-byte 8) result))
-             ,return-form)
-           `(let ((result 0))
-             (declare (type (unsigned-byte ,bits)))
-             ,@(loop :for byte :from (1- bytes) :downto 0
-                     :collect `(setf (ldb (byte 8 ,(* 8 byte)) result)
-                                (the fixnum (read-byte socket))))
-             ,return-form)))))
+  (let ((bits (* bytes 8)))
+    (labels ((return-form (signed)
+               (if signed
+                   `(if (logbitp ,(1- bits) result)
+                        (dpb result (byte ,(1- bits) 0) -1)
+                        result)
+                   `result))
+             (generate-reader (signed)
+               `(defun ,(integer-reader-name bytes signed) (socket)
+                  (declare (type stream socket)
+                           #.*optimize*)
+                  ,(if (= bytes 1)
+                       `(let ((result (the fixnum (read-byte socket))))
+                          (declare (type (unsigned-byte 8) result))
+                          ,(return-form signed))
+                       `(let ((result 0))
+                          (declare (type (unsigned-byte ,bits) result))
+                          ,@(loop :for byte :from (1- bytes) :downto 0
+                                   :collect `(setf (ldb (byte 8 ,(* 8 byte)) result)
+                                                   (the fixnum (read-byte socket))))
+                          ,(return-form signed))))))
+      `(progn
+         (declaim (inline ,(integer-reader-name bytes t)
+                          ,(integer-reader-name bytes nil)))
+         ,(generate-reader t)
+         ,(generate-reader nil)))))
 
-(defmacro integer-writer (bytes) ;; No signed version needed for now
+(defmacro integer-writer (bytes)
   "Create a function to write integers to a binary stream."
   (let ((bits (* 8 bytes)))
     `(progn
+      (declaim (inline ,(integer-writer-name bytes t)
+                       ,(integer-writer-name bytes nil)))
       (defun ,(integer-writer-name bytes nil) (socket value)
         (declare (type stream socket)
                  (type (unsigned-byte ,bits) value)
@@ -92,14 +101,10 @@ is reached or the given amount of bytes have been read."
 
 ;; All the instances of the above that we need.
 
-(integer-reader 1 t)
-(integer-reader 1 nil)
-(integer-reader 2 t)
-(integer-reader 2 nil)
-(integer-reader 4 t)
-(integer-reader 4 nil)
-(integer-reader 8 t)
-(integer-reader 8 nil)
+(integer-reader 1)
+(integer-reader 2)
+(integer-reader 4)
+(integer-reader 8)
 
 (integer-writer 1)
 (integer-writer 2)
