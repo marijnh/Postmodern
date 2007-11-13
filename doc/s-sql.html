@@ -286,17 +286,19 @@
     <p class="def"><span>sql-op</span> <a name="select"></a>:select (&amp;rest args)</p>
 
     <p class="desc">Creates a select query. The arguments are split on
-    the keywords found among them. <code>:select</code> can optionally
-    be followed by <code>:distinct</code> to select only distinct
-    rows. The group of arguments after that is interpreted as the
-    expressions that should be selected, then follows the optional
-    keyword <code>:from</code>, followed by at least on table name and
-    then any numer of join statements. Join statements start with one
-    of <code>:left-join</code>, <code>:right-join</code>,
+    the keywords found among them. The group of arguments immediately
+    after <code>:select</code> is interpreted as the expressions that
+    should be selected. After this an optional <code>:distinct</code>
+    may follow, which will cause the query to only select distinct
+    rows, or alternatively <code>:distinct-on</code> followed by a
+    group of row names. Next comes the optional keyword
+    <code>:from</code>, followed by at least one table name and then
+    any numer of join statements. Join statements start with one of
+    <code>:left-join</code>, <code>:right-join</code>,
     <code>:inner-join</code>, or <code>:outer-join</code>, then a
-    table name, then the keyword <code>:on</code>, and then a
-    form. After that an optional <code>:where</code> followed by a
-    single form may follow. And finally <code>:group-by</code> and
+    table name, then the keyword <code>:on</code>, and then a form.
+    After that an optional <code>:where</code> followed by a single
+    form may follow. And finally <code>:group-by</code> and
     <code>:having</code> can optionally be specified. The first takes
     any number of arguments, and the second only one. An example:</p>
 
