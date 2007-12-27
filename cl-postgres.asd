@@ -6,8 +6,8 @@
 ;; Change this to enable/disable unicode manually (mind that it won't
 ;; work unless your implementation supports it).
 (defparameter *unicode*
-  #+(or sb-unicode unicode)t
-  #-(or sb-unicode unicode)nil)
+  #+(or sb-unicode unicode ics)t
+  #-(or sb-unicode unicode ics)nil)
 
 (defsystem :cl-postgres
   :depends-on (:md5 :usocket :ieee-floats :simple-date
