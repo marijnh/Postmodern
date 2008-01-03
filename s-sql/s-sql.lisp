@@ -495,7 +495,7 @@ to runtime. Used to create stored procedures."
                                         :collect field)) ") VALUES ("
                ,@(sql-expand-list (loop :for (field value) :on rest :by #'cddr
                                         :collect value)) ")")))
-        ((and (not rest) (consp insert-method) (eq (first insert-method) :select))
+        ((and (not rest) (consp insert-method) (keywordp (first insert-method)))
          `("INSERT INTO " ,@(sql-expand table) " " ,@(sql-expand insert-method)))
         (t
          (error "No :set arguments or select operator passed to insert-into sql operator"))))
