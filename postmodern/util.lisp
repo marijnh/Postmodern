@@ -69,7 +69,7 @@ table."
 
 (defclass transaction-handle ()
   ((open-p :initform t :accessor transaction-open-p)
-   (connection :initform *database* :accessor transaction-connection))
+   (connection :initform *database* :reader transaction-connection))
   (:documentation "Simple box type for storing the status and the
 associated database connection of a transaction. When open-p is nil,
 the transaction has been aborted or committed."))
@@ -104,37 +104,35 @@ before the body unwinds."
 
 (defclass savepoint-handle (transaction-handle)
   ((name :initform (error "Savepoint name is not provided.")
-         :initarg :name
-         :reader savepoint-name))
+         :initarg :name :reader savepoint-name)
+   (open-p :initform t :accessor savepoint-open-p)
+   (connection :initform *database* :reader savepoint-connection))
   (:documentation "Simple box type for storing the state and the
 associated database connection of a savepoint."))
 
 (defmacro with-savepoint (name &body body)
   "Execute the body within a savepoint, releasing savepoint when the
-body exits normally, and rollbacking otherwise. NAME is both variable
-that can be used to release or rollback before the body unwinds and
-name of savepoint itself (in SQL sense)."
-  (let ((sql-name-var (gensym)))
-    `(let* ((,sql-name-var (to-sql-name ',name))
-            (,name (make-instance 'savepoint-handle :name ,sql-name-var)))
-       (execute (format nil "SAVEPOINT ~A" ,sql-name-var))
-       (unwind-protect
-            (prog1 (progn ,@body)
-              (rollback-savepoint ,name))
-         (release-savepoint ,name)))))
+body exits normally, and rolling back otherwise. NAME is both the
+variable that can be used to release or rolled back before the body
+unwinds, and the SQL name of the savepoint."
+  `(let ((,name (make-instance 'savepoint-handle :name (to-sql-name ',name))))
+     (execute (format nil "SAVEPOINT ~A" (savepoint-name ,name)))
+     (unwind-protect (prog1 (progn ,@body)
+                       (release-savepoint ,name))
+       (rollback-savepoint ,name))))
 
 (defun rollback-savepoint (savepoint)
-  "Immediately rollback a savepoint, aborting it results."
-  (when (transaction-open-p savepoint)
-    (let ((*database* (transaction-connection savepoint)))
+  "Immediately roll back a savepoint, aborting it results."
+  (when (savepoint-open-p savepoint)
+    (let ((*database* (savepoint-connection savepoint)))
       (execute (format nil "ROLLBACK TO SAVEPOINT ~A"
-                           (savepoint-name savepoint))))
-    (setf (transaction-open-p savepoint) nil)))
+                       (savepoint-name savepoint))))
+    (setf (savepoint-open-p savepoint) nil)))
 
 (defun release-savepoint (savepoint)
   "Immediately release an savepoint, commiting its results."
-  (when (transaction-open-p savepoint)
-    (let ((*database* (transaction-connection savepoint)))
+  (when (savepoint-open-p savepoint)
+    (let ((*database* (savepoint-connection savepoint)))
       (execute (format nil "RELEASE SAVEPOINT ~A"
                            (savepoint-name savepoint))))
     (setf (transaction-open-p savepoint) nil)))

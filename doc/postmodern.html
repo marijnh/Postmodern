@@ -305,6 +305,34 @@
     <p class="desc">Roll back the given database transaction.</p>
 
     <p class="def">
+      <span>macro</span>
+      <a name="with-savepoint"></a>
+      with-savepoint (name &amp;body body)
+    </p>
+
+    <p class="desc">Can only be used within a transaction. Establishes
+    a savepoint with the given name at the start of <code>body</code>,
+    and binds the same name to a handle for that savepoint. At the end
+    of <code>body</code>, the savepoint is released, unless a
+    condition is thrown, in which case it is rolled back.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="release-savepoint"></a>
+      release-savepoint (savepoint)
+    </p>
+
+    <p class="desc">Explicitly release the given savepoint.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="rollback-savepoint"></a>
+      rollback-savepoint (transaction)
+    </p>
+
+    <p class="desc">Roll back the given savepoint.</p>
+
+    <p class="def">
       <span>function</span>
       <a name="sequence-next"></a>
       sequence-next (sequence)
@@ -628,7 +656,9 @@
       <li><a href="#query">query</a></li>
       <li><a href="#query-dao">query-dao</a></li>
       <li><a href="#reconnect">reconnect</a></li>
+      <li><a href="#release-savepoint">release-savepoint</a></li>
       <li><a href="#reset-table">reset-table</a></li>
+      <li><a href="#rollback-savepoint">rollback-savepoint</a></li>
       <li><a href="#save-dao">save-dao</a></li>
       <li><a href="#select-dao">select-dao</a></li>
       <li><a href="#sequence-exists-p">sequence-exists-p</a></li>
@@ -639,6 +669,7 @@
       <li><a href="#view-exists-p">view-exists-p</a></li>
       <li><a href="#with-connection">with-connection</a></li>
       <li><a href="#with-connection*">with-connection*</a></li>
+      <li><a href="#with-savepoint">with-savepoint</a></li>
       <li><a href="#with-transaction">with-transaction</a></li>
     </ul>
 

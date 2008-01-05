@@ -13,6 +13,7 @@
    #:list-tables #:table-exists-p #:table-description
    #:list-views #:view-exists-p
    #:with-transaction #:commit-transaction #:abort-transaction
+   #:with-savepoint #:rollback-savepoint #:release-savepoint
    #:deftable #:get-id #:next-id #:db-null
    #:dao-exists-p #:query-dao #:select-dao #:get-dao
    #:save-dao #:insert-dao #:update-dao #:delete-dao
