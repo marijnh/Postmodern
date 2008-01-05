@@ -101,6 +101,44 @@ before the body unwinds."
       (execute "COMMIT"))
     (setf (transaction-open-p transaction) nil)))
 
+
+(defclass savepoint-handle (transaction-handle)
+  ((name :initform (error "Savepoint name is not provided.")
+         :initarg :name
+         :reader savepoint-name))
+  (:documentation "Simple box type for storing the state and the
+associated database connection of a savepoint."))
+
+(defmacro with-savepoint (name &body body)
+  "Execute the body within a savepoint, releasing savepoint when the
+body exits normally, and rollbacking otherwise. NAME is both variable
+that can be used to release or rollback before the body unwinds and
+name of savepoint itself (in SQL sense)."
+  (let ((sql-name-var (gensym)))
+    `(let* ((,sql-name-var (to-sql-name ',name))
+            (,name (make-instance 'savepoint-handle :name ,sql-name-var)))
+       (execute (format nil "SAVEPOINT ~A" ,sql-name-var))
+       (unwind-protect
+            (prog1 (progn ,@body)
+              (rollback-savepoint ,name))
+         (release-savepoint ,name)))))
+
+(defun rollback-savepoint (savepoint)
+  "Immediately rollback a savepoint, aborting it results."
+  (when (transaction-open-p savepoint)
+    (let ((*database* (transaction-connection savepoint)))
+      (execute (format nil "ROLLBACK TO SAVEPOINT ~A"
+                           (savepoint-name savepoint))))
+    (setf (transaction-open-p savepoint) nil)))
+
+(defun release-savepoint (savepoint)
+  "Immediately release an savepoint, commiting its results."
+  (when (transaction-open-p savepoint)
+    (let ((*database* (transaction-connection savepoint)))
+      (execute (format nil "RELEASE SAVEPOINT ~A"
+                           (savepoint-name savepoint))))
+    (setf (transaction-open-p savepoint) nil)))
+
 ;;; Copyright (c) 2006 Marijn Haverbeke
 ;;;
 ;;; This software is provided 'as-is', without any express or implied
