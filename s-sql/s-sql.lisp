@@ -196,10 +196,13 @@ name.")
 
 ;; Turning lisp values into SQL strings.
 
-(defun sql-escape-string (string)
+(defun sql-escape-string (string &optional prefix)
   "Escape string data so it can be used in a query."
   (let ((*print-pretty* nil))
     (with-output-to-string (out)
+      (when prefix
+        (princ prefix out)
+        (princ #\space out))
       (princ #\' out)
       (loop :for char :across string
             :do (princ (case char
@@ -235,14 +238,14 @@ whether the string should be escaped before being put into a query.")
     "NULL")
   (:method ((arg simple-date:date))
     (multiple-value-bind (year month day) (simple-date:decode-date arg)
-      (values (format nil "~4,'0d-~2,'0d-~2,'0d" year month day) t)))
+      (values (format nil "~4,'0d-~2,'0d-~2,'0d" year month day) "date")))
   (:method ((arg simple-date:timestamp))
     (multiple-value-bind (year month day hour min sec ms)
         (simple-date:decode-timestamp arg)
       (values
        (format nil "~4,'0d-~2,'0d-~2,'0d ~2,'0d:~2,'0d:~2,'0d~@[.~3,'0d~]"
                year month day hour min sec (if (zerop ms) nil ms))
-       t)))
+       "timestamp")))
   (:method ((arg simple-date:interval))
     (multiple-value-bind (year month day hour min sec ms)
         (simple-date:decode-interval arg)
@@ -251,7 +254,7 @@ whether the string should be escaped before being put into a query.")
          (format nil "~@[~d years ~]~@[~d months ~]~@[~d days ~]~@[~d hours ~]~@[~d minutes ~]~@[~d seconds ~]~@[~d milliseconds~]"
                  (not-zero year) (not-zero month) (not-zero day)
                  (not-zero hour) (not-zero min) (not-zero sec) (not-zero ms))
-         t))))
+         "interval"))))
   (:method ((arg t))
     (error "Value ~S can not be converted to an SQL literal." arg)))
 
@@ -274,7 +277,7 @@ textual format for binary data."
 query."
   (multiple-value-bind (string escape) (sql-ize value)
     (if escape
-        (sql-escape-string string)
+        (sql-escape-string string (and (not (eq escape t)) escape))
         string)))
 
 (defparameter *expand-runtime* nil)
