@@ -77,6 +77,21 @@
 
     <p class="def">
       <span>variable</span>
+      <a name="*standard-sql-strings*"></a>
+      *standard-sql-strings*
+    </p>
+
+    <p class="desc">Used to configure whether S-SQL will use standard
+    SQL strings (just replace #\' with ''), or backslash-style
+    escaping. Setting this to <code>NIL</code> is always safe, but
+    when the server is configured to allow standard strings
+    (compile-time parameter '<code>standard_conforming_strings</code>'
+    is '<code>on</code>', which will become the default in future
+    versions of PostgreSQL), the noise in queries can be reduced by
+    setting this to <code>T</code>.</p>
+
+    <p class="def">
+      <span>variable</span>
       <a name="*escape-sql-names-p*"></a>
       *escape-sql-names-p*
     </p>
@@ -535,6 +550,7 @@
       <li><a href="#infix">:or</a></li>
       <li><a href="#order-by">:order-by</a></li>
       <li><a href="#raw">:raw</a></li>
+      <li><a href="#*standard-sql-strings*">*standard-sql-strings*</a></li>
       <li><a href="#types">real</a></li>
       <li><a href="#select">:select</a></li>
       <li><a href="#set">:set</a></li>

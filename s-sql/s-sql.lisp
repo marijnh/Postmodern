@@ -10,6 +10,7 @@
            #:varchar
            #:db-null
            #:sql-type-name
+           #:*standard-sql-strings*
            #:sql-escape-string
            #:from-sql-name
            #:to-sql-name
@@ -196,22 +197,31 @@ name.")
 
 ;; Turning lisp values into SQL strings.
 
+(defparameter *standard-sql-strings* nil
+  "Indicate whether S-SQL will use standard SQL strings (just use ''
+  for #\'), or backslash-style escaping. Setting this to NIL is always
+  safe, but when the server is configured to allow standard
+  strings (parameter 'standard_conforming_strings' is 'on'), the noise
+  in queries can be reduced by setting this to T.")
+
 (defun sql-escape-string (string &optional prefix)
   "Escape string data so it can be used in a query."
   (let ((*print-pretty* nil))
-    (with-output-to-string (out)
+    (with-output-to-string (*standard-output*)
       (when prefix
-        (princ prefix out)
-        (princ #\space out))
-      (princ #\' out)
-      (loop :for char :across string
-            :do (princ (case char
-                         (#\' "''")
-                         ;; Turn off postgres' backslash behaviour to
-                         ;; prevent unexpected strangeness.
-                         (#\\ "\\\\")
-                         (t char)) out))
-      (princ #\' out))))
+        (princ prefix)
+        (princ #\space))
+      (unless *standard-sql-strings*
+        (princ #\E))
+      (princ #\')
+      (if *standard-sql-strings*
+          (loop :for char :across string :do (princ (if (char= char #\') "''" char)))
+          (loop :for char :across string
+                :do (princ (case char
+                             (#\' "''")
+                             (#\\ "\\\\")
+                             (otherwise char)))))
+      (princ #\'))))
 
 (defgeneric sql-ize (arg)
   (:documentation "Turn a lisp value into a string containing its SQL
