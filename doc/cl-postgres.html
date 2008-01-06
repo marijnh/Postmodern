@@ -92,6 +92,21 @@
     most obvious use for this is for storing information about the
     prepared statements that have been parsed for this connection.</p>
 
+    <p class="def">
+      <span>method</span>
+      <a name="connection-parameters"></a>
+      connection-parameters (database-connection)
+      <br/>&#8594; hash-table
+    </p>
+
+    <p class="desc">This method returns a mapping (string to string)
+    containing all the <a
+    href="http://www.postgresql.org/docs/8.2/static/runtime-config.html">configuration
+    parameters</a> that the server returned when the connection was
+    made. Note that, if you have adjusted parameters at run-time for
+    this connection, the values in the table will not automatically be
+    updated, and might not be current.</p>
+
     <h2><a name="querying">Querying</a></h2>
 
     <p class="def">

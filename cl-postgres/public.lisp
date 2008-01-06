@@ -9,8 +9,8 @@
    (socket :initarg :socket :accessor connection-socket)
    (meta :initform nil)
    (available :initform t :accessor connection-available)
-   (timestamp-format :initform :float
-                     :accessor connection-timestamp-format))
+   (parameters :accessor connection-parameters)
+   (timestamp-format :accessor connection-timestamp-format))
   (:documentation "Representatino of a database connection. Contains
 login information in order to be able to automatically re-establish a
 connection when it is somehow closed."))
@@ -47,9 +47,12 @@ if it isn't."
         (finished nil))
     (unwind-protect
          (setf (slot-value conn 'meta) nil
-               (connection-timestamp-format conn)
+               (connection-parameters conn)
                (authenticate socket (connection-user conn)
                              (connection-password conn) (connection-db conn))
+               (connection-timestamp-format conn)
+               (if (string= (gethash "integer_datetimes" (connection-parameters conn)) "on")
+                   :integer :float)
                (connection-socket conn) socket
                finished t)
       (unless finished

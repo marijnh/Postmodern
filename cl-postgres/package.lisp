@@ -8,6 +8,7 @@
            #:database-error-query
            #:database-connection
            #:connection-meta
+           #:connection-parameters
            #:open-database
            #:reopen-database
            #:database-open-p

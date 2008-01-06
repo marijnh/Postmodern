@@ -115,7 +115,7 @@ database-error condition."
 (defun authenticate (socket user password database)
   "Try to initiate a connection. Caller should close the socket if
 this raises a condition."
-  (let ((timestamp-format :float))
+  (let ((parameters (make-hash-table :test 'equal)))
     (startup-message socket user database)
     (force-output socket)
     (loop
@@ -138,12 +138,11 @@ this raises a condition."
        ;; ParameterStatus
        (#\S (let ((name (read-str socket))
                   (value (read-str socket)))
-              (when (string= name "integer_datetimes")
-                (setf timestamp-format (if (string= value "on") :integer :float)))))
+              (setf (gethash name parameters) value)))
        ;; ReadyForQuery
        (#\Z (read-uint1 socket)
             (return))))
-    timestamp-format))
+    parameters))
 
 (defclass field-description ()
   ((name :initarg :name :accessor field-name)
