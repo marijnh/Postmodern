@@ -18,6 +18,7 @@
            #:*escape-sql-names-p*
            #:sql
            #:sql-compile
+           #:register-sql-operators
            #:enable-s-sql-syntax))
 
 (in-package :s-sql)
@@ -369,36 +370,64 @@ to apply to the arguments, and body something that produces a list of
 strings and forms that evaluate to strings."
   (let ((args-name (gensym)))
     `(defmethod expand-sql-op ((op (eql ,name)) ,args-name)
-      (destructuring-bind ,arglist ,args-name
-        ,@body))))
+       (destructuring-bind ,arglist ,args-name
+         ,@body))))
 
-(defun expand-infix-op (operator allow-unary args)
-  (if (cdr args)
-      `("(" ,@(sql-expand-list args operator) ")")
-      (if allow-unary
-          (sql-expand (first args))
-          (error "SQL operator ~A takes at least two arguments." operator))))
+(defun make-expander (arity name)
+  "Generates an appropriate expander function for a given operator
+with a given arity."
+  (let ((with-spaces (strcat (list " " name " "))))
+    (flet ((check-unary (args)
+             (when (or (not args) (cdr args))
+               (error "SQL operator ~A is unary." name)))
+           (expand-n-ary (args)
+             `("(" ,@(sql-expand-list args with-spaces) ")")))
+      (ecase arity
+        (:unary (lambda (args)
+                  (check-unary args)
+                  `("(" name " " ,@(sql-expand (car args)) ")")))
+        (:unary-postfix (lambda (args)
+                          (check-unary args)
+                          `("(" ,@(sql-expand (car args)) " " ,name ")")))
+        (:n-ary (lambda (args)
+                  (if (cdr args)
+                      (expand-n-ary args)
+                      (sql-expand (car args)))))
+        (:2+-ary (lambda (args)
+                   (unless (cdr args)
+                     (error "SQL operator ~A takes at least two arguments." name))
+                   (expand-n-ary args)))
+        (:n-or-unary (lambda (args)
+                       (if (cdr args)
+                           (expand-n-ary args)
+                           `("(" ,name " " ,@(sql-expand (car args)) ")"))))))))
 
-(defmacro def-infix-ops (allow-unary &rest ops)
-  `(progn ,@(mapcar (lambda (op)
-                      `(defmethod expand-sql-op ((op (eql ,op)) args)
-                         (expand-infix-op ,(concatenate 'string " " (string-downcase (symbol-name op)) " ") ,allow-unary args)))
-                    ops)))
-(def-infix-ops t :+ :* :& :|\|| :and :or :union)
-(def-infix-ops nil := :/ :!= :< :> :<= :>= :^ :intersect :except :~* :!~ :!~* :like :ilike)
+(defmacro register-sql-operators (arity &rest names)
+  "Define simple operators. Arity is one of :unary \(like
+  'not'), :unary-postfix \(the operator comes after the operand),
+  :n-ary \(like '+': the operator falls away when there is only one
+  operand), :2+-ary (like '=', which is meaningless for one operand),
+  or :n-or-unary (like '-', where the operator is kept in the unary
+  case). After the arity follow any number of operators, either just a
+  keyword, in which case the downcased symbol name is used as the
+  operator, or a two-element list containing a keyword and a name
+  string."
+  (declare (type (member :unary :unary-postfix :n-ary :n-or-unary :2+-ary) arity))
+  (flet ((define-op (name)
+           (let ((name (if (listp name)
+                           (second name)
+                           (string-downcase (symbol-name name))))
+                 (symbol (if (listp name) (first name) name)))
+             `(let ((expander (make-expander ,arity ,name)))
+                (defmethod expand-sql-op ((op (eql ,symbol)) args)
+                  (funcall expander args))))))
+    `(progn ,@(mapcar #'define-op names))))
 
-(def-sql-op :- (first &rest rest)
-  (if rest
-      (expand-infix-op " - " nil (cons first rest))
-      `("(-" ,@(sql-expand first) ")")))
-      
-(def-sql-op :~ (first &rest rest)
-  (if rest
-      (expand-infix-op " ~ " nil (cons first rest))
-      `("(~" ,@(sql-expand first) ")")))
-
-(def-sql-op :not (arg)
-  `("(not " ,@(sql-expand arg) ")"))
+(register-sql-operators :unary :not)
+(register-sql-operators :n-ary :+ :* :& :|\|| :|\|\|| :and :or :union)
+(register-sql-operators :n-or-unary :- :~)
+(register-sql-operators :2+-ary  := :/ :!= :< :> :<= :>= :^ :intersect :except :~*
+                                 :!~ :!~* :like :ilike)
 
 (def-sql-op :desc (arg)
   `(,@(sql-expand arg) " DESC"))

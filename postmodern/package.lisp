@@ -24,7 +24,7 @@
    #:sql #:sql-compile
    #:smallint #:bigint #:numeric #:real #:double-precision
    #:bytea #:text #:varchar
-   #:*escape-sql-names-p* #:sql-escape-string
+   #:*escape-sql-names-p* #:sql-escape-string #:register-sql-operators
 
    ;; Condition type from cl-postgres
    #:database-error #:database-error-message #:database-error-code

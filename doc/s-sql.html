@@ -151,6 +151,24 @@
     your own datatypes if you want to be able to use them in S-SQL
     queries.</p>
 
+    <p class="def">
+      <span>macro</span>
+      <a name="register-sql-operators"></a>
+      register-sql-operators (arity &amp;rest names)
+    </p>
+
+    <p class="desc">Define simple SQL operators. Arity is one of
+    <code>:unary</code> (like '<code>not</code>'),
+    <code>:unary-postfix</code> (the operator comes after the
+    operand), <code>:n-ary</code> (like '<code>+</code>': the operator
+    falls away when there is only one operand), <code>:2+-ary</code>
+    (like '<code>=</code>', which is meaningless for one operand), or
+    <code>:n-or-unary</code> (like '<code>-</code>', where the
+    operator is kept in the unary case). After the arity may follow
+    any number of operators, either just a keyword, in which case the
+    downcased symbol name is used as the SQL operator, or a
+    two-element list containing a keyword and a name string.</p>
+
     <h2><a name="types"></a>SQL Types</h2>
 
     <p>S-SQL knows the SQL equivalents to a number of Lisp types, and
@@ -209,8 +227,8 @@
 
     <p>The following operators are defined:</p>
 
-    <p class="def"><span>sql-op</span> <a name="infix"></a>:+, :*, :&amp;, :|, :and,
-    :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union,
+    <p class="def"><span>sql-op</span> <a name="infix"></a>:+, :*, :&amp;, :|, :||,
+    :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union,
     :intersect, :except (&amp;rest args)</p>
 
     <p class="desc">These are expanded as infix operators. When
@@ -503,6 +521,7 @@
       <li><a href="#infix">:*</a></li>
       <li><a href="#infix">:&amp;</a></li>
       <li><a href="#infix">:|</a></li>
+      <li><a href="#infix">:||</a></li>
       <li><a href="#infix">:=</a></li>
       <li><a href="#infix">:/</a></li>
       <li><a href="#infix">:!=</a></li>
@@ -550,8 +569,9 @@
       <li><a href="#infix">:or</a></li>
       <li><a href="#order-by">:order-by</a></li>
       <li><a href="#raw">:raw</a></li>
-      <li><a href="#*standard-sql-strings*">*standard-sql-strings*</a></li>
       <li><a href="#types">real</a></li>
+      <li><a href="#register-sql-operators">:register-sql-operators</a></li>
+      <li><a href="#*standard-sql-strings*">*standard-sql-strings*</a></li>
       <li><a href="#select">:select</a></li>
       <li><a href="#set">:set</a></li>
       <li><a href="#types">smallint</a></li>
