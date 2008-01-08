@@ -24,7 +24,7 @@
 
 ;; Utils
 
-(defun strcat (&rest args)
+(defun strcat (args)
   "Concatenate a list of strings into a single one."
   (let ((result (make-string (reduce #'+ args :initial-value 0 :key 'length))))
     (loop :for pos = 0 :then (+ pos (length arg))
@@ -35,11 +35,10 @@
 (defun implode (sep list)
   "Reduce a list of strings to a single string, inserting a separator
 between them."
-  (apply 'strcat
-         (loop :for element :on list
-               :collect (car element)
-               :if (cdr element)
-               :collect sep)))
+  (strcat (loop :for element :on list
+                :collect (car element)
+                :if (cdr element)
+                :collect sep)))
 
 (defun split-on-keywords% (shape list)
   "Helper function for split-on-keywords. Extracts the values
@@ -337,7 +336,7 @@ to strings \(which will form an SQL query when concatenated)."
   (let ((list (reduce-strings (sql-expand form))))
     (if (= 1 (length list))
         (car list)
-        `(strcat ,@list))))
+        `(strcat (list ,@list)))))
   
 (defun sql-compile (form)
   (let ((*expand-runtime* t))
@@ -375,28 +374,27 @@ strings and forms that evaluate to strings."
 
 (defun expand-infix-op (operator allow-unary args)
   (if (cdr args)
-      `("(" ,@(sql-expand-list args (strcat " " operator " ")) ")")
+      `("(" ,@(sql-expand-list args operator) ")")
       (if allow-unary
           (sql-expand (first args))
           (error "SQL operator ~A takes at least two arguments." operator))))
 
 (defmacro def-infix-ops (allow-unary &rest ops)
-  `(progn
-    ,@(mapcar (lambda (op)
-                `(defmethod expand-sql-op ((op (eql ,op)) args)
-                  (expand-infix-op ,(string-downcase (symbol-name op)) ,allow-unary args)))
-              ops)))
+  `(progn ,@(mapcar (lambda (op)
+                      `(defmethod expand-sql-op ((op (eql ,op)) args)
+                         (expand-infix-op ,(concatenate 'string " " (string-downcase (symbol-name op)) " ") ,allow-unary args)))
+                    ops)))
 (def-infix-ops t :+ :* :& :|\|| :and :or :union)
 (def-infix-ops nil := :/ :!= :< :> :<= :>= :^ :intersect :except :~* :!~ :!~* :like :ilike)
 
 (def-sql-op :- (first &rest rest)
   (if rest
-      (expand-infix-op "-" nil (cons first rest))
+      (expand-infix-op " - " nil (cons first rest))
       `("(-" ,@(sql-expand first) ")")))
       
 (def-sql-op :~ (first &rest rest)
   (if rest
-      (expand-infix-op "~" nil (cons first rest))
+      (expand-infix-op " ~ " nil (cons first rest))
       `("(~" ,@(sql-expand first) ")")))
 
 (def-sql-op :not (arg)
