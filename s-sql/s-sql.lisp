@@ -385,7 +385,7 @@ with a given arity."
       (ecase arity
         (:unary (lambda (args)
                   (check-unary args)
-                  `("(" name " " ,@(sql-expand (car args)) ")")))
+                  `("(" ,name " " ,@(sql-expand (car args)) ")")))
         (:unary-postfix (lambda (args)
                           (check-unary args)
                           `("(" ,@(sql-expand (car args)) " " ,name ")")))
