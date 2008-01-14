@@ -14,6 +14,10 @@
    (id-sequence :initarg :id-sequence :accessor table-id-sequence))
   (:documentation "Representation of a table."))
 
+(defclass index ()
+  ((fields :initarg :fields :reader index-fields)
+   (unique-p :initarg :unique-p :reader index-unique-p)))
+
 (defparameter *templates* (make-hash-table)
   "Location for storing database templates.")
 
@@ -107,11 +111,12 @@ creating its ids, :class-name for the name of a dao for this table, if
 any, and :indices for the indices that should be created for this
 table. Indices can be single fields or lists of fields. The first
 index is used as primary key (:auto-id adds an index on the id)."
-  (let ((class (second (assoc :class-name options)))
-        (auto-id (second (assoc :auto-id options)))
-        (indices (mapcar (lambda (x) (if (consp x) x (list x)))
-                         (cdr (assoc :indices options))))
-        (auto-id-sequence-name (intern (format nil "~A-ID-SEQ" name) :keyword)))
+  (let* ((class (second (assoc :class-name options)))
+         (auto-id (second (assoc :auto-id options)))
+         (raw-indices (mapcar (lambda (i) (if (consp i) i (list i))) (cdr (assoc :indices options))))
+         (indices (mapcar (lambda (i) (if (eq (car i) :unique) (cdr i) i)) raw-indices))
+         (index-unique (mapcar (lambda (i) (eq (car i) :unique)) raw-indices))
+         (auto-id-sequence-name (intern (format nil "~A-ID-SEQ" name) :keyword)))
     (labels ((filter-options (options)
                (remove-if (lambda (option)
                             (member (car option) '(:class-name :auto-id :indices)))
@@ -127,16 +132,19 @@ index is used as primary key (:auto-id adds an index on the id)."
       (when auto-id
         (push `(,auto-id :type integer :initarg ,(intern (symbol-name auto-id) :keyword) :accessor get-id)
               fields)
-        (push (list auto-id) indices))
+        (push (list auto-id) indices)
+        (push t index-unique))
       (unless indices
         (error "No primary index defined for table ~A." name))
+      (setf (car index-unique) t)
       `(progn
         ,(when class
            `(defclass ,class () ,fields ,@(filter-options options)))
         (let* ((table (make-instance 'table :name ',name :class-name ',class
                                      :fields (mapcar 'extract-field ',fields)
                                      :id-sequence ,(when auto-id auto-id-sequence-name)
-                                     :indices ',indices))
+                                     :indices (list ,@(mapcar (lambda (i u) `(make-instance 'index :fields ',i :unique-p ,u))
+                                                              indices index-unique))))
                (row-reader ,(if class `(initialize-row-reader table))))
           (declare (ignorable row-reader))
           ,@(mapcar (lambda (sch) `(setf (table ',name ',sch) table)) (or templates (list nil)))
@@ -214,11 +222,12 @@ holds."
           ,(mapcar (lambda (field)
                      (list (table-field-name field) :type (table-field-type field)))
                     (table-fields table))
-          (:primary-key ,@(car (table-indices table))))))
+          (:primary-key ,@(index-fields (car (table-indices table)))))))
       (dolist (index (cdr (table-indices table)))
-        (execute (sql-compile `(:create-index (:raw ,(index-name index))
+        (execute (sql-compile `(,(if (index-unique-p index) :create-unique-index :create-index)
+                                 (:raw ,(index-name index))
                                 :on ,(table-name table)
-                                :fields ,@index))))
+                                :fields ,@(index-fields index)))))
       (when (table-id-sequence table)
         (execute (:create-sequence (table-id-sequence table)))))))
 

@@ -446,32 +446,40 @@
 
     <p class="desc">All extra options that <code>defclass</code>
     supports are allowed, in addition to: <code>:auto-id</code> to
-    give the table an id column and a sequence for creating its ids,
+    give the table an id column and a sequence for creating its ids
+    (see also <a href="#get-id"><code>get-id</code></a> and <a
+    href="#next-id"><code>next-id</code></a>),
     <code>:class-name</code> for the name of a dao class for this
-    table, and <code>:indices</code> for the indices that should be
-    created for this table. Indices can be single fields or lists of
-    fields. The first index is used as primary key
-    (<code>:auto-id</code> adds an index on the id).</p>
+    table (if this is not given, no class is defined), and
+    <code>:indices</code> for the indices that should be created for
+    this table. Indices can be single fields or lists of fields. The
+    first index is used as primary key (<code>:auto-id</code> adds a
+    primary index on the id). Lists starting with the keyword
+    <code>:unique</code> (followed by any number of field names)
+    create unique indices. The primary key is automatically made
+    unique.</p>
 
     <p class="desc">Example:</p>
 
     <pre class="code desc">
-(deftable person (my-database-template)
-  ((name :type string :initarg :name :accessor person-name)
-   (birth-date :type (or db-null date) :initarg :age :initform :null :accessor person-age)
-   (score :type bigint :initform 0 :accessor person-score))
-  (:class-name person)
-  (:indices name score))</pre>
+(deftable user (my-database-template)
+  ((name :type string :initarg :name :accessor user-name)
+   (birth-date :type (or db-null date) :initarg :age :initform :null :reader user-age)
+   (credit-card-number :type integer :initarg :card-number :accessor user-card-number)
+   (score :type bigint :initform 0 :accessor user-score))
+  (:class-name user)
+  (:indices name (:unique credit-card-number) score))</pre>
 
     <p class="desc">When instances of classed defined in this way are
-    created using <code>make-instance</code>, a <code>:defer-id</code>
-    keyword argument can be given to prevent the object from
-    immediately getting an automatic id generated for it. This can be
-    useful when, for some reason, you find yourself creating lots of
-    objects that never end up being saved in the database. When such
-    an object still does not have an id when it is inserted (the slot
-    for the id is unbound), it will be assigned an id at this
-    time.</p>
+    created using <code>make-instance</code>, their automatic id (if
+    any) will immediately be retrieved from the sequence and assigned
+    to the new object. When this is not what you want, a
+    <code>:defer-id</code> keyword argument can be given to
+    <code>make-instance</code>, in which case the id will only be
+    assigned when the object is stored (and still does not have an
+    id). This can be useful when, for some reason, you find yourself
+    creating lots of objects that never end up being saved in the
+    database.</p>
 
     <p class="def">
       <span>function</span>
