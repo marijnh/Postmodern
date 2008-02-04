@@ -385,7 +385,7 @@ to the result."
                  (declare (type (signed-byte 32) size))
                  (if (eq size -1)
                      :null
-                     (funcall (the (function (stream (unsigned-byte 32)) t) (field-interpreter field))
+                     (funcall (field-interpreter field)
                               ,socket size)))))
         ,@body))))
 
