@@ -229,15 +229,15 @@
     <p>The following operators are defined:</p>
 
     <p class="def"><span>sql-op</span> <a name="infix"></a>:+, :*, :&amp;, :|, :||,
-    :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union,
+    :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all,
     :intersect, :except (&amp;rest args)</p>
 
     <p class="desc">These are expanded as infix operators. When
     meaningful, they allow more than two arguments. <code>:-</code>
     can also be used as a unary operator to negate a value. Note that
-    the arguments to <code>:union</code>, <code>:intersect</code>, and
-    <code>:except</code> should be queries (<code>:select</code>
-    forms).</p>
+    the arguments to <code>:union</code>, <code>:union-all</code>,
+    <code>:intersect</code>, and <code>:except</code> should be
+    queries (<code>:select</code> forms).</p>
 
     <p class="def"><span>sql-op</span> <a name="unary"></a>:~, :not (arg)</p>
 
@@ -585,6 +585,7 @@
       <li><a href="#to-sql-name">to-sql-name</a></li>
       <li><a href="#type">:type</a></li>
       <li><a href="#infix">:union</a></li>
+      <li><a href="#infix">:union-all</a></li>
       <li><a href="#update">:update</a></li>
       <li><a href="#types">varchar</a></li>
     </ul>

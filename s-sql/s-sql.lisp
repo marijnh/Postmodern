@@ -425,7 +425,7 @@ with a given arity."
     `(progn ,@(mapcar #'define-op names))))
 
 (register-sql-operators :unary :not)
-(register-sql-operators :n-ary :+ :* :& :|\|| :|\|\|| :and :or :union)
+(register-sql-operators :n-ary :+ :* :& :|\|| :|\|\|| :and :or :union (:union-all "union all"))
 (register-sql-operators :n-or-unary :- :~)
 (register-sql-operators :2+-ary  := :/ :!= :< :> :<= :>= :^ :intersect :except :~*
                                  :!~ :!~* :like :ilike)
