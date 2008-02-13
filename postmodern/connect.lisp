@@ -38,7 +38,8 @@ connection, or if you want a connection for debugging from the REPL."
   (:method ((connection database-connection))
     (close-database connection))
   (:method ((connection pooled-database-connection))
-    (add-to-pool connection))
+    (when (database-open-p connection)
+      (add-to-pool connection)))
   (:documentation "Close a database connection. Returns it to a pool
 if it is a pooled connection."))
 
