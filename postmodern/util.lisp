@@ -9,7 +9,7 @@ symbols to string with the S-SQL rules."
 
 (defun sequence-next (sequence)
   "Shortcut for getting the next value from a sequence."
-  (query (:select (:nextval (if (stringp sequence) sequence (to-identifier sequence)))) :single))
+  (query (:select (:nextval (to-identifier sequence))) :single))
 
 (defmacro make-list-query (relkind)
   "Helper macro for the functions that list tables, sequences, and
