@@ -18,6 +18,8 @@
            #:*escape-sql-names-p*
            #:sql
            #:sql-compile
+           #:sql-template
+           #:$$
            #:register-sql-operators
            #:enable-s-sql-syntax))
 
@@ -298,12 +300,13 @@ query."
 to strings \(which will form an SQL query when concatenated)."
   (cond ((and (consp arg) (keywordp (first arg)))
          (expand-sql-op (car arg) (cdr arg)))
-        ((and (consp arg) *expand-runtime*)
-         (expand-sql-op (intern (symbol-name (car arg)) :keyword) (cdr arg)))
-        (*expand-runtime*
-         (list (sql-ize-escaped arg)))
         ((and (consp arg) (eq (first arg) 'quote))
          (list (sql-ize-escaped (second arg))))
+        ((and (consp arg) *expand-runtime*)
+         (expand-sql-op (intern (symbol-name (car arg)) :keyword) (cdr arg)))
+        ((and (eq arg '$$) *expand-runtime*) '($$))
+        (*expand-runtime*
+         (list (sql-ize-escaped arg)))
         ((or (consp arg) (and (symbolp arg) (not (keywordp arg))))
          (list `(sql-ize-escaped ,arg)))
         (t (list (sql-ize-escaped arg)))))
@@ -343,6 +346,14 @@ to strings \(which will form an SQL query when concatenated)."
 (defun sql-compile (form)
   (let ((*expand-runtime* t))
     (car (reduce-strings (sql-expand form)))))
+
+(defun sql-template (form)
+  (let* ((*expand-runtime* t)
+         (compiled (reduce-strings (sql-expand form))))
+    (lambda (&rest args)
+      (with-output-to-string (*standard-output*)
+        (dolist (element compiled)
+          (princ (if (eq element '$$) (sql-ize-escaped (pop args)) element)))))))
 
 ;; The reader syntax.
 
