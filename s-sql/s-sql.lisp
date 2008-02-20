@@ -349,7 +349,8 @@ to strings \(which will form an SQL query when concatenated)."
 
 (defun sql-template (form)
   (let* ((*expand-runtime* t)
-         (compiled (reduce-strings (sql-expand form))))
+         (compiled (reduce-strings (sql-expand form)))
+         (*print-pretty* nil))
     (lambda (&rest args)
       (with-output-to-string (*standard-output*)
         (dolist (element compiled)
