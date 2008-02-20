@@ -55,6 +55,21 @@
     identifiers.</p>
 
     <p class="def">
+      <span>function</span>
+      <a name="sql-template"></a>
+      sql-template (form)
+    </p>
+
+    <p class="desc">In cases where you do need to build the query at
+    run time, yet you do not want to re-compile it all the time, this
+    function can be used to compile it once and store the result. It
+    takes an S-SQL form, which may contain <code>$$</code> placeholder
+    symbols, and returns a function that takes one argument for every
+    <code>$$</code>. When called, this returned function produces an
+    SQL string in which the placeholders have been replaced by the
+    values of the arguments.</p>
+
+    <p class="def">
       <span>macro</span>
       <a name="enable-sql-syntax"></a>
       enable-sql-syntax (&amp;optional (char #\Q))
@@ -535,6 +550,7 @@
       <li><a href="#regexp">:!~</a></li>
       <li><a href="#regexp">:!~*</a></li>
       <li><a href="#regexp">:~*</a></li>
+      <li><a href="#sql-template">$$</a></li>
       <li><a href="#infix">:and</a></li>
       <li><a href="#as">:as</a></li>
       <li><a href="#types">bytea</a></li>
@@ -580,6 +596,7 @@
       <li><a href="#sql-compile">sql-compile</a></li>
       <li><a href="#sql-escape-string">sql-escape-string</a></li>
       <li><a href="#sql-ize">sql-ize</a></li>
+      <li><a href="#sql-template">sql-template</a></li>
       <li><a href="#sql-type-name">sql-type-name</a></li>
       <li><a href="#types">text</a></li>
       <li><a href="#to-sql-name">to-sql-name</a></li>
