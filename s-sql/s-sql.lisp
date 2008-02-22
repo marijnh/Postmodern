@@ -459,7 +459,9 @@ with a given arity."
         ;; Ugly way to check if everything was expanded
         (if (stringp (car expanded))
             `("(" ,@expanded ")")
-            `("(" (implode ", " (mapcar 'sql-ize-escaped ,(car elements))) ")")))))
+            `("(" (let ((elements ,(car elements)))
+                    (if (null elements) "NULL"
+                        (implode ", " (mapcar 'sql-ize-escaped elements)))) ")")))))
 
 (def-sql-op :dot (&rest args)
   (sql-expand-list args "."))
