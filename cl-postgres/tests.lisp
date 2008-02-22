@@ -83,7 +83,7 @@
   (with-test-connection
     (exec-query connection "create table test (id int not null primary key, name text)")
     (exec-query connection "insert into test values (1, 'bert')")
-    (signals database-unique-violation
+    (signals unique-violation
       (exec-query connection "insert into test values (1, 'harry')"))
     (exec-query connection "drop table test")))
 

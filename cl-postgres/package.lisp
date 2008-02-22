@@ -30,31 +30,30 @@
 
 (defpackage :cl-postgres-error
   (:use :common-lisp :cl-postgres)
-  (:export #:database-admin-shutdown
-           #:database-cannot-connect-now
-           #:database-check-violation
-           #:database-crash-shutdown
-           #:database-data-exception
-           #:database-division-by-zero
-           #:database-feature-not-supported
-           #:database-floating-point-exception
-           #:database-foreign-key-violation
-           #:database-insufficient-resources
-           #:database-integrity-violation
-           #:database-internal-error
-           #:database-invalid-datetime-format
-           #:database-lock-not-available
-           #:database-not-null-violation
-           #:database-numeric-value-out-of-range
-           #:database-object-in-use
-           #:database-object-state-error
-           #:database-operator-intervention
-           #:database-program-limit-exceeded
-           #:database-query-canceled
-           #:database-restrict-violation
-           #:database-system-error
-           #:database-unique-violation
-           #:database-warning))
+  (:export #:admin-shutdown
+           #:cannot-connect-now
+           #:check-violation
+           #:crash-shutdown
+           #:data-exception
+           #:db-division-by-zero
+           #:feature-not-supported
+           #:floating-point-exception
+           #:foreign-key-violation
+           #:insufficient-resources
+           #:integrity-violation
+           #:internal-error
+           #:invalid-datetime-format
+           #:lock-not-available
+           #:not-null-violation
+           #:numeric-value-out-of-range
+           #:object-in-use
+           #:object-state-error
+           #:operator-intervention
+           #:program-limit-exceeded
+           #:query-canceled
+           #:restrict-violation
+           #:system-error
+           #:unique-violation))
 
 (in-package :cl-postgres)
 
