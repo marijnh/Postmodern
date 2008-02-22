@@ -1,9 +1,21 @@
 (defpackage :cl-postgres-tests
-  (:use :common-lisp :fiveam :simple-date :cl-postgres :cl-postgres-error))
+  (:use :common-lisp :fiveam :simple-date :cl-postgres :cl-postgres-error)
+  (:export #:prompt-connection))
 
 (in-package :cl-postgres-tests)
 
 (defparameter *test-connection* '("test" "test" "" "localhost"))
+
+(defun prompt-connection (&optional (list *test-connection*))
+  (flet ((ask (name pos)
+           (format *query-io* "~a (enter to keep '~a'): " name (nth pos list))
+           (let ((answer (read-line *query-io*)))
+             (unless (string= answer "") (setf (nth pos list) answer)))))
+    (format *query-io* "~%To run this test, you must configure a database connection.~%")
+    (ask "Database name" 0)
+    (ask "User" 1)
+    (ask "Password" 2)
+    (ask "Hostname" 3)))
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
 ;; refers to a valid postgresql database, then after loading the file,

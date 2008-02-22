@@ -25,3 +25,10 @@
   :components
   ((:module :postmodern
             :components ((:file "tests")))))
+
+(defmethod perform ((op asdf:test-op) (system (eql (find-system :postmodern))))
+  (asdf:oos 'asdf:load-op :cl-postgres-tests)
+  (asdf:oos 'asdf:load-op :postmodern-tests)
+  (funcall (intern (string :prompt-connection) (string :cl-postgres-tests))
+           (eval (intern (string :*test-connection*) (string :postmodern-tests))))
+  (funcall (intern (string :run!) (string :it.bese.FiveAM)) :postmodern))

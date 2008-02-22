@@ -27,3 +27,8 @@
   :components
   ((:module :cl-postgres
             :components ((:file "tests")))))
+
+(defmethod perform ((op asdf:test-op) (system (eql (find-system :cl-postgres))))
+  (asdf:oos 'asdf:load-op :cl-postgres-tests)
+  (funcall (intern (string :prompt-connection) (string :cl-postgres-tests)))
+  (funcall (intern (string :run!) (string :it.bese.FiveAM)) :cl-postgres))
