@@ -26,7 +26,8 @@
            #:vector-row-reader
            #:alist-row-reader
            #:postgresql-warning
-           #:ignore-row-reader))
+           #:ignore-row-reader
+           #:register-type-reader))
 
 (defpackage :cl-postgres-error
   (:use :common-lisp :cl-postgres)

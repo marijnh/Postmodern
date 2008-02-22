@@ -21,7 +21,7 @@
     <ol>
       <li><a href="#connecting">Connecting</a></li>
       <li><a href="#querying">Querying</a></li>
-      <li><a href="#row-readers">Row readers</a></li>
+      <li><a href="#reading">Reading values</a></li>
       <li><a href="#conditions">Conditions</a></li>
       <li><a href="#index">Symbol-index</a></li>
     </ol>
@@ -118,7 +118,7 @@
 
     <p class="desc">Sends the given query to the given connection, and
     interprets the results (if there are any) with the given <a
-    href="#row-readers">row-reader</a>. If the database returns
+    href="#reading">row-reader</a>. If the database returns
     information about the amount of rows effected, this is returned as
     a second value.</p>
 
@@ -148,16 +148,10 @@
     returned. Again, the number or effected rows is optionally
     returned as a second value.</p>
 
-    <h2><a name="row-readers">Row readers</a></h2>
+    <h2><a name="reading">Reading values</a></h2>
 
-    <p>Row readers are methods for reading the results of queries.
-    Roughly, they are functions that perform the iteration over the
-    rows and cells in the result, and do <em>something</em> with the
-    returned values.</p>
-
-    <p>Cl-postgres knows about the commonly used PostgreSQL data
-    types, and will interpret them as the corresponding Lisp value.
-    This table shows the mapping:</p>
+    <p>Cl-postgres knows how to convert commonly used PostgreSQL data
+    types to Lisp values. This table shows the mapping:</p>
 
     <table>
       <thead>
@@ -179,6 +173,17 @@
         <tr><td>interval</td><td><a href="simple-date.html#interval"><code>interval</code></a></td></tr>
       </tbody>
     </table>
+
+    <p>Any type not shown in this table will be read as a string
+    containing PostgreSQL's textual representation of the value. You
+    can use <a
+    href="#register-type-reader"><code>register-type-reader</code></a>
+    to register a custom reader for a type.</p>
+
+    <p>Row readers are methods for reading and grouping the results of
+    queries. Roughly, they are functions that perform the iteration
+    over the rows and cells in the result, and do <em>something</em>
+    with the returned values.</p>
 
     <p class="def">
       <span>macro</span>
@@ -281,6 +286,20 @@
     <p class="desc">A row reader that completely ignores the result of
     a query.</p>
 
+    <p class="def">
+      <span>function</span>
+      <a name="register-type-reader"></a>
+      register-type-reader (oid function)
+    </p>
+
+    <p class="desc">Registers a function for interpreting values with
+    the given <a
+    href="http://www.postgresql.org/docs/8.2/interactive/datatype-oid.html">OID</a>.
+    The second argument can be any funcallable value. It will be used
+    when <code>next-field</code> is called on a field of this type, to
+    convert the textual representation of the value to something more
+    useful.</p>
+
     <h2><a name="conditions">Conditions</a></h2>
 
     <p>Opening or querying a database may raise errors. Cl-postgres
@@ -376,6 +395,7 @@
       <li><a href="#field-type">field-type</a></li>
       <li><a href="#ignore-row-reader">ignore-row-reader</a></li>
       <li><a href="#list-row-reader">list-row-reader</a></li>
+      <li><a href="#register-type-reader">register-type-reader</a></li>
       <li><a href="#row-reader">next-field</a></li>
       <li><a href="#row-reader">next-row</a></li>
       <li><a href="#open-database">open-database</a></li>

@@ -150,8 +150,8 @@ array of field-description objects."
                  (type (unsigned-byte 32) type-id))
         (setf (elt descriptions i)
               (make-instance 'field-description :name name :type-id type-id
-                             :interpreter (or interpreter #'interpret-unknown)
-                             :receive-binary-p (not (not interpreter))))))
+                             :interpreter (cdr interpreter)
+                             :receive-binary-p (car interpreter)))))
     descriptions))
 
 (defun terminate-connection (socket)

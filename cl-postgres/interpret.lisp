@@ -8,14 +8,28 @@ interpreters for those types know how to parse them.")
 (defparameter *known-types* (make-hash-table)
   "Mapping of OIDs to interpreter functions.")
 
-(defun type-interpreter (oid)
-  (gethash oid *known-types*))
-
-(defun interpret-unknown (stream size)
+(defun interpret-as-text (stream size)
   "This interpreter is used for types that we have no specific
 interpreter for -- it just reads the value as a string. \(We make sure
 values of unknown types are passed in text form.)"
   (#.*read-string* stream :byte-length size))
+
+(defun register-type-reader (oid function)
+  "Register an interpreter function for an OID. The function will be
+given the textual representation of the value as its argument, and
+should return the interpreted form of this value."
+  (setf (gethash oid *known-types*)
+        (cons nil (lambda (stream size)
+                    (funcall function
+                             (interpret-as-text stream size))))))
+
+(let ((default-interpreter (cons nil 'interpret-as-text)))
+  (defun type-interpreter (oid)
+    "Returns a pair representing the interpretation rules for this
+type. The car is a boolean indicating whether the type should be
+fetched as binary, and the cdr is a function that will read the value
+from the socket and build a Lisp value from it."
+    (gethash oid *known-types* default-interpreter)))
 
 (defmacro define-interpreter (oid name fields &body value)
   "A slightly convoluted macro for defining interpreter functions and
@@ -23,7 +37,7 @@ storing them in *known-types*. It allows two forms. The first is to
 pass a single type identifier after the type name, in that case a
 value of this type will be read and returned directly. The second is
 to pass a list of lists containing names and types, and then a body.
-In this case the names will be bound to values read from the socked
+In this case the names will be bound to values read from the socket
 and interpreted as the given types, and then the body will be run in
 the resulting environment. If the last field is of type bytes, string,
 or uint2s, all remaining data will be read and interpreted as an array
@@ -48,15 +62,15 @@ of the given type."
                      (incf length-used modifier)
                      `(,(integer-reader-name modifier nil) ,stream-name)))))
       `(setf (gethash ,oid *known-types*)
-        (lambda (,stream-name ,size-name)
-          (declare (type stream ,stream-name)
-                   (type integer ,size-name)
-                   (ignorable ,size-name))
-          ,(if (consp fields)
-               `(let ,(loop :for field :in fields
-                            :collect `(,(first field) ,(apply #'read-type (cdr field))))
-                 ,@value)
-               (read-type fields (car value))))))))
+        (cons t (lambda (,stream-name ,size-name)
+                  (declare (type stream ,stream-name)
+                           (type integer ,size-name)
+                           (ignorable ,size-name))
+                  ,(if (consp fields)
+                       `(let ,(loop :for field :in fields
+                                 :collect `(,(first field) ,(apply #'read-type (cdr field))))
+                          ,@value)
+                       (read-type fields (car value)))))))))
 
 (define-interpreter 18 "char" int 1)
 (define-interpreter 21 "int2" int 2)
