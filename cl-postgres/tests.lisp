@@ -1,5 +1,5 @@
 (defpackage :cl-postgres-tests
-  (:use :common-lisp :fiveam :simple-date :cl-postgres))
+  (:use :common-lisp :fiveam :simple-date :cl-postgres :cl-postgres-error))
 
 (in-package :cl-postgres-tests)
 
@@ -66,3 +66,12 @@
       (exec-query connection "gubble gubble gabble goo"))
     (is (equal (exec-query connection "select false" 'list-row-reader)
                '((nil))))))
+
+(test unique-violation-error
+  (with-test-connection
+    (exec-query connection "create table test (id int not null primary key, name text)")
+    (exec-query connection "insert into test values (1, 'bert')")
+    (signals database-unique-violation
+      (exec-query connection "insert into test values (1, 'harry')"))
+    (exec-query connection "drop table test")))
+

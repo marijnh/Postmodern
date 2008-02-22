@@ -28,6 +28,34 @@
            #:postgresql-warning
            #:ignore-row-reader))
 
+(defpackage :cl-postgres-error
+  (:use :common-lisp :cl-postgres)
+  (:export #:database-admin-shutdown
+           #:database-cannot-connect-now
+           #:database-check-violation
+           #:database-crash-shutdown
+           #:database-data-exception
+           #:database-division-by-zero
+           #:database-feature-not-supported
+           #:database-floating-point-exception
+           #:database-foreign-key-violation
+           #:database-insufficient-resources
+           #:database-integrity-violation
+           #:database-internal-error
+           #:database-invalid-datetime-format
+           #:database-lock-not-available
+           #:database-not-null-violation
+           #:database-numeric-value-out-of-range
+           #:database-object-in-use
+           #:database-object-state-error
+           #:database-operator-intervention
+           #:database-program-limit-exceeded
+           #:database-query-canceled
+           #:database-restrict-violation
+           #:database-system-error
+           #:database-unique-violation
+           #:database-warning))
+
 (in-package :cl-postgres)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)

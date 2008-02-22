@@ -3,31 +3,6 @@
 ;; For more information about the PostgreSQL scocket protocol, see
 ;; http://www.postgresql.org/docs/current/interactive/protocol.html
 
-(defparameter *current-query* nil)
-
-(define-condition database-error (error)
-  ((error-code :initarg :code :initform nil :accessor database-error-code
-               :documentation "The error code PostgreSQL associated
-with this error, if any.")
-   (message :initarg :message :accessor database-error-message
-            :documentation "Description of this error.")
-   (detail :initarg :detail :initform nil :accessor database-error-detail
-           :documentation "More elaborate description of this error,
-if any.")
-   (query :initform *current-query* :accessor database-error-query
-          :documentation "Query that led to the error, if any.")
-   (position :initarg :position :initform nil :accessor database-error-position))
-  (:report (lambda (err stream)
-             (format stream "Database error~@[ ~A~]: ~A~@[~%~A~]~@[~%Query: ~A~]"
-                     (database-error-code err)
-                     (database-error-message err)
-                     (database-error-detail err)
-                     (database-error-query err))))
-  (:documentation "This is the condition type that will be used to
-signal virtually all database-related errors \(though in some cases
-socket errors may be raised when a connection fails on the IP
-level)."))
-
 (define-condition protocol-error (error)
   ((message :initarg :message))
   (:report (lambda (err stream)
@@ -96,7 +71,8 @@ database-error condition."
         ;; away.
         (when (or (string= code "57P01") (string= code "57P02"))
           (ensure-socket-is-closed socket))
-        (error 'database-error :code code :message (get-field #\M)
+        (error (cl-postgres-error::get-error-type code)
+               :code code :message (get-field #\M)
                :detail (or (get-field #\D) (get-field #\H))
                :position (get-field #\p))))))
 

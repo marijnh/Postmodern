@@ -294,7 +294,11 @@
       database-error
     </p>
 
-    <p class="desc">The type of database-related conditions.</p>
+    <p class="desc">The type of database-related conditions. For
+    errors that you may want to catch by type, the
+    <code>cl-postgres-error</code> package defines a bucket of
+    subtypes used for specific errors. See the
+    <code>cl-postgres/package.lisp</code> file for a list.</p>
 
     <p class="def">
       <span>method</span>
@@ -323,7 +327,9 @@
     </p>
 
     <p class="desc">The error code PostgreSQL associated with this
-    error, if any.</p>
+    error, if any. See the <a
+    href="http://www.postgresql.org/docs/8.3/interactive/errcodes-appendix.html">PostgreSQL
+    manual</a> for their meaning.</p>
 
     <p class="def">
       <span>method</span>

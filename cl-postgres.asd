@@ -15,10 +15,11 @@
   :components 
   ((:module :cl-postgres
             :components ((:file "package")
+                         (:file "errors" :depends-on ("package"))
                          (:file "communicate" :depends-on ("package"))
                          (:file "messages" :depends-on ("communicate"))
                          (:file "interpret" :depends-on ("communicate"))
-                         (:file "protocol" :depends-on ("interpret" "messages"))
+                         (:file "protocol" :depends-on ("interpret" "messages" "errors"))
                          (:file "public" :depends-on ("protocol"))))))
 
 (defsystem :cl-postgres-tests
