@@ -1,5 +1,7 @@
 (defpackage :postmodern
-  (:use :common-lisp :s-sql :cl-postgres :simple-date)
+  (:use #-postmodern-use-mop :common-lisp
+        #+postmodern-use-mop :closer-common-lisp
+        :s-sql :cl-postgres :simple-date)
   (:nicknames :pomo)
   (:export 
    #:connect #:disconnect #:reconnect #:with-connection
@@ -39,13 +41,6 @@
    #:time= #:time> #:time< #:time<= #:time>=))
 
 (in-package :postmodern)
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  ;; Check for thread support, the authoritative setting comes from
-  ;; the system definition now (so it can conditionally include
-  ;; :bordeaux-threads), but if you are not using ASDF you'll have to
-  ;; set it in another way.
-  (defparameter *threads* postmodern-system:*threads*))
 
 ;;; Copyright (c) 2006 Marijn Haverbeke
 ;;;

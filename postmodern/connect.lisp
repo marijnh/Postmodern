@@ -77,19 +77,19 @@ database."
 (defparameter *connection-pools* (make-hash-table :test 'equal)
   "Maps pool specifiers to lists of pooled connections.")
 
+#+postmodern-thread-safe
 (defparameter *pool-lock*
-  (if *threads*
-      (funcall (intern "MAKE-LOCK" :bordeaux-threads) "connection-pool-lock")
-      nil)
+  (bordeaux-threads:make-lock "connection-pool-lock")
   "A lock to prevent multiple threads from messing with the connection
-pool at the same time. Or nil when no threads support is required.")
+pool at the same time.")
 
 (defmacro with-pool-lock (&body body)
   "Aquire a lock for the pool when evaluating body \(if thread support
 is present)."
-  (if *threads*
-      `(,(intern "WITH-LOCK-HELD" :bordeaux-threads) (*pool-lock*) ,@body)
-      `(progn ,@body)))
+  #+postmodern-thread-safe
+  `(bordeaux-threads:with-lock-held (*pool-lock*) ,@body)
+  #-postmodern-thread-safe
+  `(progn ,@body))
 
 (defun get-from-pool (type)
   "Get a database connection from the specified pool, returns nil if

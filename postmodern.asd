@@ -4,13 +4,17 @@
 (in-package :postmodern-system)
 
 ;; Change this to manually turn threading support on or off.
-(defparameter *threads* #+(or allegro armedbear cmu corman (and digitool ccl-5.1)
-                              ecl lispworks openmcl sbcl) t
-                        #-(or allegro armedbear cmu corman (and digitool ccl-5.1)
-                              ecl lispworks openmcl sbcl) nil)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  #+(or allegro armedbear cmu corman (and digitool ccl-5.1)
+        ecl lispworks openmcl sbcl)
+  (pushnew :postmodern-thread-safe *features*)
+
+  #+(or allegro clisp ecl lispworks mcl openmcl cmu sbcl)
+  (pushnew :postmodern-use-mop *features*))
 
 (defsystem :postmodern
-  :depends-on (:cl-postgres :s-sql . #.(if *threads* '(:bordeaux-threads)))
+  :depends-on (:cl-postgres :s-sql #+postmodern-use-mop :closer-mop
+                            #+postmodern-thread-safe :bordeaux-threads)
   :components 
   ((:module :postmodern
             :components ((:file "package")
@@ -18,6 +22,7 @@
                          (:file "query" :depends-on ("connect"))
                          (:file "prepare" :depends-on ("query"))
                          (:file "util" :depends-on ("query"))
+                         #+postmodern-use-mop
                          (:file "table" :depends-on ("util"))))))
 
 (defsystem :postmodern-tests
