@@ -57,8 +57,10 @@ message definitions themselves stay readable."
 (defun bytes-to-hex-string (bytes)
   "Convert an array of 0-255 numbers into the corresponding string of
 \(lowercase) hex codes."
-  (let ((digits "0123456789abcdef")
-	(result (make-string (* (length bytes) 2))))
+  (declare (type (vector (unsigned-byte 8)) bytes)
+           #.*optimize*)
+  (let ((digits #.(coerce "0123456789abcdef" 'simple-base-string))
+        (result (make-string (* (length bytes) 2) :element-type 'base-char)))
     (loop :for byte :across bytes
 	  :for pos :from 0 :by 2
 	  :do (setf (char result pos) (aref digits (ldb (byte 4 4) byte))
@@ -67,8 +69,11 @@ message definitions themselves stay readable."
 
 (defun md5-password (password user salt)
   "Apply the hashing that PostgreSQL expects to a password."
+  (declare (type string user password)
+           (type (vector (unsigned-byte 8)) salt)
+           #.*optimize*)
   (flet ((md5-and-hex (sequence)
-	   (bytes-to-hex-string (md5:md5sum-sequence sequence))))
+           (values (bytes-to-hex-string (md5:md5sum-sequence sequence)))))
     (let* ((pass1 (md5-and-hex (concatenate 'string password user)))
            (pass2 (md5-and-hex (concatenate '(vector (unsigned-byte 8) *) (#.*string-bytes* pass1) salt))))
       (concatenate 'string "md5" pass2))))
