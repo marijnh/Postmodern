@@ -91,38 +91,6 @@
       (is (= number 55))
       (is (string= string "foobar")))))
 
-(def-fixture with-defined-table ()
-  (deftable test-data (my-template)
-    ((a :type (or (varchar 100) db-null) :initarg :a :accessor test-a)
-     (b :type boolean :initarg :b :accessor test-b))
-    (:class-name test-data)
-    (:auto-id t)))
-
-(test deftable
-  (with-fixture with-defined-table ()
-    (with-test-connection
-      (create-table 'test-data 'my-template)
-      (is (= (next-id 'test-data) 1))
-      (is (not (get-dao 'test-data 1)))
-      (let ((dao (make-instance 'test-data :a "quux" :b nil)))
-        (is (= (get-id dao) 2))
-        (save-dao dao)
-        (is (dao-exists-p dao)))
-      (let ((dao (get-dao 'test-data 2)))
-        (is (not (null dao)))
-        (is (string= (test-a dao) "quux"))
-        (delete-dao dao))
-      (is (not (select-dao 'test-data)))
-      (drop-table 'test-data 'my-template))))
-
-(test template
-  (with-fixture with-defined-table ()
-    (with-test-connection
-      (create-template 'my-template)
-      (is (table-exists-p 'test-data))
-      (clear-template 'my-template)
-      (is (not (table-exists-p 'test-data))))))
-
 (test transaction
   (with-test-connection
     (execute (:create-table test-data ((value :type integer))))
@@ -142,3 +110,32 @@
       (abort-transaction transaction))
     (is (length (query (:select '* :from 'test-data))) 1)
     (execute (:drop-table 'test-data))))
+
+(defclass test-data ()
+  ((id :row-type integer :initarg :id :accessor test-id)
+   (a :row-type (or (varchar 100) db-null) :initarg :a :accessor test-a)
+   (b :row-type boolean :initarg :b :accessor test-b))
+  (:metaclass dao-class)
+  (:table-name dao-test)
+  (:keys id))
+
+(test dao-class
+  (with-test-connection
+    (dao-create-table 'test-data)
+    (is (member :dao-test (list-tables)))
+    (is (null (get-dao 'test-data 1)))
+    (let ((dao (make-instance 'test-data :id 1 :a "quux" :b nil)))
+      (is (not (dao-exists-p dao)))
+      (save-dao dao)
+      (is (dao-exists-p dao)))
+    (let ((dao (get-dao 'test-data 1)))
+      (is (not (null dao)))
+      (setf (test-b dao) t)
+      (update-dao dao))
+    (let ((dao (get-dao 'test-data 1)))
+      (is (not (null dao)))
+      (is (string= (test-a dao) "quux"))
+      (is (eq (test-b dao) t))
+      (delete-dao dao))
+    (is (not (select-dao 'test-data)))
+    (dao-drop-table 'test-data)))

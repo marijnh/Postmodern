@@ -1,105 +1,76 @@
+;; TODO regular slots, think about inheritance
+
 (in-package :postmodern)
 
-(defclass table-field ()
-  ((name :initarg :name :accessor table-field-name)
-   (sql-name :initarg :sql-name :accessor table-field-sql-name)
-   (type :initarg :type :accessor table-field-type))
-  (:documentation "Representation of a table field."))
+(defclass dao-class (standard-class)
+  ((keys :initarg :keys :initform (error "No primary key defined for DAO class.")
+         :reader dao-keys)
+   (table-name :initarg :table-name :reader table-name)
+   (row-reader :reader dao-row-reader)))
 
-(defclass table ()
-  ((name :initarg :name :accessor table-name)
-   (class-name :initarg :class-name :accessor table-class-name)
-   (fields :initarg :fields :accessor table-fields)
-   (indices :initarg :indices :accessor table-indices)
-   (id-sequence :initarg :id-sequence :accessor table-id-sequence))
-  (:documentation "Representation of a table."))
+(defmethod validate-superclass ((class dao-class) (super-class standard-class))
+  t)
 
-(defclass index ()
-  ((fields :initarg :fields :reader index-fields)
-   (unique-p :initarg :unique-p :reader index-unique-p)))
+(defun dao-slots (class)
+  (remove-if-not (lambda (x) (typep x 'dao-slot)) (class-direct-slots class)))
+(defun dao-fields (class)
+  (mapcar 'slot-definition-name (dao-slots class)))
+(defun dao-table (object)
+  (table-name (class-of object)))
 
-(defparameter *templates* (make-hash-table)
-  "Location for storing database templates.")
+(defmethod shared-initialize :after ((class dao-class) slot-names &rest initargs)
+  (declare (ignore slot-names initargs))
+  (unless (every (lambda (x) (member x (dao-fields class))) (dao-keys class))
+    (error "Class ~A has a key that is not also a slot." (class-name class)))
+  (setf (slot-value class 'table-name)  
+        (if (slot-boundp class 'table-name)
+            (let ((name (car (table-name class))))
+              (if (symbolp name) name (intern name)))
+            (class-name class)))
+  (build-row-reader class)
+  (build-dao-methods class))
 
-(defun template (name)
-  (gethash name *templates*))
-(defun (setf template) (value name)
-  (setf (gethash name *templates*) value))
-(defmacro dotemplate ((table-name template) &body body)
-  (let ((ignored (gensym)))
-    `(maphash (lambda (,table-name ,ignored)
-                (declare (ignore ,ignored))
-                ,@body)
-      (or (template ,template)
-       (error "Template ~A does not exists." ,template)))))
 
-(defun table (name &optional template)
-  "Get the named table inside the named template."
-  (let ((template-table (template template)))
-    (if template-table
-        (gethash name template-table)
-        nil)))
-(defun (setf table) (value name &optional template)
-  (let ((template-table (template template)))
-    (unless template-table
-        (setf template-table (make-hash-table)
-              (template template) template-table))
-    (setf (gethash name template-table) value)))
+(defclass dao-slot (standard-direct-slot-definition)
+  ((default :initarg :default :accessor dao-slot-default)
+   (row-type :initarg :row-type :accessor slot-row-type)
+   (sql-name :accessor slot-sql-name)))
 
-(defun extract-field (slot)
-  "Transform a list of defclass-style slot declarations to a list of
-table-field objects."
-  (make-instance 'table-field :name (car slot) :sql-name (to-sql-name (car slot))
-                 :type (or (getf (cdr slot) :type)
-                           (error "No type specified for slot ~A." (car slot)))))
+(defmethod initialize-instance :after ((slot dao-slot) &key &allow-other-keys)
+  (setf (slot-sql-name slot) (to-sql-name (slot-definition-name slot))))
 
-(defun initialize-row-reader (table)
+(defmethod direct-slot-definition-class ((class dao-class) &key row-type &allow-other-keys)
+  (if row-type 'dao-slot (call-next-method)))
+
+(defun build-row-reader (class)
   "Initialize the row-reader for this table to a reader that collects
 instances of the associated class and initializes their slots to the
 values from the query."
-  (let ((table-fields (table-fields table))
-        (n-fields (length (table-fields table)))
-        (class-name (table-class-name table)))
-    (row-reader (query-fields)
-      (assert (= (length query-fields) n-fields))
-      (loop :while (next-row)
-            :collect
-            (let ((instance (allocate-instance (find-class class-name))))
-              (flet ((relevant-field (probable-field name)
-                       (or (and (string= (table-field-sql-name probable-field) name)
-                                probable-field)
-                           (find-if (lambda (field) (string= (table-field-sql-name field) name))
-                                    table-fields)
-                           (error "Field ~A does not exist in defined table ~A." name (table-name table)))))
-                (loop :for query-field :across query-fields
-                      :for table-field :in table-fields
-                      :do (setf (slot-value instance (table-field-name (relevant-field table-field 
-                                                                                       (field-name query-field))))
-                                (next-field query-field)))
-                instance))))))
+  (let* ((fields (dao-slots class))
+         (n-fields (length fields)))
+    (flet ((relevant-field (probable-field name)
+                             (or (and (string= (slot-sql-name probable-field) name) probable-field)
+                                 (find-if (lambda (field) (string= (slot-sql-name field) name)) fields)
+                                 (error "Field ~A does not exist in table class ~A." name (class-name class)))))
+      (setf (slot-value class 'row-reader)
+            (row-reader (query-fields)
+              (assert (= (length query-fields) n-fields))
+              (loop :while (next-row)
+                    :collect
+                    (let ((instance (allocate-instance class)))
+                      (loop :for query-field :across query-fields
+                            :for dao-field :in fields
+                            :do (setf (slot-value instance (slot-definition-name
+                                                            (relevant-field dao-field (field-name query-field))))
+                                      (next-field query-field)))
+                      instance)))))))
 
-(defgeneric dao-exists-p (dao)
-  (:documentation "Return a boolean indicating whether the given dao
-exists in the database."))
-(defgeneric insert-dao (dao)
-  (:documentation "Insert the given dao into the database."))
-(defgeneric update-dao (dao)
-  (:documentation "Update the dao's representation in the database
-with the values in the given object."))
-(defgeneric delete-dao (dao)
-  (:documentation "Delete the given dao from the database."))
-(defgeneric query-dao% (type query)
-  (:documentation "Execute the given query, and convert the result
-into daos of the given type."))
-(defgeneric dao-table (type)
-  (:documentation "Get the name of the table associated with the given
-dao type."))
-(defgeneric get-dao (type &rest args)
-  (:documentation "Get the dao corresponding to the given primary key,
-or return nil if it does not exist."))
-(defgeneric get-id (dao)
-  (:documentation "Get the id for a dao that refers to a table that
-has :auto-ids."))
+(defgeneric dao-exists-p (object))
+(defgeneric update-dao (object))
+(defgeneric insert-dao (object))
+(defgeneric delete-dao (object))
+(defgeneric fetch-defaults (object))
+(defgeneric get-dao (type &rest keys))
 
 (defmacro deftable (name templates fields &rest options)
   "Store a table structure under the given name, in the given
@@ -163,12 +134,10 @@ index is used as primary key (:auto-id adds an index on the id)."
                           (setf (slot-value dao ',auto-id) (sequence-next ',auto-id-sequence-name)))))
                   (execute (:insert-into ',name :set ,@(set-fields 'dao (mapcar 'car fields)))))
                 (defmethod update-dao ((dao ,class))
-                  ,(when (remove-if (lambda (f) (member f (car indices)))
-                                                                       (mapcar 'car fields))
-                    `(execute (:update ',name
-                                      :set ,@(set-fields 'dao (remove-if (lambda (f) (member f (car indices)))
-                                                                         (mapcar 'car fields)))
-                                      :where ,(primary-key-test 'dao)))))
+                  (execute (:update ',name
+                                    :set ,@(set-fields 'dao (remove-if (lambda (f) (member f (car indices)))
+                                                                       (mapcar 'car fields)))
+                                    :where ,(primary-key-test 'dao))))
                 (defmethod delete-dao ((dao ,class))
                   (execute (:delete-from ',name :where ,(primary-key-test 'dao))))
                 (defmethod query-dao% ((type (eql ',class)) query)
@@ -183,11 +152,58 @@ index is used as primary key (:auto-id adds an index on the id)."
                                    row-reader)))))
           (values))))))
 
-(defun save-dao (dao)
-  "Save a dao: update it when it already exists, insert it otherwise."
-  (if (dao-exists-p dao)
-      (update-dao dao)
-      (insert-dao dao)))
+(defun build-dao-methods (class)
+  (let* ((key-fields (dao-keys class))
+         (value-fields (remove-if (lambda (x) (member x key-fields)) (dao-fields class)))
+         (table-name (table-name class)))
+    ;; Cheat
+    (setf (find-class 'target-class) class)
+    (flet ((test-fields (fields)
+             `(:and ,@(loop :for field :in fields :collect (list := field '$$))))
+           (set-fields (fields)
+             (loop :for field :in fields :append (list field '$$)))
+           (slot-values (object &rest slots)
+             (loop :for slot :in (apply 'append slots) :collect (slot-value object slot))))
+
+      (let ((tmpl (sql-template `(:select (:exists (:select t :from ,table-name
+                                                    :where ,(test-fields key-fields)))))))
+        (defmethod dao-exists-p ((object target-class))
+          (query (apply tmpl (slot-values object key-fields)) :single)))
+      (let ((tmpl (sql-template `(:update ,table-name :set ,@(set-fields value-fields)
+                                  :where ,(test-fields key-fields)))))
+        (defmethod update-dao ((object target-class))
+          (execute (apply tmpl (slot-values object value-fields key-fields)))))
+
+      (defmethod insert-dao ((object target-class))
+        (execute (sql-compile
+                  `(:insert-into ,table-name :set
+                     ,@(loop :for field :in (dao-fields class) :if (slot-boundp object field)
+                             :append (list field (slot-value object field)))))))
+
+      (let ((tmpl (sql-template `(:delete-from ,table-name :where ,(test-fields key-fields)))))
+        (defmethod delete-dao ((object target-class))
+          (execute (apply tmpl (slot-values object key-fields)))))
+
+      (let ((defaulted (remove-if-not (lambda (x) (slot-boundp x 'default)) (dao-slots class))))
+        (if defaulted
+            (let ((query (sql-compile `(:select ,@(mapcar 'dao-slot-default defaulted)))))
+              (defmethod fetch-defaults ((object target-class))
+                (loop :for value :in (query query :row)
+                      :for slot :in defaulted
+                      :do (setf (slot-value object (slot-definition-name slot)) value))))
+            (defmethod fetch-defaults ((object target-class))
+              (declare (ignore object)))))
+
+      (let ((tmpl (sql-template `(:select * :from ,table-name :where ,(test-fields key-fields)))))
+        (defmethod get-dao ((type (eql (class-name class))) &rest keys)
+          (car (exec-query *database* (apply tmpl keys) (dao-row-reader class)))))
+
+      (defmethod initialize-instance :after ((object target-class) &key defer-defaults &allow-other-keys)
+        (unless defer-defaults
+          (fetch-defaults object))))))
+
+(defun query-dao% (type query)
+  (exec-query *database* query (dao-row-reader (find-class type))))
 
 (defmacro query-dao (type query)
   "Execute a query and return the result as daos of the given type.
@@ -204,63 +220,37 @@ holds."
     (when ordering
       (setf query `(:order-by ,query ,@ordering)))
     `(let ((,type-name ,type))
-      (query-dao% ,type-name (sql ,query)))))
+      (query-dao% ,type-name (sql (:select '* :from (dao-table ,type-name)
+                                            :where ,(if (stringp test) `(:raw ,test) test)))))))
 
-(defun table! (table template)
-  "Lookup a table, complain if it does not exist."
-  (or (table table template)
-      (error "No table name ~A found in template ~A." table template)))
-  
-(defun next-id (table &optional template)
-  "Get the next id for a table that has :auto-ids."
-  (sequence-next (or (table-id-sequence (table! table template))
-                     (error "Table ~A in template ~A does not have an id sequence." table template))))
+(defun save-dao (dao)
+  "Save a dao: update it when it already exists, insert it otherwise."
+  (if (dao-exists-p dao)
+      (update-dao dao)
+      (insert-dao dao)))
 
-(defun create-table (table &optional template)
+(defun dao-create-table (table)
   "Create a defined table and its indices in the database."
-  (let ((table (table! table template)))
-    (flet ((index-name (fields)
-             (format nil "~A~{_~A~}_index" (to-sql-name (table-name table))
-                     (mapcar #'to-sql-name (index-fields fields)))))
-      (execute
-       (sql-compile
-        `(:create-table ,(table-name table)
-          ,(mapcar (lambda (field)
-                     (list (table-field-name field) :type (table-field-type field)))
-                    (table-fields table))
-          (:primary-key ,@(index-fields (car (table-indices table)))))))
-      (dolist (index (cdr (table-indices table)))
-        (execute (sql-compile `(,(if (index-unique-p index) :create-unique-index :create-index)
-                                 (:raw ,(index-name index))
-                                :on ,(table-name table)
-                                :fields ,@(index-fields index)))))
-      (when (table-id-sequence table)
-        (execute (:create-sequence (table-id-sequence table)))))))
+  (setf table (find-class table))
+  (execute
+   (sql-compile
+    `(:create-table ,(table-name table)
+                    ,(loop :for slot :in (dao-slots table)
+                           :if (typep slot 'dao-slot)
+                           :collect `(,(slot-definition-name slot) :type ,(slot-row-type slot)
+                                       ,@(when (slot-boundp slot 'default) `(:default ,(dao-slot-default slot)))))
+                    (:primary-key ,@(dao-keys table))))))
 
-(defun drop-table (table &optional template)
+(defun dao-drop-table (table)
   "Drop a defined table."
-  (let ((table (table! table template)))
-    (execute (sql (:drop-table (table-name table))))
-    (when (table-id-sequence table)
-      (execute (:drop-sequence (table-id-sequence table))))))
+  (execute (:drop-table (table-name (find-class table)))))
 
-(defun reset-table (table &optional template)
+(defun dao-reset-table (table)
   "Remove and re-create a defined table."
-  (drop-table table template)
-  (create-table table template))
+  (dao-drop-table table)
+  (dao-create-table table))
 
-(defun create-template (&optional template)
-  "Create all the tables in a template \(default is the nil
-template)."
-  (dotemplate (table template)
-    (create-table table template)))
-
-(defun clear-template (&optional template)
-  "Drop all the tables in a template."
-  (dotemplate (table template)
-    (drop-table table template)))
-
-;;; Copyright (c) 2006 Marijn Haverbeke & Streamtech
+;;; Copyright (c) Marijn Haverbeke
 ;;;
 ;;; This software is provided 'as-is', without any express or implied
 ;;; warranty. In no event will the authors be held liable for any

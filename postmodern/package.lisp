@@ -3,6 +3,14 @@
         #+postmodern-use-mop :closer-common-lisp
         :s-sql :cl-postgres :simple-date)
   (:nicknames :pomo)
+
+  #+postmodern-use-mop
+  (:export
+   #:dao-class
+   #:dao-exists-p #:query-dao #:select-dao #:get-dao
+   #:save-dao #:insert-dao #:update-dao #:delete-dao
+   #:dao-create-table #:dao-drop-table #:dao-reset-table)
+   
   (:export 
    #:connect #:disconnect #:reconnect #:with-connection
    #:call-with-connection #:with-connection*
@@ -16,11 +24,7 @@
    #:list-views #:view-exists-p
    #:with-transaction #:commit-transaction #:abort-transaction
    #:with-savepoint #:rollback-savepoint #:release-savepoint
-   #:deftable #:get-id #:next-id #:db-null
-   #:dao-exists-p #:query-dao #:select-dao #:get-dao
-   #:save-dao #:insert-dao #:update-dao #:delete-dao
-   #:create-table #:drop-table #:reset-table
-   #:create-template #:clear-template
+   #:db-null
 
    ;; Reduced S-SQL interface
    #:sql #:sql-compile
