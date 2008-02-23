@@ -27,7 +27,8 @@
            #:alist-row-reader
            #:postgresql-warning
            #:ignore-row-reader
-           #:register-type-reader))
+           #:register-type-reader
+           #:*query-log*))
 
 (defpackage :cl-postgres-error
   (:use :common-lisp :cl-postgres)

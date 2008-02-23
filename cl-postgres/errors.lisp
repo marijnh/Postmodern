@@ -1,6 +1,15 @@
 (in-package :cl-postgres)
 
 (defparameter *current-query* nil)
+(defparameter *query-log* nil)
+
+(defmacro with-query (query &body body)
+  (let ((q-name (gensym)))
+    `(let* ((,q-name ,query)
+            (*current-query* ,q-name))
+       (when *query-log*
+         (format *query-log* "CL-POSTGRES: ~a~%" ,q-name))
+       ,@body)))
 
 (define-condition database-error (error)
   ((error-code :initarg :code :initform nil :accessor database-error-code

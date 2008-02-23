@@ -257,38 +257,38 @@ results."
            (type string query)
            #.*optimize*)
   (with-syncing
-    (let ((row-description nil)
-          (*current-query* query))
-      (simple-parse-message socket query)
-      (simple-describe-message socket)
-      (flush-message socket)
-      (force-output socket)
-      (message-case socket
-        ;; ParseComplete
-        (#\1))
-      (message-case socket
-        ;; ParameterDescription
-        (#\t :skip))
-      (message-case socket
-         ;; RowDescription
-        (#\T (setf row-description (read-field-descriptions socket)))
-        ;; NoData
-        (#\n))
-      (simple-bind-message socket (map 'vector 'field-binary-p row-description))
-      (simple-execute-message socket)
-      (sync-message socket)
-      (setf sync-sent t)
-      (force-output socket)
-      (message-case socket
-        ;; BindComplete
-        (#\2))
-      (returning-effected-rows
-          (if row-description
-              (funcall row-reader socket row-description)
-              (look-for-row socket))
+    (with-query query
+      (let ((row-description nil))
+        (simple-parse-message socket query)
+        (simple-describe-message socket)
+        (flush-message socket)
+        (force-output socket)
         (message-case socket
-           ;; ReadyForQuery, skipping transaction status
-          (#\Z (read-uint1 socket)))))))
+          ;; ParseComplete
+          (#\1))
+        (message-case socket
+          ;; ParameterDescription
+          (#\t :skip))
+        (message-case socket
+          ;; RowDescription
+          (#\T (setf row-description (read-field-descriptions socket)))
+          ;; NoData
+          (#\n))
+        (simple-bind-message socket (map 'vector 'field-binary-p row-description))
+        (simple-execute-message socket)
+        (sync-message socket)
+        (setf sync-sent t)
+        (force-output socket)
+        (message-case socket
+          ;; BindComplete
+          (#\2))
+        (returning-effected-rows
+            (if row-description
+                (funcall row-reader socket row-description)
+                (look-for-row socket))
+          (message-case socket
+            ;; ReadyForQuery, skipping transaction status
+            (#\Z (read-uint1 socket))))))))
 
 (defun send-parse (socket name query)
   "Send a parse command to the server, giving it a name."
@@ -296,7 +296,7 @@ results."
            (type string name query)
            #.*optimize*)
   (with-syncing
-    (let ((*current-query* query))
+    (with-query query
       (parse-message socket name query)
       (flush-message socket)
       (force-output socket)
