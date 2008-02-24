@@ -73,7 +73,7 @@ message definitions themselves stay readable."
            (type (vector (unsigned-byte 8)) salt)
            #.*optimize*)
   (flet ((md5-and-hex (sequence)
-           (values (bytes-to-hex-string (md5:md5sum-sequence sequence)))))
+           (bytes-to-hex-string (md5:md5sum-sequence sequence))))
     (let* ((pass1 (md5-and-hex (concatenate 'string password user)))
            (pass2 (md5-and-hex (concatenate '(vector (unsigned-byte 8) *) (#.*string-bytes* pass1) salt))))
       (concatenate 'string "md5" pass2))))
