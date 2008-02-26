@@ -660,7 +660,10 @@ to runtime. Used to create stored procedures."
 (def-sql-op :drop-sequence (name)
   `("DROP SEQUENCE " ,@(sql-expand name)))
 
-;;; Copyright (c) 2006 Marijn Haverbeke & Streamtech
+(def-sql-op :drop-view (name)
+  `("DROP VIEW " ,@(sql-expand name)))
+
+;;; Copyright (c) Marijn Haverbeke & Streamtech
 ;;;
 ;;; This software is provided 'as-is', without any express or implied
 ;;; warranty. In no event will the authors be held liable for any
