@@ -93,18 +93,17 @@ element."
 (defun make-sql-name (sym)
   "Convert a Lisp symbol into a name that can be an sql table, column,
 or operation name."
-  (cond ((eq sym '*) "*") ;; Special case
-        ((and (> (length (symbol-name sym)) 1) ;; Placeholders like $2
-              (char= (char (symbol-name sym) 0) #\$)
-              (every #'digit-char-p (subseq (symbol-name sym) 1)))
-         (symbol-name sym))
-        (t (flet ((allowed-char (x)
-                    (or (alphanumericp x) (eq x #\.))))
-             (let ((name (string-downcase (symbol-name sym))))
-               (dotimes (i (length name))
-                 (unless (allowed-char (char name i))
-                   (setf (char name i) #\_)))
-               name)))))
+  (if (and (> (length (symbol-name sym)) 1) ;; Placeholders like $2
+           (char= (char (symbol-name sym) 0) #\$)
+           (every #'digit-char-p (subseq (symbol-name sym) 1)))
+      (symbol-name sym)
+      (flet ((allowed-char (x)
+               (or (alphanumericp x) (eq x #\.) (eq x #\*))))
+        (let ((name (string-downcase (symbol-name sym))))
+          (dotimes (i (length name))
+            (unless (allowed-char (char name i))
+              (setf (char name i) #\_)))
+          name))))
 
 (defparameter *escape-sql-names-p* nil
   "Setting this to T will make S-SQL add double quotes around
