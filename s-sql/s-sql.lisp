@@ -633,10 +633,11 @@ to runtime. Used to create stored procedures."
   `("DROP TABLE " ,@(sql-expand name)))
 
 (defun expand-create-index (name args)
-  (split-on-keywords ((on) (using ?) (fields *)) args
+  (split-on-keywords ((on) (using ?) (fields *) (where ?)) args
     `(,@(sql-expand name) " ON " ,@(sql-expand (first on))
       ,@(when using `(" USING " ,(symbol-name (first using))))
-      " (" ,@(sql-expand-list fields) ")")))
+      " (" ,@(sql-expand-list fields) ")"
+      ,@(when where `(" WHERE " ,@(sql-expand (first where)))))))
 
 (def-sql-op :create-index (name &rest args)
   (cons "CREATE INDEX " (expand-create-index name args)))
