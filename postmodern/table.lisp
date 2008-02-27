@@ -163,10 +163,12 @@ index is used as primary key (:auto-id adds an index on the id)."
                           (setf (slot-value dao ',auto-id) (sequence-next ',auto-id-sequence-name)))))
                   (execute (:insert-into ',name :set ,@(set-fields 'dao (mapcar 'car fields)))))
                 (defmethod update-dao ((dao ,class))
-                  (execute (:update ',name
-                                    :set ,@(set-fields 'dao (remove-if (lambda (f) (member f (car indices)))
-                                                                       (mapcar 'car fields)))
-                                    :where ,(primary-key-test 'dao))))
+                  ,(when (remove-if (lambda (f) (member f (car indices)))
+                                                                       (mapcar 'car fields))
+                    `(execute (:update ',name
+                                      :set ,@(set-fields 'dao (remove-if (lambda (f) (member f (car indices)))
+                                                                         (mapcar 'car fields)))
+                                      :where ,(primary-key-test 'dao)))))
                 (defmethod delete-dao ((dao ,class))
                   (execute (:delete-from ',name :where ,(primary-key-test 'dao))))
                 (defmethod query-dao% ((type (eql ',class)) query)
