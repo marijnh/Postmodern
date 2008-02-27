@@ -67,8 +67,9 @@ is reached or the given amount of bytes have been read."
                                                    (the fixnum (read-byte socket))))
                           ,(return-form signed))))))
       `(progn
-         (declaim (inline ,(integer-reader-name bytes t)
-                          ,(integer-reader-name bytes nil)))
+;; This causes weird errors on SBCL in some circumstances. Disabled for now.
+;;         (declaim (inline ,(integer-reader-name bytes t)
+;;                          ,(integer-reader-name bytes nil)))
          ,(generate-reader t)
          ,(generate-reader nil)))))
 
