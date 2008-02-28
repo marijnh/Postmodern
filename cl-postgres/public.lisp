@@ -139,7 +139,7 @@ result."
 apply a row-reader to the result."
   (check-type name string)
   (check-type parameters list)
-  (with-reconnect-restart
+  (with-reconnect-restart connection
     (let ((*timestamp-format* (connection-timestamp-format connection)))
       (with-availability connection
         (send-execute (connection-socket connection)
