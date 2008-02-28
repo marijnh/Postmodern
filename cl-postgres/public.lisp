@@ -64,8 +64,6 @@ if it isn't."
   (unless (database-open-p conn)
     (initiate-connection conn)))
 
-(define-condition database-connection-lost (database-error) ())
-
 (defun ensure-connection (conn)
   "Used to make sure a connection object is connected before doing
 anything with it."
@@ -94,24 +92,37 @@ connection from multiple threads, but you should not do that at all."
       (unwind-protect (progn ,@body)
         (setf (connection-available ,connection-name) t)))))
 
-(defmacro shoot-stream-on-error (stream &body body)
-  "When, inside the body, an error occurs regarding the given stream,
-make sure the stream gets closed so that the next time this connection
-is used, we can see right away that it needs to be reconnected."
-  (let ((stream-name (gensym)))
-    `(let ((,stream-name ,stream))
-      (handler-case (progn ,@body)
-        (stream-error (e)
-          (when (eq ,stream-name (stream-error-stream e))
-            (ensure-socket-is-closed ,stream-name))
-          (error e))))))
+(defmacro with-reconnect-restart (connection &body body)
+  "When, inside the body, an error occurs that breaks the connection
+socket, a condition of type database-connection-error is raised,
+offering a :reconnect restart."
+  (let ((connection-name (gensym))
+        (body-name (gensym))
+        (retry-name (gensym)))
+  `(let ((,connection-name ,connection))
+    (ensure-connection ,connection-name)
+    (labels ((,body-name ()
+               (handler-case (progn ,@body)
+                 (stream-error (e)
+                   (cond ((eq (connection-socket ,connection-name) (stream-error-stream e))
+                          (ensure-socket-is-closed (connection-socket ,connection-name))
+                          (change-class e 'database-stream-error)
+                          (,retry-name e))
+                         (t (error e))))
+                 (cl-postgres-error:server-shutdown (e)
+                   (,retry-name e))))
+             (,retry-name (err)
+               (restart-case (error err)
+                 (:reconnect () :report "Try to reconnect"
+                             (reopen-database ,connection-name)
+                             (,body-name)))))
+      (,body-name)))))
 
 (defun exec-query (connection query &optional (row-reader 'ignore-row-reader))
   "Execute a query string and apply the given row-reader to the
 result."
   (check-type query string)
-  (shoot-stream-on-error (connection-socket connection)
-    (ensure-connection connection)
+  (with-reconnect-restart connection
     (let ((*timestamp-format* (connection-timestamp-format connection)))
       (with-availability connection
         (send-query (connection-socket connection) query row-reader)))))
@@ -120,8 +131,7 @@ result."
   "Prepare a query string and store it under the given name."
   (check-type query string)
   (check-type name string)
-  (shoot-stream-on-error (connection-socket connection)
-    (ensure-connection connection)
+  (with-reconnect-restart connection
     (send-parse (connection-socket connection) name query)
     (values)))
 
@@ -130,8 +140,7 @@ result."
 apply a row-reader to the result."
   (check-type name string)
   (check-type parameters list)
-  (shoot-stream-on-error (connection-socket connection)
-    (ensure-connection connection)
+  (with-reconnect-restart
     (let ((*timestamp-format* (connection-timestamp-format connection)))
       (with-availability connection
         (send-execute (connection-socket connection)

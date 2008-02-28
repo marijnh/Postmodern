@@ -34,6 +34,17 @@ signal virtually all database-related errors \(though in some cases
 socket errors may be raised when a connection fails on the IP
 level)."))
 
+(define-condition database-connection-error (error) ()
+  (:documentation "Conditions of this type are signalled when an error
+occurs that breaks the connection socket. They offer a :reconnect
+restart."))
+(define-condition database-connection-lost (database-error database-connection-error) ()
+  (:documentation "Raised when a query is initiated on a disconnected
+connection object."))
+(define-condition database-stream-error (stream-error database-connection-error) ()
+  (:documentation "Used to give stream-errors a
+database-connection-error superclass."))
+
 (in-package :cl-postgres-error)
 
 (defparameter *error-table* (make-hash-table :test 'equal))
@@ -60,8 +71,9 @@ level)."))
 (deferror "55P03" lock-not-available object-state-error)
 (deferror "57" operator-intervention)
 (deferror "57014" query-canceled operator-intervention)
-(deferror "57P01" admin-shutdown operator-intervention)
-(deferror "57P02" crash-shutdown operator-intervention)
+(define-condition server-shutdown (operator-intervention database-connection-error) ())
+(deferror "57P01" admin-shutdown server-shutdown)
+(deferror "57P02" crash-shutdown server-shutdown)
 (deferror "57P03" cannot-connect-now operator-intervention)
 (deferror "58" system-error)
 (deferror "XX" internal-error)

@@ -7,6 +7,7 @@
            #:database-error-detail
            #:database-error-query
            #:database-connection
+           #:database-connection-error
            #:connection-meta
            #:connection-parameters
            #:open-database
@@ -54,6 +55,7 @@
            #:program-limit-exceeded
            #:query-canceled
            #:restrict-violation
+           #:server-shutdown
            #:system-error
            #:unique-violation))
 
