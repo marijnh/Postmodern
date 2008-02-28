@@ -17,20 +17,34 @@
         :collect (next-field (elt fields 0))))
 
 (defparameter *result-styles*
-  '((:none ignore-row-reader nil)
-    (:lists list-row-reader nil)
-    (:list list-row-reader t)
-    (:rows list-row-reader nil)
-    (:row list-row-reader t)
-    (:alists symbol-alist-row-reader nil)
-    (:alist symbol-alist-row-reader t)
-    (:str-alists alist-row-reader nil)
-    (:str-alist alist-row-reader t)
-    (:column column-row-reader nil)
-    (:single column-row-reader t))
+  '((:none ignore-row-reader all-rows)
+    (:lists list-row-reader all-rows)
+    (:list list-row-reader single-row)
+    (:rows list-row-reader all-rows)
+    (:row list-row-reader single-row)
+    (:alists symbol-alist-row-reader all-rows)
+    (:alist symbol-alist-row-reader single-row)
+    (:str-alists alist-row-reader all-rows)
+    (:str-alist alist-row-reader single-row)
+    (:column column-row-reader all-rows)
+    (:single column-row-reader single-row)
+    (:single! column-row-reader single-row!))
   "Mapping from keywords identifying result styles to the row-reader
 that should be used and whether all values or only one value should be
 returned.")
+
+(defmacro all-rows (form)
+  form)
+
+(defmacro single-row (form)
+  `(multiple-value-bind (rows affected) ,form
+    (if affected (values (car rows) affected) (car rows))))
+
+(defmacro single-row! (form)
+  `(multiple-value-bind (rows affected) ,form
+    (unless (= (length rows) 1)
+      (error 'database-error :message (format nil "Query for a single row returned ~a rows." (length rows))))
+    (if affected (values (car rows) affected) (car rows))))
 
 (defun real-query (query)
   "Used for supporting both plain string queries and S-SQL constructs.
@@ -40,13 +54,6 @@ looks like an S-SQL query."
       `(sql ,query)
       query))
 
-(defun single-row-from (rows &rest rest)
-  "Helper function for truncating the first value of multiple returned
-rows, without messing with the rest of the values."
-  (unless (= (length rows) 1)
-    (error 'database-error :message (format nil "Query for a single row returned ~a rows." (length rows))))
-  (apply 'values (cons (car rows) rest)))
-
 (defmacro query (query &rest args/format)
   "Execute a query, optionally with arguments to put in the place of
 $X elements. If one of the arguments is a known result style, it
@@ -55,15 +62,13 @@ specifies the format in which the results should be returned."
          (args (loop :for arg :in args/format
                      :if (assoc arg *result-styles*) :do (setf format arg)
                      :else :collect arg)))
-    (destructuring-bind (reader single-row) (cdr (assoc format *result-styles*))
+    (destructuring-bind (reader result-form) (cdr (assoc format *result-styles*))
       (let ((base (if args
                       `(let ((args (mapcar 'sql-ize (list ,@args))))
                         (prepare-query *database* "" ,(real-query query))
                         (exec-prepared *database* "" args ',reader))
                       `(exec-query *database* ,(real-query query) ',reader))))
-        (if single-row
-            `(multiple-value-call 'single-row-from ,base)
-            base)))))
+        `(,result-form ,base)))))
 
 (defmacro execute (query &rest args)
   "Execute a query, ignore the results."
