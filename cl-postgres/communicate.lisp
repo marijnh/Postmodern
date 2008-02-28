@@ -165,8 +165,7 @@ when UTF-8 support is enabled."
       (error (error)
         (warn "Ignoring the error which happened while trying to close PostgreSQL socket: ~A" error)))))
 
-
-;;; Copyright (c) 2006 Marijn Haverbeke
+;;; Copyright (c) Marijn Haverbeke
 ;;;
 ;;; This software is provided 'as-is', without any express or implied
 ;;; warranty. In no event will the authors be held liable for any

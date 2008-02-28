@@ -12,17 +12,18 @@
        ,@body)))
 
 (define-condition database-error (error)
-  ((error-code :initarg :code :initform nil :accessor database-error-code
+  ((error-code :initarg :code :initform nil :reader database-error-code
                :documentation "The error code PostgreSQL associated
 with this error, if any.")
    (message :initarg :message :accessor database-error-message
             :documentation "Description of this error.")
-   (detail :initarg :detail :initform nil :accessor database-error-detail
+   (detail :initarg :detail :initform nil :reader database-error-detail
            :documentation "More elaborate description of this error,
 if any.")
-   (query :initform *current-query* :accessor database-error-query
+   (query :initform *current-query* :reader database-error-query
           :documentation "Query that led to the error, if any.")
-   (position :initarg :position :initform nil :accessor database-error-position))
+   (position :initarg :position :initform nil :reader database-error-position)
+   (cause :initarg :cause :initform nil :reader database-error-cause))
   (:report (lambda (err stream)
              (format stream "Database error~@[ ~A~]: ~A~@[~%~A~]~@[~%Query: ~A~]"
                      (database-error-code err)
@@ -34,16 +35,21 @@ signal virtually all database-related errors \(though in some cases
 socket errors may be raised when a connection fails on the IP
 level)."))
 
-(define-condition database-connection-error (error) ()
+(define-condition database-connection-error (database-error) ()
   (:documentation "Conditions of this type are signalled when an error
 occurs that breaks the connection socket. They offer a :reconnect
 restart."))
-(define-condition database-connection-lost (database-error database-connection-error) ()
+(define-condition database-connection-lost (database-connection-error) ()
   (:documentation "Raised when a query is initiated on a disconnected
 connection object."))
-(define-condition database-stream-error (stream-error database-connection-error) ()
-  (:documentation "Used to give stream-errors a
+(define-condition database-stream-error (database-connection-error) ()
+  (:documentation "Used to wrap stream-errors, giving them a
 database-connection-error superclass."))
+
+(defun wrap-stream-error (stream-error)
+  (make-instance 'database-stream-error
+                 :message (princ-to-string stream-error)
+                 :cause stream-error))
 
 (in-package :cl-postgres-error)
 

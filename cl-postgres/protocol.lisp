@@ -219,7 +219,7 @@ message."
         (unless ok
           ;; if we can't sync, make sure the socket is shot
           ;; (e.g. a timeout, or aborting execution with a restart from sldb)
-          (ensure-socket-is-closed socket))))))
+          (ensure-socket-is-closed socket :abort t))))))
 
 (defmacro with-syncing (&body body)
   "Macro to wrap a block in a handler that will try to re-sync the
@@ -235,7 +235,7 @@ at all, only used right below here."
         (unless ok
           (try-to-sync socket sync-sent)))
       (end-of-file (c)
-        (ensure-socket-is-closed socket)
+        (ensure-socket-is-closed socket :abort t)
         (error c)))))
 
 (defmacro returning-effected-rows (value &body body)
