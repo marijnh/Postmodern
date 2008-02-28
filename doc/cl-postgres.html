@@ -372,17 +372,29 @@
     <code>NIL</code> if no query was involved.</p>
 
     <p class="def">
+      <span>method</span>
+      <a name="database-error-cause"></a>
+      database-error-cause (database-error)
+      <br/>&#8594; condition
+    </p>
+
+    <p class="desc">The condition that caused this error, or
+    <code>NIL</code> when it was not caused by another condition.</p>
+
+    <p class="def">
       <span>condition</span>
-      <a name="database-connection-lost"></a>
-      database-connection-lost
+      <a name="database-connection-error"></a>
+      database-connection-error
     </p>
 
     <p class="desc">Subtype of <a
     href="#database-error"><code>database-error</code></a>. An error
-    of this type is signaled when a query is given to a connection
-    object that is no longer connected. Always provides a
-    <code>:reconnect</code> restart, which will cause the library to
-    make an attempt to restore the connection.</p>
+    of this type (or one of its subclasses) is signaled when a query
+    is attempted with a connection object that is no longer connected,
+    or a database connection becomes invalid during a query. Always
+    provides a <code>:reconnect</code> restart, which will cause the
+    library to make an attempt to restore the connection and re-try
+    the query.</p>
 
     <h2><a name="index">Symbol-index</a></h2>
 
@@ -394,6 +406,7 @@
       <li><a href="#database-connection">database-connection</a></li>
       <li><a href="#database-connection-lost">database-connection-lost</a></li>
       <li><a href="#database-error">database-error</a></li>
+      <li><a href="#database-error-cause">database-error-cause</a></li>
       <li><a href="#database-error-code">database-error-code</a></li>
       <li><a href="#database-error-detail">database-error-detail</a></li>
       <li><a href="#database-error-message">database-error-message</a></li>

@@ -6,8 +6,10 @@
            #:database-error-code
            #:database-error-detail
            #:database-error-query
+           #:database-error-cause
            #:database-connection
            #:database-connection-error
+           #:database-stream-error
            #:connection-meta
            #:connection-parameters
            #:open-database
