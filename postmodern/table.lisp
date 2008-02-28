@@ -195,13 +195,16 @@ The fields returned by the query must match the slots of the dao, both
 in type and in order."
   `(query-dao% ,type ,(real-query query)))
 
-(defmacro select-dao (type &optional (test t))
+(defmacro select-dao (type &optional (test t) &rest ordering)
   "Select daos for the rows in its table for which the given test
 holds."
-  (let ((type-name (gensym)))
+  (let* ((type-name (gensym))
+         (query `(:select '* :from (dao-table ,type-name)
+                  :where ,(if (stringp test) `(:raw ,test) test))))
+    (when ordering
+      (setf query `(:order-by ,query ,@ordering)))
     `(let ((,type-name ,type))
-      (query-dao% ,type-name (sql (:select '* :from (dao-table ,type-name)
-                                            :where ,(if (stringp test) `(:raw ,test) test)))))))
+      (query-dao% ,type-name (sql ,query)))))
 
 (defun table! (table template)
   "Lookup a table, complain if it does not exist."
