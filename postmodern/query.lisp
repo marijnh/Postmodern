@@ -40,10 +40,12 @@ looks like an S-SQL query."
       `(sql ,query)
       query))
 
-(defun car-of-first-value (first &rest rest)
+(defun single-row-from (rows &rest rest)
   "Helper function for truncating the first value of multiple returned
-values, without messing with the rest of the values."
-  (apply 'values (cons (car first) rest)))
+rows, without messing with the rest of the values."
+  (unless (= (length rows) 1)
+    (error 'database-error :message (format nil "Query for a single row returned ~a rows." (length rows))))
+  (apply 'values (cons (car rows) rest)))
 
 (defmacro query (query &rest args/format)
   "Execute a query, optionally with arguments to put in the place of
@@ -60,7 +62,7 @@ specifies the format in which the results should be returned."
                         (exec-prepared *database* "" args ',reader))
                       `(exec-query *database* ,(real-query query) ',reader))))
         (if single-row
-            `(multiple-value-call 'car-of-first-value ,base)
+            `(multiple-value-call 'single-row-from ,base)
             base)))))
 
 (defmacro execute (query &rest args)

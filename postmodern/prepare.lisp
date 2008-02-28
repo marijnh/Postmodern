@@ -23,7 +23,7 @@
         (,@function-form (&rest params)
           (ensure-prepared *database* statement-id ,(real-query query))
           ,(if single-row
-               `(multiple-value-call 'car-of-first-value ,base)
+               `(multiple-value-call 'single-row-from ,base)
                base))))))
 
 (defmacro prepare (query &optional (format :rows))
