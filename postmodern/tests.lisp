@@ -3,7 +3,7 @@
 
 (in-package :postmodern-tests)
 
-(defparameter *test-connection* '("test" "test" "" "localhost"))
+(defvar *test-connection* '("test" "test" "" "localhost"))
 
 ;; Adjust the above to some db/user/pass/host combination that refers
 ;; to a valid postgresql database in which no table named test_data
@@ -14,7 +14,7 @@
 (in-suite :postmodern)
 
 (defmacro with-test-connection (&body body)
-  `(with-connection ,*test-connection* ,@body))
+  `(with-connection *test-connection* ,@body))
 
 (test connect-sanely
   (with-test-connection 
