@@ -344,7 +344,7 @@ to strings \(which will form an SQL query when concatenated)."
   
 (defun sql-compile (form)
   (let ((*expand-runtime* t))
-    (car (reduce-strings (sql-expand form)))))
+    (strcat (sql-expand form))))
 
 (defun sql-template (form)
   (let* ((*expand-runtime* t)
@@ -543,7 +543,7 @@ to runtime. Used to create stored procedures."
     ") RETURNS " ,(to-type-name return-type) " LANGUAGE SQL " ,(symbol-name stability) " AS " ,(escape-sql-expression body)))
 
 (def-sql-op :insert-into (table &rest rest)
-  (split-on-keywords ((method *) (returning ? *)) (cons :method args)
+  (split-on-keywords ((method *) (returning ? *)) (cons :method rest)
   `("INSERT INTO " ,@(sql-expand table) " "
     ,@(cond ((eq (car method) :set)
              (cond ((oddp (length (cdr method)))
