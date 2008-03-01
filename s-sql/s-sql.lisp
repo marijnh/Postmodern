@@ -153,6 +153,8 @@ characters other than #\-)"
 (deftype varchar (length)
   (declare (ignore length))
   `string)
+(deftype serial () 'integer)
+(deftype serial8 () 'integer)
 
 (deftype db-null ()
   "Type for representing NULL values. Use like \(or integer db-null)
@@ -189,7 +191,13 @@ name.")
     "DOUBLE PRECISION")
   (:method ((lisp-type (eql 'double-precision)) &rest args)
     (declare (ignore args))
-    "DOUBLE PRECISION"))
+    "DOUBLE PRECISION")
+  (:method ((lisp-type (eql 'serial)) &rest args)
+    (declare (ignore args))
+    "SERIAL")
+  (:method ((lisp-type (eql 'serial8)) &rest args)
+    (declare (ignore args))
+    "SERIAL8"))
 
 (defun to-type-name (type)
   "Turn a Lisp type expression into an SQL typename."
