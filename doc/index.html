@@ -268,7 +268,7 @@
 (doquery (:select 'x 'y :from 'some-imaginary-table) (x y)
   (format t "On this row, x = ~A and y = ~A.~%" x y))</pre>
 
-    <p>Now let us define a database access object class.</p>
+    <p>This is what a database-access class looks like:</p>
 
     <pre class="code">
 (defclass country ()
@@ -281,17 +281,17 @@
   (:metaclass dao-class)
   (:keys name))</pre>
 
-    <p>This defines a class that can be used to handle records in a
-    table with three columns: name, inhabitants, and king. In simple
-    cases, the information above is enough to define the table as
-    well:</p>
+    <p>The above defines a class that can be used to handle records in
+    a table with three columns: name, inhabitants, and sovereign. In
+    simple cases, the information above is enough to define the table
+    as well:</p>
 
     <pre class="code">
 (dao-table-definition 'country)
 ;; => "CREATE TABLE country (
 ;;      name TEXT NOT NULL,
 ;;      inhabitants INTEGER NOT NULL,
-;;      king TEXT,
+;;      sovereign TEXT,
 ;;      PRIMARY KEY (name))"
 (execute (dao-table-definition 'country))</pre>
 
