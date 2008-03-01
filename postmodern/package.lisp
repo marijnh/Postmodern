@@ -12,8 +12,8 @@
    #:dao-create-table #:dao-drop-table #:dao-reset-table)
    
   (:export 
-   #:connect #:disconnect #:reconnect #:with-connection
-   #:call-with-connection #:with-connection*
+   #:connect #:disconnect #:reconnect
+   #:call-with-connection #:with-connection
    #:*database* #:connected-p #:database-connection
    #:connect-toplevel #:disconnect-toplevel
    #:clear-connection-pool

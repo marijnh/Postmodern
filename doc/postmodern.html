@@ -110,27 +110,14 @@
     <p class="def">
       <span>macro</span>
       <a name="with-connection"></a>
-      with-connection ((database user password host &amp;key (port 5432) pooled-p) &amp;body body)
+      with-connection (spec &amp;body body)
     </p>
 
-    <p class="desc">Evaluates body with <a
+    <p class="desc">Evaluates the body with <a
     href="#*database*"><code>*database*</code></a> bound to a
-    connection as specified by the arguments. The <a
-    href="#with-connection*"><code>with-connection*</code></a> form is
-    often more practical, but this one is left for backward
-    compatibility (and as a monument to the author's general ineptness
-    as a library designer).</p>
-
-    <p class="def">
-      <span>macro</span>
-      <a name="with-connection*"></a>
-      with-connection* (spec &amp;body body)
-    </p>
-
-    <p class="desc">Like <a
-    href="#with-connection"><code>with-connection</code></a>, but the
-    connection specification is evaluated, so you can take it from a
-    variable, or dynamically build it in some other way.</p>
+    connection as specified by <code>spec</code>, which should be list
+    that <a href="#connect"><code>connect</code></a> can be applied
+    to.</p>
 
     <p class="def">
       <span>macro</span>
@@ -681,7 +668,6 @@
       <li><a href="#update-dao">update-dao</a></li>
       <li><a href="#view-exists-p">view-exists-p</a></li>
       <li><a href="#with-connection">with-connection</a></li>
-      <li><a href="#with-connection*">with-connection*</a></li>
       <li><a href="#with-savepoint">with-savepoint</a></li>
       <li><a href="#with-transaction">with-transaction</a></li>
     </ul>

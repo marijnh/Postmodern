@@ -65,14 +65,10 @@ database."
     (unwind-protect (funcall thunk)
       (disconnect *database*))))
 
-(defmacro with-connection ((database user password host &key (port 5432) pooled-p) &body body)
-  "Binds *database* to a new connection and runs body in that scope."
-  `(call-with-connection (list ,database ,user ,password ,host :port ,port :pooled-p ,pooled-p)
-      (lambda () ,@body)))
-
-(defmacro with-connection* (spec &body body)
+(defmacro with-connection (spec &body body)
   "Like with-connection, but evaluate the specification list."
-  `(call-with-connection ,spec (lambda () ,@body)))
+  `(let ((*database* (apply #'connect ,spec)))
+     ,@body))
 
 (defparameter *connection-pools* (make-hash-table :test 'equal)
   "Maps pool specifiers to lists of pooled connections.")
