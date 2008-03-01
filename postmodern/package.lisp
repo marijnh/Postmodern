@@ -7,8 +7,7 @@
   #+postmodern-use-mop
   (:export
    #:dao-class #:dao-exists-p #:query-dao #:select-dao #:get-dao
-   #:save-dao #:insert-dao #:update-dao #:delete-dao
-   #:dao-table-definition)
+   #:insert-dao #:update-dao #:delete-dao #:dao-table-definition)
    
   (:export 
    #:connect #:disconnect #:reconnect

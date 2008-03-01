@@ -197,12 +197,6 @@ holds, order them by the given criteria."
       `(let ((,type-name ,type))
          (query-dao% ,type-name (sql ,query))))))
 
-(defun save-dao (dao)
-  "Save a dao: update it when it already exists, insert it otherwise."
-  (if (dao-exists-p dao)
-      (update-dao dao)
-      (insert-dao dao)))
-
 (defun dao-table-definition (table)
   "Generate the appropriate CREATE TABLE query for this class."
   (unless (typep table 'dao-class)
