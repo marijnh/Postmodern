@@ -38,7 +38,7 @@
 
 (defmethod shared-initialize :after ((slot dao-slot) slot-names &key &allow-other-keys)
   (declare (ignore slot-names))
-  (setf (slot-value slot 'slot-sql-name) (to-sql-name (slot-definition-name slot))))
+  (setf (slot-value slot 'sql-name) (to-sql-name (slot-definition-name slot))))
 
 (defmethod direct-slot-definition-class ((class dao-class) &key col-type &allow-other-keys)
   "Slots that have a :col-type option are dao-slots."
@@ -70,10 +70,8 @@ values from the query."
 (defgeneric dao-exists-p (dao)
   (:documentation "Return a boolean indicating whether the given dao
   exists in the database."))
-(defgeneric insert-dao (dao &optional update-instance)
-  (:documentation "Insert the given object into the database. When
-  update-instance is true, any defaulted values will be loaded back
-  from the database and set in the object."))
+(defgeneric insert-dao (dao)
+  (:documentation "Insert the given object into the database."))
 (defgeneric update-dao (dao)
   (:documentation "Update the object's representation in the database
   with the values in the given instance."))
@@ -96,8 +94,9 @@ values from the query."
 \(Done this way because some of them are not defined in every
 situation, and each of them needs to close over some pre-computed
 values.)"
-  (let* ((key-fields (dao-keys class))
-         (value-fields (remove-if (lambda (x) (member x key-fields)) (dao-fields class)))
+  (let* ((fields (dao-fields class))
+         (key-fields (dao-keys class))
+         (value-fields (remove-if (lambda (x) (member x key-fields)) fields))
          (table-name (table-name class)))
     ;; This is a hack -- the MOP does not define a practical way to
     ;; dynamically add methods to a generic, but the specialised-on
@@ -117,7 +116,8 @@ values.)"
         (let ((tmpl (sql-template `(:select (:exists (:select t :from ,table-name
                                                       :where ,(test-fields key-fields)))))))
           (defmethod dao-exists-p ((object target-class))
-            (query (apply tmpl (slot-values object key-fields)) :single)))
+            (and (every (lambda (s) (slot-boundp object s)) key-fields)
+                 (query (apply tmpl (slot-values object key-fields)) :single))))
   
         ;; When all values are primary keys, updating makes no sense.
         (when value-fields
@@ -134,19 +134,21 @@ values.)"
           (defmethod get-dao ((type (eql (class-name class))) &rest keys)
             (car (exec-query *database* (apply tmpl keys) (dao-row-reader class))))))
 
-      (defmethod insert-dao ((object target-class) &optional (update-instance nil))
+      (defmethod insert-dao ((object target-class))
         (let (bound unbound)
-          (loop :for field :in (dao-fields class)
+          (loop :for field :in fields
                 :do (if (slot-boundp object field)
                         (push field bound)
                         (push field unbound)))
-          (execute (sql-compile `(:insert-into ,table-name
-                                  :set ,@(mapcar (lambda (x) (list x (slot-value object x))) bound))))
-          (when (and update-instance unbound)
-            (loop :for value :in (query (sql-compile `(:select ,@unbound :from ,table-name
-                                                       :where ,(test-fields key-fields))))
-                  :for field :in unbound
-                  :do (setf (slot-value object field) value)))))
+          (let* ((values (mapcan (lambda (x) (list x (slot-value object x))) bound))
+                 (returned (query (sql-compile `(:insert-into ,table-name
+                                                 :set ,@values
+                                                 ,@(when unbound (cons :returning unbound))))
+                                  :row)))
+            (when unbound
+              (loop :for value :in returned
+                    :for field :in unbound
+                    :do (setf (slot-value object field) value))))))
 
       (let* ((defaulted-slots (remove-if-not (lambda (x) (slot-boundp x 'col-default)) (dao-slots class)))
              (defaulted-names (mapcar 'slot-definition-name defaulted-slots))
@@ -168,9 +170,9 @@ values.)"
             (defmethod fetch-defaults ((object target-class))
               (declare (ignore object)))))
 
-      (defmethod shared-initialize :after ((object target-class) slot-names &key (defer-defaults t) &allow-other-keys)
+      (defmethod shared-initialize :after ((object target-class) slot-names &key (fetch-defaults nil) &allow-other-keys)
         (declare (ignore slot-names))
-        (unless defer-defaults
+        (when fetch-defaults
           (fetch-defaults object))))))
 
 (defun query-dao% (type query)
@@ -195,13 +197,13 @@ holds, order them by the given criteria."
       `(let ((,type-name ,type))
          (query-dao% ,type-name (sql ,query))))))
 
-(defun save-dao (dao &optional (update-instance t))
+(defun save-dao (dao)
   "Save a dao: update it when it already exists, insert it otherwise."
   (if (dao-exists-p dao)
       (update-dao dao)
-      (insert-dao dao update-instance)))
+      (insert-dao dao)))
 
-(defun build-table-from-dao (table)
+(defun dao-table-definition (table)
   "Generate the appropriate CREATE TABLE query for this class."
   (unless (typep table 'dao-class)
     (setf table (find-class table)))
@@ -210,7 +212,7 @@ holds, order them by the given criteria."
                    ,(loop :for slot :in (dao-slots table)
                        :if (typep slot 'dao-slot)
                        :collect `(,(slot-definition-name slot) :type ,(slot-col-type slot)
-                                   ,@(when (slot-boundp slot 'default) `(:default ,(slot-col-default slot)))))
+                                   ,@(when (slot-boundp slot 'col-default) `(:default ,(slot-col-default slot)))))
                    ,@(when (dao-keys table)
                        `((:primary-key ,@(dao-keys table)))))))
 

@@ -112,21 +112,21 @@
     (execute (:drop-table 'test-data))))
 
 (defclass test-data ()
-  ((id :row-type integer :initarg :id :accessor test-id)
-   (a :row-type (or (varchar 100) db-null) :initarg :a :accessor test-a)
-   (b :row-type boolean :initarg :b :accessor test-b))
+  ((id :col-type serial :initarg :id :accessor test-id)
+   (a :col-type (or (varchar 100) db-null) :initarg :a :accessor test-a)
+   (b :col-type boolean :col-default nil :initarg :b :accessor test-b))
   (:metaclass dao-class)
   (:table-name dao-test)
   (:keys id))
 
 (test dao-class
   (with-test-connection
-    (dao-create-table 'test-data)
+    (execute (dao-table-definition 'test-data))
     (is (member :dao-test (list-tables)))
     (is (null (get-dao 'test-data 1)))
-    (let ((dao (make-instance 'test-data :id 1 :a "quux" :b nil)))
-      (is (not (dao-exists-p dao)))
+    (let ((dao (make-instance 'test-data :a "quux")))
       (save-dao dao)
+      (is (eql (test-id dao) 1))
       (is (dao-exists-p dao)))
     (let ((dao (get-dao 'test-data 1)))
       (is (not (null dao)))
@@ -138,4 +138,4 @@
       (is (eq (test-b dao) t))
       (delete-dao dao))
     (is (not (select-dao 'test-data)))
-    (dao-drop-table 'test-data)))
+    (execute (:drop-table 'dao-test))))
