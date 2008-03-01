@@ -137,7 +137,7 @@ unwinds, and the SQL name of the savepoint."
                            (savepoint-name savepoint))))
     (setf (transaction-open-p savepoint) nil)))
 
-;;; Copyright (c) 2006 Marijn Haverbeke
+;;; Copyright (c) Marijn Haverbeke
 ;;;
 ;;; This software is provided 'as-is', without any express or implied
 ;;; warranty. In no event will the authors be held liable for any
