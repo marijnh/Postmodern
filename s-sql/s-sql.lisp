@@ -511,7 +511,8 @@ the proper SQL syntax for joining tables."
                                (setf rest (cdr rest)))))))))
 
 (def-sql-op :select (&rest args)
-  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (where ?) (group-by * ?) (having ?)) (cons :vars args)
+  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (where ?) (group-by * ?)
+                      (having ?)) (cons :vars args)
     `("(SELECT "
       ,@(if distinct '("DISTINCT "))
       ,@(if distinct-on `("DISTINCT ON (" ,@(sql-expand-list distinct-on) ") "))
@@ -542,18 +543,18 @@ to runtime. Used to create stored procedures."
     ") RETURNS " ,(to-type-name return-type) " LANGUAGE SQL " ,(symbol-name stability) " AS " ,(escape-sql-expression body)))
 
 (def-sql-op :insert-into (table insert-method &rest rest)
-  (cond ((eq insert-method :set)
-         (if (oddp (length rest))
-             (error "Invalid amount of :set arguments passed to insert-into sql operator")
-             `("INSERT INTO " ,@(sql-expand table) " (" 
-               ,@(sql-expand-list (loop :for (field value) :on rest :by #'cddr
-                                        :collect field)) ") VALUES ("
-               ,@(sql-expand-list (loop :for (field value) :on rest :by #'cddr
-                                        :collect value)) ")")))
-        ((and (not rest) (consp insert-method) (keywordp (first insert-method)))
-         `("INSERT INTO " ,@(sql-expand table) " " ,@(sql-expand insert-method)))
-        (t
-         (error "No :set arguments or select operator passed to insert-into sql operator"))))
+  `("INSERT INTO " ,@(sql-expand table) " "
+    ,@(cond ((eq insert-method :set)
+             (cond ((oddp (length rest))
+                    (error "Invalid amount of :set arguments passed to insert-into sql operator"))
+                   ((null rest) '("DEFAULT VALUES"))
+                   (t `("(" ,@(sql-expand-list (loop :for (field value) :on rest :by #'cddr
+                                                      :collect field))
+                        ") VALUES (" ,@(sql-expand-list (loop :for (field value) :on rest :by #'cddr
+                                                              :collect value)) ")"))))
+            ((and (not rest) (consp insert-method) (keywordp (first insert-method)))
+             (sql-expand insert-method))
+            (t (error "No :set arguments or select operator passed to insert-into sql operator")))))
 
 (def-sql-op :update (table &rest args)
   (split-on-keywords ((set *) (where ?)) args
