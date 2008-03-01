@@ -36,9 +36,12 @@
    (sql-name :reader slot-sql-name))
   (:documentation "Type of slots that refer to database columns."))
 
-(defmethod shared-initialize :after ((slot dao-slot) slot-names &key &allow-other-keys)
+(defmethod shared-initialize :after ((slot dao-slot) slot-names &key row-type row-default &allow-other-keys)
   (declare (ignore slot-names))
-  (setf (slot-value slot 'sql-name) (to-sql-name (slot-definition-name slot))))
+  (setf (slot-value slot 'sql-name) (to-sql-name (slot-definition-name slot)))
+  (when (and (null row-default) (consp row-type) (eq (car row-type) 'or)
+             (member 'db-null row-type) (= (length row-type) 3))
+    (setf (slot-value slot 'row-default) :null)))
 
 (defmethod direct-slot-definition-class ((class dao-class) &key col-type &allow-other-keys)
   "Slots that have a :col-type option are dao-slots."
