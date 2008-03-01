@@ -20,7 +20,7 @@
     href="cl-postgres.html#database-connection"><code>database-connection</code></a>
     and <a
     href="cl-postgres.html#database-error"><code>database-error</code></a>
-    types from <a href="cl-postgres.html">cl-postgres</a>, and a few
+    types from <a href="cl-postgres.html">CL-postgres</a>, and a few
     operators from <a href="s-sql.html">S-SQL</a>.</p>
 
     <p><a href="#query"><code>query</code></a>, <a
@@ -40,7 +40,7 @@
       <li><a href="#connecting">Connecting</a></li>
       <li><a href="#querying">Querying</a></li>
       <li><a href="#inspect">Inspecting the database</a></li>
-      <li><a href="#tables">Tables and Daos</a></li>
+      <li><a href="#daos">Database access objects</a></li>
       <li><a href="#index">Symbol-index</a></li>
     </ol>
 
@@ -413,118 +413,58 @@
     <p class="desc">Tests whether a view with the given name exists.
     The name can be either a string or a symbol.</p>
 
-    <h2><a name="tables"></a>Tables and Daos</h2>
+    <h2><a name="daos"></a>Database access objects</h2>
 
-    <p>Postmodern contains a system for defining and creating tables
-    from Lisp code. A table can belong to one or more templates
-    (schemas), and there are functions for creating all tables in a
-    template. There is also the option to create accessor classes
-    (daos) for the tables, which provide a convenient way to approach
-    table rows.</p>
-
-    <p class="def">
-      <span>macro</span>
-      <a name="deftable"></a>
-      deftable (name templates fields &amp;rest options)
-    </p>
-
-    <p class="desc">Store a table structure under the given name, in
-    the given templates, or in the nil template when no template names
-    are given. Fields are <code>defclass</code>-like slot declarations
-    which must at least have a :type declared. The type can be any
-    type that <a href="s-sql.html">S-SQL</a> understands, and a type
-    like <code>(or integer db-null)</code> can be used to indicate
-    that the field may have NULL values.</p>
-
-    <p class="desc">All extra options that <code>defclass</code>
-    supports are allowed, in addition to: <code>:auto-id</code> to
-    give the table an id column and a sequence for creating its ids
-    (see also <a href="#get-id"><code>get-id</code></a> and <a
-    href="#next-id"><code>next-id</code></a>),
-    <code>:class-name</code> for the name of a dao class for this
-    table (if this is not given, no class is defined), and
-    <code>:indices</code> for the indices that should be created for
-    this table. Indices can be single fields or lists of fields. The
-    first index is used as primary key (<code>:auto-id</code> adds a
-    primary index on the id). Lists starting with the keyword
-    <code>:unique</code> (followed by any number of field names)
-    create unique indices. The primary key is automatically made
-    unique.</p>
-
-    <p class="desc">Example:</p>
-
-    <pre class="code desc">
-(deftable user (my-database-template)
-  ((name :type string :initarg :name :accessor user-name)
-   (birth-date :type (or db-null date) :initarg :age :initform :null :reader user-age)
-   (credit-card-number :type integer :initarg :card-number :accessor user-card-number)
-   (score :type bigint :initform 0 :accessor user-score))
-  (:class-name user)
-  (:indices name (:unique credit-card-number) score))</pre>
-
-    <p class="desc">When instances of classed defined in this way are
-    created using <code>make-instance</code>, their automatic id (if
-    any) will immediately be retrieved from the sequence and assigned
-    to the new object. When this is not what you want, a
-    <code>:defer-id</code> keyword argument can be given to
-    <code>make-instance</code>, in which case the id will only be
-    assigned when the object is stored (and still does not have an
-    id). This can be useful when, for some reason, you find yourself
-    creating lots of objects that never end up being saved in the
-    database.</p>
+    <p>Postmodern contains a simple system for defining CLOS classes
+    that represent rows in the database. This is not intended as any
+    kind of object-relational magic &#x2015; while serious ORM systems
+    have their place, they are notoriously hard to get right, and are
+    outside of the scope of a humble SQL library like this.</p>
 
     <p class="def">
-      <span>function</span>
-      <a name="create-table"></a>
-      create-table (table &amp;optional template)
+      <span>metaclass</span>
+      <a name="dao-class"></a>
+      dao-class
     </p>
 
-    <p class="desc">Create a defined table and its indices in the
-    database.</p>
+    <p class="desc">To create database access objects, DAOs for short,
+    you first define new class for them, using <code>dao-class</code>
+    as the metaclass. In addition to the regular slot options, slots
+    in this class can be given <code>:col-type</code> and
+    <code>:col-default</code> options. All slots in which the first is
+    present, with a valid <a href="s-sql.html">S-SQL</a> type as its
+    value, are considered to be columns in the table this class
+    accesses. Other slots will behave as in a regular class. The
+    <code>:col-default</code> option is optional, and can be used to
+    define a default value for the column.</p>
 
-    <p class="def">
-      <span>function</span>
-      <a name="drop-table"></a>
-      drop-table (table &amp;optional template)
-    </p>
+    <pre class="code">
+(defclass user ()
+  ((name :col-type string :initarg :name :accessor user-name)
+   (creditcard :col-type (or db-null integer) :initarg :card :col-default :null)
+   (score :col-type bigint :col-default 0 :accessor user-score))
+  (:metaclass dao-class)
+  (:keys name))</pre>
 
-    <p class="desc">Drop a defined table.</p>
+    <p class="desc">The <code>(or db-null integer)</code> form is used
+    to indicate a column can have NULL values.</p>
 
-    <p class="def">
-      <span>function</span>
-      <a name="reset-table"></a>
-      reset-table  (table &amp;optional template)
-    </p>
+    <p class="desc">DAO classes should usually define a set of
+    <code>:keys</code>, as above, defining the primary key of the
+    table. It is also possible to give a <code>:table-name</code>
+    class option, setting the name of the table this class refers to.
+    When omitted, this defaults to the name of the class itself.</p>
 
-    <p class="desc">Drop and re-create a defined table.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="create-template"></a>
-      create-template (&amp;optional template)
-    </p>
-
-    <p class="desc">Create all the tables in a template (default is
-    the nil template).</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="clear-template"></a>
-      clear-template (&amp;optional template)
-    </p>
-
-    <p class="desc">Drop all tables that are part of the given
-    template.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="next-id"></a>
-      next-id (table &amp;optional template)
-      <br/>&#8594; integer
-    </p>
-
-    <p class="desc">Get the next id for a table with automatic
-    ids.</p>
+    <p class="desc">When a DAO is created with
+    <code>make-instance</code>, it can be passed a
+    <code>:fetch-defaults</code> keyword parameter which, when true,
+    will cause a query to be made to fetch the default values for all
+    slots that have default values and were not bound through
+    initargs. In some cases, such as <code>serial</code> columns,
+    which have an implicit default, this will not work. You can work
+    around this by creating your own sequence and defining a
+    <code>(:nextval "my-sequence")</code> default.
+    <code>:fetch-defaults</code> defaults to false.</p>
 
     <p class="def">
       <span>method</span>
@@ -534,28 +474,34 @@
     </p>
 
     <p class="desc">Test whether a row with the same primary key as
-    the given dao exists in the database.</p>
+    the given DAO exists in the database. Will also return
+    <code>NIL</code> when some of the key slots in the object are
+    unbound.</p>
 
     <p class="def">
       <span>method</span>
       <a name="get-dao"></a>
-      get-dao (type &amp;rest args)
+      get-dao (type &amp;rest keys)
       <br/>&#8594; dao
     </p>
 
-    <p class="desc">Select the dao object from the row that has the
+    <p class="desc">Select the DAO object from the row that has the
     given primary key values, or <code>NIL</code> if no such row
     exists.</p>
 
     <p class="def">
-      <span>function</span>
+      <span>macro</span>
       <a name="select-dao"></a>
-      select-dao (type &amp;optional (test t))
+      select-dao (type &amp;optional (test t) &amp;rest sort)
       <br/>&#8594; list
     </p>
 
-    <p class="desc">Select dao objects for the rows in the associated
-    table for which the given test holds.</p>
+    <p class="desc">Select DAO objects for the rows in the associated
+    table for which the given test (either an <a
+    href="s-sql.html">S-SQL</a> expression or a string) holds. When
+    sorting arguments are given, which can also be S-SQL forms or
+    strings, these are used to sort the result. (Note that, if you
+    want to sort, you <em>have</em> to pass a test value.)</p>
 
     <p class="def">
       <span>function</span>
@@ -566,19 +512,8 @@
 
     <p class="desc">Execute the given query (which can be either a
     string or an <a href="s-sql.html">S-SQL</a> expression) and return
-    the result as daos of the given type. The fields returned by the
-    query must match the slots of the dao, both in type and in
-    order.</p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="get-id"></a>
-      get-id (dao)
-      <br/>&#8594; integer
-    </p>
-
-    <p class="desc">Get the id for a dao that refers to a table that
-    has automatic ids.</p>
+    the result as DAOs of the given type. The names of the fields
+    returned by the query must match the slots of the DAO.</p>
 
     <p class="def">
       <span>method</span>
@@ -586,7 +521,10 @@
       insert-dao (dao)
     </p>
 
-    <p class="desc">Insert the given dao object into the database.</p>
+    <p class="desc">Insert the given DAO into the database. When any
+    row slots in the object are unbound, these will be updated with
+    the values they default to in the database. (If they have no
+    defaults, it is an error to insert them.)</p>
 
     <p class="def">
       <span>method</span>
@@ -594,18 +532,9 @@
       update-dao (dao)
     </p>
 
-    <p class="desc">Update the representation of the given dao in the
-    database with the values in the object.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="save-dao"></a>
-      save-dao (dao)
-    </p>
-
-    <p class="desc">Save a dao to the database. Will insert it if no
-    row with the dao's primary key values already exists, and update
-    otherwise.</p>
+    <p class="desc">Update the representation of the given DAO in the
+    database with the values in the object. This is not defined for
+    tables that do not have any non-key columns.</p>
 
     <p class="def">
       <span>method</span>
@@ -613,7 +542,19 @@
       delete-dao (dao)
     </p>
 
-    <p class="desc">Delete the given dao from the database.</p>
+    <p class="desc">Delete the given DAO from the database.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="dao-table-definition"></a>
+      dao-table-definition (table)
+    </p>
+
+    <p class="desc">Given a DAO class, or the name of one, this will
+    produce an SQL query string giving the definition of the table.
+    This is just the bare simple definition, so if you need any extra
+    indices or or contraints, you'll have to write your own queries to
+    add them.</p>
 
     <h2><a name="index"></a>Symbol-index</h2>
 
@@ -626,9 +567,9 @@
       <li><a href="#connect">connect</a></li>
       <li><a href="#connect-toplevel">connect-toplevel</a></li>
       <li><a href="#connected-p">connected-p</a></li>
-      <li><a href="#create-table">create-table</a></li>
-      <li><a href="#create-template">create-template</a></li>
+      <li><a href="#dao-class">dao-class</a></li>
       <li><a href="#dao-exists-p">dao-exists-p</a></li>
+      <li><a href="#dao-table-definition">dao-table-definition</a></li>
       <li><a href="#*database*">*database*</a></li>
       <li><a href="#database-connection">database-connection</a></li>
       <li><a href="cl-postgres.html#database-connection-lost">database-connection-lost</a></li>
@@ -639,20 +580,16 @@
       <li><a href="cl-postgres.html#database-error-query">database-error-query</a></li>
       <li><a href="cl-postgres.html#database-error-message">database-error-message</a></li>
       <li><a href="#defprepared">defprepared</a></li>
-      <li><a href="#deftable">deftable</a></li>
       <li><a href="#delete-dao">delete-dao</a></li>
       <li><a href="#disconnect">disconnect</a></li>
       <li><a href="#disconnect-toplevel">disconnect-toplevel</a></li>
       <li><a href="#doquery">doquery</a></li>
-      <li><a href="#drop-table">drop-table</a></li>
       <li><a href="#execute">execute</a></li>
       <li><a href="#get-dao">get-dao</a></li>
-      <li><a href="#get-id">get-id</a></li>
       <li><a href="#insert-dao">insert-dao</a></li>
       <li><a href="#list-sequences">list-sequences</a></li>
       <li><a href="#list-tables">list-tables</a></li>
       <li><a href="#list-views">list-views</a></li>
-      <li><a href="#next-id">next-id</a></li>
       <li><a href="#prepare">prepare</a></li>
       <li><a href="#query">query</a></li>
       <li><a href="#query-dao">query-dao</a></li>
@@ -660,7 +597,6 @@
       <li><a href="#release-savepoint">release-savepoint</a></li>
       <li><a href="#reset-table">reset-table</a></li>
       <li><a href="#rollback-savepoint">rollback-savepoint</a></li>
-      <li><a href="#save-dao">save-dao</a></li>
       <li><a href="#select-dao">select-dao</a></li>
       <li><a href="#sequence-exists-p">sequence-exists-p</a></li>
       <li><a href="#sequence-next">sequence-next</a></li>
