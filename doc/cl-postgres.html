@@ -2,20 +2,20 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 
   <head>
-    <title>Cl-postgres reference manual</title>
+    <title>CL-postgres reference manual</title>
     <link rel="stylesheet" type="text/css" href="style.css"/>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   </head>
 
   <body>
 
-    <h1>Cl-postgres reference manual</h1>
+    <h1>CL-postgres reference manual</h1>
 
-    <p>The cl-postgres module implements a rather low-level interface
+    <p>The CL-postgres module implements a rather low-level interface
     for communicating with a <a
     href="http://postgresql.org">PostgreSQL</a> database server. It is
-    part of the <a href="index.html">postmodern</a> library, but can
-    be used on its own.</p>
+    part of the <a href="index.html">Postmodern</a> library, but can
+    be used separately.</p>
 
     <h2>Contents</h2>
 
@@ -158,11 +158,11 @@
     <p class="desc">When debugging, it can be helpful to inspect the
     queries that are being sent to the database. Set this variable to
     an output stream value (<code>*standard-output*</code>, for
-    example) to have cl-postgres log every query it makes.</p>
+    example) to have CL-postgres log every query it makes.</p>
 
     <h2><a name="reading">Reading values</a></h2>
 
-    <p>Cl-postgres knows how to convert commonly used PostgreSQL data
+    <p>CL-postgres knows how to convert commonly used PostgreSQL data
     types to Lisp values. This table shows the mapping:</p>
 
     <table>
@@ -314,7 +314,7 @@
 
     <h2><a name="conditions">Conditions</a></h2>
 
-    <p>Opening or querying a database may raise errors. Cl-postgres
+    <p>Opening or querying a database may raise errors. CL-postgres
     will wrap the errors that the server returns in a lisp condition,
     and raise conditions of the same type when it detects some problem
     itself. Socket errors are let through as they are.</p>
