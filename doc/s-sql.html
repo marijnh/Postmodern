@@ -397,6 +397,11 @@
     <pre class="code desc">
 (:insert-into 'my-table :set 'field-1 42 'field-2 "foobar")</pre>
 
+    <p class="desc">It is possible to add <code>:returning</code>,
+    followed by a list of field names or expressions, at the end of
+    the <code>:insert-into</code> form. This will cause the query to
+    return the values of these expressions as a single row.</p>
+
     <p class="def"><span>sql-op</span> <a name="update"></a>:update (table &amp;rest rest)</p>
 
     <p class="desc">Update values in a table. After the table name

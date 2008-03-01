@@ -542,19 +542,22 @@ to runtime. Used to create stored procedures."
   `("CREATE OR REPLACE FUNCTION " ,@(sql-expand name) " (" ,(implode ", " (mapcar 'to-type-name args))
     ") RETURNS " ,(to-type-name return-type) " LANGUAGE SQL " ,(symbol-name stability) " AS " ,(escape-sql-expression body)))
 
-(def-sql-op :insert-into (table insert-method &rest rest)
+(def-sql-op :insert-into (table &rest rest)
+  (split-on-keywords ((method *) (returning ? *)) (cons :method args)
   `("INSERT INTO " ,@(sql-expand table) " "
-    ,@(cond ((eq insert-method :set)
-             (cond ((oddp (length rest))
+    ,@(cond ((eq (car method) :set)
+             (cond ((oddp (length (cdr method)))
                     (error "Invalid amount of :set arguments passed to insert-into sql operator"))
-                   ((null rest) '("DEFAULT VALUES"))
-                   (t `("(" ,@(sql-expand-list (loop :for (field value) :on rest :by #'cddr
-                                                      :collect field))
-                        ") VALUES (" ,@(sql-expand-list (loop :for (field value) :on rest :by #'cddr
+                   ((null (cdr method)) '("DEFAULT VALUES"))
+                   (t `("(" ,@(sql-expand-list (loop :for (field value) :on (cdr method) :by #'cddr
+                                                     :collect field))
+                        ") VALUES (" ,@(sql-expand-list (loop :for (field value) :on (cdr method) :by #'cddr
                                                               :collect value)) ")"))))
-            ((and (not rest) (consp insert-method) (keywordp (first insert-method)))
-             (sql-expand insert-method))
-            (t (error "No :set arguments or select operator passed to insert-into sql operator")))))
+            ((and (not (cdr method)) (consp (car method)) (keywordp (caar method)))
+             (sql-expand (car method)))
+            (t (error "No :set arguments or select operator passed to insert-into sql operator")))
+    ,@(when returning
+        `(" RETURNING " ,@(sql-expand-list returning))))))
 
 (def-sql-op :update (table &rest args)
   (split-on-keywords ((set *) (where ?)) args
