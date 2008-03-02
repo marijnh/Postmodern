@@ -45,7 +45,7 @@
 
 (defmethod direct-slot-definition-class ((class dao-class) &key col-type &allow-other-keys)
   "Slots that have a :col-type option are dao-slots."
-  (if col-type 'dao-slot (call-next-method)))
+  (if col-type (find-class 'dao-slot) (call-next-method)))
 
 (defun build-row-reader (class)
   "Initialize the row-reader for this table to a reader that collects
