@@ -1,5 +1,5 @@
 (defpackage :postmodern-tests
-  (:use :common-lisp :fiveam :postmodern))
+  (:use :common-lisp :fiveam :postmodern :simple-date))
 
 (in-package :postmodern-tests)
 
@@ -125,7 +125,7 @@
     (is (member :dao-test (list-tables)))
     (is (null (get-dao 'test-data 1)))
     (let ((dao (make-instance 'test-data :a "quux")))
-      (save-dao dao)
+      (insert-dao dao)
       (is (eql (test-id dao) 1))
       (is (dao-exists-p dao)))
     (let ((dao (get-dao 'test-data 1)))
