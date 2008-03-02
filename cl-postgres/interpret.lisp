@@ -12,7 +12,7 @@ interpreters for those types know how to parse them.")
   "This interpreter is used for types that we have no specific
 interpreter for -- it just reads the value as a string. \(We make sure
 values of unknown types are passed in text form.)"
-  (#.*read-string* stream :byte-length size))
+  (enc-read-string stream :byte-length size))
 
 (defun register-type-reader (oid function)
   "Register an interpreter function for an OID. The function will be
@@ -49,7 +49,7 @@ of the given type."
     (flet ((read-type (type &optional modifier)
              (ecase type
                (bytes `(read-bytes ,stream-name (- ,size-name ,length-used)))
-               (string `(#.*read-string* ,stream-name :byte-length (- ,size-name ,length-used)))
+               (string `(enc-read-string ,stream-name :byte-length (- ,size-name ,length-used)))
                (uint2s `(let* ((size (/ (- ,size-name ,length-used) 2))
                                (result (make-array size :element-type '(unsigned-byte 16))))
                          (dotimes (i size)

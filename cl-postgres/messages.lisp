@@ -23,7 +23,7 @@ message definitions themselves stay readable."
                         (string
                          (push `(,name ,(second part)) strings)
                          (incf base-length 1) ;; The null terminator
-                         (push `(#.*string-byte-length* ,name) extra-length)
+                         (push `(enc-byte-length ,name) extra-length)
                          `(write-str ,socket ,name))
                         (bytes
                          (push `(,name ,(second part)) strings)
@@ -47,7 +47,7 @@ message definitions themselves stay readable."
   (string "database")
   (string database)
   (string "client_encoding")
-  (string #.*client-encoding*)
+  (string *client-encoding*)
   (uint 1 0)) ;; Terminates the parameter list
 
 ;; Identify a user with a plain-text password.
@@ -75,7 +75,7 @@ message definitions themselves stay readable."
   (flet ((md5-and-hex (sequence)
            (bytes-to-hex-string (md5:md5sum-sequence sequence))))
     (let* ((pass1 (md5-and-hex (concatenate 'string password user)))
-           (pass2 (md5-and-hex (concatenate '(vector (unsigned-byte 8) *) (#.*string-bytes* pass1) salt))))
+           (pass2 (md5-and-hex (concatenate '(vector (unsigned-byte 8) *) (enc-string-bytes pass1) salt))))
       (concatenate 'string "md5" pass2))))
 
 ;; Identify a user with an MD5-hashed password.
@@ -151,7 +151,7 @@ for binding data for binary long object columns."
                     (setf (aref param-sizes idx) (length param)))
                    (string
                     (setf (aref param-formats idx) 0)
-                    (setf (aref param-sizes idx) (#.*string-byte-length* param))))))
+                    (setf (aref param-sizes idx) (enc-byte-length param))))))
     (write-uint1 socket #.(char-code #\B))
     (write-uint4 socket (+ 12
                            (length name)
@@ -175,7 +175,7 @@ for binding data for binary long object columns."
                     (write-uint4 socket size)
                     (etypecase param
                       ((vector (unsigned-byte 8)) (write-sequence param socket))
-                      (string (#.*write-string* param socket))))))
+                      (string (enc-write-string param socket))))))
     (write-uint2 socket n-result-formats)   ;; Number of result formats
     (loop :for format :across result-formats ;; Result formats (text/binary)
           :do (write-uint2 socket (if format 1 0)))))
@@ -208,7 +208,7 @@ for binding data for binary long object columns."
 ;; To get out of the copy-in protocol.
 (define-message copy-done-message #\c ())
 
-;;; Copyright (c) 2006 Marijn Haverbeke
+;;; Copyright (c) Marijn Haverbeke
 ;;;
 ;;; This software is provided 'as-is', without any express or implied
 ;;; warranty. In no event will the authors be held liable for any

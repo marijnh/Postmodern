@@ -68,25 +68,9 @@
   ;; Optimization settings (only used by functions that need it).
   (defparameter *optimize*
     '(optimize (speed 3) (safety 0) (space 1) (debug 1)
-      (compilation-speed 0)))
-  ;; Bind some variables depending on whether we are using utf-8. This
-  ;; may look like a bad hack, and it probably is, but on the bright
-  ;; side, the function to call for handling strings is determined at
-  ;; compile-time and there is no run-time overhead.
-  (cond (cl-postgres-system:*unicode*
-         (defparameter *string-byte-length* (intern "UTF-8-BYTE-LENGTH" :trivial-utf-8))
-         (defparameter *write-string* (intern "WRITE-UTF-8-BYTES" :trivial-utf-8))
-         (defparameter *read-string* (intern "READ-UTF-8-STRING" :trivial-utf-8))
-         (defparameter *string-bytes* (intern "STRING-TO-UTF-8-BYTES" :trivial-utf-8))
-         (defparameter *client-encoding* "UNICODE"))
-        (t
-         (defparameter *string-byte-length* 'length)
-         (defparameter *write-string* 'write-ascii-string)
-         (defparameter *read-string* 'read-ascii-string)
-         (defparameter *string-bytes* 'ascii-string-bytes)
-         (defparameter *client-encoding* "SQL_ASCII"))))
+      (compilation-speed 0))))
 
-;;; Copyright (c) 2006 Marijn Haverbeke
+;;; Copyright (c) Marijn Haverbeke
 ;;;
 ;;; This software is provided 'as-is', without any express or implied
 ;;; warranty. In no event will the authors be held liable for any
