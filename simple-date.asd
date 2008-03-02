@@ -2,10 +2,18 @@
   (:use :common-lisp :asdf))
 (in-package :simple-date-system)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter *glue* nil)
+  (when (find-package :s-sql)
+    (push '(:file "s-sql-glue" :depends-on ("simple-date")) *glue*))
+  (when (find-package :cl-postgres)
+    (push '(:file "cl-postgres-glue" :depends-on ("simple-date")) *glue*)))
+
 (defsystem :simple-date
   :components 
   ((:module :simple-date
-            :components ((:file "simple-date")))))
+            :components ((:file "simple-date")
+                         . #.*glue*))))
 
 (defsystem :simple-date-tests
   :depends-on (:fiveam :simple-date)
@@ -16,3 +24,4 @@
 (defmethod perform ((op asdf:test-op) (system (eql (find-system :simple-date))))
   (asdf:oos 'asdf:load-op :simple-date-tests)
   (funcall (intern (string :run!) (string :it.bese.FiveAM)) :simple-date))
+

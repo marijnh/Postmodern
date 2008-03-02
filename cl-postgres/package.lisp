@@ -1,5 +1,5 @@
 (defpackage :cl-postgres
-  (:use :common-lisp :simple-date)
+  (:use :common-lisp)
   (:export #:database-error
            #:database-connection-lost
            #:database-error-message
@@ -31,6 +31,7 @@
            #:postgresql-warning
            #:ignore-row-reader
            #:register-type-reader
+           #:binary-datetime-readers
            #:*query-log*))
 
 (defpackage :cl-postgres-error

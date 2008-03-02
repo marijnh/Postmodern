@@ -107,14 +107,32 @@ of the given type."
       (setf total (- total)))
     (/ total (expt 10000 scale))))
 
-;; Postgresql days are measured from 01-01-2000, whereas simple-date
-;; uses 01-03-2000.
-(defconstant +postgres-day-offset+ -60)
-(defconstant +millisecs-in-day+ (* 1000 3600 24))
+
+;; For date/time types, special interpreter hooks are available (as an
+;; effect of de-coupling cl-postgres and simple-date).
+
+(defconstant +start-of-2000+ (encode-universal-time 0 0 0 1 1 2000 0))
+(defconstant +seconds-in-day+ (* 60 60 24))
+
+(defvar *build-date-value*
+  (lambda (days-since-2000)
+    (+ +start-of-2000+ (* days-since-2000 +seconds-in-day+))))
+(defvar *build-timestamp-value*
+  (lambda (milliseconds-since-2000)
+    (+ +start-of-2000+ (floor milliseconds-since-2000 1000))))
+(defvar *build-interval-value*
+  (lambda (months days milliseconds)
+    (multiple-value-bind (sec ms) (floor milliseconds 1000)
+      `((:months ,months) (:days ,days) (:seconds ,sec) (:milliseconds ,ms)))))
+
+(defun binary-datetime-readers (&key date timestamp interval)
+  (when date (setf *build-date-value* date))
+  (when timestamp (setf *build-timestamp-value* timestamp))
+  (when interval (setf *build-interval-value* interval)))
 
 (define-interpreter 1082 "date"
     ((days int 4))
-  (make-instance 'date :days (+ days +postgres-day-offset+)))
+  (funcall *build-date-value* days))
 
 (defun interpret-millisecs (bits)
   "Decode a 64 bit time-related value based on the timestamp format
@@ -128,20 +146,15 @@ used. Correct for sign bit when using integer format."
 
 (define-interpreter 1114 "timestamp"
     ((bits uint 8))
-  (multiple-value-bind (days millisecs)
-      (floor (interpret-millisecs bits) +millisecs-in-day+)
-    (make-instance 'timestamp :days (+ days +postgres-day-offset+)
-                   :ms millisecs)))
+  (funcall *build-timestamp-value* (interpret-millisecs bits)))
 
 (define-interpreter 1186 "interval"
     ((ms uint 8)
      (days int 4)
      (months int 4))
-  (make-instance 'interval :months months
-                 :ms (+ (* days +millisecs-in-day+)
-                        (interpret-millisecs ms))))
+  (funcall *build-interval-value* months days (interpret-millisecs ms)))
 
-;;; Copyright (c) 2006 Marijn Haverbeke
+;;; Copyright (c) Marijn Haverbeke
 ;;;
 ;;; This software is provided 'as-is', without any express or implied
 ;;; warranty. In no event will the authors be held liable for any

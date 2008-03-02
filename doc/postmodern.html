@@ -15,8 +15,7 @@
     postmodern, which is part of a <a href="index.html">library</a> of
     the same name.</p>
 
-    <p>Note that this package also exports the whole <a
-    href="simple-date.html">simple-date</a> interface, the <a
+    <p>Note that this package also exports the <a
     href="cl-postgres.html#database-connection"><code>database-connection</code></a>
     and <a
     href="cl-postgres.html#database-error"><code>database-error</code></a>
@@ -28,11 +27,12 @@
     that would logically need to communicate with the database will
     raise a condition of the type <a
     href="cl-postgres.html#conditions"><code>database-error</code></a>
-    when something goes wrong. On top of that, conditions thrown by
-    the underlying socket library (<a
-    href="http://cliki.net/usocket">usocket</a>) may be raised when
-    something goes wrong with the connection (most likely when
-    establishing a new connection).</p>
+    when something goes wrong. As a special case, errors that break
+    the connection (socket errors, database shutdowns) will be raised
+    as subtypes of <a
+    href="cl-postgres.html#database-connection-error"><code>database-connection-error</code></a>,
+    providing a <code>:reconnect</code> restart to re-try the
+    operation that encountered to the error.</p>
 
     <h2>Contents</h2>
 

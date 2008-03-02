@@ -1,7 +1,7 @@
 (defpackage :postmodern
   (:use #-postmodern-use-mop :common-lisp
         #+postmodern-use-mop :closer-common-lisp
-        :s-sql :cl-postgres :simple-date)
+        :s-sql :cl-postgres)
   (:nicknames :pomo)
 
   #+postmodern-use-mop
@@ -32,15 +32,8 @@
 
    ;; Condition type from cl-postgres
    #:database-error #:database-error-message #:database-error-code
-   #:database-error-detail #:database-error-query #:database-connection-lost
-
-   ;; Full simple-date interface
-   #:date #:encode-date #:decode-date #:day-of-week
-   #:timestamp #:encode-timestamp #:decode-timestamp
-   #:timestamp-to-universal-time #:universal-time-to-timestamp
-   #:interval #:encode-interval #:decode-interval
-   #:time-add #:time-subtract
-   #:time= #:time> #:time< #:time<= #:time>=))
+   #:database-error-detail #:database-error-query #:database-error-cause
+   #:database-connection-error))
 
 (in-package :postmodern)
 

@@ -312,6 +312,36 @@
     convert the textual representation of the value to something more
     useful.</p>
 
+    <p class="def">
+      <span>function</span>
+      <a name="binary-datetime-readers"></a>
+      binary-datetime-reader (&amp;key date timestamp interval)
+    </p>
+
+    <p class="desc">It is possible to read dates, timestamps, and
+    intervals in textual format using <a
+    href="#register-type-reader"><code>register-type-reader</code></a>,
+    but since these are rather involved to parse, it can be easier and
+    more efficient to get directly at the numbers that encode them.
+    This function can be called to register interpreter functions for
+    these types.</p>
+
+    <p class="desc">An interpreter for date values should take a
+    single argument, which is an integer representing a number of days
+    since January 1st, 2000. A timestamp interpreter also takes a
+    single integer, representing the number of milliseconds since the
+    start of 2000. An interpreter for intervals is given three
+    arguments, all integers, representing the amount of months, days,
+    and milliseconds that the interval represents.</p>
+
+    <p class="desc">By default, CL-postgres uses very simplistic
+    interpreters, which yield univeral-time values for dates and
+    timestamps, and alists containing <code>:months</code>,
+    <code>:days</code>, <code>:seconds</code>, and
+    <code>:milliseconds</code> keys for intervals. If you load <a
+    href="simple-date.html">simple-date</a> after loading CL-postgres,
+    it will automatically replace these with its own interpreters.</p>
+
     <h2><a name="conditions">Conditions</a></h2>
 
     <p>Opening or querying a database may raise errors. CL-postgres
@@ -401,6 +431,7 @@
 
     <ul>
       <li><a href="#alist-row-reader">alist-row-reader</a></li>
+      <li><a href="#binary-datetime-readers">binary-datetime-readers</a></li>
       <li><a href="#close-database">close-database</a></li>
       <li><a href="#connection-meta">connection-meta</a></li>
       <li><a href="#connection-parameters">connection-parameters</a></li>
