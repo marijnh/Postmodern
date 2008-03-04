@@ -68,7 +68,8 @@ database."
 (defmacro with-connection (spec &body body)
   "Like with-connection, but evaluate the specification list."
   `(let ((*database* (apply #'connect ,spec)))
-     ,@body))
+    (unwind-protect (progn ,@body)
+      (disconnect *database*))))
 
 (defparameter *connection-pools* (make-hash-table :test 'equal)
   "Maps pool specifiers to lists of pooled connections.")
