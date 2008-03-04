@@ -46,6 +46,7 @@
            #:floating-point-exception
            #:foreign-key-violation
            #:insufficient-resources
+           #:insufficient-privilege
            #:integrity-violation
            #:internal-error
            #:invalid-datetime-format
@@ -59,6 +60,7 @@
            #:query-canceled
            #:restrict-violation
            #:server-shutdown
+           #:syntax-error-or-access-violation
            #:system-error
            #:unique-violation))
 
