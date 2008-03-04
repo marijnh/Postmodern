@@ -2,7 +2,7 @@
 
 (defclass dao-class (standard-class)
   ((keys :initarg :keys :initform nil :reader dao-keys)
-   (table-name :initarg :table-name :reader table-name)
+   (table-name :reader table-name)
    (row-reader :reader dao-row-reader))
   (:documentation "Metaclass for database-access-object classes."))
 
@@ -15,17 +15,16 @@
 (defun dao-fields (class)
   (mapcar 'slot-definition-name (dao-slots class)))
 
-(defmethod shared-initialize :after ((class dao-class) slot-names &key &allow-other-keys)
+(defmethod shared-initialize :after ((class dao-class) slot-names &key table-name &allow-other-keys)
   (declare (ignore slot-names))
   (unless (every (lambda (x) (member x (dao-fields class))) (dao-keys class))
     (error "Class ~A has a key that is not also a slot." (class-name class)))
   ;; Default the table name to the class name if it is not given,
   ;; remove it from the list form if it was given.
-  (setf (slot-value class 'table-name)  
-        (if (slot-boundp class 'table-name)
-            (let ((name (car (table-name class))))
-              (if (symbolp name) name (intern name)))
-            (class-name class)))
+  (setf (slot-value class 'table-name)
+        (cond ((not table-name) (class-name class))
+              ((symbolp (car table-name)) (car table-name))
+              (t (intern (car table-name)))))
   (build-row-reader class)
   (build-dao-methods class))
 
