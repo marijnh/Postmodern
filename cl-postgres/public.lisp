@@ -40,24 +40,30 @@ currently connected."
 (defun initiate-connection (conn)
   "Check whether a connection object is connected, try to connect it
 if it isn't."
-  (let ((socket (usocket:socket-stream
-                 (usocket:socket-connect (connection-host conn)
-                                         (connection-port conn)
-                                         :element-type '(unsigned-byte 8))))
-        (finished nil))
-    (unwind-protect
-         (setf (slot-value conn 'meta) nil
-               (connection-parameters conn)
-               (authenticate socket (connection-user conn)
-                             (connection-password conn) (connection-db conn))
-               (connection-timestamp-format conn)
-               (if (string= (gethash "integer_datetimes" (connection-parameters conn)) "on")
-                   :integer :float)
-               (connection-socket conn) socket
-               finished t)
-      (unless finished
-        (ensure-socket-is-closed socket)))
-    (values)))
+  (flet ((add-restart (err)
+           (restart-case (error (wrap-socket-error err))
+             (:reconnect () :report "Try again." (initiate-connection conn)))))
+    (handler-case
+        (let ((socket (usocket:socket-stream
+                       (usocket:socket-connect (connection-host conn)
+                                               (connection-port conn)
+                                               :element-type '(unsigned-byte 8))))
+              (finished nil))
+          (unwind-protect
+               (setf (slot-value conn 'meta) nil
+                     (connection-parameters conn)
+                     (authenticate socket (connection-user conn)
+                                   (connection-password conn) (connection-db conn))
+                     (connection-timestamp-format conn)
+                     (if (string= (gethash "integer_datetimes" (connection-parameters conn)) "on")
+                         :integer :float)
+                     (connection-socket conn) socket
+                     finished t)
+            (unless finished
+              (ensure-socket-is-closed socket))))
+      (usocket:socket-error (e) (add-restart e))
+      (stream-error (e) (add-restart e))))
+    (values))
 
 (defun reopen-database (conn)
   "Reconnect a disconnected database connection."
@@ -106,9 +112,10 @@ offering a :reconnect restart."
                  (stream-error (e)
                    (cond ((eq (connection-socket ,connection-name) (stream-error-stream e))
                           (ensure-socket-is-closed (connection-socket ,connection-name) :abort t)
-                          (,retry-name (wrap-stream-error e)))
+                          (,retry-name (wrap-socket-error e)))
                          (t (error e))))
                  (cl-postgres-error:server-shutdown (e)
+                   (ensure-socket-is-closed (connection-socket ,connection-name) :abort t)
                    (,retry-name e))))
              (,retry-name (err)
                (restart-case (error err)

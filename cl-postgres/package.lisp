@@ -9,7 +9,7 @@
            #:database-error-cause
            #:database-connection
            #:database-connection-error
-           #:database-stream-error
+           #:database-socket-error
            #:connection-meta
            #:connection-parameters
            #:open-database

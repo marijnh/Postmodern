@@ -42,14 +42,14 @@ restart."))
 (define-condition database-connection-lost (database-connection-error) ()
   (:documentation "Raised when a query is initiated on a disconnected
 connection object."))
-(define-condition database-stream-error (database-connection-error) ()
-  (:documentation "Used to wrap stream-errors, giving them a
-database-connection-error superclass."))
+(define-condition database-socket-error (database-connection-error) ()
+  (:documentation "Used to wrap stream-errors and socket-errors,
+giving them a database-connection-error superclass."))
 
-(defun wrap-stream-error (stream-error)
-  (make-instance 'database-stream-error
-                 :message (princ-to-string stream-error)
-                 :cause stream-error))
+(defun wrap-socket-error (err)
+  (make-instance 'database-socket-error
+                 :message (princ-to-string err)
+                 :cause err))
 
 (in-package :cl-postgres-error)
 
