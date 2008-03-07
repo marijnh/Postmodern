@@ -70,9 +70,9 @@
              (member 'db-null row-type) (= (length row-type) 3))
     (setf (slot-value slot 'row-default) :null)))
 
-(defmethod direct-slot-definition-class ((class dao-class) &key col-type &allow-other-keys)
+(defmethod direct-slot-definition-class ((class dao-class) &key column col-type &allow-other-keys)
   "Slots that have a :col-type option are column-slots."
-  (if col-type
+  (if (or column col-type)
       (find-class 'direct-column-slot)
       (call-next-method)))
 

@@ -416,10 +416,11 @@
     <h2><a name="daos"></a>Database access objects</h2>
 
     <p>Postmodern contains a simple system for defining CLOS classes
-    that represent rows in the database. This is not intended as any
-    kind of object-relational magic &#x2015; while serious ORM systems
-    have their place, they are notoriously hard to get right, and are
-    outside of the scope of a humble SQL library like this.</p>
+    that represent rows in the database. This is not intended as as a
+    full-fledged object-relational magic system &#x2015; while serious
+    ORM systems have their place, they are notoriously hard to get
+    right, and are outside of the scope of a humble SQL library like
+    this.</p>
 
     <p class="def">
       <span>metaclass</span>
@@ -427,16 +428,28 @@
       dao-class
     </p>
 
-    <p class="desc">To create database access objects, DAOs for short,
-    you first define new class for them, using <code>dao-class</code>
-    as the metaclass. In addition to the regular slot options, slots
-    in this class can be given <code>:col-type</code> and
-    <code>:col-default</code> options. All slots in which the first is
-    present, with a valid <a href="s-sql.html">S-SQL</a> type as its
-    value, are considered to be columns in the table this class
-    accesses. Other slots will behave as in a regular class. The
-    <code>:col-default</code> option is optional, and can be used to
-    define a default value for the column.</p>
+    <p class="desc">At the heart of Postmodern's DAO system is the
+    <code>dao-class</code> metaclass. It allows you to define classes
+    for your database-access objects as regular CLOS classes. Some of
+    the slots in these classes will refer to columns in the database.
+    To specify that a slot refers to a column, give it a
+    <code>:col-type</code> option containing an <a
+    href="s-sql.html">S-SQL</a> type expression (useful if you want to
+    be able to derive a table definition from the class definition),
+    or simply a <code>:column</code> option with value <code>t</code>.
+    Such slots can also take a <code>:col-default</code> option, used
+    to provide a database-side default value as an S-SQL
+    expression.</p>
+
+    <p class="desc">DAO class definitions support two extra class
+    options: <code>:table-name</code> to give the name of the table
+    that the class refers to (defaults to the class name), and
+    <code>:keys</code> to provide a set of primary keys for the table.
+    When no primary keys are defined, operations such as <a
+    href="#update-dao"><code>update-dao</code></a> and <a
+    href="#get-dao"><code>get-dao</code></a> will not work.</p>
+
+    <p class="desc">Simple example:</p>
 
     <pre class="code">
 (defclass user ()
@@ -449,22 +462,22 @@
     <p class="desc">The <code>(or db-null integer)</code> form is used
     to indicate a column can have NULL values.</p>
 
-    <p class="desc">DAO classes should usually define a set of
-    <code>:keys</code>, as above, defining the primary key of the
-    table. It is also possible to give a <code>:table-name</code>
-    class option, setting the name of the table this class refers to.
-    When omitted, this defaults to the name of the class itself.</p>
+    <p class="desc">When inheriting from DAO classes, a subclass' set
+    of columns also contains all the columns in its superclasses. The
+    primary key for such a class is the union of its own keys and all
+    the keys from its superclasses. Classes inheriting from DAO
+    classes should probably always use the <code>dao-class</code>
+    metaclass themselves.</p>
 
     <p class="desc">When a DAO is created with
     <code>make-instance</code>, it can be passed a
     <code>:fetch-defaults</code> keyword parameter which, when true,
     will cause a query to be made to fetch the default values for all
-    slots that have default values and were not bound through
+    slots that have column default values and were not bound through
     initargs. In some cases, such as <code>serial</code> columns,
     which have an implicit default, this will not work. You can work
     around this by creating your own sequence and defining a
-    <code>(:nextval "my-sequence")</code> default.
-    <code>:fetch-defaults</code> defaults to false.</p>
+    <code>(:nextval "my_sequence")</code> default.</p>
 
     <p class="def">
       <span>method</span>
@@ -475,7 +488,7 @@
 
     <p class="desc">Test whether a row with the same primary key as
     the given DAO exists in the database. Will also return
-    <code>NIL</code> when some of the key slots in the object are
+    <code>NIL</code> when any of the key slots in the object are
     unbound.</p>
 
     <p class="def">
@@ -487,7 +500,12 @@
 
     <p class="desc">Select the DAO object from the row that has the
     given primary key values, or <code>NIL</code> if no such row
-    exists.</p>
+    exists. Objects created by this function will have
+    <code>initialize-instance</code> called on them (after loading in
+    the values from the database) without any arguments &#x2015; even
+    <code>:default-initargs</code> are skipped. The same goes for <a
+    href="#select-dao"><code>select-dao</code></a> and <a
+    href="#query-dao"><code>query-dao</code></a>.</p>
 
     <p class="def">
       <span>macro</span>
@@ -502,6 +520,8 @@
     sorting arguments are given, which can also be S-SQL forms or
     strings, these are used to sort the result. (Note that, if you
     want to sort, you <em>have</em> to pass a test value.)</p>
+
+    <pre class="code">(select-dao 'user (:> score 10000) name)</pre>
 
     <p class="def">
       <span>function</span>
@@ -522,9 +542,11 @@
     </p>
 
     <p class="desc">Insert the given DAO into the database. When any
-    row slots in the object are unbound, these will be updated with
+    column slots in the object are unbound, these will be updated with
     the values they default to in the database. (If they have no
-    defaults, it is an error to insert them.)</p>
+    defaults, it is an error to insert them.) <em>Note</em>: This
+    feature only works on PostgreSQL 8.2 and up. On older versions, do
+    not insert DAOs with unbound slots.</p>
 
     <p class="def">
       <span>method</span>
@@ -534,7 +556,7 @@
 
     <p class="desc">Update the representation of the given DAO in the
     database with the values in the object. This is not defined for
-    tables that do not have any non-key columns.</p>
+    tables that do not have any non-primary-key columns.</p>
 
     <p class="def">
       <span>method</span>

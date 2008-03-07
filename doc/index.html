@@ -421,7 +421,10 @@
     older than 7.4 (it uses a client/server protocol that was
     introduced in that version). On versions prior to 8.1, retrieving
     date and time objects is broken, because their binary
-    representation was changed.</p>
+    representation was changed. Part of the functionality of <a
+    href="postmodern.html#insert-dao"><code>insert-dao</code></a>
+    (automatic defaulting of unbound slots) only works in PostgreSQL
+    8.2 and up.</p>
 
     <h3>Things that should be implemented</h3>
 
