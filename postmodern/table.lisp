@@ -69,6 +69,7 @@ values from the query."
                             :do (setf (slot-value instance (slot-definition-name
                                                             (relevant-field dao-field (field-name query-field))))
                                       (next-field query-field)))
+                      (initialize-instance instance)
                       instance)))))))
 
 (defgeneric dao-exists-p (dao)
