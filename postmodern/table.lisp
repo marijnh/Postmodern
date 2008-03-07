@@ -2,7 +2,7 @@
 
 (defclass dao-class (standard-class)
   ((keys :initarg :keys :initform nil :reader dao-keys)
-   (table-name :reader table-name)
+   (table-name :reader dao-table-name)
    (row-reader :reader dao-row-reader))
   (:documentation "Metaclass for database-access-object classes."))
 
@@ -14,6 +14,8 @@
   (remove-if-not (lambda (x) (typep x 'dao-slot)) (class-direct-slots class)))
 (defun dao-fields (class)
   (mapcar 'slot-definition-name (dao-slots class)))
+(defmethod dao-table-name ((class-name symbol))
+  (dao-table-name (find-class class-name)))
 
 (defmethod shared-initialize :after ((class dao-class) slot-names &key table-name &allow-other-keys)
   (declare (ignore slot-names))
@@ -99,7 +101,7 @@ values.)"
   (let* ((fields (dao-fields class))
          (key-fields (dao-keys class))
          (value-fields (remove-if (lambda (x) (member x key-fields)) fields))
-         (table-name (table-name class)))
+         (table-name (dao-table-name class)))
     ;; This is a hack -- the MOP does not define a practical way to
     ;; dynamically add methods to a generic, but the specialised-on
     ;; class is determined when the defmethod is evaluated, so setting
@@ -192,7 +194,7 @@ holds, order them by the given criteria."
   (flet ((check-string (x)
            (if (stringp x) `(:raw ,x) x)))
     (let* ((type-name (gensym))
-           (query `(:select '* :from (table-name (find-class ,type-name))
+           (query `(:select '* :from (dao-table-name (find-class ,type-name))
                     :where ,(check-string test))))
       (when ordering
         (setf query `(:order-by ,query ,@(mapcar #'check-string ordering))))
@@ -204,7 +206,7 @@ holds, order them by the given criteria."
   (unless (typep table 'dao-class)
     (setf table (find-class table)))
   (sql-compile
-   `(:create-table ,(table-name table)
+   `(:create-table ,(dao-table-name table)
                    ,(loop :for slot :in (dao-slots table)
                        :if (typep slot 'dao-slot)
                        :collect `(,(slot-definition-name slot) :type ,(slot-col-type slot)
