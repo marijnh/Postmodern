@@ -37,7 +37,12 @@
 
     <h2>The date library</h2>
 
-    <p>... stuff about including simple-date. to be implemented and written</p>
+    <p><a href="simple-date.html"><code>simple-date</code></a> is no
+    longer depended on by CL-postgres and S-SQL. If you load it
+    <em>after</em> loading these libraries, the integration (defining
+    <a href="s-sql.html#sql-ize"><code>sql-ize</code></a> methods for
+    the included types, registering readers for their OIDs) will
+    automagically happen.</p>
 
     <h2>The DAO system</h2>
 
@@ -97,23 +102,23 @@
 
    <p>Or you could explicitly create the id sequence and give the
    <code>id</code> field a <code>:col-default</code> of
-   <code>(:nextval "product-ids")</code>, to have more control over
+   <code>(:nextval "product_ids")</code>, to have more control over
    the id generation.</p>
 
    <p>The above example should give you a basic idea of the new
    interface: DAO classes are now created by regular class
    definitions. Instead of <code>:type</code> options, column slots
-   should get <code>:col-type</code> options. The semantics of
-   creating and inserting DAOs have been slightly adjusted: There is
-   no magic happening when you create a DAO instance (it used to fetch
-   id values), except when you give <code>make-instance</code> a
-   <code>:fetch-defaults</code> keyword argument, in which case it
-   will query the database for the rows' default values, and put them
-   in the instance. Usually, it is cleaner to not use this, since it
-   generates extra queries and does not work for stuff like
-   <code>serial</code> fields anyway, where no proper
-   <code>:col-default</code> can be given. When an object is inserted
-   into the database with <a
+   should get <code>:column</code> or <code>:col-type</code> options.
+   The semantics of creating and inserting DAOs have been slightly
+   adjusted: There is no magic happening when you create a DAO
+   instance (it used to fetch id values), except when you give
+   <code>make-instance</code> a <code>:fetch-defaults</code> keyword
+   argument, in which case it will query the database for the rows'
+   default values, and put them in the instance. Usually, it is
+   cleaner to not use this, since it generates extra queries and does
+   not work for stuff like <code>serial</code> fields anyway, where no
+   proper <code>:col-default</code> can be given. When an object is
+   inserted into the database with <a
    href="postmodern.html#insert-dao"><code>insert-dao</code></a>, some
    slots may be unbound. These will then, both in the database and in
    the object, be assigned values based on the column defaults. For
