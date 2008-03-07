@@ -44,6 +44,25 @@
     the included types, registering readers for their OIDs) will
     automagically happen.</p>
 
+    <h2>Errors and reconnecting</h2>
+
+    <p>In previous versions, only the
+    <code>database-connection-lost</code> conditions offered a
+    <code>:reconnect</code> restart. There are now various conditions
+    offering this restart, all subtypes of
+    <code>database-connection-error</code>, and the library tries its
+    very best to wrap all hard-to-prevent errors with such a restart
+    (socket errors, database shutdowns). The goal is that you can use
+    this feature to cleanly and simply add functionality for
+    recovering from connectivity problems and server restarts. If you
+    still have issues here, please discuss them on the mailing list
+    (universal error recovery is rather hard to test).</p>
+
+    <p>There is now also a bucket-load of condition types exported
+    from the <code>cl-postgres-error</code> package, which can make
+    writing <code>handler-case</code> forms around database code a lot
+    more pleasant.</p>
+
     <h2>The DAO system</h2>
 
     <p>This is where upgrading might be somewhat painful. The old
