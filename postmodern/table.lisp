@@ -1,63 +1,112 @@
 (in-package :postmodern)
 
 (defclass dao-class (standard-class)
-  ((keys :initarg :keys :initform nil :reader dao-keys)
-   (table-name :reader dao-table-name)
+  ((direct-keys :initarg :keys :initform nil :reader direct-keys)
+   (effective-keys :reader dao-keys)
+   (table-name)
    (row-reader :reader dao-row-reader))
   (:documentation "Metaclass for database-access-object classes."))
 
 (defmethod validate-superclass ((class dao-class) (super-class standard-class))
   t)
 
-(defun dao-slots (class)
+(defun dao-column-slots (class)
   "Enumerate the slots in a class that refer to table rows."
-  (remove-if-not (lambda (x) (typep x 'dao-slot)) (class-direct-slots class)))
-(defun dao-fields (class)
-  (mapcar 'slot-definition-name (dao-slots class)))
-(defmethod dao-table-name ((class-name symbol))
-  (dao-table-name (find-class class-name)))
+  (mapcar 'slot-column
+          (remove-if-not (lambda (x) (typep x 'effective-column-slot))
+                         (class-slots class))))
+(defun dao-column-fields (class)
+  (mapcar 'slot-definition-name (dao-column-slots class)))
+(defun dao-table-name (class)
+  (when (symbolp class)
+    (setf class (find-class class)))
+  (if (slot-boundp class 'table-name)
+      (slot-value class 'table-name)
+      (class-name class)))
 
-(defmethod shared-initialize :after ((class dao-class) slot-names &key table-name &allow-other-keys)
+(defmethod shared-initialize :before ((class dao-class) slot-names
+                                      &key table-name &allow-other-keys)
   (declare (ignore slot-names))
-  (unless (every (lambda (x) (member x (dao-fields class))) (dao-keys class))
+  (when table-name
+    (setf (slot-value class 'table-name)
+          (if (symbolp (car table-name)) (car table-name) (intern (car table-name))))))
+
+(defun dao-superclasses (class)
+  "Build a list of superclasses of a given class that are DAO
+  classes."
+  (let ((found ()))
+    (labels ((explore (class)
+               (when (typep class 'dao-class)
+                 (pushnew class found))
+               (mapc #'explore (class-direct-superclasses class))))
+      (explore class)
+      found)))
+
+(defmethod finalize-inheritance :after ((class dao-class))
+  "Building a row reader and a set of methods can only be done after
+  inheritance has been finalised."
+  ;; The effective set of keys of a class is the union of its keys and
+  ;; the keys of all its superclasses.
+  (setf (slot-value class 'effective-keys)
+        (reduce 'union (mapcar 'direct-keys (dao-superclasses class))))
+  (unless (every (lambda (x) (member x (dao-column-fields class))) (dao-keys class))
     (error "Class ~A has a key that is not also a slot." (class-name class)))
-  ;; Default the table name to the class name if it is not given,
-  ;; remove it from the list form if it was given.
-  (setf (slot-value class 'table-name)
-        (cond ((not table-name) (class-name class))
-              ((symbolp (car table-name)) (car table-name))
-              (t (intern (car table-name)))))
   (build-row-reader class)
   (build-dao-methods class))
 
 
-(defclass dao-slot (standard-direct-slot-definition)
-  ((col-type :initarg :col-type :reader slot-col-type)
-   (col-default :initarg :col-default :reader slot-col-default)
+(defclass direct-column-slot (standard-direct-slot-definition)
+  ((col-type :initarg :col-type :reader column-type)
+   (col-default :initarg :col-default :reader column-default)
    (sql-name :reader slot-sql-name))
   (:documentation "Type of slots that refer to database columns."))
 
-(defmethod shared-initialize :after ((slot dao-slot) slot-names &key row-type row-default &allow-other-keys)
+(defmethod shared-initialize :after ((slot direct-column-slot) slot-names
+                                     &key row-type row-default &allow-other-keys)
   (declare (ignore slot-names))
   (setf (slot-value slot 'sql-name) (to-sql-name (slot-definition-name slot)))
+  ;; The default for nullable columns defaults to :null.
   (when (and (null row-default) (consp row-type) (eq (car row-type) 'or)
              (member 'db-null row-type) (= (length row-type) 3))
     (setf (slot-value slot 'row-default) :null)))
 
 (defmethod direct-slot-definition-class ((class dao-class) &key col-type &allow-other-keys)
-  "Slots that have a :col-type option are dao-slots."
-  (if col-type (find-class 'dao-slot) (call-next-method)))
+  "Slots that have a :col-type option are column-slots."
+  (if col-type
+      (find-class 'direct-column-slot)
+      (call-next-method)))
+
+(defparameter *direct-column-slot* nil
+  "This is used to communicate the fact that a slot is a column to
+  effective-slot-definition-class.")
+
+(defclass effective-column-slot (standard-effective-slot-definition)
+  ((direct-slot :initform *direct-column-slot* :reader slot-column)))
+
+(defmethod compute-effective-slot-definition ((class dao-class) name direct-slot-definitions)
+  (flet ((is-column (slot) (typep slot 'direct-column-slot)))
+    (let ((*direct-column-slot* (find-if #'is-column direct-slot-definitions)))
+      (when (and *direct-column-slot*
+                 (not (every #'is-column direct-slot-definitions)))
+        (error "Slot ~a in class ~a is both a column slot and a regular slot." name class))
+      (call-next-method))))
+
+(defmethod effective-slot-definition-class ((class dao-class) &rest initargs)
+  (declare (ignore initargs))
+  (if *direct-column-slot*
+      (find-class 'effective-column-slot)
+      (call-next-method)))
 
 (defun build-row-reader (class)
   "Initialize the row-reader for this table to a reader that collects
 instances of the associated class and initializes their slots to the
 values from the query."
-  (let* ((fields (dao-slots class))
+  (let* ((fields (dao-column-slots class))
          (n-dao-fields (length fields)))
     (flet ((relevant-field (probable-field name)
-                             (or (and (string= (slot-sql-name probable-field) name) probable-field)
-                                 (find-if (lambda (field) (string= (slot-sql-name field) name)) fields)
-                                 (error "Field ~A does not exist in table class ~A." name (class-name class)))))
+             (or (and (string= (slot-sql-name probable-field) name) probable-field)
+                 (find-if (lambda (field) (string= (slot-sql-name field) name)) fields)
+                 (error "Field ~A does not exist in table class ~A." name (class-name class)))))
       (setf (slot-value class 'row-reader)
             (row-reader (query-fields)
               (assert (= (length query-fields) n-dao-fields))
@@ -83,6 +132,9 @@ values from the query."
 (defgeneric delete-dao (dao)
   (:documentation "Delete the given dao from the database."))
 (defgeneric get-dao (type &rest args)
+  (:method ((class-name symbol) &rest args)
+    (finalize-inheritance (find-class class-name))
+    (apply 'get-dao class-name args))
   (:documentation "Get the object corresponding to the given primary
   key, or return nil if it does not exist."))
 
@@ -99,7 +151,7 @@ values from the query."
 \(Done this way because some of them are not defined in every
 situation, and each of them needs to close over some pre-computed
 values.)"
-  (let* ((fields (dao-fields class))
+  (let* ((fields (dao-column-fields class))
          (key-fields (dao-keys class))
          (value-fields (remove-if (lambda (x) (member x key-fields)) fields))
          (table-name (dao-table-name class)))
@@ -155,9 +207,10 @@ values.)"
                     :for field :in unbound
                     :do (setf (slot-value object field) value))))))
 
-      (let* ((defaulted-slots (remove-if-not (lambda (x) (slot-boundp x 'col-default)) (dao-slots class)))
+      (let* ((defaulted-slots (remove-if-not (lambda (x) (slot-boundp x 'col-default))
+                                             (dao-column-slots class)))
              (defaulted-names (mapcar 'slot-definition-name defaulted-slots))
-             (default-values (mapcar 'slot-col-default defaulted-slots)))
+             (default-values (mapcar 'column-default defaulted-slots)))
         (if defaulted-slots
             (defmethod fetch-defaults ((object target-class))
               (let (names defaults)
@@ -175,7 +228,8 @@ values.)"
             (defmethod fetch-defaults ((object target-class))
               (declare (ignore object)))))
 
-      (defmethod shared-initialize :after ((object target-class) slot-names &key (fetch-defaults nil) &allow-other-keys)
+      (defmethod shared-initialize :after ((object target-class) slot-names
+                                           &key (fetch-defaults nil) &allow-other-keys)
         (declare (ignore slot-names))
         (when fetch-defaults
           (fetch-defaults object))))))
@@ -206,12 +260,14 @@ holds, order them by the given criteria."
   "Generate the appropriate CREATE TABLE query for this class."
   (unless (typep table 'dao-class)
     (setf table (find-class table)))
+  (unless (class-finalized-p table)
+    (finalize-inheritance table))
   (sql-compile
    `(:create-table ,(dao-table-name table)
-                   ,(loop :for slot :in (dao-slots table)
-                       :if (typep slot 'dao-slot)
-                       :collect `(,(slot-definition-name slot) :type ,(slot-col-type slot)
-                                   ,@(when (slot-boundp slot 'col-default) `(:default ,(slot-col-default slot)))))
+                   ,(loop :for slot :in (dao-column-slots table)
+                          :collect `(,(slot-definition-name slot) :type ,(column-type slot)
+                                     ,@(when (slot-boundp slot 'col-default)
+                                             `(:default ,(column-default slot)))))
                    ,@(when (dao-keys table)
                        `((:primary-key ,@(dao-keys table)))))))
 
