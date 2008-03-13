@@ -235,7 +235,10 @@ values.)"
           (fetch-defaults object))))))
 
 (defun query-dao% (type query)
-  (exec-query *database* query (dao-row-reader (find-class type))))
+  (let ((class (find-class type)))
+    (unless (class-finalized-p class)
+      (finalize-inheritance class))
+    (exec-query *database* query (dao-row-reader class))))
 
 (defmacro query-dao (type query)
   "Execute a query and return the result as daos of the given type.
