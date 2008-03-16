@@ -161,11 +161,11 @@ used. Correct for sign bit when using integer format."
 (set-sql-datetime-readers
  :date (lambda (days-since-2000)
          (+ +start-of-2000+ (* days-since-2000 +seconds-in-day+)))
- :timestamp (lambda (milliseconds-since-2000)
-              (+ +start-of-2000+ (floor milliseconds-since-2000 1000)))
- :interval (lambda (months days milliseconds)
-             (multiple-value-bind (sec ms) (floor milliseconds 1000)
-               `((:months ,months) (:days ,days) (:seconds ,sec) (:milliseconds ,ms)))))
+ :timestamp (lambda (useconds-since-2000)
+              (+ +start-of-2000+ (floor useconds-since-2000 1000000)))
+ :interval (lambda (months days useconds)
+             (multiple-value-bind (sec us) (floor useconds 1000000)
+               `((:months ,months) (:days ,days) (:seconds ,sec) (:useconds ,us)))))
 
 ;; Working with tables.
 
