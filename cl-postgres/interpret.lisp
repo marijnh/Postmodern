@@ -140,12 +140,19 @@ used. Correct for sign bit when using integer format."
                   :table table
                   :binary-p t))
 
+(defun set-time-reader (f table)
+  (set-sql-reader 1083 (binary-reader ((usec-bits uint 8))
+                         (funcall f (interpret-usec-bits usec-bits)))
+                  :table table
+                  :binary-p t))
+
 ;; Public interface for adding date/time readers
 
-(defun set-sql-datetime-readers (&key date timestamp interval (table *sql-readtable*))
+(defun set-sql-datetime-readers (&key date timestamp interval time (table *sql-readtable*))
   (when date (set-date-reader date table))
   (when timestamp (set-timestamp-reader timestamp table))
-  (when interval (set-interval-reader interval table)))
+  (when interval (set-interval-reader interval table))
+  (when time (set-time-reader time table)))
 
 ;; Provide meaningful defaults for the date/time readers.
 
