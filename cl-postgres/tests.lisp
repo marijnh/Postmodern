@@ -87,3 +87,16 @@
       (exec-query connection "insert into test values (1, 'harry')"))
     (exec-query connection "drop table test")))
 
+(test sql-reader
+  (with-test-connection
+    (let ((*sql-readtable* (copy-sql-readtable)))
+      (set-sql-reader 2249 (lambda (text)
+                             (with-input-from-string (*standard-input* text)
+                               (read-char) ;; opening paren
+                               (let ((x (read)))
+                                 (read-char) ;; comma
+                                 (cons x (read))))))
+      (is (equal (exec-query connection "select (10,20)" 'list-row-reader)
+                 '(((10 . 20))))))
+    (is (equal (exec-query connection "select (30,40)" 'list-row-reader)
+               '(("(30,40)"))))))

@@ -6,7 +6,7 @@
 (defconstant +postgres-day-offset+ -60)
 (defconstant +millisecs-in-day+ (* 1000 3600 24))
 
-(cl-postgres:binary-datetime-readers
+(cl-postgres:set-sql-datetime-readers
  :date
  (lambda (days)
    (make-instance 'date :days (+ days +postgres-day-offset+)))

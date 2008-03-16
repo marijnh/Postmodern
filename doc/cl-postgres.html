@@ -23,6 +23,7 @@
       <li><a href="#connecting">Connecting</a></li>
       <li><a href="#querying">Querying</a></li>
       <li><a href="#reading">Reading values</a></li>
+      <li><a href="#row-readers">Row readers</a></li>
       <li><a href="#conditions">Conditions</a></li>
       <li><a href="#index">Symbol-index</a></li>
     </ol>
@@ -145,9 +146,10 @@
     Parameters should be given as a list of strings, which should
     contain values in a form that PostgreSQL can make sense of. String
     values should not be escaped. The result of the executing the
-    statement, if any, is interpreted by the given row reader, and
-    returned. Again, the number or effected rows is optionally
-    returned as a second value.</p>
+    statement, if any, is interpreted by the given <a
+    href="#row-readers">row reader</a>, and returned. Again, the
+    number or effected rows is optionally returned as a second
+    value.</p>
 
     <p class="def">
       <span>variable</span>
@@ -180,22 +182,98 @@
         <tr><td>varchar</td><td>string</td></tr>
         <tr><td>text</td><td>string</td></tr>
         <tr><td>bytea</td><td>(vector (unsigned-byte 8))</td></tr>
-        <tr><td>date</td><td><a href="simple-date.html#date"><code>date</code></a></td></tr>
-        <tr><td>timestamp</td><td><a href="simple-date.html#timestamp"><code>timestamp</code></a></td></tr>
-        <tr><td>interval</td><td><a href="simple-date.html#interval"><code>interval</code></a></td></tr>
       </tbody>
     </table>
 
-    <p>Any type not shown in this table will be read as a string
-    containing PostgreSQL's textual representation of the value. You
-    can use <a
-    href="#register-type-reader"><code>register-type-reader</code></a>
-    to register a custom reader for a type.</p>
+    <p>The mapping from PostgreSQL types (identified by OID numbers)
+    to the functions that interpret them is kept in so-called SQL
+    readtables. All types for which no reader is defined will be
+    returned as string values containing their PostgreSQL
+    representation.</p>
 
-    <p>Row readers are methods for reading and grouping the results of
-    queries. Roughly, they are functions that perform the iteration
-    over the rows and cells in the result, and do <em>something</em>
-    with the returned values.</p>
+    <p class="def">
+      <span>variable</span>
+      <a name="*sql-readtable*"></a>
+      *sql-readtable*
+    </p>
+
+    <p class="desc">This variable is used to choose the current
+    readtable. For simple use, you will not have to touch this, but it
+    is possible that code within a Lisp image requires different
+    readers in different situations, in which case you can create
+    separate read tables.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="copy-sql-readtable"></a>
+      copy-sql-readtable (table)
+      <br/>&#8594; readtable
+    </p>
+
+    <p class="desc">Copies a given readtable.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="default-sql-readtable"></a>
+      default-sql-readtable ()
+      <br/>&#8594; readtable
+    </p>
+
+    <p class="desc">Returns the default readtable, containing only the
+    readers defined by CL-postgres itself.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="set-sql-reader"></a>
+      set-sql-reader (oid function &amp;key table binary-p)
+    </p>
+
+    <p class="desc">Define a new reader for a given type.
+    <code>table</code> defaults to <a
+    href="#*sql-readtable"><code>*sql-readtable*</code></a>. The
+    reader function should take a single argument, a string, and
+    transform that into some kind of equivalent Lisp value. When
+    <code>binary-p</code> is true, the reader function is supposed to
+    directly read the binary representation of the value. In most
+    cases this is not recommended, but if you want to use it: provide
+    a function that takes a binary input stream and an integer (the
+    size of the value, in bytes), and reads the value from that
+    stream. Note that reading less or more bytes than the given size
+    will horribly break your connection.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="set-sql-datetime-readers"></a>
+      set-sql-datetime-readers (&amp;key date timestamp interval table)
+    </p>
+
+    <p class="desc">Since there is no widely recognised standard way
+    of represenging dates and times in Common Lisp, and reading these
+    from string representation is clunky and slow, this function
+    provides a way to easily plug in binary readers for the
+    <code>date</code>, <code>timestamp</code>, and
+    <code>interval</code> types. It should be given functions with the
+    following signatures:</p>
+
+    <dl class="desc">
+      <dt><code>:date (days)</code></dt>
+      <dd>Where <code>days</code> is the amount of days since January
+      1st, 2000.</dd>
+      <dt><code>:timestamp (milliseconds)</code></dt>
+      <dd>Again, the zero point is the start of the year 2000,
+      UTC.</dd>
+      <dt><code>:interval (months days milliseconds)</code></dt>
+      <dd>An interval is represented as several seperate components.
+      The reason that days and milliseconds are separated is that you
+      might want to take leap seconds into account.</dd>
+    </dl>
+
+    <h2><a name="row-readers"></a>Row readers</h2>
+
+    <p>Row readers are a way to read and group the results of queries.
+    Roughly, they are functions that perform the iteration over the
+    rows and cells in the result, and do <em>something</em> with the
+    returned values.</p>
 
     <p class="def">
       <span>macro</span>
@@ -298,50 +376,6 @@
     <p class="desc">A row reader that completely ignores the result of
     a query.</p>
 
-    <p class="def">
-      <span>function</span>
-      <a name="register-type-reader"></a>
-      register-type-reader (oid function)
-    </p>
-
-    <p class="desc">Registers a function for interpreting values with
-    the given <a
-    href="http://www.postgresql.org/docs/8.2/interactive/datatype-oid.html">OID</a>.
-    The second argument can be any funcallable value. It will be used
-    when <code>next-field</code> is called on a field of this type, to
-    convert the textual representation of the value to something more
-    useful.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="binary-datetime-readers"></a>
-      binary-datetime-reader (&amp;key date timestamp interval)
-    </p>
-
-    <p class="desc">It is possible to read dates, timestamps, and
-    intervals in textual format using <a
-    href="#register-type-reader"><code>register-type-reader</code></a>,
-    but since these are rather involved to parse, it can be easier and
-    more efficient to get directly at the numbers that encode them.
-    This function can be called to register interpreter functions for
-    these types.</p>
-
-    <p class="desc">An interpreter for date values should take a
-    single argument, which is an integer representing a number of days
-    since January 1st, 2000. A timestamp interpreter also takes a
-    single integer, representing the number of milliseconds since the
-    start of 2000. An interpreter for intervals is given three
-    arguments, all integers, representing the amount of months, days,
-    and milliseconds that the interval represents.</p>
-
-    <p class="desc">By default, CL-postgres uses very simplistic
-    interpreters, which yield univeral-time values for dates and
-    timestamps, and alists containing <code>:months</code>,
-    <code>:days</code>, <code>:seconds</code>, and
-    <code>:milliseconds</code> keys for intervals. If you load <a
-    href="simple-date.html">simple-date</a> after loading CL-postgres,
-    it will automatically replace these with its own interpreters.</p>
-
     <h2><a name="conditions">Conditions</a></h2>
 
     <p>Opening or querying a database may raise errors. CL-postgres
@@ -431,10 +465,10 @@
 
     <ul>
       <li><a href="#alist-row-reader">alist-row-reader</a></li>
-      <li><a href="#binary-datetime-readers">binary-datetime-readers</a></li>
       <li><a href="#close-database">close-database</a></li>
       <li><a href="#connection-meta">connection-meta</a></li>
       <li><a href="#connection-parameters">connection-parameters</a></li>
+      <li><a href="#copy-sql-readtable">copy-sql-readtable</a></li>
       <li><a href="#database-connection">database-connection</a></li>
       <li><a href="#database-connection-lost">database-connection-lost</a></li>
       <li><a href="#database-error">database-error</a></li>
@@ -445,6 +479,7 @@
       <li><a href="#database-error-query">database-error-query</a></li>
       <li><a href="#database-open-p">database-open-p</a></li>
       <li><a href="#def-row-reader">def-row-reader</a></li>
+      <li><a href="#default-sql-readtable">default-sql-readtable</a></li>
       <li><a href="#exec-prepared">exec-prepared</a></li>
       <li><a href="#exec-query">exec-query</a></li>
       <li><a href="#field-name">field-name</a></li>
@@ -456,9 +491,11 @@
       <li><a href="#open-database">open-database</a></li>
       <li><a href="#prepare-query">prepare-query</a></li>
       <li><a href="#*query-log*">*query-log*</a></li>
-      <li><a href="#register-type-reader">register-type-reader</a></li>
       <li><a href="#reopen-database">reopen-database</a></li>
       <li><a href="#row-reader">row-reader</a></li>
+      <li><a href="#set-sql-datetime-readers">set-sql-datetime-readers</a></li>
+      <li><a href="#set-sql-reader">set-sql-reader</a></li>
+      <li><a href="#*sql-readtable*">*sql-readtable*</a></li>
     </ul>
   </body>
 </html>

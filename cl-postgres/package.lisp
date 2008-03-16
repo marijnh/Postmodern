@@ -30,8 +30,11 @@
            #:alist-row-reader
            #:postgresql-warning
            #:ignore-row-reader
-           #:register-type-reader
-           #:binary-datetime-readers
+           #:*sql-readtable*
+           #:copy-sql-readtable
+           #:default-sql-readtable
+           #:set-sql-reader
+           #:set-sql-datetime-readers
            #:*query-log*))
 
 (defpackage :cl-postgres-error

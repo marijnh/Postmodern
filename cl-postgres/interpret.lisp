@@ -5,44 +5,44 @@
 timestamps and intervals in the current connection, so that the
 interpreters for those types know how to parse them.")
 
-(defparameter *known-types* (make-hash-table)
-  "Mapping of OIDs to interpreter functions.")
+(defparameter *sql-readtable* (make-hash-table)
+  "The exported special var holding the current read table, a hash
+  mapping OIDs to (binary-p . interpreter-function) pairs.")
 
 (defun interpret-as-text (stream size)
   "This interpreter is used for types that we have no specific
-interpreter for -- it just reads the value as a string. \(We make sure
-values of unknown types are passed in text form.)"
+interpreter for -- it just reads the value as a string. \(Values of
+unknown types are passed in text form.)"
   (enc-read-string stream :byte-length size))
 
-(defun register-type-reader (oid function)
-  "Register an interpreter function for an OID. The function will be
-given the textual representation of the value as its argument, and
-should return the interpreted form of this value."
-  (setf (gethash oid *known-types*)
-        (cons nil (lambda (stream size)
-                    (funcall function
-                             (interpret-as-text stream size))))))
-
-(let ((default-interpreter (cons nil 'interpret-as-text)))
+(let ((default-interpreter (cons nil #'interpret-as-text)))
   (defun type-interpreter (oid)
     "Returns a pair representing the interpretation rules for this
 type. The car is a boolean indicating whether the type should be
 fetched as binary, and the cdr is a function that will read the value
 from the socket and build a Lisp value from it."
-    (gethash oid *known-types* default-interpreter)))
+    (gethash oid *sql-readtable* default-interpreter)))
 
-(defmacro define-interpreter (oid name fields &body value)
-  "A slightly convoluted macro for defining interpreter functions and
-storing them in *known-types*. It allows two forms. The first is to
-pass a single type identifier after the type name, in that case a
-value of this type will be read and returned directly. The second is
-to pass a list of lists containing names and types, and then a body.
-In this case the names will be bound to values read from the socket
-and interpreted as the given types, and then the body will be run in
-the resulting environment. If the last field is of type bytes, string,
-or uint2s, all remaining data will be read and interpreted as an array
-of the given type."
-  (declare (ignore name))
+(defun set-sql-reader (oid function &key (table *sql-readtable*) binary-p)
+  "Add an sql reader to a readtable. When the reader is not binary, it
+is wrapped by a function that will read the string from the socket."
+  (setf (gethash oid table)
+        (if binary-p
+            (cons t function)
+            (cons nil (lambda (stream size)
+                        (funcall function
+                                 (enc-read-string stream :byte-length size)))))))
+
+(defmacro binary-reader (fields &body value)
+  "A slightly convoluted macro for defining interpreter functions. It
+allows two forms. The first is to pass a single type identifier, in
+which case a value of this type will be read and returned directly.
+The second is to pass a list of lists containing names and types, and
+then a body. In this case the names will be bound to values read from
+the socket and interpreted as the given types, and then the body will
+be run in the resulting environment. If the last field is of type
+bytes, string, or uint2s, all remaining data will be read and
+interpreted as an array of the given type."
   (let ((stream-name (gensym))
         (size-name (gensym))
         (length-used 0))
@@ -61,16 +61,20 @@ of the given type."
                (uint (assert (integerp modifier))
                      (incf length-used modifier)
                      `(,(integer-reader-name modifier nil) ,stream-name)))))
-      `(setf (gethash ,oid *known-types*)
-        (cons t (lambda (,stream-name ,size-name)
-                  (declare (type stream ,stream-name)
-                           (type integer ,size-name)
-                           (ignorable ,size-name))
-                  ,(if (consp fields)
-                       `(let ,(loop :for field :in fields
-                                 :collect `(,(first field) ,(apply #'read-type (cdr field))))
-                          ,@value)
-                       (read-type fields (car value)))))))))
+      `(lambda (,stream-name ,size-name)
+         (declare (type stream ,stream-name)
+                  (type integer ,size-name)
+                  (ignorable ,size-name))
+         ,(if (consp fields)
+              `(let ,(loop :for field :in fields
+                           :collect `(,(first field) ,(apply #'read-type (cdr field))))
+                 ,@value)
+              (read-type fields (car value)))))))
+
+(defmacro define-interpreter (oid name fields &body value)
+  "Shorthand for defining binary readers."
+  (declare (ignore name)) ;; Names are there just for clarity
+  `(set-sql-reader ,oid (binary-reader ,fields ,@value) :binary-p t))
 
 (define-interpreter 18 "char" int 1)
 (define-interpreter 21 "int2" int 2)
@@ -107,52 +111,70 @@ of the given type."
       (setf total (- total)))
     (/ total (expt 10000 scale))))
 
+;; Since date and time types are the most likely to require custom
+;; readers, there is a hook for easily adding binary readers for them.
 
-;; For date/time types, special interpreter hooks are available (as an
-;; effect of de-coupling cl-postgres and simple-date).
-
-(defconstant +start-of-2000+ (encode-universal-time 0 0 0 1 1 2000 0))
-(defconstant +seconds-in-day+ (* 60 60 24))
-
-(defvar *build-date-value*
-  (lambda (days-since-2000)
-    (+ +start-of-2000+ (* days-since-2000 +seconds-in-day+))))
-(defvar *build-timestamp-value*
-  (lambda (milliseconds-since-2000)
-    (+ +start-of-2000+ (floor milliseconds-since-2000 1000))))
-(defvar *build-interval-value*
-  (lambda (months days milliseconds)
-    (multiple-value-bind (sec ms) (floor milliseconds 1000)
-      `((:months ,months) (:days ,days) (:seconds ,sec) (:milliseconds ,ms)))))
-
-(defun binary-datetime-readers (&key date timestamp interval)
-  (when date (setf *build-date-value* date))
-  (when timestamp (setf *build-timestamp-value* timestamp))
-  (when interval (setf *build-interval-value* interval)))
-
-(define-interpreter 1082 "date"
-    ((days int 4))
-  (funcall *build-date-value* days))
+(defun set-date-reader (f table)
+  (set-sql-reader 1082 (binary-reader ((days int 4))
+                         (funcall f days))
+                  :table table
+                  :binary-p t))
 
 (defun interpret-millisecs (bits)
   "Decode a 64 bit time-related value based on the timestamp format
 used. Correct for sign bit when using integer format."
-  (case *timestamp-format*
+  (ecase *timestamp-format*
     (:float (round (* (ieee-floats:decode-float64 bits) 1000)))
-    (:integer (round (if (logbitp 63 bits)
-                         (dpb bits (byte 63 0) -1)
-                         bits)
+    (:integer (round (if (logbitp 63 bits) (dpb bits (byte 63 0) -1) bits)
                      1000))))
 
-(define-interpreter 1114 "timestamp"
-    ((bits uint 8))
-  (funcall *build-timestamp-value* (interpret-millisecs bits)))
+(defun set-timestamp-reader (f table)
+  (set-sql-reader 1114 (binary-reader ((bits uint 8))
+                         (funcall f (interpret-millisecs bits)))
+                  :table table
+                  :binary-p t))
 
-(define-interpreter 1186 "interval"
-    ((ms uint 8)
-     (days int 4)
-     (months int 4))
-  (funcall *build-interval-value* months days (interpret-millisecs ms)))
+(defun set-interval-reader (f table)
+  (set-sql-reader 1186 (binary-reader ((ms uint 8) (days int 4) (months int 4))
+                         (funcall f months days (interpret-millisecs ms)))
+                  :table table
+                  :binary-p t))
+
+;; Public interface for adding date/time readers
+
+(defun set-sql-datetime-readers (&key date timestamp interval (table *sql-readtable*))
+  (when date (set-date-reader date table))
+  (when timestamp (set-timestamp-reader timestamp table))
+  (when interval (set-interval-reader interval table)))
+
+;; Provide meaningful defaults for the date/time readers.
+
+(defconstant +start-of-2000+ (encode-universal-time 0 0 0 1 1 2000 0))
+(defconstant +seconds-in-day+ (* 60 60 24))
+
+(set-sql-datetime-readers
+ :date (lambda (days-since-2000)
+         (+ +start-of-2000+ (* days-since-2000 +seconds-in-day+)))
+ :timestamp (lambda (milliseconds-since-2000)
+              (+ +start-of-2000+ (floor milliseconds-since-2000 1000)))
+ :interval (lambda (months days milliseconds)
+             (multiple-value-bind (sec ms) (floor milliseconds 1000)
+               `((:months ,months) (:days ,days) (:seconds ,sec) (:milliseconds ,ms)))))
+
+;; Working with tables.
+
+(defun copy-sql-readtable (&optional (table *sql-readtable*))
+  (let ((new-table (make-hash-table)))
+    (maphash (lambda (oid interpreter) (setf (gethash oid new-table) interpreter))
+             table)
+    new-table))
+
+(defparameter *default-sql-readtable* (copy-sql-readtable *sql-readtable*)
+  "A copy of the default readtable that client code can fall back
+  on.")
+
+(defun default-sql-readtable ()
+  *default-sql-readtable*)
 
 ;;; Copyright (c) Marijn Haverbeke
 ;;;
