@@ -121,23 +121,24 @@ interpreted as an array of the given type."
                   :table table
                   :binary-p t))
 
-(defun interpret-millisecs (bits)
+(defun interpret-usec-bits (bits)
   "Decode a 64 bit time-related value based on the timestamp format
 used. Correct for sign bit when using integer format."
   (ecase *timestamp-format*
-    (:float (round (* (ieee-floats:decode-float64 bits) 1000)))
-    (:integer (round (if (logbitp 63 bits) (dpb bits (byte 63 0) -1) bits)
-                     1000))))
+    (:float (round (* (ieee-floats:decode-float64 bits) 1000000)))
+    (:integer (if (logbitp 63 bits)
+                  (dpb bits (byte 63 0) -1)
+                  bits))))
 
 (defun set-timestamp-reader (f table)
-  (set-sql-reader 1114 (binary-reader ((bits uint 8))
-                         (funcall f (interpret-millisecs bits)))
+  (set-sql-reader 1114 (binary-reader ((usec-bits uint 8))
+                         (funcall f (interpret-usec-bits usec-bits)))
                   :table table
                   :binary-p t))
 
 (defun set-interval-reader (f table)
-  (set-sql-reader 1186 (binary-reader ((ms uint 8) (days int 4) (months int 4))
-                         (funcall f months days (interpret-millisecs ms)))
+  (set-sql-reader 1186 (binary-reader ((usec-bits uint 8) (days int 4) (months int 4))
+                         (funcall f months days (interpret-usec-bits usec-bits)))
                   :table table
                   :binary-p t))
 
