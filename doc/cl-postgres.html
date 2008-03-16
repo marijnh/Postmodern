@@ -275,7 +275,7 @@
     of represenging dates and times in Common Lisp, and reading these
     from string representation is clunky and slow, this function
     provides a way to easily plug in binary readers for the
-    <code>date</code>, <code>timestamp</code>, and
+    <code>date</code>, <code>time</code>, <code>timestamp</code>, and
     <code>interval</code> types. It should be given functions with the
     following signatures:</p>
 
@@ -283,12 +283,14 @@
       <dt><code>:date (days)</code></dt>
       <dd>Where <code>days</code> is the amount of days since January
       1st, 2000.</dd>
-      <dt><code>:timestamp (milliseconds)</code></dt>
-      <dd>Again, the zero point is the start of the year 2000,
-      UTC.</dd>
-      <dt><code>:interval (months days milliseconds)</code></dt>
+      <dt><code>:timestamp (useconds)</code></dt>
+      <dd>Timestamps have a microsecond resolution. Again, the zero
+      point is the start of the year 2000, UTC.</dd>
+      <dt><code>:time (useconds)</code></dt>
+      <dd>Refers to a time of day, counting from midnight.</dd>
+      <dt><code>:interval (months days useconds)</code></dt>
       <dd>An interval is represented as several seperate components.
-      The reason that days and milliseconds are separated is that you
+      The reason that days and microseconds are separated is that you
       might want to take leap seconds into account.</dd>
     </dl>
 
