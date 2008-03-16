@@ -143,13 +143,37 @@
     </p>
 
     <p class="desc">Execute the prepared statement by the given name.
-    Parameters should be given as a list of strings, which should
-    contain values in a form that PostgreSQL can make sense of. String
-    values should not be escaped. The result of the executing the
-    statement, if any, is interpreted by the given <a
-    href="#row-readers">row reader</a>, and returned. Again, the
-    number or effected rows is optionally returned as a second
+    Parameters should be given as a list. Each value in this list
+    should be of a type that <a
+    href="#to-sql-string"><code>to-sql-string</code></a> has been
+    specialised on. (Byte arrays will be passed in their binary form,
+    without being put through <a
+    href="#to-sql-string"><code>to-sql-string</code></a>.) The result
+    of the executing the statement, if any, is interpreted by the
+    given <a href="#row-readers">row reader</a>, and returned. Again,
+    the number or effected rows is optionally returned as a second
     value.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="to-sql-string"></a>
+      to-sql-string (value)
+      <br/>&#8594; (values string needs-escaping)
+    </p>
+
+    <p class="desc">Convert a Lisp value to its textual
+    <em>unescaped</em> SQL representation. Returns a second value
+    indicating whether this value should be escaped if it is to be put
+    directly into a query.</p>
+
+    <p class="desc">You can define <code>to-sql-string</code> methods
+    for your own datatypes if you want to be able to pass them to <a
+    href="#exec-prepared"><code>exec-prepared</code></a>. When a
+    non-<code>NIL</code> second value is returned, this may be
+    <code>T</code> to indicate that the first value should simply be
+    escaped as a string, or a second string providing a type prefix
+    for the value. (This is used by <a
+    href="s-sql.html">S-SQL</a>.)</p>
 
     <p class="def">
       <span>variable</span>
@@ -496,6 +520,7 @@
       <li><a href="#set-sql-datetime-readers">set-sql-datetime-readers</a></li>
       <li><a href="#set-sql-reader">set-sql-reader</a></li>
       <li><a href="#*sql-readtable*">*sql-readtable*</a></li>
+      <li><a href="#to-sql-string">to-sql-string</a></li>
     </ul>
   </body>
 </html>

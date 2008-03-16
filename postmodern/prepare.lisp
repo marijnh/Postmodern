@@ -18,7 +18,7 @@
   (destructuring-bind (reader result-form) (or (cdr (assoc format *result-styles*))
                                                (error "~S is not a valid result style." format))
     (let ((base `(exec-prepared *database* (symbol-name statement-id)
-                  (mapcar 'sql-ize params) ',reader)))
+                  (mapcar 'to-sql-string params) ',reader)))
       `(let ((statement-id (next-statement-id)))
         (,@function-form (&rest params)
           (ensure-prepared *database* statement-id ,(real-query query))

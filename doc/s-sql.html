@@ -151,23 +151,6 @@
     dashes.</p>
 
     <p class="def">
-      <span>method</span>
-      <a name="sql-ize"></a>
-      sql-ize (value)
-      <br/>&#8594; (values string needs-escaping)
-    </p>
-
-    <p class="desc">Convert a Lisp value to its textual
-    <em>unescaped</em> SQL representation. Returns a second value
-    indicating whether this value should be escaped (with <a
-    href="#sql-escape-string"><code>sql-escape-string</code></a>)
-    before being put into a query.</p>
-
-    <p class="desc">You can define <code>sql-ize</code> methods for
-    your own datatypes if you want to be able to use them in S-SQL
-    queries.</p>
-
-    <p class="def">
       <span>macro</span>
       <a name="register-sql-operators"></a>
       register-sql-operators (arity &amp;rest names)
@@ -614,7 +597,6 @@
       <li><a href="#sql">sql</a></li>
       <li><a href="#sql-compile">sql-compile</a></li>
       <li><a href="#sql-escape-string">sql-escape-string</a></li>
-      <li><a href="#sql-ize">sql-ize</a></li>
       <li><a href="#sql-template">sql-template</a></li>
       <li><a href="#sql-type-name">sql-type-name</a></li>
       <li><a href="#types">text</a></li>

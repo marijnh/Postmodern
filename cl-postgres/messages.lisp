@@ -136,28 +136,28 @@ for binding data for binary long object columns."
   (let* ((n-params (length parameters))
          (param-formats (make-array n-params :element-type 'fixnum))
          (param-sizes (make-array n-params :element-type 'fixnum))
+         (param-values (make-array n-params))
          (n-result-formats (length result-formats)))
     (declare (type (unsigned-byte 16) n-params n-result-formats))
-    (loop for param :in parameters
-          for idx :from 0
-          do (if (or (eq param :null)
-                     (eq param nil))
-                 (progn
-                   (setf (aref param-formats idx) 0)
-                   (setf (aref param-sizes idx) 0))
-                 (etypecase param
-                   ((vector (unsigned-byte 8))
-                    (setf (aref param-formats idx) 1)
-                    (setf (aref param-sizes idx) (length param)))
-                   (string
-                    (setf (aref param-formats idx) 0)
-                    (setf (aref param-sizes idx) (enc-byte-length param))))))
+    (loop :for param :in parameters
+          :for i :from 0
+          :do (flet ((set-param (format size value)
+                       (setf (aref param-formats i) format
+                             (aref param-sizes i) size
+                             (aref param-values i) value)))
+                (cond ((eq param :null)
+                       (set-param 0 0 nil))
+                      ((typep param '(vector (unsigned-byte 8)))
+                       (set-param 1 (length param) param))
+                      (t
+                       (unless (typep param 'string)
+                         (setf param (to-sql-string param)))
+                       (set-param 0 (enc-byte-length param) param)))))
     (write-uint1 socket #.(char-code #\B))
     (write-uint4 socket (+ 12
-                           (length name)
-                           (* 2 n-params)   ;; Input formats
+                           (enc-byte-length name)
+                           (* 6 n-params)   ;; Input formats and sizes
                            (* 2 n-result-formats)
-                           (* 4 n-params)
                            (loop :for size :of-type fixnum :across param-sizes
                                  :sum size)))
     (write-uint1 socket 0)                  ;; Name of the portal
@@ -166,16 +166,13 @@ for binding data for binary long object columns."
     (loop :for format :across param-formats ;; Param formats (text/binary)
           :do (write-uint2 socket format))
     (write-uint2 socket n-params)           ;; Number of parameter specifications
-    (loop :for param :in parameters
-          :for size :of-type fixnum :across param-sizes
-          :do (if (or (eq param :null)
-                      (eq param nil))
-                  (write-int4 socket -1)   ;; -1 size means SQL NULL
-                  (progn
-                    (write-uint4 socket size)
-                    (etypecase param
-                      ((vector (unsigned-byte 8)) (write-sequence param socket))
-                      (string (enc-write-string param socket))))))
+    (loop :for param :across param-values
+          :for size :across param-sizes
+          :do (write-int4 socket size)
+          :do (when param
+                (if (typep param '(vector (unsigned-byte 8)))
+                    (write-sequence param socket)
+                    (enc-write-string param socket))))
     (write-uint2 socket n-result-formats)   ;; Number of result formats
     (loop :for format :across result-formats ;; Result formats (text/binary)
           :do (write-uint2 socket (if format 1 0)))))

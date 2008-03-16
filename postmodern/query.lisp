@@ -64,7 +64,7 @@ specifies the format in which the results should be returned."
                      :else :collect arg)))
     (destructuring-bind (reader result-form) (cdr (assoc format *result-styles*))
       (let ((base (if args
-                      `(let ((args (mapcar 'sql-ize (list ,@args))))
+                      `(let ((args (mapcar 'to-sql-string (list ,@args))))
                         (prepare-query *database* "" ,(real-query query))
                         (exec-prepared *database* "" args ',reader))
                       `(exec-query *database* ,(real-query query) ',reader))))

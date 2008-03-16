@@ -14,7 +14,6 @@
            #:sql-escape-string
            #:from-sql-name
            #:to-sql-name
-           #:sql-ize
            #:*escape-sql-names-p*
            #:sql
            #:sql-compile
@@ -233,50 +232,13 @@ name.")
                              (otherwise char)))))
       (princ #\'))))
 
-(defgeneric sql-ize (arg)
-  (:documentation "Turn a lisp value into a string containing its SQL
-representation. Returns an optional second value that indicates
-whether the string should be escaped before being put into a query.")
-  (:method ((arg string))
-    (values arg t))
-  (:method ((arg vector))
-    (assert (typep arg '(vector (unsigned-byte 8))))
-    (values (escape-bytes arg) t))
-  (:method ((arg integer))
-    (princ-to-string arg))
-  (:method ((arg float))
-    (format nil "~f" arg))
-  (:method ((arg ratio))
-    (format nil "~f" arg))
-  (:method ((arg symbol))
-    (to-sql-name arg))
-  (:method ((arg (eql t)))
-    "true")
-  (:method ((arg (eql nil)))
-    "false")
-  (:method ((arg (eql :null)))
-    "NULL")
-  (:method ((arg t))
-    (error "Value ~S can not be converted to an SQL literal." arg)))
+(defmethod cl-postgres:to-sql-string ((value symbol))
+  (to-sql-name value))
 
-(defun escape-bytes (bytes)
-  "Escape an array of octets in PostgreSQL's horribly inefficient
-textual format for binary data."
-  (let ((*print-pretty* nil))
-    (with-output-to-string (out)
-      (loop :for byte :of-type fixnum :across bytes
-            :do (if (or (< byte 32) (> byte 126) (= byte 39) (= byte 92))
-                    (progn
-                      (princ #\\ out)
-                      (princ (digit-char (ldb (byte 3 6) byte) 8) out)
-                      (princ (digit-char (ldb (byte 3 3) byte) 8) out)
-                      (princ (digit-char (ldb (byte 3 0) byte) 8) out))
-                    (princ (code-char byte) out))))))
-
-(defun sql-ize-escaped (value)
+(defun sql-ize (value)
   "Get the representation of a Lisp value so that it can be used in a
 query."
-  (multiple-value-bind (string escape) (sql-ize value)
+  (multiple-value-bind (string escape) (cl-postgres:to-sql-string value)
     (if escape
         (sql-escape-string string (and (not (eq escape t)) escape))
         string)))
@@ -289,15 +251,15 @@ to strings \(which will form an SQL query when concatenated)."
   (cond ((and (consp arg) (keywordp (first arg)))
          (expand-sql-op (car arg) (cdr arg)))
         ((and (consp arg) (eq (first arg) 'quote))
-         (list (sql-ize-escaped (second arg))))
+         (list (sql-ize (second arg))))
         ((and (consp arg) *expand-runtime*)
          (expand-sql-op (intern (symbol-name (car arg)) :keyword) (cdr arg)))
         ((and (eq arg '$$) *expand-runtime*) '($$))
         (*expand-runtime*
-         (list (sql-ize-escaped arg)))
+         (list (sql-ize arg)))
         ((or (consp arg) (and (symbolp arg) (not (keywordp arg))))
-         (list `(sql-ize-escaped ,arg)))
-        (t (list (sql-ize-escaped arg)))))
+         (list `(sql-ize ,arg)))
+        (t (list (sql-ize arg)))))
 
 (defun sql-expand-list (elts &optional (sep ", "))
   "Expand a list of elements, adding a separator in between them."
@@ -342,7 +304,7 @@ to strings \(which will form an SQL query when concatenated)."
     (lambda (&rest args)
       (with-output-to-string (*standard-output*)
         (dolist (element compiled)
-          (princ (if (eq element '$$) (sql-ize-escaped (pop args)) element)))))))
+          (princ (if (eq element '$$) (sql-ize (pop args)) element)))))))
 
 ;; The reader syntax.
 
@@ -462,7 +424,7 @@ with a given arity."
             `("(" ,@expanded ")")
             `("(" (let ((elements ,(car elements)))
                     (if (null elements) "NULL"
-                        (implode ", " (mapcar 'sql-ize-escaped elements)))) ")")))))
+                        (implode ", " (mapcar 'sql-ize elements)))) ")")))))
 
 (def-sql-op :dot (&rest args)
   (sql-expand-list args "."))

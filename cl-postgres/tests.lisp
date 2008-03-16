@@ -44,6 +44,14 @@
       (is (eql d t))
       (is (eql e 9/2)))))
 
+(test sql-strings
+  (is (string= (to-sql-string :null) "NULL"))
+  (is (string= (to-sql-string t) "true"))
+  (is (string= (to-sql-string 400) "400"))
+  (is (string= (to-sql-string "foo") "foo"))
+  (is (eq t (nth-value 1 (to-sql-string "bar"))))
+  (is (eq nil (nth-value 1 (to-sql-string 10)))))
+
 (test date-query
   (with-test-connection
     (destructuring-bind ((a b c))
@@ -60,9 +68,9 @@
 
 (test prepared-statement
   (with-test-connection
-    (prepare-query connection "test" "select $1::integer, $2::integer")
-    (is (equal (exec-prepared connection "test" '("42" "99") 'list-row-reader)
-               '((42 99))))))
+    (prepare-query connection "test" "select $1::integer, $2::boolean, $3::text")
+    (is (equal (exec-prepared connection "test" '(42 nil "foo") 'list-row-reader)
+               '((42 nil "foo"))))))
 
 (test blob
   (with-test-connection
@@ -74,7 +82,7 @@
 
 (test recover-error
   (with-test-connection
-    (signals database-error
+    (signals cl-postgres-error:syntax-error-or-access-violation
       (exec-query connection "gubble gubble gabble goo"))
     (is (equal (exec-query connection "select false" 'list-row-reader)
                '((nil))))))

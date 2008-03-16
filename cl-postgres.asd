@@ -15,8 +15,9 @@
   ((:module :cl-postgres
             :components ((:file "package")
                          (:file "errors" :depends-on ("package"))
+                         (:file "sql-string" :depends-on ("package"))
                          (:file #.*string-file* :depends-on ("package"))
-                         (:file "communicate" :depends-on (#.*string-file*))
+                         (:file "communicate" :depends-on (#.*string-file* "sql-string"))
                          (:file "messages" :depends-on ("communicate"))
                          (:file "interpret" :depends-on ("communicate"))
                          (:file "protocol" :depends-on ("interpret" "messages" "errors"))

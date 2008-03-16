@@ -35,6 +35,7 @@
            #:default-sql-readtable
            #:set-sql-reader
            #:set-sql-datetime-readers
+           #:to-sql-string
            #:*query-log*))
 
 (defpackage :cl-postgres-error

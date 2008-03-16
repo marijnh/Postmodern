@@ -3,11 +3,9 @@
 (in-package :simple-date-system)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defparameter *glue* nil)
-  (when (find-package :s-sql)
-    (push '(:file "s-sql-glue" :depends-on ("simple-date")) *glue*))
-  (when (find-package :cl-postgres)
-    (push '(:file "cl-postgres-glue" :depends-on ("simple-date")) *glue*)))
+  (defparameter *glue*
+    (if (find-package :cl-postgres)
+        '((:file "cl-postgres-glue" :depends-on ("simple-date"))))))
 
 (defsystem :simple-date
   :components 
