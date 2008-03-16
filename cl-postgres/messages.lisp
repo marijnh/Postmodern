@@ -168,7 +168,7 @@ for binding data for binary long object columns."
     (write-uint2 socket n-params)           ;; Number of parameter specifications
     (loop :for param :across param-values
           :for size :across param-sizes
-          :do (write-int4 socket size)
+          :do (write-int4 socket (if param size -1))
           :do (when param
                 (if (typep param '(vector (unsigned-byte 8)))
                     (write-sequence param socket)
