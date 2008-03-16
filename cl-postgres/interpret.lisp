@@ -31,7 +31,8 @@ is wrapped by a function that will read the string from the socket."
             (cons t function)
             (cons nil (lambda (stream size)
                         (funcall function
-                                 (enc-read-string stream :byte-length size)))))))
+                                 (enc-read-string stream :byte-length size))))))
+  table)
 
 (defmacro binary-reader (fields &body value)
   "A slightly convoluted macro for defining interpreter functions. It
