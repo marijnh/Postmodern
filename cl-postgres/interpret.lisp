@@ -152,7 +152,8 @@ used. Correct for sign bit when using integer format."
   (when date (set-date-reader date table))
   (when timestamp (set-timestamp-reader timestamp table))
   (when interval (set-interval-reader interval table))
-  (when time (set-time-reader time table)))
+  (when time (set-time-reader time table))
+  table)
 
 ;; Provide meaningful defaults for the date/time readers.
 
