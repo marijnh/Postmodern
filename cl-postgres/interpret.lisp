@@ -130,31 +130,27 @@ used. Correct for sign bit when using integer format."
                   (dpb bits (byte 63 0) -1)
                   bits))))
 
-(defun set-timestamp-reader (f table)
-  (set-sql-reader 1114 (binary-reader ((usec-bits uint 8))
-                         (funcall f (interpret-usec-bits usec-bits)))
-                  :table table
-                  :binary-p t))
-
 (defun set-interval-reader (f table)
   (set-sql-reader 1186 (binary-reader ((usec-bits uint 8) (days int 4) (months int 4))
                          (funcall f months days (interpret-usec-bits usec-bits)))
                   :table table
                   :binary-p t))
 
-(defun set-time-reader (f table)
-  (set-sql-reader 1083 (binary-reader ((usec-bits uint 8))
-                         (funcall f (interpret-usec-bits usec-bits)))
+(defun set-usec-reader (oid f table)
+  (set-sql-reader oid (binary-reader ((usec-bits uint 8))
+                        (funcall f (interpret-usec-bits usec-bits)))
                   :table table
                   :binary-p t))
 
 ;; Public interface for adding date/time readers
 
-(defun set-sql-datetime-readers (&key date timestamp interval time (table *sql-readtable*))
+(defun set-sql-datetime-readers (&key date timestamp timestamp-with-timezone interval time
+                                 (table *sql-readtable*))
   (when date (set-date-reader date table))
-  (when timestamp (set-timestamp-reader timestamp table))
+  (when timestamp (set-usec-reader 1114 timestamp table))
+  (when timestamp-with-time-zone (set-usec-reader 1184 timestamp-with-timezone table))
   (when interval (set-interval-reader interval table))
-  (when time (set-time-reader time table))
+  (when time (set-usec-reader 1083 time table))
   table)
 
 ;; Provide meaningful defaults for the date/time readers.

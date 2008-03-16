@@ -268,7 +268,7 @@
     <p class="def">
       <span>function</span>
       <a name="set-sql-datetime-readers"></a>
-      set-sql-datetime-readers (&amp;key date timestamp interval table)
+      set-sql-datetime-readers (&amp;key date timestamp timestamp-with-timezone time interval table)
     </p>
 
     <p class="desc">Since there is no widely recognised standard way
@@ -286,6 +286,10 @@
       <dt><code>:timestamp (useconds)</code></dt>
       <dd>Timestamps have a microsecond resolution. Again, the zero
       point is the start of the year 2000, UTC.</dd>
+      <dt><code>:timestamp-with-timezone</code></dt>
+      <dd>Like <code>:timestamp</code>, but for values of the
+      'timestamp with time zone' type (which PostgreSQL internally
+      stores exactly the same as regular timestamps).</dd>
       <dt><code>:time (useconds)</code></dt>
       <dd>Refers to a time of day, counting from midnight.</dd>
       <dt><code>:interval (months days useconds)</code></dt>
