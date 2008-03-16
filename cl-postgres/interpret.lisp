@@ -148,7 +148,7 @@ used. Correct for sign bit when using integer format."
                                  (table *sql-readtable*))
   (when date (set-date-reader date table))
   (when timestamp (set-usec-reader 1114 timestamp table))
-  (when timestamp-with-time-zone (set-usec-reader 1184 timestamp-with-timezone table))
+  (when timestamp-with-timezone (set-usec-reader 1184 timestamp-with-timezone table))
   (when interval (set-interval-reader interval table))
   (when time (set-usec-reader 1083 time table))
   table)
