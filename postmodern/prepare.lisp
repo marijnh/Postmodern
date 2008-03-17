@@ -17,8 +17,7 @@
   "Helper macro for the following two functions."
   (destructuring-bind (reader result-form) (or (cdr (assoc format *result-styles*))
                                                (error "~S is not a valid result style." format))
-    (let ((base `(exec-prepared *database* (symbol-name statement-id)
-                  (mapcar 'to-sql-string params) ',reader)))
+    (let ((base `(exec-prepared *database* (symbol-name statement-id) params ',reader)))
       `(let ((statement-id (next-statement-id)))
         (,@function-form (&rest params)
           (ensure-prepared *database* statement-id ,(real-query query))
@@ -35,7 +34,7 @@ should contain a placeholder \($1, $2, etc) for every parameter."
 it."
   (generate-prepared `(defun ,name) query format))
 
-;;; Copyright (c) 2006 Marijn Haverbeke
+;;; Copyright (c) Marijn Haverbeke
 ;;;
 ;;; This software is provided 'as-is', without any express or implied
 ;;; warranty. In no event will the authors be held liable for any

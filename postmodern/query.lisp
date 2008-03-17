@@ -64,9 +64,9 @@ specifies the format in which the results should be returned."
                      :else :collect arg)))
     (destructuring-bind (reader result-form) (cdr (assoc format *result-styles*))
       (let ((base (if args
-                      `(let ((args (mapcar 'to-sql-string (list ,@args))))
+                      `(progn
                         (prepare-query *database* "" ,(real-query query))
-                        (exec-prepared *database* "" args ',reader))
+                        (exec-prepared *database* "" (list ,@args) ',reader))
                       `(exec-query *database* ,(real-query query) ',reader))))
         `(,result-form ,base)))))
 
@@ -90,7 +90,7 @@ names to the results and executing body for every row."
                                :collect `(,name (next-field (elt ,fields ,i))))
                      ,@body)))))))
 
-;;; Copyright (c) 2006 Marijn Haverbeke
+;;; Copyright (c) Marijn Haverbeke
 ;;;
 ;;; This software is provided 'as-is', without any express or implied
 ;;; warranty. In no event will the authors be held liable for any
