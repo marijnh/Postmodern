@@ -28,7 +28,9 @@ whether the string should be escaped before being put into a query.")
   (:method ((arg float))
     (format nil "~f" arg))
   (:method ((arg ratio))
-    (format nil "~f" arg))
+    ;; There's no support for rationals in PostreSQL,
+    ;; so do the best we can: format it as a double-float.
+    (format nil "~f" (coerce arg 'double-float)))
   (:method ((arg (eql t)))
     "true")
   (:method ((arg (eql nil)))
