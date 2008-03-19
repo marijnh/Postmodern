@@ -81,9 +81,13 @@
 
 (test prepare
   (with-test-connection
-    (let ((select (prepare (:select (:type '$1 integer)) :single)))
-      (is (= (funcall select 10) 10))
-      (is (= (funcall select -40) -40)))))
+    (let ((select-int (prepare (:select (:type '$1 integer)) :single))
+          (byte-arr (make-array 10 :element-type '(unsigned-byte 8) :initial-element 10))
+          (select-bytes (prepare (:select (:type '$1 bytea)) :single)))
+      (is (= (funcall select-int 10) 10))
+      (is (= (funcall select-int -40) -40))
+      (is (eq (funcall select-int :null) :null))
+      (is (equalp (funcall select-bytes byte-arr) byte-arr)))))
 
 (test doquery
   (with-test-connection
