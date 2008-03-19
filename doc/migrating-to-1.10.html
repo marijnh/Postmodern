@@ -35,33 +35,45 @@
     were using <code>with-connection*</code>, you should remove the
     asterisk.</p>
 
-    <h2>The date library</h2>
+    <h2>Integrating custom data types</h2>
+
+    <p>CL-postgres now exports <a href="cl-postgres.html#reading">ways
+    to manipulate</a> the way it reads values from query results. The
+    old <code>s-sql:sql-ize</code> generic has been moved to
+    <code>cl-posgres:<a
+    href="cl-postgres.html#to-sql-string">to-sql-string</a></code>,
+    and can be used to control the way values are written out when
+    passed as arguments to prepared statements or inserted in <a
+    href="s-sql.html">S-SQL</a> query forms.</p>
 
     <p><a href="simple-date.html"><code>simple-date</code></a> is no
-    longer depended on by CL-postgres and S-SQL. If you load it
-    <em>after</em> loading these libraries, the integration (defining
-    <a href="s-sql.html#sql-ize"><code>sql-ize</code></a> methods for
-    the included types, registering readers for their OIDs) will
-    automagically happen.</p>
+    longer depended on by CL-postgres and S-SQL, but uses the above
+    interface to integrate itself. Load it <em>after</em> loading
+    CL-postgres, and suitable readers and writers for its types will
+    be registered. Integrating other date/time libraries is
+    trivial.</p>
 
     <h2>Errors and reconnecting</h2>
 
     <p>In previous versions, only the
     <code>database-connection-lost</code> conditions offered a
     <code>:reconnect</code> restart. There are now various conditions
-    offering this restart, all subtypes of
-    <code>database-connection-error</code>, and the library tries its
-    very best to wrap all hard-to-prevent errors with such a restart
-    (socket errors, database shutdowns). The goal is that you can use
-    this feature to cleanly and simply add functionality for
-    recovering from connectivity problems and server restarts. If you
-    still have issues here, please discuss them on the mailing list
-    (universal error recovery is rather hard to test).</p>
+    offering this restart, all subtypes of <a
+    href="cl-postgres.html#database-connection-error"><code>database-connection-error</code></a>,
+    and the library tries its very best to wrap all hard-to-prevent
+    errors with such a restart (socket errors, database shutdowns).
+    The goal is that you can use this feature to cleanly and simply
+    add functionality for recovering from connectivity problems and
+    server restarts. If you still have issues here, please discuss
+    them on the mailing list (universal error recovery is rather hard
+    to test).</p>
 
-    <p>There is now also a bucket-load of condition types exported
-    from the <code>cl-postgres-error</code> package, which can make
-    writing <code>handler-case</code> forms around database code a lot
-    more pleasant.</p>
+    <p>There is now also a large set of condition types exported from
+    the <code>cl-postgres-error</code> package, which can make writing
+    <code>handler-case</code> forms around database code a lot more
+    pleasant. See <code>cl-postgres/error.lisp</code> for the list (or
+    just cause the error you are interested in to be raised, and look
+    at its type).</p>
 
     <h2>The DAO system</h2>
 
