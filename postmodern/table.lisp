@@ -181,7 +181,8 @@ values.)"
           (let ((tmpl (sql-template `(:update ,table-name :set ,@(set-fields value-fields)
                                       :where ,(test-fields key-fields)))))
             (defmethod update-dao ((object target-class))
-              (execute (apply tmpl (slot-values object value-fields key-fields))))))
+              (execute (apply tmpl (slot-values object value-fields key-fields)))
+              object)))
   
         (let ((tmpl (sql-template `(:delete-from ,table-name :where ,(test-fields key-fields)))))
           (defmethod delete-dao ((object target-class))
@@ -205,7 +206,8 @@ values.)"
             (when unbound
               (loop :for value :in returned
                     :for field :in unbound
-                    :do (setf (slot-value object field) value))))))
+                    :do (setf (slot-value object field) value)))))
+        object)
 
       (let* ((defaulted-slots (remove-if-not (lambda (x) (slot-boundp x 'col-default))
                                              (dao-column-slots class)))
