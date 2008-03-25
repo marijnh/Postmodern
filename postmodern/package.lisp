@@ -23,7 +23,7 @@
    #:list-views #:view-exists-p
    #:with-transaction #:commit-transaction #:abort-transaction
    #:with-savepoint #:rollback-savepoint #:release-savepoint
-   #:db-null
+   #:db-null #:coalesce
 
    ;; Reduced S-SQL interface
    #:sql #:sql-compile

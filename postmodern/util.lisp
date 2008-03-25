@@ -137,6 +137,9 @@ unwinds, and the SQL name of the savepoint."
                            (savepoint-name savepoint))))
     (setf (transaction-open-p savepoint) nil)))
 
+(defun coalesce (&rest args)
+  (some (lambda (x) (if (eq x :null) nil x)) args))
+
 ;;; Copyright (c) Marijn Haverbeke
 ;;;
 ;;; This software is provided 'as-is', without any express or implied

@@ -336,6 +336,18 @@
     it will be converted to a string with <a
     href="s-sql.html">S-SQL</a> rules.</p>
 
+    <p class="def">
+      <span>function</span>
+      <a name="coalesce"></a>
+      coalesce (&amp;rest arguments)
+      <br/>&#8594; value
+    </p>
+
+    <p class="desc">Returns the first non-<code>NIL</code>, non-null
+    (as in <code>:null</code>) argument, or <code>NIL</code> if none
+    are present. Useful for providing a fall-back value for the result
+    of a query.</p>
+
     <h2><a name="inspect"></a>Inspecting the database</h2>
 
     <p class="def">
