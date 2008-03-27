@@ -491,6 +491,23 @@
     library to make an attempt to restore the connection and re-try
     the query.</p>
 
+    <p class="desc">The following shows an example use of this
+    feature, a way to ensure that the first connection error causes a
+    reconnect attempt, while others pass through as normal. A
+    variation on this theme could continue trying to reconnect, with
+    successively longer pauses.</p>
+
+    <pre class="desc code">
+(defun call-with-single-reconnect (fun)
+  (let ((reconnected nil))
+    (handler-bind
+        ((database-connection-error
+          (lambda (err)
+            (when (not reconnected)
+              (setf reconnected t)
+              (invoke-restart :reconnect)))))
+      (funcall fun))))</pre>
+
     <h2><a name="index">Symbol-index</a></h2>
 
     <ul>
