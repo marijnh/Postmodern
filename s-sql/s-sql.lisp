@@ -89,43 +89,34 @@ element."
 
 ;; Converting between symbols and SQL strings.
 
-(defun make-sql-name (sym)
-  "Convert a Lisp symbol into a name that can be an sql table, column,
-or operation name."
-  (if (and (> (length (symbol-name sym)) 1) ;; Placeholders like $2
-           (char= (char (symbol-name sym) 0) #\$)
-           (every #'digit-char-p (subseq (symbol-name sym) 1)))
-      (symbol-name sym)
-      (flet ((allowed-char (x)
-               (or (alphanumericp x) (eq x #\.) (eq x #\*))))
-        (let ((name (string-downcase (symbol-name sym))))
-          (dotimes (i (length name))
-            (unless (allowed-char (char name i))
-              (setf (char name i) #\_)))
-          name))))
-
 (defparameter *escape-sql-names-p* nil
   "Setting this to T will make S-SQL add double quotes around
 identifiers in queries, making it possible to use keywords like 'from'
 or 'user' as column names \(at the cost of uglier queries).")
 
-(defun add-quotes (name)
-  "Add double quotes to around SQL identifier and around every dot in
-it, for escaping table and column names."
-  (loop :for dot = (position #\. name) :then (position #\. name :start (+ 2 dot))
-        :while dot
-        :do (setf name (format nil "~A\".\"~A"
-                               (subseq name 0 dot)
-                               (subseq name (1+ dot)))))
-  (format nil "\"~A\"" name))
-
-(defun to-sql-name (sym)
-  "Convert a symbol to an SQL identifier, taking *escape-sql-names*
-into account."
-  (let ((name (make-sql-name sym)))
-    (if *escape-sql-names-p*
-        (add-quotes name)
-        name)))
+(defun to-sql-name (sym &optional (escape-p *escape-sql-names-p*))
+  "Convert a Lisp symbol into a name that can be an sql table, column,
+or operation name. Add quotes when escape-p is true."
+  (declare (optimize (speed 3) (debug 0)))
+  (let ((*print-pretty* nil))
+    (with-output-to-string (*standard-output*)
+      (when escape-p
+        (write-char #\"))
+      (if (and (> (length (symbol-name sym)) 1) ;; Placeholders like $2
+               (char= (char (symbol-name sym) 0) #\$)
+               (every #'digit-char-p (the string (subseq (symbol-name sym) 1))))
+          (princ (symbol-name sym))
+          (loop :for ch :of-type character :across (symbol-name sym)
+                :do (cond ((eq ch #\.)
+                           (if escape-p
+                               (princ "\".\"")
+                               (write-char #\.)))
+                          ((or (eq ch #\*) (alphanumericp ch))
+                           (write-char (char-downcase ch)))
+                          (t
+                           (write-char #\_)))))
+      (when escape-p
+        (write-char #\")))))
 
 (defun from-sql-name (str)
   "Convert a string to something that might have been its original

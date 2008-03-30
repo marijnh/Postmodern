@@ -64,7 +64,7 @@
 (defmethod shared-initialize :after ((slot direct-column-slot) slot-names
                                      &key row-type row-default &allow-other-keys)
   (declare (ignore slot-names))
-  (setf (slot-value slot 'sql-name) (to-sql-name (slot-definition-name slot)))
+  (setf (slot-value slot 'sql-name) (to-sql-name (slot-definition-name slot) nil))
   ;; The default for nullable columns defaults to :null.
   (when (and (null row-default) (consp row-type) (eq (car row-type) 'or)
              (member 'db-null row-type) (= (length row-type) 3))
