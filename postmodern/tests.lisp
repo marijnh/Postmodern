@@ -49,6 +49,10 @@
       (is (eql d t))
       (is (eql e 9/2)))))
 
+(test reserved-words
+  (with-test-connection
+    (is (= (query (:select '* :from (:as (:select (:as 1 'as)) 'where) :where (:= 'where.as 1)) :single!) 1))))
+
 (test time-types
   (with-test-connection
     (is (time= (query (:select (:type (encode-date 1980 2 1) date)) :single)
