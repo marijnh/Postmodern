@@ -106,12 +106,13 @@ element."
 
 (defparameter *escape-sql-names-p* :auto
   "Setting this to T will make S-SQL add double quotes around
-identifiers in queries, making it possible to use keywords like 'from'
-or 'user' as column names \(at the cost of uglier queries).")
+identifiers in queries. Setting it :auto will turn on this behaviour
+only for reserved words.")
 
 (defun to-sql-name (sym &optional (escape-p *escape-sql-names-p*))
   "Convert a Lisp symbol into a name that can be an sql table, column,
-or operation name. Add quotes when escape-p is true."
+or operation name. Add quotes when escape-p is true, or escape-p
+is :auto and the symbol contains reserved words."
   (declare (optimize (speed 3) (debug 0)))
   (let ((*print-pretty* nil)
         (name (symbol-name sym)))
