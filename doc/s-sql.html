@@ -113,9 +113,15 @@
     </p>
 
     <p class="desc">Determines whether double quotes are added around
-    column, table, and function names in queries. This can be useful
-    to prevent these names from clashing with reserved words (user,
-    from, etc.). Default value is <code>NIL</code>.</p>
+    column, table, and function names in queries. May be
+    <code>T</code>, in which case every name is escaped,
+    <code>NIL</code>, in which case none is, or <code>:auto</code>,
+    which causes only <a
+    href="http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html">reserved
+    words</a> to be escaped.. The default value is <code>:auto</code>.
+    Be careful when binding this with <code>let</code> and such
+    &#x2015; since a lot of SQL compilation tends to happen at
+    compile-time, the result might not be what you expect.</p>
 
     <p class="def">
       <span>function</span>

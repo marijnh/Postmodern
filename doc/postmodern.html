@@ -465,10 +465,10 @@
     <p class="desc">Simple example:</p>
 
     <pre class="code">
-(defclass person ()
-  ((name :col-type string :initarg :name :accessor person-name)
+(defclass user ()
+  ((name :col-type string :initarg :name :accessor user-name)
    (creditcard :col-type (or db-null integer) :initarg :card :col-default :null)
-   (score :col-type bigint :col-default 0 :accessor person-score))
+   (score :col-type bigint :col-default 0 :accessor user-score))
   (:metaclass dao-class)
   (:keys name))</pre>
 
@@ -534,7 +534,7 @@
     strings, these are used to sort the result. (Note that, if you
     want to sort, you <em>have</em> to pass a test value.)</p>
 
-    <pre class="code">(select-dao 'person (:> score 10000) name)</pre>
+    <pre class="code">(select-dao 'user (:> score 10000) name)</pre>
 
     <p class="def">
       <span>function</span>

@@ -89,7 +89,22 @@ element."
 
 ;; Converting between symbols and SQL strings.
 
-(defparameter *escape-sql-names-p* nil
+(defparameter *postgres-reserved-words*
+  (let ((words (make-hash-table :test 'equal)))
+    (dolist (word '("ALL" "ANALYSE" "ANALYZE" "AND" "ANY" "ARRAY" "AS" "ASC" "ASYMMETRIC" "AUTHORIZATION"
+                    "BETWEEN" "BINARY" "BOTH" "CASE" "CAST" "CHECK" "COLLATE" "COLUMN" "CONSTRAINT" "CREATE"
+                    "CROSS" "DEFAULT" "DEFERRABLE" "DESC" "DISTINCT" "DO" "ELSE" "END" "EXCEPT" "FALSE"
+                    "FOR" "FOREIGN" "FREEZE" "FROM" "FULL" "GRANT" "GROUP" "HAVING" "ILIKE" "IN" "INITIALLY"
+                    "INNER" "INTERSECT" "INTO" "IS" "ISNULL" "JOIN" "LEADING" "LEFT" "LIKE" "LIMIT"
+                    "LOCALTIME" "LOCALTIMESTAMP" "NATURAL" "NEW" "NOT" "NOTNULL" "NULL" "OFF" "OFFSET" "OLD"
+                    "ON" "ONLY" "OR" "ORDER" "OUTER" "OVERLAPS" "PLACING" "PRIMARY" "REFERENCES" "RETURNING"
+                    "RIGHT" "SELECT" "SIMILAR" "SOME" "SYMMETRIC" "TABLE" "THEN" "TO" "TRAILING" "TRUE"
+                    "UNION" "UNIQUE" "USER" "USING" "VERBOSE" "WHEN" "WHERE" "WITH"))
+      (setf (gethash word words) t))
+    words)
+  "A set of all Postgres' reserved words, for automatic escaping.")
+
+(defparameter *escape-sql-names-p* :auto
   "Setting this to T will make S-SQL add double quotes around
 identifiers in queries, making it possible to use keywords like 'from'
 or 'user' as column names \(at the cost of uglier queries).")
@@ -98,25 +113,32 @@ or 'user' as column names \(at the cost of uglier queries).")
   "Convert a Lisp symbol into a name that can be an sql table, column,
 or operation name. Add quotes when escape-p is true."
   (declare (optimize (speed 3) (debug 0)))
-  (let ((*print-pretty* nil))
+  (let ((*print-pretty* nil)
+        (name (symbol-name sym)))
     (with-output-to-string (*standard-output*)
-      (when escape-p
-        (write-char #\"))
-      (if (and (> (length (symbol-name sym)) 1) ;; Placeholders like $2
-               (char= (char (symbol-name sym) 0) #\$)
-               (every #'digit-char-p (the string (subseq (symbol-name sym) 1))))
-          (princ (symbol-name sym))
-          (loop :for ch :of-type character :across (symbol-name sym)
-                :do (cond ((eq ch #\.)
-                           (if escape-p
-                               (princ "\".\"")
-                               (write-char #\.)))
-                          ((or (eq ch #\*) (alphanumericp ch))
-                           (write-char (char-downcase ch)))
-                          (t
-                           (write-char #\_)))))
-      (when escape-p
-        (write-char #\")))))
+      (flet ((write-element (str)
+               (declare (type string str))
+               (let ((escape-p (if (eq escape-p :auto)
+                                   (gethash str *postgres-reserved-words*)
+                                   escape-p)))
+                 (when escape-p
+                   (write-char #\"))
+                 (if (and (> (length str) 1) ;; Placeholders like $2
+                          (char= (char str 0) #\$)
+                          (every #'digit-char-p (the string (subseq str 1))))
+                     (princ str)
+                     (loop :for ch :of-type character :across str
+                           :do (if (or (eq ch #\*) (alphanumericp ch))
+                                   (write-char (char-downcase ch))
+                                   (write-char #\_))))
+                 (when escape-p
+                   (write-char #\")))))
+
+        (loop :for start := 0 :then (1+ dot)
+              :for dot := (position #\. name) :then (position #\. name :start start)
+              :do (write-element (subseq name start dot))
+              :if dot :do (princ #\.)
+              :else :do (return))))))
 
 (defun from-sql-name (str)
   "Convert a string to something that might have been its original
