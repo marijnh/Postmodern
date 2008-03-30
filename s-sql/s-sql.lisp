@@ -91,15 +91,15 @@ element."
 
 (defparameter *postgres-reserved-words*
   (let ((words (make-hash-table :test 'equal)))
-    (dolist (word '("ALL" "ANALYSE" "ANALYZE" "AND" "ANY" "ARRAY" "AS" "ASC" "ASYMMETRIC" "AUTHORIZATION"
-                    "BETWEEN" "BINARY" "BOTH" "CASE" "CAST" "CHECK" "COLLATE" "COLUMN" "CONSTRAINT" "CREATE"
-                    "CROSS" "DEFAULT" "DEFERRABLE" "DESC" "DISTINCT" "DO" "ELSE" "END" "EXCEPT" "FALSE"
-                    "FOR" "FOREIGN" "FREEZE" "FROM" "FULL" "GRANT" "GROUP" "HAVING" "ILIKE" "IN" "INITIALLY"
-                    "INNER" "INTERSECT" "INTO" "IS" "ISNULL" "JOIN" "LEADING" "LEFT" "LIKE" "LIMIT"
-                    "LOCALTIME" "LOCALTIMESTAMP" "NATURAL" "NEW" "NOT" "NOTNULL" "NULL" "OFF" "OFFSET" "OLD"
-                    "ON" "ONLY" "OR" "ORDER" "OUTER" "OVERLAPS" "PLACING" "PRIMARY" "REFERENCES" "RETURNING"
-                    "RIGHT" "SELECT" "SIMILAR" "SOME" "SYMMETRIC" "TABLE" "THEN" "TO" "TRAILING" "TRUE"
-                    "UNION" "UNIQUE" "USER" "USING" "VERBOSE" "WHEN" "WHERE" "WITH"))
+    (dolist (word '("all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric" "authorization"
+                    "between" "binary" "both" "case" "cast" "check" "collate" "column" "constraint" "create"
+                    "cross" "default" "deferrable" "desc" "distinct" "do" "else" "end" "except" "false"
+                    "for" "foreign" "freeze" "from" "full" "grant" "group" "having" "ilike" "in" "initially"
+                    "inner" "intersect" "into" "is" "isnull" "join" "leading" "left" "like" "limit"
+                    "localtime" "localtimestamp" "natural" "new" "not" "notnull" "null" "off" "offset" "old"
+                    "on" "only" "or" "order" "outer" "overlaps" "placing" "primary" "references" "returning"
+                    "right" "select" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
+                    "union" "unique" "user" "using" "verbose" "when" "where" "with"))
       (setf (gethash word words) t))
     words)
   "A set of all Postgres' reserved words, for automatic escaping.")
@@ -117,7 +117,13 @@ is :auto and the symbol contains reserved words."
   (let ((*print-pretty* nil)
         (name (symbol-name sym)))
     (with-output-to-string (*standard-output*)
-      (flet ((write-element (str)
+      (flet ((subseq-downcase (str from to)
+               (let ((result (make-string (- to from))))
+                 (loop :for i :from from :below to
+                       :for p :from 0
+                       :do (setf (char result p) (char-downcase (char str i))))
+                 result))
+             (write-element (str)
                (declare (type string str))
                (let ((escape-p (if (eq escape-p :auto)
                                    (gethash str *postgres-reserved-words*)
@@ -130,14 +136,14 @@ is :auto and the symbol contains reserved words."
                      (princ str)
                      (loop :for ch :of-type character :across str
                            :do (if (or (eq ch #\*) (alphanumericp ch))
-                                   (write-char (char-downcase ch))
+                                   (write-char ch)
                                    (write-char #\_))))
                  (when escape-p
                    (write-char #\")))))
 
         (loop :for start := 0 :then (1+ dot)
               :for dot := (position #\. name) :then (position #\. name :start start)
-              :do (write-element (subseq name start dot))
+              :do (write-element (subseq-downcase name start (or dot (length name))))
               :if dot :do (princ #\.)
               :else :do (return))))))
 
