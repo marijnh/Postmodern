@@ -421,6 +421,9 @@ with a given arity."
 (def-sql-op :as (form name)
   `(,@(sql-expand form) " AS " ,@(sql-expand name)))
 
+(def-sql-op :distinct (&rest forms)
+  `("DISTINCT(" ,@(sql-expand-list forms) ")"))
+
 (def-sql-op :exists (query)
   `("(EXISTS " ,@(sql-expand query) ")"))
 
