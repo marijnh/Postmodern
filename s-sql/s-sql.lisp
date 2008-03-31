@@ -277,7 +277,9 @@ to strings \(which will form an SQL query when concatenated)."
         ((and (eq arg '$$) *expand-runtime*) '($$))
         (*expand-runtime*
          (list (sql-ize arg)))
-        ((or (consp arg) (and (symbolp arg) (not (keywordp arg))))
+        ((or (consp arg)
+             (and (symbolp arg)
+                  (not (or (keywordp arg) (eq arg t) (eq arg nil)))))
          (list `(sql-ize ,arg)))
         (t (list (sql-ize arg)))))
 
