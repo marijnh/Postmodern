@@ -436,6 +436,9 @@ with a given arity."
 (def-sql-op :not-in (form set)
   `("(" ,@(sql-expand form) " NOT IN " ,@(sql-expand set) ")"))
 
+(def-sql-op :extract (unit form)
+  `("EXTRACT(" ,@(sql-expand unit) " FROM " ,@(sql-expand form) ")"))
+
 ;; This one has two interfaces. When the elements are known at
 ;; compile-time, they can be given as multiple arguments to the
 ;; operator. When they are not, a single argument that evaulates to a

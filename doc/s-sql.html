@@ -297,6 +297,13 @@
     be given as multiple arguments to the operator. When they are not,
     a single argument that evaulates to a list should be used.</p>
 
+    <p class="def"><span>sql-op</span> <a name="extract"></a>:extract (unit form)</p>
+
+    <p class="desc"><a
+    href="http://www.postgresql.org/docs/8.3/interactive/functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT">Extract</a>
+    a field from a date/time value. For example, <code>(:extract
+    :month (:now))</code>.</p>
+
     <p class="def"><span>sql-op</span> <a name="dot"></a>:dot (&amp;rest names)</p>
 
     <p class="desc">Can be used to combine multiple names into a name
@@ -581,6 +588,7 @@
       <li><a href="#*escape-sql-names-p*">*escape-sql-names-p*</a></li>
       <li><a href="#infix">:except</a></li>
       <li><a href="#exists">:exists</a></li>
+      <li><a href="#extract">:extract</a></li>
       <li><a href="#from-sql-name">from-sql-name</a></li>
       <li><a href="#function">:function</a></li>
       <li><a href="#like">:ilike</a></li>
