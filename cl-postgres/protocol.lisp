@@ -164,6 +164,10 @@ array of field-description objects."
 ;; or indirectly) called it.
 (defparameter *effected-rows* nil)
 
+(defparameter *connection-params* nil
+  "Bound to the current connection's parameter table when executing
+a query.")
+
 (defun look-for-row (socket)
   "Read server messages until either a new row can be read, or there
 are no more results. Return a boolean indicating whether any more
@@ -181,6 +185,9 @@ copy-in/copy-out states \(which are not supported)."
               (setf *effected-rows* (parse-integer command-tag :junk-allowed t
                                                    :start (1+ space))))
             (return-from look-for-row nil)))
+     (#\S (let ((name (read-str socket))
+                (value (read-str socket)))
+            (setf (gethash name *connection-params*) value)))
      ;; CopyInResponse
      (#\G (read-uint1 socket)
           (skip-bytes socket (* 2 (read-uint2 socket))) ;; The field formats

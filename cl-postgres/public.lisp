@@ -83,15 +83,19 @@ anything with it."
     (terminate-connection (connection-socket connection)))
   (values))
 
-(defmacro with-availability (connection &body body)
+(defmacro using-connection (connection &body body)
   "This is used to prevent a row-reader from recursively calling some
 query function. Because the connection is still returning results from
 the previous query when a row-reading is being executed, starting
 another query will not work as expected \(or at all, in general). This
 might also raise an error when you are using a single database
-connection from multiple threads, but you should not do that at all."
+connection from multiple threads, but you should not do that at all.
+Also binds *timestamp-format* and *connection-params*, which might be
+needed by the code interpreting the query results."
   (let ((connection-name (gensym)))
-    `(let ((,connection-name ,connection))
+    `(let* ((,connection-name ,connection)
+            (*timestamp-format* (connection-timestamp-format ,connection-name))
+            (*connection-params* (connection-parameters ,connection-name)))
       (when (not (connection-available ,connection-name))
         (error 'database-error :message "This connection is still processing another query."))
       (setf (connection-available ,connection-name) nil)
@@ -129,17 +133,17 @@ offering a :reconnect restart."
 result."
   (check-type query string)
   (with-reconnect-restart connection
-    (let ((*timestamp-format* (connection-timestamp-format connection)))
-      (with-availability connection
-        (send-query (connection-socket connection) query row-reader)))))
+    (using-connection connection
+      (send-query (connection-socket connection) query row-reader))))
 
 (defun prepare-query (connection name query)
   "Prepare a query string and store it under the given name."
   (check-type query string)
   (check-type name string)
   (with-reconnect-restart connection
-    (send-parse (connection-socket connection) name query)
-    (values)))
+    (using-connection connection
+      (send-parse (connection-socket connection) name query)
+      (values))))
 
 (defun exec-prepared (connection name parameters &optional (row-reader 'ignore-row-reader))
   "Execute a previously prepared query with the given parameters,
@@ -147,10 +151,9 @@ apply a row-reader to the result."
   (check-type name string)
   (check-type parameters list)
   (with-reconnect-restart connection
-    (let ((*timestamp-format* (connection-timestamp-format connection)))
-      (with-availability connection
-        (send-execute (connection-socket connection)
-                      name parameters row-reader)))))
+    (using-connection connection
+      (send-execute (connection-socket connection)
+                    name parameters row-reader))))
 
 ;; A row-reader that returns a list of (field-name . field-value)
 ;; alist for the returned rows.
