@@ -418,8 +418,18 @@ with a given arity."
 (def-sql-op :desc (arg)
   `(,@(sql-expand arg) " DESC"))
 
-(def-sql-op :as (form name)
-  `(,@(sql-expand form) " AS " ,@(sql-expand name)))
+(def-sql-op :as (form name &rest fields)
+  `(,@(sql-expand form) " AS " ,@(sql-expand name)
+    ,@(when fields
+        `("(" ,@(loop :for field :in fields
+                      :for (name type) := (if (and (consp field) (not (eq (first field) 'quote)))
+                                              field
+                                              (list field nil))
+                      :for first := t :then nil
+                      :unless first :collect ", "
+                      :append (sql-expand name)
+                      :when type :append (list " " (to-type-name type)))
+          ")"))))
 
 (def-sql-op :distinct (&rest forms)
   `("DISTINCT(" ,@(sql-expand-list forms) ")"))

@@ -267,10 +267,18 @@
     <p class="desc">Used to invert the meaning of an operator in an <a
     href="#order-by"><code>:order-by</code></a> clause.</p>
 
-    <p class="def"><span>sql-op</span> <a name="as"></a>:as (form name)</p>
+    <p class="def"><span>sql-op</span> <a name="as"></a>:as (form name &amp;rest fields)</p>
 
     <p class="desc">Assigns a name to a column or table in a <a
-    href="#select"><code>:select</code></a> form.</p>
+    href="#select"><code>:select</code></a> form. When fields are
+    given, they are added after the name, in parentheses. For example,
+    <code>(:as 'table1 't1 'foo 'bar)</code> becomes <code>table1 AS
+    t1(foo, bar)</code>. When you need to specify types for the
+    fields, you can do something like <code>(:as 'table2 't2 ('foo
+    integer))</code>. Note that names are quoted, types are not (when
+    using <code><a href="#sql-compile">sql-compile</a></code> or
+    <code><a href="#sql-template">sql-template</a></code>, you can
+    leave out the quotes entirely).</p>
 
     <p class="def"><span>sql-op</span> <a name="exists"></a>:exists (query)</p>
 
