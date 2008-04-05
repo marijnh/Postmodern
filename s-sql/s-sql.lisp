@@ -434,6 +434,12 @@ with a given arity."
 (def-sql-op :distinct (&rest forms)
   `("DISTINCT(" ,@(sql-expand-list forms) ")"))
 
+(def-sql-op :any (query)
+  `("ANY " ,@(sql-expand query)))
+
+(def-sql-op :all (query)
+  `("ALL " ,@(sql-expand query)))
+
 (def-sql-op :exists (query)
   `("(EXISTS " ,@(sql-expand query) ")"))
 
