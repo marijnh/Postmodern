@@ -48,17 +48,19 @@ if it isn't."
                        (usocket:socket-connect (connection-host conn)
                                                (connection-port conn)
                                                :element-type '(unsigned-byte 8))))
-              (finished nil))
+              (finished nil)
+              (*connection-params* (make-hash-table :test 'equal)))
+          (setf (slot-value conn 'meta) nil
+                (connection-parameters conn) *connection-params*)
           (unwind-protect
-               (setf (slot-value conn 'meta) nil
-                     (connection-parameters conn)
-                     (authenticate socket (connection-user conn)
-                                   (connection-password conn) (connection-db conn))
-                     (connection-timestamp-format conn)
-                     (if (string= (gethash "integer_datetimes" (connection-parameters conn)) "on")
-                         :integer :float)
-                     (connection-socket conn) socket
-                     finished t)
+               (progn
+                 (authenticate socket (connection-user conn)
+                               (connection-password conn) (connection-db conn))
+                 (setf (connection-timestamp-format conn)
+                       (if (string= (gethash "integer_datetimes" (connection-parameters conn)) "on")
+                           :integer :float)
+                       (connection-socket conn) socket
+                       finished t))
             (unless finished
               (ensure-socket-is-closed socket))))
       (usocket:socket-error (e) (add-restart e))

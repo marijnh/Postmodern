@@ -37,8 +37,12 @@ Cases for error and warning messages are always added."
                               (ignorable ,size-name))
                      (case ,char-name
                        (#.(char-code #\E) (get-error ,socket-name))
-                       ;; Continue reading messages when the current one is a warning.
-                       (#.(char-code #\N) (get-warning ,socket-name) (,iter-name))
+                       (#.(char-code #\S) ;; ParameterStatus: read and continue
+                          (update-parameter ,socket-name)
+                          (,iter-name))
+                       (#.(char-code #\N) ;; A warning
+                          (get-warning ,socket-name)
+                          (,iter-name))
                        ,@(mapcar (lambda (clause)
                                    `(,(expand-characters (first clause))
                                      ,@(if (eq (second clause) :skip)
@@ -51,6 +55,15 @@ Cases for error and warning messages are always added."
                                              :message (format nil "Unexpected message received: ~A"
                                                               (code-char ,char-name))))))))))
           (,iter-name))))))
+
+(defparameter *connection-params* nil
+  "Bound to the current connection's parameter table when executing
+a query.")
+
+(defun update-parameter (socket)
+  (let ((name (read-str socket))
+        (value (read-str socket)))
+    (setf (gethash name *connection-params*) value)))
 
 (defun read-byte-delimited (socket)
   "Read the fields of a null-terminated list of byte + string values
@@ -91,34 +104,28 @@ database-error condition."
 (defun authenticate (socket user password database)
   "Try to initiate a connection. Caller should close the socket if
 this raises a condition."
-  (let ((parameters (make-hash-table :test 'equal)))
-    (startup-message socket user database)
-    (force-output socket)
-    (loop
-     (message-case socket
-       ;; Authentication message
-       (#\R (let ((type (read-uint4 socket)))
-              (ecase type
-                (0 (return))
-                (2 (error 'database-error :message "Unsupported Kerberos authentication requested."))
-                (3 (plain-password-message socket password)
-                   (force-output socket))
-                (4 (error 'database-error :message "Unsupported crypt authentication requested."))
-                (5 (md5-password-message socket password user (read-bytes socket 4))
-                   (force-output socket))
-                (6 (error 'database-error :message "Unsupported SCM authentication requested.")))))))
-    (loop
-     (message-case socket
-       ;; BackendKeyData - ignore
-       (#\K :skip)
-       ;; ParameterStatus
-       (#\S (let ((name (read-str socket))
-                  (value (read-str socket)))
-              (setf (gethash name parameters) value)))
-       ;; ReadyForQuery
-       (#\Z (read-uint1 socket)
-            (return))))
-    parameters))
+  (startup-message socket user database)
+  (force-output socket)
+  (loop
+   (message-case socket
+     ;; Authentication message
+     (#\R (let ((type (read-uint4 socket)))
+            (ecase type
+              (0 (return))
+              (2 (error 'database-error :message "Unsupported Kerberos authentication requested."))
+              (3 (plain-password-message socket password)
+                 (force-output socket))
+              (4 (error 'database-error :message "Unsupported crypt authentication requested."))
+              (5 (md5-password-message socket password user (read-bytes socket 4))
+                 (force-output socket))
+              (6 (error 'database-error :message "Unsupported SCM authentication requested.")))))))
+  (loop
+   (message-case socket
+     ;; BackendKeyData - ignore
+     (#\K :skip)
+     ;; ReadyForQuery
+     (#\Z (read-uint1 socket)
+          (return)))))
 
 (defclass field-description ()
   ((name :initarg :name :accessor field-name)
@@ -164,10 +171,6 @@ array of field-description objects."
 ;; or indirectly) called it.
 (defparameter *effected-rows* nil)
 
-(defparameter *connection-params* nil
-  "Bound to the current connection's parameter table when executing
-a query.")
-
 (defun look-for-row (socket)
   "Read server messages until either a new row can be read, or there
 are no more results. Return a boolean indicating whether any more
@@ -185,9 +188,6 @@ copy-in/copy-out states \(which are not supported)."
               (setf *effected-rows* (parse-integer command-tag :junk-allowed t
                                                    :start (1+ space))))
             (return-from look-for-row nil)))
-     (#\S (let ((name (read-str socket))
-                (value (read-str socket)))
-            (setf (gethash name *connection-params*) value)))
      ;; CopyInResponse
      (#\G (read-uint1 socket)
           (skip-bytes socket (* 2 (read-uint2 socket))) ;; The field formats
