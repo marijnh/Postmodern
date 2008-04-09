@@ -15,7 +15,7 @@
    #:call-with-connection #:with-connection
    #:*database* #:connected-p #:database-connection
    #:connect-toplevel #:disconnect-toplevel
-   #:clear-connection-pool
+   #:clear-connection-pool #:*max-pool-size*
    #:query #:execute #:doquery
    #:prepare #:defprepared
    #:sequence-next #:list-sequences #:sequence-exists-p

@@ -63,10 +63,10 @@
 
     <p class="desc">Create a new database connection for the given
     user and database. Port will default to 5432, which is where most
-    PostgreSQL server are running. If pooled-p is true, a connection
-    will be taken from a pool of connections of this type, if one is
-    available there, and when the connection is disconnected it will
-    be put back into this pool instead.</p>
+    PostgreSQL server are running. If <code>pooled-p</code> is true, a
+    connection will be taken from a pool of connections of this type,
+    if one is available there, and when the connection is disconnected
+    it will be put back into this pool instead.</p>
 
     <p class="def">
       <span>method</span>
@@ -94,9 +94,9 @@
     </p>
 
     <p class="desc">Reconnect a disconnected database connection. This
-    is not allowed for pooled connections, after they are disconnected
-    they might be in use by some other process, and should no longer
-    be used.</p>
+    is not allowed for pooled connections &#x2015; after they are
+    disconnected they might be in use by some other process, and
+    should no longer be used.</p>
 
     <p class="def">
       <span>variable</span>
@@ -162,7 +162,19 @@
       clear-connection-pool ()
     </p>
 
-    <p class="desc">Disconnect and remove all connections in the connection pool.</p>
+    <p class="desc">Disconnect and remove all connections in the
+    connection pools.</p>
+
+    <p class="def">
+      <span>variable</span>
+      <a name="*max-pool-size*"></a>
+      *max-pool-size*
+    </p>
+
+    <p class="desc">Set the maximum amount of connections kept in a
+    <em>single</em> connection pool, where a pool consists of all the
+    stored connections with the exact same connect arguments. Defaults
+    to <code>NIL</code>, which means there is no maximum.</p>
 
     <h2><a name="querying"></a>Querying</h2>
 
@@ -639,6 +651,7 @@
       <li><a href="#list-sequences">list-sequences</a></li>
       <li><a href="#list-tables">list-tables</a></li>
       <li><a href="#list-views">list-views</a></li>
+      <li><a href="#*max-pool-size*">*max-pool-size*</a></li>
       <li><a href="#prepare">prepare</a></li>
       <li><a href="#query">query</a></li>
       <li><a href="#query-dao">query-dao</a></li>

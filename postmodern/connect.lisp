@@ -37,9 +37,6 @@ connection, or if you want a connection for debugging from the REPL."
 (defgeneric disconnect (database)
   (:method ((connection database-connection))
     (close-database connection))
-  (:method ((connection pooled-database-connection))
-    (when (database-open-p connection)
-      (add-to-pool connection)))
   (:documentation "Close a database connection. Returns it to a pool
 if it is a pooled connection."))
 
@@ -71,11 +68,15 @@ database."
     (unwind-protect (progn ,@body)
       (disconnect *database*))))
 
-(defparameter *connection-pools* (make-hash-table :test 'equal)
+(defvar *max-pool-size* nil
+  "The maximum amount of connection that will be kept in a single
+pool, or NIL for no maximum.")
+
+(defvar *connection-pools* (make-hash-table :test 'equal)
   "Maps pool specifiers to lists of pooled connections.")
 
 #+postmodern-thread-safe
-(defparameter *pool-lock*
+(defvar *pool-lock*
   (bordeaux-threads:make-lock "connection-pool-lock")
   "A lock to prevent multiple threads from messing with the connection
 pool at the same time.")
@@ -94,11 +95,17 @@ no connection was available."
   (with-pool-lock
     (pop (gethash type *connection-pools*))))
 
-(defun add-to-pool (connection)
-  "Add a connection to the corresponding pool."
-  (with-pool-lock
-    (push connection (gethash (connection-pool-type connection) *connection-pools*)))
-  (values))
+(defmethod disconnect ((connection pooled-database-connection))
+  "Add the connection to the corresponding pool, or drop it when the
+pool is full."
+  (macrolet ((the-pool ()
+               '(gethash (connection-pool-type connection) *connection-pools* ())))
+    (when (database-open-p connection)
+      (with-pool-lock
+        (if (or (not *max-pool-size*) (< (length (the-pool)) *max-pool-size*))
+            (push connection (the-pool))
+            (call-next-method))))
+    (values)))
 
 (defun clear-connection-pool ()
   "Disconnect and remove all connections in the connection pool."
@@ -112,7 +119,7 @@ no connection was available."
     (setf *connection-pools* (make-hash-table :test 'equal))
     (values)))
 
-;;; Copyright (c) 2006 Marijn Haverbeke
+;;; Copyright (c) Marijn Haverbeke
 ;;;
 ;;; This software is provided 'as-is', without any express or implied
 ;;; warranty. In no event will the authors be held liable for any
