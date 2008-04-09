@@ -49,6 +49,19 @@
 
     <h2><a name="news"></a>News</h2>
 
+    <p class="news"><em>09-04-2008:</em> <a
+    href="http://common-lisp.net/project/postmodern/postmodern-1.11.tgz">Version
+    1.11</a>: Fixes bugs, most importantly one that caused <a
+    href="cl-postgres.html">CL-postgres</a> to blow up whenever a <a
+    href="http://www.postgresql.org/docs/current/static/config-setting.html">connection
+    parameter</a> was changed for an open connection. Also adds <a
+    href="s-sql.html#*escape-sql-names-p*">automatic escaping</a> of
+    reserved words to S-SQL, a <a
+    href="postmodern.html#*max-pool-size*"><code>*max-pool-size*</code></a>
+    parameter and a <a
+    href="postmodern.html#coalesce"><code>coalesce</code></a> function
+    to Postmodern</p>
+
     <p class="news"><em>19-03-2008:</em> <a
     href="http://common-lisp.net/project/postmodern/postmodern-1.10.tgz">Version
     1.10</a>: Note that this release is <strong>not entirely
@@ -121,21 +134,6 @@
     href="postmodern.html#execute"><code>execute</code></a>. Fixes a
     bug that caused connections to go out of sync when the server sent
     warnings.</p>
-
-    <p class="news"><em>29-01-2007:</em> <a
-    href="http://common-lisp.net/project/postmodern/postmodern-0.23.tgz">Version
-    .23</a>: Fixes a few embarassing bugs in the previous release.</p>
-
-    <p class="news"><em>27-01-2007:</em> <a
-    href="http://common-lisp.net/project/postmodern/postmodern-0.22.tgz">Version
-    .22</a>. Another change to <a
-    href="s-sql.html#create-table"><code>:create-table</code></a>,
-    this time to add support for constraints and a few other things
-    that the plain-SQL version lets you specify. The approach to
-    transactions (see <a
-    href="postmodern.html#with-transaction"><code>with-transaction</code></a>)
-    was also changed. The old approach was actually incorrect, now it
-    should be more robust.</p>
 
     <h2><a name="dependencies"></a>Dependencies</h2>
 
