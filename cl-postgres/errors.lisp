@@ -93,5 +93,5 @@ giving them a database-connection-error superclass."))
 
 (defun get-error-type (code)
   (or (gethash code *error-table*)
-      (gethash (subseq code 0 2) *error-table*)
+      (and code (gethash (subseq code 0 2) *error-table*))
       'database-error))
