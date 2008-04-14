@@ -6,19 +6,18 @@
 (defconstant +postgres-day-offset+ -60)
 (defconstant +usecs-in-one-day+ (* 1000 1000 3600 24))
 
-(cl-postgres:set-sql-datetime-readers
- :date
- (lambda (days)
-   (make-instance 'date :days (+ days +postgres-day-offset+)))
- :timestamp
- (lambda (usecs)
-   (multiple-value-bind (days usecs) (floor usecs +usecs-in-one-day+)
-     (make-instance 'timestamp :days (+ days +postgres-day-offset+)
-                    :ms (floor usecs 1000))))
- :interval
- (lambda (months days usecs)
-   (make-instance 'interval :months months
-                  :ms (floor (+ (* days +usecs-in-one-day+) usecs) 1000))))
+(flet ((interpret-timestamp (usecs)
+         (multiple-value-bind (days usecs) (floor usecs +usecs-in-one-day+)
+           (make-instance 'timestamp :days (+ days +postgres-day-offset+)
+                          :ms (floor usecs 1000)))))
+  (cl-postgres:set-sql-datetime-readers
+   :date (lambda (days)
+           (make-instance 'date :days (+ days +postgres-day-offset+)))
+   :timestamp #'interpret-timestamp
+   :timestamp-with-timezone #'interpret-timestamp
+   :interval (lambda (months days usecs)
+               (make-instance 'interval :months months
+                              :ms (floor (+ (* days +usecs-in-one-day+) usecs) 1000)))))
 
 (defmethod cl-postgres:to-sql-string ((arg date))
   (multiple-value-bind (year month day) (decode-date arg)
