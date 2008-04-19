@@ -106,10 +106,13 @@ values from the query."
     (flet ((relevant-field (probable-field name)
              (or (and (string= (slot-sql-name probable-field) name) probable-field)
                  (find-if (lambda (field) (string= (slot-sql-name field) name)) fields)
-                 (error "Field ~A does not exist in table class ~A." name (class-name class)))))
+                 (error "DAO class ~a seems to be out of sync with its table -- no slot found for column ~a."
+                        (class-name class) name))))
       (setf (slot-value class 'row-reader)
             (row-reader (query-fields)
-              (assert (= (length query-fields) n-dao-fields))
+              (unless (= (length query-fields) n-dao-fields)
+                (error "DAO class ~a seems to be out of sync with its table -- ~a slots found for ~a columns."
+                       (class-name class) n-dao-fields (length query-fields)))
               (loop :while (next-row)
                     :collect
                     (let ((instance (allocate-instance class)))
