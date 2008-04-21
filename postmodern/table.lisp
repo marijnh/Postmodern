@@ -136,8 +136,11 @@ values from the query."
   (:documentation "Delete the given dao from the database."))
 (defgeneric get-dao (type &rest args)
   (:method ((class-name symbol) &rest args)
-    (finalize-inheritance (find-class class-name))
-    (apply 'get-dao class-name args))
+    (let ((class (find-class class-name)))
+      (if (class-finalized-p class)
+          (error "Class ~a has no key slots." (class-name class))
+          (finalize-inheritance class))
+      (apply 'get-dao class-name args)))
   (:documentation "Get the object corresponding to the given primary
   key, or return nil if it does not exist."))
 
