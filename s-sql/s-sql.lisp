@@ -109,13 +109,13 @@ element."
 identifiers in queries. Setting it :auto will turn on this behaviour
 only for reserved words.")
 
-(defun to-sql-name (sym &optional (escape-p *escape-sql-names-p*))
-  "Convert a Lisp symbol into a name that can be an sql table, column,
-or operation name. Add quotes when escape-p is true, or escape-p
-is :auto and the symbol contains reserved words."
+(defun to-sql-name (name &optional (escape-p *escape-sql-names-p*))
+  "Convert a symbol or string into a name that can be an sql table,
+column, or operation name. Add quotes when escape-p is true, or
+escape-p is :auto and the name contains reserved words."
   (declare (optimize (speed 3) (debug 0)))
   (let ((*print-pretty* nil)
-        (name (symbol-name sym)))
+        (name (string name)))
     (with-output-to-string (*standard-output*)
       (flet ((subseq-downcase (str from to)
                (let ((result (make-string (- to from))))

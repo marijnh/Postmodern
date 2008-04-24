@@ -136,15 +136,15 @@
     <p class="def">
       <span>function</span>
       <a name="to-sql-name"></a>
-      to-sql-name (symbol &amp;optional (escape-p *escape-sql-names-p*))
+      to-sql-name (name &amp;optional (escape-p *escape-sql-names-p*))
       <br/>&#8594; string
     </p>
 
-    <p class="desc">Convert a symbol to a name that can be used as an
-    SQL identifier by converting all non-alphanumeric characters to
-    underscores. Also lowercases the name to make queries look a bit
-    less hideous. When a second argument is given, this overrides the
-    current value of <a
+    <p class="desc">Convert a symbol or string to a name that can be
+    used as an SQL identifier by converting all non-alphanumeric
+    characters to underscores. Also lowercases the name to make
+    queries look a bit less hideous. When a second argument is given,
+    this overrides the current value of <a
     href="#*escape-sql-names-p*"><code>*escape-sql-names-p*</code></a>.</p>
 
     <p class="def">
