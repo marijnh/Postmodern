@@ -97,30 +97,6 @@
       (find-class 'effective-column-slot)
       (call-next-method)))
 
-(defun build-row-reader (class)
-  "Initialize the row-reader for this table to a reader that collects
-instances of the associated class and initializes their slots to the
-values from the query."
-  (let* ((fields (dao-column-slots class))
-         (n-dao-fields (length fields)))
-    (flet ((relevant-field (probable-field name)
-             (or (and (string= (slot-sql-name probable-field) name) probable-field)
-                 (find-if (lambda (field) (string= (slot-sql-name field) name)) fields)
-                 (error "Field ~A does not exist in table class ~A." name (class-name class)))))
-      (setf (slot-value class 'row-reader)
-            (row-reader (query-fields)
-              (assert (= (length query-fields) n-dao-fields))
-              (loop :while (next-row)
-                    :collect
-                    (let ((instance (allocate-instance class)))
-                      (loop :for query-field :across query-fields
-                            :for dao-field :in fields
-                            :do (setf (slot-value instance (slot-definition-name
-                                                            (relevant-field dao-field (field-name query-field))))
-                                      (next-field query-field)))
-                      (initialize-instance instance)
-                      instance)))))))
-
 (defgeneric dao-exists-p (dao)
   (:documentation "Return a boolean indicating whether the given dao
   exists in the database."))
