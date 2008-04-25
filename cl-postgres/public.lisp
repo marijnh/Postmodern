@@ -75,6 +75,8 @@ if it isn't."
 (defun ensure-connection (conn)
   "Used to make sure a connection object is connected before doing
 anything with it."
+  (unless conn
+    (error "No database connection selected."))
   (unless (database-open-p conn)
     (restart-case (error 'database-connection-lost :message "Connection to database server lost.")
       (:reconnect () :report "Try to reconnect." (initiate-connection conn)))))
