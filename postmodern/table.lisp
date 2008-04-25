@@ -27,9 +27,10 @@
 (defmethod shared-initialize :before ((class dao-class) slot-names
                                       &key table-name &allow-other-keys)
   (declare (ignore slot-names))
-  (when table-name
-    (setf (slot-value class 'table-name)
-          (if (symbolp (car table-name)) (car table-name) (intern (car table-name))))))
+  (if table-name
+      (setf (slot-value class 'table-name)
+            (if (symbolp (car table-name)) (car table-name) (intern (car table-name))))
+      (slot-makunbound class 'table-name)))
 
 (defun dao-superclasses (class)
   "Build a list of superclasses of a given class that are DAO
