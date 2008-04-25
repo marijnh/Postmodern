@@ -4,7 +4,7 @@
   ((direct-keys :initarg :keys :initform nil :reader direct-keys)
    (effective-keys :reader dao-keys)
    (table-name)
-   (row-reader :reader dao-row-reader))
+   (column-map :reader dao-column-map))
   (:documentation "Metaclass for database-access-object classes."))
 
 (defmethod validate-superclass ((class dao-class) (super-class standard-class))
@@ -52,7 +52,6 @@
         (reduce 'union (mapcar 'direct-keys (dao-superclasses class))))
   (unless (every (lambda (x) (member x (dao-column-fields class))) (dao-keys class))
     (error "Class ~A has a key that is not also a slot." (class-name class)))
-  (build-row-reader class)
   (build-dao-methods class))
 
 
@@ -107,13 +106,10 @@ values from the query."
     (flet ((relevant-field (probable-field name)
              (or (and (string= (slot-sql-name probable-field) name) probable-field)
                  (find-if (lambda (field) (string= (slot-sql-name field) name)) fields)
-                 (error "DAO class ~a seems to be out of sync with its table -- no slot found for column ~a."
-                        (class-name class) name))))
+                 (error "Field ~A does not exist in table class ~A." name (class-name class)))))
       (setf (slot-value class 'row-reader)
             (row-reader (query-fields)
-              (unless (= (length query-fields) n-dao-fields)
-                (error "DAO class ~a seems to be out of sync with its table -- ~a slots found for ~a columns."
-                       (class-name class) n-dao-fields (length query-fields)))
+              (assert (= (length query-fields) n-dao-fields))
               (loop :while (next-row)
                     :collect
                     (let ((instance (allocate-instance class)))
@@ -158,6 +154,11 @@ values from the query."
 \(Done this way because some of them are not defined in every
 situation, and each of them needs to close over some pre-computed
 values.)"
+  (setf (find-class 'target-class) class)
+
+  (setf (slot-value class 'column-map)
+        (mapcar (lambda (s) (cons (slot-sql-name s) (slot-definition-name s))) (dao-column-slots class)))
+
   (let* ((fields (dao-column-fields class))
          (key-fields (dao-keys class))
          (value-fields (remove-if (lambda (x) (member x key-fields)) fields))
@@ -167,7 +168,6 @@ values.)"
     ;; class is determined when the defmethod is evaluated, so setting
     ;; target-class to our class will cause the methods to be
     ;; specialised on the correct class.
-    (setf (find-class 'target-class) class)
     (flet ((test-fields (fields)
              `(:and ,@(loop :for field :in fields :collect (list := field '$$))))
            (set-fields (fields)
@@ -242,6 +242,35 @@ values.)"
         (declare (ignore slot-names))
         (when fetch-defaults
           (fetch-defaults object))))))
+
+(defparameter *custom-column-writers* nil
+  "A hook for locally overriding/adding behaviour to DAO row readers.
+Should be an alist mapping strings (column names) to symbols or
+functions. Symbols are interpreted as slot names that values should be
+written to, functions are called with the new object and the value as
+arguments.")
+
+(defmacro with-column-writers ((&rest defs) &body body)
+  `(let ((*custom-column-writers* (append (list ,@(loop :for (field writer) :on defs
+                                                        :collect `(cons (to-sql-name ,field) ,writer)))
+                                          *custom-column-writers*)))
+    ,@body))
+
+(defun dao-row-reader (class)
+  "Defines a row-reader for objects of a given class."
+  (row-reader (query-fields)
+    (let ((column-map (append *custom-column-writers* (dao-column-map class))))
+      (loop :while (next-row)
+            :collect (let ((instance (allocate-instance class)))
+                       (loop :for field :across query-fields
+                             :for writer := (cdr (assoc (field-name field) column-map :test #'string=))
+                             :do (etypecase writer
+                                   (null (error "No slot named ~a in class ~a. DAO out of sync with table, or incorrect query used."
+                                                (field-name field) (class-name class)))
+                                   (symbol (setf (slot-value instance writer) (next-field field)))
+                                   (function (funcall writer instance (next-field field)))))
+                       (initialize-instance instance)
+                       instance)))))
 
 (defun query-dao% (type query)
   (let ((class (find-class type)))

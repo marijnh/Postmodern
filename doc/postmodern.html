@@ -616,6 +616,34 @@
     indices or or contraints, you'll have to write your own queries to
     add them.</p>
 
+    <p class="def">
+      <span>macro</span>
+      <a name="with-column-writers"></a>
+      with-column-writers ((&amp;rest writers) &amp;body body)
+    </p>
+
+    <p class="desc">Provides control over the way <code><a
+    href="#get-dao">get-dao</a></code>, <code><a
+    href="#select-dao">select-dao</a></code>, and <code><a
+    href="#query-dao">query-dao</a></code> read values from the
+    database. This is not commonly needed, but can be used to reduce
+    the amount of queries a system makes. <code>writers</code> should
+    be a list of alternating column names (strings or symbols) and
+    writers, where writers are either symbols referring to a slot in
+    the objects, or functions taking two arguments &#x2015; an
+    instance and a value &#x2015; which can be used to somehow store
+    the value in the new instance. When any DAO-fetching function is
+    called in the body, and columns matching the given names are
+    encountered in the result, the writers are used instead of the
+    default behaviour (try and store the value in the slot that
+    matches the column name).</p>
+
+    <p class="desc">A common use for this is to add some non-column slots to a DAO
+    class, and use <code><a href="#query-dao">query-dao</a></code>
+    within a <code>with-column-writers</code> form to pull in some
+    extra information about the objects, and imediately store it in
+    the new instances.</p>
+
     <h2><a name="index"></a>Symbol-index</h2>
 
     <ul>
@@ -666,6 +694,7 @@
       <li><a href="#table-exists-p">table-exists-p</a></li>
       <li><a href="#update-dao">update-dao</a></li>
       <li><a href="#view-exists-p">view-exists-p</a></li>
+      <li><a href="#with-column-writers">with-column-writers</a></li>
       <li><a href="#with-connection">with-connection</a></li>
       <li><a href="#with-savepoint">with-savepoint</a></li>
       <li><a href="#with-transaction">with-transaction</a></li>
