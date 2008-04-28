@@ -216,13 +216,11 @@ message."
                (sync-message socket)
                (force-output socket))
              ;; TODO initiate timeout on the socket read, signal timeout error
-             (loop :named syncing
-                :while (open-stream-p socket)
-                :do (message-case socket
-                      (#\Z (read-uint1 socket)
-                           (setf ok t)
-                           (return-from syncing))
-                      (t (values)))))
+             (loop :while (and (not ok) (open-stream-p socket))
+                   :do (message-case socket
+                         (#\Z (read-uint1 socket)
+                              (setf ok t))
+                         (t :skip))))
         (unless ok
           ;; if we can't sync, make sure the socket is shot
           ;; (e.g. a timeout, or aborting execution with a restart from sldb)
