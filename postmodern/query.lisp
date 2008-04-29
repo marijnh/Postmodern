@@ -72,7 +72,8 @@ specifies the format in which the results should be returned."
 
 (defmacro execute (query &rest args)
   "Execute a query, ignore the results."
-  `(query ,query ,@args :none))
+  `(let ((rows (nth-value 1 (query ,query ,@args :none))))
+    (if rows (values rows rows) 0)))
 
 (defmacro doquery (query (&rest names) &body body)
   "Iterate over the rows in the result of a query, binding the given

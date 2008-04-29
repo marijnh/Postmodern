@@ -164,7 +164,7 @@ values.)"
           (let ((tmpl (sql-template `(:update ,table-name :set ,@(set-fields value-fields)
                                       :where ,(test-fields key-fields)))))
             (defmethod update-dao ((object target-class))
-              (when (zerop (nth-value 1 (execute (apply tmpl (slot-values object value-fields key-fields)))))
+              (when (zerop (execute (apply tmpl (slot-values object value-fields key-fields))))
                 (error "Updated row does not exist."))
               object)))
   
