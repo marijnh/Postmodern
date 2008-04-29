@@ -312,6 +312,16 @@
     a field from a date/time value. For example, <code>(:extract
     :month (:now))</code>.</p>
 
+    <p class="def"><span>sql-op</span> <a name="case"></a>:case (&amp;rest clauses)</p>
+
+    <p class="desc">A conditional expression. Clauses should take the
+    form <code>(test value)</code>.</p>
+
+    <p class="def"><span>sql-op</span> <a name="between"></a>:between (n start end)</p>
+
+    <p class="desc">Test whether a value lies between two other
+    values.</p>
+
     <p class="def"><span>sql-op</span> <a name="dot"></a>:dot (&amp;rest names)</p>
 
     <p class="desc">Can be used to combine multiple names into a name
@@ -577,8 +587,10 @@
       <li><a href="#sql-template">$$</a></li>
       <li><a href="#infix">:and</a></li>
       <li><a href="#as">:as</a></li>
+      <li><a href="#between">:between</a></li>
       <li><a href="#types">bytea</a></li>
       <li><a href="#types">bigint</a></li>
+      <li><a href="#case">:case</a></li>
       <li><a href="#create-index">:create-index</a></li>
       <li><a href="#create-sequence">:create-sequence</a></li>
       <li><a href="#create-table">:create-table</a></li>

@@ -455,6 +455,15 @@ with a given arity."
 (def-sql-op :extract (unit form)
   `("EXTRACT(" ,@(sql-expand unit) " FROM " ,@(sql-expand form) ")"))
 
+(def-sql-op :between (n start end)
+  `("(" ,@(sql-expand n) " BETWEEN " ,@(sql-expand start) " AND " ,@(sql-expand end) ")"))
+
+(def-sql-op :case (&rest clauses)
+  `("CASE"
+    ,@(loop :for (test expr) :in clauses
+            :append `(" WHEN " ,@(sql-expand test) " THEN " ,@(sql-expand expr)))
+    " END"))
+
 ;; This one has two interfaces. When the elements are known at
 ;; compile-time, they can be given as multiple arguments to the
 ;; operator. When they are not, a single argument that evaulates to a

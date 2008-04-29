@@ -134,7 +134,6 @@ when the server does not support SSL."
 (defun authenticate (socket user password database use-ssl)
   "Try to initiate a connection. Caller should close the socket if
 this raises a condition."
-  (declare (ignorable use-ssl))
   (unless (eq use-ssl :no)
     (setf socket (initiate-ssl socket (eq use-ssl :yes))))
   (startup-message socket user database)
