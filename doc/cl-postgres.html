@@ -42,12 +42,17 @@
     <p class="def">
       <span>function</span>
       <a name="open-database"></a>
-      open-database (database user password host &amp;optional (port 5432))
+      open-database (database user password host &amp;optional (port 5432) (use-ssl :no))
       <br/>&#8594; database-connection
     </p>
 
     <p class="desc">Create and open a connection for the specified
-    server, database, and user.</p>
+    server, database, and user. <code>use-ssl</code> may be
+    <code>:no</code>, <code>:yes</code>, or <code>:try</code>, where
+    <code>:try</code> means 'if the server supports it'. When it is
+    anything but <code>:no</code>, you must have the <a
+    href="http://common-lisp.net/project/cl-plus-ssl/">CL+SSL</a>
+    package loaded to initiate the connection.</p>
 
     <p class="def">
       <span>function</span>
@@ -105,6 +110,20 @@
     containing all the <a
     href="http://www.postgresql.org/docs/current/static/runtime-config.html">configuration
     parameters</a> for the connection.</p>
+
+    <p class="def">
+      <span>variable</span>
+      <a name="*ssl-certificate-file*"></a>
+      *ssl-certificate-file*<br/>
+      <span>variable</span>
+      <a name="*ssl-key-file*"></a>
+      *ssl-key-file*
+    </p>
+
+    <p class="desc">When using SSL (see <a
+    href="#open-database"><code>open-database</code></a>), these can
+    be used to provide client key and certificate files. They can be
+    either <code>NIL</code>, for no file, or a pathname.</p>
 
     <h2><a name="querying">Querying</a></h2>
 
@@ -507,7 +526,7 @@
 
     <h2><a name="index">Symbol-index</a></h2>
 
-    <ul>
+    <ul class="symbol-index">
       <li><a href="#alist-row-reader">alist-row-reader</a></li>
       <li><a href="#close-database">close-database</a></li>
       <li><a href="#connection-meta">connection-meta</a></li>
@@ -540,6 +559,8 @@
       <li><a href="#set-sql-datetime-readers">set-sql-datetime-readers</a></li>
       <li><a href="#set-sql-reader">set-sql-reader</a></li>
       <li><a href="#*sql-readtable*">*sql-readtable*</a></li>
+      <li><a href="#*ssl-certificate-file*">*ssl-certificate-file*</a></li>
+      <li><a href="#*ssl-key-file*">*ssl-key-file*</a></li>
       <li><a href="#to-sql-string">to-sql-string</a></li>
     </ul>
   </body>

@@ -55,9 +55,9 @@
     <p class="desc">Objects of this type represent database connections.</p>
 
     <p class="def">
-      <a name="connect"></a>
       <span>function</span>
-      connect (database user password host &amp;key (port 5432) pooled-p)
+      <a name="connect"></a>
+      connect (database user password host &amp;key (port 5432) pooled-p use-ssl)
       <br/>&#8594; database-connection
     </p>
 
@@ -66,7 +66,25 @@
     PostgreSQL server are running. If <code>pooled-p</code> is true, a
     connection will be taken from a pool of connections of this type,
     if one is available there, and when the connection is disconnected
-    it will be put back into this pool instead.</p>
+    it will be put back into this pool instead. <code>use-ssl</code>
+    can be <code>:no</code>, <code>:yes</code>, or <code>:try</code>,
+    as in <a
+    href="cl-postgres.html#open-database"><code>open-database</code></a>,
+    and defaults to the value of <a
+    href="#*default-use-ssl*"><code>*default-use-ssl*</code></a>.</p>
+
+    <p class="def">
+      <span>variable</span>
+      <a name="*default-use-ssl*"></a>
+      *default-use-ssl*
+    </p>
+
+    <p class="desc">The default for <a
+    href="#connect"><code>connect</code></a>'s <code>use-ssl</code>
+    argument. This starts at <code>:no</code>. If you set it to
+    anything else, be sure to also load the <a
+    href="http://common-lisp.net/project/cl-plus-ssl/">CL+SSL</a>
+    library.</p>
 
     <p class="def">
       <span>method</span>
@@ -665,7 +683,7 @@
 
     <h2><a name="index"></a>Symbol-index</h2>
 
-    <ul>
+    <ul class="symbol-index">
       <li><a href="#abort-transaction">abort-transaction</a></li>
       <li><a href="#call-with-connection">call-with-connection</a></li>
       <li><a href="#clear-connection-pool">clear-connection-pool</a></li>
@@ -687,6 +705,7 @@
       <li><a href="cl-postgres.html#database-error-detail">database-error-detail</a></li>
       <li><a href="cl-postgres.html#database-error-query">database-error-query</a></li>
       <li><a href="cl-postgres.html#database-error-message">database-error-message</a></li>
+      <li><a href="#*default-use-ssl*">*default-use-ssl*</a></li>
       <li><a href="#defprepared">defprepared</a></li>
       <li><a href="#delete-dao">delete-dao</a></li>
       <li><a href="#disconnect">disconnect</a></li>

@@ -6,17 +6,17 @@ body {
 }
 
 h1 {
-  font-size: 22pt;
+  font-size: 250%;
   border-bottom: 3px solid #449977;
 }
 
 h2 {
-  font-size: 14pt;
+  font-size: 140%;
   border-bottom: 1px solid #449977;
 }
 
 h3 {
-  font-size: 12pt;
+  font-size: 110%;
 }
 
 code {
@@ -92,4 +92,9 @@ a:visited {
 
 a:hover {
   text-decoration: underline;
+}
+
+ul.symbol-index {
+  font-family: monospace;
+  font-size: 1.2em;
 }

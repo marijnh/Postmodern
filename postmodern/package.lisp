@@ -16,7 +16,7 @@
    #:call-with-connection #:with-connection
    #:*database* #:connected-p #:database-connection
    #:connect-toplevel #:disconnect-toplevel
-   #:clear-connection-pool #:*max-pool-size*
+   #:clear-connection-pool #:*max-pool-size* #:*default-use-ssl*
    #:query #:execute #:doquery
    #:prepare #:defprepared
    #:sequence-next #:list-sequences #:sequence-exists-p

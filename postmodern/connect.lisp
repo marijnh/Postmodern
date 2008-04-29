@@ -10,28 +10,30 @@ distinguished."))
   "Special holding the current database. Most functions and macros
 operating on a database assume this contains a connected database.")
 
-(defun connect (database user password host &key (port 5432) pooled-p)
+(defparameter *default-use-ssl* :no)
+
+(defun connect (database user password host &key (port 5432) pooled-p (use-ssl *default-use-ssl*))
   "Create and return a database connection."
   (cond (pooled-p
-         (let ((type (list database user password host port)))
+         (let ((type (list database user password host port use-ssl)))
            (or (get-from-pool type)
-               (let ((connection (open-database database user password host port)))
+               (let ((connection (open-database database user password host port use-ssl)))
                  (change-class connection 'pooled-database-connection :pool-type type)
                  connection))))
-        (t (open-database database user password host port))))
+        (t (open-database database user password host port use-ssl))))
 
 (defun connected-p (database)
   "Test whether a database connection is still connected."
   (database-open-p database))
 
-(defun connect-toplevel (database user password host &key (port 5432))
+(defun connect-toplevel (database user password host &key (port 5432) (use-ssl *default-use-ssl*))
   "Set *database* to a new connection. Use this if you only need one
 connection, or if you want a connection for debugging from the REPL."
   (when (and *database* (connected-p *database*))
     (restart-case (error "Top-level database already connected.")
       (replace () :report "Replace it with a new connection." (disconnect-toplevel))
       (leave () :report "Leave it." (return-from connect-toplevel nil))))
-  (setf *database* (connect database user password host :port port))
+  (setf *database* (connect database user password host :port port :use-ssl use-ssl))
   (values))
 
 (defgeneric disconnect (database)

@@ -36,7 +36,9 @@
            #:set-sql-reader
            #:set-sql-datetime-readers
            #:to-sql-string
-           #:*query-log*))
+           #:*query-log*
+           #:*ssl-certificate-file*
+           #:*ssl-key-file*))
 
 (defpackage :cl-postgres-error
   (:use :common-lisp :cl-postgres)

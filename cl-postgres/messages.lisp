@@ -39,6 +39,10 @@ message definitions themselves stay readable."
                #.*optimize*)
       (let ,strings ,@writers))))
 
+;; Try to enable SSL for a connection.
+(define-message ssl-request-message nil ()
+  (uint 4 80877103))
+
 ;; Sends the initial message and sets a few parameters.
 (define-message startup-message nil (user database)
   (uint 4 196608) ;; Identifies protocol 3.0

@@ -101,9 +101,42 @@ database-error condition."
             :format-control "Postgres warning: ~A~@[~%~A~]"
             :format-arguments (list (get-field #\M) (or (get-field #\D) (get-field #\H)))))))
 
-(defun authenticate (socket user password database)
+(defparameter *ssl-certificate-file* nil
+  "When set to a filename, this file will be used as client
+  certificate for SSL connections.")
+(defparameter *ssl-key-file* nil
+  "When set to a filename, this file will be used as client key for
+  SSL connections.")
+
+;; The let is used to remember that we have found the
+;; cl+ssl:make-ssl-client-stream function before.
+(let ((make-ssl-stream nil))
+  (defun initiate-ssl (socket required)
+    "Initiate SSL handshake with the Posgres server, and wrap the
+socket in an SSL stream. When require is true, an error will be raised
+when the server does not support SSL."
+    (unless make-ssl-stream
+      (unless (find-package :cl+ssl)
+        (close socket)
+        (error 'database-error :message "CL+SSL is not loaded. Load it to enable SSL."))
+      (setf make-ssl-stream (intern "MAKE-SSL-CLIENT-STREAM" :cl+ssl)))
+    (ssl-request-message socket)
+    (force-output socket)
+    (ecase (read-byte socket)
+      (#.(char-code #\S)
+       (setf socket (funcall make-ssl-stream socket :key *ssl-key-file*
+                                                    :certificate *ssl-certificate-file*)))
+      (#.(char-code #\N)
+       (when required
+         (close socket)
+         (error 'database-error :message "Server does not support SSL encryption."))))))
+
+(defun authenticate (socket user password database use-ssl)
   "Try to initiate a connection. Caller should close the socket if
 this raises a condition."
+  (declare (ignorable use-ssl))
+  (unless (eq use-ssl :no)
+    (setf socket (initiate-ssl socket (eq use-ssl :yes))))
   (startup-message socket user database)
   (force-output socket)
   (loop
@@ -125,7 +158,8 @@ this raises a condition."
      (#\K :skip)
      ;; ReadyForQuery
      (#\Z (read-uint1 socket)
-          (return)))))
+          (return))))
+  socket)
 
 (defclass field-description ()
   ((name :initarg :name :accessor field-name)
