@@ -583,7 +583,23 @@
 
     <p class="desc">Update the representation of the given DAO in the
     database with the values in the object. This is not defined for
-    tables that do not have any non-primary-key columns.</p>
+    tables that do not have any non-primary-key columns. Raises an
+    error when no row matching the DAO exists.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="save-dao"></a>
+      save-dao (dao)
+      <br/>&#8594; boolean
+    </p>
+
+    <p class="desc">Tries to insert the given DAO using <a
+    href="#insert-dao"><code>insert-dao</code></a>. If this raises a
+    unique key violation error, it tries to update it using <a
+    href="#update-dao"><code>update-dao</code></a> instead. Be aware
+    that there is a possible race condition here &#x2015; if some
+    other process deletes the row at just the right moment. Returns a
+    boolean telling you whether a new row was inserted.</p>
 
     <p class="def">
       <span>method</span>
@@ -687,6 +703,7 @@
       <li><a href="#release-savepoint">release-savepoint</a></li>
       <li><a href="#reset-table">reset-table</a></li>
       <li><a href="#rollback-savepoint">rollback-savepoint</a></li>
+      <li><a href="#save-dao">save-dao</a></li>
       <li><a href="#select-dao">select-dao</a></li>
       <li><a href="#sequence-exists-p">sequence-exists-p</a></li>
       <li><a href="#sequence-next">sequence-next</a></li>

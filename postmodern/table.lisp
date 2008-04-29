@@ -164,7 +164,8 @@ values.)"
           (let ((tmpl (sql-template `(:update ,table-name :set ,@(set-fields value-fields)
                                       :where ,(test-fields key-fields)))))
             (defmethod update-dao ((object target-class))
-              (execute (apply tmpl (slot-values object value-fields key-fields)))
+              (when (zerop (nth-value 1 (execute (apply tmpl (slot-values object value-fields key-fields)))))
+                (error "Updated row does not exist."))
               object)))
   
         (let ((tmpl (sql-template `(:delete-from ,table-name :where ,(test-fields key-fields)))))
@@ -247,6 +248,14 @@ arguments.")
                                    (function (funcall writer instance (next-field field)))))
                        (initialize-instance instance)
                        instance)))))
+
+(defun save-dao (dao)
+  "Try to insert the content of a DAO. If this leads to a unique key
+violation, update it instead."
+  (handler-case (progn (insert-dao dao) t)
+    (cl-postgres-error:unique-violation ()
+      (update-dao dao)
+      nil)))
 
 (defun query-dao% (type query)
   (let ((class (find-class type)))
