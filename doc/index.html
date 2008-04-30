@@ -400,10 +400,13 @@
     you should either not use the types it provides or think really
     hard about the way you handle time zones.</p>
 
-    <p>I was going to fix this by combining my code with stuff from <a
+    <p>Recenctly, a lot of work has been done on <a
     href="http://www.common-lisp.net/project/local-time">local-time</a>,
-    but ran out of motivation. If you really need a reliable time
-    datatype, you could consider finishing this.</p>
+    which solves the same problem as simple-date, but does understand
+    time zones. The <a
+    href="http://common-lisp.net/cgi-bin/darcsweb/darcsweb.cgi?r=local-time-local-time-1.0">1.0
+    repository</a> currently has code for integration with
+    CL-postgres, though this might not be stable yet.</p>
 
     <h3>Portability</h3>
 
