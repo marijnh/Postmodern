@@ -145,14 +145,13 @@
     </p>
 
     <p class="desc">The functional backend to <a
-    href="#with-connection"><code>with-connection</code></a> and <a
-    href="#with-connection*"><code>with-connection*</code></a>. Binds
-    <a href="#*database*"><code>*database*</code></a> to a new
-    connection as specified by <code>spec</code>, which should be a
-    list that <a href="#connect"><code>connect</code></a> can be
-    applied to, and runs the zero-argument function given as second
-    argument in the new environment. When the function returns or
-    throws, the new connection is disconnected.</p>
+    href="#with-connection"><code>with-connection</code></a>. Binds <a
+    href="#*database*"><code>*database*</code></a> to a new connection
+    as specified by <code>spec</code>, which should be a list that <a
+    href="#connect"><code>connect</code></a> can be applied to, and
+    runs the zero-argument function given as second argument in the
+    new environment. When the function returns or throws, the new
+    connection is disconnected.</p>
 
     <p class="def">
       <span>function</span>
@@ -579,7 +578,9 @@
     <p class="desc">Execute the given query (which can be either a
     string or an <a href="s-sql.html">S-SQL</a> expression) and return
     the result as DAOs of the given type. The names of the fields
-    returned by the query must match the slots of the DAO.</p>
+    returned by the query must either match slots in the DAO class, or
+    be bound through <a
+    href="#with-column-writers"><code>with-column-writers</code></a>.</p>
 
     <p class="def">
       <span>method</span>
@@ -619,8 +620,9 @@
     unique key violation error, it tries to update it using <a
     href="#update-dao"><code>update-dao</code></a> instead. Be aware
     that there is a possible race condition here &#x2015; if some
-    other process deletes the row at just the right moment. Returns a
-    boolean telling you whether a new row was inserted.</p>
+    other process deletes the row at just the right moment, the update
+    fails as well. Returns a boolean telling you whether a new row was
+    inserted.</p>
 
     <p class="def">
       <span>method</span>
@@ -648,10 +650,10 @@
     </p>
 
     <p class="desc">Given a DAO class, or the name of one, this will
-    produce an SQL query string giving the definition of the table.
-    This is just the bare simple definition, so if you need any extra
-    indices or or contraints, you'll have to write your own queries to
-    add them.</p>
+    produce an SQL query string with a definition of the table. This
+    is just the bare simple definition, so if you need any extra
+    indices or or constraints, you'll have to write your own queries
+    to add them.</p>
 
     <p class="def">
       <span>macro</span>
@@ -675,11 +677,12 @@
     default behaviour (try and store the value in the slot that
     matches the column name).</p>
 
-    <p class="desc">A common use for this is to add some non-column slots to a DAO
-    class, and use <code><a href="#query-dao">query-dao</a></code>
-    within a <code>with-column-writers</code> form to pull in some
-    extra information about the objects, and imediately store it in
-    the new instances.</p>
+    <p class="desc">A common use for this is to add some non-column
+    slots to a DAO class, and use <code><a
+    href="#query-dao">query-dao</a></code> within a
+    <code>with-column-writers</code> form to pull in extra information
+    about the objects, and imediately store it in the new
+    instances.</p>
 
     <h2><a name="index"></a>Symbol-index</h2>
 
