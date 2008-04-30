@@ -49,6 +49,17 @@
 
     <h2><a name="news"></a>News</h2>
 
+    <p class="news"><em>30-04-2008:</em> <a
+    href="http://common-lisp.net/project/postmodern/postmodern-1.12.tgz">Version
+    1.12</a>: Restores the <a
+    href="postmodern.html#save-dao"><code>save-dao</code></a> function
+    (though you should still be careful with it), adds <a
+    href="cl-postgres.html#open-database">support</a> <a
+    href="postmodern.html#*default-use-ssl*">for</a> <a
+    href="http://www.postgresql.org/docs/current/static/ssl-tcp.html">SSL</a>
+    connections, makes some error messages clearer, adds some S-SQL <a
+    href="s-sql.html#between">operators</a>, and fixes a few bugs.</p>
+
     <p class="news"><em>09-04-2008:</em> <a
     href="http://common-lisp.net/project/postmodern/postmodern-1.11.tgz">Version
     1.11</a>: Fixes bugs, most importantly one that caused <a
@@ -116,24 +127,6 @@
     the field names of a <a
     href="postmodern.html#deftable"><code>deftable</code></a>
     form.</p>
-
-    <p class="news"><em>15-05-2007:</em> <a
-    href="http://common-lisp.net/project/postmodern/postmodern-1.00.tgz">Version
-    1.00</a>: A few minor bugfixes and tweaks, most notably a fix that
-    makes Postmodern work on LispWorks. Since the stream of bug
-    reports seems to have more or less dried up, I bumped the version
-    number up to 1, and this release should not be considered a beta
-    version anymore.</p>
-
-    <p class="news"><em>16-03-2007:</em> <a
-    href="http://common-lisp.net/project/postmodern/postmodern-0.24.tgz">Version
-    .24</a>: Fixes <a
-    href="cl-postgres.html#database-connection-lost"><code>:reconnect</code></a>
-    restarts, add varargs to <a
-    href="postmodern.html#query"><code>query</code></a> and <a
-    href="postmodern.html#execute"><code>execute</code></a>. Fixes a
-    bug that caused connections to go out of sync when the server sent
-    warnings.</p>
 
     <h2><a name="dependencies"></a>Dependencies</h2>
 
