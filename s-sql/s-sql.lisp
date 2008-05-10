@@ -216,7 +216,10 @@ name.")
     "SERIAL")
   (:method ((lisp-type (eql 'serial8)) &rest args)
     (declare (ignore args))
-    "SERIAL8"))
+    "SERIAL8")
+  (:method ((lisp-type (eql 'db-null)) &rest args)
+    (declare (ignore args))
+    (error "Bad use of ~s." 'db-null)))
 
 (defun to-type-name (type)
   "Turn a Lisp type expression into an SQL typename."
@@ -580,10 +583,13 @@ to runtime. Used to create stored procedures."
 
 (def-sql-op :create-table (name (&rest columns) &rest options)
   (labels ((dissect-type (type)
-             (if (and (consp type) (eq (car type) 'or) (member 'db-null type) (= (length type) 3))
-                 (if (eq (second type) 'db-null)
-                     (values (third type) t)
-                     (values (second type) t))
+             (if (and (consp type) (eq (car type) 'or))
+                 (if (and (member 'db-null type) (= (length type) 3))
+                     (if (eq (second type) 'db-null)
+                         (values (third type) t)
+                         (values (second type) t))
+                     (error "Invalid type: ~a. 'or' types must have two alternatives, one of which is ~s."
+                            type 'db-null))
                  (values type nil)))
            (reference-action (action)
              (case action
