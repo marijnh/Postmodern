@@ -130,7 +130,7 @@ unwinds, and the SQL name of the savepoint."
     (setf (savepoint-open-p savepoint) nil)))
 
 (defun release-savepoint (savepoint)
-  "Immediately release an savepoint, commiting its results."
+  "Immediately release a savepoint, commiting its results."
   (when (savepoint-open-p savepoint)
     (let ((*database* (savepoint-connection savepoint)))
       (execute (format nil "RELEASE SAVEPOINT ~A"
