@@ -18,9 +18,10 @@
   (destructuring-bind (reader result-form) (or (cdr (assoc format *result-styles*))
                                                (error "~S is not a valid result style." format))
     (let ((base `(exec-prepared *database* (symbol-name statement-id) params ',reader)))
-      `(let ((statement-id (next-statement-id)))
+      `(let ((statement-id (next-statement-id))
+             (query ,(real-query query)))
         (,@function-form (&rest params)
-          (ensure-prepared *database* statement-id ,(real-query query))
+          (ensure-prepared *database* statement-id query)
          (,result-form ,base))))))
 
 (defmacro prepare (query &optional (format :rows))
