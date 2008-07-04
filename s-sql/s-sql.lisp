@@ -496,7 +496,7 @@ with a given arity."
 (defun expand-joins (args)
   "Helper for the select operator. Turns the part following :from into
 the proper SQL syntax for joining tables."
-  (labels ((is-join (x) (member x '(:left-join :right-join :inner-join :cross-join))))
+  (labels ((is-join (x) (member x '(:left-join :right-join :inner-join :outer-join :cross-join))))
     (when (null args)
       (error "Empty :from clause in select"))
     (when (is-join (car args))
@@ -511,7 +511,8 @@ the proper SQL syntax for joining tables."
                                 (error "Incorrect join form in select."))
                               `(" " ,(ecase join
                                         (:left-join "LEFT") (:right-join "RIGHT")
-                                        (:inner-join "INNER") (:cross-join "CROSS"))
+                                        (:inner-join "INNER") (:outer-join "FULL OUTER")
+                                        (:cross-join "CROSS"))
                                 " JOIN " ,@(sql-expand name)
                                 " ON " ,@(sql-expand clause))))
                           (t (prog1 `(,@(if first () '(", ")) ,@(sql-expand (car rest)))

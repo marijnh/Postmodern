@@ -361,12 +361,13 @@
     <code>:from</code>, followed by at least one table name and then
     any numer of join statements. Join statements start with one of
     <code>:left-join</code>, <code>:right-join</code>,
-    <code>:inner-join</code>, or <code>:outer-join</code>, then a
-    table name, then the keyword <code>:on</code>, and then a form.
-    After that an optional <code>:where</code> followed by a single
-    form may follow. And finally <code>:group-by</code> and
-    <code>:having</code> can optionally be specified. The first takes
-    any number of arguments, and the second only one. An example:</p>
+    <code>:inner-join</code>, <code>:outer-join</code> or
+    <code>:cross-join</code>, then a table name or subquery, then the
+    keyword <code>:on</code>, and then a form. After that an optional
+    <code>:where</code> followed by a single form may follow. And
+    finally <code>:group-by</code> and <code>:having</code> can
+    optionally be specified. The first takes any number of arguments,
+    and the second only one. An example:</p>
 
     <pre class="code desc">
 (:select (:+ 'field-1 100) 'field-5
