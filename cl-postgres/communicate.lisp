@@ -6,9 +6,9 @@
 ;; some macros that use them create names this way.
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun integer-reader-name (bytes signed)
-    (intern (format nil "~a~a~a~a" #:read- (if signed "" "U") #:int bytes)))
+    (intern (format nil "~a~a~a~a" '#:read- (if signed "" "U") '#:int bytes)))
   (defun integer-writer-name (bytes signed)
-    (intern (format nil "~a~a~a~a" #:write- (if signed "" "U") #:int bytes))))
+    (intern (format nil "~a~a~a~a" '#:write- (if signed "" "U") '#:int bytes))))
 
 (defmacro integer-reader (bytes)
   "Create a function to read integers from a binary stream."
