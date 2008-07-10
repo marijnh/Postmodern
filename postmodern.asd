@@ -23,7 +23,9 @@
                          (:file "prepare" :depends-on ("query"))
                          (:file "util" :depends-on ("query"))
                          #+postmodern-use-mop
-                         (:file "table" :depends-on ("util"))))))
+                         (:file "table" :depends-on ("util"))
+                         (:file "deftable" :depends-on
+                                ("query" #+postmodern-use-mop "table"))))))
 
 (defsystem :postmodern-tests
   :depends-on (:postmodern :fiveam)

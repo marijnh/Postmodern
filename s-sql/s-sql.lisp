@@ -649,9 +649,9 @@ to runtime. Used to create stored procedures."
 
 (defun expand-create-index (name args)
   (split-on-keywords ((on) (using ?) (fields *) (where ?)) args
-    `(,@(sql-expand name) " ON " ,@(sql-expand (first on))
+    `(,@(sql-expand name) " ON " ,(to-sql-name (first on))
       ,@(when using `(" USING " ,(symbol-name (first using))))
-      " (" ,@(sql-expand-list fields) ")"
+      " (" ,@(sql-expand-names fields) ")"
       ,@(when where `(" WHERE " ,@(sql-expand (first where)))))))
 
 (def-sql-op :create-index (name &rest args)

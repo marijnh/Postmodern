@@ -41,6 +41,7 @@
       <li><a href="#querying">Querying</a></li>
       <li><a href="#inspect">Inspecting the database</a></li>
       <li><a href="#daos">Database access objects</a></li>
+      <li><a href="#tabledef">Table definition and creation</a></li>
       <li><a href="#index">Symbol-index</a></li>
     </ol>
 
@@ -684,10 +685,106 @@
     about the objects, and imediately store it in the new
     instances.</p>
 
-    <h2><a name="index"></a>Symbol-index</h2>
+    <h2 id="tabledef">Table definition and creation</h2>
+
+    <p>It can be useful to have the SQL statements needed to build an
+    application's tables available from the code, to do things like
+    automatically initialising a database. The following macro and
+    functions allow you to group sets of SQL statements under symbols,
+    with some shortcuts for common elements in table definitions.</p>
+
+    <p class="def" id="deftable">
+      <span>macro</span>
+      deftable (name &amp;body definition)
+    </p>
+
+    <p class="desc">Define a table. name can be either a symbol or a
+    <code>(symbol string)</code> list. In the first case, the table
+    name is derived from the symbol by <a
+    href="s-sql.html">S-SQL</a>'s rules, in the second case, the name
+    is given explicitly. The body of definitions can contain anything
+    that evaluates to a string, as well as S-SQL expressions. In this
+    body, the variables <a
+    href="#*table-name*"><code>*table-name*</code></a> and <a
+    href="#*table-name*"><code>*table-symbol*</code></a> are bound to
+    the relevant values. Note that the definitions are evaluated in
+    order, so you'll generally want to first create your table and
+    then start defining indices on it.</p>
+
+    <p class="def" id="create-table">
+      <span>function</span>
+      create-table (symbol)
+    </p>
+
+    <p class="desc">Creates the table identified by
+    <code>symbol</code> by <a href="#execute">executing</a> the result
+    of all the forms in its definition.</p>
+
+    <p class="def" id="create-all-tables">
+      <span>function</span>
+      create-all-tables ()
+    </p>
+
+    <p class="desc">Creates all defined tables.</p>
+
+    <p class="def" id="create-package-tables">
+      <span>function</span>
+      create-package-tables (package)
+    </p>
+
+    <p class="desc">Creates all tables whose identifying symbol is
+    interned in the given package.</p>
+
+    <p class="def">
+      <a name="*table-name*"></a>
+      <span>variables</span>
+      *table-name*, *table-symbol*
+    </p>
+
+    <p class="desc">These are bound to the relevant symbol and name
+    while the clauses of a table definition are evaluated. Can be used
+    to define shorthands like the ones below.</p>
+
+    <p class="def">
+      <a name="!dao-def"></a>
+      <span>function</span>
+      !dao-def ()
+    </p>
+
+    <p class="desc">Should only be used inside <a
+    href="#deftable"><code>deftable</code></a> forms. Adds the result
+    of calling <a
+    href="#dao-table-definition"><code>dao-table-definition</code></a>
+    on <a href="#*table-symbol*"><code>*table-symbol*</code></a> to
+    the definition.</p>
+
+    <p class="def">
+      <a name="!index"></a>
+      <span>function</span>
+      !index (&amp;rest columns), !unique-index (&amp;rest columns)
+    </p>
+
+    <p class="desc">Define an index on the table being defined. The
+    columns can be given as symbols or strings.</p>
+
+    <p class="def">
+      <a name="!foreign"></a>
+      <span>function</span>
+      !foreign (target-table columns &amp;optional target-columns)
+    </p>
+
+    <p class="desc">Add a foreign key to the table being defined.
+    <code>target-table</code> is the table the index refers to,
+    <code>columns</code> is a list of column names or single name in
+    <em>this</em> table, and, if the columns have different names in
+    the table referred to, <code>target-columns</code> should be
+    another list of names or single name for the target table.</p>
+
+    <h2 id="index">Symbol-index</h2>
 
     <ul class="symbol-index">
       <li><a href="#abort-transaction">abort-transaction</a></li>
+      <li><a href="#deftable">deftable</a></li>
       <li><a href="#call-with-connection">call-with-connection</a></li>
       <li><a href="#clear-connection-pool">clear-connection-pool</a></li>
       <li><a href="#clear-template">clear-template</a></li>
@@ -695,7 +792,11 @@
       <li><a href="#connect">connect</a></li>
       <li><a href="#connect-toplevel">connect-toplevel</a></li>
       <li><a href="#connected-p">connected-p</a></li>
+      <li><a href="#create-all-tables">create-all-tables</a></li>
+      <li><a href="#create-package-tables">create-package-tables</a></li>
+      <li><a href="#create-table">create-table</a></li>
       <li><a href="#dao-class">dao-class</a></li>
+      <li><a href="#!dao-def">!dao-def</a></li>
       <li><a href="#dao-exists-p">dao-exists-p</a></li>
       <li><a href="#dao-table-definition">dao-table-definition</a></li>
       <li><a href="#dao-table-name">dao-table-name</a></li>
@@ -715,7 +816,9 @@
       <li><a href="#disconnect-toplevel">disconnect-toplevel</a></li>
       <li><a href="#doquery">doquery</a></li>
       <li><a href="#execute">execute</a></li>
+      <li><a href="#!foreign">!foreign</a></li>
       <li><a href="#get-dao">get-dao</a></li>
+      <li><a href="#!index">!index</a></li>
       <li><a href="#insert-dao">insert-dao</a></li>
       <li><a href="#list-sequences">list-sequences</a></li>
       <li><a href="#list-tables">list-tables</a></li>
@@ -734,6 +837,9 @@
       <li><a href="#sequence-next">sequence-next</a></li>
       <li><a href="#table-description">table-description</a></li>
       <li><a href="#table-exists-p">table-exists-p</a></li>
+      <li><a href="#*table-name*">*table-name*</a></li>
+      <li><a href="#*table-name*">*table-symbol*</a></li>
+      <li><a href="#!index">!unique-index</a></li>
       <li><a href="#update-dao">update-dao</a></li>
       <li><a href="#view-exists-p">view-exists-p</a></li>
       <li><a href="#with-column-writers">with-column-writers</a></li>

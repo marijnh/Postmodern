@@ -9,7 +9,8 @@
    #:dao-class #:dao-exists-p #:query-dao #:select-dao #:get-dao
    #:with-column-writers
    #:insert-dao #:update-dao #:save-dao #:delete-dao
-   #:dao-table-name #:dao-table-definition)
+   #:dao-table-name #:dao-table-definition
+   #:!dao-def)
    
   (:export 
    #:connect #:disconnect #:reconnect
@@ -25,6 +26,10 @@
    #:with-transaction #:commit-transaction #:abort-transaction
    #:with-savepoint #:rollback-savepoint #:release-savepoint
    #:db-null #:coalesce
+
+   #:deftable #:*table-name* #:*table-symbol*
+   #:create-table #:create-all-tables #:create-package-tables
+   #:!index #:!unique-index #:!foreign
 
    ;; Reduced S-SQL interface
    #:sql #:sql-compile
