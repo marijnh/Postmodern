@@ -118,7 +118,7 @@ when the server does not support SSL."
     (unless make-ssl-stream
       (unless (find-package :cl+ssl)
         (error 'database-error :message "CL+SSL is not loaded. Load it to enable SSL."))
-      (setf make-ssl-stream (intern "MAKE-SSL-CLIENT-STREAM" :cl+ssl)))
+      (setf make-ssl-stream (intern (string '#:make-ssl-client-stream) :cl+ssl)))
     (ssl-request-message socket)
     (force-output socket)
     (ecase (read-byte socket)
