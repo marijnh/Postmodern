@@ -25,7 +25,8 @@ and *table-symbol* are bound to the relevant values."
          (setf (gethash ',symbol *tables*)
                (lambda ()
                  (let ((*table-name* ,name) (*table-symbol* ',symbol))
-                   (mapc 'execute (list ,@(mapcar #'check-s-sql definitions))))))
+                   (dolist (stat (list ,@(mapcar #'check-s-sql definitions)))
+                     (execute stat)))))
          (values)))))
 
 (defun create-table (name)
