@@ -24,20 +24,24 @@
                   (declare (type stream socket)
                            #.*optimize*)
                   ,(if (= bytes 1)
-                       `(let ((result (the fixnum (read-byte socket))))
+                       `(let ((result (the (unsigned-byte 8) (read-byte socket))))
                           (declare (type (unsigned-byte 8) result))
                           ,(return-form signed))
                        `(let ((result 0))
                           (declare (type (unsigned-byte ,bits) result))
                           ,@(loop :for byte :from (1- bytes) :downto 0
                                    :collect `(setf (ldb (byte 8 ,(* 8 byte)) result)
-                                                   (the fixnum (read-byte socket))))
+                                                   (the (unsigned-byte 8) (read-byte socket))))
                           ,(return-form signed))))))
       `(progn
 ;; This causes weird errors on SBCL in some circumstances. Disabled for now.
 ;;         (declaim (inline ,(integer-reader-name bytes t)
 ;;                          ,(integer-reader-name bytes nil)))
+         (declaim (ftype (function (t) (signed-byte ,bits))
+                         ,(integer-reader-name bytes t)))
          ,(generate-reader t)
+         (declaim (ftype (function (t) (unsigned-byte ,bits))
+                         ,(integer-reader-name bytes nil)))
          ,(generate-reader nil)))))
 
 (defmacro integer-writer (bytes)
@@ -94,6 +98,9 @@ support is enabled.)."
   (enc-write-string string socket)
   (write-uint1 socket 0))
 
+(declaim (ftype (function (t unsigned-byte)
+                          (simple-array (unsigned-byte 8) (*)))
+                read-bytes))
 (defun read-bytes (socket length)
   "Read a byte array of the given length from a stream."
   (declare (type stream socket)
@@ -103,6 +110,7 @@ support is enabled.)."
     (read-sequence result socket)
     result))
 
+(declaim (ftype (function (t) string) read-str))
 (defun read-str (socket)
   "Read a null-terminated string from a stream. Takes care of encoding
 when UTF-8 support is enabled."

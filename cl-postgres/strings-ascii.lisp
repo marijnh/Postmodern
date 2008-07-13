@@ -2,8 +2,14 @@
 
 (defparameter *client-encoding* "SQL_ASCII")
 
-(setf (fdefinition 'enc-byte-length) (fdefinition 'length))
+(declaim (inline enc-byte-length))
+(defun enc-byte-length (sequence)
+  (length sequence))
 
+(declaim (ftype (function (t &key (:null-terminated t)
+                                  (:byte-length unsigned-byte))
+                          string)
+                enc-read-string))
 (defun enc-read-string (stream &key null-terminated byte-length)
   "Read an ascii-string from a byte stream, until either a null byte
 is reached or the given amount of bytes have been read."
@@ -23,9 +29,11 @@ is reached or the given amount of bytes have been read."
          (vector-push-extend (code-char next-char) string)))
     string))
 
+(declaim (ftype (function (string) (simple-array (unsigned-byte 8) (*)))
+                enc-string-bytes))
 (defun enc-string-bytes (string)
   "Convert an ascii string to an array of octets."
-  (map '(vector (unsigned-byte 8) *) 'char-code string))
+  (map '(simple-array (unsigned-byte 8) (*)) 'char-code string))
 
 (defun enc-write-string (string stream)
   "Write an ascii string to a stream."
