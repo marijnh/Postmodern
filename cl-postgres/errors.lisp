@@ -3,18 +3,16 @@
 (defparameter *current-query* nil)
 (defparameter *query-log* nil)
 
-(defmacro with-query (query &body body)
-  (let ((q-name (gensym))
-        (time-name (gensym)))
-    `(let* ((,q-name ,query)
-            (*current-query* ,q-name)
-            (,time-name (when *query-log* (get-internal-real-time))))
-      (multiple-value-prog1 (progn ,@body)
-        (when *query-log*
-          (format *query-log* "CL-POSTGRES query (~ams): ~a~%"
-                  (round (/ (* 1000 (- (get-internal-real-time) ,time-name))
-                            internal-time-units-per-second))
-                  ,q-name))))))
+(defmacro with-query ((query) &body body)
+  (let ((time-name (gensym)))
+    `(let ((*current-query* ,query)
+           (,time-name (if *query-log* (get-internal-real-time) 0)))
+       (multiple-value-prog1 (progn ,@body)
+         (when *query-log*
+           (format *query-log* "CL-POSTGRES query (~ams): ~a~%"
+                   (round (/ (* 1000 (- (get-internal-real-time) ,time-name))
+                             internal-time-units-per-second))
+                   *current-query*))))))
 
 (define-condition database-error (error)
   ((error-code :initarg :code :initform nil :reader database-error-code

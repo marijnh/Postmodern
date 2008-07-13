@@ -293,7 +293,7 @@ results."
            (type string query)
            #.*optimize*)
   (with-syncing
-    (with-query query
+    (with-query (query)
       (let ((row-description nil))
         (simple-parse-message socket query)
         (simple-describe-message socket)
@@ -332,7 +332,7 @@ results."
            (type string name query)
            #.*optimize*)
   (with-syncing
-    (with-query query
+    (with-query (query)
       (parse-message socket name query)
       (flush-message socket)
       (force-output socket)
