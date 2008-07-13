@@ -16,7 +16,7 @@
                                   (:byte-length unsigned-byte))
                           string)
                 enc-read-string))
-(defun enc-read-string (input &key null-terminated byte-length)
+(defun enc-read-string (input &key null-terminated (byte-length -1))
   (trivial-utf-8:read-utf-8-string input :null-terminated null-terminated
                                    :byte-length byte-length))
 
