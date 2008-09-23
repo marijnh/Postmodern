@@ -677,3 +677,9 @@ to runtime. Used to create stored procedures."
 
 (def-sql-op :drop-view (name)
   `("DROP VIEW " ,@(sql-expand name)))
+
+(def-sql-op :create-enum (name members)
+  `("CREATE TYPE " ,@(sql-expand name) " AS ENUM (" ,@(sql-expand-list (mapcar #'cl-postgres:to-sql-string members)) ") "))
+
+(def-sql-op :drop-enum (name)
+  `("DROP TYPE " ,@(sql-expand name)))
