@@ -582,17 +582,20 @@ to runtime. Used to create stored procedures."
 
 ;; Data definition
 
+(defun dissect-type (type)
+  ;; todo: better documentation
+  "Return the type and whether it may be NULL."
+  (if (and (consp type) (eq (car type) 'or))
+      (if (and (member 'db-null type) (= (length type) 3))
+	  (if (eq (second type) 'db-null)
+	      (values (third type) t)
+	      (values (second type) t))
+	  (error "Invalid type: ~a. 'or' types must have two alternatives, one of which is ~s."
+		 type 'db-null))
+      (values type nil)))
+
 (def-sql-op :create-table (name (&rest columns) &rest options)
-  (labels ((dissect-type (type)
-             (if (and (consp type) (eq (car type) 'or))
-                 (if (and (member 'db-null type) (= (length type) 3))
-                     (if (eq (second type) 'db-null)
-                         (values (third type) t)
-                         (values (second type) t))
-                     (error "Invalid type: ~a. 'or' types must have two alternatives, one of which is ~s."
-                            type 'db-null))
-                 (values type nil)))
-           (reference-action (action)
+  (labels ((reference-action (action)
              (case action
                (:restrict "RESTRICT")
                (:set-null "SET NULL")
@@ -683,3 +686,20 @@ to runtime. Used to create stored procedures."
 
 (def-sql-op :drop-enum (name)
   `("DROP TYPE " ,@(sql-expand name)))
+
+;;; http://www.postgresql.org/docs/8.3/interactive/sql-createdomain.html
+(def-sql-op :create-domain (name &key type default constraint-name check)
+  (multiple-value-bind (type may-be-null)
+      (dissect-type type)
+    `("CREATE DOMAIN " ,@(sql-expand name) " AS " ,(to-type-name type)
+			 ,@(when default
+				 (list "DEFAULT " (sql-compile default)))
+			 ,@(when constraint-name
+				 (list " CONSTRAINT " (sql-expand constraint-name)))
+			 ,@(unless may-be-null
+				   (list " NOT NULL "))
+			 ,@(when check
+				 (list " CHECK" (sql-compile check))))))
+
+(def-sql-op :drop-domain (name)
+  `("DROP DOMAIN " ,@(sql-expand name)))
