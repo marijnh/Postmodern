@@ -678,6 +678,10 @@ to runtime. Used to create stored procedures."
 (def-sql-op :drop-sequence (name)
   `("DROP SEQUENCE " ,@(sql-expand name)))
 
+(def-sql-op :create-view (name query)
+  ;; does not allow to specify the columns of the view yet
+  `("CREATE VIEW " ,@(sql-expand name) " AS " ,(sql-compile query)))
+
 (def-sql-op :drop-view (name)
   `("DROP VIEW " ,@(sql-expand name)))
 
