@@ -709,16 +709,21 @@ to runtime. Used to create stored procedures."
   `("DROP DOMAIN " ,@(sql-expand name)))
 
 ;http://www.postgresql.org/docs/8.3/static/sql-createrule.html
-(def-sql-op :create-rule (name &key on to where instead do)
-  `(,@(check-type on (member :select :insert :update :delete))
-      "CREATE RULE " 
-      ,@(sql-expand name) 
-      " AS ON " ,(format nil "~a" on) " TO " ,@(sql-expand to) 
-      ,@(when where (list " WHERE " (sql-compile where)))
-      " DO " ,@(when instead (list "INSTEAD "))
-      ,(if (or (null do) (eq do :nothing))
-	   " NOTHING " 
-	   (sql-compile do))))
+(def-sql-op :create-rule (name &rest rest)
+  (split-on-keywords ((on) (to) (where ?) (instead ? -) (do ? *)) 
+      rest
+    `(,@(check-type (car on) (member :select :insert :update :delete))
+	"CREATE RULE " 
+	,@(sql-expand name) 
+	" AS ON " ,(format nil "~a" (car on)) " TO " ,@(sql-expand (car to)) 
+	,@(when where (list " WHERE " (sql-compile (car where))))
+	" DO " ,@(when instead (list "INSTEAD "))
+	,(cond ((or (null do) (eq do :nothing))
+	       " NOTHING ")
+	      ((cdr do) 
+	       (car (reduce-strings (list " (" (implode "; " (mapcar #'sql-compile do)) ") "))))
+	      (t (sql-compile (car do)))))))
+
 
 (def-sql-op :drop-rule (name)
   `("DROP RULE " ,@(sql-expand name)))
