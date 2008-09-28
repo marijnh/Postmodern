@@ -78,8 +78,8 @@ errors."
 are divided by keywords, which are interned with the name of the
 non-keyword symbols in words, and bound to these symbols. After the
 naming symbols, a ? can be used to indicate this argument group is
-optional, and an * to indicate it can consist of more than one
-element."
+optional, an * to indicate it can consist of more than one element,
+and a - to indicate it does not take any elements."
   (let ((alist (gensym)))
     `(let* ((,alist (split-on-keywords% ',words ,form))
             ,@(mapcar (lambda (word)
@@ -317,7 +317,7 @@ to strings \(which will form an SQL query when concatenated)."
     (if (= 1 (length list))
         (car list)
         `(strcat (list ,@list)))))
-  
+
 (defun sql-compile (form)
   (let ((*expand-runtime* t))
     (strcat (sql-expand form))))
@@ -632,7 +632,7 @@ to runtime. Used to create stored procedures."
                (:check `("CHECK " ,@(sql-expand (car args))))
                (:primary-key `("PRIMARY KEY (" ,@(sql-expand-names args) ")"))
                (:unique `("UNIQUE (" ,@(sql-expand-names args) ")"))
-               (:foreign-key 
+               (:foreign-key
                 (destructuring-bind (columns target &optional (on-delete :restrict) (on-update :restrict)) args
                   `("FOREIGN KEY (" ,@(sql-expand-names columns) ")"
                     ,@(build-foreign target on-delete on-update)))))))
@@ -680,7 +680,7 @@ to runtime. Used to create stored procedures."
 
 (def-sql-op :create-view (name query)
   ;; does not allow to specify the columns of the view yet
-  `("CREATE VIEW " ,(to-sql-name name) " AS " ,(sql-compile query)))
+  `("CREATE VIEW " ,(to-sql-name name) " AS " ,@(sql-expand query)))
 
 (def-sql-op :drop-view (name)
   `("DROP VIEW " ,@(sql-expand name)))
@@ -692,38 +692,29 @@ to runtime. Used to create stored procedures."
   `("DROP TYPE " ,@(sql-expand name)))
 
 ;;; http://www.postgresql.org/docs/8.3/interactive/sql-createdomain.html
-(def-sql-op :create-domain (name &key type default constraint-name check)
-  (multiple-value-bind (type may-be-null)
-      (dissect-type type)
-    `("CREATE DOMAIN " ,@(sql-expand name) " AS " ,(to-type-name type)
-			 ,@(when default
-				 (list "DEFAULT " (sql-compile default)))
-			 ,@(when constraint-name
-				 (list " CONSTRAINT " (sql-expand constraint-name)))
-			 ,@(unless may-be-null
-				   (list " NOT NULL "))
-			 ,@(when check
-				 (list " CHECK" (sql-compile check))))))
+(def-sql-op :create-domain (name &rest args)
+  (split-on-keywords ((type) (default ?) (constraint-name ?) (check ?)) args
+    (multiple-value-bind (type may-be-null) (dissect-type type)
+      `("CREATE DOMAIN " ,@(sql-expand name) " AS " ,(to-type-name type)
+			 ,@(when default `(" DEFAULT " ,@(sql-expand (car default))))
+			 ,@(when constraint-name `(" CONSTRAINT " ,@(sql-expand (car constraint-name))))
+			 ,@(unless may-be-null '(" NOT NULL"))
+			 ,@(when check `(" CHECK" ,@(sql-expand (car check))))))))
 
 (def-sql-op :drop-domain (name)
   `("DROP DOMAIN " ,@(sql-expand name)))
 
 ;http://www.postgresql.org/docs/8.3/static/sql-createrule.html
 (def-sql-op :create-rule (name &rest rest)
-  (split-on-keywords ((on) (to) (where ?) (instead ? -) (do ? *)) 
-      rest
-    `(,@(check-type (car on) (member :select :insert :update :delete))
-	"CREATE RULE " 
-	,@(sql-expand name) 
-	" AS ON " ,(format nil "~a" (car on)) " TO " ,@(sql-expand (car to)) 
-	,@(when where (list " WHERE " (sql-compile (car where))))
-	" DO " ,@(when instead (list "INSTEAD "))
-	,(cond ((or (null do) (eq do :nothing))
-	       " NOTHING ")
-	      ((cdr do) 
-	       (car (reduce-strings (list " (" (implode "; " (mapcar #'sql-compile do)) ") "))))
-	      (t (sql-compile (car do)))))))
-
+  (split-on-keywords ((on) (to) (where ?) (instead ? -) (do ? *)) rest
+    (check-type (car on) (member :select :insert :update :delete))
+    `("CREATE RULE " ,@(sql-expand name)
+      " AS ON " ,(symbol-name (car on)) " TO " ,@(sql-expand (car to))
+      ,@(when where `(" WHERE " ,@(sql-expand (car where))))
+      " DO" ,@(when instead '(" INSTEAD"))
+      ,@(if (or (null do) (eq do :nothing))
+            '(" NOTHING")
+            `("(" (sql-expand-list do "; ") ")")))))
 
 (def-sql-op :drop-rule (name)
   `("DROP RULE " ,@(sql-expand name)))
