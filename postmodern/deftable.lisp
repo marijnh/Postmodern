@@ -31,9 +31,10 @@ and *table-symbol* are bound to the relevant values."
 
 (defun create-table (name)
   "Create a defined table."
-  (funcall (or (gethash name *tables*)
-               (error "No table '~a' defined." name)))
-  (values))
+  (with-transaction ()
+    (funcall (or (gethash name *tables*)
+		 (error "No table '~a' defined." name)))
+    (values)))
 
 (defun create-all-tables ()
   "Create all defined tables."
