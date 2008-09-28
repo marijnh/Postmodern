@@ -714,7 +714,7 @@ to runtime. Used to create stored procedures."
       " DO" ,@(when instead '(" INSTEAD"))
       ,@(if (or (null do) (eq do :nothing))
             '(" NOTHING")
-            `("(" (sql-expand-list do "; ") ")")))))
+            `("(" ,@(sql-expand-list do "; ") ")")))))
 
 (def-sql-op :drop-rule (name)
   `("DROP RULE " ,@(sql-expand name)))
