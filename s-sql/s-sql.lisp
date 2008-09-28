@@ -694,7 +694,7 @@ to runtime. Used to create stored procedures."
 ;;; http://www.postgresql.org/docs/8.3/interactive/sql-createdomain.html
 (def-sql-op :create-domain (name &rest args)
   (split-on-keywords ((type) (default ?) (constraint-name ?) (check ?)) args
-    (multiple-value-bind (type may-be-null) (dissect-type type)
+    (multiple-value-bind (type may-be-null) (dissect-type (car type))
       `("CREATE DOMAIN " ,@(sql-expand name) " AS " ,(to-type-name type)
 			 ,@(when default `(" DEFAULT " ,@(sql-expand (car default))))
 			 ,@(when constraint-name `(" CONSTRAINT " ,@(sql-expand (car constraint-name))))
