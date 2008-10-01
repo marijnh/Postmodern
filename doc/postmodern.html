@@ -258,9 +258,14 @@
       doquery (query (&amp;rest names) &amp;body body)
     </p>
 
-    <p class="desc">Execute the given query, iterating over the rows
-    in the result. The body will be executed with the values in the
-    row bound to the symbols given in <code>names</code>.</p>
+    <p class="desc">Execute the given query (a string or a list
+    starting with a keyword), iterating over the rows in the result.
+    The body will be executed with the values in the row bound to the
+    symbols given in <code>names</code>. For example:</p>
+
+    <pre class="code">
+(doquery (:select 'name 'score :from 'scores) (n s)
+  (incf (gethash n *scores*) s))</pre>
 
     <p class="def">
       <span>macro</span>
