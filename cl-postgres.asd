@@ -5,8 +5,8 @@
 ;; Change this to enable/disable unicode manually (mind that it won't
 ;; work unless your implementation supports it).
 (defparameter *unicode*
-  #+(or sb-unicode unicode ics) t
-  #-(or sb-unicode unicode ics) nil)
+  #+(or sb-unicode unicode ics openmcl-unicode-strings) t
+  #-(or sb-unicode unicode ics openmcl-unicode-strings) nil)
 (defparameter *string-file* (if *unicode* "strings-utf-8" "strings-ascii"))
 
 (defsystem :cl-postgres
