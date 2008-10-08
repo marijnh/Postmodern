@@ -421,6 +421,12 @@ with a given arity."
 (def-sql-op :desc (arg)
   `(,@(sql-expand arg) " DESC"))
 
+(def-sql-op :nulls-first (arg)
+  `(,@(sql-expand arg) " NULLS FIRST"))
+
+(def-sql-op :nulls-last (arg)
+  `(,@(sql-expand arg) " NULLS LAST"))
+
 (def-sql-op :as (form name &rest fields)
   `(,@(sql-expand form) " AS " ,@(sql-expand name)
     ,@(when fields
