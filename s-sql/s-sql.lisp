@@ -600,23 +600,34 @@ to runtime. Used to create stored procedures."
 		 type 'db-null))
       (values type nil)))
 
+(defun %build-foreign-reference (target on-delete on-update)
+  (flet ((reference-action (action)
+           (case action
+             (:restrict "RESTRICT")
+             (:set-null "SET NULL")
+             (:set-default "SET DEFAULT")
+             (:cascade "CASCADE")
+             (:no-action "NO ACTION")
+             (t (error "Unsupported action for foreign key: ~A" action)))))
+    `(" REFERENCES "
+      ,@(if (consp target)
+            `(,(to-sql-name (car target)) "(" ,@(sql-expand-names (cdr target)) ")")
+            `(,(to-sql-name target)))
+      " ON DELETE " ,(reference-action on-delete)
+      " ON UPDATE " ,(reference-action on-update))))
+
+(defun expand-table-constraint (option args)
+  (case option
+    (:check `("CHECK " ,@(sql-expand (car args))))
+    (:primary-key `("PRIMARY KEY (" ,@(sql-expand-names args) ")"))
+    (:unique `("UNIQUE (" ,@(sql-expand-names args) ")"))
+    (:foreign-key
+     (destructuring-bind (columns target &optional (on-delete :restrict) (on-update :restrict)) args
+       `("FOREIGN KEY (" ,@(sql-expand-names columns) ")"
+                         ,@(%build-foreign-reference target on-delete on-update))))))
+
 (def-sql-op :create-table (name (&rest columns) &rest options)
-  (labels ((reference-action (action)
-             (case action
-               (:restrict "RESTRICT")
-               (:set-null "SET NULL")
-               (:set-default "SET DEFAULT")
-               (:cascade "CASCADE")
-               (:no-action "NO ACTION")
-               (t (error "Unsupported action for foreign key: ~A" action))))
-           (build-foreign (target on-delete on-update)
-             `(" REFERENCES "
-               ,@(if (consp target)
-                     `(,(to-sql-name (car target)) "(" ,@(sql-expand-names (cdr target)) ")")
-                     `(,(to-sql-name target)))
-               " ON DELETE " ,(reference-action on-delete)
-               " ON UPDATE " ,(reference-action on-update)))
-           (expand-column (column-name args)
+  (labels ((expand-column (column-name args)
              `(,(to-sql-name column-name) " "
                ,@(let ((type (or (getf args :type)
                                  (error "No type specified for column ~A." column-name))))
@@ -630,18 +641,9 @@ to runtime. Used to create stored procedures."
                                  (:check `(" CHECK " ,@(sql-expand value)))
                                  (:references
                                   (destructuring-bind (target &optional (on-delete :restrict) (on-update :restrict)) value
-                                    (build-foreign target on-delete on-update)))
+                                    (%build-foreign-reference target on-delete on-update)))
                                  (:type ())
-                                 (t (error "Unknown column option: ~A." option))))))
-           (expand-option (option args)
-             (case option
-               (:check `("CHECK " ,@(sql-expand (car args))))
-               (:primary-key `("PRIMARY KEY (" ,@(sql-expand-names args) ")"))
-               (:unique `("UNIQUE (" ,@(sql-expand-names args) ")"))
-               (:foreign-key
-                (destructuring-bind (columns target &optional (on-delete :restrict) (on-update :restrict)) args
-                  `("FOREIGN KEY (" ,@(sql-expand-names columns) ")"
-                    ,@(build-foreign target on-delete on-update)))))))
+                                 (t (error "Unknown column option: ~A." option)))))))
     (when (null columns)
       (error "No columns defined for table ~A." name))
     `("CREATE TABLE " ,(to-sql-name name) " ("
@@ -650,7 +652,7 @@ to runtime. Used to create stored procedures."
               :if rest :collect ", ")
       ,@(loop :for ((option . args) . rest) :on options
               :collect ", "
-              :append (expand-option option args))
+              :append (expand-table-constraint option args))
       ")")))
 
 (def-sql-op :drop-table (name)
