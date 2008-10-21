@@ -656,6 +656,24 @@ to runtime. Used to create stored procedures."
               :append (expand-table-constraint option args))
       ")")))
 
+(def-sql-op :alter-table (name action &rest args)
+  (flet
+      ((drop-action (action)
+         (case action
+           (:restrict "RESTRICT")
+           (:cascade "CASCADE")
+           (t (error "Unknown DROP action ~A." action)))))
+    `("ALTER TABLE "
+      ,(to-sql-name name) " "
+      ,@ (case action
+           (:add (cons "ADD " (expand-table-constraint (first args) (rest args))))
+           (:drop-constraint (list "DROP CONSTRAINT "
+                                   (to-sql-name (first args))
+                                   (if (rest args)
+                                       (drop-action (second args))
+                                       "")))
+           (t (error "Unknown ALTER TABLE action ~A" action))))))
+
 (def-sql-op :drop-table (name)
   `("DROP TABLE " ,@(sql-expand name)))
 

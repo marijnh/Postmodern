@@ -479,9 +479,10 @@
       <code>:no-action</code>.</dd>
     </dl></div>
 
-    <p class="desc">After the list of columns, zero or more extra
-    options (table constraints) can be specified. These are lists
-    starting with one of the following keywords:</p>
+    <p class="desc"><a name="table-constraints"></a>After the list of
+    columns, zero or more extra options (table constraints) can be
+    specified. These are lists starting with one of the following
+    keywords:</p>
 
     <div class="desc"><dl>
       <dt><code>:check</code></dt>
@@ -529,6 +530,24 @@
    (identifying-color :type (string 20) :unique t)
   (:foreign-key (identifying-color) (colors name))
   (:constraint enemy-age-check :check (:> 'age 12)))</pre>
+
+    <p class="def"><span>sql-op</apen><a name="alter-table"></a>:alter-table (name action &amp;rest args)</p>
+
+    <p class="desc">Alters named table.  Currently, only adding and
+    dropping constraints are supported.  Meaning of <code>args</code>
+    depends on <code>action</code>:</p>
+
+    <div class="desc"><dl>
+        <dt><code>:add</code></dt><dd>Adds constraint to
+        table.  <code>args</code> should be a constraint in the same
+        form as
+        for <a href="#table-constraints"><code>:create-table</code></a>.</dd>
+        <dt><code>:drop-constraint</code><dd>Drops constraint.  First
+        of <code>args</code> should name a constraint to be dropped;
+        second, optional argument specifies behaviour regarding
+        objects dependent on the constraint and it may
+        equal <code>:cascade</code> or <code>:restrict</code>.</dd>
+    </dl></div>
 
     <p class="def"><span>sql-op</span> <a name="drop-table"></a>:drop-table (name)</p>
 
