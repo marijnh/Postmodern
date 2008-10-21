@@ -618,6 +618,7 @@ to runtime. Used to create stored procedures."
 
 (defun expand-table-constraint (option args)
   (case option
+    (:constraint `("CONSTRAINT " ,(to-sql-name (car args)) " " ,@(expand-table-constraint (cadr args) (cddr args))))
     (:check `("CHECK " ,@(sql-expand (car args))))
     (:primary-key `("PRIMARY KEY (" ,@(sql-expand-names args) ")"))
     (:unique `("UNIQUE (" ,@(sql-expand-names args) ")"))

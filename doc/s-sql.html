@@ -480,8 +480,8 @@
     </dl></div>
 
     <p class="desc">After the list of columns, zero or more extra
-    options can be specified. These are lists starting with one of the
-    following keywords:</p>
+    options (table constraints) can be specified. These are lists
+    starting with one of the following keywords:</p>
 
     <div class="desc"><dl>
       <dt><code>:check</code></dt>
@@ -504,6 +504,9 @@
       columns.</dd>
     </dl></div>
 
+    <p class="desc">Every list can start with <code>:constraint
+    name</code> to create a specifically named constraint.</p>
+
     <p class="desc">Note that, unlike most other operators,
     <code>:create-table</code> expects most of its arguments to be
     <em>unquoted</em> symbols. The exception to this is the value of
@@ -520,11 +523,12 @@
     <pre class="code desc">
 (:create-table enemy
   ((name :type string :primary-key t)
-   (age :type integer :check (:> 'age 12))
+   (age :type integer)
    (address :type (or db-null string) :references (important-addresses :cascade :cascade))
    (fatal-weakness :type text :default "None")
-   (identifying-color :type (string 20) :unique t))
-  (:foreign-key (identifying-color) (colors name)))</pre>
+   (identifying-color :type (string 20) :unique t)
+  (:foreign-key (identifying-color) (colors name))
+  (:constraint enemy-age-check :check (:> 'age 12)))</pre>
 
     <p class="def"><span>sql-op</span> <a name="drop-table"></a>:drop-table (name)</p>
 
