@@ -650,7 +650,7 @@ to runtime. Used to create stored procedures."
       ,@(loop :for ((column-name . args) . rest) :on columns
               :append (expand-column column-name args)
               :if rest :collect ", ")
-      ,@(loop :for ((option . args) . rest) :on options
+      ,@(loop :for ((option . args)) :on options
               :collect ", "
               :append (expand-table-constraint option args))
       ")")))
