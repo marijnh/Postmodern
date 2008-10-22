@@ -574,14 +574,16 @@ to runtime. Used to create stored procedures."
         `(" RETURNING " ,@(sql-expand-list returning))))))
 
 (def-sql-op :update (table &rest args)
-  (split-on-keywords ((set *) (where ?)) args
+  (split-on-keywords ((set *) (where ?) (returning ? *)) args
     (when (oddp (length set))
       (error "Invalid amount of :set arguments passed to update sql operator"))
     `("UPDATE " ,@(sql-expand table) " SET "
       ,@(loop :for (field value) :on set :by #'cddr
               :for first = t :then nil
               :append `(,@(if first () '(", ")) ,@(sql-expand field) " = " ,@(sql-expand value)))
-      ,@(if where (cons " WHERE " (sql-expand (car where))) ()))))
+      ,@(if where (cons " WHERE " (sql-expand (car where))) ())
+      ,@(when returning
+          (cons " RETURNING " (sql-expand-list returning))))))
 
 (def-sql-op :delete-from (table &key where)
   `("DELETE FROM " ,@(sql-expand table) ,@(if where (cons " WHERE " (sql-expand where)) ())))
