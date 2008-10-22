@@ -693,6 +693,9 @@ to runtime. Used to create stored procedures."
 (def-sql-op :drop-index (name)
   `("DROP INDEX " ,@(sql-expand name)))
 
+(def-sql-op :nextval (name)
+  `("nextval(" (sql-escape-string (to-sql-name ,name)) ")"))
+
 (def-sql-op :create-sequence (name &key increment min-value max-value start cache cycle)
   `("CREATE SEQUENCE " ,@(sql-expand name)
     ,@(when increment `(" INCREMENT " ,@(sql-expand increment)))
