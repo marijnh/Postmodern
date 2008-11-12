@@ -563,15 +563,36 @@ to runtime. Used to create stored procedures."
              (cond ((oddp (length (cdr method)))
                     (error "Invalid amount of :set arguments passed to insert-into sql operator"))
                    ((null (cdr method)) '("DEFAULT VALUES"))
-                   (t `("(" ,@(sql-expand-list (loop :for (field value) :on (cdr method) :by #'cddr
+                   (t `("(" ,@(sql-expand-list (loop :for (field nil) :on (cdr method) :by #'cddr
                                                      :collect field))
-                        ") VALUES (" ,@(sql-expand-list (loop :for (field value) :on (cdr method) :by #'cddr
+                        ") VALUES (" ,@(sql-expand-list (loop :for (nil value) :on (cdr method) :by #'cddr
                                                               :collect value)) ")"))))
             ((and (not (cdr method)) (consp (car method)) (keywordp (caar method)))
              (sql-expand (car method)))
             (t (error "No :set arguments or select operator passed to insert-into sql operator")))
     ,@(when returning
         `(" RETURNING " ,@(sql-expand-list returning))))))
+
+(defun expand-rows (rows length)
+  (unless rows (error "Running :insert-rows-into without data."))
+  (unless length (setf length (length (car rows))))
+  (let ((*expand-runtime* t))
+    (strcat
+     (loop :for row :in rows :for first := t :then nil
+           :when (/= (length row) length)
+           :do (error "Found rows of unequal length in :insert-rows-into.")
+           :append `(,@(unless first '(", ")) "(" ,@(sql-expand-list row) ")")))))
+
+(def-sql-op :insert-rows-into (table &rest rest)
+  (split-on-keywords ((columns ? *) (values) (returning ? *)) rest
+    `("INSERT INTO "
+      ,@(sql-expand table) " "
+      ,@(when columns `("(" ,@(sql-expand-list columns) ") "))
+      "VALUES "
+      ,(if *expand-runtime*
+           (expand-rows (car values) (and columns (length columns)))
+           `(expand-rows ,(car values) ,(and columns (length columns))))
+      ,@(when returning `(" RETURNING " ,@(sql-expand-list returning))))))
 
 (def-sql-op :update (table &rest args)
   (split-on-keywords ((set *) (where ?) (returning ? *)) args
