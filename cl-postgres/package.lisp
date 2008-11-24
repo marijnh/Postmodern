@@ -53,6 +53,11 @@
            #:foreign-key-violation
            #:insufficient-resources
            #:insufficient-privilege
+           #:transaction-rollback
+           #:serialization-failure
+           #:transaction-integrity-constraint-violation
+           #:statement-completion-unknown
+           #:deadlock-detected
            #:integrity-violation
            #:internal-error
            #:invalid-datetime-format
