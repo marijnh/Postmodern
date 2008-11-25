@@ -10,6 +10,9 @@
 (defmethod validate-superclass ((class dao-class) (super-class standard-class))
   t)
 
+(defmethod dao-keys ((class-name symbol))
+  (dao-keys (find-class class-name)))
+
 (defun dao-column-slots (class)
   "Enumerate the slots in a class that refer to table rows."
   (mapcar 'slot-column
