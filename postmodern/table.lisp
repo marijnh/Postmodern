@@ -13,6 +13,11 @@
 (defmethod dao-keys ((class-name symbol))
   (dao-keys (find-class class-name)))
 
+(defmethod dao-keys (dao)
+  (mapcar #'(lambda (slot)
+              (slot-value dao slot))
+          (dao-keys (class-of dao))))
+
 (defun dao-column-slots (class)
   "Enumerate the slots in a class that refer to table rows."
   (mapcar 'slot-column
