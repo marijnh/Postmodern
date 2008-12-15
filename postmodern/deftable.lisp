@@ -53,20 +53,20 @@ package."
            (make-symbol (format nil "~a-~{~a~^-~}-index" *table-name* fields)))
          (make-index (type fields)
            (sql-compile `(,type ,(index-name fields) :on ,*table-name* :fields ,@fields))))
-  (defun !index (&rest fields)
+  (defun \!index (&rest fields)
     "Used inside a deftable form. Define an index on the defined table."
     (make-index :create-index fields))
-  (defun !unique-index (&rest fields)
+  (defun \!unique-index (&rest fields)
     "Used inside a deftable form. Define a unique index on the defined table."
     (make-index :create-unique-index fields)))
 
 #+postmodern-use-mop
-(defun !dao-def ()
+(defun \!dao-def ()
   "Used inside a deftable form. Define this table using the
 corresponding DAO class' slots."
   (dao-table-definition *table-symbol*))
 
-(defun !foreign (target fields &optional target-fields)
+(defun \!foreign (target fields &optional target-fields)
   "Used inside a deftable form. Define a foreign key on this table.
 Pass a table the index refers to, a list of fields or single field in
 *this* table, and, if the fields have different names in the table

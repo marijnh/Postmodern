@@ -10,7 +10,7 @@
    #:with-column-writers
    #:insert-dao #:update-dao #:save-dao #:delete-dao
    #:dao-table-name #:dao-table-definition
-   #:!dao-def)
+   #:\!dao-def)
    
   (:export 
    #:connect #:disconnect #:reconnect
@@ -29,7 +29,7 @@
 
    #:deftable #:*table-name* #:*table-symbol*
    #:create-table #:create-all-tables #:create-package-tables
-   #:!index #:!unique-index #:!foreign
+   #:\!index #:\!unique-index #:\!foreign
 
    ;; Reduced S-SQL interface
    #:sql #:sql-compile
