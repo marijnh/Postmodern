@@ -78,5 +78,5 @@ referred to, another field or list of fields for the target table."
     (let* ((target (to-sql-name target))
            (fields (as-names fields))
            (target-fields (if target-fields (as-names target-fields) fields)))
-      (format nil "ALTER TABLE ~a ADD CONTRAINT ~a FOREIGN KEY (~{~a~^, ~}) REFERENCES ~a (~{~a~^, ~})"
+      (format nil "ALTER TABLE ~a ADD CONSTRAINT ~a FOREIGN KEY (~{~a~^, ~}) REFERENCES ~a (~{~a~^, ~})"
               *table-name* (fkey-name target fields) fields target target-fields))))
