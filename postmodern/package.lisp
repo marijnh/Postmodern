@@ -36,6 +36,7 @@
    #:smallint #:bigint #:numeric #:real #:double-precision
    #:bytea #:text #:varchar
    #:*escape-sql-names-p* #:sql-escape-string #:register-sql-operators
+   #:sql-error
 
    ;; Condition type from cl-postgres
    #:database-error #:database-error-message #:database-error-code

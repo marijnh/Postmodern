@@ -20,11 +20,16 @@
            #:sql-template
            #:$$
            #:register-sql-operators
-           #:enable-s-sql-syntax))
+           #:enable-s-sql-syntax
+           #:sql-error))
 
 (in-package :s-sql)
 
 ;; Utils
+
+(define-condition sql-error (simple-error) ())
+(defun sql-error (control &rest args)
+  (error 'sql-error :format-control control :format-arguments args))
 
 (defun strcat (args)
   "Concatenate a list of strings into a single one."
@@ -57,20 +62,20 @@ errors."
                      (cond (found
                             (let ((after-me (nthcdr (1+ found) values)))
                               (unless (or after-me no-args)
-                                (error "Keyword ~A encountered at end of arguments." me))
+                                (sql-error "Keyword ~A encountered at end of arguments." me))
                               (let ((next (next-word (cdr words) after-me)))
                                 (cond
-                                  (no-args (unless (zerop next) (error "Keyword ~A does not take any arguments." me)))
-                                  (multi (unless (>= next 1) (error "Not enough arguments to keyword ~A." me)))
-                                  (t (unless (= next 1) (error "Keyword ~A takes exactly one argument." me))))
+                                  (no-args (unless (zerop next) (sql-error "Keyword ~A does not take any arguments." me)))
+                                  (multi (unless (>= next 1) (sql-error "Not enough arguments to keyword ~A." me)))
+                                  (t (unless (= next 1) (sql-error "Keyword ~A takes exactly one argument." me))))
                                 (push (cons (caar words) (if no-args t (subseq after-me 0 next))) result)
                                 found)))
                            (optional
                             (next-word (cdr words) values))
-                           (t (error "Required keyword ~A not found." me))))
+                           (t (sql-error "Required keyword ~A not found." me))))
                    (length values))))
       (unless (= (next-word shape list) 0)
-        (error "Arguments do not start with a valid keyword."))
+        (sql-error "Arguments do not start with a valid keyword."))
       result)))
 
 (defmacro split-on-keywords (words form &body body)
@@ -219,7 +224,7 @@ name.")
     "SERIAL8")
   (:method ((lisp-type (eql 'db-null)) &rest args)
     (declare (ignore args))
-    (error "Bad use of ~s." 'db-null)))
+    (sql-error "Bad use of ~s." 'db-null)))
 
 (defun to-type-name (type)
   "Turn a Lisp type expression into an SQL typename."
@@ -367,7 +372,7 @@ with a given arity."
   (let ((with-spaces (strcat (list " " name " "))))
     (flet ((check-unary (args)
              (when (or (not args) (cdr args))
-               (error "SQL operator ~A is unary." name)))
+               (sql-error "SQL operator ~A is unary." name)))
            (expand-n-ary (args)
              `("(" ,@(sql-expand-list args with-spaces) ")")))
       (ecase arity
@@ -383,7 +388,7 @@ with a given arity."
                       (sql-expand (car args)))))
         (:2+-ary (lambda (args)
                    (unless (cdr args)
-                     (error "SQL operator ~A takes at least two arguments." name))
+                     (sql-error "SQL operator ~A takes at least two arguments." name))
                    (expand-n-ary args)))
         (:n-or-unary (lambda (args)
                        (if (cdr args)
@@ -504,9 +509,9 @@ with a given arity."
 the proper SQL syntax for joining tables."
   (labels ((is-join (x) (member x '(:left-join :right-join :inner-join :outer-join :cross-join))))
     (when (null args)
-      (error "Empty :from clause in select"))
+      (sql-error "Empty :from clause in select"))
     (when (is-join (car args))
-      (error ":from clause starts with a join: ~A" args))
+      (sql-error ":from clause starts with a join: ~A" args))
     (let ((rest args))
       (loop :while rest
             :for first = t :then nil
@@ -514,7 +519,7 @@ the proper SQL syntax for joining tables."
                            (destructuring-bind (join name on clause &rest left) rest
                               (setf rest left)
                               (unless (and (eq on :on) clause)
-                                (error "Incorrect join form in select."))
+                                (sql-error "Incorrect join form in select."))
                               `(" " ,(ecase join
                                         (:left-join "LEFT") (:right-join "RIGHT")
                                         (:inner-join "INNER") (:outer-join "FULL OUTER")
@@ -561,7 +566,7 @@ to runtime. Used to create stored procedures."
   `("INSERT INTO " ,@(sql-expand table) " "
     ,@(cond ((eq (car method) :set)
              (cond ((oddp (length (cdr method)))
-                    (error "Invalid amount of :set arguments passed to insert-into sql operator"))
+                    (sql-error "Invalid amount of :set arguments passed to insert-into sql operator"))
                    ((null (cdr method)) '("DEFAULT VALUES"))
                    (t `("(" ,@(sql-expand-list (loop :for (field nil) :on (cdr method) :by #'cddr
                                                      :collect field))
@@ -569,18 +574,18 @@ to runtime. Used to create stored procedures."
                                                               :collect value)) ")"))))
             ((and (not (cdr method)) (consp (car method)) (keywordp (caar method)))
              (sql-expand (car method)))
-            (t (error "No :set arguments or select operator passed to insert-into sql operator")))
+            (t (sql-error "No :set arguments or select operator passed to insert-into sql operator")))
     ,@(when returning
         `(" RETURNING " ,@(sql-expand-list returning))))))
 
 (defun expand-rows (rows length)
-  (unless rows (error "Running :insert-rows-into without data."))
+  (unless rows (sql-error "Running :insert-rows-into without data."))
   (unless length (setf length (length (car rows))))
   (let ((*expand-runtime* t))
     (strcat
      (loop :for row :in rows :for first := t :then nil
            :when (/= (length row) length)
-           :do (error "Found rows of unequal length in :insert-rows-into.")
+           :do (sql-error "Found rows of unequal length in :insert-rows-into.")
            :append `(,@(unless first '(", ")) "(" ,@(sql-expand-list row) ")")))))
 
 (def-sql-op :insert-rows-into (table &rest rest)
@@ -597,7 +602,7 @@ to runtime. Used to create stored procedures."
 (def-sql-op :update (table &rest args)
   (split-on-keywords ((set *) (where ?) (returning ? *)) args
     (when (oddp (length set))
-      (error "Invalid amount of :set arguments passed to update sql operator"))
+      (sql-error "Invalid amount of :set arguments passed to update sql operator"))
     `("UPDATE " ,@(sql-expand table) " SET "
       ,@(loop :for (field value) :on set :by #'cddr
               :for first = t :then nil
@@ -619,8 +624,8 @@ to runtime. Used to create stored procedures."
 	  (if (eq (second type) 'db-null)
 	      (values (third type) t)
 	      (values (second type) t))
-	  (error "Invalid type: ~a. 'or' types must have two alternatives, one of which is ~s."
-		 type 'db-null))
+	  (sql-error "Invalid type: ~a. 'or' types must have two alternatives, one of which is ~s."
+                     type 'db-null))
       (values type nil)))
 
 (defun %build-foreign-reference (target on-delete on-update)
@@ -631,7 +636,7 @@ to runtime. Used to create stored procedures."
              (:set-default "SET DEFAULT")
              (:cascade "CASCADE")
              (:no-action "NO ACTION")
-             (t (error "Unsupported action for foreign key: ~A" action)))))
+             (t (sql-error "Unsupported action for foreign key: ~A" action)))))
     `(" REFERENCES "
       ,@(if (consp target)
             `(,(to-sql-name (car target)) "(" ,@(sql-expand-names (cdr target)) ")")
@@ -654,7 +659,7 @@ to runtime. Used to create stored procedures."
   (labels ((expand-column (column-name args)
              `(,(to-sql-name column-name) " "
                ,@(let ((type (or (getf args :type)
-                                 (error "No type specified for column ~A." column-name))))
+                                 (sql-error "No type specified for column ~A." column-name))))
                    (multiple-value-bind (type null) (dissect-type type)
                      `(,(to-type-name type) ,@(when (not null) '(" NOT NULL")))))
                ,@(loop :for (option value) :on args :by #'cddr
@@ -667,9 +672,9 @@ to runtime. Used to create stored procedures."
                                   (destructuring-bind (target &optional (on-delete :restrict) (on-update :restrict)) value
                                     (%build-foreign-reference target on-delete on-update)))
                                  (:type ())
-                                 (t (error "Unknown column option: ~A." option)))))))
+                                 (t (sql-error "Unknown column option: ~A." option)))))))
     (when (null columns)
-      (error "No columns defined for table ~A." name))
+      (sql-error "No columns defined for table ~A." name))
     `("CREATE TABLE " ,(to-sql-name name) " ("
       ,@(loop :for ((column-name . args) . rest) :on columns
               :append (expand-column column-name args)
@@ -685,7 +690,7 @@ to runtime. Used to create stored procedures."
          (case action
            (:restrict "RESTRICT")
            (:cascade "CASCADE")
-           (t (error "Unknown DROP action ~A." action)))))
+           (t (sql-error "Unknown DROP action ~A." action)))))
     `("ALTER TABLE "
       ,(to-sql-name name) " "
       ,@ (case action
@@ -695,7 +700,7 @@ to runtime. Used to create stored procedures."
                                    (if (rest args)
                                        (drop-action (second args))
                                        "")))
-           (t (error "Unknown ALTER TABLE action ~A" action))))))
+           (t (sql-error "Unknown ALTER TABLE action ~A" action))))))
 
 (def-sql-op :drop-table (name)
   `("DROP TABLE " ,@(sql-expand name)))
