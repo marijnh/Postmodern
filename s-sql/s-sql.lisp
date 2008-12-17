@@ -611,8 +611,11 @@ to runtime. Used to create stored procedures."
       ,@(when returning
           (cons " RETURNING " (sql-expand-list returning))))))
 
-(def-sql-op :delete-from (table &key where)
-  `("DELETE FROM " ,@(sql-expand table) ,@(if where (cons " WHERE " (sql-expand where)) ())))
+(def-sql-op :delete-from (table &rest args)
+  (split-on-keywords ((where ?) (returning ? *)) args
+    `("DELETE FROM " ,@(sql-expand table)
+		     ,@(when where (cons " WHERE " (sql-expand (car where))))
+		     ,@(when returning (cons " RETURNING " (sql-expand-list returning))))))
 
 ;; Data definition
 
