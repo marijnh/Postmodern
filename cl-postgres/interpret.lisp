@@ -82,7 +82,7 @@ interpreted as an array of the given type."
 (define-interpreter 23 "int4" int 4)
 (define-interpreter 20 "int8" int 8)
 
-(define-interpreter 23 "oid" uint 4)
+(define-interpreter 26 "oid" uint 4)
 
 (define-interpreter 16 "bool" ((value int 1))
   (if (zerop value) nil t))
