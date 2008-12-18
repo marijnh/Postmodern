@@ -437,10 +437,12 @@
     names or expressions indicating values to be returned as query
     result.</p>
 
-    <p class="def"><span>sql-op</span> <a name="delete-from"></a>:delete-from (table &amp;key where)</p>
+    <p class="def"><span>sql-op</span> <a name="delete-from"></a>:delete-from (table &amp;rest rest)</p>
 
-    <p class="desc">Delete rows from the named table where the given
-    condition holds.</p>
+    <p class="desc">Delete rows from the named table. Can be given a
+    <code>:where</code> argument followed by a condition, and a
+    <code>:returning</code> argument, followed by one or more
+    expressions that should be returned for every deleted row.</p>
 
     <p class="def"><span>sql-op</span> <a name="create-table"></a>:create-table (name (&amp;rest columns) &amp;rest options)</p>
 
