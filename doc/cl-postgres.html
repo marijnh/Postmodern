@@ -202,6 +202,48 @@
     an output stream value (<code>*standard-output*</code>, for
     example) to have CL-postgres log every query it makes.</p>
 
+    <p class="def">
+      <span>variable</span>
+      <a hane="*query-callback*"></a>
+      *query-callback*
+    </p>
+
+    <p class="desc">
+      When profiling or debugging,
+      the <a href="#*query-log*"><code>*query-log*</code></a> may not
+      give enough information, or reparsing its output may not be
+      feasible.  This variable may be set to a designator of function
+      taking two arguments.  This function will be then called after
+      every query, and receive query string and internal time units
+      (as in <code>(CL:GET-INTERNAL-REAL-TIME)</code>) spent in query
+      as its arguments.
+    </p>
+
+    <p class="desc">
+      Default value of this variable
+      is <a href="#log-query"><code>'LOG-QUERY</code></a>, which takes
+      care of <a href="#*query-log*"><code>*QUERY-LOG*</code></a>
+      processing.  If you provide custom query callback and wish to
+      keep <a href="#*query-log*"><code>*QUERY-LOG*</code></a>
+      functionality, you will have to
+      call <a href="#log-query"><code>LOG-QUERY</code></a> from your
+      callback function
+    </p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="log-query"></a>
+      log-query (query internal-time)
+    </p>
+
+    <p class="desc">
+      This function is default value
+      of <a href="#*query-callback*"><code>*QUERY-CALLBACK*</code></a>
+      and logs queries
+      to <a href="#*query-log*"><code>*QUERY-LOG*</code></a> if it is
+      not <code>NIL</code>.
+    </p>
+
     <h2><a name="reading">Reading values</a></h2>
 
     <p>CL-postgres knows how to convert commonly used PostgreSQL data
@@ -549,10 +591,12 @@
       <li><a href="#field-type">field-type</a></li>
       <li><a href="#ignore-row-reader">ignore-row-reader</a></li>
       <li><a href="#list-row-reader">list-row-reader</a></li>
+      <li><a href="#log-query">log-query</a></li>
       <li><a href="#row-reader">next-field</a></li>
       <li><a href="#row-reader">next-row</a></li>
       <li><a href="#open-database">open-database</a></li>
       <li><a href="#prepare-query">prepare-query</a></li>
+      <li><a href="#*query-callback*">*query-callback*</a></li>
       <li><a href="#*query-log*">*query-log*</a></li>
       <li><a href="#reopen-database">reopen-database</a></li>
       <li><a href="#row-reader">row-reader</a></li>

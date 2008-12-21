@@ -2,17 +2,24 @@
 
 (defparameter *current-query* nil)
 (defparameter *query-log* nil)
+(defparameter *query-callback* 'log-query)
+
+(defun log-query (query time-units)
+  (when *query-log*
+    (format *query-log* "CL-POSTGRES query (~ams): ~a~%"
+            (round (/ (* 1000 time-units)
+                      internal-time-units-per-second))
+            query)))
 
 (defmacro with-query ((query) &body body)
   (let ((time-name (gensym)))
     `(let ((*current-query* ,query)
-           (,time-name (if *query-log* (get-internal-real-time) 0)))
+           (,time-name (if *query-callback* (get-internal-real-time) 0)))
        (multiple-value-prog1 (progn ,@body)
-         (when *query-log*
-           (format *query-log* "CL-POSTGRES query (~ams): ~a~%"
-                   (round (/ (* 1000 (- (get-internal-real-time) ,time-name))
-                             internal-time-units-per-second))
-                   *current-query*))))))
+         (when *query-callback*
+           (funcall *query-callback*
+                    *current-query*
+                    (- (get-internal-real-time) ,time-name)))))))
 
 (define-condition database-error (error)
   ((error-code :initarg :code :initform nil :reader database-error-code

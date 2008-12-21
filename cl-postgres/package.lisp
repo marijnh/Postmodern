@@ -26,6 +26,7 @@
            #:next-row
            #:next-field
            #:list-row-reader
+           #:log-query
            #:vector-row-reader
            #:alist-row-reader
            #:postgresql-warning
@@ -36,6 +37,7 @@
            #:set-sql-reader
            #:set-sql-datetime-readers
            #:to-sql-string
+           #:*query-callback*
            #:*query-log*
            #:*ssl-certificate-file*
            #:*ssl-key-file*))
