@@ -708,6 +708,9 @@ to runtime. Used to create stored procedures."
 (def-sql-op :drop-table (name)
   `("DROP TABLE " ,@(sql-expand name)))
 
+(def-sql-op :cascade (op)
+  `(,@(sql-expand op) " CASCADE"))
+
 (defun expand-create-index (name args)
   (split-on-keywords ((on) (using ?) (fields *) (where ?)) args
     `(,@(sql-expand name) " ON " ,(to-sql-name (first on))
