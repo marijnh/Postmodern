@@ -37,6 +37,7 @@
            #:set-sql-reader
            #:set-sql-datetime-readers
            #:to-sql-string
+           #:*silently-truncate-rationals*
            #:*query-callback*
            #:*query-log*
            #:*ssl-certificate-file*

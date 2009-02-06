@@ -193,6 +193,19 @@
 
     <p class="def">
       <span>variable</span>
+      <a name="*silently-truncate-rationals*"></a>
+      *silently-truncate-rationals*
+    </p>
+
+    <p class="desc">When a rational number is passed into a query (as
+    per <a href="#to-sql-string"><code>to-sql-string</code></a>), but
+    it can not be expressed within 38 decimal digits (for example
+    <code>1/3</code>), it will be truncated, and lose some precision.
+    Set this variable to <code>nil</code> to suppress that behaviour
+    and raise an error instead.</p>
+
+    <p class="def">
+      <span>variable</span>
       <a name="*query-log*"></a>
       *query-log*
     </p>
@@ -602,6 +615,7 @@
       <li><a href="#row-reader">row-reader</a></li>
       <li><a href="#set-sql-datetime-readers">set-sql-datetime-readers</a></li>
       <li><a href="#set-sql-reader">set-sql-reader</a></li>
+      <li><a href="#*silently-truncate-rationals*">*silently-truncate-rationals*</a></li>
       <li><a href="#*sql-readtable*">*sql-readtable*</a></li>
       <li><a href="#*ssl-certificate-file*">*ssl-certificate-file*</a></li>
       <li><a href="#*ssl-key-file*">*ssl-key-file*</a></li>

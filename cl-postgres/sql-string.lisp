@@ -14,36 +14,28 @@ textual format for binary data."
                       (princ (digit-char (ldb (byte 3 0) byte) 8) out))
                     (princ (code-char byte) out))))))
 
-(defun write-rational-as-foating-point (input-number stream digit-length-limit)
-  (declare (optimize speed))
+(defparameter *silently-truncate-rationals* t)
+
+(defun write-rational-as-floating-point (number stream digit-length-limit)
+  (declare #.*optimize*)
   (flet ((fail ()
-           (error "Can not write the rational ~F with only ~A digits" (coerce input-number 'double-float) digit-length-limit)))
-    (declare (inline fail))
-    (let ((number input-number))
-      (when (< number 0)
-        (write-char #\- stream)
-        (setf number (abs number)))
-      (multiple-value-bind (quotient remainder) (floor number)
-        (let* ((quotient-part (with-output-to-string (stream)
-                                (write quotient :stream stream)))
-               (quotient-digit-length (length quotient-part))
-               (decimal-length-limit (- digit-length-limit quotient-digit-length)))
-          (when (<= decimal-length-limit 0)
-            (fail))
-          (write-string quotient-part stream)
-          (write-char #\. stream)
-          (setf number remainder)
-          (loop
-             :for decimal-digits :upfrom 1
-             :until (zerop number)
-             :do (progn
-                   (when (> decimal-digits decimal-length-limit)
-                     (fail))
-                   ;; (format *debug-io* "*** step ~A, number is ~A~%" decimal-digits number)
-                   (setf number (* number 10))
-                   (multiple-value-bind (quotient remainder) (floor number)
-                     (write quotient :stream stream)
-                     (setf number remainder)))))))))
+           (if *silently-truncate-rationals*
+               (return-from write-rational-as-floating-point)
+               (error 'database-error :message 
+                      (format nil "Can not write the rational ~a with only ~a digits"
+                              number digit-length-limit)))))
+    (multiple-value-bind (quotient remainder)
+        (truncate (if (< number 0) (prog1 (- number) (write-char #\- stream)) number))
+      (let* ((quotient-part (princ-to-string quotient))
+             (decimal-length-limit (- digit-length-limit (length quotient-part))))
+        (write-string quotient-part stream)
+        (when (<= decimal-length-limit 0) (fail))
+        (unless (zerop remainder) (write-char #\. stream))
+        (loop :for decimal-digits :upfrom 1 :until (zerop remainder)
+              :do (when (> decimal-digits decimal-length-limit) (fail))
+              :do (multiple-value-bind (quotient rem) (floor (* remainder 10))
+                    (princ quotient stream)
+                    (setf remainder rem)))))))
 
 (defgeneric to-sql-string (arg)
   (:documentation "Turn a lisp value into a string containing its SQL
@@ -66,7 +58,7 @@ whether the string should be escaped before being put into a query.")
       ;; 38 digits from the NUMERIC type, and Oracle also doesn't handle more. For practical
       ;; reasons we also draw the line there. If someone needs full rational numbers then
       ;; 200 wouldn't help them much more than 38...
-      (write-rational-as-foating-point arg result 38)))
+      (write-rational-as-floating-point arg result 38)))
   (:method ((arg (eql t)))
     "true")
   (:method ((arg (eql nil)))
