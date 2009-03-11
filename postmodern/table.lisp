@@ -94,6 +94,7 @@
 (defmethod compute-effective-slot-definition ((class dao-class) name direct-slot-definitions)
   (flet ((is-column (slot) (typep slot 'direct-column-slot)))
     (let ((*direct-column-slot* (find-if #'is-column direct-slot-definitions)))
+      #+(or) ;; Things seem to work without this check. Removed for now.
       (when (and *direct-column-slot*
                  (not (every #'is-column direct-slot-definitions)))
         (error "Slot ~a in class ~a is both a column slot and a regular slot." name class))
