@@ -9,6 +9,7 @@
 (defun prompt-connection (&optional (list *test-connection*))
   (flet ((ask (name pos)
            (format *query-io* "~a (enter to keep '~a'): " name (nth pos list))
+           (finish-output *query-io*)
            (let ((answer (read-line *query-io*)))
              (unless (string= answer "") (setf (nth pos list) answer)))))
     (format *query-io* "~%To run this test, you must configure a database connection.~%")
