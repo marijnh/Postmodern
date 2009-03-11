@@ -92,6 +92,7 @@
   ((direct-slot :initform *direct-column-slot* :reader slot-column)))
 
 (defmethod compute-effective-slot-definition ((class dao-class) name direct-slot-definitions)
+  (declare (ignore name))
   (flet ((is-column (slot) (typep slot 'direct-column-slot)))
     (let ((*direct-column-slot* (find-if #'is-column direct-slot-definitions)))
       #+(or) ;; Things seem to work without this check. Removed for now.
@@ -221,7 +222,7 @@ values.)"
                         :for slot-name :in names
                         :do (setf (slot-value object slot-name) value)))))
             (defmethod fetch-defaults ((object target-class))
-              (declare (ignore object)))))
+              nil)))
 
       (defmethod shared-initialize :after ((object target-class) slot-names
                                            &key (fetch-defaults nil) &allow-other-keys)
