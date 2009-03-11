@@ -45,10 +45,13 @@ if it isn't."
            (restart-case (error (wrap-socket-error err))
              (:reconnect () :report "Try again." (initiate-connection conn)))))
     (handler-case
-        (let ((socket (usocket:socket-stream
-                       (usocket:socket-connect (connection-host conn)
-                                               (connection-port conn)
-                                               :element-type '(unsigned-byte 8))))
+        (let ((socket #-allegro (usocket:socket-stream
+                                 (usocket:socket-connect (connection-host conn)
+                                                         (connection-port conn)
+                                                         :element-type '(unsigned-byte 8)))
+                      #+allegro (socket:make-socket :remote-host (connection-host conn)
+                                                    :remote-port (connection-port conn)
+                                                    :format :binary))
               (finished nil)
               (*connection-params* (make-hash-table :test 'equal)))
           (setf (slot-value conn 'meta) nil
@@ -64,7 +67,8 @@ if it isn't."
                      finished t)
             (unless finished
               (ensure-socket-is-closed socket))))
-      (usocket:socket-error (e) (add-restart e))
+      #-allegro(usocket:socket-error (e) (add-restart e))
+      #+allegro(excl:socket-error (e) (add-restart e))
       (stream-error (e) (add-restart e))))
     (values))
 
