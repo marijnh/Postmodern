@@ -35,6 +35,7 @@
 (defmethod shared-initialize :before ((class dao-class) slot-names
                                       &key table-name &allow-other-keys)
   (declare (ignore slot-names))
+  (setf (slot-value class 'direct-keys) nil)
   (if table-name
       (setf (slot-value class 'table-name)
             (if (symbolp (car table-name)) (car table-name) (intern (car table-name))))
