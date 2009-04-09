@@ -507,27 +507,33 @@ with a given arity."
 (defun expand-joins (args)
   "Helper for the select operator. Turns the part following :from into
 the proper SQL syntax for joining tables."
-  (labels ((is-join (x) (member x '(:left-join :right-join :inner-join :outer-join :cross-join))))
+  (labels ((expand-join (natural-p)
+             (let ((type (first args)) (table (second args)) on)
+               (unless table (sql-error "Incomplete join clause in select."))
+               (setf args (cddr args))
+               (unless (or natural-p (eq type :cross-join))
+                 (unless (and (eq (car args) :on) (cdr args))
+                   (sql-error "Incorrect join form in select."))
+                 (setf on (second args) args (cddr args)))
+               `(" " ,@(when natural-p '("NATURAL "))
+                 ,(ecase type
+                    (:left-join "LEFT") (:right-join "RIGHT")
+                    (:inner-join "INNER") (:outer-join "FULL OUTER")
+                    (:cross-join "CROSS")) " JOIN " ,@(sql-expand table)
+                 ,@(unless (or natural-p (eq type :cross-join)) `(" ON " . ,(sql-expand on))))))
+           (is-join (x)
+             (member x '(:left-join :right-join :inner-join :outer-join :cross-join))))
     (when (null args)
       (sql-error "Empty :from clause in select"))
-    (when (is-join (car args))
-      (sql-error ":from clause starts with a join: ~A" args))
-    (let ((rest args))
-      (loop :while rest
-            :for first = t :then nil
-            :append (cond ((is-join (car rest))
-                           (destructuring-bind (join name on clause &rest left) rest
-                              (setf rest left)
-                              (unless (and (eq on :on) clause)
-                                (sql-error "Incorrect join form in select."))
-                              `(" " ,(ecase join
-                                        (:left-join "LEFT") (:right-join "RIGHT")
-                                        (:inner-join "INNER") (:outer-join "FULL OUTER")
-                                        (:cross-join "CROSS"))
-                                " JOIN " ,@(sql-expand name)
-                                " ON " ,@(sql-expand clause))))
-                          (t (prog1 `(,@(if first () '(", ")) ,@(sql-expand (car rest)))
-                               (setf rest (cdr rest)))))))))
+    (loop :while args :for first = t :then nil
+          :append (cond ((is-join (car args))
+                         (when first (sql-error ":from clause starts with a join."))
+                         (expand-join nil))
+                        ((eq (car args) :natural)
+                         (when first (sql-error ":from clause starts with a join."))
+                         (pop args)
+                         (expand-join t))
+                        (t `(,@(if first () '(", ")) ,@(sql-expand (pop args))))))))
 
 (def-sql-op :select (&rest args)
   (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (where ?) (group-by * ?)

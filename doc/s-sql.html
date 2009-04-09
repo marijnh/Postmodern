@@ -369,9 +369,11 @@
     <code>:left-join</code>, <code>:right-join</code>,
     <code>:inner-join</code>, <code>:outer-join</code> or
     <code>:cross-join</code>, then a table name or subquery, then the
-    keyword <code>:on</code>, and then a form. After that an optional
-    <code>:where</code> followed by a single form may follow. And
-    finally <code>:group-by</code> and <code>:having</code> can
+    keyword <code>:on</code>, if applicable, and then a form. A join
+    can be preceded by <code>:natural</code> (leaving off the
+    <code>:on</code> clause) to use a natural join. After the joins an
+    optional <code>:where</code> followed by a single form may occur.
+    And finally <code>:group-by</code> and <code>:having</code> can
     optionally be specified. The first takes any number of arguments,
     and the second only one. An example:</p>
 
