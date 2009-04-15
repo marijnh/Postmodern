@@ -44,6 +44,15 @@
                (= month* month)
                (= day* day))))))
 
+(test leap-year
+  (flet ((test-date (y m d)
+           (multiple-value-bind (y2 m2 d2) (decode-date (encode-date y m d))
+             (and (= y y2) (= m m2) (= d d2)))))
+    (is (test-date 2000 2 29))
+    (is (test-date 2004 2 29))
+    (is (test-date 2108 2 29))
+    (is (test-date 1992 2 29))))
+
 (test encode-timestamp
   (with-random-dates 100
     (multiple-value-bind (year* month* day* hour* min* sec* millisec*)
