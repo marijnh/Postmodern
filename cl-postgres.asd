@@ -33,3 +33,9 @@
   (asdf:oos 'asdf:load-op :cl-postgres-tests)
   (funcall (intern (string :prompt-connection) (string :cl-postgres-tests)))
   (funcall (intern (string :run!) (string :it.bese.FiveAM)) :cl-postgres))
+
+(defmethod perform :after ((op asdf:load-op) (system (eql (find-system :cl-postgres))))
+  (let ((simple-date (asdf:find-system :simple-date nil)))
+   (when (and simple-date
+              (asdf:operation-done-p (make-instance 'asdf:load-op) simple-date))
+     (asdf:oos 'asdf:load-op :simple-date-postgres-glue))))
