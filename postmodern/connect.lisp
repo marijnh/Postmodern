@@ -65,7 +65,7 @@ database."
       (disconnect *database*))))
 
 (defmacro with-connection (spec &body body)
-  "Like with-connection, but evaluate the specification list."
+  "Locally establish a database connection, and bind *database* to it."
   `(let ((*database* (apply #'connect ,spec)))
     (unwind-protect (progn ,@body)
       (disconnect *database*))))
