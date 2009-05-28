@@ -557,7 +557,9 @@
 
     <p class="def"><span>sql-op</span> <a name="drop-table"></a>:drop-table (name)</p>
 
-    <p class="desc">Drops the named table.</p>
+    <p class="desc">Drops the named table. You may optionally pass
+    <code>:if-exists</code> before the name to suppress the error
+    message.</p>
 
     <p class="def"><span>sql-op</span> <a
     name="create-index"></a>:create-index (name &amp;rest args)</p>
@@ -580,7 +582,9 @@
     <p class="def"><span>sql-op</span> <a
     name="drop-index"></a>:drop-index (name)</p>
 
-    <p class="desc">Drop an index.</p>
+    <p class="desc">Drop an index. Takes an <code>:if-exists</code>
+    argument like <a
+    href="#drop-table"><code>:drop-table</code></a>.</p>
 
     <p class="def"><span>sql-op</span> <a
     name="create-sequence"></a>:create-sequence (name &amp;key
@@ -592,7 +596,8 @@
     <p class="def"><span>sql-op</span> <a
     name="drop-sequence"></a>:drop-sequence (name)</p>
 
-    <p class="desc">Drop a sequence.</p>
+    <p class="desc">Drop a sequence. You may pass
+    <code>:if-exists</code> as an extra first argument.</p>
 
     <p class="def"><span>sql-op</span> <a
     name="create-view"></a>:create-view (name query)</p>
@@ -602,7 +607,8 @@
     <p class="def"><span>sql-op</span> <a
     name="drop-view"></a>:drop-view (name)</p>
 
-    <p class="desc">Drop a view.</p>
+    <p class="desc">Drop a view. Takes optional
+    <code>:if-exists</code> argument.</p>
 
     <h2><a name="index"></a>Symbol-index</h2>
 

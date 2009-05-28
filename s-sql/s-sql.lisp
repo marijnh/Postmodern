@@ -711,12 +711,6 @@ to runtime. Used to create stored procedures."
                                        "")))
            (t (sql-error "Unknown ALTER TABLE action ~A" action))))))
 
-(def-sql-op :drop-table (name)
-  `("DROP TABLE " ,@(sql-expand name)))
-
-(def-sql-op :cascade (op)
-  `(,@(sql-expand op) " CASCADE"))
-
 (defun expand-create-index (name args)
   (split-on-keywords ((on) (using ?) (fields *) (where ?)) args
     `(,@(sql-expand name) " ON " ,(to-sql-name (first on))
@@ -730,8 +724,21 @@ to runtime. Used to create stored procedures."
 (def-sql-op :create-unique-index (name &rest args)
   (cons "CREATE UNIQUE INDEX " (expand-create-index name args)))
 
-(def-sql-op :drop-index (name)
-  `("DROP INDEX " ,@(sql-expand name)))
+(def-sql-op :cascade (op)
+  `(,@(sql-expand op) " CASCADE"))
+
+(defmacro def-drop-op (op-name word)
+  `(def-sql-op ,op-name (&rest args)
+     (let ((if-exists (if (eq (car args) :if-exists) (pop args) nil)))
+       (destructuring-bind (name) args
+         `("DROP " ,,word " " ,@(when if-exists '("IF EXISTS ")) ,@(sql-expand name))))))
+
+(def-drop-op :drop-table "TABLE")
+(def-drop-op :drop-index "INDEX")
+(def-drop-op :drop-sequence "SEQUENCE")
+(def-drop-op :drop-view "VIEW")
+(def-drop-op :drop-enum "ENUM")
+(def-drop-op :drop-rule "RULE")
 
 (defun dequote (val)
   (if (and (consp val) (eq (car val) 'quote)) (cadr val) val))
@@ -750,21 +757,12 @@ to runtime. Used to create stored procedures."
     ,@(when cache `(" CACHE " ,@(sql-expand cache)))
     ,@(when cycle `(" CYCLE"))))
 
-(def-sql-op :drop-sequence (name)
-  `("DROP SEQUENCE " ,@(sql-expand name)))
-
 (def-sql-op :create-view (name query)
   ;; does not allow to specify the columns of the view yet
   `("CREATE VIEW " ,(to-sql-name name) " AS " ,@(sql-expand query)))
 
-(def-sql-op :drop-view (name)
-  `("DROP VIEW " ,@(sql-expand name)))
-
 (def-sql-op :create-enum (name members)
   `("CREATE TYPE " ,@(sql-expand name) " AS ENUM (" ,@(sql-expand-list (mapcar #'cl-postgres:to-sql-string members)) ") "))
-
-(def-sql-op :drop-enum (name)
-  `("DROP TYPE " ,@(sql-expand name)))
 
 ;;; http://www.postgresql.org/docs/8.3/interactive/sql-createdomain.html
 (def-sql-op :create-domain (name &rest args)
@@ -790,6 +788,3 @@ to runtime. Used to create stored procedures."
       ,@(if (or (null do) (eq do :nothing))
             '(" NOTHING")
             `("(" ,@(sql-expand-list do "; ") ")")))))
-
-(def-sql-op :drop-rule (name)
-  `("DROP RULE " ,@(sql-expand name)))
