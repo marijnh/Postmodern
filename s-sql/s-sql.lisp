@@ -664,34 +664,35 @@ to runtime. Used to create stored procedures."
        `("FOREIGN KEY (" ,@(sql-expand-names columns) ")"
                          ,@(%build-foreign-reference target on-delete on-update))))))
 
+(defun expand-table-column (column-name args)
+  `(,(to-sql-name column-name) " "
+     ,@(let ((type (or (getf args :type)
+                       (sql-error "No type specified for column ~A." column-name))))
+         (multiple-value-bind (type null) (dissect-type type)
+           `(,(to-type-name type) ,@(when (not null) '(" NOT NULL")))))
+     ,@(loop :for (option value) :on args :by #'cddr
+             :append (case option
+                       (:default `(" DEFAULT " ,@(sql-expand value)))
+                       (:primary-key (when value `(" PRIMARY KEY")))
+                       (:unique (when value `(" UNIQUE")))
+                       (:check `(" CHECK " ,@(sql-expand value)))
+                       (:references
+                        (destructuring-bind (target &optional (on-delete :restrict) (on-update :restrict)) value
+                          (%build-foreign-reference target on-delete on-update)))
+                       (:type ())
+                       (t (sql-error "Unknown column option: ~A." option))))))
+
 (def-sql-op :create-table (name (&rest columns) &rest options)
-  (labels ((expand-column (column-name args)
-             `(,(to-sql-name column-name) " "
-               ,@(let ((type (or (getf args :type)
-                                 (sql-error "No type specified for column ~A." column-name))))
-                   (multiple-value-bind (type null) (dissect-type type)
-                     `(,(to-type-name type) ,@(when (not null) '(" NOT NULL")))))
-               ,@(loop :for (option value) :on args :by #'cddr
-                       :append (case option
-                                 (:default `(" DEFAULT " ,@(sql-expand value)))
-                                 (:primary-key (when value `(" PRIMARY KEY")))
-                                 (:unique (when value `(" UNIQUE")))
-                                 (:check `(" CHECK " ,@(sql-expand value)))
-                                 (:references
-                                  (destructuring-bind (target &optional (on-delete :restrict) (on-update :restrict)) value
-                                    (%build-foreign-reference target on-delete on-update)))
-                                 (:type ())
-                                 (t (sql-error "Unknown column option: ~A." option)))))))
-    (when (null columns)
-      (sql-error "No columns defined for table ~A." name))
-    `("CREATE TABLE " ,(to-sql-name name) " ("
-      ,@(loop :for ((column-name . args) . rest) :on columns
-              :append (expand-column column-name args)
-              :if rest :collect ", ")
-      ,@(loop :for ((option . args)) :on options
-              :collect ", "
-              :append (expand-table-constraint option args))
-      ")")))
+  (when (null columns)
+    (sql-error "No columns defined for table ~A." name))
+  `("CREATE TABLE " ,(to-sql-name name) " ("
+                    ,@(loop :for ((column-name . args) . rest) :on columns
+                            :append (expand-table-column column-name args)
+                            :if rest :collect ", ")
+                    ,@(loop :for ((option . args)) :on options
+                            :collect ", "
+                            :append (expand-table-constraint option args))
+                    ")"))
 
 (def-sql-op :alter-table (name action &rest args)
   (flet
@@ -704,6 +705,7 @@ to runtime. Used to create stored procedures."
       ,(to-sql-name name) " "
       ,@ (case action
            (:add (cons "ADD " (expand-table-constraint (first args) (rest args))))
+           (:add-column (cons "ADD COLUMN " (expand-table-column (first args) (rest args))))
            (:drop-constraint (list "DROP CONSTRAINT "
                                    (to-sql-name (first args))
                                    (if (rest args)
