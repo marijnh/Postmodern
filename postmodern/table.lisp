@@ -25,6 +25,7 @@
                          (class-slots class))))
 (defun dao-column-fields (class)
   (mapcar 'slot-definition-name (dao-column-slots class)))
+
 (defun dao-table-name (class)
   (when (symbolp class)
     (setf class (find-class class)))
@@ -67,6 +68,7 @@
 (defclass direct-column-slot (standard-direct-slot-definition)
   ((col-type :initarg :col-type :reader column-type)
    (col-default :initarg :col-default :reader column-default)
+   (ghost :initform nil :initarg :ghost :reader ghost)
    (sql-name :reader slot-sql-name))
   (:documentation "Type of slots that refer to database columns."))
 
@@ -148,7 +150,9 @@ values.)"
 
   (let* ((fields (dao-column-fields class))
          (key-fields (dao-keys class))
-         (value-fields (remove-if (lambda (x) (member x key-fields)) fields))
+	 (ghost-slots (remove-if-not 'ghost (dao-column-slots class)))
+	 (ghost-fields (mapcar 'slot-definition-name ghost-slots))
+         (value-fields (remove-if (lambda (x) (or (member x key-fields) (member x ghost-fields))) fields))
          (table-name (dao-table-name class)))
     ;; This is a hack -- the MOP does not define a practical way to
     ;; dynamically add methods to a generic, but the specialised-on
@@ -193,7 +197,9 @@ values.)"
                 :do (if (slot-boundp object field)
                         (push field bound)
                         (push field unbound)))
-          (let* ((values (mapcan (lambda (x) (list x (slot-value object x))) bound))
+
+          (let* ((values (mapcan (lambda (x) (list x (slot-value object x)))
+                                 (remove-if (lambda (x) (member x ghost-fields)) bound) ))
                  (returned (query (sql-compile `(:insert-into ,table-name
                                                  :set ,@values
                                                  ,@(when unbound (cons :returning unbound))))
@@ -203,6 +209,7 @@ values.)"
                     :for field :in unbound
                     :do (setf (slot-value object field) value)))))
         object)
+
 
       (let* ((defaulted-slots (remove-if-not (lambda (x) (slot-boundp x 'col-default))
                                              (dao-column-slots class)))
@@ -302,6 +309,7 @@ holds, order them by the given criteria."
   (sql-compile
    `(:create-table ,(dao-table-name table)
                    ,(loop :for slot :in (dao-column-slots table)
+                          :unless (ghost slot)
                           :collect `(,(slot-definition-name slot) :type ,(column-type slot)
                                      ,@(when (slot-boundp slot 'col-default)
                                              `(:default ,(column-default slot)))))

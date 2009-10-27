@@ -530,6 +530,16 @@
     around this by creating your own sequence and defining a
     <code>(:nextval "my_sequence")</code> default.</p>
 
+    <p class="desc">Finally, DAO class slots can have an option
+    <code>:ghost t</code> to specify them as ghost slots. These are
+    selected when retrieving instances, but not written when updating
+    or inserting, or even included in the table definition. The only
+    know use for this to date is to create your table with
+    <code>(oids=true)</code>, and specify a slot like this:</p>
+
+    <pre class="code">
+(oid :col-type integer :ghost t :accessor get-oid)</pre>
+
     <p class="def">
       <span>method</span>
       <a name="dao-keys"></a>

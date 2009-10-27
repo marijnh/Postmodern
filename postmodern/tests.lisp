@@ -147,3 +147,23 @@
       (delete-dao dao))
     (is (not (select-dao 'test-data)))
     (execute (:drop-table 'dao-test))))
+
+(defclass test-oid ()
+  ((oid :col-type integer :ghost t :accessor test-oid)
+   (a :col-type string :initarg :a :accessor test-a)
+   (b :col-type string :initarg :b :accessor test-b))
+  (:metaclass dao-class)  
+  (:keys a))
+
+(test dao-class-oid
+  (with-test-connection
+    (execute (concatenate 'string (dao-table-definition 'test-oid) "with (oids=true)"))
+    (let ((dao (make-instance 'test-oid :a "a" :b "b")))
+      (insert-dao dao)
+      (is-true (integerp (test-oid dao)))
+      (let ((back (get-dao 'test-oid "a")))
+        (is (test-oid dao) (test-oid back))
+        (setf (test-b back) "c")
+        (update-dao back))
+      (is (test-b (get-dao 'test-oid "a")) "c"))
+    (execute (:drop-table 'test-oid))))
