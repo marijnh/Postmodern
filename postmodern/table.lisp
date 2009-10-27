@@ -239,7 +239,7 @@ written to, functions are called with the new object and the value as
 arguments.")
 
 (defmacro with-column-writers ((&rest defs) &body body)
-  `(let ((*custom-column-writers* (append (list ,@(loop :for (field writer) :on defs
+  `(let ((*custom-column-writers* (append (list ,@(loop :for (field writer) :on defs :by #'cddr
                                                         :collect `(cons (to-sql-name ,field) ,writer)))
                                           *custom-column-writers*)))
     ,@body))
