@@ -152,7 +152,7 @@
   ((oid :col-type integer :ghost t :accessor test-oid)
    (a :col-type string :initarg :a :accessor test-a)
    (b :col-type string :initarg :b :accessor test-b))
-  (:metaclass dao-class)  
+  (:metaclass dao-class)
   (:keys a))
 
 (test dao-class-oid

@@ -299,7 +299,9 @@ to strings \(which will form an SQL query when concatenated)."
 
 (defun sql-expand-names (names &optional (sep ", "))
   (loop :for (name . rest) :on names
-        :collect (to-sql-name name)
+        :if (consp name) :append (let ((*expand-runtime* t))
+                                   (sql-expand name))
+        :else :collect (to-sql-name name)
         :if rest :collect sep))
 
 (defun reduce-strings (list)
