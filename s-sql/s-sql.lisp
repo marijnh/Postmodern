@@ -474,6 +474,9 @@ with a given arity."
 (def-sql-op :between (n start end)
   `("(" ,@(sql-expand n) " BETWEEN " ,@(sql-expand start) " AND " ,@(sql-expand end) ")"))
 
+(def-sql-op :between-symmetric (n start end)
+  `("(" ,@(sql-expand n) " BETWEEN SYMMETRIC " ,@(sql-expand start) " AND " ,@(sql-expand end) ")"))
+
 (def-sql-op :case (&rest clauses)
   `("CASE"
     ,@(loop :for (test expr) :in clauses
