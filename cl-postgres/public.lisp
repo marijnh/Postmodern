@@ -38,6 +38,23 @@ currently connected."
     (initiate-connection conn)
     conn))
 
+#+(and sbcl unix)
+(defun sb-unix-socket-connect (port)
+  (let ((sock (make-instance 'sb-bsd-sockets:local-socket :type :stream))
+        (addr (format nil "/var/run/postgresql/.s.PGSQL.~a" port)))
+    (sb-bsd-sockets:socket-connect sock addr)
+    (sb-bsd-sockets:socket-make-stream
+     sock :input t :output t :element-type '(unsigned-byte 8))))
+
+#+sbcl
+(defun sb-socket-connect (port host)
+  (let ((sock (make-instance 'sb-bsd-sockets:inet-socket
+                             :type :stream :protocol :tcp))
+        (host (sb-bsd-sockets:host-ent-address (sb-bsd-sockets:get-host-by-name host))))
+    (sb-bsd-sockets:socket-connect sock host port)
+    (sb-bsd-sockets:socket-make-stream
+     sock :input t :output t :buffering :full :element-type '(unsigned-byte 8))))
+
 (defun initiate-connection (conn)
   "Check whether a connection object is connected, try to connect it
 if it isn't."
@@ -45,13 +62,21 @@ if it isn't."
            (restart-case (error (wrap-socket-error err))
              (:reconnect () :report "Try again." (initiate-connection conn)))))
     (handler-case
-        (let ((socket #-allegro (usocket:socket-stream
-                                 (usocket:socket-connect (connection-host conn)
-                                                         (connection-port conn)
-                                                         :element-type '(unsigned-byte 8)))
-                      #+allegro (socket:make-socket :remote-host (connection-host conn)
-                                                    :remote-port (connection-port conn)
-                                                    :format :binary))
+        (let ((socket #-(or allegro sbcl)
+                      (usocket:socket-stream
+                       (usocket:socket-connect (connection-host conn)
+                                               (connection-port conn)
+                                               :element-type '(unsigned-byte 8)))
+                      #+allegro
+                      (socket:make-socket :remote-host (connection-host conn)
+                                          :remote-port (connection-port conn)
+                                          :format :binary)
+                      #+sbcl
+                      (if (equal (connection-host conn) :unix)
+                          #+unix(sb-unix-socket-connect (connection-port conn))
+                          #-unix(error "Unix sockets only available on Unix (really)")
+                          (sb-socket-connect (connection-port conn)
+                                             (connection-host conn))))
               (finished nil)
               (*connection-params* (make-hash-table :test 'equal)))
           (setf (slot-value conn 'meta) nil
@@ -67,8 +92,9 @@ if it isn't."
                      finished t)
             (unless finished
               (ensure-socket-is-closed socket))))
-      #-allegro(usocket:socket-error (e) (add-restart e))
+      #-(or allegro sbcl)(usocket:socket-error (e) (add-restart e))
       #+allegro(excl:socket-error (e) (add-restart e))
+      #+sbcl(sb-bsd-sockets:socket-error (e) (add-restart e))
       (stream-error (e) (add-restart e))))
     (values))
 

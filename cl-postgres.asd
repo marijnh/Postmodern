@@ -10,7 +10,7 @@
 (defparameter *string-file* (if *unicode* "strings-utf-8" "strings-ascii"))
 
 (defsystem :cl-postgres
-  :depends-on (:md5 #-allegro :usocket :ieee-floats . #.(if *unicode* '(:trivial-utf-8)))
+  :depends-on (:md5 #-(or allegro sbcl) :usocket :ieee-floats . #.(if *unicode* '(:trivial-utf-8)))
   :components 
   ((:module :cl-postgres
             :components ((:file "package")
