@@ -261,11 +261,16 @@
     <p class="desc">Execute the given query (a string or a list
     starting with a keyword), iterating over the rows in the result.
     The body will be executed with the values in the row bound to the
-    symbols given in <code>names</code>. For example:</p>
+    symbols given in <code>names</code>. To iterate over a
+    parameterised query, one can specify a list whose car is the
+    query, and whose cdr contains the arguments. For example:</p>
 
     <pre class="code">
 (doquery (:select 'name 'score :from 'scores) (n s)
-  (incf (gethash n *scores*) s))</pre>
+  (incf (gethash n *scores*) s))
+
+(doquery ((:select 'name :from 'scores :where (:> 'score '$1)) 100) (name)
+  (print name))</pre>
 
     <p class="def">
       <span>macro</span>

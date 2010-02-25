@@ -75,18 +75,29 @@ specifies the format in which the results should be returned."
   `(let ((rows (nth-value 1 (query ,query ,@args :none))))
     (if rows (values rows rows) 0)))
 
+
 (defmacro doquery (query (&rest names) &body body)
-  "Iterate over the rows in the result of a query, binding the given
-names to the results and executing body for every row."
-  (let ((fields (gensym))
-        (query-name (gensym)))
-    `(let ((,query-name ,(real-query query)))
-      (exec-query *database* ,query-name
-       (row-reader (,fields)
-         (unless (= ,(length names) (length ,fields))
-           (error "Number of field names does not match number of selected fields in query ~A." ,query-name))
-         (loop :while (next-row)
-               :do (let ,(loop :for i :from 0
-                               :for name :in names
-                               :collect `(,name (next-field (elt ,fields ,i))))
-                     ,@body)))))))
+ "Iterate over the rows in the result of a query, binding the given
+names to the results and executing body for every row. Query can be a
+string, an s-sql query, or a list starting with one of those, followed
+by the arguments to parameterize the query with."
+ (let* ((fields (gensym))
+        (query-name (gensym))
+        args
+        (reader-expr
+          `(row-reader (,fields)
+             (unless (= ,(length names) (length ,fields))
+               (error "Number of field names does not match number of selected fields in query ~A." ,query-name))
+             (loop :while (next-row)
+                   :do (let ,(loop :for i :from 0
+                                   :for name :in names
+                                   :collect `(,name (next-field (elt ,fields ,i))))
+                         ,@body)))))
+   (when (and (consp query) (not (keywordp (first query))))
+     (setf args (cdr query) query (car query)))
+   (if args
+       `(let ((,query-name ,(real-query query)))
+          (prepare-query *database* "" ,query-name)
+          (exec-prepared *database* "" (list ,@args) ,reader-expr))
+       `(let ((,query-name ,(real-query query)))
+          (exec-query *database* ,query-name ,reader-expr)))))

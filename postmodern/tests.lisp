@@ -99,6 +99,11 @@
       (is (= number 55))
       (is (string= string "foobar")))))
 
+(test doquery-params
+  (with-test-connection
+    (doquery ("select $1::integer + 10" 20) (answer)
+       (is (= answer 30)))))
+
 (test transaction
   (with-test-connection
     (execute (:create-table test-data ((value :type integer))))

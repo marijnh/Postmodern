@@ -28,7 +28,7 @@
                                 ("query" #+postmodern-use-mop "table"))))))
 
 (defsystem :postmodern-tests
-  :depends-on (:postmodern :fiveam :simple-date)
+  :depends-on (:postmodern :fiveam :simple-date :simple-date-postgres-glue)
   :components
   ((:module :postmodern
             :components ((:file "tests")))))
