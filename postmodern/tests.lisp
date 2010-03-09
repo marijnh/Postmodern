@@ -153,6 +153,20 @@
     (is (not (select-dao 'test-data)))
     (execute (:drop-table 'dao-test))))
 
+(test save-dao
+  (with-test-connection
+    (execute (dao-table-definition 'test-data))
+    (let ((dao (make-instance 'test-data :a "quux")))
+      (is (save-dao dao))
+      (setf (test-a dao) "bar")
+      (is (not (save-dao dao)))
+      (is (equal (test-a (get-dao 'test-data (test-id dao))) "bar"))
+      (signals database-error
+        (with-transaction () (save-dao dao)))
+      (with-transaction ()
+        (is (not (save-dao/transaction dao)))))
+    (execute (:drop-table 'dao-test))))
+
 (defclass test-oid ()
   ((oid :col-type integer :ghost t :accessor test-oid)
    (a :col-type string :initarg :a :accessor test-a)

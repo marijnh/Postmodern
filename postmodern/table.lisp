@@ -270,7 +270,13 @@ arguments.")
 (defun save-dao (dao)
   "Try to insert the content of a DAO. If this leads to a unique key
 violation, update it instead."
-  (handler-case (with-transaction () (insert-dao dao) t)
+  (handler-case (progn (insert-dao dao) t)
+    (cl-postgres-error:unique-violation ()
+      (update-dao dao)
+      nil)))
+
+(defun save-dao/transaction (dao)
+  (handler-case (with-savepoint save-dao/transaction (insert-dao dao) t)
     (cl-postgres-error:unique-violation ()
       (update-dao dao)
       nil)))

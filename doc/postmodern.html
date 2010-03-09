@@ -652,7 +652,7 @@
     error when no row matching the DAO exists.</p>
 
     <p class="def">
-      <span>method</span>
+      <span>function</span>
       <a name="save-dao"></a>
       save-dao (dao)
       <br/>&#8594; boolean
@@ -666,6 +666,24 @@
     other process deletes the row at just the right moment, the update
     fails as well. Returns a boolean telling you whether a new row was
     inserted.</p>
+
+    <p class="desc">This function is unsafe to use inside of a
+    transaction &#x2015; when a row with the given keys already
+    exists, the transaction will be abandoned. Use <a
+    href="#save-dao/transaction"><code>save-dao/transaction</code></a>
+    instead in such a situation.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="save-dao/transaction"></a>
+      save-dao/transaction (dao)
+      <br/>&#8594; boolean
+    </p>
+
+    <p class="desc">Acts exactly like <a
+    href="#save-dao"><code>save-dao</code></a>, except that it
+    protects its attempt to insert the object with a rollback point,
+    so that a failure will not abort the transaction.</p>
 
     <p class="def">
       <span>method</span>
@@ -875,6 +893,7 @@
       <li><a href="#reset-table">reset-table</a></li>
       <li><a href="#rollback-savepoint">rollback-savepoint</a></li>
       <li><a href="#save-dao">save-dao</a></li>
+      <li><a href="#save-dao/transaction">save-dao/transaction</a></li>
       <li><a href="#select-dao">select-dao</a></li>
       <li><a href="#sequence-exists-p">sequence-exists-p</a></li>
       <li><a href="#sequence-next">sequence-next</a></li>
