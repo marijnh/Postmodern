@@ -744,7 +744,7 @@ to runtime. Used to create stored procedures."
 (def-drop-op :drop-index "INDEX")
 (def-drop-op :drop-sequence "SEQUENCE")
 (def-drop-op :drop-view "VIEW")
-(def-drop-op :drop-enum "ENUM")
+(def-drop-op :drop-type "TYPE")
 (def-drop-op :drop-rule "RULE")
 
 (defun dequote (val)
