@@ -675,7 +675,7 @@ to runtime. Used to create stored procedures."
           `(,(to-sql-name (car target)) "(" ,@(sql-expand-names (cdr target)) ")")
           `(,(to-sql-name target)))
     " ON DELETE " ,(expand-foreign-on* on-delete)
-    " ON UPDATE " ,(expand-foreign-on* on-update))))
+    " ON UPDATE " ,(expand-foreign-on* on-update)))
 
 (defun expand-table-constraint (option args)
   (case option
