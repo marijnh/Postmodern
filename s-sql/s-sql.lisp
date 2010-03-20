@@ -660,21 +660,22 @@ to runtime. Used to create stored procedures."
                      type 'db-null))
       (values type nil)))
 
+(defun expand-foreign-on* (action)
+  (case action
+    (:restrict "RESTRICT")
+    (:set-null "SET NULL")
+    (:set-default "SET DEFAULT")
+    (:cascade "CASCADE")
+    (:no-action "NO ACTION")
+    (t (sql-error "Unsupported action for foreign key: ~A" action))))
+
 (defun %build-foreign-reference (target on-delete on-update)
-  (flet ((reference-action (action)
-           (case action
-             (:restrict "RESTRICT")
-             (:set-null "SET NULL")
-             (:set-default "SET DEFAULT")
-             (:cascade "CASCADE")
-             (:no-action "NO ACTION")
-             (t (sql-error "Unsupported action for foreign key: ~A" action)))))
-    `(" REFERENCES "
-      ,@(if (consp target)
-            `(,(to-sql-name (car target)) "(" ,@(sql-expand-names (cdr target)) ")")
-            `(,(to-sql-name target)))
-      " ON DELETE " ,(reference-action on-delete)
-      " ON UPDATE " ,(reference-action on-update))))
+  `(" REFERENCES "
+    ,@(if (consp target)
+          `(,(to-sql-name (car target)) "(" ,@(sql-expand-names (cdr target)) ")")
+          `(,(to-sql-name target)))
+    " ON DELETE " ,(expand-foreign-on* on-delete)
+    " ON UPDATE " ,(expand-foreign-on* on-update))))
 
 (defun expand-table-constraint (option args)
   (case option

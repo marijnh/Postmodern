@@ -830,7 +830,7 @@
     <p class="def">
       <a name="!foreign"></a>
       <span>function</span>
-      !foreign (target-table columns &amp;optional target-columns)
+      !foreign (target-table columns &amp;optional target-columns &amp;key on-delete on-update)
     </p>
 
     <p class="desc">Add a foreign key to the table being defined.
@@ -839,6 +839,14 @@
     <em>this</em> table, and, if the columns have different names in
     the table referred to, <code>target-columns</code> should be
     another list of names or single name for the target table.</p>
+
+    <p class="desc">The <code>on-delete</code> and
+    <code>on-update</code> arguments can be used to specify ON DELETE
+    and ON UPDATE actions, as per the keywords allowed in <a
+    href="s-sql.html#create-table"><code>create-table</code></a>. Note
+    that they are not really &amp;key arguments, but rather are picked
+    out of a &amp;rest arg at runtime, so that they can be specified
+    even when <code>target-columns</code> is not given.</p>
 
     <h2 id="index">Symbol-index</h2>
 
