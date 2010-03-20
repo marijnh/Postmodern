@@ -16,6 +16,9 @@
 (defmacro with-test-connection (&body body)
   `(with-connection *test-connection* ,@body))
 
+(defmacro protect (&body body)
+  `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
+
 (test connect-sanely
   (with-test-connection 
     (is (not (null *database*)))))
@@ -41,13 +44,15 @@
 
 (test simple-query
   (with-test-connection
-    (destructuring-bind (a b c d e)
-        (query (:select 22 (:type 44.5 double-precision) "abcde" t (:type 9/2 (numeric 5 2))) :row)
+    (destructuring-bind (a b c d e f)
+        (query (:select 22 (:type 44.5 double-precision) "abcde" t (:type 9/2 (numeric 5 2))
+                        (:[] #("A" "B") 2)) :row)
       (is (eql a 22))
       (is (eql b 44.5d0))
       (is (string= c "abcde"))
       (is (eql d t))
-      (is (eql e 9/2)))))
+      (is (eql e 9/2))
+      (is (equal f "B")))))
 
 (test reserved-words
   (with-test-connection
@@ -65,22 +70,24 @@
 (test table
   (with-test-connection
     (execute (:create-table test-data ((a :type integer :primary-key t) (b :type real) (c :type (or text db-null))) (:unique c)))
-    (is (table-exists-p 'test-data))
-    (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
-    (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null))
-    (is (equal (query (:order-by (:select '* :from 'test-data) 'a))
-               '((1 5.4 "foobar")
-                 (2 88.0 :null))))
-    (execute (:drop-table 'test-data))
+    (protect
+      (is (table-exists-p 'test-data))
+      (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
+      (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null))
+      (is (equal (query (:order-by (:select '* :from 'test-data) 'a))
+                 '((1 5.4 "foobar")
+                   (2 88.0 :null))))
+      (execute (:drop-table 'test-data)))
     (is (not (table-exists-p 'test-data)))))
 
 (test sequence
   (with-test-connection
     (execute (:create-sequence 'my-seq :increment 4 :start 10))
-    (is (sequence-exists-p 'my-seq))
-    (is (= (sequence-next 'my-seq) 10))
-    (is (= (sequence-next 'my-seq) 14))
-    (execute (:drop-sequence 'my-seq))
+    (protect
+      (is (sequence-exists-p 'my-seq))
+      (is (= (sequence-next 'my-seq) 10))
+      (is (= (sequence-next 'my-seq) 14))
+      (execute (:drop-sequence 'my-seq)))
     (is (not (sequence-exists-p 'my-seq)))))
 
 (test prepare
@@ -107,22 +114,23 @@
 (test transaction
   (with-test-connection
     (execute (:create-table test-data ((value :type integer))))
-    (ignore-errors
-      (with-transaction ()
-        (execute (:insert-into 'test-data :set 'value 2))
-        (error "no wait")))
-    (is (length (query (:select '* :from 'test-data))) 0)
-    (ignore-errors
+    (protect
+      (ignore-errors
+        (with-transaction ()
+          (execute (:insert-into 'test-data :set 'value 2))
+          (error "no wait")))
+      (is (length (query (:select '* :from 'test-data))) 0)
+      (ignore-errors
+        (with-transaction (transaction)
+          (execute (:insert-into 'test-data :set 'value 2))
+          (commit-transaction transaction)
+          (error "no wait!!")))
+      (is (length (query (:select '* :from 'test-data))) 1)
       (with-transaction (transaction)
-        (execute (:insert-into 'test-data :set 'value 2))
-        (commit-transaction transaction)
-        (error "no wait!!")))
-    (is (length (query (:select '* :from 'test-data))) 1)
-    (with-transaction (transaction)
-      (execute (:insert-into 'test-data :set 'value 44))
-      (abort-transaction transaction))
-    (is (length (query (:select '* :from 'test-data))) 1)
-    (execute (:drop-table 'test-data))))
+        (execute (:insert-into 'test-data :set 'value 44))
+        (abort-transaction transaction))
+      (is (length (query (:select '* :from 'test-data))) 1)
+      (execute (:drop-table 'test-data)))))
 
 (defclass test-data ()
   ((id :col-type serial :initarg :id :accessor test-id)
@@ -135,37 +143,39 @@
 (test dao-class
   (with-test-connection
     (execute (dao-table-definition 'test-data))
-    (is (member :dao-test (list-tables)))
-    (is (null (get-dao 'test-data 1)))
-    (let ((dao (make-instance 'test-data :a "quux")))
-      (insert-dao dao)
-      (is (eql (test-id dao) 1))
-      (is (dao-exists-p dao)))
-    (let ((dao (get-dao 'test-data 1)))
-      (is (not (null dao)))
-      (setf (test-b dao) t)
-      (update-dao dao))
-    (let ((dao (get-dao 'test-data 1)))
-      (is (not (null dao)))
-      (is (string= (test-a dao) "quux"))
-      (is (eq (test-b dao) t))
-      (delete-dao dao))
-    (is (not (select-dao 'test-data)))
-    (execute (:drop-table 'dao-test))))
+    (protect
+      (is (member :dao-test (list-tables)))
+      (is (null (get-dao 'test-data 1)))
+      (let ((dao (make-instance 'test-data :a "quux")))
+        (insert-dao dao)
+        (is (eql (test-id dao) 1))
+        (is (dao-exists-p dao)))
+      (let ((dao (get-dao 'test-data 1)))
+        (is (not (null dao)))
+        (setf (test-b dao) t)
+        (update-dao dao))
+      (let ((dao (get-dao 'test-data 1)))
+        (is (not (null dao)))
+        (is (string= (test-a dao) "quux"))
+        (is (eq (test-b dao) t))
+        (delete-dao dao))
+      (is (not (select-dao 'test-data)))
+      (execute (:drop-table 'dao-test)))))
 
 (test save-dao
   (with-test-connection
     (execute (dao-table-definition 'test-data))
-    (let ((dao (make-instance 'test-data :a "quux")))
-      (is (save-dao dao))
-      (setf (test-a dao) "bar")
-      (is (not (save-dao dao)))
-      (is (equal (test-a (get-dao 'test-data (test-id dao))) "bar"))
-      (signals database-error
-        (with-transaction () (save-dao dao)))
-      (with-transaction ()
-        (is (not (save-dao/transaction dao)))))
-    (execute (:drop-table 'dao-test))))
+    (protect
+      (let ((dao (make-instance 'test-data :a "quux")))
+        (is (save-dao dao))
+        (setf (test-a dao) "bar")
+        (is (not (save-dao dao)))
+        (is (equal (test-a (get-dao 'test-data (test-id dao))) "bar"))
+        (signals database-error
+          (with-transaction () (save-dao dao)))
+        (with-transaction ()
+          (is (not (save-dao/transaction dao)))))
+      (execute (:drop-table 'dao-test)))))
 
 (defclass test-oid ()
   ((oid :col-type integer :ghost t :accessor test-oid)
@@ -177,12 +187,13 @@
 (test dao-class-oid
   (with-test-connection
     (execute (concatenate 'string (dao-table-definition 'test-oid) "with (oids=true)"))
-    (let ((dao (make-instance 'test-oid :a "a" :b "b")))
-      (insert-dao dao)
-      (is-true (integerp (test-oid dao)))
-      (let ((back (get-dao 'test-oid "a")))
-        (is (test-oid dao) (test-oid back))
-        (setf (test-b back) "c")
-        (update-dao back))
-      (is (test-b (get-dao 'test-oid "a")) "c"))
-    (execute (:drop-table 'test-oid))))
+    (protect
+      (let ((dao (make-instance 'test-oid :a "a" :b "b")))
+        (insert-dao dao)
+        (is-true (integerp (test-oid dao)))
+        (let ((back (get-dao 'test-oid "a")))
+          (is (test-oid dao) (test-oid back))
+          (setf (test-b back) "c")
+          (update-dao back))
+        (is (test-b (get-dao 'test-oid "a")) "c"))
+      (execute (:drop-table 'test-oid)))))

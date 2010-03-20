@@ -37,6 +37,14 @@ textual format for binary data."
                     (princ quotient stream)
                     (setf remainder rem)))))))
 
+(defun write-quoted (string out)
+  (write-char #\" out)
+  (loop :for ch :across string :do
+     (when (member ch '(#\" #\\))
+       (write-char #\\ out))
+     (write-char ch out))
+  (write-char #\" out))
+
 (defgeneric to-sql-string (arg)
   (:documentation "Turn a lisp value into a string containing its SQL
 representation. Returns an optional second value that indicates
@@ -44,8 +52,17 @@ whether the string should be escaped before being put into a query.")
   (:method ((arg string))
     (values arg t))
   (:method ((arg vector))
-    (assert (typep arg '(vector (unsigned-byte 8))))
-    (values (escape-bytes arg) t))
+    (if (typep arg '(vector (unsigned-byte 8)))
+        (values (escape-bytes arg) t)
+        (with-output-to-string (out)
+          (write-char #\{ out)
+          (loop :for sep := "" :then #\, :for x :across arg :do
+             (princ sep out)
+             (multiple-value-bind (string escape) (to-sql-string x)
+               (if escape
+                   (write-quoted string out)
+                   (write-string string out))))
+          (write-char #\} out))))
   (:method ((arg integer))
     (princ-to-string arg))
   (:method ((arg float))

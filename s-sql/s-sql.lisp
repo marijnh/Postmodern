@@ -222,6 +222,8 @@ name.")
   (:method ((lisp-type (eql 'serial8)) &rest args)
     (declare (ignore args))
     "SERIAL8")
+  (:method ((lisp-type (eql 'array)) &rest args)
+    (format nil "~a[]" (to-type-name (car args))))
   (:method ((lisp-type (eql 'db-null)) &rest args)
     (declare (ignore args))
     (sql-error "Bad use of ~s." 'db-null)))
@@ -263,13 +265,23 @@ name.")
 (defmethod cl-postgres:to-sql-string ((value symbol))
   (to-sql-name value))
 
-(defun sql-ize (value)
-  "Get the representation of a Lisp value so that it can be used in a
-query."
-  (multiple-value-bind (string escape) (cl-postgres:to-sql-string value)
-    (if escape
-        (sql-escape-string string (and (not (eq escape t)) escape))
-        string)))
+(defgeneric sql-ize (arg)
+  (:documentation "Get the representation of a Lisp value so that it
+can be used in a query.")
+  (:method ((arg symbol))
+    (if (or (typep arg 'boolean) (eq arg :null))
+        (call-next-method)
+        (to-sql-name arg)))
+  (:method ((arg vector))
+    (if (or (typep arg '(vector (unsigned-byte 8)))
+            (stringp arg))
+        (call-next-method)
+        (format nil "ARRAY[~{~A~^, ~}]" (map 'list 'sql-ize arg))))
+  (:method ((arg t))
+    (multiple-value-bind (string escape) (cl-postgres:to-sql-string arg)
+      (if escape
+          (sql-escape-string string (and (not (eq escape t)) escape))
+          string))))
 
 (defparameter *expand-runtime* nil)
 
@@ -450,6 +462,9 @@ with a given arity."
 (def-sql-op :distinct (&rest forms)
   `("DISTINCT(" ,@(sql-expand-list forms) ")"))
 
+(def-sql-op :any* (query)
+  `("ANY(" ,@(sql-expand query) ")"))
+
 (def-sql-op :any (query)
   `("ANY " ,@(sql-expand query)))
 
@@ -482,6 +497,9 @@ with a given arity."
     ,@(loop :for (test expr) :in clauses
             :append `(" WHEN " ,@(sql-expand test) " THEN " ,@(sql-expand expr)))
     " END"))
+
+(def-sql-op :[] (form subscript)
+  `("(" ,@(sql-expand form) ")[" ,@(sql-expand subscript) "]"))
 
 ;; This one has two interfaces. When the elements are known at
 ;; compile-time, they can be given as multiple arguments to the
@@ -769,7 +787,7 @@ to runtime. Used to create stored procedures."
   `("CREATE VIEW " ,(to-sql-name name) " AS " ,@(sql-expand query)))
 
 (def-sql-op :create-enum (name members)
-  `("CREATE TYPE " ,@(sql-expand name) " AS ENUM (" ,@(sql-expand-list (mapcar #'cl-postgres:to-sql-string members)) ") "))
+  `("CREATE TYPE " ,@(sql-expand name) " AS ENUM (" ,@(sql-expand-list (mapcar #'sql-ize members)) ") "))
 
 ;;; http://www.postgresql.org/docs/8.3/interactive/sql-createdomain.html
 (def-sql-op :create-domain (name &rest args)

@@ -73,6 +73,15 @@
     (is (equal (exec-prepared connection "test" '(42 nil "foo") 'list-row-reader)
                '((42 nil "foo"))))))
 
+(test prepared-array-param
+  (with-test-connection
+    (prepare-query connection "test" "select ($1::int[])[2]")
+    (is (equal (exec-prepared connection "test" '((1 2 3)) 'list-row-reader)
+               '((2))))
+    (prepare-query connection "test2" "select ($1::text[])[2]")
+    (is (equal (exec-prepared connection "test2" '(("A" "B" "C")) 'list-row-reader)
+               '(("B"))))))
+
 (test blob
   (with-test-connection
     (let* ((str "foobar42")
