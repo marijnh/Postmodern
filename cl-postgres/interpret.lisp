@@ -169,6 +169,57 @@ used. Correct for sign bit when using integer format."
              (multiple-value-bind (sec us) (floor useconds 1000000)
                `((:months ,months) (:days ,days) (:seconds ,sec) (:useconds ,us)))))
 
+;; Readers for a few of the array types
+
+(defun read-array-value (transform)
+  (declare #.*optimize*)
+  (lambda (value)
+    (declare (type string value))
+    (let ((pos 1))
+      (declare (type fixnum pos))
+      (labels ((word ()
+                 (if (char= (char value pos) #\")
+                     (with-output-to-string (out)
+                       (loop :with escaped := nil :for ch := (char value (incf pos)) :do
+                          (when (and (char= ch #\") (not escaped)) (return))
+                          (setf escaped (and (not escaped) (char= ch #\\)))
+                          (unless escaped (write-char ch out)))
+                       (incf pos))
+                     (let ((start pos))
+                       (loop :for ch := (char value pos) :do
+                          (when (or (char= ch #\,) (char= ch #\}))
+                            (return (subseq value start pos)))
+                          (incf pos)))))
+               (interpret (word)
+                 (if (string= word "NULL") :null (funcall transform word))))
+        (coerce (loop :for w := (word) :collect (interpret w) :into ws :do
+                   (unless (< (incf pos) (length value)) (return ws)))
+                'simple-vector)))))
+
+;; Integral array types
+(let ((read-integral (read-array-value #'parse-integer)))
+  (dolist (oid '(1561 1005 1007 1016 1028))
+    (set-sql-reader oid read-integral)))
+
+;; String array types
+(let ((read-strings (read-array-value #'identity)))
+  (dolist (oid '(1014 1002 1009 1015))
+    (set-sql-reader oid read-strings)))
+
+;; Floating point arrays
+(set-sql-reader 1231 (read-array-value 'read-from-string))
+(set-sql-reader 1021 (read-array-value (lambda (x) (float (read-from-string x)))))
+;; Bit of a hack, really. CL needs a proper float parser.
+(flet ((read-as-double (str)
+         (loop :for ch :across str :for i :from 0 :do
+            (when (char= ch #\e) (setf (char str i) #\d)))
+         (coerce (read-from-string str) 'double-float)))
+  (set-sql-reader 1022 (read-array-value #'read-as-double)))
+
+;; Boolean arrays
+(flet ((read-as-bool (str) (equal str "t")))
+  (set-sql-reader 1000 (read-array-value #'read-as-bool)))
+
 ;; Working with tables.
 
 (defun copy-sql-readtable (&optional (table *sql-readtable*))
