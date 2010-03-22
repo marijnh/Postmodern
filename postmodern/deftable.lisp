@@ -72,7 +72,7 @@ Pass a table the index refers to, a list of fields or single field in
 *this* table, and, if the fields have different names in the table
 referred to, another field or list of fields for the target table."
   (let* ((args target-fields/on-delete/on-update)
-         (target-fields (and args (listp (car args)) (pop args))))
+         (target-fields (and args (not (keywordp (car args))) (pop args))))
     (labels ((fkey-name (target fields)
                (to-sql-name (format nil "~a_~a_~{~a~^_~}_foreign" *table-name* target fields))))
       (unless (listp fields) (setf fields (list fields)))
