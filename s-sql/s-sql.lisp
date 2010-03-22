@@ -262,9 +262,6 @@ name.")
                              (otherwise char)))))
       (princ #\'))))
 
-(defmethod cl-postgres:to-sql-string ((value symbol))
-  (to-sql-name value))
-
 (defgeneric sql-ize (arg)
   (:documentation "Get the representation of a Lisp value so that it
 can be used in a query.")
@@ -788,7 +785,8 @@ to runtime. Used to create stored procedures."
   `("CREATE VIEW " ,(to-sql-name name) " AS " ,@(sql-expand query)))
 
 (def-sql-op :create-enum (name members)
-  `("CREATE TYPE " ,@(sql-expand name) " AS ENUM (" ,@(sql-expand-list (mapcar #'sql-ize members)) ") "))
+  (let ((strings (loop :for m :in members :collect (etypecase m (symbol (string-downcase m)) (string m)))))
+    `("CREATE TYPE " ,@(sql-expand name) " AS ENUM (" ,@(sql-expand-list strings) ")")))
 
 ;;; http://www.postgresql.org/docs/8.3/interactive/sql-createdomain.html
 (def-sql-op :create-domain (name &rest args)
