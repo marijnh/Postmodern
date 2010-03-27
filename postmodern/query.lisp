@@ -9,6 +9,14 @@
                          :for symbol :in symbols
                          :collect (cons symbol (next-field field))))))
 
+;; Like symbol-alist-row-reader, but return plist
+(def-row-reader symbol-plist-row-reader (fields)
+  (let ((symbols (map 'list (lambda (desc) (from-sql-name (field-name desc))) fields)))
+    (loop :while (next-row)
+          :collect (loop :for field :across fields
+                         :for symbol :in symbols
+                         :collect symbol :collect (next-field field)))))
+
 ;; A row-reader for reading only a single column, and returning a list
 ;; of single values.
 (def-row-reader column-row-reader (fields)
@@ -26,6 +34,8 @@
     (:alist symbol-alist-row-reader single-row)
     (:str-alists alist-row-reader all-rows)
     (:str-alist alist-row-reader single-row)
+    (:plists symbol-plist-row-reader nil)
+    (:plist symbol-plist-row-reader t)
     (:column column-row-reader all-rows)
     (:single column-row-reader single-row)
     (:single! column-row-reader single-row!))
