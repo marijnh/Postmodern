@@ -7,6 +7,10 @@
    (column-map :reader dao-column-map))
   (:documentation "Metaclass for database-access-object classes."))
 
+(defmethod dao-keys :before ((class dao-class))
+  (unless (class-finalized-p class)
+    (finalize-inheritance class)))
+
 (defmethod validate-superclass ((class dao-class) (super-class standard-class))
   t)
 
