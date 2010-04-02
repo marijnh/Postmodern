@@ -163,18 +163,15 @@
     <h2><a name="dependencies"></a>Dependencies</h2>
 
     <p>The library depends on <a
-    href="http://cliki.net/usocket">usocket</a>, <a
+    href="http://cliki.net/usocket">usocket</a> (except on SBCL and
+    ACL, where the built-in socket library is used), <a
     href="http://www.cliki.net/CL-MD5">md5</a>, <a
     href="http://common-lisp.net/project/closer/closer-mop.html">closer-mop</a>,
     <a
-    href="http://common-lisp.net/project/ieee-floats">ieee-floats</a>,
-    <a
-    href="http://common-lisp.net/project/trivial-utf-8">trivial-utf-8</a>
-    if you want Unicode support, <a
     href="http://common-lisp.net/project/bordeaux-threads">bordeaux-threads</a>
     if you want thread-safe connection pools, and <a
-    href="http://common-lisp.net/project/cl-plus-ssl/">CL+SSL</a> for
-    SSL connections.</p>
+    href="http://common-lisp.net/project/cl-plus-ssl/">CL+SSL</a> when
+    SSL connections are needed.</p>
 
     <p>Postmodern itself is split into four different packages, some
     of which can be used independently. <a

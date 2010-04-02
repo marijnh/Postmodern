@@ -10,17 +10,19 @@
 (defparameter *string-file* (if *unicode* "strings-utf-8" "strings-ascii"))
 
 (defsystem :cl-postgres
-  :depends-on (:md5 #-(or allegro sbcl) :usocket :ieee-floats
-                    #+(and sbcl unix) :sb-bsd-sockets . #.(if *unicode* '(:trivial-utf-8)))
+  :depends-on (:md5 #-(or allegro sbcl) :usocket
+                    #+sbcl :sb-bsd-sockets)
   :components 
   ((:module :cl-postgres
-            :components ((:file "package")
+            :components ((:file "trivial-utf-8")
+                         (:file "ieee-floats")
+                         (:file "package")
                          (:file "errors" :depends-on ("package"))
                          (:file "sql-string" :depends-on ("package"))
-                         (:file #.*string-file* :depends-on ("package"))
+                         (:file #.*string-file* :depends-on ("package" "trivial-utf-8"))
                          (:file "communicate" :depends-on (#.*string-file* "sql-string"))
                          (:file "messages" :depends-on ("communicate"))
-                         (:file "interpret" :depends-on ("communicate"))
+                         (:file "interpret" :depends-on ("communicate" "ieee-floats"))
                          (:file "protocol" :depends-on ("interpret" "messages" "errors"))
                          (:file "public" :depends-on ("protocol"))))))
 
