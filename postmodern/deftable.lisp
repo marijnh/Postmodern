@@ -7,8 +7,20 @@
 (setf (documentation '*table-name* 'variable)
       "Used inside deftable to find the symbol naming the table being defined.")
 
-(defvar *tables* (make-hash-table)
-  "Unexported table containing the known table definitions.")
+(defvar *tables* ()
+  "Unexported ordered list containing the known table definitions.")
+
+(defun add-table-definition (symbol func)
+  (let (last-cons)
+    (loop :for cons :on *tables* :do
+       (when (eq (caar cons) symbol)
+         (setf (cdar cons) func)
+         (return-from add-table-definition (values)))
+       (setf last-cons cons))
+    (if last-cons
+        (setf (cdr last-cons) (list (cons symbol func)))
+        (setf *tables* (list (cons symbol func)))))
+  (values))
 
 (defmacro deftable (name &body definitions)
   "Define a table. name can be either a symbol or a (symbol string)
@@ -21,33 +33,30 @@ and *table-symbol* are bound to the relevant values."
       (if (consp name) (values-list name) (values name (to-sql-name name nil)))
     (flet ((check-s-sql (form)
              (if (and (consp form) (keywordp (car form))) (list 'sql form) form)))
-      `(progn
-         (setf (gethash ',symbol *tables*)
-               (lambda ()
-                 (let ((*table-name* ,name) (*table-symbol* ',symbol))
-                   (dolist (stat (list ,@(mapcar #'check-s-sql definitions)))
-                     (execute stat)))))
-         (values)))))
+      `(add-table-definition
+        ',symbol
+        (lambda ()
+          (let ((*table-name* ,name) (*table-symbol* ',symbol))
+            (dolist (stat (list ,@(mapcar #'check-s-sql definitions)))
+              (execute stat))))))))
 
 (defun create-table (name)
   "Create a defined table."
   (with-transaction ()
-    (funcall (or (gethash name *tables*)
+    (funcall (or (cdr (assoc name *tables*))
 		 (error "No table '~a' defined." name)))
     (values)))
 
 (defun create-all-tables ()
   "Create all defined tables."
-  (maphash (lambda (name def) (declare (ignore name)) (funcall def)) *tables*))
+  (loop :for (nil . def) :in *tables* :do (funcall def)))
 
 (defun create-package-tables (package)
   "Create all tables whose identifying symbol is interned in the given
 package."
   (let ((package (find-package package)))
-    (maphash (lambda (name def)
-               (when (eq (symbol-package name) package)
-                 (funcall def)))
-             *tables*)))
+    (loop :for (sym . def) :in *tables* :do
+       (when (eq (symbol-package sym) package) (funcall def)))))
 
 (labels ((index-name (fields)
            (make-symbol (format nil "~a-~{~a~^-~}-index" *table-name* fields)))
