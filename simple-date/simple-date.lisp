@@ -166,7 +166,7 @@ time of day is not important."))
 (defun day-of-week (date)
   "Returns the weekday of the given date as a number between 0 and 6,
 0 being Sunday and 6 being Saturday."
-  (+ (mod (+ (days date) 2) 7)))
+  (+ (mod (+ (days date) 3) 7)))
 
 (defclass timestamp (date)
   ((millisecs :initarg :ms :accessor millisecs))
