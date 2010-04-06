@@ -33,6 +33,12 @@ currently connected."
 
 (defun open-database (database user password host &optional (port 5432) (use-ssl :no))
   "Create and connect a database object. use-ssl may be :no, :yes, or :try."
+  (check-type database string)
+  (check-type user string)
+  (check-type password (or null string))
+  (check-type host (or string (eql :unix)) "a string or :unix")
+  (check-type port (integer 1 65535) "an integer from 1 to 65535")
+  (check-type use-ssl (member :no :yes :try) ":no, :yes, or :try")
   (let ((conn (make-instance 'database-connection :host host :port port :user user
                              :password password :socket nil :db database :ssl use-ssl)))
     (initiate-connection conn)

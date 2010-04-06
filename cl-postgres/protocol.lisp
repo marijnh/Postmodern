@@ -143,10 +143,12 @@ this raises a condition."
             (ecase type
               (0 (return))
               (2 (error 'database-error :message "Unsupported Kerberos authentication requested."))
-              (3 (plain-password-message socket password)
+              (3 (unless password (error "Server requested plain-password authentication, but no password was given."))
+                 (plain-password-message socket password)
                  (force-output socket))
               (4 (error 'database-error :message "Unsupported crypt authentication requested."))
-              (5 (md5-password-message socket password user (read-bytes socket 4))
+              (5 (unless password (error "Server requested md5-password authentication, but no password was given."))
+                 (md5-password-message socket password user (read-bytes socket 4))
                  (force-output socket))
               (6 (error 'database-error :message "Unsupported SCM authentication requested.")))))))
   (loop
