@@ -45,9 +45,13 @@ currently connected."
     conn))
 
 #+(and sbcl unix)
+(defparameter *unix-socket-dir* #-freebsd "/var/run/postgresql/" #+freebsd "/tmp/"
+              "Directory where the Unix domain socket for Postgres be found.")
+
+#+(and sbcl unix)
 (defun sb-unix-socket-connect (port)
   (let ((sock (make-instance 'sb-bsd-sockets:local-socket :type :stream))
-        (addr (format nil "/var/run/postgresql/.s.PGSQL.~a" port)))
+        (addr (format nil "~a.s.PGSQL.~a" *unix-socket-dir* port)))
     (sb-bsd-sockets:socket-connect sock addr)
     (sb-bsd-sockets:socket-make-stream
      sock :input t :output t :element-type '(unsigned-byte 8))))
