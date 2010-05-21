@@ -230,7 +230,7 @@ values.)"
                             (push default defaults)))
                 ;; If there are any unbound, defaulted slots, fetch their content.
                 (when names
-                  (loop :for value :in (query (sql-compile (cons :select defaults)))
+                  (loop :for value :in (query (sql-compile (cons :select defaults) :list))
                         :for slot-name :in names
                         :do (setf (slot-value object slot-name) value)))))
             (defmethod fetch-defaults ((object target-class))
