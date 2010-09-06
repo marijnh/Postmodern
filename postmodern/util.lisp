@@ -83,7 +83,7 @@ before the body unwinds."
     `(let ((,name (make-instance 'transaction-handle)))
       (execute "BEGIN")
       (unwind-protect
-           (prog1 (progn ,@body)
+           (multiple-value-prog1 (progn ,@body)
              (commit-transaction ,name))
         (abort-transaction ,name)))))
 
@@ -117,7 +117,7 @@ variable that can be used to release or rolled back before the body
 unwinds, and the SQL name of the savepoint."
   `(let ((,name (make-instance 'savepoint-handle :name (to-sql-name ',name))))
      (execute (format nil "SAVEPOINT ~A" (savepoint-name ,name)))
-     (unwind-protect (prog1 (progn ,@body)
+     (unwind-protect (multiple-value-prog1 (progn ,@body)
                        (release-savepoint ,name))
        (rollback-savepoint ,name))))
 
