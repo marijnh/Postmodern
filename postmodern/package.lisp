@@ -32,7 +32,7 @@
    #:\!index #:\!unique-index #:\!foreign
 
    ;; Reduced S-SQL interface
-   #:sql #:sql-compile
+   #:sql #:sql-compile #:sql-fmt
    #:smallint #:bigint #:numeric #:real #:double-precision
    #:bytea #:text #:varchar
    #:*escape-sql-names-p* #:sql-escape-string #:register-sql-operators
