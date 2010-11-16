@@ -12,6 +12,7 @@
            #:sql-type-name
            #:*standard-sql-strings*
            #:sql-escape-string
+           #:sql-escape
            #:from-sql-name
            #:to-sql-name
            #:*escape-sql-names-p*
@@ -262,7 +263,7 @@ name.")
                              (otherwise char)))))
       (princ #\'))))
 
-(defgeneric sql-ize (arg)
+(defgeneric sql-escape (arg)
   (:documentation "Get the representation of a Lisp value so that it
 can be used in a query.")
   (:method ((arg symbol))
@@ -273,7 +274,7 @@ can be used in a query.")
     (if (or (typep arg '(vector (unsigned-byte 8)))
             (stringp arg))
         (call-next-method)
-        (format nil "ARRAY[~{~A~^, ~}]" (map 'list 'sql-ize arg))))
+        (format nil "ARRAY[~{~A~^, ~}]" (map 'list 'sql-escape arg))))
   (:method ((arg t))
     (multiple-value-bind (string escape) (cl-postgres:to-sql-string arg)
       (if escape
@@ -288,17 +289,17 @@ to strings \(which will form an SQL query when concatenated)."
   (cond ((and (consp arg) (keywordp (first arg)))
          (expand-sql-op (car arg) (cdr arg)))
         ((and (consp arg) (eq (first arg) 'quote))
-         (list (sql-ize (second arg))))
+         (list (sql-escape (second arg))))
         ((and (consp arg) *expand-runtime*)
          (expand-sql-op (intern (symbol-name (car arg)) :keyword) (cdr arg)))
         ((and (eq arg '$$) *expand-runtime*) '($$))
         (*expand-runtime*
-         (list (sql-ize arg)))
+         (list (sql-escape arg)))
         ((or (consp arg)
              (and (symbolp arg)
                   (not (or (keywordp arg) (eq arg t) (eq arg nil)))))
-         (list `(sql-ize ,arg)))
-        (t (list (sql-ize arg)))))
+         (list `(sql-escape ,arg)))
+        (t (list (sql-escape arg)))))
 
 (defun sql-expand-list (elts &optional (sep ", "))
   "Expand a list of elements, adding a separator in between them."
@@ -345,7 +346,7 @@ to strings \(which will form an SQL query when concatenated)."
     (lambda (&rest args)
       (with-output-to-string (*standard-output*)
         (dolist (element compiled)
-          (princ (if (eq element '$$) (sql-ize (pop args)) element)))))))
+          (princ (if (eq element '$$) (sql-escape (pop args)) element)))))))
 
 ;; The reader syntax.
 
@@ -511,7 +512,7 @@ with a given arity."
             `("(" ,@expanded ")")
             `("(" (let ((elements ,(car elements)))
                     (if (null elements) "NULL"
-                        (implode ", " (mapcar 'sql-ize elements)))) ")")))))
+                        (implode ", " (mapcar 'sql-escape elements)))) ")")))))
 
 (def-sql-op :dot (&rest args)
   (sql-expand-list args "."))

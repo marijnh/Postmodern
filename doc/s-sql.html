@@ -92,6 +92,19 @@
     a string for inclusion in a PostgreSQL query.</p>
 
     <p class="def">
+      <span>method</span>
+      <a name="sql-escape"></a>
+      sql-escape (value)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">A generalisation of <a
+    href="#sql-escape-string"><code>sql-escape-string</code></a>.
+    Looks at the type of the value passed, and properly writes it out
+    it for inclusion in an SQL query. Symbols will be converted to SQL
+    names.</p>
+
+    <p class="def">
       <span>variable</span>
       <a name="*standard-sql-strings*"></a>
       *standard-sql-strings*
@@ -695,6 +708,7 @@
       <li><a href="#types">smallint</a></li>
       <li><a href="#sql">sql</a></li>
       <li><a href="#sql-compile">sql-compile</a></li>
+      <li><a href="#sql-escape">sql-escape</a></li>
       <li><a href="#sql-escape-string">sql-escape-string</a></li>
       <li><a href="#sql-template">sql-template</a></li>
       <li><a href="#sql-type-name">sql-type-name</a></li>

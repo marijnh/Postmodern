@@ -35,7 +35,7 @@
    #:sql #:sql-compile
    #:smallint #:bigint #:numeric #:real #:double-precision
    #:bytea #:text #:varchar
-   #:*escape-sql-names-p* #:sql-escape-string #:register-sql-operators
+   #:*escape-sql-names-p* #:sql-escape-string #:sql-escape #:register-sql-operators
    #:sql-error
 
    ;; Condition type from cl-postgres
