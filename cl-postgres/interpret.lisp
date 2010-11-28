@@ -175,26 +175,33 @@ used. Correct for sign bit when using integer format."
   (declare #.*optimize*)
   (lambda (value)
     (declare (type string value))
-    (let ((pos 1))
+    (let ((pos 0))
       (declare (type fixnum pos))
-      (labels ((word ()
-                 (if (char= (char value pos) #\")
-                     (with-output-to-string (out)
-                       (loop :with escaped := nil :for ch := (char value (incf pos)) :do
-                          (when (and (char= ch #\") (not escaped)) (return))
-                          (setf escaped (and (not escaped) (char= ch #\\)))
-                          (unless escaped (write-char ch out)))
-                       (incf pos))
-                     (let ((start pos))
-                       (loop :for ch := (char value pos) :do
-                          (when (or (char= ch #\,) (char= ch #\}))
-                            (return (subseq value start pos)))
-                          (incf pos)))))
+      (labels ((readelt ()
+                 (case (char value pos)
+                   (#\" (interpret
+                         (with-output-to-string (out)
+                           (loop :with escaped := nil :for ch := (char value (incf pos)) :do
+                              (when (and (char= ch #\") (not escaped)) (return))
+                              (setf escaped (and (not escaped) (char= ch #\\)))
+                              (unless escaped (write-char ch out)))
+                           (incf pos))))
+                   (#\{ (incf pos)
+                        (unless (char= (char value pos) #\})
+                          (loop :for val := (readelt) :collect val :into vals :do
+                             (let ((next (char value pos)))
+                               (incf pos)
+                               (ecase next (#\,) (#\} (return vals)))))))
+                   (t (let ((start pos))
+                        (loop :for ch := (char value pos) :do
+                           (when (or (char= ch #\,) (char= ch #\}))
+                             (return (interpret (subseq value start pos))))
+                           (incf pos))))))
                (interpret (word)
                  (if (string= word "NULL") :null (funcall transform word))))
-        (coerce (loop :for w := (word) :collect (interpret w) :into ws :do
-                   (unless (< (incf pos) (length value)) (return ws)))
-                'simple-vector)))))
+        (let* ((arr (readelt))
+               (dim (loop :for x := arr :then (car x) :while (listp x) :collect (length x))))
+          (make-array dim :initial-contents arr))))))
 
 ;; Integral array types
 (let ((read-integral (read-array-value #'parse-integer)))
