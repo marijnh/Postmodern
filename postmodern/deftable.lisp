@@ -58,8 +58,16 @@ package."
     (loop :for (sym . def) :in *tables* :do
        (when (eq (symbol-package sym) package) (funcall def)))))
 
+(defun flat-table-name (&optional (table *table-name*))
+  (when (symbolp table)
+    (setf table (string-downcase (string table))))
+  (let ((dotpos (position #\. table)))
+    (if dotpos
+        (subseq table (1+ dotpos))
+        table)))
+
 (labels ((index-name (fields)
-           (make-symbol (format nil "~a-~{~a~^-~}-index" *table-name* fields)))
+           (make-symbol (format nil "~a-~{~a~^-~}-index" (flat-table-name) fields)))
          (make-index (type fields)
            (sql-compile `(,type ,(index-name fields) :on ,*table-name* :fields ,@fields))))
   (defun \!index (&rest fields)
@@ -83,7 +91,7 @@ referred to, another field or list of fields for the target table."
   (let* ((args target-fields/on-delete/on-update)
          (target-fields (and args (not (keywordp (car args))) (pop args))))
     (labels ((fkey-name (target fields)
-               (to-sql-name (format nil "~a_~a_~{~a~^_~}_foreign" *table-name* target fields))))
+               (to-sql-name (format nil "~a_~a_~{~a~^_~}_foreign" (flat-table-name) (flat-table-name target) fields))))
       (unless (listp fields) (setf fields (list fields)))
       (unless (listp target-fields) (setf target-fields (list target-fields)))
       (let* ((target-name (to-sql-name target))
