@@ -266,9 +266,10 @@ arguments.")
                        (loop :for field :across query-fields
                              :for writer := (cdr (assoc (field-name field) column-map :test #'string=))
                              :do (etypecase writer
-                                   (null (unless *ignore-unknown-columns*
-                                           (error "No slot named ~a in class ~a. DAO out of sync with table, or incorrect query used."
-                                                  (field-name field) (class-name class))))
+                                   (null (if *ignore-unknown-columns*
+                                             (next-field field)
+                                             (error "No slot named ~a in class ~a. DAO out of sync with table, or incorrect query used."
+                                                    (field-name field) (class-name class))))
                                    (symbol (setf (slot-value instance writer) (next-field field)))
                                    (function (funcall writer instance (next-field field)))))
                        (initialize-instance instance)
