@@ -629,6 +629,20 @@
     href="#with-column-writers"><code>with-column-writers</code></a>.</p>
 
     <p class="def">
+      <span>variable</span>
+      <a name="*ignore-unknown-columns*"></a>
+      *ignore-unknown-columns*
+    </p>
+
+    <p class="desc">Normally,
+    when <code><a href="#get-dao">get-dao</a></code>,
+    <code><a href="#select-dao">select-dao</a></code>,
+    or <code><a href="#query-dao">query-dao</a></code> finds a column
+    in the database that's not in the DAO class, it will raise an
+    error. Setting this variable to a truthy value will cause it to
+    simply ignore the unknown column.</p>
+
+    <p class="def">
       <span>method</span>
       <a name="insert-dao"></a>
       insert-dao (dao)
@@ -890,6 +904,7 @@
       <li><a href="#execute">execute</a></li>
       <li><a href="#!foreign">!foreign</a></li>
       <li><a href="#get-dao">get-dao</a></li>
+      <li><a href="#*ignore-unknown-columns*">*ignore-unknown-columns*</a></li>
       <li><a href="#!index">!index</a></li>
       <li><a href="#insert-dao">insert-dao</a></li>
       <li><a href="#list-sequences">list-sequences</a></li>

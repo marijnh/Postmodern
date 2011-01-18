@@ -255,6 +255,8 @@ arguments.")
                                           *custom-column-writers*)))
     ,@body))
 
+(defparameter *ignore-unknown-columns* nil)
+
 (defun dao-row-reader (class)
   "Defines a row-reader for objects of a given class."
   (row-reader (query-fields)
@@ -264,8 +266,9 @@ arguments.")
                        (loop :for field :across query-fields
                              :for writer := (cdr (assoc (field-name field) column-map :test #'string=))
                              :do (etypecase writer
-                                   (null (error "No slot named ~a in class ~a. DAO out of sync with table, or incorrect query used."
-                                                (field-name field) (class-name class)))
+                                   (null (unless *ignore-unknown-columns*
+                                           (error "No slot named ~a in class ~a. DAO out of sync with table, or incorrect query used."
+                                                  (field-name field) (class-name class))))
                                    (symbol (setf (slot-value instance writer) (next-field field)))
                                    (function (funcall writer instance (next-field field)))))
                        (initialize-instance instance)

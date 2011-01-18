@@ -10,7 +10,7 @@
    #:with-column-writers
    #:insert-dao #:update-dao #:save-dao #:save-dao/transaction #:delete-dao
    #:dao-table-name #:dao-table-definition
-   #:\!dao-def)
+   #:\!dao-def #:*ignore-unknown-columns*)
    
   (:export 
    #:connect #:disconnect #:reconnect
