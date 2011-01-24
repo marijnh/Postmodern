@@ -32,9 +32,11 @@
 
 (defmethod cl-postgres:to-sql-string ((arg interval))
   (multiple-value-bind (year month day hour min sec ms) (decode-interval arg)
-    (flet ((not-zero (x) (if (zerop x) nil x)))
-      (values
-       (format nil "~@[~d years ~]~@[~d months ~]~@[~d days ~]~@[~d hours ~]~@[~d minutes ~]~@[~d seconds ~]~@[~d milliseconds~]"
-               (not-zero year) (not-zero month) (not-zero day)
-               (not-zero hour) (not-zero min) (not-zero sec) (not-zero ms))
-       "interval"))))
+    (if (= year month day hour min sec ms 0)
+        "0 milliseconds"
+        (flet ((not-zero (x) (if (zerop x) nil x)))
+          (values
+           (format nil "~@[~d years ~]~@[~d months ~]~@[~d days ~]~@[~d hours ~]~@[~d minutes ~]~@[~d seconds ~]~@[~d milliseconds~]"
+                   (not-zero year) (not-zero month) (not-zero day)
+                   (not-zero hour) (not-zero min) (not-zero sec) (not-zero ms))
+           "interval")))))
