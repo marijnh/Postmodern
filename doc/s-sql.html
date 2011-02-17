@@ -454,10 +454,10 @@
     <p class="def"><span>sql-op</span> <a name="update"></a>:update (table &amp;rest rest)</p>
 
     <p class="desc">Update values in a table. After the table name
-    there should follow a number of alternating field names and
-    values, like
+    there should follow the keyword <code>:set</code> and any number
+    of alternating field names and values, like
     for <a href="#insert-into"><code>:insert-into</code></a>, and then
-    an optional <code>:where</code> keyword followed by the condition
+    an optional <code>:where</code> keyword followed by the condition,
     and <code>:returning</code> keyword followed by a list of field
     names or expressions indicating values to be returned as query
     result.</p>
