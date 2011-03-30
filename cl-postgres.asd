@@ -27,7 +27,7 @@
                          (:file "public" :depends-on ("protocol"))))))
 
 (defsystem :cl-postgres-tests
-  :depends-on (:cl-postgres :fiveam :simple-date)
+  :depends-on (:cl-postgres :eos :simple-date)
   :components
   ((:module :cl-postgres
             :components ((:file "tests")))))
@@ -35,7 +35,7 @@
 (defmethod perform ((op asdf:test-op) (system (eql (find-system :cl-postgres))))
   (asdf:oos 'asdf:load-op :cl-postgres-tests)
   (funcall (intern (string :prompt-connection) (string :cl-postgres-tests)))
-  (funcall (intern (string :run!) (string :it.bese.FiveAM)) :cl-postgres))
+  (funcall (intern (string :run!) (string :Eos)) :cl-postgres))
 
 (defmethod perform :after ((op asdf:load-op) (system (eql (find-system :cl-postgres))))
   (let ((simple-date (asdf:find-system :simple-date nil)))

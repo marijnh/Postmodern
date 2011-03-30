@@ -157,7 +157,9 @@ escape-p is :auto and the name contains reserved words."
   "Convert a string to something that might have been its original
 lisp name \(does not work if this name contained non-alphanumeric
 characters other than #\-)"
-  (intern (map 'string (lambda (x) (if (eq x #\_) #\- x)) (string-upcase str)) (find-package :keyword)))
+  (intern (map 'string (lambda (x) (if (eq x #\_) #\- x))
+               (if (eq (readtable-case *readtable*) :upcase) (string-upcase str) str))
+          (find-package :keyword)))
 
 ;; Writing out SQL type identifiers.
 

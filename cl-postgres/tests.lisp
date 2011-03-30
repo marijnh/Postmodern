@@ -1,5 +1,5 @@
 (defpackage :cl-postgres-tests
-  (:use :common-lisp :fiveam :simple-date :cl-postgres :cl-postgres-error)
+  (:use :common-lisp :Eos :simple-date :cl-postgres :cl-postgres-error)
   (:export #:prompt-connection))
 
 (in-package :cl-postgres-tests)
@@ -20,7 +20,7 @@
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
 ;; refers to a valid postgresql database, then after loading the file,
-;; run the tests with (fiveam:run! :cl-postgres)
+;; run the tests with (Eos:run! :cl-postgres)
 
 (def-suite :cl-postgres)
 (in-suite :cl-postgres)

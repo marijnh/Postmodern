@@ -28,7 +28,7 @@
                                 ("query" #+postmodern-use-mop "table"))))))
 
 (defsystem :postmodern-tests
-  :depends-on (:postmodern :fiveam :simple-date :simple-date-postgres-glue)
+  :depends-on (:postmodern :eos :simple-date :simple-date-postgres-glue)
   :components
   ((:module :postmodern
             :components ((:file "tests")))))
@@ -39,4 +39,4 @@
   (asdf:oos 'asdf:load-op :postmodern-tests)
   (funcall (intern (string :prompt-connection) (string :cl-postgres-tests))
            (eval (intern (string :*test-connection*) (string :postmodern-tests))))
-  (funcall (intern (string :run!) (string :it.bese.FiveAM)) :postmodern))
+  (funcall (intern (string :run!) (string :Eos)) :postmodern))
