@@ -133,6 +133,26 @@
       (apply 'get-dao class-name args)))
   (:documentation "Get the object corresponding to the given primary
   key, or return nil if it does not exist."))
+(defgeneric make-dao (type &rest args &key &allow-other-keys)
+  (:method ((class-name symbol) &rest args &key &allow-other-keys)
+    (let ((class (find-class class-name)))
+      (apply 'make-dao class args)))
+  (:method ((class dao-class) &rest args &key &allow-other-keys)
+    (unless (class-finalized-p class)
+      (finalize-inheritance class))
+    (let ((instance (apply #'make-instance class args)))
+      (insert-dao instance)))
+  (:documentation "Make the instance of the given class and insert it into the database"))
+
+(defmacro define-dao-finalization (((dao-name class) &rest keyword-args) &body body)
+  (let ((args-name (gensym)))
+    `(defmethod make-dao :around ((class (eql ',class)) 
+				  &rest ,args-name
+				  &key ,@keyword-args &allow-other-keys)
+       (declare (ignorable ,args-name))
+       (let ((,dao-name (call-next-method)))
+	 ,@body
+	 (update-dao ,dao-name)))))
 
 (defgeneric fetch-defaults (object)
   (:documentation "Used to fetch the default values of an object on
@@ -289,17 +309,21 @@ violation, update it instead."
       (update-dao dao)
       nil)))
 
-(defun query-dao% (type query)
+(defun query-dao% (type query &rest args)
   (let ((class (find-class type)))
     (unless (class-finalized-p class)
       (finalize-inheritance class))
-    (exec-query *database* query (dao-row-reader class))))
+    (if args
+	(progn
+	  (prepare-query *database* "" query)
+	  (exec-prepared *database* "" args (dao-row-reader class)))
+	(exec-query *database* query (dao-row-reader class)))))
 
-(defmacro query-dao (type query)
+(defmacro query-dao (type query &rest args)
   "Execute a query and return the result as daos of the given type.
 The fields returned by the query must match the slots of the dao, both
 by type and by name."
-  `(query-dao% ,type ,(real-query query)))
+  `(query-dao% ,type ,(real-query query) ,@args))
 
 (defmacro select-dao (type &optional (test t) &rest ordering)
   "Select daos for the rows in its table for which the given test
