@@ -43,19 +43,27 @@
 that should be used and whether all values or only one value should be
 returned.")
 
+(defun dao-spec-for-format (format)
+  (if (and (consp format)
+	   (eq :dao (car format)))
+      (cdr format)))
+
 (defun reader-for-format (format)
   (let ((format-spec (cdr (assoc format *result-styles*))))
     (if format-spec
 	`(',(car format-spec) ,@(cdr format-spec))
-	(progn
-	  (unless (find-class format nil)
-	    (warn "no class ~S or an invalid result style." format))
+	(destructuring-bind (class &optional result)
+	    (dao-spec-for-format format)
+	  (unless class
+	    (error "~S is not a valid result style." format))
 	  (let ((class-name (gensym)))
-	    (list `(let ((,class-name (find-class ',format)))
+	    (list `(let ((,class-name (find-class ',class)))
 		     (unless (class-finalized-p ,class-name)
 		       (finalize-inheritance ,class-name))
 		     (dao-row-reader ,class-name))
-		  'all-rows))))))
+		  (if (eq result :single)
+		      'single-row 
+		      'all-rows)))))))
 
 (defmacro all-rows (form)
   form)
@@ -84,7 +92,7 @@ $X elements. If one of the arguments is a known result style or a class name,
 it specifies the format in which the results should be returned."
   (let* ((format :rows)
          (args (loop :for arg :in args/format
-                     :if (or (find-class arg nil)
+		     :if (or (dao-spec-for-format arg)
 			     (assoc arg *result-styles*)) :do (setf format arg)
                      :else :collect arg)))
     (destructuring-bind (reader result-form) (reader-for-format format)
