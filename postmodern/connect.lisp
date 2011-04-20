@@ -15,7 +15,7 @@ operating on a database assume this contains a connected database.")
 (defun connect (database user password host &key (port 5432) pooled-p (use-ssl *default-use-ssl*))
   "Create and return a database connection."
   (cond (pooled-p
-         (let ((type (list database user password host port use-ssl)))
+         (let ((type (make-spec database user password host :port port :use-ssl use-ssl)))
            (or (get-from-pool type)
                (let ((connection (open-database database user password host port use-ssl)))
                  (change-class connection 'pooled-database-connection :pool-type type)
@@ -66,9 +66,15 @@ database."
 
 (defmacro with-connection (spec &body body)
   "Locally establish a database connection, and bind *database* to it."
-  `(let ((*database* (apply #'connect ,spec)))
-    (unwind-protect (progn ,@body)
-      (disconnect *database*))))
+  (let ((nested-name (gensym)))
+    `(let ((,nested-name (and *database*
+			      (equal (connection-spec *database*)
+				     (apply #'make-spec ,spec)))))
+       (if ,nested-name
+	   (progn ,@body)
+	   (let ((*database* (apply #'connect ,spec)))
+	     (unwind-protect (progn ,@body)
+	       (disconnect *database*)))))))
 
 (defvar *max-pool-size* nil
   "The maximum amount of connection that will be kept in a single

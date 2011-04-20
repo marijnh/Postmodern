@@ -10,6 +10,8 @@
            #:database-connection
            #:database-connection-error
            #:database-socket-error
+	   #:connection-spec
+	   #:make-spec
            #:connection-meta
            #:connection-parameters
            #:open-database
