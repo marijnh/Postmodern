@@ -33,3 +33,13 @@ should contain a placeholder \($1, $2, etc) for every parameter."
   "Like perpare, but gives the function a name instead of returning
 it."
   (generate-prepared `(defun ,name) query format))
+
+(defmacro defprepared-with-names (name (&rest args)
+				  (query &rest query-args)
+				  &optional (format :rows))
+  "Like defprepared, but with lambda list for statement arguments."
+  (let ((prepared-name (gensym "STATEMENT")))
+    `(progn
+       (defprepared ,prepared-name ,query ,format)
+       (defun ,name ,args
+	 (,prepared-name ,@query-args)))))
