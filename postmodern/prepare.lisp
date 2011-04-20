@@ -15,9 +15,8 @@
 
 (defun generate-prepared (function-form query format)
   "Helper macro for the following two functions."
-  (destructuring-bind (reader result-form) (or (cdr (assoc format *result-styles*))
-                                               (error "~S is not a valid result style." format))
-    (let ((base `(exec-prepared *database* (symbol-name statement-id) params ',reader)))
+  (destructuring-bind (reader result-form) (reader-for-format format)
+    (let ((base `(exec-prepared *database* (symbol-name statement-id) params ,reader)))
       `(let ((statement-id (next-statement-id))
              (query ,(real-query query)))
         (,@function-form (&rest params)

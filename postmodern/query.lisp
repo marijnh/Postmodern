@@ -43,6 +43,20 @@
 that should be used and whether all values or only one value should be
 returned.")
 
+(defun reader-for-format (format)
+  (let ((format-spec (cdr (assoc format *result-styles*))))
+    (if format-spec
+	`(',(car format-spec) ,@(cdr format-spec))
+	(progn
+	  (unless (find-class format nil)
+	    (warn "no class ~S or an invalid result style." format))
+	  (let ((class-name (gensym)))
+	    (list `(let ((,class-name (find-class ',format)))
+		     (unless (class-finalized-p ,class-name)
+		       (finalize-inheritance ,class-name))
+		     (dao-row-reader ,class-name))
+		  'all-rows))))))
+
 (defmacro all-rows (form)
   form)
 
@@ -66,18 +80,19 @@ looks like an S-SQL query."
 
 (defmacro query (query &rest args/format)
   "Execute a query, optionally with arguments to put in the place of
-$X elements. If one of the arguments is a known result style, it
-specifies the format in which the results should be returned."
+$X elements. If one of the arguments is a known result style or a class name,
+it specifies the format in which the results should be returned."
   (let* ((format :rows)
          (args (loop :for arg :in args/format
-                     :if (assoc arg *result-styles*) :do (setf format arg)
+                     :if (or (find-class arg nil)
+			     (assoc arg *result-styles*)) :do (setf format arg)
                      :else :collect arg)))
-    (destructuring-bind (reader result-form) (cdr (assoc format *result-styles*))
+    (destructuring-bind (reader result-form) (reader-for-format format)
       (let ((base (if args
                       `(progn
                         (prepare-query *database* "" ,(real-query query))
-                        (exec-prepared *database* "" (list ,@args) ',reader))
-                      `(exec-query *database* ,(real-query query) ',reader))))
+                        (exec-prepared *database* "" (list ,@args) ,reader))
+                      `(exec-query *database* ,(real-query query) ,reader))))
         `(,result-form ,base)))))
 
 (defmacro execute (query &rest args)
