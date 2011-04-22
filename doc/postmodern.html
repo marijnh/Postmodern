@@ -237,7 +237,9 @@
       <tr><td><code>:single!</code></td><td>Like <code>:single</code>,
       but raise an error when the number of selected rows is not equal
       to 1.</td></tr>
-    </table>
+      <tr><td><code>(:dao type)</code></td><td>Return a list of DAOs of the given type. The names of the fields returned by the query must match slots in the DAO class the same way as with <a href="#query-dao"><code>query-dao</code></a>.</td></tr>
+      <tr><td><code>(:dao type :single)</code></td><td>Return a single DAO of the given type.</td></tr>
+     </table>
 
     <p class="desc">If the database returns information about the
     amount rows that were affected, such as with updating or deleting
@@ -313,6 +315,25 @@
     <p class="desc">This is the <code>defun</code>-style variant of <a
     href="#prepare"><code>prepare</code></a>. It will define a
     top-level function for the prepared statement.</p>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="defprepared-with-names"></a>
+      defprepared-with-names (name (&amp;rest args) (query &amp;rest query-args) &amp;optional (format :rows))
+    </p>
+    
+    <p class="desc">Like <a href="#defprepared"><code>defprepared</code></a>,
+    but allows to specify names of the function arguments as well as arguments 
+    supplied to the query.</p>
+
+    <pre class="code">
+(defprepared-with-names user-messages (user &amp;key (limit 10))
+  ("select * from messages
+    where user_id = $1
+    order by date desc
+    limit $2" (user-id user) limit)
+  :plists)
+    </pre>
 
     <p class="def">
       <span>macro</span>
@@ -584,6 +605,32 @@
 
     <p class="def">
       <span>method</span>
+      <a name="make-dao"></a>
+      make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)
+      <br/>&#8594; dao
+    </p>
+
+    <p class="desc">Combines <code>make-instance</code> with 
+    <a href="#insert-dao"><code>insert-dao</code></a>. Return the 
+    created dao.</p>
+
+    <p class="def">
+      <span>macro</span>
+      <a name="define-dao-finalization"></a>
+      define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)
+    </p>
+
+    <p class="desc">Create an <code>:around</code>-method for <a href="#make-dao">
+    <code>make-dao</code></a>. Code <code>body</code> is executed in 
+    a lexical environment where variable <code>dao-name</code> is bound 
+    to a freshly created and inserted DAO. The representation of the DAO in the
+    database is then updated to reflect changes that <code>body</code> might
+    have introduced. Useful for processing values of slots with the type
+    <code>serial</code>, which are unknown before <a href="#insert-dao">
+    <code>insert-dao</code></a>.</p>
+
+    <p class="def">
+      <span>method</span>
       <a name="get-dao"></a>
       get-dao (type &amp;rest keys)
       <br/>&#8594; dao
@@ -617,15 +664,16 @@
     <p class="def">
       <span>function</span>
       <a name="query-dao"></a>
-      query-dao (type query)
+      query-dao (type query &amp;rest args)
       <br/>&#8594; list
     </p>
 
     <p class="desc">Execute the given query (which can be either a
     string or an <a href="s-sql.html">S-SQL</a> expression) and return
-    the result as DAOs of the given type. The names of the fields
-    returned by the query must either match slots in the DAO class, or
-    be bound through <a
+    the result as DAOs of the given type. If the query contains placeholders 
+    ($1, $2, etc) their values can be given as extra arguments. 
+    The names of the fields returned by the query must either match slots 
+    in the DAO class, or be bound through <a
     href="#with-column-writers"><code>with-column-writers</code></a>.</p>
 
     <p class="def">
@@ -888,6 +936,7 @@
       <li><a href="#dao-table-name">dao-table-name</a></li>
       <li><a href="#*database*">*database*</a></li>
       <li><a href="#database-connection">database-connection</a></li>
+      <li><a href="#define-dao-finalization">define-dao-finalization</a></li>
       <li><a href="cl-postgres.html#database-connection-lost">database-connection-lost</a></li>
       <li><a href="cl-postgres.html#database-error">database-error</a></li>
       <li><a href="cl-postgres.html#database-error-cause">database-error-cause</a></li>
@@ -897,6 +946,7 @@
       <li><a href="cl-postgres.html#database-error-message">database-error-message</a></li>
       <li><a href="#*default-use-ssl*">*default-use-ssl*</a></li>
       <li><a href="#defprepared">defprepared</a></li>
+      <li><a href="#defprepared">defprepared-with-names</a></li>
       <li><a href="#delete-dao">delete-dao</a></li>
       <li><a href="#disconnect">disconnect</a></li>
       <li><a href="#disconnect-toplevel">disconnect-toplevel</a></li>
@@ -910,6 +960,7 @@
       <li><a href="#list-sequences">list-sequences</a></li>
       <li><a href="#list-tables">list-tables</a></li>
       <li><a href="#list-views">list-views</a></li>
+      <li><a href="#make-dao">make-dao</a></li>
       <li><a href="#*max-pool-size*">*max-pool-size*</a></li>
       <li><a href="#prepare">prepare</a></li>
       <li><a href="#query">query</a></li>
