@@ -200,7 +200,7 @@ used. Correct for sign bit when using integer format."
                (interpret (word)
                  (if (string= word "NULL") :null (funcall transform word))))
         (let* ((arr (readelt))
-               (dim (loop :for x := arr :then (car x) :while (listp x) :collect (length x))))
+               (dim (if arr (loop :for x := arr :then (car x) :while (consp x) :collect (length x)) '(0))))
           (make-array dim :initial-contents arr))))))
 
 ;; Integral array types
