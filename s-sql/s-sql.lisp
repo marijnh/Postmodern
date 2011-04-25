@@ -498,8 +498,10 @@ with a given arity."
             :append `(" WHEN " ,@(sql-expand test) " THEN " ,@(sql-expand expr)))
     " END"))
 
-(def-sql-op :[] (form subscript)
-  `("(" ,@(sql-expand form) ")[" ,@(sql-expand subscript) "]"))
+(def-sql-op :[] (form start &optional end)
+  (if end
+      `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) ":" ,@(sql-expand end) "]")
+      `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) "]")))
 
 ;; This one has two interfaces. When the elements are known at
 ;; compile-time, they can be given as multiple arguments to the

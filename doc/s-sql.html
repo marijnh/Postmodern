@@ -310,7 +310,7 @@
     <p class="desc">Test whether a value is null.</p>
 
     <p class="def"><span>sql-op</span> <a name="in"></a>:in (value set)</p>
-   
+
     <p class="desc">Test whether a value is in a set of values.</p>
 
     <p class="def"><span>sql-op</span> <a name="not-in"></a>:not-in (value set)</p>
@@ -324,9 +324,10 @@
     be given as multiple arguments to the operator. When they are not,
     a single argument that evaulates to a list should be used.</p>
 
-    <p class="def"><span>sql-op</span> <a name="deref"></a>:[] (form subscript)</p>
-   
-    <p class="desc">Dereference an array value.</p>
+    <p class="def"><span>sql-op</span> <a name="deref"></a>:[] (form start &amp;optional end)</p>
+
+    <p class="desc">Dereference an array value. If <code>end</code> is
+    provided, extract a slice of the array.</p>
 
     <p class="def"><span>sql-op</span> <a name="extract"></a>:extract (unit form)</p>
 
