@@ -99,5 +99,5 @@ referred to, another field or list of fields for the target table."
              (target-names (if target-fields (mapcar #'to-sql-name target-fields) field-names)))
         (format nil "ALTER TABLE ~a ADD CONSTRAINT ~a FOREIGN KEY (~{~a~^, ~}) REFERENCES ~a (~{~a~^, ~}) ~@[ON DELETE ~a~] ~@[ON UPDATE ~a~]"
                 (to-sql-name *table-name*) (fkey-name target fields) field-names target-name target-names
-                (s-sql::expand-foreign-on* (getf args :on-delete))
-                (s-sql::expand-foreign-on* (getf args :on-update)))))))
+                (s-sql::expand-foreign-on* (getf args :on-delete :restrict))
+                (s-sql::expand-foreign-on* (getf args :on-update :restrict)))))))
