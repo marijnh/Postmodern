@@ -77,13 +77,13 @@
   (:documentation "Type of slots that refer to database columns."))
 
 (defmethod shared-initialize :after ((slot direct-column-slot) slot-names
-                                     &key row-type row-default &allow-other-keys)
+                                     &key col-type col-default &allow-other-keys)
   (declare (ignore slot-names))
   (setf (slot-value slot 'sql-name) (to-sql-name (slot-definition-name slot) nil))
   ;; The default for nullable columns defaults to :null.
-  (when (and (null row-default) (consp row-type) (eq (car row-type) 'or)
-             (member 'db-null row-type) (= (length row-type) 3))
-    (setf (slot-value slot 'row-default) :null)))
+  (when (and (null col-default) (consp col-type) (eq (car col-type) 'or)
+             (member 'db-null col-type) (= (length col-type) 3))
+    (setf (slot-value slot 'col-default) :null)))
 
 (defmethod direct-slot-definition-class ((class dao-class) &key column col-type &allow-other-keys)
   "Slots that have a :col-type option are column-slots."
