@@ -93,9 +93,9 @@ interpreted as an array of the given type."
 (define-interpreter 1043 "varchar" string)
 
 (define-interpreter 700 "float4" ((bits uint 4))
-  (ieee-floats:decode-float32 bits))
+  (cl-postgres-ieee-floats:decode-float32 bits))
 (define-interpreter 701 "float8" ((bits uint 8))
-  (ieee-floats:decode-float64 bits))
+  (cl-postgres-ieee-floats:decode-float64 bits))
 
 ;; Numeric types are rather involved. I got some clues on their
 ;; structure from http://archives.postgresql.org/pgsql-interfaces/2004-08/msg00000.php
@@ -127,7 +127,7 @@ interpreted as an array of the given type."
   "Decode a 64 bit time-related value based on the timestamp format
 used. Correct for sign bit when using integer format."
   (ecase *timestamp-format*
-    (:float (round (* (ieee-floats:decode-float64 bits) 1000000)))
+    (:float (round (* (cl-postgres-ieee-floats:decode-float64 bits) 1000000)))
     (:integer (if (logbitp 63 bits)
                   (dpb bits (byte 63 0) -1)
                   bits))))

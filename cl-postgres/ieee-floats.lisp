@@ -3,7 +3,7 @@
 ;;;
 ;;; See http://common-lisp.net/project/ieee-floats/
 
-(defpackage :ieee-floats
+(defpackage :cl-postgres-ieee-floats
   (:use :common-lisp)
   (:export :make-float-converters
 	   :encode-float32
@@ -11,7 +11,7 @@
 	   :encode-float64
 	   :decode-float64))
 
-(in-package :ieee-floats)
+(in-package :cl-postgres-ieee-floats)
 
 ;; The following macro may look a bit overcomplicated to the casual
 ;; reader. The main culprit is the fact that NaN and infinity can be

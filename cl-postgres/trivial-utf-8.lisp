@@ -2,7 +2,7 @@
 ;;;
 ;;; See http://common-lisp.net/project/trivial-utf-8/
 
-(defpackage :trivial-utf-8
+(defpackage :cl-postgres-trivial-utf-8
   (:use :common-lisp)
   (:export #:utf-8-byte-length
            #:string-to-utf-8-bytes
@@ -12,7 +12,7 @@
            #:read-utf-8-string
            #:utf-8-decoding-error))
 
-(in-package :trivial-utf-8)
+(in-package :cl-postgres-trivial-utf-8)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter *optimize*
