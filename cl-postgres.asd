@@ -38,5 +38,6 @@
   (funcall (intern (string :run!) (string :Eos)) :cl-postgres))
 
 (defmethod perform :after ((op asdf:load-op) (system (eql (find-system :cl-postgres))))
-  (when (find-package :simple-date)
+  (when (and (find-package :simple-date)
+             (not (find-symbol (symbol-name '#:+postgres-day-offset+) :simple-date)))
     (asdf:oos 'asdf:load-op :simple-date-postgres-glue)))
