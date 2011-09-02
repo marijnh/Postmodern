@@ -436,6 +436,8 @@ with a given arity."
 (register-sql-operators :2+-ary  := :/ :!= :< :> :<= :>= :^ :~* :!~ :!~* :like :ilike
                         :intersect (:intersect-all "intersect all")
                         :except (:except-all "except all"))
+;; PostGIS operators
+(register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :@ :|\|&>| :|\|>>| :~=)
 
 (def-sql-op :desc (arg)
   `(,@(sql-expand arg) " DESC"))
