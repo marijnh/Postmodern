@@ -105,7 +105,7 @@ and a - to indicate it does not take any elements."
                     "localtime" "localtimestamp" "natural" "new" "not" "notnull" "null" "off" "offset" "old"
                     "on" "only" "or" "order" "outer" "overlaps" "placing" "primary" "references" "returning"
                     "right" "select" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
-                    "union" "unique" "user" "using" "verbose" "when" "where" "with"))
+                    "union" "unique" "user" "using" "verbose" "when" "where" "with" "for" "nowait" "share"))
       (setf (gethash word words) t))
     words)
   "A set of all Postgres' reserved words, for automatic escaping.")
@@ -580,6 +580,21 @@ the proper SQL syntax for joining tables."
 
 (def-sql-op :order-by (form &rest fields)
   `("(" ,@(sql-expand form) " ORDER BY " ,@(sql-expand-list fields) ")"))
+
+(defun for-update/share (share-or-update form &rest args)
+  (let* ((of-position (position :of args))
+         (no-wait-position (position :nowait args))
+         (of-tables (when of-position (subseq args (1+ of-position) no-wait-position))))
+    `("(" ,@(sql-expand form) ,(format nil " FOR ~:@(~A~)" share-or-update)
+          ,@(when of-tables (list (format nil " OF ~{~A~^, ~}" (mapcar #'sql-compile of-tables))))
+          ,@(when no-wait-position (list " NOWAIT"))
+          ")")))
+
+(def-sql-op :for-update (form &rest args)
+  (apply #'for-update/share "UPDATE" form args))
+
+(def-sql-op :for-share (form &rest args)
+  (apply #'for-update/share "SHARE" form args))
 
 (defun escape-sql-expression (expr)
   "Try to escape an expression at compile-time, if not possible, delay
