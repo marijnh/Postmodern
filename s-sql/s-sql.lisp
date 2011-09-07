@@ -479,6 +479,9 @@ with a given arity."
 (def-sql-op :is-null (arg)
   `("(" ,@(sql-expand arg) " IS NULL)"))
 
+(def-sql-op :not-null (arg)
+  `("(" ,@(sql-expand arg) " IS NOT NULL)"))
+
 (def-sql-op :in (form set)
   `("(" ,@(sql-expand form) " IN " ,@(sql-expand set) ")"))
 
