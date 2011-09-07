@@ -426,6 +426,25 @@
     expressions. See <a href="#desc"><code>:desc</code></a> for when
     you want to invert an ordering.</p>
 
+    <p class="def"><span>sql-op</span> <a name="for-update"></a>:for-update (query &amp;key of nowait)</p>
+
+    <p class="desc">Locks the selected rows against concurrent updates. This will prevent the rows
+    from being modified or deleted by other transactions until the current transaction ends. The :of
+    keyword should be followed by one or more table names. If provided, Postgres will lock
+    these tables instead of the ones detected in the select statement. The :nowait keyword should be
+    provided by itself (with no argument attached to it), after all the :of arguments . If :nowait
+    is provided, Postgres will throw an error if a table cannot be locked immediately, instead of
+    pausing until it's possible.</p>
+
+    <pre class="desc code">
+(:for-update (:select :* :from 'foo 'bar 'baz) :of 'bar 'baz :nowait)</pre>
+
+    <p class="def"><span>sql-op</span> <a name="for-share"></a>:for-share (query &amp;key of nowait)</p>
+
+    <p class="desc">Similar to <a href="#for-update">:for-update</a>, except it acquires a shared
+    lock on the table, allowing other transactions from performing :for-share selects on the locked
+    tables.</p>
+
     <p class="def"><span>sql-op</span> <a name="function"></a>:function (name (&amp;rest
     arg-types) return-type stability body)</p>
 
