@@ -83,12 +83,12 @@ package."
 corresponding DAO class' slots."
   (dao-table-definition *table-symbol*))
 
-(defun \!foreign (target fields &rest target-fields/on-delete/on-update)
+(defun \!foreign (target fields &rest target-fields/on-delete/on-update/deferrable/initially-deferred)
   "Used inside a deftable form. Define a foreign key on this table.
 Pass a table the index refers to, a list of fields or single field in
 *this* table, and, if the fields have different names in the table
 referred to, another field or list of fields for the target table."
-  (let* ((args target-fields/on-delete/on-update)
+  (let* ((args target-fields/on-delete/on-update/deferrable/initially-deferred)
          (target-fields (and args (not (keywordp (car args))) (pop args))))
     (labels ((fkey-name (target fields)
                (to-sql-name (format nil "~a_~a_~{~a~^_~}_foreign" (flat-table-name) (flat-table-name target) fields))))
@@ -97,7 +97,17 @@ referred to, another field or list of fields for the target table."
       (let* ((target-name (to-sql-name target))
              (field-names (mapcar #'to-sql-name fields))
              (target-names (if target-fields (mapcar #'to-sql-name target-fields) field-names)))
-        (format nil "ALTER TABLE ~a ADD CONSTRAINT ~a FOREIGN KEY (~{~a~^, ~}) REFERENCES ~a (~{~a~^, ~}) ~@[ON DELETE ~a~] ~@[ON UPDATE ~a~]"
+        (format nil "ALTER TABLE ~a ADD CONSTRAINT ~a FOREIGN KEY (~{~a~^, ~}) REFERENCES ~a (~{~a~^, ~}) ~@[ON DELETE ~a~] ~@[ON UPDATE ~a~] ~:[NOT DEFERRABLE~;DEFERRABLE INITIALLY ~:[IMMEDIATE~;DEFERRED~]~]"
                 (to-sql-name *table-name*) (fkey-name target fields) field-names target-name target-names
                 (s-sql::expand-foreign-on* (getf args :on-delete :restrict))
-                (s-sql::expand-foreign-on* (getf args :on-update :restrict)))))))
+                (s-sql::expand-foreign-on* (getf args :on-update :restrict))
+                (getf args :deferrable nil)
+                (getf args :initially-deferred nil))))))
+
+(defun \!unique (target-fields &key deferrable initially-deferred)
+  (format nil "ALTER TABLE ~A ADD CONSTRAINT ~A UNIQUE (~{~A~^, ~}) ~:[NOT DEFERRABLE~;DEFERRABLE INITIALLY ~:[IMMEDIATE~;DEFERRED~]~]"
+          (to-sql-name *table-name*)
+          (to-sql-name (format nil "~A_~{~A~^_~}_unique" *table-name* target-fields))
+          (mapcar #'pomo::to-sql-name target-fields)
+          deferrable
+          initially-deferred))
