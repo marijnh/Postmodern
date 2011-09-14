@@ -30,7 +30,7 @@
 
    #:deftable #:*table-name* #:*table-symbol*
    #:create-table #:create-all-tables #:create-package-tables
-   #:\!index #:\!unique-index #:\!foreign
+   #:\!index #:\!unique-index #:\!foreign #:\!unique
 
    ;; Reduced S-SQL interface
    #:sql #:sql-compile
