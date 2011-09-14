@@ -660,6 +660,19 @@
     <p class="desc">Drop a view. Takes optional
     <code>:if-exists</code> argument.</p>
 
+    <p class="def"><span>sql-op</span> <a
+    name="set-constraints"></a>:set-constraints (state &amp;rest
+    constraints)</p>
+
+    <p class="desc">Configure whether deferrable constraints should be
+    checked when a statement is executed, or when the transaction
+    containing that statement is completed. The provided state must be
+    either <code>:immediate</code>, indicating the former, or
+    <code>:deferred</code>, indicating the latter.  The constraints
+    must be either the names of the constraints to be configured, or
+    unspecified, indicating that all deferrable constraints should be
+    thus configured.</p>
+
     <h2><a name="index"></a>Symbol-index</h2>
 
     <ul class="symbol-index">
@@ -702,6 +715,7 @@
       <li><a href="#drop-sequence">:drop-sequence</a></li>
       <li><a href="#drop-table">:drop-table</a></li>
       <li><a href="#drop-view">:drop-view</a></li>
+      <li><a href="#set-constraints">:set-constraints</a></li>
       <li><a href="#enable-s-sql-syntax">enable-s-sql-syntax</a></li>
       <li><a href="#*escape-sql-names-p*">*escape-sql-names-p*</a></li>
       <li><a href="#infix">:except</a></li>
