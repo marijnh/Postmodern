@@ -112,6 +112,7 @@ referenced."
                 (getf args :initially-deferred nil))))))
 
 (defun \!unique (target-fields &key deferrable initially-deferred)
+  (unless (listp target-fields) (setf target-fields (list target-fields)))
   (format nil "ALTER TABLE ~A ADD CONSTRAINT ~A UNIQUE (~{~A~^, ~}) ~:[NOT DEFERRABLE~;DEFERRABLE INITIALLY ~:[IMMEDIATE~;DEFERRED~]~]"
           (to-sql-name *table-name*)
           (to-sql-name (format nil "~A_~{~A~^_~}_unique" *table-name* target-fields))
