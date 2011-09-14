@@ -584,6 +584,14 @@ the proper SQL syntax for joining tables."
 (def-sql-op :order-by (form &rest fields)
   `("(" ,@(sql-expand form) " ORDER BY " ,@(sql-expand-list fields) ")"))
 
+(def-sql-op :set-constraints (state &rest constraints)
+  `("SET CONSTRAINTS " ,@(if constraints
+                             (sql-expand-list constraints)
+                             '("ALL"))
+                       ,(ecase state
+                          (:deferred " DEFERRED")
+                          (:immediate " IMMEDIATE"))))
+
 (defun for-update/share (share-or-update form &rest args)
   (let* ((of-position (position :of args))
          (no-wait-position (position :nowait args))
