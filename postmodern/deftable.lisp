@@ -102,7 +102,7 @@ referred to, another field or list of fields for the target table."
                 (s-sql::expand-foreign-on* (getf args :on-delete :restrict))
                 (s-sql::expand-foreign-on* (getf args :on-update :restrict))
                 (getf args :deferrable nil)
-                (getf args :initially-deferred nil)))))))
+                (getf args :initially-deferred nil))))))
 
 (defun \!unique (target-fields &key deferrable initially-deferred)
   (format nil "ALTER TABLE ~A ADD CONSTRAINT ~A UNIQUE (~{~A~^, ~}) ~:[NOT DEFERRABLE~;DEFERRABLE INITIALLY ~:[IMMEDIATE~;DEFERRED~]~]"
