@@ -88,11 +88,11 @@ corresponding DAO class' slots."
 Pass a table the index refers to, a list of fields or single field in
 *this* table, and, if the fields have different names in the table
 referred to, another field or list of fields for the target table, or
-:key to indicate that the other table's primary key should be
+:primary-key to indicate that the other table's primary key should be
 referenced."
   (let* ((args target-fields/on-delete/on-update/deferrable/initially-deferred)
          (target-fields (and args (or (not (keywordp (car args)))
-                                      (eq (car args) :key))
+                                      (eq (car args) :primary-key))
                              (pop args))))
     (labels ((fkey-name (target fields)
                (to-sql-name (format nil "~a_~a_~{~a~^_~}_foreign" (flat-table-name) (flat-table-name target) fields))))
@@ -101,7 +101,7 @@ referenced."
       (let* ((target-name (to-sql-name target))
              (field-names (mapcar #'to-sql-name fields))
              (target-names (cond
-                             ((equal target-fields '(:key)) nil)
+                             ((equal target-fields '(:primary-key)) nil)
                              ((null target-fields) field-names)
                              (t (mapcar #'to-sql-name target-fields)))))
         (format nil "ALTER TABLE ~a ADD CONSTRAINT ~a FOREIGN KEY (~{~a~^, ~}) REFERENCES ~a~@[ (~{~a~^, ~})~] ~@[ON DELETE ~a~] ~@[ON UPDATE ~a~] ~:[NOT DEFERRABLE~;DEFERRABLE INITIALLY ~:[IMMEDIATE~;DEFERRED~]~]"
