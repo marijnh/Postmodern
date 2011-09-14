@@ -87,17 +87,24 @@ corresponding DAO class' slots."
   "Used inside a deftable form. Define a foreign key on this table.
 Pass a table the index refers to, a list of fields or single field in
 *this* table, and, if the fields have different names in the table
-referred to, another field or list of fields for the target table."
+referred to, another field or list of fields for the target table, or
+:key to indicate that the other table's primary key should be
+referenced."
   (let* ((args target-fields/on-delete/on-update/deferrable/initially-deferred)
-         (target-fields (and args (not (keywordp (car args))) (pop args))))
+         (target-fields (and args (or (not (keywordp (car args)))
+                                      (eq (car args) :key))
+                             (pop args))))
     (labels ((fkey-name (target fields)
                (to-sql-name (format nil "~a_~a_~{~a~^_~}_foreign" (flat-table-name) (flat-table-name target) fields))))
       (unless (listp fields) (setf fields (list fields)))
       (unless (listp target-fields) (setf target-fields (list target-fields)))
       (let* ((target-name (to-sql-name target))
              (field-names (mapcar #'to-sql-name fields))
-             (target-names (if target-fields (mapcar #'to-sql-name target-fields) field-names)))
-        (format nil "ALTER TABLE ~a ADD CONSTRAINT ~a FOREIGN KEY (~{~a~^, ~}) REFERENCES ~a (~{~a~^, ~}) ~@[ON DELETE ~a~] ~@[ON UPDATE ~a~] ~:[NOT DEFERRABLE~;DEFERRABLE INITIALLY ~:[IMMEDIATE~;DEFERRED~]~]"
+             (target-names (cond
+                             ((equal target-fields '(:key)) nil)
+                             ((null target-fields) field-names)
+                             (t (mapcar #'to-sql-name target-fields)))))
+        (format nil "ALTER TABLE ~a ADD CONSTRAINT ~a FOREIGN KEY (~{~a~^, ~}) REFERENCES ~a~@[ (~{~a~^, ~})~] ~@[ON DELETE ~a~] ~@[ON UPDATE ~a~] ~:[NOT DEFERRABLE~;DEFERRABLE INITIALLY ~:[IMMEDIATE~;DEFERRED~]~]"
                 (to-sql-name *table-name*) (fkey-name target fields) field-names target-name target-names
                 (s-sql::expand-foreign-on* (getf args :on-delete :restrict))
                 (s-sql::expand-foreign-on* (getf args :on-update :restrict))
