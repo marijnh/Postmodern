@@ -8,20 +8,20 @@
       (prepare-query connection (symbol-name id) query))))
 
 (let ((next-id 0))
-  (defun next-statement-id ()
+  (defun next-statement-id (&optional (name "STATEMENT"))
     "Provide unique statement names."
     (incf next-id)
-    (intern (format nil "STATEMENT-~A" next-id) :keyword)))
+    (intern (format nil "~A-~A" name next-id) :keyword)))
 
-(defun generate-prepared (function-form query format)
-  "Helper macro for the following two functions."
+(defun generate-prepared (function-form query format &optional id)
+  "Helper function for the following two macros."
   (destructuring-bind (reader result-form) (reader-for-format format)
     (let ((base `(exec-prepared *database* (symbol-name statement-id) params ,reader)))
-      `(let ((statement-id (next-statement-id))
+      `(let ((statement-id (next-statement-id ,@(when id `((quote ,id)))))
              (query ,(real-query query)))
         (,@function-form (&rest params)
           (ensure-prepared *database* statement-id query)
-         (,result-form ,base))))))
+          (,result-form ,base))))))
 
 (defmacro prepare (query &optional (format :rows))
   "Wraps a query into a function that will prepare it once for a
@@ -32,14 +32,13 @@ should contain a placeholder \($1, $2, etc) for every parameter."
 (defmacro defprepared (name query &optional (format :rows))
   "Like perpare, but gives the function a name instead of returning
 it."
-  (generate-prepared `(defun ,name) query format))
+  (generate-prepared `(defun ,name) query format name))
 
 (defmacro defprepared-with-names (name (&rest args)
 				  (query &rest query-args)
 				  &optional (format :rows))
   "Like defprepared, but with lambda list for statement arguments."
-  (let ((prepared-name (gensym "STATEMENT")))
-    `(progn
-       (defprepared ,prepared-name ,query ,format)
-       (defun ,name ,args
-	 (,prepared-name ,@query-args)))))
+  (let ((prepared-name (gensym (symbol-name name))))
+   `(let ((,prepared-name ,(generate-prepared '(lambda) query format name)))
+      (defun ,name ,args
+        (funcall ,prepared-name ,@query-args)))))
