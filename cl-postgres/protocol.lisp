@@ -78,16 +78,43 @@ database-error condition."
   (let ((data (read-byte-delimited socket)))
     (flet ((get-field (char)
              (cdr (assoc char data))))
-      (let ((code (get-field #\C)))
+      (let* ((code (get-field #\C))
+ 	     (error-type (cl-postgres-error::get-error-type code))
+ 	     (message (get-field #\M)))
         ;; These are the errors "ADMIN SHUTDOWN" and "CRASH SHUTDOWN",
         ;; in which case the server will close the connection right
         ;; away.
         (when (or (string= code "57P01") (string= code "57P02"))
           (ensure-socket-is-closed socket))
-        (error (cl-postgres-error::get-error-type code)
-               :code code :message (get-field #\M)
-               :detail (or (get-field #\D) (get-field #\H))
-               :position (get-field #\p))))))
+ 	(error error-type
+ 	       :code code
+ 	       :message message
+ 	       :detail (or (get-field #\D) (get-field #\H))
+ 	       :position (get-field #\p)
+ 	       :constraint (extract-constraint-name error-type message))))))
+
+(defun extract-constraint-name (error-type message)
+  "Given a PostgreSQL error CODE and MESSAGE for an integrity violation, will attempt to extract the constraint name."
+  (case error-type
+    (cl-postgres-error:not-null-violation    (extract-quoted-part message 0))
+    (cl-postgres-error:foreign-key-violation (extract-quoted-part message 1))
+    (cl-postgres-error:unique-violation      (extract-quoted-part message 0))
+    (cl-postgres-error:check-violation       (extract-quoted-part message 1))
+    (t                                       "")))
+
+(defun extract-quoted-part (string n)
+  "Extracts the Nth quoted substring from STRING."
+  (let* ((start-quote-inst (* 2 n))
+         (start-quote-pos  (position-nth #\" string start-quote-inst))
+         (end-quote-pos    (position     #\" string :start (1+ start-quote-pos))))
+    (subseq string (1+ start-quote-pos) end-quote-pos)))
+
+(defun position-nth (item seq n)
+  "Finds the position of the zero-indexed Nth ITEM in SEQ."
+  (loop :with pos = -1
+        :repeat (1+ n)
+        :do (setf pos (position item seq :start (1+ pos)))
+        :finally (return pos)))
 
 (define-condition postgresql-warning (simple-warning)
   ())
