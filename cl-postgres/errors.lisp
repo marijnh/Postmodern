@@ -33,8 +33,7 @@ if any.")
    (query :initform *current-query* :reader database-error-query
           :documentation "Query that led to the error, if any.")
    (position :initarg :position :initform nil :reader database-error-position)
-   (cause :initarg :cause :initform nil :reader database-error-cause)
-   (constraint :initarg :constraint :initform nil :reader database-error-constraint))
+   (cause :initarg :cause :initform nil :reader database-error-cause))
   (:report (lambda (err stream)
              (format stream "Database error~@[ ~A~]: ~A~@[~%~A~]~@[~%Query: ~A~]"
                      (database-error-code err)
@@ -45,6 +44,27 @@ if any.")
 signal virtually all database-related errors \(though in some cases
 socket errors may be raised when a connection fails on the IP
 level)."))
+
+(defun database-error-constraint-name (err)
+  "Given a database-error for an integrity violation, will attempt to
+extract the constraint name."
+  (labels ((extract-quoted-part (string n)
+             "Extracts the Nth quoted substring from STRING."
+             (let* ((start-quote-inst (* 2 n))
+                    (start-quote-pos (position-nth #\" string start-quote-inst))
+                    (end-quote-pos (position #\" string :start (1+ start-quote-pos))))
+               (subseq string (1+ start-quote-pos) end-quote-pos)))
+           (position-nth (item seq n)
+             "Finds the position of the zero-indexed Nth ITEM in SEQ."
+             (loop :with pos = -1 :repeat (1+ n)
+                   :do (setf pos (position item seq :start (1+ pos)))
+                   :finally (return pos))))
+    (let ((message (database-error-message err)))
+      (typecase err
+        (cl-postgres-error:not-null-violation (extract-quoted-part message 0))
+        (cl-postgres-error:unique-violation (extract-quoted-part message 0))
+        (cl-postgres-error:foreign-key-violation (extract-quoted-part message 1))
+        (cl-postgres-error:check-violation (extract-quoted-part message 1))))))
 
 (define-condition database-connection-error (database-error) ()
   (:documentation "Conditions of this type are signalled when an error

@@ -552,6 +552,17 @@
     <code>NIL</code> when it was not caused by another condition.</p>
 
     <p class="def">
+      <span>function</span>
+      <a name="database-error-constraint-name"></a>
+      database-error-constraint-name (database-error)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">For integrity-violation errors, returns the name
+    of the constraint that was violated (or <code>nil</code> if no
+    constraint was found.)</p>
+
+    <p class="def">
       <span>condition</span>
       <a name="database-connection-error"></a>
       database-connection-error
