@@ -7,7 +7,7 @@
            #:database-error-detail
            #:database-error-query
            #:database-error-cause
-           #:database-error-contraint-name
+           #:database-error-constraint-name
            #:database-connection
            #:database-connection-error
            #:database-socket-error
