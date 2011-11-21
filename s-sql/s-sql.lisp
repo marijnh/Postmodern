@@ -439,6 +439,9 @@ with a given arity."
 ;; PostGIS operators
 (register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :@ :|\|&>| :|\|>>| :~=)
 
+(def-sql-op :|| (&rest args)
+  `("(" ,@(sql-expand-list args " || ") ")"))
+
 (def-sql-op :desc (arg)
   `(,@(sql-expand arg) " DESC"))
 

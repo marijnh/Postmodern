@@ -259,6 +259,12 @@
     <code>:intersect</code>, and <code>:except</code> should be
     queries (<code>:select</code> forms).</p>
 
+    <p class="desc">Note that you'll have to escape pipe characters to
+    enter them as keywords. S-SQL handles the empty keyword symbol
+    (written <code>:||</code>) specially, and treats it
+    like <code>:\|\|</code>, so that it can be written without
+    escapes. With <code>:\|</code>, this doesn't work.</p>
+
     <p class="def"><span>sql-op</span> <a name="unary"></a>:~, :not (arg)</p>
 
     <p class="desc">Unary operators for bitwise and logical
