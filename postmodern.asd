@@ -13,6 +13,7 @@
   (pushnew :postmodern-use-mop *features*))
 
 (defsystem :postmodern
+  :description "PosgreSQL programming API"
   :depends-on (:cl-postgres :s-sql #+postmodern-use-mop :closer-mop
                             #+postmodern-thread-safe :bordeaux-threads)
   :components 
