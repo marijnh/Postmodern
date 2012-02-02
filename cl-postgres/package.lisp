@@ -41,6 +41,12 @@
            #:*silently-truncate-rationals*
            #:*query-callback*
            #:*query-log*
+           ;; **MCNA Addition** - the following symbols are being added and
+           ;; exported to support bulk copying
+           #:open-copier
+           #:copy-row
+           #:copy-done
+           ;; ** end of MCNA Additions **
            #:*ssl-certificate-file*
            #:*ssl-key-file*))
 
