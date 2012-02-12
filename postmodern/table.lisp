@@ -158,109 +158,103 @@
   (:documentation "Used to fetch the default values of an object on
   creation."))
 
-(defclass target-class () ()
-  (:documentation "A dummy class that is used to specialise DAO
-  methods on -- see build-dao-methods."))
+(defun %eval (code)
+  (funcall (compile nil `(lambda () ,code))))
 
 (defun build-dao-methods (class)
   "Synthesise a number of methods for a newly defined DAO class.
 \(Done this way because some of them are not defined in every
 situation, and each of them needs to close over some pre-computed
 values.)"
-  (setf (find-class 'target-class) class)
 
   (setf (slot-value class 'column-map)
         (mapcar (lambda (s) (cons (slot-sql-name s) (slot-definition-name s))) (dao-column-slots class)))
 
-  (let* ((fields (dao-column-fields class))
-         (key-fields (dao-keys class))
-	 (ghost-slots (remove-if-not 'ghost (dao-column-slots class)))
-	 (ghost-fields (mapcar 'slot-definition-name ghost-slots))
-         (value-fields (remove-if (lambda (x) (or (member x key-fields) (member x ghost-fields))) fields))
-         (table-name (dao-table-name class)))
-    ;; This is a hack -- the MOP does not define a practical way to
-    ;; dynamically add methods to a generic, but the specialised-on
-    ;; class is determined when the defmethod is evaluated, so setting
-    ;; target-class to our class will cause the methods to be
-    ;; specialised on the correct class.
-    (flet ((test-fields (fields)
-             `(:and ,@(loop :for field :in fields :collect (list := field '$$))))
-           (set-fields (fields)
-             (loop :for field :in fields :append (list field '$$)))
-           (slot-values (object &rest slots)
-             (loop :for slot :in (apply 'append slots) :collect (slot-value object slot))))
+  (%eval
+    `(let* ((fields (dao-column-fields ,class))
+            (key-fields (dao-keys ,class))
+            (ghost-slots (remove-if-not 'ghost (dao-column-slots ,class)))
+            (ghost-fields (mapcar 'slot-definition-name ghost-slots))
+            (value-fields (remove-if (lambda (x) (or (member x key-fields) (member x ghost-fields))) fields))
+            (table-name (dao-table-name ,class)))
+       (flet ((test-fields (fields)
+                `(:and ,@(loop :for field :in fields :collect (list := field '$$))))
+              (set-fields (fields)
+                (loop :for field :in fields :append (list field '$$)))
+              (slot-values (object &rest slots)
+                (loop :for slot :in (apply 'append slots) :collect (slot-value object slot))))
 
-      ;; When there is no primary key, a lot of methods make no sense.
-      (when key-fields
-        (let ((tmpl (sql-template `(:select (:exists (:select t :from ,table-name
-                                                      :where ,(test-fields key-fields)))))))
-          (defmethod dao-exists-p ((object target-class))
-            (and (every (lambda (s) (slot-boundp object s)) key-fields)
-                 (query (apply tmpl (slot-values object key-fields)) :single))))
+         ;; When there is no primary key, a lot of methods make no sense.
+         (when key-fields
+           (let ((tmpl (sql-template `(:select (:exists (:select t :from ,table-name
+                                                                 :where ,(test-fields key-fields)))))))
+             (defmethod dao-exists-p ((object ,class))
+               (and (every (lambda (s) (slot-boundp object s)) key-fields)
+                    (query (apply tmpl (slot-values object key-fields)) :single))))
   
-        ;; When all values are primary keys, updating makes no sense.
-        (when value-fields
-          (let ((tmpl (sql-template `(:update ,table-name :set ,@(set-fields value-fields)
-                                      :where ,(test-fields key-fields)))))
-            (defmethod update-dao ((object target-class))
-              (when (zerop (execute (apply tmpl (slot-values object value-fields key-fields))))
-                (error "Updated row does not exist."))
-              object)))
+           ;; When all values are primary keys, updating makes no sense.
+           (when value-fields
+             (let ((tmpl (sql-template `(:update ,table-name :set ,@(set-fields value-fields)
+                                                 :where ,(test-fields key-fields)))))
+               (defmethod update-dao ((object ,class))
+                 (when (zerop (execute (apply tmpl (slot-values object value-fields key-fields))))
+                   (error "Updated row does not exist."))
+                 object)))
   
-        (let ((tmpl (sql-template `(:delete-from ,table-name :where ,(test-fields key-fields)))))
-          (defmethod delete-dao ((object target-class))
-            (execute (apply tmpl (slot-values object key-fields)))))
+           (let ((tmpl (sql-template `(:delete-from ,table-name :where ,(test-fields key-fields)))))
+             (defmethod delete-dao ((object ,class))
+               (execute (apply tmpl (slot-values object key-fields)))))
   
-        (let ((tmpl (sql-template `(:select * :from ,table-name :where ,(test-fields key-fields)))))
-          (defmethod get-dao ((type (eql (class-name class))) &rest keys)
-            (car (exec-query *database* (apply tmpl keys) (dao-row-reader class))))))
+           (let ((tmpl (sql-template `(:select * :from ,table-name :where ,(test-fields key-fields)))))
+             (defmethod get-dao ((type (eql (class-name ,class))) &rest keys)
+               (car (exec-query *database* (apply tmpl keys) (dao-row-reader ,class))))))
 
-      (defmethod insert-dao ((object target-class))
-        (let (bound unbound)
-          (loop :for field :in fields
+         (defmethod insert-dao ((object ,class))
+           (let (bound unbound)
+             (loop :for field :in fields
                 :do (if (slot-boundp object field)
                         (push field bound)
                         (push field unbound)))
 
-          (let* ((values (mapcan (lambda (x) (list x (slot-value object x)))
-                                 (remove-if (lambda (x) (member x ghost-fields)) bound) ))
-                 (returned (query (sql-compile `(:insert-into ,table-name
-                                                 :set ,@values
-                                                 ,@(when unbound (cons :returning unbound))))
-                                  :row)))
-            (when unbound
-              (loop :for value :in returned
+             (let* ((values (mapcan (lambda (x) (list x (slot-value object x)))
+                                    (remove-if (lambda (x) (member x ghost-fields)) bound) ))
+                    (returned (query (sql-compile `(:insert-into ,table-name
+                                                                 :set ,@values
+                                                                 ,@(when unbound (cons :returning unbound))))
+                                     :row)))
+               (when unbound
+                 (loop :for value :in returned
                     :for field :in unbound
                     :do (setf (slot-value object field) value)))))
-        object)
+           object)
 
 
-      (let* ((defaulted-slots (remove-if-not (lambda (x) (slot-boundp x 'col-default))
-                                             (dao-column-slots class)))
-             (defaulted-names (mapcar 'slot-definition-name defaulted-slots))
-             (default-values (mapcar 'column-default defaulted-slots)))
-        (if defaulted-slots
-            (defmethod fetch-defaults ((object target-class))
-              (let (names defaults)
-                ;; Gather unbound slots and their default expressions.
-                (loop :for slot-name :in defaulted-names
+         (let* ((defaulted-slots (remove-if-not (lambda (x) (slot-boundp x 'col-default))
+                                                (dao-column-slots ,class)))
+                (defaulted-names (mapcar 'slot-definition-name defaulted-slots))
+                (default-values (mapcar 'column-default defaulted-slots)))
+           (if defaulted-slots
+               (defmethod fetch-defaults ((object ,class))
+                 (let (names defaults)
+                   ;; Gather unbound slots and their default expressions.
+                   (loop :for slot-name :in defaulted-names
                       :for default :in default-values
                       :do (unless (slot-boundp object slot-name)
                             (push slot-name names)
                             (push default defaults)))
-                ;; If there are any unbound, defaulted slots, fetch their content.
-                (when names
-                  (loop :for value :in (query (sql-compile (cons :select defaults)) :list)
+                   ;; If there are any unbound, defaulted slots, fetch their content.
+                   (when names
+                     (loop :for value :in (query (sql-compile (cons :select defaults)) :list)
                         :for slot-name :in names
                         :do (setf (slot-value object slot-name) value)))))
-            (defmethod fetch-defaults ((object target-class))
-              nil)))
+               (defmethod fetch-defaults ((object ,class))
+                 nil)))
 
-      (defmethod shared-initialize :after ((object target-class) slot-names
-                                           &key (fetch-defaults nil) &allow-other-keys)
-        (declare (ignore slot-names))
-        (when fetch-defaults
-          (fetch-defaults object))))))
+         (defmethod shared-initialize :after ((object ,class) slot-names
+                                              &key (fetch-defaults nil) &allow-other-keys)
+           (declare (ignore slot-names))
+           (when fetch-defaults
+             (fetch-defaults object)))))))
 
 (defparameter *custom-column-writers* nil
   "A hook for locally overriding/adding behaviour to DAO row readers.

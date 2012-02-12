@@ -30,7 +30,7 @@
 
    #:deftable #:*table-name* #:*table-symbol*
    #:create-table #:create-all-tables #:create-package-tables
-   #:\!index #:\!unique-index #:\!foreign
+   #:\!index #:\!unique-index #:\!foreign #:\!unique
 
    ;; Reduced S-SQL interface
    #:sql #:sql-compile
@@ -42,6 +42,6 @@
    ;; Condition type from cl-postgres
    #:database-error #:database-error-message #:database-error-code
    #:database-error-detail #:database-error-query #:database-error-cause
-   #:database-connection-error))
+   #:database-connection-error #:database-error-constraint-name))
 
 (in-package :postmodern)

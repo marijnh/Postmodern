@@ -105,7 +105,7 @@ and a - to indicate it does not take any elements."
                     "localtime" "localtimestamp" "natural" "new" "not" "notnull" "null" "off" "offset" "old"
                     "on" "only" "or" "order" "outer" "overlaps" "placing" "primary" "references" "returning"
                     "right" "select" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
-                    "union" "unique" "user" "using" "verbose" "when" "where" "with"))
+                    "union" "unique" "user" "using" "verbose" "when" "where" "with" "for" "nowait" "share"))
       (setf (gethash word words) t))
     words)
   "A set of all Postgres' reserved words, for automatic escaping.")
@@ -433,9 +433,14 @@ with a given arity."
 (register-sql-operators :unary :not)
 (register-sql-operators :n-ary :+ :* :% :& :|\|| :|\|\|| :and :or :union (:union-all "union all"))
 (register-sql-operators :n-or-unary :- :~)
-(register-sql-operators :2+-ary  := :/ :!= :< :> :<= :>= :^ :~* :!~ :!~* :like :ilike
+(register-sql-operators :2+-ary  := :/ :!= :<> :< :> :<= :>= :^ :~* :!~ :!~* :like :ilike
                         :intersect (:intersect-all "intersect all")
                         :except (:except-all "except all"))
+;; PostGIS operators
+(register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :@ :|\|&>| :|\|>>| :~=)
+
+(def-sql-op :|| (&rest args)
+  `("(" ,@(sql-expand-list args " || ") ")"))
 
 (def-sql-op :desc (arg)
   `(,@(sql-expand arg) " DESC"))
@@ -476,6 +481,9 @@ with a given arity."
 
 (def-sql-op :is-null (arg)
   `("(" ,@(sql-expand arg) " IS NULL)"))
+
+(def-sql-op :not-null (arg)
+  `("(" ,@(sql-expand arg) " IS NOT NULL)"))
 
 (def-sql-op :in (form set)
   `("(" ,@(sql-expand form) " IN " ,@(sql-expand set) ")"))
@@ -578,6 +586,29 @@ the proper SQL syntax for joining tables."
 
 (def-sql-op :order-by (form &rest fields)
   `("(" ,@(sql-expand form) " ORDER BY " ,@(sql-expand-list fields) ")"))
+
+(def-sql-op :set-constraints (state &rest constraints)
+  `("SET CONSTRAINTS " ,@(if constraints
+                             (sql-expand-list constraints)
+                             '("ALL"))
+                       ,(ecase state
+                          (:deferred " DEFERRED")
+                          (:immediate " IMMEDIATE"))))
+
+(defun for-update/share (share-or-update form &rest args)
+  (let* ((of-position (position :of args))
+         (no-wait-position (position :nowait args))
+         (of-tables (when of-position (subseq args (1+ of-position) no-wait-position))))
+    `("(" ,@(sql-expand form) ,(format nil " FOR ~:@(~A~)" share-or-update)
+          ,@(when of-tables (list (format nil " OF ~{~A~^, ~}" (mapcar #'sql-compile of-tables))))
+          ,@(when no-wait-position (list " NOWAIT"))
+          ")")))
+
+(def-sql-op :for-update (form &rest args)
+  (apply #'for-update/share "UPDATE" form args))
+
+(def-sql-op :for-share (form &rest args)
+  (apply #'for-update/share "SHARE" form args))
 
 (defun escape-sql-expression (expr)
   "Try to escape an expression at compile-time, if not possible, delay

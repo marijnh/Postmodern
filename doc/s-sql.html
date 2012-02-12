@@ -259,6 +259,12 @@
     <code>:intersect</code>, and <code>:except</code> should be
     queries (<code>:select</code> forms).</p>
 
+    <p class="desc">Note that you'll have to escape pipe characters to
+    enter them as keywords. S-SQL handles the empty keyword symbol
+    (written <code>:||</code>) specially, and treats it
+    like <code>:\|\|</code>, so that it can be written without
+    escapes. With <code>:\|</code>, this doesn't work.</p>
+
     <p class="def"><span>sql-op</span> <a name="unary"></a>:~, :not (arg)</p>
 
     <p class="desc">Unary operators for bitwise and logical
@@ -308,6 +314,10 @@
     <p class="def"><span>sql-op</span> <a name="is-null"></a>:is-null (arg)</p>
 
     <p class="desc">Test whether a value is null.</p>
+
+    <p class="def"><span>sql-op</span> <a name="not-null"></a>:not-null (arg)</p>
+
+    <p class="desc">Test whether a value is not null.</p>
 
     <p class="def"><span>sql-op</span> <a name="in"></a>:in (value set)</p>
 
@@ -421,6 +431,25 @@
     <p class="desc">Order the results of a query by the given
     expressions. See <a href="#desc"><code>:desc</code></a> for when
     you want to invert an ordering.</p>
+
+    <p class="def"><span>sql-op</span> <a name="for-update"></a>:for-update (query &amp;key of nowait)</p>
+
+    <p class="desc">Locks the selected rows against concurrent updates. This will prevent the rows
+    from being modified or deleted by other transactions until the current transaction ends. The :of
+    keyword should be followed by one or more table names. If provided, Postgres will lock
+    these tables instead of the ones detected in the select statement. The :nowait keyword should be
+    provided by itself (with no argument attached to it), after all the :of arguments . If :nowait
+    is provided, Postgres will throw an error if a table cannot be locked immediately, instead of
+    pausing until it's possible.</p>
+
+    <pre class="desc code">
+(:for-update (:select :* :from 'foo 'bar 'baz) :of 'bar 'baz :nowait)</pre>
+
+    <p class="def"><span>sql-op</span> <a name="for-share"></a>:for-share (query &amp;key of nowait)</p>
+
+    <p class="desc">Similar to <a href="#for-update">:for-update</a>, except it acquires a shared
+    lock on the table, allowing other transactions to perform :for-share selects on the locked
+    tables.</p>
 
     <p class="def"><span>sql-op</span> <a name="function"></a>:function (name (&amp;rest
     arg-types) return-type stability body)</p>
@@ -637,6 +666,19 @@
     <p class="desc">Drop a view. Takes optional
     <code>:if-exists</code> argument.</p>
 
+    <p class="def"><span>sql-op</span> <a
+    name="set-constraints"></a>:set-constraints (state &amp;rest
+    constraints)</p>
+
+    <p class="desc">Configure whether deferrable constraints should be
+    checked when a statement is executed, or when the transaction
+    containing that statement is completed. The provided state must be
+    either <code>:immediate</code>, indicating the former, or
+    <code>:deferred</code>, indicating the latter.  The constraints
+    must be either the names of the constraints to be configured, or
+    unspecified, indicating that all deferrable constraints should be
+    thus configured.</p>
+
     <h2><a name="index"></a>Symbol-index</h2>
 
     <ul class="symbol-index">
@@ -679,6 +721,7 @@
       <li><a href="#drop-sequence">:drop-sequence</a></li>
       <li><a href="#drop-table">:drop-table</a></li>
       <li><a href="#drop-view">:drop-view</a></li>
+      <li><a href="#set-constraints">:set-constraints</a></li>
       <li><a href="#enable-s-sql-syntax">enable-s-sql-syntax</a></li>
       <li><a href="#*escape-sql-names-p*">*escape-sql-names-p*</a></li>
       <li><a href="#infix">:except</a></li>
@@ -695,6 +738,7 @@
       <li><a href="#limit">:limit</a></li>
       <li><a href="#not">:not</a></li>
       <li><a href="#not-in">:not-in</a></li>
+      <li><a href="#not-null">:not-null</a></li>
       <li><a href="#types">numeric</a></li>
       <li><a href="#nulls-first">:nulls-first</a></li>
       <li><a href="#nulls-first">:nulls-last</a></li>

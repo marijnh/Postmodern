@@ -10,6 +10,7 @@
 (defparameter *string-file* (if *unicode* "strings-utf-8" "strings-ascii"))
 
 (defsystem :cl-postgres
+  :description "Low-level client library for PosgreSQL"
   :depends-on (:md5 #-(or allegro sbcl) :usocket
                     #+sbcl :sb-bsd-sockets)
   :components 
