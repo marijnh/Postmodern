@@ -16,7 +16,11 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter *optimize*
-    '(optimize (speed 3) (safety 0) (space 0) (debug 1)
+    '(optimize
+      (speed 3)
+      #-ecl(safety 0) #+ecl(safety 1)
+      (space 0)
+      (debug 1)
       (compilation-speed 0))))
 
 (defun utf-8-byte-length (string)
