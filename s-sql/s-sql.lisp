@@ -558,7 +558,7 @@ the proper SQL syntax for joining tables."
              (member x '(:left-join :right-join :inner-join :outer-join :cross-join))))
     (when (null args)
       (sql-error "Empty :from clause in select"))
-    (loop :while args :for first = t :then nil
+    (loop :for first = t :then nil :while args
           :append (cond ((is-join (car args))
                          (when first (sql-error ":from clause starts with a join."))
                          (expand-join nil))
