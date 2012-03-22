@@ -90,5 +90,9 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   ;; Optimization settings (only used by functions that need it).
   (defparameter *optimize*
-    '(optimize (speed 3) (safety 0) (space 1) (debug 1)
+    '(optimize
+      (speed 3)
+      #-ecl(safety 0) #+ecl(safety 1)
+      (space 1)
+      (debug 1)
       (compilation-speed 0))))
