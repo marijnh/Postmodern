@@ -121,7 +121,7 @@ milliseconds."
   "Days in a certain month -- note that these months use internal
 encoding."
   (case month
-    (11 (if (leap-year-p year) 29 28))
+    (11 (if (leap-year-p (1+ year)) 29 28))
     ((1 3 6 8) 30)
     (t 31)))
 
