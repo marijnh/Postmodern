@@ -22,6 +22,9 @@
               (slot-value dao slot))
           (dao-keys (class-of dao))))
 
+(defclass effective-column-slot (standard-effective-slot-definition)
+  ((direct-slot :initform *direct-column-slot* :reader slot-column)))
+
 (defun dao-column-slots (class)
   "Enumerate the slots in a class that refer to table rows."
   (mapcar 'slot-column
@@ -94,9 +97,6 @@
 (defparameter *direct-column-slot* nil
   "This is used to communicate the fact that a slot is a column to
   effective-slot-definition-class.")
-
-(defclass effective-column-slot (standard-effective-slot-definition)
-  ((direct-slot :initform *direct-column-slot* :reader slot-column)))
 
 (defmethod compute-effective-slot-definition ((class dao-class) name direct-slot-definitions)
   (declare (ignore name))
