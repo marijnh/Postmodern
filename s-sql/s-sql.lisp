@@ -19,6 +19,7 @@
            #:sql
            #:sql-compile
            #:sql-template
+	   #:sql-fmt
            #:$$
            #:register-sql-operators
            #:enable-s-sql-syntax
@@ -245,6 +246,9 @@ name.")
   safe, but when the server is configured to allow standard
   strings (parameter 'standard_conforming_strings' is 'on'), the noise
   in queries can be reduced by setting this to T.")
+
+(defun sql-fmt (fmt &rest args)
+  (apply 'format nil fmt (mapcar 'sql-ize args)))
 
 (defun sql-escape-string (string &optional prefix)
   "Escape string data so it can be used in a query."
