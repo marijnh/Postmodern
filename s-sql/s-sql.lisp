@@ -541,19 +541,23 @@ with a given arity."
   "Helper for the select operator. Turns the part following :from into
 the proper SQL syntax for joining tables."
   (labels ((expand-join (natural-p)
-             (let ((type (first args)) (table (second args)) on)
+             (let ((type (first args)) (table (second args)) kind param)
                (unless table (sql-error "Incomplete join clause in select."))
                (setf args (cddr args))
                (unless (or natural-p (eq type :cross-join))
-                 (unless (and (eq (car args) :on) (cdr args))
+                 (setf kind (pop args))
+                 (unless (and (or (eq kind :on) (eq kind :using)) args)
                    (sql-error "Incorrect join form in select."))
-                 (setf on (second args) args (cddr args)))
+                 (setf param (pop args)))
                `(" " ,@(when natural-p '("NATURAL "))
                  ,(ecase type
                     (:left-join "LEFT") (:right-join "RIGHT")
                     (:inner-join "INNER") (:outer-join "FULL OUTER")
                     (:cross-join "CROSS")) " JOIN " ,@(sql-expand table)
-                 ,@(unless (or natural-p (eq type :cross-join)) `(" ON " . ,(sql-expand on))))))
+                 ,@(unless (or natural-p (eq type :cross-join))
+                     (ecase kind
+                       (:on `(" ON " . ,(sql-expand param)))
+                       (:using `(" USING (" ,@(sql-expand-list param) ")")))))))
            (is-join (x)
              (member x '(:left-join :right-join :inner-join :outer-join :cross-join))))
     (when (null args)
