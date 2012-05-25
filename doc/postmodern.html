@@ -442,14 +442,16 @@
     <p class="def">
       <span>function</span>
       <a name="table-description"></a>
-      table-description (name)
+      table-description (name &amp;optional schema-name)
       <br/>&#8594; list
     </p>
 
     <p class="desc">Returns a list of the fields in the named table.
     Each field is represented by a list of three elements: the field
     name, the type, and a boolean indicating whether the field may be
-    null.</p>
+    null.  Optionally, schema-name can be specified to restrict the
+    result to fields from the named schema.  Without it, all fields in
+    the table are returned, regardless of their schema.</p>
 
     <p class="def">
       <span>function</span>
