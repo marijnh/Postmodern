@@ -503,7 +503,11 @@ with a given arity."
 (def-sql-op :case (&rest clauses)
   `("CASE"
     ,@(loop :for (test expr) :in clauses
-            :append `(" WHEN " ,@(sql-expand test) " THEN " ,@(sql-expand expr)))
+            :if (eql test :else)
+              :append `(" ELSE " ,@(sql-expand expr))
+            :else
+              :append `(" WHEN " ,@(sql-expand test) " THEN " ,@(sql-expand expr))
+            :end)
     " END"))
 
 (def-sql-op :[] (form start &optional end)
