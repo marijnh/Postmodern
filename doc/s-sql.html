@@ -395,7 +395,7 @@
     <p class="desc">Creates a select query. The arguments are split on
     the keywords found among them. The group of arguments immediately
     after <code>:select</code> is interpreted as the expressions that
-    should be selected. After this an optional <code>:distinct</code>
+    should be selected. After this, an optional <code>:distinct</code>
     may follow, which will cause the query to only select distinct
     rows, or alternatively <code>:distinct-on</code> followed by a
     group of row names. Next comes the optional keyword
@@ -404,8 +404,9 @@
     <code>:left-join</code>, <code>:right-join</code>,
     <code>:inner-join</code>, <code>:outer-join</code> or
     <code>:cross-join</code>, then a table name or subquery, then the
-    keyword <code>:on</code>, if applicable, and then a form. A join
-    can be preceded by <code>:natural</code> (leaving off the
+    keyword <code>:on</code> or <code>:using</code>, if applicable,
+    and then a form. A join can be preceded by <code>:natural</code>
+    (leaving off the
     <code>:on</code> clause) to use a natural join. After the joins an
     optional <code>:where</code> followed by a single form may occur.
     And finally <code>:group-by</code> and <code>:having</code> can
