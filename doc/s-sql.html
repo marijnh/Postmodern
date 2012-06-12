@@ -349,7 +349,8 @@
     <p class="def"><span>sql-op</span> <a name="case"></a>:case (&amp;rest clauses)</p>
 
     <p class="desc">A conditional expression. Clauses should take the
-    form <code>(test value)</code>.</p>
+    form <code>(test value)</code>. If test is <code>:else</code>,
+    an <code>ELSE</code> clause will be generated.</p>
 
     <p class="def"><span>sql-op</span> <a name="between"></a>:between (n start end)</p>
 
