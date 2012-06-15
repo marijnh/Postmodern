@@ -57,15 +57,18 @@ if strings-p is not true."
 the view name."
   (query (make-exists-query "v" view) :single))
 
-(defun table-description (table)
+(defun table-description (table &optional schema-name)
   "Return a list of (name type null-allowed) lists for the fields of a
-table."
-  (query (:select 'attname 'typname (:not 'attnotnull)
-                  :from 'pg-catalog.pg-attribute
-                  :inner-join 'pg-catalog.pg-type :on (:= 'pg-type.oid 'atttypid)
-                  :inner-join 'pg-catalog.pg-class :on (:and (:= 'pg-class.oid 'attrelid)
-                                                             (:= 'pg-class.relname (to-identifier table)))
-                  :where (:> 'attnum 0))))
+table.  If SCHEMA-NAME is specified, only fields from that schema are
+returned."
+  (let ((schema-test (if schema-name (sql (:= 'pg-namespace.nspname schema-name)) "true")))
+    (query (:select 'attname 'typname (:not 'attnotnull) :distinct
+                    :from 'pg-catalog.pg-attribute
+                    :inner-join 'pg-catalog.pg-type :on (:= 'pg-type.oid 'atttypid)
+                    :inner-join 'pg-catalog.pg-class :on (:and (:= 'pg-class.oid 'attrelid)
+                                                               (:= 'pg-class.relname (to-identifier table)))
+                    :inner-join 'pg-catalog.pg-namespace :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+                    :where (:and (:> 'attnum 0) (:raw schema-test))))))
 
 (defclass transaction-handle ()
   ((open-p :initform t :accessor transaction-open-p)

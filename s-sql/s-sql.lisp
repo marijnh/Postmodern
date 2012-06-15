@@ -433,11 +433,14 @@ with a given arity."
 (register-sql-operators :unary :not)
 (register-sql-operators :n-ary :+ :* :% :& :|\|| :|\|\|| :and :or :union (:union-all "union all"))
 (register-sql-operators :n-or-unary :- :~)
-(register-sql-operators :2+-ary  := :/ :!= :< :> :<= :>= :^ :~* :!~ :!~* :like :ilike
+(register-sql-operators :2+-ary  := :/ :!= :<> :< :> :<= :>= :^ :~* :!~ :!~* :like :ilike
                         :intersect (:intersect-all "intersect all")
                         :except (:except-all "except all"))
 ;; PostGIS operators
 (register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :@ :|\|&>| :|\|>>| :~=)
+
+(def-sql-op :|| (&rest args)
+  `("(" ,@(sql-expand-list args " || ") ")"))
 
 (def-sql-op :desc (arg)
   `(,@(sql-expand arg) " DESC"))
@@ -500,7 +503,11 @@ with a given arity."
 (def-sql-op :case (&rest clauses)
   `("CASE"
     ,@(loop :for (test expr) :in clauses
-            :append `(" WHEN " ,@(sql-expand test) " THEN " ,@(sql-expand expr)))
+            :if (eql test :else)
+              :append `(" ELSE " ,@(sql-expand expr))
+            :else
+              :append `(" WHEN " ,@(sql-expand test) " THEN " ,@(sql-expand expr))
+            :end)
     " END"))
 
 (def-sql-op :[] (form start &optional end)
@@ -538,24 +545,28 @@ with a given arity."
   "Helper for the select operator. Turns the part following :from into
 the proper SQL syntax for joining tables."
   (labels ((expand-join (natural-p)
-             (let ((type (first args)) (table (second args)) on)
+             (let ((type (first args)) (table (second args)) kind param)
                (unless table (sql-error "Incomplete join clause in select."))
                (setf args (cddr args))
                (unless (or natural-p (eq type :cross-join))
-                 (unless (and (eq (car args) :on) (cdr args))
+                 (setf kind (pop args))
+                 (unless (and (or (eq kind :on) (eq kind :using)) args)
                    (sql-error "Incorrect join form in select."))
-                 (setf on (second args) args (cddr args)))
+                 (setf param (pop args)))
                `(" " ,@(when natural-p '("NATURAL "))
                  ,(ecase type
                     (:left-join "LEFT") (:right-join "RIGHT")
                     (:inner-join "INNER") (:outer-join "FULL OUTER")
                     (:cross-join "CROSS")) " JOIN " ,@(sql-expand table)
-                 ,@(unless (or natural-p (eq type :cross-join)) `(" ON " . ,(sql-expand on))))))
+                 ,@(unless (or natural-p (eq type :cross-join))
+                     (ecase kind
+                       (:on `(" ON " . ,(sql-expand param)))
+                       (:using `(" USING (" ,@(sql-expand-list param) ")")))))))
            (is-join (x)
              (member x '(:left-join :right-join :inner-join :outer-join :cross-join))))
     (when (null args)
       (sql-error "Empty :from clause in select"))
-    (loop :while args :for first = t :then nil
+    (loop :for first = t :then nil :while args
           :append (cond ((is-join (car args))
                          (when first (sql-error ":from clause starts with a join."))
                          (expand-join nil))
@@ -583,6 +594,14 @@ the proper SQL syntax for joining tables."
 
 (def-sql-op :order-by (form &rest fields)
   `("(" ,@(sql-expand form) " ORDER BY " ,@(sql-expand-list fields) ")"))
+
+(def-sql-op :set-constraints (state &rest constraints)
+  `("SET CONSTRAINTS " ,@(if constraints
+                             (sql-expand-list constraints)
+                             '("ALL"))
+                       ,(ecase state
+                          (:deferred " DEFERRED")
+                          (:immediate " IMMEDIATE"))))
 
 (defun for-update/share (share-or-update form &rest args)
   (let* ((of-position (position :of args))

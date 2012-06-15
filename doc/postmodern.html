@@ -442,14 +442,16 @@
     <p class="def">
       <span>function</span>
       <a name="table-description"></a>
-      table-description (name)
+      table-description (name &amp;optional schema-name)
       <br/>&#8594; list
     </p>
 
     <p class="desc">Returns a list of the fields in the named table.
     Each field is represented by a list of three elements: the field
     name, the type, and a boolean indicating whether the field may be
-    null.</p>
+    null.  Optionally, schema-name can be specified to restrict the
+    result to fields from the named schema.  Without it, all fields in
+    the table are returned, regardless of their schema.</p>
 
     <p class="def">
       <span>function</span>
@@ -895,7 +897,7 @@
     <p class="def">
       <a name="!foreign"></a>
       <span>function</span>
-      !foreign (target-table columns &amp;optional target-columns &amp;key on-delete on-update)
+      !foreign (target-table columns &amp;optional target-columns &amp;key on-delete on-update deferrable initially-deferred)
     </p>
 
     <p class="desc">Add a foreign key to the table being defined.
@@ -903,15 +905,32 @@
     <code>columns</code> is a list of column names or single name in
     <em>this</em> table, and, if the columns have different names in
     the table referred to, <code>target-columns</code> should be
-    another list of names or single name for the target table.</p>
+    another list of names or single name for the target table, or
+    <code>:primary-key</code> to indicate that the primary key of the
+    target table should be referenced.</p>
 
     <p class="desc">The <code>on-delete</code> and
     <code>on-update</code> arguments can be used to specify ON DELETE
     and ON UPDATE actions, as per the keywords allowed in <a
-    href="s-sql.html#create-table"><code>create-table</code></a>. Note
-    that they are not really &amp;key arguments, but rather are picked
-    out of a &amp;rest arg at runtime, so that they can be specified
-    even when <code>target-columns</code> is not given.</p>
+    href="s-sql.html#create-table"><code>create-table</code></a>. In
+    addition, the deferrable and initially-deferred arguments can be
+    used to indicate whether constraint checking can be deferred until
+    the current transaction is completed, and whether this should be
+    done by default. Note that none of these are really &amp;key
+    arguments, but rather are picked out of a &amp;rest arg at
+    runtime, so that they can be specified even when
+    <code>target-columns</code> is not given.</p>
+
+    <p class="def">
+      <a name="!unique"></a>
+      <span>function</span>
+      !unique (target-fields &amp;key deferrable initially-deferred)
+    </p>
+
+    <p class="desc">Constrains one or more columns to only contain
+    unique (combinations of) values, with deferrable and
+    initially-deferred defined as in <a
+    href="#!foreign"><code>!foreign</code></a></p>
 
     <h2 id="index">Symbol-index</h2>
 
@@ -953,6 +972,7 @@
       <li><a href="#doquery">doquery</a></li>
       <li><a href="#execute">execute</a></li>
       <li><a href="#!foreign">!foreign</a></li>
+      <li><a href="#!unique">!unique</a></li>
       <li><a href="#get-dao">get-dao</a></li>
       <li><a href="#*ignore-unknown-columns*">*ignore-unknown-columns*</a></li>
       <li><a href="#!index">!index</a></li>

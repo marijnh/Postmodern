@@ -85,9 +85,10 @@ database-error condition."
         (when (or (string= code "57P01") (string= code "57P02"))
           (ensure-socket-is-closed socket))
         (error (cl-postgres-error::get-error-type code)
-               :code code :message (get-field #\M)
-               :detail (or (get-field #\D) (get-field #\H))
-               :position (get-field #\p))))))
+ 	       :code code
+ 	       :message (get-field #\M)
+ 	       :detail (or (get-field #\D) (get-field #\H))
+ 	       :position (get-field #\p))))))
 
 (define-condition postgresql-warning (simple-warning)
   ())
