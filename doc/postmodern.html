@@ -122,7 +122,7 @@
       <a name="*database*"></a>
       *database*
     </p>
-    
+
     <p class="desc">Special variable holding the current database.
     Most functions and macros operating on a database assume this
     contains a connected database.</p>
@@ -212,7 +212,7 @@
     argument, but will determine the format in which the results are
     returned instead. Any of the following formats can be used, with
     the default being <code>:rows</code>:</p>
-    
+
     <table class="desc">
       <tr><td><code>:none</code></td><td>Ignore the result values.</td></tr>
       <tr><td><code>:lists</code>, <code>:rows</code></td><td>Return a
@@ -321,9 +321,9 @@
       <a name="defprepared-with-names"></a>
       defprepared-with-names (name (&amp;rest args) (query &amp;rest query-args) &amp;optional (format :rows))
     </p>
-    
+
     <p class="desc">Like <a href="#defprepared"><code>defprepared</code></a>,
-    but allows to specify names of the function arguments as well as arguments 
+    but allows to specify names of the function arguments as well as arguments
     supplied to the query.</p>
 
     <pre class="code">
@@ -397,7 +397,7 @@
       sequence-next (sequence)
       <br/>&#8594; integer
     </p>
-    
+
     <p class="desc">Get the next value from a sequence. The sequence
     identifier can be either a string or a symbol, in the latter case
     it will be converted to a string with <a
@@ -612,8 +612,8 @@
       <br/>&#8594; dao
     </p>
 
-    <p class="desc">Combines <code>make-instance</code> with 
-    <a href="#insert-dao"><code>insert-dao</code></a>. Return the 
+    <p class="desc">Combines <code>make-instance</code> with
+    <a href="#insert-dao"><code>insert-dao</code></a>. Return the
     created dao.</p>
 
     <p class="def">
@@ -623,8 +623,8 @@
     </p>
 
     <p class="desc">Create an <code>:around</code>-method for <a href="#make-dao">
-    <code>make-dao</code></a>. Code <code>body</code> is executed in 
-    a lexical environment where variable <code>dao-name</code> is bound 
+    <code>make-dao</code></a>. Code <code>body</code> is executed in
+    a lexical environment where variable <code>dao-name</code> is bound
     to a freshly created and inserted DAO. The representation of the DAO in the
     database is then updated to reflect changes that <code>body</code> might
     have introduced. Useful for processing values of slots with the type
@@ -672,9 +672,9 @@
 
     <p class="desc">Execute the given query (which can be either a
     string or an <a href="s-sql.html">S-SQL</a> expression) and return
-    the result as DAOs of the given type. If the query contains placeholders 
-    ($1, $2, etc) their values can be given as extra arguments. 
-    The names of the fields returned by the query must either match slots 
+    the result as DAOs of the given type. If the query contains placeholders
+    ($1, $2, etc) their values can be given as extra arguments.
+    The names of the fields returned by the query must either match slots
     in the DAO class, or be bound through <a
     href="#with-column-writers"><code>with-column-writers</code></a>.</p>
 
@@ -740,6 +740,8 @@
     href="#save-dao/transaction"><code>save-dao/transaction</code></a>
     instead in such a situation.</p>
 
+    <p class="desc"><b>See also:</b> <a href="#upsert-dao"><code>upsert-dao</code></a>.</p>
+
     <p class="def">
       <span>function</span>
       <a name="save-dao/transaction"></a>
@@ -751,6 +753,41 @@
     href="#save-dao"><code>save-dao</code></a>, except that it
     protects its attempt to insert the object with a rollback point,
     so that a failure will not abort the transaction.</p>
+
+    <p class="desc"><b>See also:</b> <a href="#upsert-dao"><code>upsert-dao</code></a>.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="upsert-dao"></a>
+      upsert-dao (dao)
+      <br/>&#8594; dao
+    </p>
+
+    <p class="desc">
+      Like <a href="#save-dao"><code>save-dao</code></a>
+      or <a href="#save-dao/transaction"><code>save-dao/transaction</code></a>
+      but using a different method that doesn't involve a database
+      exception.  This is safe to use both in and outside a transaction,
+      though it's advisable to always do it in a transaction to prevent a
+      race condition.  The way it works is:
+    </p>
+
+    <ol class="desc">
+      <li>If the object contains unbound slots, we
+      call <a href="#insert-dao"><code>insert-dao</code></a> directly, thus
+      the behavior is like <code>save-dao</code>.</li>
+      <li>Otherwise we try to update a record with the same primary key.  If
+      it already exists in the database, Postgres will return a non-zero
+      value and we stop here.</li>
+      <li>If the update operation succeeds but returns zero, it means the
+      record does not exist and we call <code>insert-dao</code>.
+    </ol>
+
+    <p class="desc">
+      The race condition might occur at step 3 <em>if there's no
+      transaction:</em> if <code>update</code> returns zero and another
+      thread inserts the record at that moment, our insertion will fail.
+    </p>
 
     <p class="def">
       <span>method</span>
