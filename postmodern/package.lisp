@@ -8,7 +8,7 @@
   (:export
    #:dao-class #:dao-exists-p #:dao-keys #:query-dao #:select-dao #:get-dao
    #:with-column-writers
-   #:insert-dao #:update-dao #:save-dao #:save-dao/transaction #:delete-dao #:make-dao
+   #:insert-dao #:update-dao #:save-dao #:save-dao/transaction #:upsert-dao #:delete-dao #:make-dao
    #:define-dao-finalization
    #:dao-table-name #:dao-table-definition
    #:\!dao-def #:*ignore-unknown-columns*)
