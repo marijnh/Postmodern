@@ -124,6 +124,10 @@
   with the values in the given instance."))
 (defgeneric delete-dao (dao)
   (:documentation "Delete the given dao from the database."))
+(defgeneric upsert-dao (dao)
+  (:documentation "Update or insert the given dao.  If its primary key
+  is already in the database and all slots are bound, an update will
+  occur.  Otherwise it tries to insert it."))
 (defgeneric get-dao (type &rest args)
   (:method ((class-name symbol) &rest args)
     (let ((class (find-class class-name)))
