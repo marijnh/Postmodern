@@ -146,7 +146,7 @@
 
 (defmacro define-dao-finalization (((dao-name class) &rest keyword-args) &body body)
   (let ((args-name (gensym)))
-    `(defmethod make-dao :around ((class (eql ',class)) 
+    `(defmethod make-dao :around ((class (eql ',class))
 				  &rest ,args-name
 				  &key ,@keyword-args &allow-other-keys)
        (declare (ignorable ,args-name))
@@ -191,20 +191,28 @@ values.)"
              (defmethod dao-exists-p ((object ,class))
                (and (every (lambda (s) (slot-boundp object s)) key-fields)
                     (query (apply tmpl (slot-values object key-fields)) :single))))
-  
+
            ;; When all values are primary keys, updating makes no sense.
            (when value-fields
              (let ((tmpl (sql-template `(:update ,table-name :set ,@(set-fields value-fields)
-                                                 :where ,(test-fields key-fields)))))
+                                         :where ,(test-fields key-fields)))))
                (defmethod update-dao ((object ,class))
                  (when (zerop (execute (apply tmpl (slot-values object value-fields key-fields))))
                    (error "Updated row does not exist."))
-                 object)))
-  
+                 object)
+
+               (defmethod upsert-dao ((object ,class))
+                 (handler-case
+                     (if (zerop (execute (apply tmpl (slot-values object value-fields key-fields))))
+                         (insert-dao object)
+                         object)
+                   (unbound-slot ()
+                     (insert-dao object))))))
+
            (let ((tmpl (sql-template `(:delete-from ,table-name :where ,(test-fields key-fields)))))
              (defmethod delete-dao ((object ,class))
                (execute (apply tmpl (slot-values object key-fields)))))
-  
+
            (let ((tmpl (sql-template `(:select * :from ,table-name :where ,(test-fields key-fields)))))
              (defmethod get-dao ((type (eql (class-name ,class))) &rest keys)
                (car (exec-query *database* (apply tmpl keys) (dao-row-reader ,class))))))
