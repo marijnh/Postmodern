@@ -648,6 +648,14 @@ to runtime. Used to create stored procedures."
     ,@(when returning
         `(" RETURNING " ,@(sql-expand-list returning))))))
 
+(def-sql-op :listen (channel)
+  `("LISTEN " ,@(sql-expand channel)))
+
+(def-sql-op :notify (channel &optional payload)
+  `("NOTIFY " ,@(sql-expand channel)
+              ,@(when payload
+                  (list ", " (sql-escape-string payload)))))
+
 (defun expand-rows (rows length)
   (unless rows (sql-error "Running :insert-rows-into without data."))
   (unless length (setf length (length (car rows))))
