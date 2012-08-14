@@ -36,6 +36,9 @@ Cases for error and warning messages are always added."
                               (type (unsigned-byte 32) ,size-name)
                               (ignorable ,size-name))
                      (case ,char-name
+                       (#.(char-code #\A)
+                          (get-notification ,socket-name)
+                          (,iter-name))
                        (#.(char-code #\E) (get-error ,socket-name))
                        (#.(char-code #\S) ;; ParameterStatus: read and continue
                           (update-parameter ,socket-name)
@@ -71,6 +74,25 @@ and put them in an alist."
   (loop :for type = (read-uint1 socket)
         :until (zerop type)
         :collect (cons (code-char type) (read-str socket))))
+
+(define-condition postgresql-notification (simple-warning)
+  ((pid :initarg :pid :accessor postgresql-notification-pid)
+   (channel :initarg :channel :accessor postgresql-notification-channel)
+   (payload :initarg :payload :accessor postgresql-notification-payload)))
+
+(defun get-notification (socket)
+  "Read an asynchronous notification message from the socket and
+signal a condition for it."
+  (let ((pid (read-int4 socket))
+        (channel (read-str socket))
+        (payload (read-str socket)))
+    (warn 'postgresql-notification
+          :pid pid
+          :channel channel
+          :payload payload
+          :format-control "Asynchronous notification ~S~@[ (payload: ~S)~] received from ~
+                           server process with PID ~D."
+          :format-arguments (list channel payload pid))))
 
 (defun get-error (socket)
   "Read an error message from the socket and raise the corresponding
