@@ -689,7 +689,12 @@
       connection.</p>
 
     <p class="def"><span>sql-op</span> <a
-    name="listen"></a>:notify (channel &optional payload)</p>
+    name="unlisten"></a>:unlisten (channel)</p>
+
+    <p class="desc">Stop listening for events on <code>channel</code>.</p>
+
+    <p class="def"><span>sql-op</span> <a
+    name="notify"></a>:notify (channel &optional payload)</p>
 
     <p class="desc">Signal a notification event on
         channel <code>channel</code>, a string.  The
@@ -781,6 +786,7 @@
       <li><a href="#type">:type</a></li>
       <li><a href="#infix">:union</a></li>
       <li><a href="#infix">:union-all</a></li>
+      <li><a href="#unlisten">:unlisten</a></li>
       <li><a href="#update">:update</a></li>
       <li><a href="#types">varchar</a></li>
     </ul>

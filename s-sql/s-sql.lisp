@@ -651,6 +651,9 @@ to runtime. Used to create stored procedures."
 (def-sql-op :listen (channel)
   `("LISTEN " ,@(sql-expand channel)))
 
+(def-sql-op :unlisten (channel)
+  `("UNLISTEN " ,@(sql-expand channel)))
+
 (def-sql-op :notify (channel &optional payload)
   `("NOTIFY " ,@(sql-expand channel)
               ,@(when payload
