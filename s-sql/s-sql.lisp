@@ -494,6 +494,11 @@ with a given arity."
 (def-sql-op :extract (unit form)
   `("EXTRACT(" ,@(sql-expand unit) " FROM " ,@(sql-expand form) ")"))
 
+(def-sql-op :count (what &optional distinct)
+  `("COUNT(" ,@(when (eq distinct :distinct)
+				     '("DISTINCT "))
+	     ,@(sql-expand what)  ")"))
+
 (def-sql-op :between (n start end)
   `("(" ,@(sql-expand n) " BETWEEN " ,@(sql-expand start) " AND " ,@(sql-expand end) ")"))
 
@@ -647,6 +652,14 @@ to runtime. Used to create stored procedures."
             (t (sql-error "No :set arguments or select operator passed to insert-into sql operator")))
     ,@(when returning
         `(" RETURNING " ,@(sql-expand-list returning))))))
+
+(def-sql-op :listen (channel)
+  `("LISTEN " ,@(sql-expand channel)))
+
+(def-sql-op :notify (channel &optional payload)
+  `("NOTIFY " ,@(sql-expand channel)
+              ,@(when payload
+                  (list ", " (sql-escape-string payload)))))
 
 (defun expand-rows (rows length)
   (unless rows (sql-error "Running :insert-rows-into without data."))

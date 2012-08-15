@@ -208,3 +208,16 @@ for binding data for binary long object columns."
 
 ;; To get out of the copy-in protocol.
 (define-message copy-done-message #\c ())
+
+;; ** MCNA Addition ** -- this line and everything below it was added by MCNA to
+;; support bulk copying.
+(defun copy-data-message (socket data)
+  (declare (type stream socket)
+    (optimize (speed 3) (safety 0) (space 1) (debug 1)
+      (compilation-speed 0)))
+  (write-uint1 socket 100)
+  (write-uint4 socket (+ 4 (length data)))
+  (enc-write-string data socket))
+
+(define-message copy-fail-message #\f (reason)
+  (string reason))

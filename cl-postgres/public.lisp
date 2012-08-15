@@ -173,6 +173,18 @@ offering a :reconnect restart."
                              (,body-name)))))
       (,body-name)))))
 
+(defun wait-for-notification (connection)
+  "Perform a blocking wait for asynchronous notification. Return the
+channel string, the payload and notifying pid as multiple values."
+  (block nil
+    (with-reconnect-restart connection
+      (handler-bind ((postgresql-notification
+                      (lambda (c)
+                        (return (values (postgresql-notification-channel c)
+                                        (postgresql-notification-payload c)
+                                        (postgresql-notification-pid c))))))
+        (message-case (connection-socket connection))))))
+
 (defun exec-query (connection query &optional (row-reader 'ignore-row-reader))
   "Execute a query string and apply the given row-reader to the
 result."

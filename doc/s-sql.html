@@ -681,6 +681,21 @@
     unspecified, indicating that all deferrable constraints should be
     thus configured.</p>
 
+    <p class="def"><span>sql-op</span> <a
+    name="listen"></a>:listen (channel)</p>
+
+    <p class="desc">Tell the server to listen for notification events
+      on channel <code>channel</code>, a string, on the current
+      connection.</p>
+
+    <p class="def"><span>sql-op</span> <a
+    name="listen"></a>:notify (channel &optional payload)</p>
+
+    <p class="desc">Signal a notification event on
+        channel <code>channel</code>, a string.  The
+        optional <code>payload</code> string can be used to send
+        additional event information to the listeners.</p>
+
     <h2><a name="index"></a>Symbol-index</h2>
 
     <ul class="symbol-index">
@@ -738,9 +753,11 @@
       <li><a href="#is-null">:is-null</a></li>
       <li><a href="#like">:like</a></li>
       <li><a href="#limit">:limit</a></li>
+      <li><a href="#listen">:listen</a></li>
       <li><a href="#not">:not</a></li>
       <li><a href="#not-in">:not-in</a></li>
       <li><a href="#not-null">:not-null</a></li>
+      <li><a href="#notify">:notify</a></li>
       <li><a href="#types">numeric</a></li>
       <li><a href="#nulls-first">:nulls-first</a></li>
       <li><a href="#nulls-first">:nulls-last</a></li>

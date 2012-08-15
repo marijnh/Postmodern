@@ -17,6 +17,7 @@
            #:reopen-database
            #:database-open-p
            #:close-database
+           #:wait-for-notification
            #:exec-query
            #:prepare-query
            #:exec-prepared
@@ -30,6 +31,10 @@
            #:log-query
            #:vector-row-reader
            #:alist-row-reader
+           #:postgresql-notification
+           #:postgresql-notification-channel
+           #:postgresql-notification-payload
+           #:postgresql-notification-pid
            #:postgresql-warning
            #:ignore-row-reader
            #:*sql-readtable*
@@ -41,6 +46,12 @@
            #:*silently-truncate-rationals*
            #:*query-callback*
            #:*query-log*
+           ;; **MCNA Addition** - the following symbols are being added and
+           ;; exported to support bulk copying
+           #:open-copier
+           #:copy-row
+           #:copy-done
+           ;; ** end of MCNA Additions **
            #:*ssl-certificate-file*
            #:*ssl-key-file*))
 
