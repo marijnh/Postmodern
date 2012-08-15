@@ -129,6 +129,16 @@
     be used to provide client key and certificate files. They can be
     either <code>NIL</code>, for no file, or a pathname.</p>
 
+    <p class="def">
+      <span>function</span>
+      <a name="wait-for-notification"></a>
+      wait-for-notification (database-connection)
+    </p>
+
+    <p class="desc">This function blocks until a notification is
+      received on the connection.  The PostgreSQL <code>LISTEN</code>
+      command must be used to enable listening for notifications.</p>
+
     <h2><a name="querying">Querying</a></h2>
 
     <p class="def">
@@ -594,6 +604,46 @@
               (invoke-restart :reconnect)))))
       (funcall fun))))</pre>
 
+    <p class="def">
+      <span>condition</span>
+      <a name="postgresql-notification"></a>
+      postgresql-notification
+    </p>
+
+    <p class="desc">The condition that is signalled when a
+      notification message is received from the PostgreSQL server.
+      This is a <code>WARNING</code> condition which is caught by
+      the <code>WAIT-FOR-NOTIFICATION</code> function that implements
+      synchronous waiting for notifications.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="postgresql-notification-channel"></a>
+      postgresql-notification-channel (postgresql-notification)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">The channel string of this notification.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="postgresql-notification-payload"></a>
+      postgresql-notification-payload (postgresql-notification)
+      <br/>&#8594; string
+    </p>
+
+    <p class="desc">The payload of this notification.</p>
+
+    <p class="def">
+      <span>method</span>
+      <a name="postgresql-notification-pid"></a>
+      postgresql-notification-pid (postgresql-notification)
+      <br/>&#8594; integer
+    </p>
+
+    <p class="desc">The process ID of the process that sent the
+    notification.</p>
+
     <h2><a name="index">Symbol-index</a></h2>
 
     <ul class="symbol-index">
@@ -624,6 +674,10 @@
       <li><a href="#row-reader">next-field</a></li>
       <li><a href="#row-reader">next-row</a></li>
       <li><a href="#open-database">open-database</a></li>
+      <li><a href="#postgresql-notification">postgresql-notification</a></li>
+      <li><a href="#postgresql-notification-channel">postgresql-notification-channel</a></li>
+      <li><a href="#postgresql-notification-payload">postgresql-notification-payload</a></li>
+      <li><a href="#postgresql-notification-pid">postgresql-notification-pid</a></li>
       <li><a href="#prepare-query">prepare-query</a></li>
       <li><a href="#*query-callback*">*query-callback*</a></li>
       <li><a href="#*query-log*">*query-log*</a></li>
@@ -636,6 +690,7 @@
       <li><a href="#*ssl-certificate-file*">*ssl-certificate-file*</a></li>
       <li><a href="#*ssl-key-file*">*ssl-key-file*</a></li>
       <li><a href="#to-sql-string">to-sql-string</a></li>
+      <li><a href="#wait-for-notification">wait-for-notification</a></li>
     </ul>
   </body>
 </html>
