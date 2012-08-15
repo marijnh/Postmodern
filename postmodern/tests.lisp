@@ -197,3 +197,10 @@
           (update-dao back))
         (is (test-b (get-dao 'test-oid "a")) "c"))
       (execute (:drop-table 'test-oid)))))
+
+(test notification
+  (with-test-connection
+    (execute (:listen 'foo))
+    (with-test-connection
+      (execute (:notify 'foo)))
+    (is (cl-postgres:wait-for-notification *database*) "foo")))
