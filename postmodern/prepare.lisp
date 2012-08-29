@@ -11,7 +11,7 @@
   (defun next-statement-id ()
     "Provide unique statement names."
     (incf next-id)
-    (intern (format nil "STATEMENT-~A" next-id) :keyword)))
+    (intern (with-standard-io-syntax (format nil "STATEMENT-~A" next-id)) :keyword)))
 
 (defun generate-prepared (function-form query format)
   "Helper macro for the following two functions."
