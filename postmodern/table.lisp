@@ -208,10 +208,10 @@ values.)"
                (defmethod upsert-dao ((object ,class))
                  (handler-case
                      (if (zerop (execute (apply tmpl (slot-values object value-fields key-fields))))
-                         (insert-dao object)
-                         object)
+                         (values (insert-dao object) t)
+                         (values object nil))
                    (unbound-slot ()
-                     (insert-dao object))))))
+                     (values (insert-dao object) t))))))
 
            (let ((tmpl (sql-template `(:delete-from ,table-name :where ,(test-fields key-fields)))))
              (defmethod delete-dao ((object ,class))
