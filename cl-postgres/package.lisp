@@ -47,7 +47,8 @@
            #:*query-callback*
            #:*query-log*
            #:*ssl-certificate-file*
-           #:*ssl-key-file*))
+           #:*ssl-key-file*
+           #+(and sbcl unix) #:*unix-socket-dir*))
 
 (defpackage :cl-postgres-error
   (:use :common-lisp :cl-postgres)
