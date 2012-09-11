@@ -494,6 +494,11 @@ with a given arity."
 (def-sql-op :extract (unit form)
   `("EXTRACT(" ,@(sql-expand unit) " FROM " ,@(sql-expand form) ")"))
 
+(def-sql-op :count (what &optional distinct)
+  `("COUNT(" ,@(when (eq distinct :distinct)
+				     '("DISTINCT "))
+	     ,@(sql-expand what)  ")"))
+
 (def-sql-op :between (n start end)
   `("(" ,@(sql-expand n) " BETWEEN " ,@(sql-expand start) " AND " ,@(sql-expand end) ")"))
 
