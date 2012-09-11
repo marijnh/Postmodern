@@ -44,9 +44,7 @@
   (incf (copier-count self)))
 
 (defun copy-query (self)
-  (format nil "~%copy ~a ~@[(~{~a~^,~})~] ~a ~a
-  with (
-  format 'text')"
+  (format nil "~%copy ~a ~@[(~{~a~^,~})~] ~a ~a"
     (copier-table self)
     (copier-columns self)
     "FROM"
