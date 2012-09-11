@@ -46,6 +46,9 @@
            #:*silently-truncate-rationals*
            #:*query-callback*
            #:*query-log*
+           #:open-db-writer
+           #:db-write-row
+           #:close-db-writer
            #:*ssl-certificate-file*
            #:*ssl-key-file*
            #+(and sbcl unix) #:*unix-socket-dir*))

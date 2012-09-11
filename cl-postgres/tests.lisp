@@ -118,3 +118,22 @@
                  '(((10 . 20))))))
     (is (equal (exec-query connection "select (30,40)" 'list-row-reader)
                '(("(30,40)"))))))
+
+(test bulk-writer
+  (with-test-connection
+    (exec-query connection "create table test (a int, b text, c date, d timestamp, e int[])")
+    (let ((stream (open-db-writer *test-connection* 'test '(a b c d e))))
+      ;; test a variety of types (int, text, date, timstamp, int array)
+      (loop for row in '((1 "one" "2012-01-01" "2012-01-01 00:00" #(1 2 3 42))
+                         (2 "two" "2012-01-01" "2012-01-01 00:00" #(3 2 1 42))
+
+                         ;; make sure utf-8 gets through ok
+                         (3 "κόσμε" "2012-01-01" "2012-01-01 00:00" #(1))
+
+                         ;; make sure tabs get through ok
+                         (4 "one two	three" "2012-01-01" "2012-01-01 00:00" #(1)))
+           do
+           (db-write-row stream row))
+      (close-db-writer stream))
+    (print (exec-query connection "select * from test"))
+    (exec-query connection "drop table test")))

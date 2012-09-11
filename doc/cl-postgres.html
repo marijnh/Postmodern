@@ -24,6 +24,7 @@
       <li><a href="#querying">Querying</a></li>
       <li><a href="#reading">Reading values</a></li>
       <li><a href="#row-readers">Row readers</a></li>
+      <li><a href="#bulk-copying">Bulk Copying</a></li>
       <li><a href="#conditions">Conditions</a></li>
       <li><a href="#index">Symbol-index</a></li>
     </ol>
@@ -502,6 +503,53 @@
     <p class="desc">A row reader that completely ignores the result of
     a query.</p>
 
+    <h2><a name="connecting">Bulk Copying</a></h2>
+
+    <p>When loading large amounts of data into PostgreSQL, it can be done
+    significantly faster using the bulk copying feature.  The drawback to
+    this approach is that you don't find out about data integrity errors
+    until the entire batch is completed but sometimes the speed is worth it
+    </p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="open-db-writer"></a>
+      open-db-writer (db table &optional columns)
+    </p>
+
+    <p class="desc">Opens a table stream into which rows can be written
+    one at a time using the <code>db-write-row</code>. <code>db</code>
+    is list of arguments that could be passed to <code>open-database</code>.
+    <code>table</code> is the name of an existing table into which this writer
+    will write rows.  If you don't have data for all columns, use
+    <code>columns</code> to indicate those that you do.
+    </p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="close-db-writer"></a>
+      close-db-writer (writer &key abort)
+    </p>
+
+    <p class="desc">Closes a bulk writer opened by <code>open-db-writer</code>.
+    Like the standard close, accepts the <code>abort</code> parameter which if
+    true, attempts to clean up the database connection created by this writer.
+    <code>abort</code> is true by default
+    </p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="db-write-row"></a>
+      db-write-row (writer row-data)
+    </p>
+
+    <p class="desc">Writes <code>row-data</code> into the table and columns
+    referenced by the writer.  <code>row-data</code> is a list of Lisp objects,
+    one for each column included when opening the writer.  Arrays (the elements
+    of which must all be the same type) will be serialized into their Postgres
+    representation before being written into the DB.
+    </p>
+
     <h2><a name="conditions">Conditions</a></h2>
 
     <p>Opening or querying a database may raise errors. CL-postgres
@@ -660,6 +708,7 @@
     <ul class="symbol-index">
       <li><a href="#alist-row-reader">alist-row-reader</a></li>
       <li><a href="#close-database">close-database</a></li>
+      <li><a href="#close-db-writer">close-db-writer</a></li>
       <li><a href="#connection-meta">connection-meta</a></li>
       <li><a href="#connection-parameters">connection-parameters</a></li>
       <li><a href="#copy-sql-readtable">copy-sql-readtable</a></li>
@@ -685,6 +734,7 @@
       <li><a href="#row-reader">next-field</a></li>
       <li><a href="#row-reader">next-row</a></li>
       <li><a href="#open-database">open-database</a></li>
+      <li><a href="#open-db-writer">open-db-writer</a></li>
       <li><a href="#postgresql-notification">postgresql-notification</a></li>
       <li><a href="#postgresql-notification-channel">postgresql-notification-channel</a></li>
       <li><a href="#postgresql-notification-payload">postgresql-notification-payload</a></li>
@@ -696,6 +746,7 @@
       <li><a href="#row-reader">row-reader</a></li>
       <li><a href="#set-sql-datetime-readers">set-sql-datetime-readers</a></li>
       <li><a href="#set-sql-reader">set-sql-reader</a></li>
+      <li><a href="#write-db-row">write-db-row</a></li>
       <li><a href="#*silently-truncate-rationals*">*silently-truncate-rationals*</a></li>
       <li><a href="#*sql-readtable*">*sql-readtable*</a></li>
       <li><a href="#*ssl-certificate-file*">*ssl-certificate-file*</a></li>

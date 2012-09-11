@@ -208,3 +208,13 @@ for binding data for binary long object columns."
 
 ;; To get out of the copy-in protocol.
 (define-message copy-done-message #\c ())
+
+(defun copy-data-message (socket data)
+  (declare (type string data)
+           #.*optimize*)
+  (write-uint1 socket 100)
+  (write-uint4 socket (+ 4 (length data)))
+  (enc-write-string data socket))
+
+(define-message copy-fail-message #\f (reason)
+  (string reason))
