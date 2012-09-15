@@ -503,7 +503,7 @@
     <p class="desc">A row reader that completely ignores the result of
     a query.</p>
 
-    <h2><a name="connecting">Bulk Copying</a></h2>
+    <h2><a name="bulk-copying">Bulk Copying</a></h2>
 
     <p>When loading large amounts of data into PostgreSQL, it can be done
     significantly faster using the bulk copying feature.  The drawback to
@@ -518,8 +518,8 @@
     </p>
 
     <p class="desc">Opens a table stream into which rows can be written
-    one at a time using the <code>db-write-row</code>. <code>db</code>
-    is list of arguments that could be passed to <code>open-database</code>.
+    one at a time using <code>db-write-row</code>. <code>db</code>
+    is a list of arguments that could be passed to <code>open-database</code>.
     <code>table</code> is the name of an existing table into which this writer
     will write rows.  If you don't have data for all columns, use
     <code>columns</code> to indicate those that you do.
