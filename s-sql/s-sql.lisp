@@ -437,7 +437,7 @@ with a given arity."
                         :intersect (:intersect-all "intersect all")
                         :except (:except-all "except all"))
 ;; PostGIS operators
-(register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :@ :|\|&>| :|\|>>| :~=)
+(register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :@ :|\|&>| :|\|>>| :~= :@> :@<)
 
 (def-sql-op :|| (&rest args)
   `("(" ,@(sql-expand-list args " || ") ")"))
