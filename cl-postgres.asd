@@ -12,7 +12,9 @@
 (defsystem :cl-postgres
   :description "Low-level client library for PosgreSQL"
   :depends-on (:md5 #-(or allegro sbcl) :usocket
-                    #+sbcl :sb-bsd-sockets)
+                    #+sbcl :sb-bsd-sockets
+               :cl-ppcre
+               :do-urlencode)
   :components 
   ((:module :cl-postgres
             :components ((:file "trivial-utf-8")
