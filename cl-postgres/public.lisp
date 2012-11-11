@@ -55,8 +55,8 @@ See also: http://www.postgresql.org/docs/9.2/static/libpq-connect.html#LIBPQ-CON
     (:key-value
      (parse-connection-string/key-value connection-string))
     (:guess
-     (if (or (alexandria:starts-with-subseq "postgres:" connection-string)
-             (alexandria:starts-with-subseq "postgresql:" connection-string))
+     (if (or (= (length "postgres:") (mismatch connection-string "postgres:"))
+             (= (length "postgresql:") (mismatch connection-string "postgresql:")))
          (parse-connection-string connection-string :kind :uri)
          (parse-connection-string connection-string :kind :key-value)))))
 
