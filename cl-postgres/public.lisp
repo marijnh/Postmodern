@@ -44,14 +44,18 @@ currently connected."
     (initiate-connection conn)
     conn))
 
-#+(and sbcl unix)
-(defparameter *unix-socket-dir* #-freebsd "/var/run/postgresql/" #+freebsd "/tmp/"
+#+(and (or sbcl ccl) unix)
+(defparameter *unix-socket-dir* #-(or freebsd darwin) "/var/run/postgresql/" #+freebsd "/tmp/" #+darwin "/tmp/"
               "Directory where the Unix domain socket for Postgres be found.")
+
+#+(and (or sbcl ccl) unix)
+(defun unix-socket-path (port)
+  (format nil "~a.s.PGSQL.~a" *unix-socket-dir* port))
 
 #+(and sbcl unix)
 (defun sb-unix-socket-connect (port)
   (let ((sock (make-instance 'sb-bsd-sockets:local-socket :type :stream))
-        (addr (format nil "~a.s.PGSQL.~a" *unix-socket-dir* port)))
+        (addr (unix-socket-path port)))
     (sb-bsd-sockets:socket-connect sock addr)
     (sb-bsd-sockets:socket-make-stream
      sock :input t :output t :element-type '(unsigned-byte 8))))
@@ -72,11 +76,20 @@ if it isn't."
            (restart-case (error (wrap-socket-error err))
              (:reconnect () :report "Try again." (initiate-connection conn)))))
     (handler-case
-        (let ((socket #-(or allegro sbcl)
+        (let ((socket #-(or allegro sbcl ccl)
                       (usocket:socket-stream
                        (usocket:socket-connect (connection-host conn)
                                                (connection-port conn)
                                                :element-type '(unsigned-byte 8)))
+                      #+ccl
+                      (if (equal (connection-host conn) :unix)
+                          #+unix (ccl:make-socket :address-family :file
+                                                 :format :binary
+                                                 :remote-filename (unix-socket-path (connection-port conn)))
+                          #-unix (error "Unix sockets only available on Unix (really)")
+                          (ccl:make-socket :format :binary
+                                           :remote-host (connection-host conn)
+                                           :remote-port (connection-port conn)))
                       #+allegro
                       (socket:make-socket :remote-host (connection-host conn)
                                           :remote-port (connection-port conn)
@@ -102,7 +115,8 @@ if it isn't."
                      finished t)
             (unless finished
               (ensure-socket-is-closed socket))))
-      #-(or allegro sbcl)(usocket:socket-error (e) (add-restart e))
+      #-(or allegro sbcl ccl)(usocket:socket-error (e) (add-restart e))
+      #+ccl (ccl:socket-error (e) (add-restart e))
       #+allegro(excl:socket-error (e) (add-restart e))
       #+sbcl(sb-bsd-sockets:socket-error (e) (add-restart e))
       (stream-error (e) (add-restart e))))
