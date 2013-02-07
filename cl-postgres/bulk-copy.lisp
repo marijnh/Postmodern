@@ -22,14 +22,12 @@
     copier))
 
 (defun close-db-writer (self &key (abort t))
-  (flet ((finish-copying-socket ()
-           (let* ((connection (copier-database self))
-                  (socket (connection-socket connection)))
-             (with-reconnect-restart connection
-               (using-connection connection
-                 (send-copy-done socket))))))
-    (unwind-protect
-         (finish-copying-socket))
+  (unwind-protect
+       (let* ((connection (copier-database self))
+              (socket (connection-socket connection)))
+         (with-reconnect-restart connection
+           (using-connection connection
+             (send-copy-done socket))))
     (when abort
       (close-database (copier-database self))))
   (copier-count self))
