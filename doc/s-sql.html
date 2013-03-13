@@ -488,7 +488,10 @@
     <p class="desc">Update values in a table. After the table name
     there should follow the keyword <code>:set</code> and any number
     of alternating field names and values, like
-    for <a href="#insert-into"><code>:insert-into</code></a>, and then
+    for <a href="#insert-into"><code>:insert-into</code></a>. Next comes 
+    the optional keyword <code>:from</code>, followed by at least one table name
+    and then any numer of join statements, like for 
+    <a href="#select"><code>:select</code></a>. After the joins,
     an optional <code>:where</code> keyword followed by the condition,
     and <code>:returning</code> keyword followed by a list of field
     names or expressions indicating values to be returned as query
