@@ -464,6 +464,9 @@ with a given arity."
                       :when type :append (list " " (to-type-name type)))
           ")"))))
 
+(def-sql-op :@@ (op1 op2)
+  `("(" ,@(sql-expand op1) " @@ " ,@(sql-expand op2) ")"))
+
 (def-sql-op :distinct (&rest forms)
   `("DISTINCT(" ,@(sql-expand-list forms) ")"))
 
