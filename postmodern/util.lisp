@@ -62,13 +62,15 @@ the view name."
 table.  If SCHEMA-NAME is specified, only fields from that schema are
 returned."
   (let ((schema-test (if schema-name (sql (:= 'pg-namespace.nspname schema-name)) "true")))
-    (query (:select 'attname 'typname (:not 'attnotnull) :distinct
-                    :from 'pg-catalog.pg-attribute
-                    :inner-join 'pg-catalog.pg-type :on (:= 'pg-type.oid 'atttypid)
-                    :inner-join 'pg-catalog.pg-class :on (:and (:= 'pg-class.oid 'attrelid)
-                                                               (:= 'pg-class.relname (to-identifier table)))
-                    :inner-join 'pg-catalog.pg-namespace :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
-                    :where (:and (:> 'attnum 0) (:raw schema-test))))))
+    (mapcar #'butlast
+            (query (:order-by (:select 'attname 'typname (:not 'attnotnull) 'attnum :distinct
+                               :from 'pg-catalog.pg-attribute
+                               :inner-join 'pg-catalog.pg-type :on (:= 'pg-type.oid 'atttypid)
+                               :inner-join 'pg-catalog.pg-class :on (:and (:= 'pg-class.oid 'attrelid)
+                                                                          (:= 'pg-class.relname (to-identifier table)))
+                               :inner-join 'pg-catalog.pg-namespace :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+                               :where (:and (:> 'attnum 0) (:raw schema-test)))
+                              'attnum)))))
 
 (defclass transaction-handle ()
   ((open-p :initform t :accessor transaction-open-p)
