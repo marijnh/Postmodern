@@ -120,6 +120,16 @@ when UTF-8 support is enabled."
            #.*optimize*)
   (enc-read-string socket :null-terminated t))
 
+(declaim (ftype (function (t) string) read-simple-str))
+(defun read-simple-str (socket)
+  "Read a null-terminated string from a stream. Interprets it as ASCII."
+  (declare (type stream socket)
+           #.*optimize*)
+  (with-output-to-string (out)
+    (loop :for b := (read-byte socket nil 0) :do
+       (cond ((eq b 0) (return))
+             ((< b 128) (write-char (code-char b) out))))))
+
 (defun skip-bytes (socket length)
   "Skip a given number of bytes in a binary stream."
   (declare (type stream socket)

@@ -82,7 +82,7 @@ a query.")
 and put them in an alist."
   (loop :for type = (read-uint1 socket)
         :until (zerop type)
-        :collect (cons (code-char type) (read-str socket))))
+        :collect (cons (code-char type) (read-simple-str socket))))
 
 (define-condition postgresql-notification (simple-warning)
   ((pid :initarg :pid :accessor postgresql-notification-pid)
