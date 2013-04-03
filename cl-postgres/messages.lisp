@@ -86,6 +86,9 @@ message definitions themselves stay readable."
 (define-message md5-password-message #\p (password user salt)
   (string (md5-password password user salt)))
 
+(define-message gss-auth-buffer-message #\p (buf)
+  (bytes buf))
+
 ;; Send a query, the simple way.
 (define-message query-message #\Q (query)
   (string query))

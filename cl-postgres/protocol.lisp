@@ -6,7 +6,7 @@
 (define-condition protocol-error (error)
   ((message :initarg :message))
   (:report (lambda (err stream)
-             (format stream "Postgresql protocol error: ~A" 
+             (format stream "Postgresql protocol error: ~A"
                      (slot-value err 'message))))
   (:documentation "This is raised if something really unexpected
 happens in the communcation with the server. Should only happen in
@@ -17,12 +17,18 @@ PostgreSQL server at all."))
   "Helper macro for reading messages from the server. A list of cases
 \(characters that identify the message) can be given, each with a body
 that handles the message, or the keyword :skip to skip the message.
-Cases for error and warning messages are always added."
+Cases for error and warning messages are always added.
+
+The body may contain an initial parameter of the form :LENGTH-SYM SYMBOL
+where SYMBOL is a symbol to which the remaining length of the packet is
+bound. This value indicates the number of bytes that have to be read
+from the socket."
   (let ((socket-name (gensym))
         (size-name (gensym))
         (char-name (gensym))
         (iter-name (gensym))
-        (t-found nil))
+        (t-found nil)
+        (size-sym (and (eq (car clauses) :length-sym) (progn (pop clauses) (pop clauses)))))
     (flet ((expand-characters (chars)
              (cond ((eq chars t) (setf t-found t) t)
                    ((consp chars) (mapcar #'char-code chars))
@@ -48,9 +54,12 @@ Cases for error and warning messages are always added."
                           (,iter-name))
                        ,@(mapcar (lambda (clause)
                                    `(,(expand-characters (first clause))
-                                     ,@(if (eq (second clause) :skip)
-                                           `((skip-bytes ,socket-name (- ,size-name 4)))
-                                           (cdr clause))))
+                                      ,(if (eq (second clause) :skip)
+                                           `(skip-bytes ,socket-name (- ,size-name 4))
+                                           (if size-sym
+                                               `(let ((,size-sym (- ,size-name 4)))
+                                                  ,@(cdr clause))
+                                               `(progn ,@(cdr clause))))))
                                  clauses)
                        ,@(unless t-found
                                  `((t (ensure-socket-is-closed ,socket-name)
@@ -152,28 +161,63 @@ when the server does not support SSL."
        (when required
          (error 'database-error :message "Server does not support SSL encryption."))))))
 
-(defun authenticate (socket user password database use-ssl)
+(defun authenticate (socket conn)
   "Try to initiate a connection. Caller should close the socket if
 this raises a condition."
-  (unless (eq use-ssl :no)
-    (setf socket (initiate-ssl socket (eq use-ssl :yes))))
-  (startup-message socket user database)
-  (force-output socket)
-  (loop
-   (message-case socket
-     ;; Authentication message
-     (#\R (let ((type (read-uint4 socket)))
-            (ecase type
-              (0 (return))
-              (2 (error 'database-error :message "Unsupported Kerberos authentication requested."))
-              (3 (unless password (error "Server requested plain-password authentication, but no password was given."))
-                 (plain-password-message socket password)
-                 (force-output socket))
-              (4 (error 'database-error :message "Unsupported crypt authentication requested."))
-              (5 (unless password (error "Server requested md5-password authentication, but no password was given."))
-                 (md5-password-message socket password user (read-bytes socket 4))
-                 (force-output socket))
-              (6 (error 'database-error :message "Unsupported SCM authentication requested.")))))))
+
+  (let ((gss-context nil)
+        (gss-init-function nil)
+        (user (connection-user conn))
+        (password (connection-password conn))
+        (database (connection-db conn))
+        (use-ssl (connection-use-ssl conn)))
+
+    (unless (eq use-ssl :no)
+      (setf socket (initiate-ssl socket (eq use-ssl :yes))))
+    (startup-message socket user database)
+    (force-output socket)
+
+    (labels ((init-gss-msg (in-buffer)
+               (when (null gss-init-function)
+                 (when (null (find-package "CL-GSS"))
+                   (error 'database-error :message  "To use GSS authentication, make sure the CL-GSS package is loaded."))
+                 (setq gss-init-function (find-symbol "INIT-SEC" "CL-GSS"))
+                 (unless gss-init-function
+                   (error 'database-error :message "INIT-SEC not found in CL-GSS package")))
+               (multiple-value-bind (continue-needed context buffer flags)
+                   (funcall gss-init-function
+                            (format nil "~a@~a" (connection-service conn) (connection-host conn))
+                            :flags '(:mutual)
+                            :context gss-context
+                            :input-token in-buffer)
+                 (declare (ignore flags))
+                 (setq gss-context context)
+                 (when buffer
+                   (gss-auth-buffer-message socket buffer))
+                 (force-output socket)
+                 continue-needed)))
+
+      (loop
+         (message-case socket :length-sym size
+           ;; Authentication message
+           (#\R (let ((type (read-uint4 socket)))
+                  (ecase type
+                    (0 (return))
+                    (2 (error 'database-error :message "Unsupported Kerberos authentication requested."))
+                    (3 (unless password (error "Server requested plain-password authentication, but no password was given."))
+                       (plain-password-message socket password)
+                       (force-output socket))
+                    (4 (error 'database-error :message "Unsupported crypt authentication requested."))
+                    (5 (unless password (error "Server requested md5-password authentication, but no password was given."))
+                       (md5-password-message socket password user (read-bytes socket 4))
+                       (force-output socket))
+                    (6 (error 'database-error :message "Unsupported SCM authentication requested."))
+                    (7 (when gss-context
+                         (error 'database-error "Got GSS init message when a context was already established"))
+                       (init-gss-msg nil))
+                    (8 (unless gss-context
+                         (error 'database-error :message "Got GSS continuation message without a context"))
+                       (init-gss-msg (read-bytes socket (- size 4)))))))))))
   (loop
    (message-case socket
      ;; BackendKeyData - ignore

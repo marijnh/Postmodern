@@ -12,7 +12,7 @@ operating on a database assume this contains a connected database.")
 
 (defparameter *default-use-ssl* :no)
 
-(defun connect (database user password host &key (port 5432) pooled-p (use-ssl *default-use-ssl*))
+(defun connect (database user password host &key (port 5432) pooled-p (use-ssl *default-use-ssl*) (service "postgres"))
   "Create and return a database connection."
   (cond (pooled-p
          (let ((type (list database user password host port use-ssl)))
@@ -20,7 +20,7 @@ operating on a database assume this contains a connected database.")
                (let ((connection (open-database database user password host port use-ssl)))
                  (change-class connection 'pooled-database-connection :pool-type type)
                  connection))))
-        (t (open-database database user password host port use-ssl))))
+        (t (open-database database user password host port use-ssl service))))
 
 (defun connected-p (database)
   "Test whether a database connection is still connected."

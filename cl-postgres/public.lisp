@@ -7,6 +7,7 @@
    (user :initarg :user :reader connection-user)
    (password :initarg :password :reader connection-password)
    (use-ssl :initarg :ssl :reader connection-use-ssl)
+   (service :initarg :service :accessor connection-service)
    (socket :initarg :socket :accessor connection-socket)
    (meta :initform nil)
    (available :initform t :accessor connection-available)
@@ -31,7 +32,7 @@ currently connected."
   (and (connection-socket connection)
        (open-stream-p (connection-socket connection))))
 
-(defun open-database (database user password host &optional (port 5432) (use-ssl :no))
+(defun open-database (database user password host &optional (port 5432) (use-ssl :no) (service "postgres"))
   "Create and connect a database object. use-ssl may be :no, :yes, or :try."
   (check-type database string)
   (check-type user string)
@@ -40,7 +41,8 @@ currently connected."
   (check-type port (integer 1 65535) "an integer from 1 to 65535")
   (check-type use-ssl (member :no :yes :try) ":no, :yes, or :try")
   (let ((conn (make-instance 'database-connection :host host :port port :user user
-                             :password password :socket nil :db database :ssl use-ssl)))
+                             :password password :socket nil :db database :ssl use-ssl
+                             :service service)))
     (initiate-connection conn)
     conn))
 
@@ -105,9 +107,7 @@ if it isn't."
           (setf (slot-value conn 'meta) nil
                 (connection-parameters conn) *connection-params*)
           (unwind-protect
-               (setf socket (authenticate socket (connection-user conn)
-                                          (connection-password conn) (connection-db conn)
-                                          (connection-use-ssl conn))
+               (setf socket (authenticate socket conn)
                      (connection-timestamp-format conn)
                      (if (string= (gethash "integer_datetimes" (connection-parameters conn)) "on")
                          :integer :float)
