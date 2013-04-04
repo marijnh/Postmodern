@@ -449,6 +449,10 @@ to the result."
               (funcall row-reader socket row-description)
               (look-for-row socket))
         (message-case socket
+          ;; CommandComplete
+          (#\C (read-str socket)
+               (message-case socket
+                 (#\Z (read-uint1 socket))))
           ;; ReadyForQuery, skipping transaction status
           (#\Z (read-uint1 socket)))))))
 
