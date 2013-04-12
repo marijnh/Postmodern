@@ -273,7 +273,7 @@
     <p class="def"><span>sql-op</span> <a name="regexp"></a>:~, :~*, :!~, :!~* (string pattern)</p>
 
     <p class="desc">Regular expression matching operators. The
-    exclamation mark means 'does not match', the asteriks makes the
+    exclamation mark means 'does not match', the asterisk makes the
     match case-insensitive.</p>
 
     <p class="def"><span>sql-op</span> <a name="like"></a>:like, :ilike (string pattern)</p>
@@ -336,7 +336,7 @@
     <p class="desc">Denote a set of values. This one has two
     interfaces. When the elements are known at compile-time, they can
     be given as multiple arguments to the operator. When they are not,
-    a single argument that evaulates to a list should be used.</p>
+    a single argument that evaluates to a list should be used.</p>
 
     <p class="def"><span>sql-op</span> <a name="deref"></a>:[] (form start &amp;optional end)</p>
 
@@ -371,7 +371,7 @@
 
     <p class="desc">Can be used to combine multiple names into a name
     of the form A.B to refer to a column in a table, or a table in a
-    schema. Note that you calso just use a symbol with a dot in
+    schema. Note that you can also just use a symbol with a dot in
     it.</p>
 
     <p class="def"><span>sql-op</span> <a name="type"></a>:type (form type)</p>
@@ -404,7 +404,7 @@
     rows, or alternatively <code>:distinct-on</code> followed by a
     group of row names. Next comes the optional keyword
     <code>:from</code>, followed by at least one table name and then
-    any numer of join statements. Join statements start with one of
+    any number of join statements. Join statements start with one of
     <code>:left-join</code>, <code>:right-join</code>,
     <code>:inner-join</code>, <code>:outer-join</code> or
     <code>:cross-join</code>, then a table name or subquery, then the
@@ -494,7 +494,7 @@
     of alternating field names and values, like
     for <a href="#insert-into"><code>:insert-into</code></a>. Next comes 
     the optional keyword <code>:from</code>, followed by at least one table name
-    and then any numer of join statements, like for 
+    and then any number of join statements, like for 
     <a href="#select"><code>:select</code></a>. After the joins,
     an optional <code>:where</code> keyword followed by the condition,
     and <code>:returning</code> keyword followed by a list of field
@@ -581,7 +581,7 @@
     <em>unquoted</em> symbols. The exception to this is the value of
     <code>:check</code> constraints: These must be normal S-SQL
     expressions, which means that any column names they contain should
-    be quoted. When programatically generating table definitions,
+    be quoted. When programmatically generating table definitions,
     <code><a href="#sql-compile">sql-compile</a></code> is usually
     more practical than the <code><a href="#sql">sql</a></code>
     macro.</p>
