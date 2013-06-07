@@ -23,15 +23,18 @@ views."
 (defmacro make-exists-query (relkind name)
   "Helper macro for the functions that check whether an object
 exists."
-  `(sql (:select (:exists (:select 1 :from 'pg-catalog.pg-class
-                                   :where (:and (:= 'relkind ,relkind)
-                                                (:= 'relname (to-identifier ,name))))))))
+  `(sql (:select (:exists (:select 'relname :from 'pg_catalog.pg_class :inner-join 'pg_catalog.pg_namespace :on
+                                   (:= 'pg_class.relnamespace 'pg_namespace.oid)
+                                   :where (:and (:= 'pg_class.relkind ,relkind)
+                                                (:= 'pg_namespace.nspname (:any* (:current_schemas nil)))
+                                                (:= 'pg_class.relname (to-identifier ,name))))))))
 
 (defun list-tables (&optional strings-p)
   "Return a list of the tables in a database. Turn them into keywords
 if strings-p is not true."
   (let ((result (query (make-list-query "r") :column)))
     (if strings-p result (mapcar 'from-sql-name result))))
+
 (defun table-exists-p (table)
   "Check whether a table exists. Takes either a string or a symbol for
 the table name."
