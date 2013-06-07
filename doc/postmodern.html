@@ -42,6 +42,7 @@
       <li><a href="#inspect">Inspecting the database</a></li>
       <li><a href="#daos">Database access objects</a></li>
       <li><a href="#tabledef">Table definition and creation</a></li>
+      <li><a href="#schemata">Schemata</a></li>
       <li><a href="#index">Symbol-index</a></li>
     </ol>
 
@@ -392,6 +393,28 @@
     <p class="desc">Roll back the given savepoint.</p>
 
     <p class="def">
+      <span>macro</span>
+      <a name="with-schema"></a>
+      with-schema ((namespace &amp;key :strict t :if-not-exist
+                               :create :drop-after ) &amp;body body)
+    </p>
+
+    <p class="desc">Executes the <code>body</code> within a
+    namespace. Before executing <code>body</code> the variable
+    search_path is set to the given schema name. After
+    executing <code>body</code> the search_path variable is set to its
+    original and stored value.
+
+    If the keyword <code>:strict</code> is set to a true value
+    the <code>search_path</code> only contains the namespace before
+    exucting body. otherwise the schema is prepended
+    to <code>search_path</code>. If the
+    keyword <code>:if-not-exist</code> is set to nil, an error is
+    signaled. If the keyword <code>:drop-after</code> is set to true
+    the namesapce is removed from the database.
+    </p>
+
+    <p class="def">
       <span>function</span>
       <a name="sequence-next"></a>
       sequence-next (sequence)
@@ -494,6 +517,30 @@
 
     <p class="desc">Tests whether a view with the given name exists.
     The name can be either a string or a symbol.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="list-schemata"></a>
+      list-schemata ()
+      <br/>&#8594; list
+    </p>
+
+    <p class="desc">
+        Lists all existing schemata in a list of names (String) and
+        the quantity of existing schemata.
+    </p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="schema-exist-p"></a>
+        schema-exist-p (schema)
+        <br/>&#8594; boolean
+    </p>
+
+    <p class="desc">
+        Tests thes existence of a given schema. Returns T if the
+        schema exists, otherwise NIL.
+    </p>
 
     <h2><a name="daos"></a>Database access objects</h2>
 
@@ -975,6 +1022,53 @@
     initially-deferred defined as in <a
     href="#!foreign"><code>!foreign</code></a></p>
 
+    <h2 id="schemata">Schemata</h2>
+
+    Schema allow you to seperate tables into differnet name spaces. In
+    different schemata two tables with the same name are allowed to
+    exists. The tables can be referenced by fully qualified names or
+    with the macro <a href="#with-schema">with-schema</a>. You could
+    also set the search path
+    with <a href="#set-search-path">set-search-path<a/>. For listing
+    end checking there are also the
+    functions <a href="#list-schemata">list-schemata</a>
+    and <a href="#schema-exist-p">schema-exist-p</a>. The following
+    functions allow you to create, drop schemata and to set the search
+    path.
+
+    <p class="def">
+        <span>function</span>
+        <a name="create-schema"></a>
+        create-schema (schema)
+    </p>
+
+    <p class="desc">
+        Creates a new schema, raises an error if the schema is already existing.
+    </p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="drop-schema"></a>
+        drop-schema (schema)
+    </p>
+
+    <p class="desc">
+        Removes a schema. The schema must be empty, otherwise an error
+        is raised.
+    </p>
+    
+    <p class="def">
+      <span>function</span>
+      <a name="set-search-path"></a>
+      set-search-path (name)
+    </p>
+
+    <p class="desc">
+        Sets the search path to a new value. This function is used
+        by <a href="#with-schema">with-schema</a>.
+    </p>
+    
+
     <h2 id="index">Symbol-index</h2>
 
     <ul class="symbol-index">
@@ -989,6 +1083,7 @@
       <li><a href="#connected-p">connected-p</a></li>
       <li><a href="#create-all-tables">create-all-tables</a></li>
       <li><a href="#create-package-tables">create-package-tables</a></li>
+      <li><a href="#create-schema">create-schema</a></li>
       <li><a href="#create-table">create-table</a></li>
       <li><a href="#dao-class">dao-class</a></li>
       <li><a href="#!dao-def">!dao-def</a></li>
@@ -1013,6 +1108,7 @@
       <li><a href="#disconnect">disconnect</a></li>
       <li><a href="#disconnect-toplevel">disconnect-toplevel</a></li>
       <li><a href="#doquery">doquery</a></li>
+      <li><a href="#drop-schema">drop-schema</a></li>
       <li><a href="#execute">execute</a></li>
       <li><a href="#!foreign">!foreign</a></li>
       <li><a href="#!unique">!unique</a></li>
@@ -1021,6 +1117,7 @@
       <li><a href="#!index">!index</a></li>
       <li><a href="#insert-dao">insert-dao</a></li>
       <li><a href="#list-sequences">list-sequences</a></li>
+      <li><a href="#list-schemata">list-schemata</a></li>
       <li><a href="#list-tables">list-tables</a></li>
       <li><a href="#list-views">list-views</a></li>
       <li><a href="#make-dao">make-dao</a></li>
@@ -1035,6 +1132,8 @@
       <li><a href="#save-dao">save-dao</a></li>
       <li><a href="#save-dao/transaction">save-dao/transaction</a></li>
       <li><a href="#select-dao">select-dao</a></li>
+      <li><a href="#set-search-path">set-search-path</a></li>
+      <li><a href="#schema-exist-p">schema-exist-p</a></li>
       <li><a href="#sequence-exists-p">sequence-exists-p</a></li>
       <li><a href="#sequence-next">sequence-next</a></li>
       <li><a href="#table-description">table-description</a></li>
@@ -1047,6 +1146,7 @@
       <li><a href="#with-column-writers">with-column-writers</a></li>
       <li><a href="#with-connection">with-connection</a></li>
       <li><a href="#with-savepoint">with-savepoint</a></li>
+      <li><a href="#with-schema">with-schema</a></li>
       <li><a href="#with-transaction">with-transaction</a></li>
     </ul>
 
