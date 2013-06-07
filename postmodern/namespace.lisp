@@ -45,7 +45,7 @@
 (defmacro make-set-search-path-query (path)
   "Sets the run-time parameter search_path to path"
   `(sql (:update 'pg_catalog.pg_settings
-                 :set 'name ,path
+                 :set 'setting ,path
                  :where (:= 'name "search_path"))))
 
 
