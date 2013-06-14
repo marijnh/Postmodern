@@ -1,7 +1,7 @@
 (in-package :postmodern)
 
 (defmacro with-schema ((schema &key (strict t) (if-not-exist :create) (drop-after nil))
-                        &body form)
+                       &body form)
   "Simple macro to set the schema search path of the postgresql
    database to include as first entry a specified schema.
 
@@ -18,7 +18,10 @@
      (with-schema (:schema-name :strict nil :drop-after nil :if-not-exist :error)
             (foo 1)
             (foo 2))"
-  (alexandria:with-gensyms (search-path schema-on schema-off sschema)
+  (let ((search-path (gensym))
+        (schema-on (gensym))
+        (schema-off (gensym))
+        (sschema (gensym)))
     `(let* ((,sschema (string ,schema))
             (,search-path (query (make-show-search-path-query) :single))
             (,schema-on (if ,strict
