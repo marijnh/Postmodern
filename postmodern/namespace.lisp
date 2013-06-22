@@ -2,7 +2,7 @@
 
 (defmacro with-schema ((schema &key (strict t) (if-not-exist :create) (drop-after nil))
                        &body form)
-  "Simple macro to set the schema search path of the postgresql
+  "A macro to set the schema search path of the postgresql
    database to include as first entry a specified schema.
 
    calling with strict 't only the specified schema is set as current

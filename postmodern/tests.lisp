@@ -20,7 +20,7 @@
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
 
 (test connect-sanely
-  (with-test-connection 
+  (with-test-connection
     (is (not (null *database*)))))
 
 (test connection-pool
@@ -205,6 +205,8 @@
       (execute (:notify 'foo)))
     (is (cl-postgres:wait-for-notification *database*) "foo")))
 
+;; create two tables with the same name in two different
+;; namesapces.
 (test namespace
   (with-test-connection
     (is (not (table-exists-p 'test-uniq)))
