@@ -31,19 +31,25 @@
                                                                      ", "
                                                                      ,search-path))))
             (,schema-off (make-set-search-path-query ,search-path)))
-       (unwind-protect
-            (progn
-              (unless (schema-exist-p ,sschema)
-                (if (eq ,if-not-exist :create)
-                    (create-schema ,sschema)
-                    (error "schema does not exist!")))
-              (postmodern:execute ,schema-on)
-              ,@form)
-         (progn
-           (postmodern:execute ,schema-off)
-           (if (eq ,drop-after t)
-               (drop-schema ,sschema)))))))
+       (do-with-schema (lambda () ,@form)
+          :schema ,sschema
+          :schema-on ,schema-on
+          :schema-off ,schema-off
+          :drop-after ,drop-after
+          :if-not-exist ,if-not-exist))))
 
+(defun do-with-schema (function &key schema schema-on schema-off drop-after if-not-exist)
+  (unwind-protect
+       (progn
+         (unless (schema-exist-p schema)
+           (if (eq if-not-exist :create)
+               (create-schema schema)
+               (error "schema does not exist!")))
+         (postmodern:execute schema-on)
+         (funcall function))
+    (postmodern:execute schema-off)
+    (when (eq drop-after t)
+      (drop-schema schema))))
 
 (defmacro make-set-search-path-query (path)
   "Sets the run-time parameter search_path to path"
