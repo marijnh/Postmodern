@@ -16,13 +16,14 @@
   :description "PosgreSQL programming API"
   :depends-on (:cl-postgres :s-sql #+postmodern-use-mop :closer-mop
                             #+postmodern-thread-safe :bordeaux-threads)
-  :components 
+  :components
   ((:module :postmodern
             :components ((:file "package")
                          (:file "connect" :depends-on ("package"))
                          (:file "query" :depends-on ("connect"))
                          (:file "prepare" :depends-on ("query"))
                          (:file "util" :depends-on ("query"))
+                         (:file "namespace" :depends-on ("query"))
                          #+postmodern-use-mop
                          (:file "table" :depends-on ("util"))
                          (:file "deftable" :depends-on

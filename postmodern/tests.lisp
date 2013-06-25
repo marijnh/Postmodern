@@ -20,7 +20,7 @@
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
 
 (test connect-sanely
-  (with-test-connection 
+  (with-test-connection
     (is (not (null *database*)))))
 
 (test connection-pool
@@ -204,3 +204,22 @@
     (with-test-connection
       (execute (:notify 'foo)))
     (is (cl-postgres:wait-for-notification *database*) "foo")))
+
+;; create two tables with the same name in two different
+;; namesapces.
+(test namespace
+  (with-test-connection
+    (is (not (table-exists-p 'test-uniq)))
+    (execute (:create-table test-uniq ((value :type integer))))
+    (is (table-exists-p 'test-uniq))
+    (is (not (schema-exist-p 'uniq)))
+    (with-schema ('uniq :if-not-exist :create)
+      (is (schema-exist-p 'uniq))
+      (is (not (table-exists-p 'test-uniq)))
+      (execute (:create-table test-uniq ((value :type integer))))
+      (is (table-exists-p 'test-uniq))
+      (execute (:drop-table 'test-uniq)))
+    (is (schema-exist-p 'uniq))
+    (drop-schema 'uniq)
+    (is (not (schema-exist-p 'uniq)))
+    (execute (:drop-table 'test-uniq))))

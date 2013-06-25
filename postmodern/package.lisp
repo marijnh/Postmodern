@@ -12,8 +12,8 @@
    #:define-dao-finalization
    #:dao-table-name #:dao-table-definition
    #:\!dao-def #:*ignore-unknown-columns*)
-   
-  (:export 
+
+  (:export
    #:connect #:disconnect #:reconnect
    #:call-with-connection #:with-connection
    #:*database* #:connected-p #:database-connection
@@ -31,6 +31,8 @@
    #:deftable #:*table-name* #:*table-symbol*
    #:create-table #:create-all-tables #:create-package-tables
    #:\!index #:\!unique-index #:\!foreign #:\!unique
+   #:create-schema #:drop-schema #:list-schemata
+   #:with-schema #:schema-exist-p #:set-search-path
 
    ;; Reduced S-SQL interface
    #:sql #:sql-compile
