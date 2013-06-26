@@ -32,7 +32,7 @@
    #:create-table #:create-all-tables #:create-package-tables
    #:\!index #:\!unique-index #:\!foreign #:\!unique
    #:create-schema #:drop-schema #:list-schemata
-   #:with-schema #:schema-exist-p #:set-search-path
+   #:with-schema #:schema-exist-p #:set-search-path #:get-search-path
 
    ;; Reduced S-SQL interface
    #:sql #:sql-compile
