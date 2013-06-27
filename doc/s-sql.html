@@ -595,9 +595,9 @@
    (age :type integer)
    (address :type (or db-null string) :references (important-addresses :cascade :cascade))
    (fatal-weakness :type text :default "None")
-   (identifying-color :type (string 20) :unique t)
+   (identifying-color :type (string 20) :unique t))
   (:foreign-key (identifying-color) (colors name))
-  (:constraint enemy-age-check :check (:> 'age 12)))</pre>
+  (:constraint enemy-age-check :check (:> 'age 12))</pre>
 
     <p class="def"><span>sql-op</apen><a name="alter-table"></a>:alter-table (name action &amp;rest args)</p>
 
