@@ -2,7 +2,8 @@
 (in-package :cl-postgres)
 
 (defclass bulk-copier ()
-  ((database :initarg :database :reader copier-database)
+  ((own-connection :initarg :own-connection :reader bulk-copier-own-connection)
+   (database :initarg :database :reader copier-database)
    (table :initarg :table :reader copier-table)
    (columns :initarg :columns :reader copier-columns)
    (count :initform 0 :accessor copier-count)))
@@ -14,21 +15,23 @@
 
 
 (defun open-db-writer (db-spec table columns)
-  (let ((copier (make-instance 'bulk-copier
-                  :database (apply 'open-database db-spec)
-                  :table table
-                  :columns columns)))
+  (let* ((own-connection (listp db-spec))
+         (copier (make-instance 'bulk-copier
+                   :own-connection own-connection
+                   :database (if own-connection (apply 'open-database db-spec) db-spec)
+                   :table table
+                   :columns columns)))
     (initialize-copier copier)
     copier))
 
-(defun close-db-writer (self &key (abort t))
+(defun close-db-writer (self &key (abort nil))
   (unwind-protect
        (let* ((connection (copier-database self))
               (socket (connection-socket connection)))
          (with-reconnect-restart connection
            (using-connection connection
              (send-copy-done socket))))
-    (when abort
+    (when (or abort (bulk-copier-own-connection self))
       (close-database (copier-database self))))
   (copier-count self))
 
@@ -101,6 +104,7 @@
   (write-char #\} s))
 
 (defmethod prepare-row (self row)
+  (declare (ignore self))
   (with-output-to-string (s)
     (loop for (val . more-p) on row
 		   do (progn
