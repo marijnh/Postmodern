@@ -13,9 +13,9 @@
 	    (copier-columns self))))
 
 
-(defun open-db-writer (db-spec table columns)
+(defun open-db-writer (connection table columns)
   (let ((copier (make-instance 'bulk-copier
-                  :database (apply 'open-database db-spec)
+                  :database connection
                   :table table
                   :columns columns)))
     (initialize-copier copier)
@@ -27,9 +27,7 @@
               (socket (connection-socket connection)))
          (with-reconnect-restart connection
            (using-connection connection
-             (send-copy-done socket))))
-    (when abort
-      (close-database (copier-database self))))
+             (send-copy-done socket)))))
   (copier-count self))
 
 (defun db-write-row (self row &optional (data (prepare-row self row)))
