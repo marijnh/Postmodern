@@ -588,13 +588,14 @@ the proper SQL syntax for joining tables."
                         (t `(,@(if first () '(", ")) ,@(sql-expand (pop args))))))))
 
 (def-sql-op :select (&rest args)
-  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (where ?) (group-by * ?)
+  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (window ?) (where ?) (group-by * ?)
                       (having ?)) (cons :vars args)
     `("(SELECT "
       ,@(if distinct '("DISTINCT "))
       ,@(if distinct-on `("DISTINCT ON (" ,@(sql-expand-list distinct-on) ") "))
       ,@(sql-expand-list vars)
       ,@(if from (cons " FROM " (expand-joins from)))
+      ,@(if window (cons " WINDOW " (sql-expand-list window)))
       ,@(if where (cons " WHERE " (sql-expand (car where))))
       ,@(if group-by (cons " GROUP BY " (sql-expand-list group-by)))
       ,@(if having (cons " HAVING " (sql-expand (car having))))
@@ -604,7 +605,9 @@ the proper SQL syntax for joining tables."
   `("(" ,@(sql-expand form) " LIMIT " ,@(if amount (sql-expand amount) (list "ALL")) ,@(if offset (cons " OFFSET " (sql-expand offset)) ()) ")"))
 
 (def-sql-op :order-by (form &rest fields)
-  `("(" ,@(sql-expand form) " ORDER BY " ,@(sql-expand-list fields) ")"))
+  (if fields
+      `("(" ,@(sql-expand form) " ORDER BY " ,@(sql-expand-list fields) ")")
+      `("( ORDER BY " ,@(sql-expand form) ")")))
 
 (def-sql-op :set-constraints (state &rest constraints)
   `("SET CONSTRAINTS " ,@(if constraints
@@ -709,6 +712,29 @@ to runtime. Used to create stored procedures."
     `("DELETE FROM " ,@(sql-expand table)
 		     ,@(when where (cons " WHERE " (sql-expand (car where))))
 		     ,@(when returning (cons " RETURNING " (sql-expand-list returning))))))
+
+(def-sql-op :over (form &rest args)
+  (if args `("(" ,@(sql-expand form) " OVER " ,@(sql-expand-list args) ")")
+          `("(" ,@(sql-expand form) " OVER ()) ")))
+
+(def-sql-op :partition-by (form &rest fields)
+  (split-on-keywords ((order-by ? *)) fields
+                     `("(PARTITION BY " ,@(sql-expand form)
+                                        ,@(when order-by (cons " ORDER BY " (sql-expand-list order-by)))
+                                            ")")))
+
+(def-sql-op :parens (op) `(" (" ,@(sql-expand op) ") "))
+
+(def-sql-op :with (&rest args)
+  (let ((x (butlast args)) (y (last args))) 
+    `("WITH " ,@(sql-expand-list x) ,@(sql-expand (car y)))))
+
+(def-sql-op :with-recursive (form1 form2)
+  `("WITH RECURSIVE " ,@(sql-expand form1) ,@(sql-expand form2)))
+
+(def-sql-op :window (form)
+  `("WINDOW " ,@(sql-expand form)))
+
 
 ;; Data definition
 
