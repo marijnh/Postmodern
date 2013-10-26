@@ -717,13 +717,11 @@ to runtime. Used to create stored procedures."
   (if args `("(" ,@(sql-expand form) " OVER " ,@(sql-expand-list args) ")")
           `("(" ,@(sql-expand form) " OVER ()) ")))
 
-
-
-(def-sql-op :partition-by (&rest args)
-  `("(PARTITION BY " ,@(sql-expand-list args) ")"))
-
-(def-sql-op :partition-by-order-by (form &rest fields)
-  `("(PARTITION BY " ,@(sql-expand form) " ORDER BY " ,@(sql-expand-list fields) ") "))
+(def-sql-op :partition-by (form &rest fields)
+  (split-on-keywords ((order-by ? *)) fields
+                     `("(PARTITION BY " ,@(sql-expand form)
+                                        ,@(when order-by (cons " ORDER BY " (sql-expand-list order-by)))
+                                            ")")))
 
 (def-sql-op :parens (op) `(" (" ,@(sql-expand op) ") "))
 
@@ -731,7 +729,7 @@ to runtime. Used to create stored procedures."
   (let ((x (butlast args)) (y (last args))) 
     `("WITH " ,@(sql-expand-list x) ,@(sql-expand (car y)))))
 
-(def-sql-op :with-recursive1 (form1 form2)
+(def-sql-op :with-recursive (form1 form2)
   `("WITH RECURSIVE " ,@(sql-expand form1) ,@(sql-expand form2)))
 
 (def-sql-op :window (form)

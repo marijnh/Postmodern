@@ -443,17 +443,14 @@
 
     <p class="desc"><code>Over</code>, <code>partition-by</code> and <code>window</code> are so-called window
     functions. A window function performs a calculation across a set
-    of table rows that are somehow related to the current row.
-    <code>Partition-by-order-by</code> is provided as a separate function because
-    the syntax for order-by does not easily lend itself to add-hoc
-    use by partition-by.</p> 
+    of table rows that are somehow related to the current row.</p> 
 
     <pre class="code desc">
 (query (:select 'salary (:over (:sum 'salary))
                 :from 'empsalary))</pre>
 
     <p class="def"><span>sql-op</span> <a name="partition-by"></a>:partition-by
-    (&amp;rest args)</p>
+    (form &amp;rest args)</p>
 
     <pre class="code desc">
 (query (:select 'depname 'empno 'salary
@@ -461,14 +458,17 @@
                        (:partition-by 'depname))
                 :from 'empsalary))</pre>
 
-    <p class="def"><span>sql-op</span> <a name="partition-by-order-by"></a>:partition-by-order-by
+    <p class="def"><span>sql-op</span> <a name="partition-by-order-by"></a>:partition-by
     (form &amp;rest args)</p>
 
+Note the use of :order-by without parens
     <pre class="code desc">
 (query (:select 'depname 'empno 'salary
                 (:over (:rank)
-                       (:partition-by-order-by 'depname (:desc 'salary)))
-                :from 'empsalary))</pre>
+                       (:partition-by-order-by2 'depname :order-by
+                (:desc 'salary)))
+
+                :from 'empsalary))
 
     <p class="def"><span>sql-op</span> <a name="window"></a>:window (form)</p>
 
