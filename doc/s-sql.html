@@ -458,16 +458,11 @@
                        (:partition-by 'depname))
                 :from 'empsalary))</pre>
 
-    <p class="def"><span>sql-op</span> <a name="partition-by-order-by"></a>:partition-by
-    (form &amp;rest args)</p>
-
 Note the use of :order-by without parens
     <pre class="code desc">
 (query (:select 'depname 'empno 'salary
                 (:over (:rank)
-                       (:partition-by-order-by2 'depname :order-by
-                (:desc 'salary)))
-
+                       (:partition-by 'depname :order-by (:desc 'salary)))
                 :from 'empsalary))
 
     <p class="def"><span>sql-op</span> <a name="window"></a>:window (form)</p>
@@ -476,8 +471,7 @@ Note the use of :order-by without parens
 (query (:select (:over (:sum 'salary) 'w)
               (:over (:avg 'salary) 'w)
               :from 'empsalary :window
-              (:as 'w (:partition-by-order-by 'depname
-                                              (:desc 'salary)))))</pre>
+              (:as 'w (:partition-by 'depname :order-by (:desc 'salary)))))</pre>
 
     <p class="def"><span>sql-op</span> <a name="with"></a>:with
     (&amp;rest args)</p>
