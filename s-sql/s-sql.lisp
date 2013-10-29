@@ -440,7 +440,7 @@ with a given arity."
 (register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :@ :|\|&>| :|\|>>| :~= :@> :@<)
 
 ;; hstore operators
-(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :@> :<@ :#= :unary :%% :%#)
+(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :<@ :#= :unary :%% :%#)
 
 (def-sql-op :|| (&rest args)
   `("(" ,@(sql-expand-list args " || ") ")"))
