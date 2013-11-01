@@ -819,7 +819,13 @@ to runtime. Used to create stored procedures."
       ,(to-sql-name name) " "
       ,@ (case action
            (:add (cons "ADD " (expand-table-constraint (first args) (rest args))))
-           (:add-column (cons "ADD COLUMN " (expand-table-column (first args) (rest args))))
+           (:add-column (cons "ADD COLUMN "
+                              (expand-table-column (first args) (rest args))))
+           (:drop-column (list "DROP COLUMN " (to-sql-name (first args))))
+           (:add-constraint (append (list "ADD CONSTRAINT ")
+                                    (list (to-sql-name (first args)) " ")
+                                    (expand-table-constraint (second args)
+                                                             (cddr args))))
            (:drop-constraint (list "DROP CONSTRAINT "
                                    (to-sql-name (first args))
                                    (if (rest args)
