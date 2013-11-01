@@ -710,24 +710,34 @@ Note the use of :order-by without parens
 
     <p class="def"><span>sql-op</apen><a name="alter-table"></a>:alter-table (name action &amp;rest args)</p>
 
-    <p class="desc">Alters named table.  Currently, only adding and
-    dropping constraints are supported.  Meaning of <code>args</code>
-    depends on <code>action</code>:</p>
+    <p class="desc">Alters named table. Currently changing a column's data
+    type is not supported. The meaning of <code>args</code> depends on
+    <code>action</code>:</p>
 
     <div class="desc"><dl>
-        <dt><code>:add</code></dt><dd>Adds constraint to
-        table.  <code>args</code> should be a constraint in the same
-        form as
-        for <a href="#table-constraints"><code>:create-table</code></a>.</dd>
         <dt><code>:add-column</code></dt><dd>Adds column to table.
         <code>args</code> should be a column in the same form as for
         <a href="#create-table"><code>:create-table</code></a>.</dd>
+        <dt><code>:drop-column</code></dt><dd>Drops a column from the
+        table.</dd>
+        <dt><code>:add-constraint</code></dt><dd>Adds a named constraint
+        to the table.</dd>
         <dt><code>:drop-constraint</code><dd>Drops constraint.  First
         of <code>args</code> should name a constraint to be dropped;
         second, optional argument specifies behaviour regarding
         objects dependent on the constraint and it may
         equal <code>:cascade</code> or <code>:restrict</code>.</dd>
+        <dt><code>:add</code></dt><dd>Adds an unnamed constraint to
+        table.  <code>args</code> should be a constraint in the same
+        form as for <a href="#table-constraints"><code>:create-table</code></a>.
+        (This is for backwards-compatibility, you should use named constraints.)</dd>
     </dl></div>
+    
+    <p class="desc">Here is an example using the table defined above:</p>
+
+    <pre class="code desc">
+(:alter-table enemy :drop-constraint enemy-age-check)
+(:alter-table enemy :add-constraint enemy-age-check :check (:> 'age 21))</pre>
 
     <p class="def"><span>sql-op</span> <a name="drop-table"></a>:drop-table (name)</p>
 
