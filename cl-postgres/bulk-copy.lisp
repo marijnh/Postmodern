@@ -118,6 +118,7 @@
 
 (defun send-copy-done (socket)
   (with-syncing
+    (setf sync-sent t)
     (copy-done-message socket)
     (force-output socket)
     (message-case socket
@@ -125,8 +126,9 @@
 		  (space (position #\Space command-tag :from-end t)))
 	     (when space
 	       (parse-integer command-tag :junk-allowed t :start (1+ space))))))
-    (loop (message-case socket
-	    (#\Z (read-uint1 socket)
-		 (return-from send-copy-done))
-	    (t :skip)))))
+    (block find-ready
+      (loop (message-case socket
+              (#\Z (read-uint1 socket)
+                   (return-from find-ready))
+              (t :skip))))))
 
