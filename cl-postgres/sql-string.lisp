@@ -84,6 +84,8 @@ whether the string should be escaped before being put into a query.")
     (princ-to-string arg))
   (:method ((arg float))
     (format nil "~f" arg))
+  (:method ((arg double-float))
+    (format nil "~,,,,,,'EE" arg))
   (:method ((arg ratio))
     ;; Possible optimization: we could probably build up the same binary structure postgres
     ;; sends us instead of sending it as a string. See the "numeric" interpreter for more details...
