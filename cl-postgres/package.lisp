@@ -43,7 +43,7 @@
            #:set-sql-reader
            #:set-sql-datetime-readers
            #:to-sql-string
-           #:*silently-truncate-rationals*
+           #:*silently-truncate-ratios*
            #:*query-callback*
            #:*query-log*
            #:open-db-writer

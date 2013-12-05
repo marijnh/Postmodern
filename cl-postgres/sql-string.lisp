@@ -14,28 +14,50 @@ textual format for binary data."
                       (princ (digit-char (ldb (byte 3 0) byte) 8) out))
                     (princ (code-char byte) out))))))
 
-(defparameter *silently-truncate-rationals* t)
+(defparameter *silently-truncate-ratios* t)
 
-(defun write-rational-as-floating-point (number stream digit-length-limit)
-  (declare #.*optimize*)
-  (flet ((fail ()
-           (if *silently-truncate-rationals*
-               (return-from write-rational-as-floating-point)
-               (error 'database-error :message 
-                      (format nil "Can not write the rational ~a with only ~a digits"
-                              number digit-length-limit)))))
-    (multiple-value-bind (quotient remainder)
-        (truncate (if (< number 0) (prog1 (- number) (write-char #\- stream)) number))
-      (let* ((quotient-part (princ-to-string quotient))
-             (decimal-length-limit (- digit-length-limit (length quotient-part))))
-        (write-string quotient-part stream)
-        (when (<= decimal-length-limit 0) (fail))
-        (unless (zerop remainder) (write-char #\. stream))
-        (loop :for decimal-digits :upfrom 1 :until (zerop remainder)
-              :do (when (> decimal-digits decimal-length-limit) (fail))
-              :do (multiple-value-bind (quotient rem) (floor (* remainder 10))
+(defun write-ratio-as-floating-point (number stream digit-length-limit)
+  (declare #.*optimize* (type fixnum digit-length-limit))
+  (check-type number ratio)
+  (let ((silently-truncate? *silently-truncate-ratios*))
+    (flet ((fail ()
+             (unless silently-truncate?
+               (restart-case
+                   (error 'database-error :message
+                          (format nil "Can not write the ratio ~A as a floating point number with only ~A available digits. You may want to (setf ~S t) if you don't mind the loss of precision."
+                                  number digit-length-limit '*silently-truncate-ratios*))
+                 (continue ()
+                   :report (lambda (stream)
+                             (write-string "Ignore this precision loss and continue" stream))
+                   (setf silently-truncate? t))
+                 (disable-assertion ()
+                   :report (lambda (stream)
+                             (write-string "Set ~S to true (the precision loss of ratios will be silently ignored in this Lisp VM)." stream))
+                   (setf silently-truncate? t)
+                   (setf *silently-truncate-ratios* t))))))
+      (multiple-value-bind (quotient remainder)
+          (truncate (if (< number 0)
+                        (progn
+                          (write-char #\- stream)
+                          (- number))
+                        number))
+        (let* ((quotient-part (princ-to-string quotient))
+               (remaining-digit-length (- digit-length-limit (length quotient-part))))
+          (write-string quotient-part stream)
+          (when (<= remaining-digit-length 0)
+            (fail))
+          (unless (zerop remainder)
+            (write-char #\. stream))
+          (loop
+            :for decimal-digits :upfrom 1
+            :until (zerop remainder)
+            :do (progn
+                  (when (> decimal-digits remaining-digit-length)
+                    (fail)
+                    (return))
+                  (multiple-value-bind (quotient rem) (floor (* remainder 10))
                     (princ quotient stream)
-                    (setf remainder rem)))))))
+                    (setf remainder rem)))))))))
 
 (defun write-quoted (string out)
   (write-char #\" out)
@@ -94,7 +116,7 @@ whether the string should be escaped before being put into a query.")
       ;; 38 digits from the NUMERIC type, and Oracle also doesn't handle more. For practical
       ;; reasons we also draw the line there. If someone needs full rational numbers then
       ;; 200 wouldn't help them much more than 38...
-      (write-rational-as-floating-point arg result 38)))
+      (write-ratio-as-floating-point arg result 38)))
   (:method ((arg (eql t)))
     "true")
   (:method ((arg (eql nil)))
