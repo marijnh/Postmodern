@@ -118,8 +118,11 @@ database-error condition."
         (error (cl-postgres-error::get-error-type code)
  	       :code code
  	       :message (get-field #\M)
- 	       :detail (or (get-field #\D) (get-field #\H))
- 	       :position (get-field #\p))))))
+ 	       :detail (get-field #\D)
+               :hint (get-field #\H)
+               :context (get-field #\W)
+ 	       :position (let ((position (get-field #\p)))
+                           (when position (parse-integer position))))))))
 
 (define-condition postgresql-warning (simple-warning)
   ())
