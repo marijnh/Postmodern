@@ -440,7 +440,7 @@ with a given arity."
 (register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :@ :|\|&>| :|\|>>| :~= :@> :@<)
 
 ;; hstore operators
-(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :@> :<@ :#= :unary :%% :%#)
+(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :<@ :#= :unary :%% :%#)
 
 (def-sql-op :|| (&rest args)
   `("(" ,@(sql-expand-list args " || ") ")"))
@@ -588,13 +588,14 @@ the proper SQL syntax for joining tables."
                         (t `(,@(if first () '(", ")) ,@(sql-expand (pop args))))))))
 
 (def-sql-op :select (&rest args)
-  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (where ?) (group-by * ?)
+  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (window ?) (where ?) (group-by * ?)
                       (having ?)) (cons :vars args)
     `("(SELECT "
       ,@(if distinct '("DISTINCT "))
       ,@(if distinct-on `("DISTINCT ON (" ,@(sql-expand-list distinct-on) ") "))
       ,@(sql-expand-list vars)
       ,@(if from (cons " FROM " (expand-joins from)))
+      ,@(if window (cons " WINDOW " (sql-expand-list window)))
       ,@(if where (cons " WHERE " (sql-expand (car where))))
       ,@(if group-by (cons " GROUP BY " (sql-expand-list group-by)))
       ,@(if having (cons " HAVING " (sql-expand (car having))))
@@ -604,7 +605,9 @@ the proper SQL syntax for joining tables."
   `("(" ,@(sql-expand form) " LIMIT " ,@(if amount (sql-expand amount) (list "ALL")) ,@(if offset (cons " OFFSET " (sql-expand offset)) ()) ")"))
 
 (def-sql-op :order-by (form &rest fields)
-  `("(" ,@(sql-expand form) " ORDER BY " ,@(sql-expand-list fields) ")"))
+  (if fields
+      `("(" ,@(sql-expand form) " ORDER BY " ,@(sql-expand-list fields) ")")
+      `("( ORDER BY " ,@(sql-expand form) ")")))
 
 (def-sql-op :set-constraints (state &rest constraints)
   `("SET CONSTRAINTS " ,@(if constraints
@@ -710,6 +713,29 @@ to runtime. Used to create stored procedures."
 		     ,@(when where (cons " WHERE " (sql-expand (car where))))
 		     ,@(when returning (cons " RETURNING " (sql-expand-list returning))))))
 
+(def-sql-op :over (form &rest args)
+  (if args `("(" ,@(sql-expand form) " OVER " ,@(sql-expand-list args) ")")
+          `("(" ,@(sql-expand form) " OVER ()) ")))
+
+(def-sql-op :partition-by (form &rest fields)
+  (split-on-keywords ((order-by ? *)) fields
+                     `("(PARTITION BY " ,@(sql-expand form)
+                                        ,@(when order-by (cons " ORDER BY " (sql-expand-list order-by)))
+                                            ")")))
+
+(def-sql-op :parens (op) `(" (" ,@(sql-expand op) ") "))
+
+(def-sql-op :with (&rest args)
+  (let ((x (butlast args)) (y (last args))) 
+    `("WITH " ,@(sql-expand-list x) ,@(sql-expand (car y)))))
+
+(def-sql-op :with-recursive (form1 form2)
+  `("WITH RECURSIVE " ,@(sql-expand form1) ,@(sql-expand form2)))
+
+(def-sql-op :window (form)
+  `("WINDOW " ,@(sql-expand form)))
+
+
 ;; Data definition
 
 (defun dissect-type (type)
@@ -793,7 +819,13 @@ to runtime. Used to create stored procedures."
       ,(to-sql-name name) " "
       ,@ (case action
            (:add (cons "ADD " (expand-table-constraint (first args) (rest args))))
-           (:add-column (cons "ADD COLUMN " (expand-table-column (first args) (rest args))))
+           (:add-column (cons "ADD COLUMN "
+                              (expand-table-column (first args) (rest args))))
+           (:drop-column (list "DROP COLUMN " (to-sql-name (first args))))
+           (:add-constraint (append (list "ADD CONSTRAINT ")
+                                    (list (to-sql-name (first args)) " ")
+                                    (expand-table-constraint (second args)
+                                                             (cddr args))))
            (:drop-constraint (list "DROP CONSTRAINT "
                                    (to-sql-name (first args))
                                    (if (rest args)

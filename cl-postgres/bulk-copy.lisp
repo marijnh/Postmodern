@@ -2,7 +2,8 @@
 (in-package :cl-postgres)
 
 (defclass bulk-copier ()
-  ((database :initarg :database :reader copier-database)
+  ((own-connection :initarg :own-connection :reader bulk-copier-own-connection)
+   (database :initarg :database :reader copier-database)
    (table :initarg :table :reader copier-table)
    (columns :initarg :columns :reader copier-columns)
    (count :initform 0 :accessor copier-count)))
@@ -13,21 +14,25 @@
 	    (copier-columns self))))
 
 
-(defun open-db-writer (connection table columns)
-  (let ((copier (make-instance 'bulk-copier
-                  :database connection
-                  :table table
-                  :columns columns)))
+(defun open-db-writer (db-spec table columns)
+  (let* ((own-connection (listp db-spec))
+         (copier (make-instance 'bulk-copier
+                   :own-connection own-connection
+                   :database (if own-connection (apply 'open-database db-spec) db-spec)
+                   :table table
+                   :columns columns)))
     (initialize-copier copier)
     copier))
 
-(defun close-db-writer (self &key (abort t))
+(defun close-db-writer (self &key (abort nil))
   (unwind-protect
        (let* ((connection (copier-database self))
               (socket (connection-socket connection)))
          (with-reconnect-restart connection
            (using-connection connection
-             (send-copy-done socket)))))
+             (send-copy-done socket))))
+    (when (or abort (bulk-copier-own-connection self))
+      (close-database (copier-database self))))
   (copier-count self))
 
 (defun db-write-row (self row &optional (data (prepare-row self row)))
@@ -99,6 +104,7 @@
   (write-char #\} s))
 
 (defmethod prepare-row (self row)
+  (declare (ignore self))
   (with-output-to-string (s)
     (loop for (val . more-p) on row
 		   do (progn
@@ -112,6 +118,7 @@
 
 (defun send-copy-done (socket)
   (with-syncing
+    (setf sync-sent t)
     (copy-done-message socket)
     (force-output socket)
     (message-case socket
@@ -119,8 +126,9 @@
 		  (space (position #\Space command-tag :from-end t)))
 	     (when space
 	       (parse-integer command-tag :junk-allowed t :start (1+ space))))))
-    (loop (message-case socket
-	    (#\Z (read-uint1 socket)
-		 (return-from send-copy-done))
-	    (t :skip)))))
+    (block find-ready
+      (loop (message-case socket
+              (#\Z (read-uint1 socket)
+                   (return-from find-ready))
+              (t :skip))))))
 

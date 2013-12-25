@@ -4,7 +4,7 @@
 (setf (documentation '*table-name* 'variable)
       "Used inside deftable to find the name of the table being defined.")
 (defvar *table-symbol*)
-(setf (documentation '*table-name* 'variable)
+(setf (documentation '*table-symbol* 'variable)
       "Used inside deftable to find the symbol naming the table being defined.")
 
 (defvar *tables* ()

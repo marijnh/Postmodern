@@ -517,9 +517,11 @@
       open-db-writer (db table &optional columns)
     </p>
 
-    <p class="desc">Opens a table stream into which rows can be written
-    one at a time using <code>db-write-row</code>. <code>db</code>
-    is a list of arguments that could be passed to <code>open-database</code>.
+    <p class="desc">Opens a table stream into which rows can be
+    written one at a time
+    using <code>db-write-row</code>. <code>db</code> is either
+    a <a href="#database-connection">connection</a> object or a list
+    of arguments that could be passed to <code>open-database</code>.
     <code>table</code> is the name of an existing table into which this writer
     will write rows.  If you don't have data for all columns, use
     <code>columns</code> to indicate those that you do.
@@ -531,11 +533,10 @@
       close-db-writer (writer &key abort)
     </p>
 
-    <p class="desc">Closes a bulk writer opened by <code>open-db-writer</code>.
-    Like the standard close, accepts the <code>abort</code> parameter which if
-    true, attempts to clean up the database connection created by this writer.
-    <code>abort</code> is true by default
-    </p>
+    <p class="desc">Closes a bulk writer opened
+    by <code>open-db-writer</code>. Will close the associated database
+    connection when it was created for this copier,
+    or <code>abort</code> is true.</p>
 
     <p class="def">
       <span>function</span>
