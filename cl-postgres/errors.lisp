@@ -21,25 +21,36 @@
                     *current-query*
                     (- (get-internal-real-time) ,time-name)))))))
 
+;;
+;; See http://www.postgresql.org/docs/9.3/static/protocol-error-fields.html
+;; for details, including documentation strings.
+;;
 (define-condition database-error (error)
   ((error-code :initarg :code :initform nil :reader database-error-code
-               :documentation "The error code PostgreSQL associated
-with this error, if any.")
+               :documentation "Code: the SQLSTATE code for the error (see Appendix A). Not localizable. Always present.")
    (message :initarg :message :accessor database-error-message
-            :documentation "Description of this error.")
+            :documentation "Message: the primary human-readable error message. This should be accurate but terse (typically one line). Always present.")
    (detail :initarg :detail :initform nil :reader database-error-detail
-           :documentation "More elaborate description of this error,
-if any.")
+           :documentation "Detail: an optional secondary error message carrying more detail about the problem. Might run to multiple lines.")
+   (hint :initarg :hint :initform nil :reader database-error-hint
+         :documentation "Hint: an optional suggestion what to do about the problem.")
+   (context :initarg :context :initform nil :reader database-error-context
+            :documentation "Where: an indication of the context in which the error occurred. Presently this includes a call stack traceback of active procedural language functions and internally-generated queries. The trace is one entry per line, most recent first."
+)
    (query :initform *current-query* :reader database-error-query
           :documentation "Query that led to the error, if any.")
-   (position :initarg :position :initform nil :reader database-error-position)
+   (position :initarg :position :initform nil :reader database-error-position
+             :documentation "Position: the field value is a decimal ASCII integer, indicating an error cursor position as an index into the original query string. The first character has index 1, and positions are measured in characters not bytes.")
    (cause :initarg :cause :initform nil :reader database-error-cause))
   (:report (lambda (err stream)
-             (format stream "Database error~@[ ~A~]: ~A~@[~%~A~]~@[~%Query: ~A~]"
+             (format stream "Database error~@[ ~A~]: ~A~@[~&DETAIL: ~A~]~@[~&HINT: ~A~]~@[~&CONTEXT: ~A~]~@[~&QUERY: ~A~]~@[~VT^~]"
                      (database-error-code err)
                      (database-error-message err)
                      (database-error-detail err)
-                     (database-error-query err))))
+                     (database-error-hint err)
+                     (database-error-context err)
+                     (database-error-query err)
+                     (database-error-position err))))
   (:documentation "This is the condition type that will be used to
 signal virtually all database-related errors \(though in some cases
 socket errors may be raised when a connection fails on the IP
