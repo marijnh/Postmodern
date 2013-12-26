@@ -334,25 +334,26 @@ The fields returned by the query must match the slots of the dao, both
 by type and by name."
   `(query-dao% ,type ,(real-query query) (dao-row-reader (find-class ,type)) ,@args))
 
-(defmacro dao-row-reader-with-body (class &body body)
+(defmacro dao-row-reader-with-body ((type type-var) &body body)
   (let ((fields (gensym))
         (column-map (gensym)))
     `(row-reader (,fields)
-       (let ((,column-map ))))))
+       (let ((,column-map (append *custom-column-writers* (dao-column-map (find-class ,type)))))
+         (loop :while (next-row)
+            :do (let ((,type-var (dao-from-fields (find-class ,type) ,column-map ,fields #'next-field)))
+                  ,@body))))))
 
-(defmacro do-query-dao ((type type-var) query &body body)
-  (let* ((fields (gensym))
-         (column-map (gensym))
-         args
-         (reader-expr
-          `(row-reader (,fields)
-             (let ((,column-map (append *custom-column-writers* (dao-column-map (find-class ,type)))))
-               (loop :while (next-row)
-                     :do (let ((,type-var (dao-from-fields (find-class ,type) ,column-map ,fields #'next-field)))
-                           ,@body))))))
+(defmacro do-query-dao (((type type-var) query) &body body)
+  "Like query-dao, but rather than returning a list of results,
+executes BODY once for each result, with TYPE-VAR bound to the DAO
+representing that result."
+  (let (args)
     (when (and (consp query) (not (keywordp (first query))))
       (setf args (cdr query) query (car query)))
-    `(query-dao% ,type ,(real-query query) ,reader-expr ,@args)))
+    `(query-dao% ,type ,(real-query query)
+                 (dao-row-reader-with-body (,type ,type-var)
+                   ,@body)
+                 ,@args)))
 
 (defun generate-dao-query (type &optional (test t) ordering)
   (flet ((check-string (x)
@@ -367,6 +368,14 @@ by type and by name."
   "Select daos for the rows in its table for which the given test
 holds, order them by the given criteria."
   `(query-dao% ,type (sql ,(generate-dao-query type test ordering)) (dao-row-reader (find-class ,type))))
+
+(defmacro do-select-dao (((type type-var) &optional (test t) &rest ordering) &body body)
+  "Like select-dao, but rather than returning a list of results,
+executes BODY once for each result, with TYPE-VAR bound to the DAO
+representing that result."
+  `(query-dao% ,type (sql ,(generate-dao-query type test ordering))
+               (dao-row-reader-with-body (,type ,type-var)
+                 ,@body)))
 
 (defun dao-table-definition (table)
   "Generate the appropriate CREATE TABLE query for this class."
