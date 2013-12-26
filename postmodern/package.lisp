@@ -6,7 +6,7 @@
 
   #+postmodern-use-mop
   (:export
-   #:dao-class #:dao-exists-p #:dao-keys #:query-dao #:select-dao #:get-dao
+   #:dao-class #:dao-exists-p #:dao-keys #:query-dao #:select-dao #:get-dao #:do-query-dao
    #:with-column-writers
    #:insert-dao #:update-dao #:save-dao #:save-dao/transaction #:upsert-dao #:delete-dao #:make-dao
    #:define-dao-finalization

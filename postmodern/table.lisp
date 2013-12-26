@@ -283,23 +283,26 @@ arguments.")
 
 (defparameter *ignore-unknown-columns* nil)
 
+(defun dao-from-fields (class column-map query-fields result-next-field-generator-fn)
+  (let ((instance (allocate-instance class)))
+    (loop :for field :across query-fields
+         :for writer := (cdr (assoc (field-name field) column-map :test #'string=))
+         :do (etypecase writer
+               (null (if *ignore-unknown-columns*
+                         (funcall result-next-field-generator-fn field)
+                         (error "No slot named ~a in class ~a. DAO out of sync with table, or incorrect query used."
+                                (field-name field) (class-name class))))
+               (symbol (setf (slot-value instance writer) (funcall result-next-field-generator-fn field)))
+               (function (funcall writer instance (funcall result-next-field-generator-fn field)))))
+    (initialize-instance instance)
+    instance))
+
 (defun dao-row-reader (class)
   "Defines a row-reader for objects of a given class."
   (row-reader (query-fields)
     (let ((column-map (append *custom-column-writers* (dao-column-map class))))
       (loop :while (next-row)
-            :collect (let ((instance (allocate-instance class)))
-                       (loop :for field :across query-fields
-                             :for writer := (cdr (assoc (field-name field) column-map :test #'string=))
-                             :do (etypecase writer
-                                   (null (if *ignore-unknown-columns*
-                                             (next-field field)
-                                             (error "No slot named ~a in class ~a. DAO out of sync with table, or incorrect query used."
-                                                    (field-name field) (class-name class))))
-                                   (symbol (setf (slot-value instance writer) (next-field field)))
-                                   (function (funcall writer instance (next-field field)))))
-                       (initialize-instance instance)
-                       instance)))))
+            :collect (dao-from-fields class column-map query-fields #'next-field)))))
 
 (defun save-dao (dao)
   "Try to insert the content of a DAO. If this leads to a unique key
@@ -315,34 +318,55 @@ violation, update it instead."
       (update-dao dao)
       nil)))
 
-(defun query-dao% (type query &rest args)
+(defun query-dao% (type query row-reader &rest args)
   (let ((class (find-class type)))
     (unless (class-finalized-p class)
       (finalize-inheritance class))
     (if args
 	(progn
 	  (prepare-query *database* "" query)
-	  (exec-prepared *database* "" args (dao-row-reader class)))
-	(exec-query *database* query (dao-row-reader class)))))
+	  (exec-prepared *database* "" args row-reader))
+	(exec-query *database* query row-reader))))
 
 (defmacro query-dao (type query &rest args)
   "Execute a query and return the result as daos of the given type.
 The fields returned by the query must match the slots of the dao, both
 by type and by name."
-  `(query-dao% ,type ,(real-query query) ,@args))
+  `(query-dao% ,type ,(real-query query) (dao-row-reader (find-class ,type)) ,@args))
+
+(defmacro dao-row-reader-with-body (class &body body)
+  (let ((fields (gensym))
+        (column-map (gensym)))
+    `(row-reader (,fields)
+       (let ((,column-map ))))))
+
+(defmacro do-query-dao ((type type-var) query &body body)
+  (let* ((fields (gensym))
+         (column-map (gensym))
+         args
+         (reader-expr
+          `(row-reader (,fields)
+             (let ((,column-map (append *custom-column-writers* (dao-column-map (find-class ,type)))))
+               (loop :while (next-row)
+                     :do (let ((,type-var (dao-from-fields (find-class ,type) ,column-map ,fields #'next-field)))
+                           ,@body))))))
+    (when (and (consp query) (not (keywordp (first query))))
+      (setf args (cdr query) query (car query)))
+    `(query-dao% ,type ,(real-query query) ,reader-expr ,@args)))
+
+(defun generate-dao-query (type &optional (test t) ordering)
+  (flet ((check-string (x)
+           (if (stringp x) `(:raw ,x) x)))
+    (let ((query `(:select '* :from (dao-table-name (find-class ,type))
+                   :where ,(check-string test))))
+      (when ordering
+        (setf query `(:order-by ,query ,@(mapcar #'check-string ordering))))
+      query)))
 
 (defmacro select-dao (type &optional (test t) &rest ordering)
   "Select daos for the rows in its table for which the given test
 holds, order them by the given criteria."
-  (flet ((check-string (x)
-           (if (stringp x) `(:raw ,x) x)))
-    (let* ((type-name (gensym))
-           (query `(:select '* :from (dao-table-name (find-class ,type-name))
-                    :where ,(check-string test))))
-      (when ordering
-        (setf query `(:order-by ,query ,@(mapcar #'check-string ordering))))
-      `(let ((,type-name ,type))
-         (query-dao% ,type-name (sql ,query))))))
+  `(query-dao% ,type (sql ,(generate-dao-query type test ordering)) (dao-row-reader (find-class ,type))))
 
 (defun dao-table-definition (table)
   "Generate the appropriate CREATE TABLE query for this class."
