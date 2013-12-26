@@ -108,7 +108,6 @@ it specifies the format in which the results should be returned."
   `(let ((rows (nth-value 1 (query ,query ,@args :none))))
     (if rows (values rows rows) 0)))
 
-
 (defmacro doquery (query (&rest names) &body body)
  "Iterate over the rows in the result of a query, binding the given
 names to the results and executing body for every row. Query can be a

@@ -711,6 +711,17 @@
     <pre class="code">(select-dao 'user (:> 'score 10000) 'name)</pre>
 
     <p class="def">
+      <span>macro</span>
+      <a name="do-select-dao"></a>
+      do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)
+    </p>
+
+    <p class="desc">Like <a href="#select-dao"><code>select-dao</code></a>, but iterates over the results rather than returning them. For each matching DAO, <code>body</code> is evaluated with <code>type-var</code> bound to the DAO instance.</p>
+
+    <pre class="code">(do-select-dao (('user user) (:> 'score 10000) 'name)
+  (pushnew user high-scorers))</pre>
+
+    <p class="def">
       <span>function</span>
       <a name="query-dao"></a>
       query-dao (type query &amp;rest args)
@@ -724,6 +735,18 @@
     The names of the fields returned by the query must either match slots
     in the DAO class, or be bound through <a
     href="#with-column-writers"><code>with-column-writers</code></a>.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="do-query-dao"></a>
+      do-query-dao (((type type-var) query &amp;rest args) &body body)
+      <br/>&#8594; list
+    </p>
+
+    <p class="desc">Like <a href="#query-dao"><code>query-dao</code></a>, but iterates over the results rather than returning them. For each matching DAO, <code>body</code> is evaluated with <code>type-var</code> bound to the DAO instance.</p>
+
+    <pre class="code">(do-query-dao (('user user) (:order-by (:select '* :from 'user :where (:> 'score 10000)) 'name))
+  (pushnew user high-scorers))</pre>
 
     <p class="def">
       <span>variable</span>
