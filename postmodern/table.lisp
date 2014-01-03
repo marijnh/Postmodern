@@ -77,9 +77,12 @@
   (:documentation "Type of slots that refer to database columns."))
 
 (defmethod shared-initialize :after ((slot direct-column-slot) slot-names
-                                     &key col-type col-default &allow-other-keys)
+                                     &key col-type col-default (col-name nil col-name-p) &allow-other-keys)
   (declare (ignore slot-names))
-  (setf (slot-value slot 'sql-name) (to-sql-name (slot-definition-name slot) nil))
+  (setf (slot-value slot 'sql-name) (to-sql-name
+                                     (if col-name-p
+                                         col-name
+                                         (slot-definition-name slot))))
   ;; The default for nullable columns defaults to :null.
   (when (and (null col-default) (consp col-type) (eq (car col-type) 'or)
              (member 'db-null col-type) (= (length col-type) 3))
