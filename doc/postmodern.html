@@ -562,13 +562,15 @@
     for your database-access objects as regular CLOS classes. Some of
     the slots in these classes will refer to columns in the database.
     To specify that a slot refers to a column, give it a
-    <code>:col-type</code> option containing an <a
-    href="s-sql.html">S-SQL</a> type expression (useful if you want to
-    be able to derive a table definition from the class definition),
-    or simply a <code>:column</code> option with value <code>t</code>.
-    Such slots can also take a <code>:col-default</code> option, used
-    to provide a database-side default value as an S-SQL
-    expression.</p>
+    <code>:col-type</code> option containing
+    an <a href="s-sql.html">S-SQL</a> type expression (useful if you
+    want to be able to derive a table definition from the class
+    definition), or simply a <code>:column</code> option with
+    value <code>t</code>.  Such slots can also take
+    a <code>:col-default</code> option, used to provide a
+    database-side default value as an S-SQL expression. You can use
+    the <code>:col-name</code> initarg (whose unevaluated value will
+    be passed to to-sql-name) to specify the slot's column's name.</p>
 
     <p class="desc">DAO class definitions support two extra class
     options: <code>:table-name</code> to give the name of the table
