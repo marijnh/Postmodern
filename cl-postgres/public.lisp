@@ -51,57 +51,60 @@ currently connected."
               "Directory where the Unix domain socket for Postgres be found.")
 
 #+(and (or sbcl ccl) unix)
-(defun unix-socket-path (port)
-  (format nil "~a.s.PGSQL.~a" *unix-socket-dir* port))
+(defun unix-socket-path (base-dir port)
+  (format nil "~a.s.PGSQL.~a" base-dir port))
 
 #+(and sbcl unix)
-(defun sb-unix-socket-connect (port)
-  (let ((sock (make-instance 'sb-bsd-sockets:local-socket :type :stream))
-        (addr (unix-socket-path port)))
-    (sb-bsd-sockets:socket-connect sock addr)
+(defun unix-socket-connect (path)
+  (let ((sock (make-instance 'sb-bsd-sockets:local-socket :type :stream)))
+    (sb-bsd-sockets:socket-connect sock path)
     (sb-bsd-sockets:socket-make-stream
      sock :input t :output t :element-type '(unsigned-byte 8))))
 
-#+sbcl
-(defun sb-socket-connect (port host)
-  (let ((sock (make-instance 'sb-bsd-sockets:inet-socket
-                             :type :stream :protocol :tcp))
-        (host (sb-bsd-sockets:host-ent-address (sb-bsd-sockets:get-host-by-name host))))
-    (sb-bsd-sockets:socket-connect sock host port)
-    (sb-bsd-sockets:socket-make-stream
-     sock :input t :output t :buffering :full :element-type '(unsigned-byte 8))))
+#+(and ccl unix)
+(defun unix-socket-connect (path)
+  (ccl:make-socket :address-family :file
+                   :format :binary
+                   :remote-filename path))
 
 (defun initiate-connection (conn)
   "Check whether a connection object is connected, try to connect it
 if it isn't."
   (flet ((add-restart (err)
            (restart-case (error (wrap-socket-error err))
-             (:reconnect () :report "Try again." (initiate-connection conn)))))
+             (:reconnect () :report "Try again." (initiate-connection conn))))
+         (assert-unix ()
+           #+unix t
+           #-unix (error "Unix sockets only available on Unix (really)")))
     (handler-case
         (let ((socket #-(or allegro sbcl ccl)
                       (usocket:socket-stream
                        (usocket:socket-connect (connection-host conn)
                                                (connection-port conn)
                                                :element-type '(unsigned-byte 8)))
-                      #+ccl
-                      (if (equal (connection-host conn) :unix)
-                          #+unix (ccl:make-socket :address-family :file
-                                                 :format :binary
-                                                 :remote-filename (unix-socket-path (connection-port conn)))
-                          #-unix (error "Unix sockets only available on Unix (really)")
-                          (ccl:make-socket :format :binary
-                                           :remote-host (connection-host conn)
-                                           :remote-port (connection-port conn)))
+                      #+(or sbcl ccl)
+                      (cond
+                        ((equal (connection-host conn) :unix)
+                         (assert-unix)
+                         (unix-socket-connect (unix-socket-path *unix-socket-dir* (connection-port conn))))
+                        ((and (stringp (connection-host conn))
+                              (char= #\/ (aref (connection-host conn) 0)))
+                         (assert-unix)
+                         (unix-socket-connect (unix-socket-path (connection-host conn) (connection-port conn))))
+                        ((and (pathnamep (connection-host conn))
+                              (eql :absolute (pathname-directory (connection-host conn))))
+                         (assert-unix)
+                         (unix-socket-connect (unix-socket-path (namestring (connection-host conn))
+                                                                (connection-port conn))))
+                        (t
+                         (usocket:socket-stream
+                          (usocket:socket-connect (connection-host conn)
+                                                  (connection-port conn)
+                                                  :element-type '(unsigned-byte 8)))))
                       #+allegro
                       (socket:make-socket :remote-host (connection-host conn)
                                           :remote-port (connection-port conn)
-                                          :format :binary)
-                      #+sbcl
-                      (if (equal (connection-host conn) :unix)
-                          #+unix(sb-unix-socket-connect (connection-port conn))
-                          #-unix(error "Unix sockets only available on Unix (really)")
-                          (sb-socket-connect (connection-port conn)
-                                             (connection-host conn))))
+                                          :format :binary))
               (finished nil)
               (*connection-params* (make-hash-table :test 'equal)))
           (setf (slot-value conn 'meta) nil
