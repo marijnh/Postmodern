@@ -46,26 +46,60 @@ currently connected."
     (initiate-connection conn)
     conn))
 
-#+(and (or sbcl ccl) unix)
-(defparameter *unix-socket-dir* #-(or freebsd darwin) "/var/run/postgresql/" #+freebsd "/tmp/" #+darwin "/tmp/"
-              "Directory where the Unix domain socket for Postgres be found.")
+#+(and (or sbcl ccl allegro) unix)
+(progn
+  (defparameter *unix-socket-dir*
+    #-(or freebsd darwin) "/var/run/postgresql/"
+    #+(or darwin freebsd) "/tmp/"
+    "Directory where the Unix domain socket for Postgres be found.")
 
-#+(and (or sbcl ccl) unix)
-(defun unix-socket-path (base-dir port)
-  (format nil "~a.s.PGSQL.~a" base-dir port))
+  (defun unix-socket-path (base-dir port)
+    (unless (char= #\/ (aref base-dir (1- (length base-dir))))
+      (setf base-dir (concatenate 'string base-dir "/")))
+    (format nil "~a.s.PGSQL.~a" base-dir port))
 
-#+(and sbcl unix)
-(defun unix-socket-connect (path)
-  (let ((sock (make-instance 'sb-bsd-sockets:local-socket :type :stream)))
-    (sb-bsd-sockets:socket-connect sock path)
+  #+sbcl
+  (defun unix-socket-connect (path)
+    (let ((sock (make-instance 'sb-bsd-sockets:local-socket :type :stream)))
+      (sb-bsd-sockets:socket-connect sock path)
+      (sb-bsd-sockets:socket-make-stream
+       sock :input t :output t :element-type '(unsigned-byte 8))))
+
+  #+ccl
+  (defun unix-socket-connect (path)
+    (ccl:make-socket :type :stream
+                     :address-family :file
+                     :format :binary
+                     :remote-filename path))
+
+  #+allegro
+  (defun unix-socket-connect (path)
+    (socket:make-socket :type :stream
+                        :address-family :file
+                        :format :binary
+                        :remote-filename path)))
+
+#+sbcl
+(defun inet-socket-connect (host port)
+  (let ((sock (make-instance 'sb-bsd-sockets:inet-socket
+                             :type :stream :protocol :tcp))
+        (host (sb-bsd-sockets:host-ent-address (sb-bsd-sockets:get-host-by-name host))))
+    (sb-bsd-sockets:socket-connect sock host port)
     (sb-bsd-sockets:socket-make-stream
-     sock :input t :output t :element-type '(unsigned-byte 8))))
+     sock :input t :output t :buffering :full :element-type '(unsigned-byte 8))))
 
-#+(and ccl unix)
-(defun unix-socket-connect (path)
-  (ccl:make-socket :address-family :file
-                   :format :binary
-                   :remote-filename path))
+#+ccl
+(defun inet-socket-connect (host port)
+  (ccl:make-socket :format :binary
+                   :remote-host host
+                   :remote-port port))
+
+#+allegro
+(defun inet-socket-connect (host port)
+  (socket:make-socket :remote-host host
+                      :remote-port port
+                      :format :binary
+                      :type :stream))
 
 (defun initiate-connection (conn)
   "Check whether a connection object is connected, try to connect it
@@ -82,7 +116,7 @@ if it isn't."
                        (usocket:socket-connect (connection-host conn)
                                                (connection-port conn)
                                                :element-type '(unsigned-byte 8)))
-                      #+(or sbcl ccl)
+                      #+(or allegro sbcl ccl)
                       (cond
                         ((equal (connection-host conn) :unix)
                          (assert-unix)
@@ -97,14 +131,8 @@ if it isn't."
                          (unix-socket-connect (unix-socket-path (namestring (connection-host conn))
                                                                 (connection-port conn))))
                         (t
-                         (usocket:socket-stream
-                          (usocket:socket-connect (connection-host conn)
-                                                  (connection-port conn)
-                                                  :element-type '(unsigned-byte 8)))))
-                      #+allegro
-                      (socket:make-socket :remote-host (connection-host conn)
-                                          :remote-port (connection-port conn)
-                                          :format :binary))
+                         (inet-socket-connect (connection-host conn)
+                                              (connection-port conn)))))
               (finished nil)
               (*connection-params* (make-hash-table :test 'equal)))
           (setf (slot-value conn 'meta) nil
