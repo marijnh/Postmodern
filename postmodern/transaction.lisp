@@ -32,7 +32,8 @@ before the body unwinds."
   (when (transaction-open-p transaction)
     (let ((*database* (transaction-connection transaction)))
       (execute "ABORT"))
-    (mapc #'funcall (abort-hooks transaction))
+    (unwind-protect
+         (mapc #'funcall (abort-hooks transaction)))
     (setf (transaction-open-p transaction) nil)))
 
 (defun commit-transaction (transaction)
@@ -40,7 +41,8 @@ before the body unwinds."
   (when (transaction-open-p transaction)
     (let ((*database* (transaction-connection transaction)))
       (execute "COMMIT"))
-    (mapc #'funcall (commit-hooks transaction))
+    (unwind-protect
+         (mapc #'funcall (commit-hooks transaction)))
     (setf (transaction-open-p transaction) nil)))
 
 
@@ -70,7 +72,8 @@ unwinds, and the SQL name of the savepoint."
           (*transaction-level* (1+ *transaction-level*)))
       (execute (format nil "ROLLBACK TO SAVEPOINT ~A"
                        (savepoint-name savepoint))))
-    (mapc #'funcall (abort-hooks savepoint))
+    (unwind-protect
+         (mapc #'funcall (abort-hooks savepoint)))
     (setf (savepoint-open-p savepoint) nil)))
 
 (defun release-savepoint (savepoint)
