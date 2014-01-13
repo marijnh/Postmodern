@@ -52,7 +52,7 @@ before the body unwinds."
   (:documentation "Simple box type for storing the state and the
 associated database connection of a savepoint."))
 
-(defmacro with-savepoint (name &body body)
+(defmacro with-savepoint ((&optional (name (gensym))) &body body)
   "Execute the body within a savepoint, releasing savepoint when the
 body exits normally, and rolling back otherwise. NAME is both the
 variable that can be used to release or rolled back before the body
@@ -79,18 +79,20 @@ unwinds, and the SQL name of the savepoint."
     (let ((*database* (savepoint-connection savepoint)))
       (execute (format nil "RELEASE SAVEPOINT ~A"
                            (savepoint-name savepoint))))
-    (mapc #'funcall (commit-hooks savepoint))
+    (unwind-protect
+         (mapc #'funcall (commit-hooks savepoint)))
     (setf (transaction-open-p savepoint) nil)))
 
-(defmacro with-logical-transaction ((&optional (name (gensym))) &body body)
+(defmacro with-logical-transaction ((&optional (name nil name-p)) &body body)
   "Executes the body within a with-transaction (if no transaction is
 already in progress) or a with-savepoint (if one is), binding the
 transaction or savepoint to NAME (if supplied)"
-  `(if (zerop *transaction-level*)
-       (with-transaction (,name)
-         ,@body)
-       (with-savepoint ,name
-         ,@body)))
+  (let ((macro-arguments (if name-p
+                             `(,name)
+                             '())))
+    `(if (zerop *transaction-level*)
+         (with-transaction ,macro-arguments ,@body)
+         (with-savepoint ,macro-arguments ,@body))))
 
 (defmacro ensure-transaction (&body body)
   "Executes body within a with-transaction form if and only if no

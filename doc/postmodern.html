@@ -367,12 +367,13 @@
     <p class="def">
       <span>macro</span>
       <a name="with-savepoint"></a>
-      with-savepoint (name &amp;body body)
+      with-savepoint ((&optional name) &amp;body body)
     </p>
 
     <p class="desc">Can only be used within a transaction. Establishes
-    a savepoint with the given name at the start of <code>body</code>,
-    and binds the same name to a handle for that savepoint. At the end
+    a savepoint with the given name (or a randomly-chosen name, if
+    none is supplied) at the start of <code>body</code>, and binds the
+    same name to a handle for that savepoint. At the end
     of <code>body</code>, the savepoint is released, unless a
     condition is thrown, in which case it is rolled back.</p>
 
