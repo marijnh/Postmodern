@@ -26,6 +26,8 @@
    #:list-views #:view-exists-p
    #:with-transaction #:commit-transaction #:abort-transaction
    #:with-savepoint #:rollback-savepoint #:release-savepoint
+   #:with-logical-transaction #:ensure-transaction
+   #:abort-hooks #:commit-hooks
    #:db-null #:coalesce
 
    #:deftable #:*table-name* #:*table-symbol*
