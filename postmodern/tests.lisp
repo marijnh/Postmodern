@@ -119,17 +119,17 @@
         (with-transaction ()
           (execute (:insert-into 'test-data :set 'value 2))
           (error "no wait")))
-      (is (length (query (:select '* :from 'test-data))) 0)
+      (is (= 0 (length (query (:select '* :from 'test-data)))))
       (ignore-errors
         (with-transaction (transaction)
           (execute (:insert-into 'test-data :set 'value 2))
           (commit-transaction transaction)
           (error "no wait!!")))
-      (is (length (query (:select '* :from 'test-data))) 1)
+      (is (= 1 (length (query (:select '* :from 'test-data)))))
       (with-transaction (transaction)
         (execute (:insert-into 'test-data :set 'value 44))
         (abort-transaction transaction))
-      (is (length (query (:select '* :from 'test-data))) 1)
+      (is (= 1 (length (query (:select '* :from 'test-data)))))
       (execute (:drop-table 'test-data)))))
 
 (test logical-transaction
@@ -143,7 +143,7 @@
             (execute (:insert-into 'test-data :set 'value 2))
             (error "fail here"))))
       (is-true (query (:select '* :from 'test-data :where (:= 'value 1))))
-      (is-true (not (query (:select '* :from 'test-data :where (:= 'value 2)))))
+      (is-false (query (:select '* :from 'test-data :where (:= 'value 2))))
       (execute (:drop-table 'test-data)))))
 
 (test transaction-commit-hooks
@@ -156,7 +156,7 @@
           (push (lambda () (execute (:insert-into 'test-data :set 'value 3))) (commit-hooks transaction-2))
           (push (lambda () (execute (:insert-into 'test-data :set 'value 4))) (commit-hooks transaction-1))
           (execute (:insert-into 'test-data :set 'value 2))))
-      (is (length (query (:select '* :from 'test-data))) 4)
+      (is (= 4 (length (query (:select '* :from 'test-data)))))
       (execute (:drop-table 'test-data)))))
 
 (test transaction-abort-hooks
@@ -171,7 +171,7 @@
             (push (lambda () (execute (:insert-into 'test-data :set 'value 4))) (abort-hooks transaction-1))
             (error "no wait")
             (execute (:insert-into 'test-data :set 'value 2)))))
-      (is (length (query (:select '* :from 'test-data))) 2)
+      (is (= 2 (length (query (:select '* :from 'test-data)))))
       (execute (:drop-table 'test-data)))))
 
 (test ensure-transaction
