@@ -132,6 +132,57 @@
       (is (length (query (:select '* :from 'test-data))) 1)
       (execute (:drop-table 'test-data)))))
 
+(test logical-transaction
+  (with-test-connection
+    (protect
+      (execute (:create-table test-data ((value :type integer))))
+      (with-logical-transaction ()
+        (execute (:insert-into 'test-data :set 'value 1))
+        (ignore-errors
+          (with-logical-transaction ()
+            (execute (:insert-into 'test-data :set 'value 2))
+            (error "fail here"))))
+      (is-true (query (:select '* :from 'test-data :where (:= 'value 1))))
+      (is-true (not (query (:select '* :from 'test-data :where (:= 'value 2)))))
+      (execute (:drop-table 'test-data)))))
+
+(test transaction-commit-hooks
+  (with-test-connection
+    (protect
+      (execute (:create-table test-data ((value :type integer))))
+      (with-logical-transaction (transaction-1)
+        (execute (:insert-into 'test-data :set 'value 1))
+        (with-logical-transaction (transaction-2)
+          (push (lambda () (execute (:insert-into 'test-data :set 'value 3))) (commit-hooks transaction-2))
+          (push (lambda () (execute (:insert-into 'test-data :set 'value 4))) (commit-hooks transaction-1))
+          (execute (:insert-into 'test-data :set 'value 2))))
+      (is (length (query (:select '* :from 'test-data))) 4)
+      (execute (:drop-table 'test-data)))))
+
+(test transaction-abort-hooks
+  (with-test-connection
+    (protect
+      (execute (:create-table test-data ((value :type integer))))
+      (with-logical-transaction (transaction-1)
+        (execute (:insert-into 'test-data :set 'value 1))
+        (ignore-errors
+          (with-logical-transaction (transaction-2)
+            (push (lambda () (execute (:insert-into 'test-data :set 'value 3))) (abort-hooks transaction-2))
+            (push (lambda () (execute (:insert-into 'test-data :set 'value 4))) (abort-hooks transaction-1))
+            (error "no wait")
+            (execute (:insert-into 'test-data :set 'value 2)))))
+      (is (length (query (:select '* :from 'test-data))) 2)
+      (execute (:drop-table 'test-data)))))
+
+(test ensure-transaction
+  (with-test-connection
+    (with-transaction (transaction-1)
+      (ensure-transaction
+        (is (eql postmodern::*transaction-level* 1))))
+    (is (eql postmodern::*transaction-level* 0))
+    (ensure-transaction
+      (is (eql postmodern::*transaction-level* 1)))))
+
 (defclass test-data ()
   ((id :col-type serial :initarg :id :accessor test-id)
    (a :col-type (or (varchar 100) db-null) :initarg :a :accessor test-a)
