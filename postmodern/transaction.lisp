@@ -83,7 +83,9 @@ unwinds, and the SQL name of the savepoint."
     (setf (transaction-open-p savepoint) nil)))
 
 (defmacro with-logical-transaction ((&optional (name (gensym))) &body body)
-  "Executes the body within a with-transaction (if no transaction is already in progress) or a with-savepoint (if one is), binding the transaction or savepoint to NAME (if supplied)"
+  "Executes the body within a with-transaction (if no transaction is
+already in progress) or a with-savepoint (if one is), binding the
+transaction or savepoint to NAME (if supplied)"
   `(if (zerop *transaction-level*)
        (with-transaction (,name)
          ,@body)
@@ -91,7 +93,8 @@ unwinds, and the SQL name of the savepoint."
          ,@body)))
 
 (defmacro ensure-transaction (&body body)
-  "Executes body within a with-transaction form if and only if no transaction is already in progress."
+  "Executes body within a with-transaction form if and only if no
+transaction is already in progress."
   `(if (zerop *transaction-level*)
        (with-transaction ()
          ,@body)
