@@ -1,6 +1,7 @@
 (in-package :postmodern)
 
 (defparameter *transaction-level* 0)
+(defparameter *current-logical-transaction* nil)
 
 (defclass transaction-handle ()
   ((open-p :initform t :accessor transaction-open-p)
@@ -20,7 +21,8 @@ given to the transaction, which can be used to force a commit or abort
 before the body unwinds."
   (let ((name (or name (gensym))))
     `(let ((,name (make-instance 'transaction-handle))
-           (*transaction-level* (1+ *transaction-level*)))
+           (*transaction-level* (1+ *transaction-level*))
+           (*current-logical-transaction* ,name))
       (execute "BEGIN")
       (unwind-protect
            (multiple-value-prog1 (progn ,@body)
@@ -59,7 +61,9 @@ associated database connection of a savepoint."))
 body exits normally, and rolling back otherwise. NAME is both the
 variable that can be used to release or rolled back before the body
 unwinds, and the SQL name of the savepoint."
-  `(let ((,name (make-instance 'savepoint-handle :name (to-sql-name ',name))))
+  `(let ((,name (make-instance 'savepoint-handle :name (to-sql-name ',name)))
+         (*transaction-level* (1+ *transaction-level*))         
+         (*current-logical-transaction* ,name))
      (execute (format nil "SAVEPOINT ~A" (savepoint-name ,name)))
      (unwind-protect (multiple-value-prog1 (progn ,@body)
                        (release-savepoint ,name))
@@ -68,8 +72,7 @@ unwinds, and the SQL name of the savepoint."
 (defun rollback-savepoint (savepoint)
   "Immediately roll back a savepoint, aborting it results."
   (when (savepoint-open-p savepoint)
-    (let ((*database* (savepoint-connection savepoint))
-          (*transaction-level* (1+ *transaction-level*)))
+    (let ((*database* (savepoint-connection savepoint)))
       (execute (format nil "ROLLBACK TO SAVEPOINT ~A"
                        (savepoint-name savepoint))))
     (unwind-protect

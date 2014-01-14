@@ -424,6 +424,18 @@
     supplied.</p>
 
     <p class="def">
+      <a name="*current-logical-transaction*"></a>
+      <span>variable</span>
+      *current-logical-transaction*
+    </p>
+
+    <p class="desc">This is bound to the
+    current <code>transaction-handle</code>
+    or <code>savepoint-handle</code> instance representing the
+    innermost open logical transaction.</p>
+
+
+    <p class="def">
       <span>macro</span>
       <a name="ensure-transaction"></a>
       ensure-transaction (&amp;body body)
