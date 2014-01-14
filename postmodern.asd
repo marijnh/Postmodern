@@ -23,6 +23,7 @@
                          (:file "query" :depends-on ("connect"))
                          (:file "prepare" :depends-on ("query"))
                          (:file "util" :depends-on ("query"))
+                         (:file "transaction" :depends-on ("query"))
                          (:file "namespace" :depends-on ("query"))
                          #+postmodern-use-mop
                          (:file "table" :depends-on ("util"))

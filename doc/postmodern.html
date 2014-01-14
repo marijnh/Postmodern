@@ -367,12 +367,13 @@
     <p class="def">
       <span>macro</span>
       <a name="with-savepoint"></a>
-      with-savepoint (name &amp;body body)
+      with-savepoint ((&optional name) &amp;body body)
     </p>
 
     <p class="desc">Can only be used within a transaction. Establishes
-    a savepoint with the given name at the start of <code>body</code>,
-    and binds the same name to a handle for that savepoint. At the end
+    a savepoint with the given name (or a randomly-chosen name, if
+    none is supplied) at the start of <code>body</code>, and binds the
+    same name to a handle for that savepoint. At the end
     of <code>body</code>, the savepoint is released, unless a
     condition is thrown, in which case it is rolled back.</p>
 
@@ -391,6 +392,58 @@
     </p>
 
     <p class="desc">Roll back the given savepoint.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="commit-hooks"></a>
+      commit-hooks (transaction-or-savepoint), 
+      setf (commit-hooks transaction-or-savepoint)
+    </p>
+
+    <p class="desc">An accessor for the transaction or savepoint's list of commit hooks, each of which should be a function with no required arguments. These functions will be executed when a transaction is successfully committed or a savepoint successfully released.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="abort-hooks"></a>
+      abort-hooks (transaction-or-savepoint), setf (abort-hooks transaction-or-savepoint)
+    </p>
+
+    <p class="desc">An accessor for the transaction or savepoint's list of abort hooks, each of which should be a function with no required arguments. These functions will be executed when a transaction is aborted or a savepoint rolled back (whether via a non-local transfer of control or explicit call to <code>abort-transaction</code> or <code>rollback-savepoint</code>).
+
+    <p class="def">
+      <span>macro</span>
+      <a name="with-logical-transaction"></a>
+      with-logical-transaction ((&amp;optional name) &amp;body body)
+    </p>
+
+    <p class="desc">Executes <code>body</code> within
+    a <code>with-transaction</code> form is no transaction is
+    currently in progress, otherwise simulates a nested transaction by
+    executing it within a <code>with-savepoint</code> form. The
+    transaction or savepoint is bound to <code>name</code> if one is
+    supplied.</p>
+
+    <p class="def">
+      <a name="*current-logical-transaction*"></a>
+      <span>variable</span>
+      *current-logical-transaction*
+    </p>
+
+    <p class="desc">This is bound to the
+    current <code>transaction-handle</code>
+    or <code>savepoint-handle</code> instance representing the
+    innermost open logical transaction.</p>
+
+
+    <p class="def">
+      <span>macro</span>
+      <a name="ensure-transaction"></a>
+      ensure-transaction (&amp;body body)
+    </p>
+
+    <p class="desc">Ensures that <code>body</code> is executed within
+    a transaction, but does not begin a new transaction if one is
+    already in progress.</p>
 
     <p class="def">
       <span>macro</span>
