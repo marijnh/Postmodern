@@ -24,7 +24,7 @@
    #:sequence-next #:list-sequences #:sequence-exists-p
    #:list-tables #:table-exists-p #:table-description
    #:list-views #:view-exists-p
-   #:with-transaction #:commit-transaction #:abort-transaction
+   #:*current-logical-transaction* #:with-transaction #:commit-transaction #:abort-transaction
    #:with-savepoint #:rollback-savepoint #:release-savepoint
    #:with-logical-transaction #:ensure-transaction
    #:abort-hooks #:commit-hooks
