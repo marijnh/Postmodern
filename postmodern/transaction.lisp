@@ -100,10 +100,12 @@ transaction or savepoint to NAME (if supplied)"
          (with-transaction ,macro-arguments ,@body)
          (with-savepoint ,macro-arguments ,@body))))
 
+(defun call-with-ensured-transaction (thunk)
+  (if (zerop *transaction-level*)
+      (with-transaction () (funcall thunk))
+      (funcall thunk)))
+
 (defmacro ensure-transaction (&body body)
   "Executes body within a with-transaction form if and only if no
 transaction is already in progress."
-  `(if (zerop *transaction-level*)
-       (with-transaction ()
-         ,@body)
-       ,@body))
+  `(call-with-ensured-transaction (lambda () ,@body)))
