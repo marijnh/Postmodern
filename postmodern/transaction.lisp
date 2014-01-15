@@ -35,8 +35,8 @@ before the body unwinds."
     (let ((*database* (transaction-connection transaction)))
       (execute "ABORT"))
     (unwind-protect
-         (mapc #'funcall (abort-hooks transaction)))
-    (setf (transaction-open-p transaction) nil)))
+         (mapc #'funcall (abort-hooks transaction))
+      (setf (transaction-open-p transaction) nil))))
 
 (defun commit-transaction (transaction)
   "Immediately commit an open transaction."
@@ -44,8 +44,8 @@ before the body unwinds."
     (let ((*database* (transaction-connection transaction)))
       (execute "COMMIT"))
     (unwind-protect
-         (mapc #'funcall (commit-hooks transaction)))
-    (setf (transaction-open-p transaction) nil)))
+         (mapc #'funcall (commit-hooks transaction))
+      (setf (transaction-open-p transaction) nil))))
 
 
 (defclass savepoint-handle (transaction-handle)
@@ -76,8 +76,8 @@ unwinds, and the SQL name of the savepoint."
       (execute (format nil "ROLLBACK TO SAVEPOINT ~A"
                        (savepoint-name savepoint))))
     (unwind-protect
-         (mapc #'funcall (abort-hooks savepoint)))
-    (setf (savepoint-open-p savepoint) nil)))
+         (mapc #'funcall (abort-hooks savepoint))
+      (setf (savepoint-open-p savepoint) nil))))
 
 (defun release-savepoint (savepoint)
   "Immediately release a savepoint, commiting its results."
@@ -86,8 +86,8 @@ unwinds, and the SQL name of the savepoint."
       (execute (format nil "RELEASE SAVEPOINT ~A"
                            (savepoint-name savepoint))))
     (unwind-protect
-         (mapc #'funcall (commit-hooks savepoint)))
-    (setf (transaction-open-p savepoint) nil)))
+         (mapc #'funcall (commit-hooks savepoint))
+      (setf (transaction-open-p savepoint) nil))))
 
 (defmacro with-logical-transaction ((&optional (name nil name-p)) &body body)
   "Executes the body within a with-transaction (if no transaction is
