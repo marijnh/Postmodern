@@ -97,10 +97,12 @@ transaction or savepoint to NAME (if supplied)"
        (with-transaction ,(if name-p `(,name) '()) ,@body)
        (with-savepoint ,(if name-p name (gensym)) ,@body)))
 
+(defun call-with-ensured-transaction (thunk)
+  (if (zerop *transaction-level*)
+      (with-transaction () (funcall thunk))
+      (funcall thunk)))
+
 (defmacro ensure-transaction (&body body)
   "Executes body within a with-transaction form if and only if no
 transaction is already in progress."
-  `(if (zerop *transaction-level*)
-       (with-transaction ()
-         ,@body)
-       ,@body))
+  `(call-with-ensured-transaction (lambda () ,@body)))
