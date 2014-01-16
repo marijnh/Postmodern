@@ -26,7 +26,7 @@
                          (:file "transaction" :depends-on ("query"))
                          (:file "namespace" :depends-on ("query"))
                          #+postmodern-use-mop
-                         (:file "table" :depends-on ("util"))
+                         (:file "table" :depends-on ("util" "transaction"))
                          (:file "deftable" :depends-on
                                 ("query" #+postmodern-use-mop "table"))))))
 

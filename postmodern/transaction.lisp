@@ -62,7 +62,7 @@ body exits normally, and rolling back otherwise. NAME is both the
 variable that can be used to release or rolled back before the body
 unwinds, and the SQL name of the savepoint."
   `(let* ((,name (make-instance 'savepoint-handle :name (to-sql-name ',name)))
-          (*transaction-level* (1+ *transaction-level*))         
+          (*transaction-level* (1+ *transaction-level*))
           (*current-logical-transaction* ,name))
      (execute (format nil "SAVEPOINT ~A" (savepoint-name ,name)))
      (unwind-protect (multiple-value-prog1 (progn ,@body)
