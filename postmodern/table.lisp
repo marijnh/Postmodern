@@ -316,7 +316,7 @@ violation, update it instead."
       nil)))
 
 (defun save-dao/transaction (dao)
-  (handler-case (with-savepoint save-dao/transaction (insert-dao dao) t)
+  (handler-case (with-savepoint (save-dao/transaction) (insert-dao dao) t)
     (cl-postgres-error:unique-violation ()
       (update-dao dao)
       nil)))
