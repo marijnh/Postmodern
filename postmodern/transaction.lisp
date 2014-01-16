@@ -89,19 +89,16 @@ unwinds, and the SQL name of the savepoint."
          (mapc #'funcall (commit-hooks savepoint))
       (setf (transaction-open-p savepoint) nil))))
 
-(defun call-with-logical-transaction (thunk)
-  (if (zerop *transaction-level*)
-      (with-transaction (transaction) (funcall thunk transaction))
-      (with-savepoint (transaction) (funcall thunk transaction))))
-
-(defmacro with-logical-transaction ((&optional (name (gensym) name-p)) &body body)
+(defmacro with-logical-transaction ((&optional (name nil name-p)) &body body)
   "Executes the body within a with-transaction (if no transaction is
 already in progress) or a with-savepoint (if one is), binding the
 transaction or savepoint to NAME (if supplied)"
-  `(call-with-logical-transaction
-    ,(if name-p
-         `(lambda (,name) ,@body)
-         `(lambda (,name) (declare (ignore ,name)) ,@body))))
+  (let ((macro-arguments (if name-p
+                             `(,name)
+                             '())))
+    `(if (zerop *transaction-level*)
+         (with-transaction ,macro-arguments ,@body)
+         (with-savepoint ,macro-arguments ,@body))))
 
 (defun call-with-ensured-transaction (thunk)
   (if (zerop *transaction-level*)
