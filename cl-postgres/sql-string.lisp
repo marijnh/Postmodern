@@ -14,7 +14,7 @@ textual format for binary data."
                       (princ (digit-char (ldb (byte 3 0) byte) 8) out))
                     (princ (code-char byte) out))))))
 
-(defparameter *silently-truncate-ratios* t)
+(defparameter *silently-truncate-ratios* nil)
 
 (defun write-ratio-as-floating-point (number stream digit-length-limit)
   (declare #.*optimize* (type fixnum digit-length-limit))
