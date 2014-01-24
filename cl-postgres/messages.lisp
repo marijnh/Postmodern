@@ -152,14 +152,19 @@ for binding data for binary long object columns."
                        (setf (aref param-formats i) format
                              (aref param-sizes i) size
                              (aref param-values i) value)))
+                (declare (inline set-param))
                 (cond ((eq param :null)
                        (set-param 0 0 nil))
                       ((typep param '(vector (unsigned-byte 8)))
                        (set-param 1 (length param) param))
                       (t
                        (unless (typep param 'string)
-                         (setf param (to-sql-string param)))
-                       (set-param 0 (enc-byte-length param) param)))))
+                         (setf param (serialize-for-postgres param)))
+                       (etypecase param
+                         (string
+                          (set-param 0 (enc-byte-length param) param))
+                         ((vector (unsigned-byte 8))
+                          (set-param 1 (length param) param)))))))
     (write-uint1 socket #.(char-code #\B))
     (write-uint4 socket (+ 12
                            (enc-byte-length name)

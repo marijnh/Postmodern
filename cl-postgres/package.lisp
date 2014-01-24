@@ -42,6 +42,7 @@
            #:default-sql-readtable
            #:set-sql-reader
            #:set-sql-datetime-readers
+           #:serialize-for-postgres
            #:to-sql-string
            #:*silently-truncate-rationals*
            #:*query-callback*

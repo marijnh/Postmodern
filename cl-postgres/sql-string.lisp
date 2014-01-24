@@ -103,3 +103,8 @@ whether the string should be escaped before being put into a query.")
     "NULL")
   (:method ((arg t))
     (error "Value ~S can not be converted to an SQL literal." arg)))
+
+(defgeneric serialize-for-postgres (arg)
+  (:documentation "Conversion function used to turn a lisp value into a value that PostgreSQL understands when sent through its socket connection. May return a string or a (vector (unsigned-byte 8)).")
+  (:method (arg)
+    (to-sql-string arg)))
