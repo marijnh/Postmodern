@@ -256,6 +256,29 @@
       (execute (:notify 'foo)))
     (is (cl-postgres:wait-for-notification *database*) "foo")))
 
+(defclass test-col-name ()
+  ((a :col-type string :col-name aa :initarg :a :accessor test-a)
+   (b :col-type string :col-name bb :initarg :b :accessor test-b)
+   (c :col-type string              :initarg :c :accessor test-c))
+  (:metaclass dao-class)
+  (:keys a))
+
+(test dao-class-col-name
+  (with-test-connection
+    (execute "CREATE TEMPORARY TABLE test_col_name (aa text primary key,  bb text not null, c text not null)")
+    (let ((o (make-instance 'test-col-name :a "1" :b "2" :c "3")))
+      (save-dao o)
+      (let ((oo (get-dao 'test-col-name "1")))
+        (is (string= "1" (test-a oo)))
+        (is (string= "2" (test-b oo)))
+        (is (string= "3" (test-c oo)))))
+    (let ((o (get-dao 'test-col-name "1")))
+      (setf (test-b o) "b")
+      (update-dao o))
+    (is (string= "1" (test-a (get-dao 'test-col-name "1"))))
+    (is (string= "b" (test-b (get-dao 'test-col-name "1"))))
+    (is (string= "3" (test-c (get-dao 'test-col-name "1"))))))
+
 ;; create two tables with the same name in two different
 ;; namespaces.
 (test namespace

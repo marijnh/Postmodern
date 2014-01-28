@@ -184,12 +184,14 @@ values.)"
             (ghost-fields (mapcar 'slot-definition-name ghost-slots))
             (value-fields (remove-if (lambda (x) (or (member x key-fields) (member x ghost-fields))) fields))
             (table-name (dao-table-name ,class)))
-       (flet ((test-fields (fields)
-                `(:and ,@(loop :for field :in fields :collect (list := field '$$))))
-              (set-fields (fields)
-                (loop :for field :in fields :append (list field '$$)))
-              (slot-values (object &rest slots)
-                (loop :for slot :in (apply 'append slots) :collect (slot-value object slot))))
+       (labels ((field-sql-name (field)
+                  (make-symbol (car (find field (slot-value ,class 'column-map) :key #'cdr :test #'eql))))
+                (test-fields (fields)
+                  `(:and ,@(loop :for field :in fields :collect (list := (field-sql-name field) '$$))))
+                (set-fields (fields)
+                  (loop :for field :in fields :append (list (field-sql-name field) '$$)))
+                (slot-values (object &rest slots)
+                  (loop :for slot :in (apply 'append slots) :collect (slot-value object slot))))
 
          ;; When there is no primary key, a lot of methods make no sense.
          (when key-fields
@@ -231,7 +233,7 @@ values.)"
                         (push field bound)
                         (push field unbound)))
 
-             (let* ((values (mapcan (lambda (x) (list x (slot-value object x)))
+             (let* ((values (mapcan (lambda (x) (list (field-sql-name x) (slot-value object x)))
                                     (remove-if (lambda (x) (member x ghost-fields)) bound) ))
                     (returned (query (sql-compile `(:insert-into ,table-name
                                                                  :set ,@values
