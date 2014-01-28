@@ -175,7 +175,8 @@ situation, and each of them needs to close over some pre-computed
 values.)"
 
   (setf (slot-value class 'column-map)
-        (mapcar (lambda (s) (cons (slot-sql-name s) (slot-definition-name s))) (dao-column-slots class)))
+        (mapcar (lambda (s) (cons (slot-sql-name s) (slot-definition-name s)))
+                (dao-column-slots class)))
 
   (%eval
     `(let* ((fields (dao-column-fields ,class))
@@ -184,17 +185,19 @@ values.)"
             (ghost-fields (mapcar 'slot-definition-name ghost-slots))
             (value-fields (remove-if (lambda (x) (or (member x key-fields) (member x ghost-fields))) fields))
             (table-name (dao-table-name ,class)))
-       (flet ((test-fields (fields)
-                `(:and ,@(loop :for field :in fields :collect (list := field '$$))))
-              (set-fields (fields)
-                (loop :for field :in fields :append (list field '$$)))
-              (slot-values (object &rest slots)
-                (loop :for slot :in (apply 'append slots) :collect (slot-value object slot))))
+       (labels ((field-sql-name (field)
+                  (car (find field (slot-value ,class 'column-map) :key #'cdr :test #'eql)))
+                (test-fields (fields)
+                  `(:and ,@(loop :for field :in fields :collect (list := (field-sql-name field) '$$))))
+                (set-fields (fields)
+                  (loop :for field :in fields :append (list (field-sql-name field) '$$)))
+                (slot-values (object &rest slots)
+                  (loop :for slot :in (apply 'append slots) :collect (slot-value object slot))))
 
          ;; When there is no primary key, a lot of methods make no sense.
          (when key-fields
            (let ((tmpl (sql-template `(:select (:exists (:select t :from ,table-name
-                                                                 :where ,(test-fields key-fields)))))))
+                                                         :where ,(test-fields key-fields)))))))
              (defmethod dao-exists-p ((object ,class))
                (and (every (lambda (s) (slot-boundp object s)) key-fields)
                     (query (apply tmpl (slot-values object key-fields)) :single))))
@@ -227,20 +230,20 @@ values.)"
          (defmethod insert-dao ((object ,class))
            (let (bound unbound)
              (loop :for field :in fields
-                :do (if (slot-boundp object field)
-                        (push field bound)
-                        (push field unbound)))
+                   :do (if (slot-boundp object field)
+                           (push field bound)
+                           (push field unbound)))
 
-             (let* ((values (mapcan (lambda (x) (list x (slot-value object x)))
-                                    (remove-if (lambda (x) (member x ghost-fields)) bound) ))
+             (let* ((values (mapcan (lambda (x) (list (list :raw (field-sql-name x)) (slot-value object x)))
+                                    (remove-if (lambda (x) (member x ghost-fields)) bound)))
                     (returned (query (sql-compile `(:insert-into ,table-name
-                                                                 :set ,@values
-                                                                 ,@(when unbound (cons :returning unbound))))
+                                                    :set ,@values
+                                                    ,@(when unbound (cons :returning unbound))))
                                      :row)))
                (when unbound
                  (loop :for value :in returned
-                    :for field :in unbound
-                    :do (setf (slot-value object field) value)))))
+                       :for field :in unbound
+                       :do (setf (slot-value object field) value)))))
            object)
 
 
@@ -253,15 +256,15 @@ values.)"
                  (let (names defaults)
                    ;; Gather unbound slots and their default expressions.
                    (loop :for slot-name :in defaulted-names
-                      :for default :in default-values
-                      :do (unless (slot-boundp object slot-name)
-                            (push slot-name names)
-                            (push default defaults)))
+                         :for default :in default-values
+                         :do (unless (slot-boundp object slot-name)
+                               (push slot-name names)
+                               (push default defaults)))
                    ;; If there are any unbound, defaulted slots, fetch their content.
                    (when names
                      (loop :for value :in (query (sql-compile (cons :select defaults)) :list)
-                        :for slot-name :in names
-                        :do (setf (slot-value object slot-name) value)))))
+                           :for slot-name :in names
+                           :do (setf (slot-value object slot-name) value)))))
                (defmethod fetch-defaults ((object ,class))
                  nil)))
 
