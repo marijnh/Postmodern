@@ -274,3 +274,13 @@
     (drop-schema 'uniq)
     (is (not (schema-exist-p 'uniq)))
     (execute (:drop-table 'test-uniq))))
+
+(test arrays
+  (with-test-connection
+    (execute (:create-table test-data ((a :type integer[]))))
+    (protect
+      (is (table-exists-p 'test-data))
+      (execute (:insert-into 'test-data :set 'a (vector 3 4 5)))
+      (execute (:insert-into 'test-data :set 'a #()))
+      (execute (:drop-table 'test-data)))
+    (is (not (table-exists-p 'test-data)))))
