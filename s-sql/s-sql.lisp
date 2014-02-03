@@ -276,7 +276,7 @@ can be used in a query.")
     (if (or (typep arg '(vector (unsigned-byte 8)))
             (stringp arg))
         (call-next-method)
-        (format nil "ARRAY[~{~A~^, ~}]" (map 'list 'sql-escape arg))))
+        (format nil "~:['{}'~;ARRAY[~:*~{~A~^, ~}]~]" (map 'list 'sql-escape arg))))
   (:method ((arg t))
     (multiple-value-bind (string escape) (cl-postgres:to-sql-string arg)
       (if escape
