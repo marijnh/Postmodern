@@ -364,7 +364,7 @@
 
     <p class="desc">Roll back the given database transaction.</p>
 
-    <p class="def">
+     <p class="def">
       <span>macro</span>
       <a name="with-savepoint"></a>
       with-savepoint (name &amp;body body)
@@ -421,6 +421,22 @@
     executing it within a <code>with-savepoint</code> form. The
     transaction or savepoint is bound to <code>name</code> if one is
     supplied.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="abort-logical-transaction"></a>
+      abort-logical-transaction (transaction-or-savepoint)
+    </p>
+
+    <p class="desc">Roll back the given logical transaction, regardless of whether it is a true transaction or a savepoint.</p>
+
+    <p class="def">
+      <span>function</span>
+      <a name="commit-logical-transaction"></a>
+      commit-logical-transaction (transaction-or-savepoint)
+    </p>
+
+    <p class="desc">Commit the given logical transaction, regardless of whether it is a true transaction or a savepoint.</p>
 
     <p class="def">
       <a name="*current-logical-transaction*"></a>

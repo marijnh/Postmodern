@@ -20,12 +20,13 @@ body exits normally, and aborting otherwise. An optional name can be
 given to the transaction, which can be used to force a commit or abort
 before the body unwinds."
   (let ((name (or name (gensym))))
-    `(let* ((,name (make-instance 'transaction-handle))
-            (*transaction-level* (1+ *transaction-level*))
-            (*current-logical-transaction* ,name))
+    `(let ((,name (make-instance 'transaction-handle)))
        (execute "BEGIN")
        (unwind-protect
-            (multiple-value-prog1 (progn ,@body)
+            (multiple-value-prog1 (progn
+                                    (let ((*transaction-level* (1+ *transaction-level*))
+                                          (*current-logical-transaction* ,name))
+                                      ,@body))
               (commit-transaction ,name))
          (abort-transaction ,name)))))
 
@@ -34,18 +35,16 @@ before the body unwinds."
   (when (transaction-open-p transaction)
     (let ((*database* (transaction-connection transaction)))
       (execute "ABORT"))
-    (unwind-protect
-         (mapc #'funcall (abort-hooks transaction))
-      (setf (transaction-open-p transaction) nil))))
+    (setf (transaction-open-p transaction) nil)
+    (mapc #'funcall (abort-hooks transaction))))
 
 (defun commit-transaction (transaction)
   "Immediately commit an open transaction."
   (when (transaction-open-p transaction)
     (let ((*database* (transaction-connection transaction)))
       (execute "COMMIT"))
-    (unwind-protect
-         (mapc #'funcall (commit-hooks transaction))
-      (setf (transaction-open-p transaction) nil))))
+    (setf (transaction-open-p transaction) nil)
+    (mapc #'funcall (commit-hooks transaction))))
 
 
 (defclass savepoint-handle (transaction-handle)
@@ -61,11 +60,12 @@ associated database connection of a savepoint."))
 body exits normally, and rolling back otherwise. NAME is both the
 variable that can be used to release or rolled back before the body
 unwinds, and the SQL name of the savepoint."
-  `(let* ((,name (make-instance 'savepoint-handle :name (to-sql-name ',name)))
-          (*transaction-level* (1+ *transaction-level*))
-          (*current-logical-transaction* ,name))
+  `(let ((,name (make-instance 'savepoint-handle :name (to-sql-name ',name))))
      (execute (format nil "SAVEPOINT ~A" (savepoint-name ,name)))
-     (unwind-protect (multiple-value-prog1 (progn ,@body)
+     (unwind-protect (multiple-value-prog1 (progn
+                                             (let ((*transaction-level* (1+ *transaction-level*))
+                                                   (*current-logical-transaction* ,name))
+                                               ,@body))
                        (release-savepoint ,name))
        (rollback-savepoint ,name))))
 
@@ -75,19 +75,17 @@ unwinds, and the SQL name of the savepoint."
     (let ((*database* (savepoint-connection savepoint)))
       (execute (format nil "ROLLBACK TO SAVEPOINT ~A"
                        (savepoint-name savepoint))))
-    (unwind-protect
-         (mapc #'funcall (abort-hooks savepoint))
-      (setf (savepoint-open-p savepoint) nil))))
+    (setf (savepoint-open-p savepoint) nil)
+    (mapc #'funcall (abort-hooks savepoint))))
 
 (defun release-savepoint (savepoint)
   "Immediately release a savepoint, commiting its results."
   (when (savepoint-open-p savepoint)
     (let ((*database* (savepoint-connection savepoint)))
       (execute (format nil "RELEASE SAVEPOINT ~A"
-                           (savepoint-name savepoint))))
-    (unwind-protect
-         (mapc #'funcall (commit-hooks savepoint))
-      (setf (transaction-open-p savepoint) nil))))
+                       (savepoint-name savepoint))))
+    (setf (transaction-open-p savepoint) nil)
+    (mapc #'funcall (commit-hooks savepoint))))
 
 (defmacro with-logical-transaction ((&optional (name nil name-p)) &body body)
   "Executes the body within a with-transaction (if no transaction is
@@ -96,6 +94,18 @@ transaction or savepoint to NAME (if supplied)"
   `(if (zerop *transaction-level*)
        (with-transaction ,(if name-p `(,name) '()) ,@body)
        (with-savepoint ,(if name-p name (gensym)) ,@body)))
+
+(defmethod abort-logical-transaction ((savepoint savepoint-handle))
+  (rollback-savepoint savepoint))
+
+(defmethod abort-logical-transaction ((transaction transaction-handle))
+  (abort-transaction transaction))
+
+(defmethod commit-logical-transaction ((savepoint savepoint-handle))
+  (commit-transaction savepoint))
+
+(defmethod commit-logical-transaction ((transaction transaction-handle))
+  (commit-transaction transaction))
 
 (defun call-with-ensured-transaction (thunk)
   (if (zerop *transaction-level*)
