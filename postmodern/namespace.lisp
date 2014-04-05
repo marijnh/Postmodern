@@ -18,7 +18,7 @@
      (with-schema (:schema-name :strict nil :drop-after nil :if-not-exist :error)
             (foo 1)
             (foo 2))"
-  `(do-with-schema (to-sql-name ,schema) (lambda () ,@form)
+  `(do-with-schema ,schema (lambda () ,@form)
      :strict ,strict :if-not-exist ,if-not-exist :drop-after ,drop-after))
 
 (defun do-with-schema (schema thunk &key strict if-not-exist drop-after)
@@ -29,10 +29,10 @@
              (if (eq if-not-exist :create)
                  (create-schema schema)
                  (error 'database-error :message (format nil "Schema '~a' does not exist." schema))))
-           (set-search-path (if strict schema (concatenate 'string schema "," old-search-path)))
+           (set-search-path (if strict (to-sql-name schema) (concatenate 'string (to-sql-name schema) "," old-search-path)))
            (funcall thunk))
       (set-search-path old-search-path)
-      (when drop-after (drop-schema schema)))))
+      (when drop-after (drop-schema schema :cascade 't)))))
 
 (defun get-search-path ()
   (query "SHOW search_path" :single))
@@ -61,7 +61,6 @@
   ;;(format t "creating schema: ~a" schema)
   (execute (format nil "CREATE SCHEMA ~a" (s-sql:to-sql-name schema))))
 
-;; TODO: optional delete all tables in schema
-(defun drop-schema (schema)
+(defun drop-schema (schema &key (cascade nil))
   "Drops an existing database schema 'schema'"
-  (execute (format nil "DROP SCHEMA ~a" (s-sql:to-sql-name schema))))
+  (execute (format nil "DROP SCHEMA ~a ~:[~;CASCADE~]" (s-sql:to-sql-name schema) cascade)))

@@ -257,7 +257,7 @@
     (is (cl-postgres:wait-for-notification *database*) "foo")))
 
 ;; create two tables with the same name in two different
-;; namesapces.
+;; namespaces.
 (test namespace
   (with-test-connection
     (is (not (table-exists-p 'test-uniq)))
