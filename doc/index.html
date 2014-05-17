@@ -346,8 +346,8 @@
 
    <pre class="code">
 (insert-dao (make-instance 'country :name "The Netherlands"
-                                    :inhabitants 16400000
-                                    :sovereign "Beatrix"))
+                                    :inhabitants 16800000
+                                    :sovereign "Willem-Alexander"))
 (insert-dao (make-instance 'country :name "Croatia"
                                     :inhabitants 4400000))</pre>
 
@@ -358,7 +358,7 @@
   (setf (country-inhabitants croatia) 4500000)
   (update-dao croatia))
 (query (:select '* :from 'country))
-;; => (("The Netherlands" 16400000 "Beatrix")
+;; => (("The Netherlands" 16800000 "Willem-Alexander")
 ;;     ("Croatia" 4500000 :NULL))</pre>
 
     <p>Next, to demonstrate a bit more of the S-SQL syntax, here is
@@ -399,7 +399,7 @@
   (:select 'sovereign :from 'country :where (:= 'name '$1))
   :single!)
 (sovereign-of "The Netherlands")
-;; => "Beatrix"</pre>
+;; => "Willem-Alexander"</pre>
 
     <p>The <a
     href="postmodern.html#defprepared"><code>defprepared</code></a>
