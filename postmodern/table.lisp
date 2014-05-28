@@ -185,7 +185,7 @@ values.)"
             (value-fields (remove-if (lambda (x) (or (member x key-fields) (member x ghost-fields))) fields))
             (table-name (dao-table-name ,class)))
        (labels ((field-sql-name (field)
-                  (list :raw (car (find field (slot-value ,class 'column-map) :key #'cdr :test #'eql))))
+                  (make-symbol (car (find field (slot-value ,class 'column-map) :key #'cdr :test #'eql))))
                 (test-fields (fields)
                   `(:and ,@(loop :for field :in fields :collect (list := (field-sql-name field) '$$))))
                 (set-fields (fields)
