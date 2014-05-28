@@ -176,7 +176,7 @@
 
 (test ensure-transaction
   (with-test-connection
-    (with-transaction (transaction-1)
+    (with-transaction ()
       (ensure-transaction
         (is (eql postmodern::*transaction-level* 1))))
     (is (eql postmodern::*transaction-level* 0))
