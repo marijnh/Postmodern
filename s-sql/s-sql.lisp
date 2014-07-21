@@ -821,6 +821,8 @@ to runtime. Used to create stored procedures."
            (:add (cons "ADD " (expand-table-constraint (first args) (rest args))))
            (:add-column (cons "ADD COLUMN "
                               (expand-table-column (first args) (rest args))))
+           (:alter-column (cons "ALTER COLUMN "
+                              (expand-table-column (first args) (rest args))))
            (:drop-column (list "DROP COLUMN " (to-sql-name (first args))))
            (:add-constraint (append (list "ADD CONSTRAINT ")
                                     (list (to-sql-name (first args)) " ")
