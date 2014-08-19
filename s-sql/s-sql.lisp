@@ -717,9 +717,9 @@ to runtime. Used to create stored procedures."
   (if args `("(" ,@(sql-expand form) " OVER " ,@(sql-expand-list args) ")")
           `("(" ,@(sql-expand form) " OVER ()) ")))
 
-(def-sql-op :partition-by (form &rest fields)
-  (split-on-keywords ((order-by ? *)) fields
-                     `("(PARTITION BY " ,@(sql-expand form)
+(def-sql-op :partition-by (&rest args)
+  (split-on-keywords ((partition-by *) (order-by ? *)) (cons :partition-by args)
+                     `("(PARTITION BY " ,@(sql-expand-list partition-by)
                                         ,@(when order-by (cons " ORDER BY " (sql-expand-list order-by)))
                                             ")")))
 
