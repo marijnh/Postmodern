@@ -588,17 +588,17 @@ the proper SQL syntax for joining tables."
                         (t `(,@(if first () '(", ")) ,@(sql-expand (pop args))))))))
 
 (def-sql-op :select (&rest args)
-  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (window ?) (where ?) (group-by * ?)
-                      (having ?)) (cons :vars args)
+  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (where ?) (group-by * ?)
+                      (having ?) (window ?)) (cons :vars args)
     `("(SELECT "
       ,@(if distinct '("DISTINCT "))
       ,@(if distinct-on `("DISTINCT ON (" ,@(sql-expand-list distinct-on) ") "))
       ,@(sql-expand-list vars)
       ,@(if from (cons " FROM " (expand-joins from)))
-      ,@(if window (cons " WINDOW " (sql-expand-list window)))
       ,@(if where (cons " WHERE " (sql-expand (car where))))
       ,@(if group-by (cons " GROUP BY " (sql-expand-list group-by)))
       ,@(if having (cons " HAVING " (sql-expand (car having))))
+      ,@(if window (cons " WINDOW " (sql-expand-list window)))
       ")")))
 
 (def-sql-op :limit (form amount &optional offset)
