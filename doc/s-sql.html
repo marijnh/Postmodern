@@ -450,12 +450,16 @@
                 :from 'empsalary))</pre>
 
     <p class="def"><span>sql-op</span> <a name="partition-by"></a>:partition-by
-    (form &amp;rest args)</p>
+    (&amp;rest args)</p>
 
+    <p class="desc"><code>Args</code> is a list of one or more columns
+    to partition by, optionally followed by an <code>:order-by</code>
+    clause.</p>
+    
     <pre class="code desc">
-(query (:select 'depname 'empno 'salary
+(query (:select 'depname 'subdepname 'empno 'salary
                 (:over (:avg 'salary)
-                       (:partition-by 'depname))
+                       (:partition-by 'depname 'subdepname))
                 :from 'empsalary))</pre>
 
     <p class="desc">Note the use of <code>:order-by</code> without parens:</p>
