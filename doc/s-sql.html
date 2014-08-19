@@ -458,7 +458,8 @@
                        (:partition-by 'depname))
                 :from 'empsalary))</pre>
 
-Note the use of :order-by without parens
+    <p class="desc">Note the use of <code>:order-by</code> without parens:</p>
+    
     <pre class="code desc">
 (query (:select 'depname 'empno 'salary
                 (:over (:rank)
