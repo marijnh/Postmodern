@@ -11,6 +11,7 @@
            #:db-null
            #:sql-type-name
            #:*standard-sql-strings*
+           #:*downcase-symbols*
            #:sql-escape-string
            #:sql-escape
            #:from-sql-name
@@ -115,6 +116,8 @@ and a - to indicate it does not take any elements."
 identifiers in queries. Setting it :auto will turn on this behaviour
 only for reserved words.")
 
+(defvar *downcase-symbols* t)
+
 (defun to-sql-name (name &optional (escape-p *escape-sql-names-p*))
   "Convert a symbol or string into a name that can be an sql table,
 column, or operation name. Add quotes when escape-p is true, or
@@ -127,7 +130,9 @@ escape-p is :auto and the name contains reserved words."
                (let ((result (make-string (- to from))))
                  (loop :for i :from from :below to
                        :for p :from 0
-                       :do (setf (char result p) (char-downcase (char str i))))
+                       :do (setf (char result p) (if *downcase-symbols*
+                                                     (char-downcase (char str i))
+                                                     (char str i))))
                  result))
              (write-element (str)
                (declare (type string str))
