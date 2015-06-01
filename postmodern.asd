@@ -14,6 +14,8 @@
 
 (defsystem :postmodern
   :description "PosgreSQL programming API"
+  :author "Marijn Haverbeke <marijnh@gmail.com>"
+  :license "BSD"
   :depends-on (:cl-postgres :s-sql #+postmodern-use-mop :closer-mop
                             #+postmodern-thread-safe :bordeaux-threads)
   :components
