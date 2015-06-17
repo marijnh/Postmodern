@@ -247,6 +247,14 @@ result."
       (send-parse (connection-socket connection) name query)
       (values))))
 
+(defun unprepare-query (connection name)
+  "Close the prepared query given by name."
+  (check-type name string)
+  (with-reconnect-restart connection
+    (using-connection connection
+      (send-close (connection-socket connection) name)
+      (values))))
+
 (defun exec-prepared (connection name parameters &optional (row-reader 'ignore-row-reader))
   "Execute a previously prepared query with the given parameters,
 apply a row-reader to the result."

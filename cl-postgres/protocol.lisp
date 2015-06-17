@@ -412,6 +412,19 @@ results."
         ;; ParseComplete
         (#\1)))))
 
+(defun send-close (socket name)
+  "Send a close command to the server, giving it a name."
+  (declare (type stream socket)
+           (type string name)
+           #.*optimize*)
+  (with-syncing
+    (close-prepared-message socket name)
+    (flush-message socket)
+    (force-output socket)
+    (message-case socket
+      ;; CloseComplete
+      (#\3))))
+
 (defun send-execute (socket name parameters row-reader)
   "Execute a previously parsed query, and apply the given row-reader
 to the result."
