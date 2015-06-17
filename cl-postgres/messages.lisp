@@ -105,6 +105,11 @@ message definitions themselves stay readable."
   (string query)
   (uint 2 0))
 
+;; Close a named parsed query, freeing the name.
+(define-message close-prepared-message #\C (name)
+  (uint 1 #.(char-code #\S)) ;; Prepared statement
+  (string name))
+
 (defun formats-to-bytes (formats)
   "Formats have to be passed as arrays of 2-byte integers, with 1
 indicating binary and 0 indicating plain text."
