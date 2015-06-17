@@ -73,6 +73,14 @@
     (is (equal (exec-prepared connection "test" '(42 nil "foo") 'list-row-reader)
                '((42 nil "foo"))))))
 
+(test unprepare-statement
+  (with-test-connection
+    (prepare-query connection "test" "select true")
+    (unprepare-query connection "test")
+    (prepare-query connection "test" "select false")
+    (is (equal (exec-prepared connection "test" '() 'list-row-reader)
+               '((false))))))
+      
 (test prepared-array-param
   (with-test-connection
     (prepare-query connection "test" "select ($1::int[])[2]")
