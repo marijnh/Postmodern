@@ -79,7 +79,7 @@
     (unprepare-query connection "test")
     (prepare-query connection "test" "select false")
     (is (equal (exec-prepared connection "test" '() 'list-row-reader)
-               '((false))))))
+               '((nil))))))
       
 (test prepared-array-param
   (with-test-connection

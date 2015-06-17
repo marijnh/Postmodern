@@ -20,6 +20,7 @@
            #:wait-for-notification
            #:exec-query
            #:prepare-query
+           #:unprepare-query
            #:exec-prepared
            #:field-name
            #:field-type
