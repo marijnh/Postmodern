@@ -29,7 +29,7 @@
              (if (eq if-not-exist :create)
                  (create-schema schema)
                  (error 'database-error :message (format nil "Schema '~a' does not exist." schema))))
-           (set-search-path (if strict (to-sql-name schema) (concatenate 'string (to-sql-name schema) "," old-search-path)))
+           (set-search-path (if strict (to-sql-name schema t) (concatenate 'string (to-sql-name schema t) "," old-search-path)))
            (funcall thunk))
       (set-search-path old-search-path)
       (when drop-after (drop-schema schema :cascade 't)))))
@@ -53,14 +53,14 @@
   "Predicate for schema existence"
   (query (:select (:exists (:select 'schema_name
                             :from 'information_schema.schemata
-                            :where (:= 'schema_name (to-sql-name name))))) :single))
+                            :where (:= 'schema_name (to-sql-name name t))))) :single))
 
 (defun create-schema (schema)
   "Creating a non existing schema.
    If the schema exists an error is raised."
   ;;(format t "creating schema: ~a" schema)
-  (execute (format nil "CREATE SCHEMA ~s" (s-sql:to-sql-name schema nil))))
+  (execute (format nil "CREATE SCHEMA ~a" (s-sql:to-sql-name schema t))))
 
 (defun drop-schema (schema &key (cascade nil))
   "Drops an existing database schema 'schema'"
-  (execute (format nil "DROP SCHEMA ~s ~:[~;CASCADE~]" (s-sql:to-sql-name schema nil) cascade)))
+  (execute (format nil "DROP SCHEMA ~a ~:[~;CASCADE~]" (s-sql:to-sql-name schema t) cascade)))
