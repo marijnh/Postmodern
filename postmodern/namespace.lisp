@@ -59,8 +59,8 @@
   "Creating a non existing schema.
    If the schema exists an error is raised."
   ;;(format t "creating schema: ~a" schema)
-  (execute (format nil "CREATE SCHEMA ~a" (s-sql:to-sql-name schema))))
+  (execute (format nil "CREATE SCHEMA ~s" (s-sql:to-sql-name schema nil))))
 
 (defun drop-schema (schema &key (cascade nil))
   "Drops an existing database schema 'schema'"
-  (execute (format nil "DROP SCHEMA ~a ~:[~;CASCADE~]" (s-sql:to-sql-name schema) cascade)))
+  (execute (format nil "DROP SCHEMA ~s ~:[~;CASCADE~]" (s-sql:to-sql-name schema nil) cascade)))
