@@ -109,7 +109,7 @@ and a - to indicate it does not take any elements."
                     "union" "unique" "user" "using" "verbose" "when" "where" "with" "for" "nowait" "share"))
       (setf (gethash word words) t))
     words)
-  "A set of all Postgres' reserved words, for automatic escaping.")
+  "A set of all PostgreSQL's reserved words, for automatic escaping.")
 
 (defparameter *escape-sql-names-p* :auto
   "Setting this to T will make S-SQL add double quotes around
@@ -507,8 +507,8 @@ with a given arity."
 
 (def-sql-op :count (what &optional distinct)
   `("COUNT(" ,@(when (eq distinct :distinct)
-				     '("DISTINCT "))
-	     ,@(sql-expand what)  ")"))
+                 '("DISTINCT "))
+             ,@(sql-expand what)  ")"))
 
 (def-sql-op :between (n start end)
   `("(" ,@(sql-expand n) " BETWEEN " ,@(sql-expand start) " AND " ,@(sql-expand end) ")"))
@@ -715,8 +715,8 @@ to runtime. Used to create stored procedures."
 (def-sql-op :delete-from (table &rest args)
   (split-on-keywords ((where ?) (returning ? *)) args
     `("DELETE FROM " ,@(sql-expand table)
-		     ,@(when where (cons " WHERE " (sql-expand (car where))))
-		     ,@(when returning (cons " RETURNING " (sql-expand-list returning))))))
+                     ,@(when where (cons " WHERE " (sql-expand (car where))))
+                     ,@(when returning (cons " RETURNING " (sql-expand-list returning))))))
 
 (def-sql-op :over (form &rest args)
   (if args `("(" ,@(sql-expand form) " OVER " ,@(sql-expand-list args) ")")
@@ -731,7 +731,7 @@ to runtime. Used to create stored procedures."
 (def-sql-op :parens (op) `(" (" ,@(sql-expand op) ") "))
 
 (def-sql-op :with (&rest args)
-  (let ((x (butlast args)) (y (last args))) 
+  (let ((x (butlast args)) (y (last args)))
     `("WITH " ,@(sql-expand-list x) ,@(sql-expand (car y)))))
 
 (def-sql-op :with-recursive (form1 form2)
@@ -748,10 +748,10 @@ to runtime. Used to create stored procedures."
   "Return the type and whether it may be NULL."
   (if (and (consp type) (eq (car type) 'or))
       (if (and (member 'db-null type) (= (length type) 3))
-	  (if (eq (second type) 'db-null)
-	      (values (third type) t)
-	      (values (second type) t))
-	  (sql-error "Invalid type: ~a. 'or' types must have two alternatives, one of which is ~s."
+          (if (eq (second type) 'db-null)
+              (values (third type) t)
+              (values (second type) t))
+          (sql-error "Invalid type: ~a. 'or' types must have two alternatives, one of which is ~s."
                      type 'db-null))
       (values type nil)))
 
@@ -899,10 +899,10 @@ to runtime. Used to create stored procedures."
   (split-on-keywords ((type) (default ?) (constraint-name ?) (check ?)) args
     (multiple-value-bind (type may-be-null) (dissect-type (car type))
       `("CREATE DOMAIN " ,@(sql-expand name) " AS " ,(to-type-name type)
-			 ,@(when default `(" DEFAULT " ,@(sql-expand (car default))))
-			 ,@(when constraint-name `(" CONSTRAINT " ,@(sql-expand (car constraint-name))))
-			 ,@(unless may-be-null '(" NOT NULL"))
-			 ,@(when check `(" CHECK" ,@(sql-expand (car check))))))))
+                         ,@(when default `(" DEFAULT " ,@(sql-expand (car default))))
+                         ,@(when constraint-name `(" CONSTRAINT " ,@(sql-expand (car constraint-name))))
+                         ,@(unless may-be-null '(" NOT NULL"))
+                         ,@(when check `(" CHECK" ,@(sql-expand (car check))))))))
 
 (def-sql-op :drop-domain (name)
   `("DROP DOMAIN " ,@(sql-expand name)))
