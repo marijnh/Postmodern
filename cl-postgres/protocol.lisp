@@ -6,7 +6,7 @@
 (define-condition protocol-error (error)
   ((message :initarg :message))
   (:report (lambda (err stream)
-             (format stream "Postgresql protocol error: ~A"
+             (format stream "PostgreSQL protocol error: ~A"
                      (slot-value err 'message))))
   (:documentation "This is raised if something really unexpected
 happens in the communcation with the server. Should only happen in
@@ -116,12 +116,12 @@ database-error condition."
         (when (or (string= code "57P01") (string= code "57P02"))
           (ensure-socket-is-closed socket))
         (error (cl-postgres-error::get-error-type code)
- 	       :code code
- 	       :message (get-field #\M)
- 	       :detail (get-field #\D)
+               :code code
+               :message (get-field #\M)
+               :detail (get-field #\D)
                :hint (get-field #\H)
                :context (get-field #\W)
- 	       :position (let ((position (get-field #\p)))
+               :position (let ((position (get-field #\p)))
                            (when position (parse-integer position))))))))
 
 (define-condition postgresql-warning (simple-warning)
@@ -133,7 +133,7 @@ database-error condition."
     (flet ((get-field (char)
              (cdr (assoc char data))))
       (warn 'postgresql-warning
-            :format-control "Postgres warning: ~A~@[~%~A~]"
+            :format-control "PostgreSQL warning: ~A~@[~%~A~]"
             :format-arguments (list (get-field #\M) (or (get-field #\D) (get-field #\H)))))))
 
 (defparameter *ssl-certificate-file* nil
@@ -147,7 +147,7 @@ database-error condition."
 ;; cl+ssl:make-ssl-client-stream function before.
 (let ((make-ssl-stream nil))
   (defun initiate-ssl (socket required)
-    "Initiate SSL handshake with the Posgres server, and wrap the
+    "Initiate SSL handshake with the PostgreSQL server, and wrap the
 socket in an SSL stream. When require is true, an error will be raised
 when the server does not support SSL."
     (unless make-ssl-stream

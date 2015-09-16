@@ -10,11 +10,11 @@
 (defparameter *string-file* (if *unicode* "strings-utf-8" "strings-ascii"))
 
 (defsystem :cl-postgres
-  :description "Low-level client library for PosgreSQL"
+  :description "Low-level client library for PostgreSQL"
   :depends-on (:md5
                #-(or sbcl allegro ccl) :usocket
                #+sbcl                  :sb-bsd-sockets)
-  :components 
+  :components
   ((:module :cl-postgres
             :components ((:file "trivial-utf-8")
                          (:file "ieee-floats")

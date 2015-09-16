@@ -443,7 +443,7 @@
 
     <p class="desc"><code>Over</code>, <code>partition-by</code> and <code>window</code> are so-called window
     functions. A window function performs a calculation across a set
-    of table rows that are somehow related to the current row.</p> 
+    of table rows that are somehow related to the current row.</p>
 
     <pre class="code desc">
 (query (:select 'salary (:over (:sum 'salary))
@@ -455,7 +455,7 @@
     <p class="desc"><code>Args</code> is a list of one or more columns
     to partition by, optionally followed by an <code>:order-by</code>
     clause.</p>
-    
+
     <pre class="code desc">
 (query (:select 'depname 'subdepname 'empno 'salary
                 (:over (:avg 'salary)
@@ -463,7 +463,7 @@
                 :from 'empsalary))</pre>
 
     <p class="desc">Note the use of <code>:order-by</code> without parens:</p>
-    
+
     <pre class="code desc">
 (query (:select 'depname 'empno 'salary
                 (:over (:rank)
@@ -557,10 +557,10 @@
 
     <p class="desc">Locks the selected rows against concurrent updates. This will prevent the rows
     from being modified or deleted by other transactions until the current transaction ends. The :of
-    keyword should be followed by one or more table names. If provided, Postgres will lock
+    keyword should be followed by one or more table names. If provided, PostgreSQL will lock
     these tables instead of the ones detected in the select statement. The :nowait keyword should be
     provided by itself (with no argument attached to it), after all the :of arguments . If :nowait
-    is provided, Postgres will throw an error if a table cannot be locked immediately, instead of
+    is provided, PostgreSQL will throw an error if a table cannot be locked immediately, instead of
     pausing until it's possible.</p>
 
     <pre class="desc code">
@@ -580,7 +580,7 @@
     should be one of <code>:immutable</code>, <code>:stable</code>, or
     <code>:volatile</code> (see <a
     href="http://www.postgresql.org/docs/current/static/sql-createfunction.html">the
-    Postgres manual</a>). For example, a function that gets foobars by
+    PostgreSQL documentation</a>). For example, a function that gets foobars by
     id:</p>
 
     <pre class="desc code">
@@ -607,9 +607,9 @@
     <p class="desc">Update values in a table. After the table name
     there should follow the keyword <code>:set</code> and any number
     of alternating field names and values, like
-    for <a href="#insert-into"><code>:insert-into</code></a>. Next comes 
+    for <a href="#insert-into"><code>:insert-into</code></a>. Next comes
     the optional keyword <code>:from</code>, followed by at least one table name
-    and then any number of join statements, like for 
+    and then any number of join statements, like for
     <a href="#select"><code>:select</code></a>. After the joins,
     an optional <code>:where</code> keyword followed by the condition,
     and <code>:returning</code> keyword followed by a list of field
@@ -738,7 +738,7 @@
         form as for <a href="#table-constraints"><code>:create-table</code></a>.
         (This is for backwards-compatibility, you should use named constraints.)</dd>
     </dl></div>
-    
+
     <p class="desc">Here is an example using the table defined above:</p>
 
     <pre class="code desc">

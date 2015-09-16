@@ -51,7 +51,7 @@ currently connected."
   (defparameter *unix-socket-dir*
     #-(or freebsd darwin) "/var/run/postgresql/"
     #+(or darwin freebsd) "/tmp/"
-    "Directory where the Unix domain socket for Postgres be found.")
+    "Directory where the Unix domain socket for PostgreSQL be found.")
 
   (defun unix-socket-path (base-dir port)
     (unless (char= #\/ (aref base-dir (1- (length base-dir))))

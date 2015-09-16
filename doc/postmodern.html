@@ -395,7 +395,7 @@
     <p class="def">
       <span>function</span>
       <a name="commit-hooks"></a>
-      commit-hooks (transaction-or-savepoint), 
+      commit-hooks (transaction-or-savepoint),
       setf (commit-hooks transaction-or-savepoint)
     </p>
 
@@ -917,7 +917,7 @@
       call <a href="#insert-dao"><code>insert-dao</code></a> directly, thus
       the behavior is like <code>save-dao</code>.</li>
       <li>Otherwise we try to update a record with the same primary key.  If
-      it already exists in the database, Postgres will return a non-zero
+      it already exists in the database, PostgreSQL will return a non-zero
       value and we stop here.</li>
       <li>If the update operation succeeds but returns zero, it means the
       record does not exist and we call <code>insert-dao</code>.
@@ -1149,7 +1149,7 @@
         Removes a schema. The schema must be empty, otherwise an error
         is raised.
     </p>
-    
+
     <p class="def">
       <span>function</span>
       <a name="get-search-path"></a>
@@ -1159,7 +1159,7 @@
     <p class="desc">
         Retrieve the current search path.
     </p>
-    
+
     <p class="def">
       <span>function</span>
       <a name="set-search-path"></a>

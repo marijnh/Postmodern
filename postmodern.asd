@@ -13,7 +13,7 @@
   (pushnew :postmodern-use-mop *features*))
 
 (defsystem :postmodern
-  :description "PosgreSQL programming API"
+  :description "PostgreSQL programming API"
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :license "BSD"
   :depends-on (:cl-postgres :s-sql #+postmodern-use-mop :closer-mop

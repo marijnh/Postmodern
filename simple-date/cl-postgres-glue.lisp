@@ -1,6 +1,6 @@
 (in-package :simple-date)
 
-;; Postgresql days are measured from 01-01-2000, whereas simple-date
+;; PostgreSQL days are measured from 01-01-2000, whereas simple-date
 ;; uses 01-03-2000.
 
 (defconstant +postgres-day-offset+ -60)

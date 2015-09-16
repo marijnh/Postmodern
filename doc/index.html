@@ -28,7 +28,7 @@
     <p>The biggest differences between this library and <a
     href="http://clsql.b9.com/">CLSQL</a>/CommonSQL are that
     Postmodern has no intention of being portable across different SQL
-    implementations (it embraces non-standard Postgres features), and
+    implementations (it embraces non-standard PostgreSQL features), and
     approaches extensions like lispy SQL and database access objects
     in a quite different way. This library was written because the
     CLSQL approach did not really work for me, your mileage may
@@ -372,7 +372,7 @@
       :where (:and (:= 'relkind "r")
                    (:not-in 'nspname (:set "pg_catalog" "pg_toast"))
                    (:pg-catalog.pg-table-is-visible 'pg-class.oid))))
-;; => "(SELECT relname FROM pg_catalog.pg_class 
+;; => "(SELECT relname FROM pg_catalog.pg_class
 ;;      INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
 ;;      WHERE ((relkind = 'r') and (nspname NOT IN ('pg_catalog', 'pg_toast'))
 ;;             and pg_catalog.pg_table_is_visible(pg_class.oid)))"</pre>
