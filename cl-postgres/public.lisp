@@ -13,7 +13,7 @@
    (available :initform t :accessor connection-available)
    (parameters :accessor connection-parameters)
    (timestamp-format :accessor connection-timestamp-format))
-  (:documentation "Representatino of a database connection. Contains
+  (:documentation "Representation of a database connection. Contains
 login information in order to be able to automatically re-establish a
 connection when it is somehow closed."))
 
