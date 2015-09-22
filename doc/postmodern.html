@@ -12,14 +12,14 @@
     <h1>Postmodern reference manual</h1>
 
     <p>This is the reference manual for the component named
-    postmodern, which is part of a <a href="index.html">library</a> of
-    the same name.</p>
+    <code>postmodern</code>, which is part of a <a
+    href="index.html">library</a> of the same name.</p>
 
     <p>Note that this package also exports the <a
     href="cl-postgres.html#database-connection"><code>database-connection</code></a>
     and <a
     href="cl-postgres.html#database-error"><code>database-error</code></a>
-    types from <a href="cl-postgres.html">CL-postgres</a>, and a few
+    types from <a href="cl-postgres.html">CL-postgres</a> and a few
     operators from <a href="s-sql.html">S-SQL</a>.</p>
 
     <p><a href="#query"><code>query</code></a>, <a
@@ -64,13 +64,13 @@
     </p>
 
     <p class="desc">Create a new database connection for the given
-    user and database. Port will default to 5432, which is where most
-    PostgreSQL server are running. If <code>pooled-p</code> is true, a
-    connection will be taken from a pool of connections of this type,
-    if one is available there, and when the connection is disconnected
-    it will be put back into this pool instead. <code>use-ssl</code>
-    can be <code>:no</code>, <code>:yes</code>, or <code>:try</code>,
-    as in <a
+    <code>user</code> and the <code>database</code>. Port will default
+    to 5432, which is where most PostgreSQL servers are running. If
+    <code>pooled-p</code> is <code>T</code>, a connection will be taken
+    from a pool of connections of this type, if one is available there,
+    and when the connection is disconnected it will be put back into this
+    pool instead. <code>use-ssl</code> can be <code>:no</code>,
+    <code>:yes</code>, or <code>:try</code>, as in <a
     href="cl-postgres.html#open-database"><code>open-database</code></a>,
     and defaults to the value of <a
     href="#*default-use-ssl*"><code>*default-use-ssl*</code></a>.</p>
@@ -126,7 +126,7 @@
 
     <p class="desc">Special variable holding the current database.
     Most functions and macros operating on a database assume this
-    contains a connected database.</p>
+    binds to a connected database.</p>
 
     <p class="def">
       <span>macro</span>
@@ -134,7 +134,7 @@
       with-connection (spec &amp;body body)
     </p>
 
-    <p class="desc">Evaluates the body with <a
+    <p class="desc">Evaluates the <code>body</code> with <a
     href="#*database*"><code>*database*</code></a> bound to a
     connection as specified by <code>spec</code>, which should be list
     that <a href="#connect"><code>connect</code></a> can be applied
@@ -161,7 +161,7 @@
       connect-toplevel  (database user password host &amp;key (port 5432))
     </p>
 
-    <p class="desc">Set <a
+    <p class="desc">Bind the <a
     href="#*database*"><code>*database*</code></a> to a new
     connection. Use this if you only need one connection, or if you
     want a connection for debugging from the REPL.</p>
@@ -172,7 +172,7 @@
       disconnect-toplevel ()
     </p>
 
-    <p class="desc">Disconnect <a
+    <p class="desc">Disconnect the <a
     href="#*database*"><code>*database*</code></a>.</p>
 
     <p class="def">
@@ -181,7 +181,7 @@
       clear-connection-pool ()
     </p>
 
-    <p class="desc">Disconnect and remove all connections in the
+    <p class="desc">Disconnect and remove all connections from the
     connection pools.</p>
 
     <p class="def">
@@ -204,14 +204,14 @@
       <br/>&#8594; result
     </p>
 
-    <p class="desc">Execute the given query, which can be either a
-    string or an <a href="s-sql.html">S-SQL</a> form (list starting
+    <p class="desc">Execute the given <code>query</code>, which can be
+    either a string or an <a href="s-sql.html">S-SQL</a> form (list starting
     with a keyword). If the query contains placeholders
     (<code>$1</code>, <code>$2</code>, etc) their values can be given
     as extra arguments. If one of these arguments is a keyword
-    occurring in the table below, it will not be used as a query
-    argument, but will determine the format in which the results are
-    returned instead. Any of the following formats can be used, with
+    occurring in the table below, it will not be used as a <code>query</code>
+    argument, but will determine the <code>format</code> in which the results
+    are returned instead. Any of the following formats can be used, with
     the default being <code>:rows</code>:</p>
 
     <table class="desc">
@@ -222,7 +222,7 @@
       <tr><td><code>:list</code>, <code>:row</code></td><td>Return a
       single row as a list.</td></tr>
       <tr><td><code>:alists</code></td><td>Return a list of alists which map column
-      names to values,with the names represented as
+      names to values, with the names represented as
       keywords.</td></tr>
       <tr><td><code>:alist</code></td><td>Return a single row as an alist.</td></tr>
       <tr><td><code>:str-alists</code></td><td>Like
@@ -252,8 +252,8 @@
       execute (query &amp;rest args)
     </p>
 
-    <p class="desc">Like <a href="#query"><code>query</code></a>, but
-    called with <code>format</code> :none, and returning the amount of
+    <p class="desc">Like <a href="#query"><code>query</code></a>
+    called with <code>format :none</code>. Returns the amount of
     affected rows as its first returned value. (Also returns this
     amount as the second returned value, but use of this is
     deprecated.)</p>
@@ -264,12 +264,12 @@
       doquery (query (&amp;rest names) &amp;body body)
     </p>
 
-    <p class="desc">Execute the given query (a string or a list
+    <p class="desc">Execute the given <code>query</code> (a string or a list
     starting with a keyword), iterating over the rows in the result.
-    The body will be executed with the values in the row bound to the
+    The <code>body</code> will be executed with the values in the row bound to the
     symbols given in <code>names</code>. To iterate over a
-    parameterised query, one can specify a list whose car is the
-    query, and whose cdr contains the arguments. For example:</p>
+    parameterised query, one can specify a list whose <em>car</em> is the
+    query, and whose <em>cdr</em> contains the arguments. For example:</p>
 
     <pre class="code">
 (doquery (:select 'name 'score :from 'scores) (n s)
@@ -286,26 +286,26 @@
     </p>
 
     <p class="desc">Creates a function that can be used as the
-    interface to a prepared statement. The given query (either a
-    string or an <a href="s-sql.html">S-SQL</a> form) may contain
+    interface to a prepared statement. The given <code>query</code>
+    (either a string or an <a href="s-sql.html">S-SQL</a> form) may contain
     placeholders, which look like <code>$1</code>, <code>$2</code>,
     etc. The resulting function takes one argument for every
-    placeholder in the query, executes the prepared query, and returns
-    the result in the format specified (allowed formats are the same
-    as for <a href="#query"><code>query</code></a>).</p>
+    placeholder in the <code>query</code>, executes the prepared query,
+    and returns the result in the <code>format</code> specified. (Allowed
+    formats are the same as for <a href="#query"><code>query</code></a>.)</p>
 
     <p class="desc">For queries that have to be run very often,
-    especially when they are complex, it may help performance if the
+    especially when they are complex, it may help performance since the
     server only has to plan them once. See <a
     href="http://www.postgresql.org/docs/current/static/sql-prepare.html">the
     PostgreSQL manual</a> for details.</p>
 
     <p class="desc">In some cases, the server will complain about not
     being able to deduce the type of the arguments in a statement. In
-    that case you should add type declarations (either with the
-    <code>::</code> syntax or with S-SQL's <a
-    href="s-sql.html#type"><code>:type</code></a> construct) to help it
-    out.</p>
+    that case you should add type declarations (either with the PostgreSQL's
+    <code>CAST</code> SQL-conforming syntax or historical <code>::</code>
+    syntax, or with S-SQL's <a href="s-sql.html#type"><code>:type</code></a>
+    construct) to help it out.</p>
 
     <p class="def">
       <span>macro</span>
@@ -325,7 +325,7 @@
 
     <p class="desc">Like <a href="#defprepared"><code>defprepared</code></a>,
     but allows to specify names of the function arguments as well as arguments
-    supplied to the query.</p>
+    supplied to the <code>query</code>.</p>
 
     <pre class="code">
 (defprepared-with-names user-messages (user &amp;key (limit 10))
@@ -342,11 +342,11 @@
       with-transaction ((&amp;optional name) &amp;body body)
     </p>
 
-    <p class="desc">Execute the given body within a database
-    transaction, committing it when the body exits normally, and
-    aborting otherwise. An optional name can be given to the
+    <p class="desc">Execute the given <code>body</code> within a database
+    transaction, committing it when the <code>body</code> exits normally, and
+    aborting otherwise. An optional <code>name</code> can be given to the
     transaction, which can be used to force a commit or abort before
-    the body unwinds.</p>
+    the <code>body</code> unwinds.</p>
 
     <p class="def">
       <span>function</span>
@@ -354,7 +354,7 @@
       commit-transaction (transaction)
     </p>
 
-    <p class="desc">Commit the given database transaction.</p>
+    <p class="desc">Commit the given <code>transaction</code>.</p>
 
     <p class="def">
       <span>function</span>
@@ -362,7 +362,7 @@
       abort-transaction (transaction)
     </p>
 
-    <p class="desc">Roll back the given database transaction.</p>
+    <p class="desc">Roll back the given <code>transaction</code>.</p>
 
      <p class="def">
       <span>macro</span>
@@ -371,10 +371,11 @@
     </p>
 
     <p class="desc">Can only be used within a transaction. Establishes
-    a savepoint with the given name at the start of <code>body</code>,
-    and binds the same name to a handle for that savepoint. At the end
-    of <code>body</code>, the savepoint is released, unless a
-    condition is thrown, in which case it is rolled back.</p>
+    a savepoint with the given <code>name</code> at the start of
+    <code>body</code>, and binds the same <code>name</code> to a handle
+    for that savepoint. At the end of <code>body</code>, the savepoint
+    is released, unless a condition is thrown, in which case it is rolled
+    back.</p>
 
     <p class="def">
       <span>function</span>
@@ -382,15 +383,15 @@
       release-savepoint (savepoint)
     </p>
 
-    <p class="desc">Explicitly release the given savepoint.</p>
+    <p class="desc">Release the given <code>savepoint</code>.</p>
 
     <p class="def">
       <span>function</span>
       <a name="rollback-savepoint"></a>
-      rollback-savepoint (transaction)
+      rollback-savepoint (savepoint)
     </p>
 
-    <p class="desc">Roll back the given savepoint.</p>
+    <p class="desc">Roll back the given <code>savepoint</code>.</p>
 
     <p class="def">
       <span>function</span>
@@ -399,15 +400,25 @@
       setf (commit-hooks transaction-or-savepoint)
     </p>
 
-    <p class="desc">An accessor for the transaction or savepoint's list of commit hooks, each of which should be a function with no required arguments. These functions will be executed when a transaction is successfully committed or a savepoint successfully released.</p>
+    <p class="desc">An accessor for the transaction or savepoint's list
+    of commit hooks, each of which should be a function with no required
+    arguments. These functions will be executed when a transaction is
+    committed or a savepoint released.</p>
 
     <p class="def">
       <span>function</span>
       <a name="abort-hooks"></a>
-      abort-hooks (transaction-or-savepoint), setf (abort-hooks transaction-or-savepoint)
+      abort-hooks (transaction-or-savepoint),
+      setf (abort-hooks transaction-or-savepoint)
     </p>
 
-    <p class="desc">An accessor for the transaction or savepoint's list of abort hooks, each of which should be a function with no required arguments. These functions will be executed when a transaction is aborted or a savepoint rolled back (whether via a non-local transfer of control or explicit call to <code>abort-transaction</code> or <code>rollback-savepoint</code>).
+    <p class="desc">An accessor for the transaction or savepoint's list
+    of abort hooks, each of which should be a function with no required
+    arguments. These functions will be executed when a transaction is
+    aborted or a savepoint rolled back (whether via a non-local transfer
+    of control or explicitly by either <a href="#abort-transaction">
+    <code>abort-transaction</code></a> or <a href="#rollback-savepoint">
+    <code>rollback-savepoint</code></a>).
 
     <p class="def">
       <span>macro</span>
@@ -416,10 +427,10 @@
     </p>
 
     <p class="desc">Executes <code>body</code> within
-    a <code>with-transaction</code> form is no transaction is
-    currently in progress, otherwise simulates a nested transaction by
-    executing it within a <code>with-savepoint</code> form. The
-    transaction or savepoint is bound to <code>name</code> if one is
+    a <a href="#with-transaction"><code>with-transaction</code></a>
+    form if no transaction is currently in progress, otherwise simulates
+    a nested transaction by executing it within a <code>with-savepoint</code>
+    form. The transaction or savepoint is bound to <code>name</code> if one is
     supplied.</p>
 
     <p class="def">
@@ -428,7 +439,8 @@
       abort-logical-transaction (transaction-or-savepoint)
     </p>
 
-    <p class="desc">Roll back the given logical transaction, regardless of whether it is a true transaction or a savepoint.</p>
+    <p class="desc">Roll back the given logical transaction, regardless of
+    whether it is an actual transaction or a savepoint.</p>
 
     <p class="def">
       <span>function</span>
@@ -436,7 +448,8 @@
       commit-logical-transaction (transaction-or-savepoint)
     </p>
 
-    <p class="desc">Commit the given logical transaction, regardless of whether it is a true transaction or a savepoint.</p>
+    <p class="desc">Commit the given logical transaction, regardless of
+    whether it is an actual transaction or a savepoint.</p>
 
     <p class="def">
       <a name="*current-logical-transaction*"></a>
@@ -464,22 +477,23 @@
       <span>macro</span>
       <a name="with-schema"></a>
       with-schema ((namespace &amp;key :strict t :if-not-exist
-                               :create :drop-after ) &amp;body body)
+                               :create :drop-after) &amp;body body)
     </p>
 
-    <p class="desc">Executes the <code>body</code> within a
-    namespace. Before executing <code>body</code> the variable
-    search_path is set to the given schema name. After
-    executing <code>body</code> the search_path variable is set to its
-    original and stored value.
+    <p class="desc">Sets the current schema to <code>namespace</code> and
+    executes the <code>body</code>. Before executing <code>body</code> the
+    PostgreSQL's session variable <code>search_path</code> is set to
+    the given <code>namespace</code>. After executing <code>body</code> the
+    <code>search_path</code> variable is restored to the original value.
 
-    If the keyword <code>:strict</code> is set to a true value
-    the <code>search_path</code> only contains the namespace before
-    exucting body. otherwise the schema is prepended
-    to <code>search_path</code>. If the
-    keyword <code>:if-not-exist</code> is set to nil, an error is
-    signaled. If the keyword <code>:drop-after</code> is set to true
-    the namesapce is removed from the database.
+    If the keyword <code>:strict</code> is set to <code>T</code> then
+    the <code>namespace</code> is only the scheme on the search path upon
+    the <code>body</code> execution. Otherwise the <code>namespace</code> is
+    just first schema on the search path upon the the <code>body</code>
+    execution. If <code>:if-not-exist</code> is <code>NIL</code>,
+    an error is signaled. If <code>:drop-after</code> is <code>T</code>
+    the <code>namespace</code> is dropped from the database after the
+    <code>body</code> execution.
     </p>
 
     <p class="def">
@@ -489,9 +503,9 @@
       <br/>&#8594; integer
     </p>
 
-    <p class="desc">Get the next value from a sequence. The sequence
-    identifier can be either a string or a symbol, in the latter case
-    it will be converted to a string with <a
+    <p class="desc">Get the next value from a <code>sequence</code>.
+    The sequence identifier can be either a string or a symbol, in the latter
+    case it will be converted to a string according to <a
     href="s-sql.html">S-SQL</a> rules.</p>
 
     <p class="def">
@@ -501,7 +515,7 @@
       <br/>&#8594; value
     </p>
 
-    <p class="desc">Returns the first non-<code>NIL</code>, non-null
+    <p class="desc">Returns the first non-<code>NIL</code>, non-NULL
     (as in <code>:null</code>) argument, or <code>NIL</code> if none
     are present. Useful for providing a fall-back value for the result
     of a query, or, when given only one argument, for transforming
@@ -517,8 +531,8 @@
     </p>
 
     <p class="desc">Returns a list of the tables in the current
-    database. When <code>strings-p</code> is true, the names will be
-    given as strings, otherwise as keywords.</p>
+    database. When <code>strings-p</code> is <code>T</code>, the
+    names will be given as strings, otherwise as keywords.</p>
 
     <p class="def">
       <span>function</span>
@@ -527,8 +541,8 @@
       <br/>&#8594; boolean
     </p>
 
-    <p class="desc">Tests whether a table with the given name
-    exists. The name can be either a string or a symbol.</p>
+    <p class="desc">Tests whether a table with the given <code>name</code>
+    exists. The <code>name</code> can be either a string or a symbol.</p>
 
     <p class="def">
       <span>function</span>
@@ -540,9 +554,9 @@
     <p class="desc">Returns a list of the fields in the named table.
     Each field is represented by a list of three elements: the field
     name, the type, and a boolean indicating whether the field may be
-    null.  Optionally, schema-name can be specified to restrict the
-    result to fields from the named schema.  Without it, all fields in
-    the table are returned, regardless of their schema.</p>
+    NULL.  Optionally, <code>schema-name</code> can be specified to
+    restrict the result to fields from the named schema. Without it,
+    all fields in the table are returned, regardless of their schema.</p>
 
     <p class="def">
       <span>function</span>
@@ -552,8 +566,8 @@
     </p>
 
     <p class="desc">Returns a list of the sequences in the current
-    database. When <code>strings-p</code> is true, the names will be
-    given as strings, otherwise as keywords.</p>
+    database. When <code>strings-p</code> is <code>T</code>, the names
+    will be given as strings, otherwise as keywords.</p>
 
     <p class="def">
       <span>function</span>
@@ -562,8 +576,8 @@
       <br/>&#8594; boolean
     </p>
 
-    <p class="desc">Tests whether a sequence with the given name
-    exists. The name can be either a string or a symbol.</p>
+    <p class="desc">Tests whether a sequence with the given <code>name</code>
+    exists. The <code>name</code> can be either a string or a symbol.</p>
 
     <p class="def">
       <span>function</span>
@@ -572,9 +586,9 @@
       <br/>&#8594; list
     </p>
 
-    <p class="desc">Returns a list of the views in the current
-    database. When <code>strings-p</code> is true, the names will be
-    given as strings, otherwise as keywords.</p>
+    <p class="desc">Returns list of the user defined views in the current
+    database. When <code>strings-p</code> is <code>T</code>, the names will
+    be returned as strings, otherwise as keywords.</p>
 
     <p class="def">
       <span>function</span>
@@ -583,8 +597,8 @@
       <br/>&#8594; boolean
     </p>
 
-    <p class="desc">Tests whether a view with the given name exists.
-    The name can be either a string or a symbol.</p>
+    <p class="desc">Tests whether a view with the given <code>name</code>
+    exists. The <code>name</code> can be either a string or a symbol.</p>
 
     <p class="def">
       <span>function</span>
@@ -593,10 +607,8 @@
       <br/>&#8594; list
     </p>
 
-    <p class="desc">
-        Lists all existing schemata in a list of names (String) and
-        the quantity of existing schemata.
-    </p>
+    <p class="desc">Returns list of the user defined schemata (as strings)
+    and the quantity of existing schemata.</p>
 
     <p class="def">
         <span>function</span>
@@ -605,15 +617,14 @@
         <br/>&#8594; boolean
     </p>
 
-    <p class="desc">
-        Tests thes existence of a given schema. Returns T if the
-        schema exists, otherwise NIL.
-    </p>
+    <p class="desc">Tests the existence of a given <code>schema</code>.
+    Returns <code>T</code> if the schema exists or <code>NIL</code>
+    otherwise.</p>
 
     <h2><a name="daos"></a>Database access objects</h2>
 
     <p>Postmodern contains a simple system for defining CLOS classes
-    that represent rows in the database. This is not intended as as a
+    that represent rows in the database. This is not intended as a
     full-fledged object-relational magic system &#x2015; while serious
     ORM systems have their place, they are notoriously hard to get
     right, and are outside of the scope of a humble SQL library like
@@ -634,11 +645,12 @@
     an <a href="s-sql.html">S-SQL</a> type expression (useful if you
     want to be able to derive a table definition from the class
     definition), or simply a <code>:column</code> option with
-    value <code>t</code>.  Such slots can also take
+    value <code>T</code>. Such slots can also take
     a <code>:col-default</code> option, used to provide a
     database-side default value as an S-SQL expression. You can use
     the <code>:col-name</code> initarg (whose unevaluated value will
-    be passed to to-sql-name) to specify the slot's column's name.</p>
+    be passed to <code>to-sql-name</code>) to specify the slot's column's
+    name.</p>
 
     <p class="desc">DAO class definitions support two extra class
     options: <code>:table-name</code> to give the name of the table
@@ -662,27 +674,27 @@
     to indicate a column can have NULL values.</p>
 
     <p class="desc">When inheriting from DAO classes, a subclass' set
-    of columns also contains all the columns in its superclasses. The
+    of columns also contains all the columns of its superclasses. The
     primary key for such a class is the union of its own keys and all
     the keys from its superclasses. Classes inheriting from DAO
     classes should probably always use the <code>dao-class</code>
     metaclass themselves.</p>
 
     <p class="desc">When a DAO is created with
-    <code>make-instance</code>, it can be passed a
-    <code>:fetch-defaults</code> keyword parameter which, when true,
-    will cause a query to be made to fetch the default values for all
-    slots that have column default values and were not bound through
-    initargs. In some cases, such as <code>serial</code> columns,
-    which have an implicit default, this will not work. You can work
-    around this by creating your own sequence and defining a
+    <code>make-instance</code>, the <code>:fetch-defaults</code> keyword
+    argument can be passed, which, when <code>T</code>, will cause a query
+    to fetch the default values for all slots that refers to columns with
+    defaults and were not bound through initargs. In some cases, such as
+    <code>serial</code> columns, which have an implicit default, this will
+    not work. You can work around this by creating your own sequence, e.g.
+    <code>"my_sequence"</code>, and defining a
     <code>(:nextval "my_sequence")</code> default.</p>
 
     <p class="desc">Finally, DAO class slots can have an option
     <code>:ghost t</code> to specify them as ghost slots. These are
     selected when retrieving instances, but not written when updating
     or inserting, or even included in the table definition. The only
-    know use for this to date is to create your table with
+    known use for this to date is for creating the table with
     <code>(oids=true)</code>, and specify a slot like this:</p>
 
     <pre class="code">
@@ -696,8 +708,8 @@
     </p>
 
     <p class="desc">
-      Returns list of slot names that are the primary key of DAO class
-      CLASS.
+      Returns list of slot names that are the primary key of DAO
+      <code>class</code>.
     </p>
 
     <p class="def">
@@ -707,7 +719,7 @@
     </p>
 
     <p class="desc">
-      Returns list of values that are the primary key of DAO.
+      Returns list of values that are the primary key of <code>dao</code>.
     </p>
 
     <p class="def">
@@ -718,7 +730,7 @@
     </p>
 
     <p class="desc">Test whether a row with the same primary key as
-    the given DAO exists in the database. Will also return
+    the given <code>dao</code> exists in the database. Will also return
     <code>NIL</code> when any of the key slots in the object are
     unbound.</p>
 
@@ -740,8 +752,8 @@
     </p>
 
     <p class="desc">Create an <code>:around</code>-method for <a href="#make-dao">
-    <code>make-dao</code></a>. Code <code>body</code> is executed in
-    a lexical environment where variable <code>dao-name</code> is bound
+    <code>make-dao</code></a>. The <code>body</code> is executed in
+    a lexical environment where <code>dao-name</code> is bound
     to a freshly created and inserted DAO. The representation of the DAO in the
     database is then updated to reflect changes that <code>body</code> might
     have introduced. Useful for processing values of slots with the type
@@ -772,11 +784,12 @@
     </p>
 
     <p class="desc">Select DAO objects for the rows in the associated
-    table for which the given test (either an <a
+    table for which the given <code>test</code> (either an <a
     href="s-sql.html">S-SQL</a> expression or a string) holds. When
     sorting arguments are given, which can also be S-SQL forms or
     strings, these are used to sort the result. (Note that, if you
-    want to sort, you <em>have</em> to pass a test value.)</p>
+    want to sort, you <em>have</em> to pass the <code>test</code>
+    argument.)</p>
 
     <pre class="code">(select-dao 'user (:> 'score 10000) 'name)</pre>
 
@@ -786,7 +799,10 @@
       do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)
     </p>
 
-    <p class="desc">Like <a href="#select-dao"><code>select-dao</code></a>, but iterates over the results rather than returning them. For each matching DAO, <code>body</code> is evaluated with <code>type-var</code> bound to the DAO instance.</p>
+    <p class="desc">Like <a href="#select-dao"><code>select-dao</code></a>,
+    but iterates over the results rather than returning them. For each matching
+    DAO, <code>body</code> is evaluated with <code>type-var</code> bound to the
+    DAO instance.</p>
 
     <pre class="code">(do-select-dao (('user user) (:> 'score 10000) 'name)
   (pushnew user high-scorers))</pre>
@@ -798,12 +814,12 @@
       <br/>&#8594; list
     </p>
 
-    <p class="desc">Execute the given query (which can be either a
-    string or an <a href="s-sql.html">S-SQL</a> expression) and return
-    the result as DAOs of the given type. If the query contains placeholders
-    ($1, $2, etc) their values can be given as extra arguments.
-    The names of the fields returned by the query must either match slots
-    in the DAO class, or be bound through <a
+    <p class="desc">Execute the given <code>query</code> (which can be either
+    a string or an <a href="s-sql.html">S-SQL</a> expression) and return
+    the result as DAOs of the given <code>type</code>. If the <code>query</code>
+    contains placeholders ($1, $2, etc) their values can be given as extra
+    arguments. The names of the fields returned by the <code>query</code> must
+    either match slots in the DAO class, or be bound through <a
     href="#with-column-writers"><code>with-column-writers</code></a>.</p>
 
     <p class="def">
@@ -813,7 +829,10 @@
       <br/>&#8594; list
     </p>
 
-    <p class="desc">Like <a href="#query-dao"><code>query-dao</code></a>, but iterates over the results rather than returning them. For each matching DAO, <code>body</code> is evaluated with <code>type-var</code> bound to the DAO instance.</p>
+    <p class="desc">Like <a href="#query-dao"><code>query-dao</code></a>, but
+    iterates over the results rather than returning them. For each matching DAO,
+    <code>body</code> is evaluated with <code>type-var</code> bound to the
+    instance.</p>
 
     <pre class="code">(do-query-dao (('user user) (:order-by (:select '* :from 'user :where (:> 'score 10000)) 'name))
   (pushnew user high-scorers))</pre>
@@ -829,7 +848,7 @@
     <code><a href="#select-dao">select-dao</a></code>,
     or <code><a href="#query-dao">query-dao</a></code> finds a column
     in the database that's not in the DAO class, it will raise an
-    error. Setting this variable to a truthy value will cause it to
+    error. Setting this variable to a non-<code>NIL</code> will cause it to
     simply ignore the unknown column.</p>
 
     <p class="def">
@@ -839,12 +858,11 @@
       <br/>&#8594; dao
     </p>
 
-    <p class="desc">Insert the given DAO into the database. When any
-    column slots in the object are unbound, these will be updated with
-    the values they default to in the database. (If they have no
-    defaults, it is an error to insert them.) <em>Note</em>: This
-    feature only works on PostgreSQL 8.2 and up. On older versions, do
-    not insert DAOs with unbound slots.</p>
+    <p class="desc">Insert the given <code>dao</code> into the database.
+    Column slots of the object which are unbound implies the database defaults.
+    Hence, if these columns has no defaults defined in the database, the
+    the insertion of the <code>dao</code> will be failed.
+    (This feature only works on PostgreSQL 8.2 and up.)</p>
 
     <p class="def">
       <span>method</span>
@@ -853,10 +871,10 @@
       <br/>&#8594; dao
     </p>
 
-    <p class="desc">Update the representation of the given DAO in the
-    database with the values in the object. This is not defined for
+    <p class="desc">Update the representation of the given <code>dao</code>
+    in the database to the values in the object. This is not defined for
     tables that do not have any non-primary-key columns. Raises an
-    error when no row matching the DAO exists.</p>
+    error when no row matching the <code>dao</code> exists.</p>
 
     <p class="def">
       <span>function</span>
@@ -865,9 +883,9 @@
       <br/>&#8594; boolean
     </p>
 
-    <p class="desc">Tries to insert the given DAO using <a
+    <p class="desc">Tries to insert the given <code>dao</code> using <a
     href="#insert-dao"><code>insert-dao</code></a>. If this raises a
-    unique key violation error, it tries to update it using <a
+    unique key violation error, it tries to update it by using <a
     href="#update-dao"><code>update-dao</code></a> instead. Be aware
     that there is a possible race condition here &#x2015; if some
     other process deletes the row at just the right moment, the update
@@ -876,11 +894,12 @@
 
     <p class="desc">This function is unsafe to use inside of a
     transaction &#x2015; when a row with the given keys already
-    exists, the transaction will be abandoned. Use <a
+    exists, the transaction will be aborted. Use <a
     href="#save-dao/transaction"><code>save-dao/transaction</code></a>
     instead in such a situation.</p>
 
-    <p class="desc"><b>See also:</b> <a href="#upsert-dao"><code>upsert-dao</code></a>.</p>
+    <p class="desc"><b>See also:</b> <a href="#upsert-dao">
+    <code>upsert-dao</code></a>.</p>
 
     <p class="def">
       <span>function</span>
@@ -894,7 +913,8 @@
     protects its attempt to insert the object with a rollback point,
     so that a failure will not abort the transaction.</p>
 
-    <p class="desc"><b>See also:</b> <a href="#upsert-dao"><code>upsert-dao</code></a>.</p>
+    <p class="desc"><b>See also:</b> <a href="#upsert-dao">
+    <code>upsert-dao</code></a>.</p>
 
     <p class="def">
       <span>method</span>
@@ -907,7 +927,7 @@
       Like <a href="#save-dao"><code>save-dao</code></a>
       or <a href="#save-dao/transaction"><code>save-dao/transaction</code></a>
       but using a different method that doesn't involve a database
-      exception.  This is safe to use both in and outside a transaction,
+      exception. This is safe to use both in and outside a transaction,
       though it's advisable to always do it in a transaction to prevent a
       race condition.  The way it works is:
     </p>
@@ -916,17 +936,27 @@
       <li>If the object contains unbound slots, we
       call <a href="#insert-dao"><code>insert-dao</code></a> directly, thus
       the behavior is like <code>save-dao</code>.</li>
-      <li>Otherwise we try to update a record with the same primary key.  If
-      it already exists in the database, PostgreSQL will return a non-zero
-      value and we stop here.</li>
-      <li>If the update operation succeeds but returns zero, it means the
-      record does not exist and we call <code>insert-dao</code>.
+      <li>Otherwise we try to update a record with the same primary key. If
+      the PostgreSQL returns a non-zero number of rows updated it
+      <em>treated</em> as the record is already exists in the database, and
+      we stop here.</li>
+      <li>If the PostgreSQL returns a zero number of rows updated, it
+      <em>treated</em> as the record does not exist and we call
+      <code>insert-dao</code>.</li>
     </ol>
 
     <p class="desc">
       The race condition might occur at step 3 <em>if there's no
-      transaction:</em> if <code>update</code> returns zero and another
-      thread inserts the record at that moment, our insertion will fail.
+      transaction:</em> if UPDATE returns zero number of rows updated and
+      another thread inserts the record at that moment, the insertion
+      implied by step 3 will fail.
+    </p>
+
+    <p class="desc">
+      Note, that triggers and rules may affect the number of inserted or
+      updated rows returned by PostgreSQL, so zero or non-zero number of
+      affected rows may not <em>actually</em> indicate the existence of
+      record in the database.
     </p>
 
     <p class="desc">
@@ -941,28 +971,28 @@
       delete-dao (dao)
     </p>
 
-    <p class="desc">Delete the given DAO from the database.</p>
+    <p class="desc">Delete the given <code>dao</code> from the database.</p>
 
     <p class="def">
       <span>function</span>
       <a name="dao-table-name"></a>
-      dao-table-name (table)
+      dao-table-name (class)
       <br/>&#8594; string
     </p>
 
-    <p class="desc">Get the table name associated with the given DAO
-    class (or symbol naming such a class).</p>
+    <p class="desc">Get the name of the <code>table</code> associated with
+    the given DAO <code>class</code> (or symbol naming such a class).</p>
 
     <p class="def">
       <span>function</span>
       <a name="dao-table-definition"></a>
-      dao-table-definition (table)
+      dao-table-definition (class)
       <br/>&#8594; string
     </p>
 
-    <p class="desc">Given a DAO class, or the name of one, this will
-    produce an SQL query string with a definition of the table. This
-    is just the bare simple definition, so if you need any extra
+    <p class="desc">Given a DAO <code>class</code>, or the name of one,
+    this will produce an SQL query string with a definition of the table.
+    This is just the bare simple definition, so if you need any extra
     indices or or constraints, you'll have to write your own queries
     to add them.</p>
 
@@ -983,12 +1013,12 @@
     the objects, or functions taking two arguments &#x2015; an
     instance and a value &#x2015; which can be used to somehow store
     the value in the new instance. When any DAO-fetching function is
-    called in the body, and columns matching the given names are
-    encountered in the result, the writers are used instead of the
-    default behaviour (try and store the value in the slot that
+    called in the <code>body</code>, and columns matching the given
+    names are encountered in the result, the writers are used instead
+    of the default behaviour (try and store the value in the slot that
     matches the column name).</p>
 
-    <p class="desc">A common use for this is to add some non-column
+    <p class="desc">An example of using this is to add some non-column
     slots to a DAO class, and use <code><a
     href="#query-dao">query-dao</a></code> within a
     <code>with-column-writers</code> form to pull in extra information
@@ -998,8 +1028,8 @@
     <h2 id="tabledef">Table definition and creation</h2>
 
     <p>It can be useful to have the SQL statements needed to build an
-    application's tables available from the code, to do things like
-    automatically initialising a database. The following macro and
+    application's tables available from the source code, to do things like
+    automatically deploying a database. The following macro and
     functions allow you to group sets of SQL statements under symbols,
     with some shortcuts for common elements in table definitions.</p>
 
@@ -1008,18 +1038,79 @@
       deftable (name &amp;body definition)
     </p>
 
-    <p class="desc">Define a table. name can be either a symbol or a
-    <code>(symbol string)</code> list. In the first case, the table
-    name is derived from the symbol by <a
-    href="s-sql.html">S-SQL</a>'s rules, in the second case, the name
-    is given explicitly. The body of definitions can contain anything
-    that evaluates to a string, as well as S-SQL expressions. In this
-    body, the variables <a
-    href="#*table-name*"><code>*table-name*</code></a> and <a
-    href="#*table-name*"><code>*table-symbol*</code></a> are bound to
-    the relevant values. Note that the definitions are evaluated in
-    order, so you'll generally want to first create your table and
-    then start defining indices on it.</p>
+    <p class="desc">Define a table. <code>name</code> can be either a symbol
+    or a <code>(symbol string)</code> list. In the first case, the table
+    name is derived from the symbol's name by <a
+    href="s-sql.html">S-SQL</a>'s rules. In the second case, the
+    <code>name</code> is given explicitly. The body of definitions can contain
+    anything that evaluates to a string, as well as S-SQL expressions. The
+    variables <a href="#*table-name*"><code>*table-name*</code></a> and
+    <a href="#*table-name*"><code>*table-symbol*</code></a> are bound to
+    the relevant values in the body. Note that the evaluation of the
+    <code>definition</code> is ordered, so you'll generally want to create your
+    table first and then define indices on it.</p>
+
+    <p class="def">
+      <a name="!dao-def"></a>
+      <span>function</span>
+      !dao-def ()
+    </p>
+
+    <p class="desc">Should only be used inside <a
+    href="#deftable"><code>deftable</code></a>'s body. Adds the result
+    of calling <a
+    href="#dao-table-definition"><code>dao-table-definition</code></a>
+    on <a href="#*table-symbol*"><code>*table-symbol*</code></a> to
+    the <code>definition</code>.</p>
+
+    <p class="def">
+      <a name="!index"></a>
+      <span>function</span>
+      !index (&amp;rest columns), !unique-index (&amp;rest columns)
+    </p>
+
+    <p class="desc">Define an index on the table being defined. The
+      <code>columns</code> can be given as symbols or strings.</p>
+
+    <p class="def">
+      <a name="!foreign"></a>
+      <span>function</span>
+      !foreign (target-table columns &amp;optional target-columns &amp;key on-delete on-update deferrable initially-deferred)
+    </p>
+
+    <p class="desc">Add a foreign key to the table being defined.
+      <code>target-table</code> is the referenced table.
+      <code>columns</code> is a list of column names or single name in
+      <em>this</em> table, and, if the columns have different names in
+      the referenced table, <code>target-columns</code> must be
+      another list of column names or single column name of the
+      <code>target-table</code>, or <code>:primary-key</code> to denote
+      the column(s) of the <code>target-table</code>'s primary key
+      as referenced column(s).
+    </p>
+
+    <p class="desc">The <code>on-delete</code> and
+      <code>on-update</code> arguments can be used to specify ON DELETE
+      and ON UPDATE actions, as per the keywords allowed in <a
+    href="s-sql.html#create-table"><code>create-table</code></a>. In
+      addition, the <code>deferrable</code> and <code>initially-deferred</code>
+      arguments can be used to indicate whether constraint checking can be
+      deferred until the current transaction completed, and whether this should
+      be done by default. Note that none of these are really &amp;key
+      arguments, but rather are picked out of a &amp;rest arg at
+      runtime, so that they can be specified even when
+      <code>target-columns</code> is not given.</p>
+
+    <p class="def">
+      <a name="!unique"></a>
+      <span>function</span>
+      !unique (target-fields &amp;key deferrable initially-deferred)
+    </p>
+
+    <p class="desc">Constrains one or more columns to only contain
+      unique (combinations of) values, with <code>deferrable</code> and
+      <code>initially-deferred</code> defined as in <a
+    href="#!foreign"><code>!foreign</code></a></p>
 
     <p class="def" id="create-table">
       <span>function</span>
@@ -1027,8 +1118,8 @@
     </p>
 
     <p class="desc">Creates the table identified by
-    <code>symbol</code> by <a href="#execute">executing</a> the result
-    of all the forms in its definition.</p>
+    <code>symbol</code> by <a href="#execute">executing</a> all forms in
+    its definition.</p>
 
     <p class="def" id="create-all-tables">
       <span>function</span>
@@ -1042,8 +1133,8 @@
       create-package-tables (package)
     </p>
 
-    <p class="desc">Creates all tables whose identifying symbol is
-    interned in the given package.</p>
+    <p class="desc">Creates all tables identified by symbols
+    interned in the given <code>package</code>.</p>
 
     <p class="def">
       <a name="*table-name*"></a>
@@ -1051,75 +1142,15 @@
       *table-name*, *table-symbol*
     </p>
 
-    <p class="desc">These are bound to the relevant symbol and name
-    while the clauses of a table definition are evaluated. Can be used
-    to define shorthands like the ones below.</p>
-
-    <p class="def">
-      <a name="!dao-def"></a>
-      <span>function</span>
-      !dao-def ()
-    </p>
-
-    <p class="desc">Should only be used inside <a
-    href="#deftable"><code>deftable</code></a> forms. Adds the result
-    of calling <a
-    href="#dao-table-definition"><code>dao-table-definition</code></a>
-    on <a href="#*table-symbol*"><code>*table-symbol*</code></a> to
-    the definition.</p>
-
-    <p class="def">
-      <a name="!index"></a>
-      <span>function</span>
-      !index (&amp;rest columns), !unique-index (&amp;rest columns)
-    </p>
-
-    <p class="desc">Define an index on the table being defined. The
-    columns can be given as symbols or strings.</p>
-
-    <p class="def">
-      <a name="!foreign"></a>
-      <span>function</span>
-      !foreign (target-table columns &amp;optional target-columns &amp;key on-delete on-update deferrable initially-deferred)
-    </p>
-
-    <p class="desc">Add a foreign key to the table being defined.
-    <code>target-table</code> is the table the index refers to,
-    <code>columns</code> is a list of column names or single name in
-    <em>this</em> table, and, if the columns have different names in
-    the table referred to, <code>target-columns</code> should be
-    another list of names or single name for the target table, or
-    <code>:primary-key</code> to indicate that the primary key of the
-    target table should be referenced.</p>
-
-    <p class="desc">The <code>on-delete</code> and
-    <code>on-update</code> arguments can be used to specify ON DELETE
-    and ON UPDATE actions, as per the keywords allowed in <a
-    href="s-sql.html#create-table"><code>create-table</code></a>. In
-    addition, the deferrable and initially-deferred arguments can be
-    used to indicate whether constraint checking can be deferred until
-    the current transaction is completed, and whether this should be
-    done by default. Note that none of these are really &amp;key
-    arguments, but rather are picked out of a &amp;rest arg at
-    runtime, so that they can be specified even when
-    <code>target-columns</code> is not given.</p>
-
-    <p class="def">
-      <a name="!unique"></a>
-      <span>function</span>
-      !unique (target-fields &amp;key deferrable initially-deferred)
-    </p>
-
-    <p class="desc">Constrains one or more columns to only contain
-    unique (combinations of) values, with deferrable and
-    initially-deferred defined as in <a
-    href="#!foreign"><code>!foreign</code></a></p>
+    <p class="desc">These variables are bound to the relevant name and
+    symbol while the forms of a table definition are evaluated. Can be
+    used to define shorthands like the ones below.</p>
 
     <h2 id="schemata">Schemata</h2>
 
-    Schema allow you to seperate tables into differnet name spaces. In
+    Schema allow you to separate tables into differnet name spaces. In
     different schemata two tables with the same name are allowed to
-    exists. The tables can be referenced by fully qualified names or
+    exists. The tables can be referred by fully qualified names or
     with the macro <a href="#with-schema">with-schema</a>. You could
     also set the search path
     with <a href="#set-search-path">set-search-path<a/>. For listing
@@ -1136,7 +1167,7 @@
     </p>
 
     <p class="desc">
-        Creates a new schema, raises an error if the schema is already existing.
+        Creates a new schema. Raises an error if the schema is already exists.
     </p>
 
     <p class="def">
@@ -1146,8 +1177,7 @@
     </p>
 
     <p class="desc">
-        Removes a schema. The schema must be empty, otherwise an error
-        is raised.
+        Removes a schema. Raises an error if the schema is not empty.
     </p>
 
     <p class="def">
@@ -1163,12 +1193,12 @@
     <p class="def">
       <span>function</span>
       <a name="set-search-path"></a>
-      set-search-path (name)
+      set-search-path (path)
     </p>
 
     <p class="desc">
-        Sets the search path to a new value. This function is used
-        by <a href="#with-schema">with-schema</a>.
+      Sets the search path to the <code>path</code>. This function is used
+      by <a href="#with-schema">with-schema</a>.
     </p>
 
     <h2 id="index">Symbol-index</h2>
