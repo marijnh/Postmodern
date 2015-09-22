@@ -30,10 +30,9 @@ arguments) to be executed at commit and abort time, respectively."))
 body exits normally, and aborting otherwise. An optional name can be
 given to the transaction, which can be used to force a commit or abort
 before the body unwinds."
-  (if name
-      `(call-with-transaction (lambda (,name) ,@body))
-      (let ((ignored (gensym)))
-        `(call-with-transaction (lambda (,ignored) (declare (ignore ,ignored)) ,@body)))))
+  (let ((transaction-name (or name (gensym "anonymous-transaction"))))
+    `(call-with-transaction (lambda (,transaction-name)
+                              (declare (ignorable ,transaction-name)) ,@body))))
 
 (defun abort-transaction (transaction)
   "Immediately abort an open transaction."
