@@ -216,7 +216,7 @@ this raises a condition."
                        (force-output socket))
                     (6 (error 'database-error :message "Unsupported SCM authentication requested."))
                     (7 (when gss-context
-                         (error 'database-error "Got GSS init message when a context was already established"))
+                         (error 'database-error :message "Got GSS init message when a context was already established"))
                        (init-gss-msg nil))
                     (8 (unless gss-context
                          (error 'database-error :message "Got GSS continuation message without a context"))
