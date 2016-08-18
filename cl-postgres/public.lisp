@@ -79,12 +79,29 @@ currently connected."
                         :format :binary
                         :remote-filename path)))
 
+
+(defun get-host-address (host)
+  "Returns valid IPv4 or IPv6 address for the host."
+  ;; get all IPv4 and IPv6 addresses as a list
+  (let* ((host-ents (multiple-value-list (sb-bsd-sockets:get-host-by-name host)))
+         ;; remove protocols for which we don't have an address
+         (addresses (remove-if-not #'sb-bsd-sockets:host-ent-address host-ents)))
+    ;; Return the first one or nil,
+    ;; but actually, it shouln't return nil, because
+    ;; get-host-by-name should signal NAME-SERVICE-ERROR condition
+    ;; if there isn't any address for the host.
+    (first addresses)))
+
+
 #+sbcl
 (defun inet-socket-connect (host port)
-  (let ((sock (make-instance 'sb-bsd-sockets:inet-socket
+  (let* ((host-ent (get-host-address host))
+        (sock (make-instance (ecase (sb-bsd-sockets:host-ent-address-type host-ent)
+                               (2  'sb-bsd-sockets:inet-socket)
+                               (10 'sb-bsd-sockets:inet6-socket))
                              :type :stream :protocol :tcp))
-        (host (sb-bsd-sockets:host-ent-address (sb-bsd-sockets:get-host-by-name host))))
-    (sb-bsd-sockets:socket-connect sock host port)
+         (address (sb-bsd-sockets:host-ent-address host-ent)))
+    (sb-bsd-sockets:socket-connect sock address port)
     (sb-bsd-sockets:socket-make-stream
      sock :input t :output t :buffering :full :element-type '(unsigned-byte 8))))
 
