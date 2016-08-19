@@ -79,7 +79,7 @@ currently connected."
                         :format :binary
                         :remote-filename path)))
 
-
+#+sbcl
 (defun get-host-address (host)
   "Returns valid IPv4 or IPv6 address for the host."
   ;; get all IPv4 and IPv6 addresses as a list
