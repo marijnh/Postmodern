@@ -1,9 +1,9 @@
 (defpackage :simple-date-tests
-  (:use :common-lisp :Eos :simple-date))
+  (:use :common-lisp :fiveam :simple-date))
 
 (in-package :simple-date-tests)
 
-;; After loading the file, run the tests with (Eos:run! :simple-date)
+;; After loading the file, run the tests with (fiveam:run! :simple-date)
 
 (def-suite :simple-date)
 (in-suite :simple-date)

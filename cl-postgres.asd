@@ -27,18 +27,17 @@
                          (:file "interpret" :depends-on ("communicate" "ieee-floats"))
                          (:file "protocol" :depends-on ("interpret" "messages" "errors"))
                          (:file "public" :depends-on ("protocol"))
-                         (:file "bulk-copy" :depends-on ("public"))))))
+                         (:file "bulk-copy" :depends-on ("public")))))
+  :in-order-to ((test-op (test-op :cl-postgres-tests))))
 
 (defsystem :cl-postgres-tests
-  :depends-on (:cl-postgres :eos :simple-date)
+  :depends-on (:cl-postgres :fiveam :simple-date)
   :components
   ((:module :cl-postgres
-            :components ((:file "tests")))))
-
-(defmethod perform ((op asdf:test-op) (system (eql (find-system :cl-postgres))))
-  (asdf:oos 'asdf:load-op :cl-postgres-tests)
-  (funcall (intern (string :prompt-connection) (string :cl-postgres-tests)))
-  (funcall (intern (string :run!) (string :Eos)) :cl-postgres))
+            :components ((:file "tests"))))
+  :perform (test-op (o c)
+             (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
+             (uiop:symbol-call :fiveam '#:run! :cl-postgres)))
 
 (defmethod perform :after ((op asdf:load-op) (system (eql (find-system :cl-postgres))))
   (when (and (find-package :simple-date)

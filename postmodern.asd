@@ -30,18 +30,15 @@
                          #+postmodern-use-mop
                          (:file "table" :depends-on ("util" "transaction"))
                          (:file "deftable" :depends-on
-                                ("query" #+postmodern-use-mop "table"))))))
+                                ("query" #+postmodern-use-mop "table")))))
+  :in-order-to ((test-op (test-op :postmodern-tests))))
 
 (defsystem :postmodern-tests
-  :depends-on (:postmodern :eos :simple-date :simple-date-postgres-glue)
+  :depends-on (:postmodern :fiveam :simple-date :simple-date-postgres-glue
+               :cl-postgres-tests)
   :components
   ((:module :postmodern
-            :components ((:file "tests")))))
-
-(defmethod perform ((op asdf:test-op) (system (eql (find-system :postmodern))))
-  (asdf:oos 'asdf:load-op :postmodern)
-  (asdf:oos 'asdf:load-op :cl-postgres-tests)
-  (asdf:oos 'asdf:load-op :postmodern-tests)
-  (funcall (intern (string :prompt-connection) (string :cl-postgres-tests))
-           (eval (intern (string :*test-connection*) (string :postmodern-tests))))
-  (funcall (intern (string :run!) (string :Eos)) :postmodern))
+            :components ((:file "tests"))))
+  :perform (test-op (o c)
+             (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
+             (uiop:symbol-call :fiveam '#:run! :postmodern)))

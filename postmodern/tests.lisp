@@ -1,14 +1,12 @@
 (defpackage :postmodern-tests
-  (:use :common-lisp :Eos :postmodern :simple-date))
+  (:use :common-lisp :fiveam :postmodern :simple-date :cl-postgres-tests))
 
 (in-package :postmodern-tests)
-
-(defvar *test-connection* '("test" "test" "" "localhost"))
 
 ;; Adjust the above to some db/user/pass/host combination that refers
 ;; to a valid postgresql database in which no table named test_data
 ;; currently exists. Then after loading the file, run the tests with
-;; (Eos:run! :postmodern)
+;; (fiveam:run! :postmodern)
 
 (def-suite :postmodern)
 (in-suite :postmodern)
