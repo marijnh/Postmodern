@@ -274,6 +274,8 @@ array of field-description objects."
 ;; or indirectly) called it.
 (defparameter *effected-rows* nil)
 
+(defvar *current-socket*)
+
 (defun look-for-row (socket)
   "Read server messages until either a new row can be read, or there
 are no more results. Return a boolean indicating whether any more
@@ -364,39 +366,40 @@ results."
   (declare (type stream socket)
            (type string query)
            #.*optimize*)
-  (with-syncing
-    (with-query (query)
-      (let ((row-description nil))
-        (simple-parse-message socket query)
-        (simple-describe-message socket)
-        (flush-message socket)
-        (force-output socket)
-        (message-case socket
-          ;; ParseComplete
-          (#\1))
-        (message-case socket
-          ;; ParameterDescription
-          (#\t :skip))
-        (message-case socket
-          ;; RowDescription
-          (#\T (setf row-description (read-field-descriptions socket)))
-          ;; NoData
-          (#\n))
-        (simple-bind-message socket (map 'vector 'field-binary-p row-description))
-        (simple-execute-message socket)
-        (sync-message socket)
-        (setf sync-sent t)
-        (force-output socket)
-        (message-case socket
-          ;; BindComplete
-          (#\2))
-        (returning-effected-rows
-            (if row-description
-                (funcall row-reader socket row-description)
-                (look-for-row socket))
+  (let ((*current-socket* socket))
+    (with-syncing
+      (with-query (query)
+        (let ((row-description nil))
+          (simple-parse-message socket query)
+          (simple-describe-message socket)
+          (flush-message socket)
+          (force-output socket)
           (message-case socket
-            ;; ReadyForQuery, skipping transaction status
-            (#\Z (read-uint1 socket))))))))
+            ;; ParseComplete
+            (#\1))
+          (message-case socket
+            ;; ParameterDescription
+            (#\t :skip))
+          (message-case socket
+            ;; RowDescription
+            (#\T (setf row-description (read-field-descriptions socket)))
+            ;; NoData
+            (#\n))
+          (simple-bind-message socket (map 'vector 'field-binary-p row-description))
+          (simple-execute-message socket)
+          (sync-message socket)
+          (setf sync-sent t)
+          (force-output socket)
+          (message-case socket
+            ;; BindComplete
+            (#\2))
+          (returning-effected-rows
+              (if row-description
+                  (funcall row-reader socket row-description)
+                  (look-for-row socket))
+            (message-case socket
+              ;; ReadyForQuery, skipping transaction status
+              (#\Z (read-uint1 socket)))))))))
 
 (defun send-parse (socket name query)
   "Send a parse command to the server, giving it a name."
@@ -432,45 +435,46 @@ to the result."
            (type string name)
            (type list parameters)
            #.*optimize*)
-  (with-syncing
-    (let ((row-description nil)
-          (n-parameters 0))
-      (declare (type (unsigned-byte 16) n-parameters))
-      (describe-prepared-message socket name)
-      (flush-message socket)
-      (force-output socket)
-      (message-case socket
-        ;; ParameterDescription
-        (#\t (setf n-parameters (read-uint2 socket))
-             (skip-bytes socket (* 4 n-parameters))))
-      (message-case socket
-        ;; RowDescription
-        (#\T (setf row-description (read-field-descriptions socket)))
-         ;; NoData
-        (#\n))
-      (unless (= (length parameters) n-parameters)
-        (error 'database-error
-               :message (format nil "Incorrect number of parameters given for prepared statement ~A." name)))
-      (bind-message socket name (map 'vector 'field-binary-p row-description)
-                    parameters)
-      (simple-execute-message socket)
-      (sync-message socket)
-      (setf sync-sent t)
-      (force-output socket)
-      (message-case socket
-        ;; BindComplete
-        (#\2))
-      (returning-effected-rows
-          (if row-description
-              (funcall row-reader socket row-description)
-              (look-for-row socket))
+  (let ((*current-socket* socket))
+    (with-syncing
+      (let ((row-description nil)
+            (n-parameters 0))
+        (declare (type (unsigned-byte 16) n-parameters))
+        (describe-prepared-message socket name)
+        (flush-message socket)
+        (force-output socket)
         (message-case socket
-          ;; CommandComplete
-          (#\C (read-str socket)
-               (message-case socket
-                 (#\Z (read-uint1 socket))))
-          ;; ReadyForQuery, skipping transaction status
-          (#\Z (read-uint1 socket)))))))
+          ;; ParameterDescription
+          (#\t (setf n-parameters (read-uint2 socket))
+               (skip-bytes socket (* 4 n-parameters))))
+        (message-case socket
+          ;; RowDescription
+          (#\T (setf row-description (read-field-descriptions socket)))
+          ;; NoData
+          (#\n))
+        (unless (= (length parameters) n-parameters)
+          (error 'database-error
+                 :message (format nil "Incorrect number of parameters given for prepared statement ~A." name)))
+        (bind-message socket name (map 'vector 'field-binary-p row-description)
+                      parameters)
+        (simple-execute-message socket)
+        (sync-message socket)
+        (setf sync-sent t)
+        (force-output socket)
+        (message-case socket
+          ;; BindComplete
+          (#\2))
+        (returning-effected-rows
+            (if row-description
+                (funcall row-reader socket row-description)
+                (look-for-row socket))
+          (message-case socket
+            ;; CommandComplete
+            (#\C (read-str socket)
+                 (message-case socket
+                   (#\Z (read-uint1 socket))))
+            ;; ReadyForQuery, skipping transaction status
+            (#\Z (read-uint1 socket))))))))
 
 (defun build-row-reader (function-form fields body)
   "Helper for the following two macros."
