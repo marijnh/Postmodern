@@ -446,7 +446,7 @@ to the result."
       (message-case socket
         ;; RowDescription
         (#\T (setf row-description (read-field-descriptions socket)))
-         ;; NoData
+        ;; NoData
         (#\n))
       (unless (= (length parameters) n-parameters)
         (error 'database-error
