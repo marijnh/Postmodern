@@ -103,6 +103,28 @@ interpreted as an array of the given type."
                      (funcall (cdr (type-interpreter oid))
                               socket size))))))
 
+(define-interpreter 2287 "recordarray" ((num-dims uint 4)
+                                        (has-null uint 4)
+                                        (element-type uint 4))
+  (declare (ignore has-null))
+  (let ((socket *current-socket*))
+    (let* ((array-dims
+            (loop for i below num-dims
+               collect
+                 (let ((dim (read-int4 socket))
+                       (lb (read-int4 socket)))
+                   (declare (ignore lb))
+                   dim)))
+           (num-items (reduce #'* array-dims)))
+      (loop for i below num-items
+         collect
+           (let ((size (read-int4 socket)))
+             (declare (type (signed-byte 32) size))
+             (if (eq size -1)
+                 :null
+                 (funcall (cdr (type-interpreter element-type))
+                          socket size)))))))
+
 (define-interpreter 700 "float4" ((bits uint 4))
   (cl-postgres-ieee-floats:decode-float32 bits))
 (define-interpreter 701 "float8" ((bits uint 8))
