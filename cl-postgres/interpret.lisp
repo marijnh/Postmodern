@@ -92,6 +92,11 @@ interpreted as an array of the given type."
 (define-interpreter 1042 "bpchar" string)
 (define-interpreter 1043 "varchar" string)
 
+;; HACK ALERT: we need to squirrel away the current socket when
+;; processing queries. Define this here as interpret.lisp is compiled
+;; before protocol.lisp
+(defvar *current-socket*)
+
 (define-interpreter 2249 "row" ((num-fields uint 4))
   (let ((socket *current-socket*))
     (loop for i below num-fields

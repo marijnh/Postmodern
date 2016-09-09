@@ -274,8 +274,6 @@ array of field-description objects."
 ;; or indirectly) called it.
 (defparameter *effected-rows* nil)
 
-(defvar *current-socket*)
-
 (defun look-for-row (socket)
   "Read server messages until either a new row can be read, or there
 are no more results. Return a boolean indicating whether any more
