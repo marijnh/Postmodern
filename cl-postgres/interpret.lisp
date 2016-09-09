@@ -116,14 +116,17 @@ interpreted as an array of the given type."
                    (declare (ignore lb))
                    dim)))
            (num-items (reduce #'* array-dims)))
-      (loop for i below num-items
-         collect
-           (let ((size (read-int4 socket)))
-             (declare (type (signed-byte 32) size))
-             (if (eq size -1)
-                 :null
-                 (funcall (cdr (type-interpreter element-type))
-                          socket size)))))))
+      (let ((results (make-array array-dims)))
+        (loop for i below num-items
+           do
+             (let ((size (read-int4 socket)))
+               (declare (type (signed-byte 32) size))
+               (setf (row-major-aref results i)
+                     (if (eq size -1)
+                         :null
+                         (funcall (cdr (type-interpreter element-type))
+                                  socket size)))))
+        results))))
 
 (define-interpreter 700 "float4" ((bits uint 4))
   (cl-postgres-ieee-floats:decode-float32 bits))
