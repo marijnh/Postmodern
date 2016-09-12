@@ -92,7 +92,7 @@ interpreted as an array of the given type."
 (define-interpreter 1042 "bpchar" string)
 (define-interpreter 1043 "varchar" string)
 
-(defun row-reader (stream size)
+(defun row-value-reader (stream size)
   (declare (type stream stream)
            (type integer size)
            (ignore size))
@@ -105,9 +105,9 @@ interpreted as an array of the given type."
                      :null
                      (funcall (cdr (type-interpreter oid)) stream size))))))
 ;; "row" types
-(set-sql-reader 2249 #'row-reader :binary-p t)
+(set-sql-reader 2249 #'row-value-reader :binary-p t)
 
-(defun recordarray-reader (stream size)
+(defun recordarray-value-reader (stream size)
   (declare (type stream stream)
            (type integer size)
            (ignore size))
@@ -133,7 +133,7 @@ interpreted as an array of the given type."
         results))))
 
 ;; "recordarray" types
-(set-sql-reader 2287 #'recordarray-reader :binary-p t)
+(set-sql-reader 2287 #'recordarray-value-reader :binary-p t)
 
 (define-interpreter 700 "float4" ((bits uint 4))
   (cl-postgres-ieee-floats:decode-float32 bits))
