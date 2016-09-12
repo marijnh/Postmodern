@@ -92,46 +92,48 @@ interpreted as an array of the given type."
 (define-interpreter 1042 "bpchar" string)
 (define-interpreter 1043 "varchar" string)
 
-;; HACK ALERT: we need to squirrel away the current socket when
-;; processing queries. Define this here as interpret.lisp is compiled
-;; before protocol.lisp
-(defvar *current-socket*)
-
-(define-interpreter 2249 "row" ((num-fields uint 4))
-  (let ((socket *current-socket*))
+(defun row-reader (stream size)
+  (declare (type stream stream)
+           (type integer size)
+           (ignore size))
+  (let ((num-fields (read-uint4 stream)))
     (loop for i below num-fields
-       collect (let ((oid (read-int4 socket))
-                     (size (read-int4 socket)))
+       collect (let ((oid (read-uint4 stream))
+                     (size (read-int4 stream)))
                  (declare (type (signed-byte 32) size))
                  (if (eq size -1)
                      :null
-                     (funcall (cdr (type-interpreter oid))
-                              socket size))))))
+                     (funcall (cdr (type-interpreter oid)) stream size))))))
+;; "row" types
+(set-sql-reader 2249 #'row-reader :binary-p t)
 
-(define-interpreter 2287 "recordarray" ((num-dims uint 4)
-                                        (has-null uint 4)
-                                        (element-type uint 4))
-  (declare (ignore has-null))
-  (let ((socket *current-socket*))
+(defun recordarray-reader (stream size)
+  (declare (type stream stream)
+           (type integer size)
+           (ignore size))
+  (let ((num-dims (read-uint4 stream))
+        (has-null (read-uint4 stream))
+        (element-type (read-uint4 stream)))
+    (declare (ignore has-null))
     (let* ((array-dims
             (loop for i below num-dims
-               collect
-                 (let ((dim (read-int4 socket))
-                       (lb (read-int4 socket)))
-                   (declare (ignore lb))
-                   dim)))
+               collect (let ((dim (read-uint4 stream))
+                             (lb (read-uint4 stream)))
+                         (declare (ignore lb))
+                         dim)))
            (num-items (reduce #'* array-dims)))
       (let ((results (make-array array-dims)))
         (loop for i below num-items
-           do
-             (let ((size (read-int4 socket)))
-               (declare (type (signed-byte 32) size))
-               (setf (row-major-aref results i)
-                     (if (eq size -1)
-                         :null
-                         (funcall (cdr (type-interpreter element-type))
-                                  socket size)))))
+           do (let ((size (read-int4 stream)))
+                (declare (type (signed-byte 32) size))
+                (setf (row-major-aref results i)
+                      (if (eq size -1)
+                          :null
+                          (funcall (cdr (type-interpreter element-type)) stream size)))))
         results))))
+
+;; "recordarray" types
+(set-sql-reader 2287 #'recordarray-reader :binary-p t)
 
 (define-interpreter 700 "float4" ((bits uint 4))
   (cl-postgres-ieee-floats:decode-float32 bits))
