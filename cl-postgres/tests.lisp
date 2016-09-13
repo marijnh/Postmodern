@@ -304,3 +304,18 @@
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[lseg(point(1,2),point(3,4))])" 'list-row-reader)
                 '(((#(((1.0d0 2.0d0) (3.0d0 4.0d0))))))))))
+
+(test box
+  (with-test-connection
+    (is (equalp (exec-query connection "select box(point(1,2),point(3,4))" 'list-row-reader)
+                '((((3.0d0 4.0d0) (1.0d0 2.0d0))))))))
+
+(test row-box
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(box(point(1,2),point(3,4)))" 'list-row-reader)
+                '(((((3.0d0 4.0d0) (1.0d0 2.0d0)))))))))
+
+(test row-box-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY[box(point(1,2),point(3,4))])" 'list-row-reader)
+                '(((#(((3.0d0 4.0d0) (1.0d0 2.0d0))))))))))
