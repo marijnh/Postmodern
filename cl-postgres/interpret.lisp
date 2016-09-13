@@ -153,6 +153,7 @@ interpreted as an array of the given type."
                1000 ;; boolean array
                1001 ;; bytea array
                1002 ;; char array
+               1003 ;; name (internal PG type) array
                1005 ;; int2 array
                1007 ;; integer array
                1009 ;; text array

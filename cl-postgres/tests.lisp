@@ -270,3 +270,7 @@
                        `(((#(,random-bytes)))))))
       (exec-query connection "drop table test"))))
 
+(test row-name-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY['foo'::name])" 'list-row-reader)
+                '(((#("foo"))))))))
