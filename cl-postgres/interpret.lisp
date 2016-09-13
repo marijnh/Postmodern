@@ -108,6 +108,22 @@ interpreted as an array of the given type."
 ;; "row" types
 (set-sql-reader 2249 #'read-row-value :binary-p t)
 
+(defun read-binary-bits (stream size)
+  (declare (type stream stream)
+           (type integer size))
+  (let ((byte-count (- size 4))
+        (bit-count (read-uint4 stream)))
+    (let ((bit-bytes (read-bytes stream byte-count))
+          (bit-array (make-array (list bit-count) :element-type 'bit)))
+      (loop for i below bit-count
+         do (let ((cur-byte (ash i -3))
+                  (cur-bit (ldb (byte 3 0) i)))
+              (setf (aref bit-array i)
+                    (ldb (byte 1 (logxor cur-bit 7)) (aref bit-bytes cur-byte)))))
+      bit-array)))
+
+(set-sql-reader 1560 #'read-binary-bits :binary-p t)
+
 (defun read-binary-array-value (stream size)
   (declare (type stream stream)
            (type integer size)
@@ -133,10 +149,23 @@ interpreted as an array of the given type."
                           (funcall (cdr (type-interpreter element-type)) stream size)))))
         results))))
 
-(dolist (oid '(2287 ;; record array
+(dolist (oid '(
+               1000 ;; boolean array
+               1002 ;; char array
+               1005 ;; int2 array
+               1007 ;; integer array
                1009 ;; text array
+               1014 ;; bpchar array
+               1015 ;; varchar array
+               1016 ;; int8 array
+               1021 ;; float4 array
+               1022 ;; float8 array
+               1028 ;; oid array
+               1561 ;; bit array
+               1231 ;; numeric array
+               2287 ;; record array
                ))
-  (set-sql-reader oid #'read-recordarray-value :binary-p t))
+  (set-sql-reader oid #'read-binary-array-value :binary-p t))
 
 (define-interpreter 700 "float4" ((bits uint 4))
   (cl-postgres-ieee-floats:decode-float32 bits))
@@ -248,30 +277,6 @@ used. Correct for sign bit when using integer format."
         (let* ((arr (readelt))
                (dim (if arr (loop :for x := arr :then (car x) :while (consp x) :collect (length x)) '(0))))
           (make-array dim :initial-contents arr))))))
-
-;; Integral array types
-(let ((read-integral (read-array-value #'parse-integer)))
-  (dolist (oid '(1561 1005 1007 1016 1028))
-    (set-sql-reader oid read-integral)))
-
-;; String array types
-(let ((read-strings (read-array-value #'identity)))
-  (dolist (oid '(1014 1002 1009 1015))
-    (set-sql-reader oid read-strings)))
-
-;; Floating point arrays
-(set-sql-reader 1231 (read-array-value 'read-from-string))
-(set-sql-reader 1021 (read-array-value (lambda (x) (float (read-from-string x)))))
-;; Bit of a hack, really. CL needs a proper float parser.
-(flet ((read-as-double (str)
-         (loop :for ch :across str :for i :from 0 :do
-            (when (char= ch #\e) (setf (char str i) #\d)))
-         (coerce (read-from-string str) 'double-float)))
-  (set-sql-reader 1022 (read-array-value #'read-as-double)))
-
-;; Boolean arrays
-(flet ((read-as-bool (str) (equal str "t")))
-  (set-sql-reader 1000 (read-array-value #'read-as-bool)))
 
 ;; Working with tables.
 
