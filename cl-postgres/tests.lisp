@@ -225,3 +225,48 @@
                                        'list-row-reader)) 0)
                (encode-interval :year 2 :day -4)))))
 
+
+(defparameter *random-byte-count* 8192)
+
+(test write-bytea
+  (with-test-connection
+    (exec-query connection "create table test (a bytea)")
+    (unwind-protect
+         (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
+           (loop for i below *random-byte-count*
+                         do (setf (aref random-bytes i)
+                                  (random #x100)))
+           (prepare-query connection "bytea-insert" "insert into test values ($1)")
+           (exec-prepared connection "bytea-insert" (list random-bytes))
+           (is (equalp (exec-query connection "select a from test;" 'list-row-reader)
+                       `((,random-bytes)))))
+      (exec-query connection "drop table test"))))
+
+(test write-row-bytea
+  (with-test-connection
+    (exec-query connection "create table test (a bytea)")
+    (unwind-protect
+         (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
+           (loop for i below *random-byte-count*
+                         do (setf (aref random-bytes i)
+                                  (random #x100)))
+           (prepare-query connection "bytea-insert" "insert into test values ($1)")
+           (exec-prepared connection "bytea-insert" (list random-bytes))
+           (is (equalp (exec-query connection "select row(a) from test;" 'list-row-reader)
+                       `(((,random-bytes))))))
+      (exec-query connection "drop table test"))))
+
+(test write-row-array-bytea
+  (with-test-connection
+    (exec-query connection "create table test (a bytea)")
+    (unwind-protect
+         (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
+           (loop for i below *random-byte-count*
+                         do (setf (aref random-bytes i)
+                                  (random #x100)))
+           (prepare-query connection "bytea-insert" "insert into test values ($1)")
+           (exec-prepared connection "bytea-insert" (list random-bytes))
+           (is (equalp (exec-query connection "select row(ARRAY[a]) from test;" 'list-row-reader)
+                       `(((#(,random-bytes)))))))
+      (exec-query connection "drop table test"))))
+

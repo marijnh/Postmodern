@@ -151,6 +151,7 @@ interpreted as an array of the given type."
 
 (dolist (oid '(
                1000 ;; boolean array
+               1001 ;; bytea array
                1002 ;; char array
                1005 ;; int2 array
                1007 ;; integer array
