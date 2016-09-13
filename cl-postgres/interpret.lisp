@@ -123,6 +123,7 @@ interpreted as an array of the given type."
       bit-array)))
 
 (set-sql-reader 1560 #'read-binary-bits :binary-p t)
+(set-sql-reader 1562 #'read-binary-bits :binary-p t)
 
 (defun read-binary-array-value (stream size)
   (declare (type stream stream)
@@ -170,6 +171,7 @@ interpreted as an array of the given type."
                1182 ;; date array
                1187 ;; interval array
                1561 ;; bit array
+               1563 ;; varbit array
                1231 ;; numeric array
                2287 ;; record array
                ))

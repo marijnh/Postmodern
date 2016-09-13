@@ -163,6 +163,20 @@
     (is (equalp (exec-query connection "select row(ARRAY[cast(32 as bit(16))])" 'list-row-reader)
                 '(((#(#*0000000000100000))))))))
 
+(test cast-to-varbits
+  (with-test-connection
+    (is (equalp (exec-query connection "select 255::bit(8)::varbit(8), 44::bit(128)::varbit(128)" 'list-row-reader)
+                '((#*11111111
+                   #*00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000101100))))
+    (is (equalp (exec-query connection "select row(32::bit(12)::varbit(12))" 'list-row-reader)
+                '(((#*000000100000)))))
+    (is (equalp (exec-query connection "select ARRAY[32::bit(16)::varbit(16)]" 'list-row-reader)
+                '((#(#*0000000000100000)))))
+    (is (equalp (exec-query connection "select row(ARRAY[32::bit(16)::varbit(16)])" 'list-row-reader)
+                '(((#(#*0000000000100000))))))))
+
+
+
 (test row-integer-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[1,2,4,8])" 'list-row-reader)
