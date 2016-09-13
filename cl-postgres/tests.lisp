@@ -145,3 +145,65 @@
       (close-db-writer stream))
     (print (exec-query connection "select * from test"))
     (exec-query connection "drop table test")))
+
+(test row-boolean-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY[TRUE, FALSE, TRUE])" 'list-row-reader)
+                '(((#(T NIL T))))))))
+
+(test cast-to-bits
+  (with-test-connection
+    (is (equalp (exec-query connection "select cast(255 as bit(8)), cast(-44 as bit(128))" 'list-row-reader)
+                '((#*11111111
+                   #*11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111010100))))
+    (is (equalp (exec-query connection "select row(cast(32 as bit(12)))" 'list-row-reader)
+                '(((#*000000100000)))))
+    (is (equalp (exec-query connection "select ARRAY[cast(32 as bit(16))]" 'list-row-reader)
+                '((#(#*0000000000100000)))))
+    (is (equalp (exec-query connection "select row(ARRAY[cast(32 as bit(16))])" 'list-row-reader)
+                '(((#(#*0000000000100000))))))))
+
+(test row-integer-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY[1,2,4,8])" 'list-row-reader)
+                '(((#(1 2 4 8))))))))
+
+(test row-string-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY['foo', 'bar', 'baz'])" 'list-row-reader)
+                '(((#("foo" "bar" "baz"))))))))
+
+(test row-bpchar-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY[cast('foo' as bpchar)])" 'list-row-reader)
+                '(((#("foo"))))))))
+
+(test row-varchar-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY['foo'::varchar])" 'list-row-reader)
+                '(((#("foo"))))))))
+
+(test row-oid-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY[1234::oid, 5678::oid])" 'list-row-reader)
+                '(((#(1234 5678))))))))
+
+(test row-int2-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY[1234::int2])" 'list-row-reader)
+                '(((#(1234))))))))
+
+(test row-int8-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY[123456789012::int8])" 'list-row-reader)
+                '(((#(123456789012))))))))
+
+(test row-float-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY[3.14::float])" 'list-row-reader)
+                '(((#(3.14d0))))))))
+
+(test row-double-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY[cast(3.14 as double precision)])" 'list-row-reader)
+                '(((#(3.14d0))))))))
