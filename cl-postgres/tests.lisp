@@ -207,3 +207,21 @@
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[cast(3.14 as double precision)])" 'list-row-reader)
                 '(((#(3.14d0))))))))
+
+(test row-date-array
+  (with-test-connection
+    (is (time= (elt (caaar (exec-query connection "select row(ARRAY['1980-02-01'::date])" 'list-row-reader)) 0)
+               (encode-date 1980 2 1)))))
+
+(test row-timestamp-array
+  (with-test-connection
+    (is (time= (elt (caaar (exec-query connection "select row(ARRAY['2010-04-05 14:42:21.500'::timestamp])"
+                                       'list-row-reader)) 0)
+               (encode-timestamp 2010 4 5 14 42 21 500)))))
+
+(test row-interval-array
+  (with-test-connection
+    (is (time= (elt (caaar (exec-query connection "select row(ARRAY['2 years -4 days'::interval])"
+                                       'list-row-reader)) 0)
+               (encode-interval :year 2 :day -4)))))
+

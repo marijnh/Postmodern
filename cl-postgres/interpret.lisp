@@ -161,6 +161,9 @@ interpreted as an array of the given type."
                1021 ;; float4 array
                1022 ;; float8 array
                1028 ;; oid array
+               1115 ;; timestamp array
+               1182 ;; date array
+               1187 ;; interval array
                1561 ;; bit array
                1231 ;; numeric array
                2287 ;; record array
