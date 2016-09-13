@@ -125,7 +125,7 @@
       (is (equal (exec-query connection "select (10,20)" 'list-row-reader)
                  '(((10 . 20))))))
     (is (equal (exec-query connection "select (30,40)" 'list-row-reader)
-               '(("(30,40)"))))))
+               '(((30 40)))))))
 
 (test bulk-writer
   (with-test-connection
