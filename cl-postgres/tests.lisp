@@ -274,3 +274,18 @@
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY['foo'::name])" 'list-row-reader)
                 '(((#("foo"))))))))
+
+(test point
+  (with-test-connection
+    (is (equalp (exec-query connection "select point(1,2)" 'list-row-reader)
+                '(((1.0d0 2.0d0)))))))
+
+(test row-point
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(point(1,2))" 'list-row-reader)
+                '((((1.0d0 2.0d0))))))))
+
+(test row-point-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY[point(1,2)])" 'list-row-reader)
+                '(((#((1.0d0 2.0d0)))))))))

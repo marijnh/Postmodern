@@ -160,6 +160,7 @@ interpreted as an array of the given type."
                1014 ;; bpchar array
                1015 ;; varchar array
                1016 ;; int8 array
+               1017 ;; point array
                1021 ;; float4 array
                1022 ;; float8 array
                1028 ;; oid array
@@ -171,6 +172,11 @@ interpreted as an array of the given type."
                2287 ;; record array
                ))
   (set-sql-reader oid #'read-binary-array-value :binary-p t))
+
+(define-interpreter 600 "point" ((point-x-bits uint 8)
+                                 (point-y-bits uint 8))
+  (list (cl-postgres-ieee-floats:decode-float64 point-x-bits)
+        (cl-postgres-ieee-floats:decode-float64 point-y-bits)))
 
 (define-interpreter 700 "float4" ((bits uint 4))
   (cl-postgres-ieee-floats:decode-float32 bits))
