@@ -161,6 +161,7 @@ interpreted as an array of the given type."
                1015 ;; varchar array
                1016 ;; int8 array
                1017 ;; point array
+               1018 ;; lseg array
                1021 ;; float4 array
                1022 ;; float8 array
                1028 ;; oid array
@@ -177,6 +178,15 @@ interpreted as an array of the given type."
                                  (point-y-bits uint 8))
   (list (cl-postgres-ieee-floats:decode-float64 point-x-bits)
         (cl-postgres-ieee-floats:decode-float64 point-y-bits)))
+
+(define-interpreter 601 "lseg" ((point-x1-bits uint 8)
+                                (point-y1-bits uint 8)
+                                (point-x2-bits uint 8)
+                                (point-y2-bits uint 8))
+  (list (list (cl-postgres-ieee-floats:decode-float64 point-x1-bits)
+              (cl-postgres-ieee-floats:decode-float64 point-y1-bits))
+        (list (cl-postgres-ieee-floats:decode-float64 point-x2-bits)
+              (cl-postgres-ieee-floats:decode-float64 point-y2-bits))))
 
 (define-interpreter 700 "float4" ((bits uint 4))
   (cl-postgres-ieee-floats:decode-float32 bits))

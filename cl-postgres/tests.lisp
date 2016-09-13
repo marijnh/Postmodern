@@ -289,3 +289,18 @@
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[point(1,2)])" 'list-row-reader)
                 '(((#((1.0d0 2.0d0)))))))))
+
+(test lseg
+  (with-test-connection
+    (is (equalp (exec-query connection "select lseg(point(1,2),point(3,4))" 'list-row-reader)
+                '((((1.0d0 2.0d0) (3.0d0 4.0d0))))))))
+
+(test row-lseg
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(lseg(point(1,2),point(3,4)))" 'list-row-reader)
+                '(((((1.0d0 2.0d0) (3.0d0 4.0d0)))))))))
+
+(test row-lseg-array
+  (with-test-connection
+    (is (equalp (exec-query connection "select row(ARRAY[lseg(point(1,2),point(3,4))])" 'list-row-reader)
+                '(((#(((1.0d0 2.0d0) (3.0d0 4.0d0))))))))))
