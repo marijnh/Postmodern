@@ -45,7 +45,7 @@
            #:set-sql-datetime-readers
            #:serialize-for-postgres
            #:to-sql-string
-           #:*silently-truncate-rationals*
+           #:*silently-truncate-ratios*
            #:*query-callback*
            #:*query-log*
            #:open-db-writer
