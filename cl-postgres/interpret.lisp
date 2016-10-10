@@ -142,7 +142,7 @@ interpreted as an array of the given type."
                      (funcall (interpreter-reader (get-type-interpreter oid)) stream size))))))
 
 ;; "row" types
-(defparameter *read-row-values-as-binary* nil)
+(defparameter *read-row-values-as-binary* t)
 (set-sql-reader 2249 #'read-row-value :binary-p (lambda () *read-row-values-as-binary*))
 
 (defmacro with-binary-row-values (&body body)
