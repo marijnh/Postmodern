@@ -17,7 +17,19 @@
    :timestamp-with-timezone #'interpret-timestamp
    :interval (lambda (months days usecs)
                (make-instance 'interval :months months
-                              :ms (floor (+ (* days +usecs-in-one-day+) usecs) 1000)))))
+                              :ms (floor (+ (* days +usecs-in-one-day+) usecs) 1000)))
+   :time (lambda (usecs)
+           (multiple-value-bind (seconds usecs)
+               (floor usecs 1000000)
+             (multiple-value-bind (minutes seconds)
+                 (floor seconds 60)
+               (multiple-value-bind (hours minutes)
+                   (floor minutes 60)
+                 (make-instance 'time-of-day
+                                :hours hours
+                                :minutes minutes
+                                :seconds seconds
+                                :microseconds usecs)))))))
 
 (defmethod cl-postgres:to-sql-string ((arg date))
   (multiple-value-bind (year month day) (decode-date arg)
@@ -40,3 +52,12 @@
                    (not-zero year) (not-zero month) (not-zero day)
                    (not-zero hour) (not-zero min) (not-zero sec) (not-zero ms))
            "interval")))))
+
+(defmethod cl-postgres:to-sql-string ((arg time-of-day))
+  (with-accessors ((hours hours)
+                   (minutes minutes)
+                   (seconds seconds)
+                   (microseconds microseconds))
+      arg
+    (format nil "~2,'0d:~2,'0d:~2,'0d~@[.~6,'0d~]"
+            hours minutes seconds (if (zerop microseconds) nil microseconds))))

@@ -4,6 +4,7 @@
            #:timestamp #:encode-timestamp #:decode-timestamp
            #:timestamp-to-universal-time #:universal-time-to-timestamp
            #:interval #:encode-interval #:decode-interval
+           #:time-of-day #:encode-time-of-day #:decode-time-of-day
            #:time-add #:time-subtract
            #:time= #:time> #:time< #:time<= #:time>=))
 
@@ -167,6 +168,40 @@ time of day is not important."))
   "Returns the weekday of the given date as a number between 0 and 6,
 0 being Sunday and 6 being Saturday."
   (+ (mod (+ (days date) 3) 7)))
+
+(defclass time-of-day ()
+  ((hours :initarg :hours :accessor hours)
+   (minutes :initarg :minutes :accessor minutes)
+   (seconds :initarg :seconds :accessor seconds)
+   (microseconds :initarg :microseconds :accessor microseconds))
+  (:documentation "This class is used to represent time of day in
+  hours, minutes, seconds and microseconds."))
+
+(defmethod print-object ((time time-of-day) stream)
+  (print-unreadable-object (time stream :type t)
+    (with-accessors ((hours hours)
+                     (minutes minutes)
+                     (seconds seconds)
+                     (microseconds microseconds))
+        time
+      (format stream "~2,'0d:~2,'0d:~2,'0d~@[.~6,'0d~]"
+              hours minutes seconds (if (zerop microseconds) nil microseconds)))))
+
+(defun encode-time-of-day (hour minute &optional (second 0) (microsecond 0))
+  "Create a timestamp object."
+  (make-instance 'time-of-day
+                 :hours hour
+                 :minutes minute
+                 :seconds second
+                 :microseconds microsecond))
+
+(defun decode-time-of-day (time)
+  (with-accessors ((hours hours)
+                   (minutes minutes)
+                   (seconds seconds)
+                   (microseconds microseconds))
+      time
+    (values hours minutes seconds microseconds)))
 
 (defclass timestamp (date)
   ((millisecs :initarg :ms :accessor millisecs))
@@ -337,6 +372,12 @@ indicating whether they denote the same time or period."))
 (defmethod time= ((a interval) (b interval))
   (and (= (millisecs a) (millisecs b))
        (= (months a) (months b))))
+
+(defmethod time= ((a time-of-day) (b time-of-day))
+  (and (= (hours a) (hours b))
+       (= (minutes a) (minutes b))
+       (= (seconds a) (seconds b))
+       (= (microseconds a) (microseconds b))))
 
 (defgeneric time< (a b)
   (:documentation "Compare two time-related values, returns a boolean

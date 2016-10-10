@@ -273,9 +273,19 @@ used. Correct for sign bit when using integer format."
          (+ +start-of-2000+ (* days-since-2000 +seconds-in-day+)))
  :timestamp (lambda (useconds-since-2000)
               (+ +start-of-2000+ (floor useconds-since-2000 1000000)))
+ :timestamp-with-timezone (lambda (useconds-since-2000)
+                            (+ +start-of-2000+ (floor useconds-since-2000 1000000)))
  :interval (lambda (months days useconds)
              (multiple-value-bind (sec us) (floor useconds 1000000)
-               `((:months ,months) (:days ,days) (:seconds ,sec) (:useconds ,us)))))
+               `((:months ,months) (:days ,days) (:seconds ,sec) (:useconds ,us))))
+ :time (lambda (usecs)
+         (multiple-value-bind (seconds usecs)
+             (floor usecs 1000000)
+           (multiple-value-bind (minutes seconds)
+               (floor seconds 60)
+             (multiple-value-bind (hours minutes)
+                 (floor minutes 60)
+               `((:hours ,hours) (:minutes ,minutes) (:seconds ,seconds) (:microseconds ,usecs)))))))
 
 ;; Readers for a few of the array types
 
