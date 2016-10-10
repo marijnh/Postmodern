@@ -15,8 +15,38 @@ interpreter for -- it just reads the value as a string. \(Values of
 unknown types are passed in text form.)"
   (enc-read-string stream :byte-length size))
 
-(let ((default-interpreter (cons nil #'interpret-as-text)))
-  (defun type-interpreter (oid)
+(defclass type-interpreter ()
+  ((oid :initarg :oid :accessor type-interpreter-oid)
+   (use-binary :initarg :use-binary :accessor type-interpreter-use-binary)
+   (binary-reader :initarg :binary-reader :accessor type-interpreter-binary-reader)
+   (text-reader :initarg :text-reader :accessor type-interpreter-text-reader))
+  (:documentation "Information about type interpreter for types coming
+  back from the database. use-binary is either T for binary, nil for
+  text, or a function of no arguments to be called to determine if
+  binary or text should be used. The idea is that there will always be
+  a text reader, there may be a binary reader, and there may be times
+  when one wants to use the text reader."))
+
+(defun interpreter-binary-p (interp)
+  "If the interpreter's use-binary field is a function, call it and
+return the value, otherwise, return T or nil as appropriate."
+  (let ((val (type-interpreter-use-binary interp)))
+    (typecase val
+      (function (funcall val))
+      (t val))))
+
+(defun interpreter-reader (interp)
+  "Determine if we went the text or binary reader for this type
+interpreter and return the appropriate reader."
+  (if (interpreter-binary-p interp)
+      (type-interpreter-binary-reader interp)
+      (type-interpreter-text-reader interp)))
+
+(let ((default-interpreter (make-instance 'type-interpreter
+                                          :oid :default
+                                          :use-binary nil
+                                          :text-reader #'interpret-as-text)))
+  (defun get-type-interpreter (oid)
     "Returns a pair representing the interpretation rules for this
 type. The car is a boolean indicating whether the type should be
 fetched as binary, and the cdr is a function that will read the value
@@ -27,11 +57,17 @@ from the socket and build a Lisp value from it."
   "Add an sql reader to a readtable. When the reader is not binary, it
 is wrapped by a function that will read the string from the socket."
   (setf (gethash oid table)
-        (if binary-p
-            (cons t function)
-            (cons nil (lambda (stream size)
-                        (funcall function
-                                 (enc-read-string stream :byte-length size))))))
+        (make-instance 'type-interpreter
+                       :oid oid
+                       :use-binary binary-p
+                       :binary-reader
+                       (when binary-p function)
+                       :text-reader
+                       (if binary-p
+                           'interpret-as-text
+                           (lambda (stream size)
+                             (funcall function
+                                      (enc-read-string stream :byte-length size))))))
   table)
 
 (defmacro binary-reader (fields &body value)
@@ -103,10 +139,19 @@ interpreted as an array of the given type."
                  (declare (type (signed-byte 32) size))
                  (if (eq size -1)
                      :null
-                     (funcall (cdr (type-interpreter oid)) stream size))))))
+                     (funcall (interpreter-reader (get-type-interpreter oid)) stream size))))))
 
 ;; "row" types
-(set-sql-reader 2249 #'read-row-value :binary-p t)
+(defparameter *read-row-values-as-binary* nil)
+(set-sql-reader 2249 #'read-row-value :binary-p (lambda () *read-row-values-as-binary*))
+
+(defmacro with-binary-row-values (&body body)
+  `(let ((*read-row-values-as-binary* t))
+    ,@body))
+
+(defmacro with-text-row-values (&body body)
+  `(let ((*read-row-values-as-binary* nil))
+    ,@body))
 
 (defun read-binary-bits (stream size)
   (declare (type stream stream)
@@ -147,7 +192,7 @@ interpreted as an array of the given type."
                 (setf (row-major-aref results i)
                       (if (eq size -1)
                           :null
-                          (funcall (cdr (type-interpreter element-type)) stream size)))))
+                          (funcall (interpreter-reader (get-type-interpreter element-type)) stream size)))))
         results))))
 
 (dolist (oid '(

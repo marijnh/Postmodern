@@ -234,7 +234,7 @@ this raises a condition."
   ((name :initarg :name :accessor field-name)
    (type-id :initarg :type-id :accessor field-type)
    (interpreter :initarg :interpreter :accessor field-interpreter)
-   (receive-binary-p :initarg :receive-binary-p :accessor field-binary-p))
+   (receive-binary-p :initarg :receive-binary-p :reader field-binary-p))
   (:documentation "Description of a field in a query result."))
 
 (defun read-field-descriptions (socket)
@@ -254,14 +254,18 @@ array of field-description objects."
              (size (read-uint2 socket))
              (type-modifier (read-uint4 socket))
              (format (read-uint2 socket))
-             (interpreter (type-interpreter type-id)))
+             (interpreter (get-type-interpreter type-id)))
         (declare (ignore table-oid column size type-modifier format)
                  (type string name)
                  (type (unsigned-byte 32) type-id))
         (setf (elt descriptions i)
-              (make-instance 'field-description :name name :type-id type-id
-                             :interpreter (cdr interpreter)
-                             :receive-binary-p (car interpreter)))))
+              (if (interpreter-binary-p interpreter)
+                  (make-instance 'field-description :name name :type-id type-id
+                                 :interpreter (type-interpreter-binary-reader interpreter)
+                                 :receive-binary-p t)
+                  (make-instance 'field-description :name name :type-id type-id
+                                 :interpreter (type-interpreter-text-reader interpreter)
+                                 :receive-binary-p nil)))))
     descriptions))
 
 (defun terminate-connection (socket)
