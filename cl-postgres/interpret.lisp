@@ -47,10 +47,8 @@ interpreter and return the appropriate reader."
                                           :use-binary nil
                                           :text-reader #'interpret-as-text)))
   (defun get-type-interpreter (oid)
-    "Returns a pair representing the interpretation rules for this
-type. The car is a boolean indicating whether the type should be
-fetched as binary, and the cdr is a function that will read the value
-from the socket and build a Lisp value from it."
+    "Returns a type-interpreter containing interpretation rules for
+this type."
     (gethash oid *sql-readtable* default-interpreter)))
 
 (defun set-sql-reader (oid function &key (table *sql-readtable*) binary-p)
