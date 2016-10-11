@@ -7,7 +7,9 @@ interpreters for those types know how to parse them.")
 
 (defparameter *sql-readtable* (make-hash-table)
   "The exported special var holding the current read table, a hash
-  mapping OIDs to (binary-p . interpreter-function) pairs.")
+mapping OIDs to instances of the type-interpreter class that contain
+functions for retreiving values from the database in text, and
+possible binary, form.")
 
 (defun interpret-as-text (stream size)
   "This interpreter is used for types that we have no specific
