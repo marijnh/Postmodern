@@ -30,6 +30,10 @@
     (unwind-protect (progn ,@body)
       (close-database connection))))
 
+(defmacro with-default-readtable (&body body)
+  `(let ((*sql-readtable* (default-sql-readtable)))
+    ,@body))
+
 (test connect-sanity
   (with-test-connection
     (is (database-open-p connection))))
@@ -54,13 +58,14 @@
   (is (eq nil (nth-value 1 (to-sql-string 10)))))
 
 (test date-query
-  (with-test-connection
-    (destructuring-bind ((a b c))
-        (exec-query connection "select '1980-02-01'::date, '2010-04-05 14:42:21.500'::timestamp, '2 years -4 days'::interval"
-                    'list-row-reader)
-      (is (time= a (encode-date 1980 2 1)))
-      (is (time= b (encode-timestamp 2010 4 5 14 42 21 500)))
-      (is (time= c (encode-interval :year 2 :day -4))))))
+  (with-default-readtable
+    (with-test-connection
+      (destructuring-bind ((a b c))
+          (exec-query connection "select '1980-02-01'::date, '2010-04-05 14:42:21.500'::timestamp, '2 years -4 days'::interval"
+                      'list-row-reader)
+        (is (= a 2527200000))
+        (is (= b 3479467341))
+        (is (equal c '((:MONTHS 24) (:DAYS -4) (:SECONDS 0) (:USECONDS 0))))))))
 
 (test alist-row-reader
   (with-test-connection
@@ -324,59 +329,70 @@
                   '(((#(3.14d0)))))))))
 
 (test row-date-array
-  (with-test-connection
-    (is (time= (elt (caaar (exec-query connection "select row(ARRAY['1980-02-01'::date])" 'list-row-reader)) 0)
-               (encode-date 1980 2 1)))))
+  (with-default-readtable
+    (with-test-connection
+      (is (equalp (elt (exec-query connection "select row(ARRAY['1980-02-01'::date])" 'list-row-reader) 0)
+                  '("({1980-02-01})"))))))
+
+(test row-date-array-binary
+  (with-default-readtable
+    (with-test-connection
+      (with-binary-row-values
+        (is (= (elt (caaar (exec-query connection "select row(ARRAY['1980-02-01'::date])" 'list-row-reader)) 0)
+               2527200000))))))
 
 (test row-timestamp
   (with-test-connection
-    (is (time= (caaar (exec-query connection "select row('2010-04-05 14:42:21.500'::timestamp)"
-                                  'list-row-reader))
-               (encode-timestamp 2010 4 5 14 42 21 500)))))
+    (is (equalp (exec-query connection "select row('2010-04-05 14:42:21.500'::timestamp)"
+                            'list-row-reader)
+                '(("(\"2010-04-05 14:42:21.5\")"))))))
 
 (test row-timestamp-without-time-zone
   (with-test-connection
-    (is (time= (caaar (exec-query connection "select row('2010-04-05 14:42:21.500'::timestamp without time zone)"
-                                  'list-row-reader))
-               (encode-timestamp 2010 4 5 14 42 21 500)))))
+    (is (equalp (exec-query connection "select row('2010-04-05 14:42:21.500'::timestamp without time zone)"
+                            'list-row-reader)
+                '(("(\"2010-04-05 14:42:21.5\")"))))))
 
 (test row-timestamp-with-time-zone
   (with-test-connection
-    (is (time= (caaar (exec-query connection "select row('2010-04-05 14:42:21.500'::timestamp with time zone)"
-                                  'list-row-reader))
-               (encode-timestamp 2010 4 5 14 42 21 500)))))
+    (is (equalp (exec-query connection "select row('2010-04-05 14:42:21.500'::timestamp with time zone)"
+                            'list-row-reader)
+                '(("(\"2010-04-05 14:42:21.5+00\")"))))))
 
 (test row-timestamp-array
-  (with-test-connection
-    (is (time= (elt (caaar (exec-query connection "select row(ARRAY['2010-04-05 14:42:21.500'::timestamp])"
-                                       'list-row-reader)) 0)
-               (encode-timestamp 2010 4 5 14 42 21 500)))))
+  (with-default-readtable
+    (with-test-connection
+      (is (equalp (elt (exec-query connection "select row(ARRAY['2010-04-05 14:42:21.500'::timestamp])"
+                                   'list-row-reader) 0)
+                  '("(\"{\"\"2010-04-05 14:42:21.5\"\"}\")"))))))
+
+(test row-timestamp-array-binary
+  (with-default-readtable
+    (with-binary-row-values
+        (with-test-connection
+          (is (equalp (elt (exec-query connection "select row(ARRAY['2010-04-05 14:42:21.500'::timestamp])"
+                                  'list-row-reader) 0)
+                      '((#(3479467341)))))))))
 
 (test row-timestamp-without-time-zone-array
   (with-test-connection
-    (is (time= (elt (caaar (exec-query connection "select row(ARRAY['2010-04-05 14:42:21.500'::timestamp without time zone])"
-                                       'list-row-reader)) 0)
-               (encode-timestamp 2010 4 5 14 42 21 500)))))
+    (is (equalp (elt (exec-query connection "select row(ARRAY['2010-04-05 14:42:21.500'::timestamp without time zone])"
+                                 'list-row-reader) 0)
+                '("(\"{\"\"2010-04-05 14:42:21.5\"\"}\")")))))
 
 (test row-time
   (with-test-connection
-    (is (time= (caaar (exec-query connection "select row('05:00'::time)"
-                                  'list-row-reader))
-               (encode-time-of-day 5 0)))))
+    (is (equalp (exec-query connection "select row('05:00'::time)"
+                            'list-row-reader)
+                '(("(05:00:00)"))))))
 
 (test row-interval-array
-  (with-test-connection
-    (is (time= (elt (caaar (exec-query connection "select row(ARRAY['2 years -4 days'::interval])"
-                                       'list-row-reader)) 0)
-               '(\"{\"\"2 years -4 days\"\"}\")))))
-
-(test row-interval-array-binary
-  (with-test-connection
-    (with-binary-row-values
-      (is (time= (elt (caaar (exec-query connection "select row(ARRAY['2 years -4 days'::interval])"
-                                         'list-row-reader)) 0)
-                 (encode-interval :year 2 :day -4))))))
-
+  (with-default-readtable
+    (with-test-connection
+      (with-binary-row-values
+        (is (equalp (elt (caaar (exec-query connection "select row(ARRAY['2 years -4 days'::interval])"
+                                            'list-row-reader)) 0)
+                    '((:MONTHS 24) (:DAYS -4) (:SECONDS 0) (:USECONDS 0))))))))
 
 (defparameter *random-byte-count* 8192)
 

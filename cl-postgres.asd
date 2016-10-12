@@ -28,10 +28,16 @@
                          (:file "protocol" :depends-on ("interpret" "messages" "errors"))
                          (:file "public" :depends-on ("protocol"))
                          (:file "bulk-copy" :depends-on ("public")))))
-  :in-order-to ((test-op (test-op :cl-postgres-tests))))
+  :in-order-to ((test-op (test-op :cl-postgres-tests)
+                         (test-op :cl-postgres-simple-date-tests))))
+
+(defmethod perform :after ((op asdf:load-op) (system (eql (find-system :cl-postgres))))
+  (when (and (find-package :simple-date)
+             (not (find-symbol (symbol-name '#:+postgres-day-offset+) :simple-date)))
+    (asdf:oos 'asdf:load-op :simple-date-postgres-glue)))
 
 (defsystem :cl-postgres-tests
-  :depends-on (:cl-postgres :fiveam :simple-date)
+  :depends-on (:cl-postgres :fiveam)
   :components
   ((:module :cl-postgres
             :components ((:file "tests"))))
@@ -39,7 +45,12 @@
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
              (uiop:symbol-call :fiveam '#:run! :cl-postgres)))
 
-(defmethod perform :after ((op asdf:load-op) (system (eql (find-system :cl-postgres))))
-  (when (and (find-package :simple-date)
-             (not (find-symbol (symbol-name '#:+postgres-day-offset+) :simple-date)))
-    (asdf:oos 'asdf:load-op :simple-date-postgres-glue)))
+(defsystem :cl-postgres-simple-date-tests
+  :depends-on (:cl-postgres :cl-postgres-tests :fiveam :simple-date)
+  :components
+  ((:module :cl-postgres
+            :components ((:file "simple-date-tests"))))
+  :perform (test-op (o c)
+             (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
+             (uiop:symbol-call :fiveam '#:run! :cl-postgres-simple-date)))
+
