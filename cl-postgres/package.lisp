@@ -45,6 +45,9 @@
            #:set-sql-datetime-readers
            #:serialize-for-postgres
            #:to-sql-string
+           #:*read-row-values-as-binary*
+           #:with-binary-row-values
+           #:with-text-row-values
            #:*silently-truncate-rationals*
            #:*query-callback*
            #:*query-log*

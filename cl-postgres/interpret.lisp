@@ -142,14 +142,23 @@ interpreted as an array of the given type."
                      (funcall (interpreter-reader (get-type-interpreter oid)) stream size))))))
 
 ;; "row" types
-(defparameter *read-row-values-as-binary* t)
+(defparameter *read-row-values-as-binary* nil
+  "Controls whether row values (as in select row(1, 'foo') ) should be
+  received from the database in text or binary form. The default value
+  is nil, specifying that the results be sent back as text. Set this
+  to t to cause the results to be read as binary.")
+
 (set-sql-reader 2249 #'read-row-value :binary-p (lambda () *read-row-values-as-binary*))
 
 (defmacro with-binary-row-values (&body body)
+  "Helper macro to locally set *read-row-values-as-binary* to t while
+executing body so that row values will be returned as binary."
   `(let ((*read-row-values-as-binary* t))
     ,@body))
 
 (defmacro with-text-row-values (&body body)
+  "Helper macro to locally set *read-row-values-as-binary* to nil while
+executing body so that row values will be returned as t."
   `(let ((*read-row-values-as-binary* nil))
     ,@body))
 
