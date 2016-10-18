@@ -125,7 +125,22 @@
       (is (equal (exec-query connection "select (10,20)" 'list-row-reader)
                  '(((10 . 20))))))
     (is (equal (exec-query connection "select (30,40)" 'list-row-reader)
-               '(((30 40)))))))
+               '(("(30,40)"))))))
+
+(test sql-reader-binary
+  (with-test-connection
+    (with-binary-row-values
+      (let ((*sql-readtable* (copy-sql-readtable)))
+        (set-sql-reader 2249 (lambda (text)
+                               (with-input-from-string (*standard-input* text)
+                                 (read-char) ;; opening paren
+                                 (let ((x (read)))
+                                   (read-char) ;; comma
+                                   (cons x (read))))))
+        (is (equal (exec-query connection "select (10,20)" 'list-row-reader)
+                   '(((10 . 20))))))
+      (is (equal (exec-query connection "select (30,40)" 'list-row-reader)
+                 '(((30 40))))))))
 
 (test bulk-writer
   (with-test-connection
@@ -149,7 +164,13 @@
 (test row-boolean-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[TRUE, FALSE, TRUE])" 'list-row-reader)
-                '(((#(T NIL T))))))))
+                '(("(\"{t,f,t}\")"))))))
+
+(test row-boolean-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY[TRUE, FALSE, TRUE])" 'list-row-reader)
+                  '(((#(T NIL T)))))))))
 
 (test cast-to-bits
   (with-test-connection
@@ -157,11 +178,24 @@
                 '((#*11111111
                    #*11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111010100))))
     (is (equalp (exec-query connection "select row(cast(32 as bit(12)))" 'list-row-reader)
-                '(((#*000000100000)))))
+                '(("(000000100000)"))))
     (is (equalp (exec-query connection "select ARRAY[cast(32 as bit(16))]" 'list-row-reader)
                 '((#(#*0000000000100000)))))
     (is (equalp (exec-query connection "select row(ARRAY[cast(32 as bit(16))])" 'list-row-reader)
-                '(((#(#*0000000000100000))))))))
+                '(("({0000000000100000})"))))))
+
+(test cast-to-bits-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select cast(255 as bit(8)), cast(-44 as bit(128))" 'list-row-reader)
+                  '((#*11111111
+                     #*11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111010100))))
+      (is (equalp (exec-query connection "select row(cast(32 as bit(12)))" 'list-row-reader)
+                  '(((#*000000100000)))))
+      (is (equalp (exec-query connection "select ARRAY[cast(32 as bit(16))]" 'list-row-reader)
+                  '((#(#*0000000000100000)))))
+      (is (equalp (exec-query connection "select row(ARRAY[cast(32 as bit(16))])" 'list-row-reader)
+                  '(((#(#*0000000000100000)))))))))
 
 (test cast-to-varbits
   (with-test-connection
@@ -169,58 +203,125 @@
                 '((#*11111111
                    #*00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000101100))))
     (is (equalp (exec-query connection "select row(32::bit(12)::varbit(12))" 'list-row-reader)
-                '(((#*000000100000)))))
+                '(("(000000100000)"))))
     (is (equalp (exec-query connection "select ARRAY[32::bit(16)::varbit(16)]" 'list-row-reader)
                 '((#(#*0000000000100000)))))
     (is (equalp (exec-query connection "select row(ARRAY[32::bit(16)::varbit(16)])" 'list-row-reader)
-                '(((#(#*0000000000100000))))))))
+                '(("({0000000000100000})"))))))
+
+(test cast-to-varbits-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select 255::bit(8)::varbit(8), 44::bit(128)::varbit(128)" 'list-row-reader)
+                  '((#*11111111
+                     #*00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000101100))))
+      (is (equalp (exec-query connection "select row(32::bit(12)::varbit(12))" 'list-row-reader)
+                  '(((#*000000100000)))))
+      (is (equalp (exec-query connection "select ARRAY[32::bit(16)::varbit(16)]" 'list-row-reader)
+                  '((#(#*0000000000100000)))))
+      (is (equalp (exec-query connection "select row(ARRAY[32::bit(16)::varbit(16)])" 'list-row-reader)
+                  '(((#(#*0000000000100000)))))))))
 
 
 
 (test row-integer-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[1,2,4,8])" 'list-row-reader)
-                '(((#(1 2 4 8))))))))
+                '(("(\"{1,2,4,8}\")"))))))
+
+(test row-integer-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY[1,2,4,8])" 'list-row-reader)
+                  '(((#(1 2 4 8)))))))))
 
 (test row-string-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY['foo', 'bar', 'baz'])" 'list-row-reader)
-                '(((#("foo" "bar" "baz"))))))))
+                '(("(\"{foo,bar,baz}\")"))))))
+
+(test row-string-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY['foo', 'bar', 'baz'])" 'list-row-reader)
+                  '(((#("foo" "bar" "baz")))))))))
 
 (test row-bpchar-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[cast('foo' as bpchar)])" 'list-row-reader)
-                '(((#("foo"))))))))
+                '(("({foo})"))))))
+
+(test row-bpchar-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY[cast('foo' as bpchar)])" 'list-row-reader)
+                  '(((#("foo")))))))))
 
 (test row-varchar-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY['foo'::varchar])" 'list-row-reader)
-                '(((#("foo"))))))))
+                '(("({foo})"))))))
+
+(test row-varchar-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY['foo'::varchar])" 'list-row-reader)
+                  '(((#("foo")))))))))
 
 (test row-oid-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[1234::oid, 5678::oid])" 'list-row-reader)
-                '(((#(1234 5678))))))))
+                '(("(\"{1234,5678}\")"))))))
+
+(test row-oid-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY[1234::oid, 5678::oid])" 'list-row-reader)
+                  '(((#(1234 5678)))))))))
 
 (test row-int2-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[1234::int2])" 'list-row-reader)
-                '(((#(1234))))))))
+                '(("({1234})"))))))
+
+(test row-int2-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY[1234::int2])" 'list-row-reader)
+                  '(((#(1234)))))))))
 
 (test row-int8-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[123456789012::int8])" 'list-row-reader)
-                '(((#(123456789012))))))))
+                '(("({123456789012})"))))))
+
+(test row-int8-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY[123456789012::int8])" 'list-row-reader)
+                  '(((#(123456789012)))))))))
 
 (test row-float-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[3.14::float])" 'list-row-reader)
-                '(((#(3.14d0))))))))
+                '(("({3.14})"))))))
+
+(test row-float-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY[3.14::float])" 'list-row-reader)
+                  '(((#(3.14d0)))))))))
 
 (test row-double-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[cast(3.14 as double precision)])" 'list-row-reader)
-                '(((#(3.14d0))))))))
+                '(("({3.14})"))))))
+
+(test row-double-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY[cast(3.14 as double precision)])" 'list-row-reader)
+                  '(((#(3.14d0)))))))))
 
 (test row-date-array
   (with-test-connection
@@ -267,7 +368,14 @@
   (with-test-connection
     (is (time= (elt (caaar (exec-query connection "select row(ARRAY['2 years -4 days'::interval])"
                                        'list-row-reader)) 0)
-               (encode-interval :year 2 :day -4)))))
+               '(\"{\"\"2 years -4 days\"\"}\")))))
+
+(test row-interval-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (time= (elt (caaar (exec-query connection "select row(ARRAY['2 years -4 days'::interval])"
+                                         'list-row-reader)) 0)
+                 (encode-interval :year 2 :day -4))))))
 
 
 (defparameter *random-byte-count* 8192)
@@ -286,38 +394,86 @@
                        `((,random-bytes)))))
       (exec-query connection "drop table test"))))
 
+(defun vector-to-hex-string (vec)
+    (with-output-to-string (s)
+      (map nil (lambda (x)
+                 (format s "~(~2,\'0x~)" x))
+           vec)
+      s))
+
 (test write-row-bytea
   (with-test-connection
     (exec-query connection "create table test (a bytea)")
-    (unwind-protect
-         (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
-           (loop for i below *random-byte-count*
-                         do (setf (aref random-bytes i)
-                                  (random #x100)))
-           (prepare-query connection "bytea-insert" "insert into test values ($1)")
-           (exec-prepared connection "bytea-insert" (list random-bytes))
-           (is (equalp (exec-query connection "select row(a) from test;" 'list-row-reader)
-                       `(((,random-bytes))))))
-      (exec-query connection "drop table test"))))
+    (let ((*random-byte-count* 16))
+      (unwind-protect
+           (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
+             (loop for i below *random-byte-count*
+                do (setf (aref random-bytes i)
+                         (random #x100)))
+             (prepare-query connection "bytea-insert" "insert into test values ($1)")
+             (exec-prepared connection "bytea-insert" (list random-bytes))
+             (is (equalp (exec-query connection "select row(a) from test;" 'list-row-reader)
+                         `((,(concatenate 'string
+                                          "(\"\\\\x"
+                                          (vector-to-hex-string random-bytes)
+                                          "\")"))))))
+        (exec-query connection "drop table test")))))
 
 (test write-row-array-bytea
   (with-test-connection
     (exec-query connection "create table test (a bytea)")
-    (unwind-protect
-         (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
-           (loop for i below *random-byte-count*
-                         do (setf (aref random-bytes i)
-                                  (random #x100)))
-           (prepare-query connection "bytea-insert" "insert into test values ($1)")
-           (exec-prepared connection "bytea-insert" (list random-bytes))
-           (is (equalp (exec-query connection "select row(ARRAY[a]) from test;" 'list-row-reader)
-                       `(((#(,random-bytes)))))))
-      (exec-query connection "drop table test"))))
+    (let ((*random-byte-count* 16))
+      (unwind-protect
+           (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
+             (loop for i below *random-byte-count*
+                do (setf (aref random-bytes i)
+                         (random #x100)))
+             (prepare-query connection "bytea-insert" "insert into test values ($1)")
+             (exec-prepared connection "bytea-insert" (list random-bytes))
+             (is (equalp (exec-query connection "select row(ARRAY[a]) from test;" 'list-row-reader)
+                         `(((#(,random-bytes)))))))
+        (exec-query connection "drop table test")))))
+
+(test write-row-array-bytea
+  (with-test-connection
+    (with-binary-row-values
+      (exec-query connection "create table test (a bytea)")
+      (unwind-protect
+           (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
+             (loop for i below *random-byte-count*
+                do (setf (aref random-bytes i)
+                         (random #x100)))
+             (prepare-query connection "bytea-insert" "insert into test values ($1)")
+             (exec-prepared connection "bytea-insert" (list random-bytes))
+             (is (equalp (exec-query connection "select row(ARRAY[a]) from test;" 'list-row-reader)
+                         `(((#(,random-bytes)))))))
+        (exec-query connection "drop table test")))))
+
+(test write-row-array-bytea-binary
+  (with-test-connection
+    (with-binary-row-values
+      (exec-query connection "create table test (a bytea)")
+      (unwind-protect
+           (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
+             (loop for i below *random-byte-count*
+                do (setf (aref random-bytes i)
+                         (random #x100)))
+             (prepare-query connection "bytea-insert" "insert into test values ($1)")
+             (exec-prepared connection "bytea-insert" (list random-bytes))
+             (is (equalp (exec-query connection "select row(ARRAY[a]) from test;" 'list-row-reader)
+                         `(((#(,random-bytes)))))))
+        (exec-query connection "drop table test")))))
 
 (test row-name-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY['foo'::name])" 'list-row-reader)
-                '(((#("foo"))))))))
+                '(("({foo})"))))))
+
+(test row-name-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY['foo'::name])" 'list-row-reader)
+                  '(((#("foo")))))))))
 
 (test point
   (with-test-connection
@@ -327,12 +483,24 @@
 (test row-point
   (with-test-connection
     (is (equalp (exec-query connection "select row(point(1,2))" 'list-row-reader)
-                '((((1.0d0 2.0d0))))))))
+                '(("(\"(1,2)\")"))))))
+
+(test row-point-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(point(1,2))" 'list-row-reader)
+                  '((((1.0d0 2.0d0)))))))))
 
 (test row-point-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[point(1,2)])" 'list-row-reader)
-                '(((#((1.0d0 2.0d0)))))))))
+                '(("(\"{\"\"(1,2)\"\"}\")"))))))
+
+(test row-point-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY[point(1,2)])" 'list-row-reader)
+                  '(((#((1.0d0 2.0d0))))))))))
 
 (test lseg
   (with-test-connection
@@ -342,12 +510,24 @@
 (test row-lseg
   (with-test-connection
     (is (equalp (exec-query connection "select row(lseg(point(1,2),point(3,4)))" 'list-row-reader)
-                '(((((1.0d0 2.0d0) (3.0d0 4.0d0)))))))))
+                '(("(\"[(1,2),(3,4)]\")"))))))
+
+(test row-lseg-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(lseg(point(1,2),point(3,4)))" 'list-row-reader)
+                  '(((((1.0d0 2.0d0) (3.0d0 4.0d0))))))))))
 
 (test row-lseg-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[lseg(point(1,2),point(3,4))])" 'list-row-reader)
-                '(((#(((1.0d0 2.0d0) (3.0d0 4.0d0))))))))))
+                '(("(\"{\"\"[(1,2),(3,4)]\"\"}\")"))))))
+
+(test row-lseg-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY[lseg(point(1,2),point(3,4))])" 'list-row-reader)
+                  '(((#(((1.0d0 2.0d0) (3.0d0 4.0d0)))))))))))
 
 (test box
   (with-test-connection
@@ -357,9 +537,21 @@
 (test row-box
   (with-test-connection
     (is (equalp (exec-query connection "select row(box(point(1,2),point(3,4)))" 'list-row-reader)
-                '(((((3.0d0 4.0d0) (1.0d0 2.0d0)))))))))
+                '(("(\"(3,4),(1,2)\")"))))))
+
+(test row-box-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(box(point(1,2),point(3,4)))" 'list-row-reader)
+                  '(((((3.0d0 4.0d0) (1.0d0 2.0d0))))))))))
 
 (test row-box-array
   (with-test-connection
     (is (equalp (exec-query connection "select row(ARRAY[box(point(1,2),point(3,4))])" 'list-row-reader)
-                '(((#(((3.0d0 4.0d0) (1.0d0 2.0d0))))))))))
+                '(("(\"{(3,4),(1,2)}\")"))))))
+
+(test row-box-array-binary
+  (with-test-connection
+    (with-binary-row-values
+      (is (equalp (exec-query connection "select row(ARRAY[box(point(1,2),point(3,4))])" 'list-row-reader)
+                  '(((#(((3.0d0 4.0d0) (1.0d0 2.0d0)))))))))))
