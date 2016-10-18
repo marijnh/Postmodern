@@ -14,9 +14,16 @@
 (test row-timestamp-with-time-zone-binary
   (with-test-connection
     (with-binary-row-values
-      (is (time= (caaar (exec-query connection "select row('2010-04-05 14:42:21.500'::timestamp with time zone)"
-                                    'list-row-reader))
-                 (encode-timestamp 2010 4 5 14 42 21 500))))))
+      (destructuring-bind (gmt pdt)
+          (caar
+           (exec-query
+            connection
+            (concatenate 'string
+                         "select row('2010-04-05 14:42:21.500'::timestamp with time zone at time zone 'GMT', "
+                         " '2010-04-05 14:42:21.500'::timestamp with time zone at time zone 'PST')")
+            'list-row-reader))
+        (is (time= gmt (encode-timestamp 2010 4 5 14 42 21 500)))
+        (is (time= pdt (encode-timestamp 2010 4 5 6 42 21 500)))))))
 
 (test row-timestamp-without-time-zone-array-binary
   (with-test-connection

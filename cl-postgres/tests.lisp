@@ -359,6 +359,23 @@
                             'list-row-reader)
                 '(("(\"2010-04-05 14:42:21.5+00\")"))))))
 
+(test row-timestamp-with-time-zone-binary
+  (with-default-readtable
+    (with-test-connection
+      (with-binary-row-values
+        (destructuring-bind (gmt pdt)
+            (caar
+             (exec-query
+              connection
+              (concatenate 'string
+                           "select row('2010-04-05 14:42:21.500'::timestamp with time zone at time zone 'GMT', "
+                           " '2010-04-05 14:42:21.500'::timestamp with time zone at time zone 'PST')")
+              'list-row-reader))
+          (is (equalp (multiple-value-list gmt)
+                      '(21 42 14 5 4 2010 0 NIL 0)))
+          (is (equalp (multiple-value-list pdt)
+                      '(21 42 14 5 4 2010 0 NIL 0))))))))
+
 (test row-timestamp-array
   (with-default-readtable
     (with-test-connection
