@@ -51,6 +51,6 @@
   ((:module :cl-postgres
             :components ((:file "simple-date-tests"))))
   :perform (test-op (o c)
-             (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
+             (uiop:symbol-call :cl-postgres-simple-date-tests '#:prompt-connection)
              (uiop:symbol-call :fiveam '#:run! :cl-postgres-simple-date)))
 
