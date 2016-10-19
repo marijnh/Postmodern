@@ -35,6 +35,7 @@
 
 (test row-timestamp-with-time-zone-binary
   (with-test-connection
+    (exec-query connection "set time zone 'GMT'")
     (with-binary-row-values
       (destructuring-bind (gmt pdt)
           (caar

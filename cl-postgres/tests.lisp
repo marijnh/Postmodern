@@ -355,6 +355,7 @@
 
 (test row-timestamp-with-time-zone
   (with-test-connection
+    (exec-query connection "set time zone 'GMT'")
     (is (equalp (exec-query connection "select row('2010-04-05 14:42:21.500'::timestamp with time zone)"
                             'list-row-reader)
                 '(("(\"2010-04-05 14:42:21.5+00\")"))))))
@@ -362,6 +363,7 @@
 (test row-timestamp-with-time-zone-binary
   (with-default-readtable
     (with-test-connection
+      (exec-query connection "set time zone 'GMT'")
       (with-binary-row-values
         (destructuring-bind (gmt pdt)
             (caar
