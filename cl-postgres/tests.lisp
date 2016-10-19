@@ -372,9 +372,9 @@
                            " '2010-04-05 14:42:21.500'::timestamp with time zone at time zone 'PST')")
               'list-row-reader))
           (is (equalp (multiple-value-list gmt)
-                      '(21 42 14 5 4 2010 0 NIL 0)))
+                      '(3479467341)))
           (is (equalp (multiple-value-list pdt)
-                      '(21 42 14 5 4 2010 0 NIL 0))))))))
+                      '(3479438541))))))))
 
 (test row-timestamp-array
   (with-default-readtable
