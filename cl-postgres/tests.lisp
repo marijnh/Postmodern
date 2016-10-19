@@ -1,6 +1,6 @@
 (defpackage :cl-postgres-tests
-  (:use :common-lisp :fiveam :simple-date :cl-postgres :cl-postgres-error)
-  (:export #:prompt-connection #:*test-connection*))
+  (:use :common-lisp :fiveam :cl-postgres :cl-postgres-error)
+  (:export #:prompt-connection #:*test-connection* #:with-test-connection))
 
 (in-package :cl-postgres-tests)
 
