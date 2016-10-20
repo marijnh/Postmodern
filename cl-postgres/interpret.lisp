@@ -187,22 +187,26 @@ executing body so that row values will be returned as t."
         (has-null (read-uint4 stream))
         (element-type (read-uint4 stream)))
     (declare (ignore has-null))
-    (let* ((array-dims
-            (loop for i below num-dims
-               collect (let ((dim (read-uint4 stream))
-                             (lb (read-uint4 stream)))
-                         (declare (ignore lb))
-                         dim)))
-           (num-items (reduce #'* array-dims)))
-      (let ((results (make-array array-dims)))
-        (loop for i below num-items
-           do (let ((size (read-int4 stream)))
-                (declare (type (signed-byte 32) size))
-                (setf (row-major-aref results i)
-                      (if (eq size -1)
-                          :null
-                          (funcall (interpreter-reader (get-type-interpreter element-type)) stream size)))))
-        results))))
+    ;; FIXME:
+    ;; should we return nil or a (make-array nil) when num-dims is
+    ;; 0? Returning nil for now.
+    (when (plusp num-dims)
+      (let* ((array-dims
+              (loop for i below num-dims
+                 collect (let ((dim (read-uint4 stream))
+                               (lb (read-uint4 stream)))
+                           (declare (ignore lb))
+                           dim)))
+             (num-items (reduce #'* array-dims)))
+        (let ((results (make-array array-dims)))
+          (loop for i below num-items
+             do (let ((size (read-int4 stream)))
+                  (declare (type (signed-byte 32) size))
+                  (setf (row-major-aref results i)
+                        (if (eq size -1)
+                            :null
+                            (funcall (interpreter-reader (get-type-interpreter element-type)) stream size)))))
+          results)))))
 
 (dolist (oid '(
                1000 ;; boolean array
