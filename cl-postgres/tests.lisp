@@ -590,3 +590,34 @@
     (with-binary-row-values
       (is (equalp (exec-query connection "select row(ARRAY[box(point(1,2),point(3,4))])" 'list-row-reader)
                   '(((#(((3.0d0 4.0d0) (1.0d0 2.0d0)))))))))))
+
+(test row-array-nulls
+  (with-test-connection
+    (is (equalp (exec-query connection "select row((ARRAY[1,3,4])[5:99])" 'list-row-reader)
+                '(("({})"))))))
+
+(test row-array-nulls-binary
+  (with-test-connection
+    (cl-postgres::with-binary-row-values
+      (is (equalp (exec-query connection "select row((ARRAY[1,3,4])[5:99])" 'list-row-reader)
+                  '(((NIL))))))))
+
+(test row-array-table-nulls-binary
+  (with-binary-row-values
+    (with-test-connection
+      (exec-query connection "create table test (a integer[])")
+      (unwind-protect
+           (progn
+             (prepare-query connection "integer-array-insert" "insert into test values ($1)")
+             (exec-prepared connection "integer-array-insert" (list "{{0,0},{0,0}}"))
+             (exec-prepared connection "integer-array-insert" (list "{{1,1}}"))
+             (exec-prepared connection "integer-array-insert" (list "{{2,2}, {2,2}}"))
+             (exec-prepared connection "integer-array-insert" (list "{{3,3}}"))
+             (exec-prepared connection "integer-array-insert" (list "{{4,4}}"))
+             (is (equalp
+                  (exec-query
+                   connection
+                   "select row(a[2:45]) from test"
+                   'list-row-reader)
+                  '(((#2A((0 0)))) ((NIL)) ((#2A((2 2)))) ((NIL)) ((NIL))))))
+        (exec-query connection "drop table test")))))
