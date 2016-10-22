@@ -4,7 +4,8 @@
            #:timestamp #:encode-timestamp #:decode-timestamp
            #:timestamp-to-universal-time #:universal-time-to-timestamp
            #:interval #:encode-interval #:decode-interval
-           #:time-of-day #:encode-time-of-day #:decode-time-of-day
+           #:time-of-day #:hours #:minutes #:seconds #:microseconds
+           #:encode-time-of-day #:decode-time-of-day
            #:time-add #:time-subtract
            #:time= #:time> #:time< #:time<= #:time>=))
 
