@@ -19,10 +19,16 @@
     (ask "Password" 2)
     (ask "Hostname" 3)))
 
+(defmacro with-simple-date-readtable (&body body)
+  `(let ((*sql-readtable* (simple-date-cl-postgres-glue:simple-date-sql-readtable)))
+    ,@body))
+
 (defmacro with-test-connection (&body body)
   `(let ((connection (apply 'open-database *test-connection*)))
-    (unwind-protect (progn ,@body)
-      (close-database connection))))
+    (with-simple-date-readtable
+      (unwind-protect (progn ,@body)
+        (close-database connection)))))
+
 (def-suite :cl-postgres-simple-date)
 (in-suite :cl-postgres-simple-date)
 
