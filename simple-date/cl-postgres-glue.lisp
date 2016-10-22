@@ -1,4 +1,13 @@
-(in-package :simple-date)
+
+(defpackage :simple-date-cl-postgres-glue
+  (:use :common-lisp :simple-date)
+  (:export *simple-date-sql-readtable*
+           :simple-date-sql-readtable))
+
+(in-package :simple-date-cl-postgres-glue)
+
+(defparameter *simple-date-sql-readtable*
+  (cl-postgres:copy-sql-readtable))
 
 ;; PostgreSQL days are measured from 01-01-2000, whereas simple-date
 ;; uses 01-03-2000.
@@ -29,7 +38,8 @@
                                 :hours hours
                                 :minutes minutes
                                 :seconds seconds
-                                :microseconds usecs)))))))
+                                :microseconds usecs)))))
+   :table *simple-date-sql-readtable*))
 
 (defmethod cl-postgres:to-sql-string ((arg date))
   (multiple-value-bind (year month day) (decode-date arg)
@@ -61,3 +71,14 @@
       arg
     (format nil "~2,'0d:~2,'0d:~2,'0d~@[.~6,'0d~]"
             hours minutes seconds (if (zerop microseconds) nil microseconds))))
+
+;;
+;; install a copy of the readtable we just modified, leaving our
+;; readtable safe from further modification, for better or worse.
+(setf cl-postgres:*sql-readtable*
+      (cl-postgres:copy-sql-readtable *simple-date-sql-readtable*))
+
+(defun simple-date-sql-readtable ()
+  "An sql-readtable that has the simple-date-cl-postgres-glue reader
+functions installed."
+  *simple-date-sql-readtable*)
