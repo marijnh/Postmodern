@@ -138,7 +138,8 @@ interpreted as an array of the given type."
                      (size (read-int4 stream)))
                  (declare (type (signed-byte 32) size))
                  (if (eq size -1)
-                     :null
+                     ;; should we return :null or nil here?
+                     nil
                      (funcall (interpreter-reader (get-type-interpreter oid)) stream size))))))
 
 ;; "row" types
@@ -191,10 +192,6 @@ executing body so that row values will be returned as t."
        ;; Should we return nil or a (make-array nil) when num-dims is
        ;; 0? Returning nil for now.
        nil)
-      ((plusp has-null)
-       (error "According to the code in arrayfuns.c/array_send, this
-       shouldn't happen. Please report this error to the cl-postgres
-       developers."))
       (t
        (let* ((array-dims
                (loop for i below num-dims
@@ -209,7 +206,8 @@ executing body so that row values will be returned as t."
                    (declare (type (signed-byte 32) size))
                    (setf (row-major-aref results i)
                          (if (eq size -1)
-                             :null
+                             ;; should we return :null or nil here?
+                             nil
                              (funcall (interpreter-reader (get-type-interpreter element-type)) stream size)))))
            results))))))
 
