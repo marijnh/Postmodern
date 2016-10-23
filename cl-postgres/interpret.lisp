@@ -191,10 +191,6 @@ executing body so that row values will be returned as t."
        ;; Should we return nil or a (make-array nil) when num-dims is
        ;; 0? Returning nil for now.
        nil)
-      ((plusp has-null)
-       (error "According to the code in arrayfuns.c/array_send, this
-       shouldn't happen. Please report this error to the cl-postgres
-       developers."))
       (t
        (let* ((array-dims
                (loop for i below num-dims
