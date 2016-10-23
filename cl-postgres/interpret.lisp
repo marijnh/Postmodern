@@ -138,8 +138,7 @@ interpreted as an array of the given type."
                      (size (read-int4 stream)))
                  (declare (type (signed-byte 32) size))
                  (if (eq size -1)
-                     ;; should we return :null or nil here?
-                     nil
+                     :null
                      (funcall (interpreter-reader (get-type-interpreter oid)) stream size))))))
 
 ;; "row" types
@@ -206,8 +205,7 @@ executing body so that row values will be returned as t."
                    (declare (type (signed-byte 32) size))
                    (setf (row-major-aref results i)
                          (if (eq size -1)
-                             ;; should we return :null or nil here?
-                             nil
+                             :null
                              (funcall (interpreter-reader (get-type-interpreter element-type)) stream size)))))
            results))))))
 

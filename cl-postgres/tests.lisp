@@ -606,7 +606,7 @@
   (with-test-connection
     (cl-postgres::with-binary-row-values
       (is (equalp (exec-query connection "select row(ARRAY[NULL, NULL]);" 'list-row-reader)
-                  '(((#(NIL NIL)))))))))
+                  '(((#(:null :null)))))))))
 
 (test row-array-table-nulls-binary
   (with-binary-row-values
