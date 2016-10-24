@@ -627,3 +627,14 @@
                    'list-row-reader)
                   '(((#2A((0 0)))) ((NIL)) ((#2A((2 2)))) ((NIL)) ((NIL))))))
         (exec-query connection "drop table test")))))
+
+(test array-row-text
+  (with-test-connection
+    (is (equalp (exec-query connection "select array_agg(row(1,2,3));" 'list-row-reader)
+                '(("{\"(1,2,3)\"}"))))))
+
+(test array-row-binary
+  (with-test-connection
+    (cl-postgres::with-binary-row-values
+      (is (equalp (exec-query connection "select array_agg(row(1,2,3));" 'list-row-reader)
+                  '((#((1 2 3)))))))))

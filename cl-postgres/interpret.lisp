@@ -232,9 +232,15 @@ executing body so that row values will be returned as t."
                1561 ;; bit array
                1563 ;; varbit array
                1231 ;; numeric array
-               2287 ;; record array
                ))
   (set-sql-reader oid #'read-binary-array-value :binary-p t))
+
+;; 2287 record array
+;;
+;; NOTE: need to treat this separately because if we want the record
+;; (row types) to come back as text, we have to read the array value
+;; as text.
+(set-sql-reader 2287 #'read-binary-array-value :binary-p (lambda () *read-row-values-as-binary*))
 
 (define-interpreter 600 "point" ((point-x-bits uint 8)
                                  (point-y-bits uint 8))
