@@ -67,6 +67,23 @@
         (is (= b 3479467341))
         (is (equal c '((:MONTHS 24) (:DAYS -4) (:SECONDS 0) (:USECONDS 0))))))))
 
+(test timestamp-with-time-zone-text
+  (let ((*sql-readtable* (copy-sql-readtable)))
+    (set-sql-reader +timestamptz-oid+ nil)
+    (with-test-connection
+      (exec-query connection "set time zone 'GMT'")
+      (is (equalp (exec-query connection "select '2010-04-05 14:42:21.500'::timestamp with time zone"
+                              'list-row-reader)
+                  '(("2010-04-05 14:42:21.5+00"))))
+      (exec-query connection "set time zone 'PST8PDT'")
+      (is (equalp (exec-query connection "select '2010-04-05 14:42:21.500'::timestamp with time zone"
+                              'list-row-reader)
+                  '(("2010-04-05 14:42:21.5-07"))))
+      (exec-query connection "set time zone 'GMT'")
+      (is (equalp (exec-query connection "select '2010-04-05 14:42:21.500'::timestamp at time zone 'America/New_York'"
+                              'list-row-reader)
+                  '(("2010-04-05 18:42:21.5+00")))))))
+
 (test alist-row-reader
   (with-test-connection
     (is (equal (exec-query connection "select 42 as foo, 99 as bar" 'alist-row-reader)
