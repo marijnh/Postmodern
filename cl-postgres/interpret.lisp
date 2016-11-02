@@ -56,18 +56,20 @@ this type."
 (defun set-sql-reader (oid function &key (table *sql-readtable*) binary-p)
   "Add an sql reader to a readtable. When the reader is not binary, it
 is wrapped by a function that will read the string from the socket."
-  (setf (gethash oid table)
-        (make-instance 'type-interpreter
-                       :oid oid
-                       :use-binary binary-p
-                       :binary-reader
-                       (when binary-p function)
-                       :text-reader
-                       (if binary-p
-                           'interpret-as-text
-                           (lambda (stream size)
-                             (funcall function
-                                      (enc-read-string stream :byte-length size))))))
+  (if function
+      (setf (gethash oid table)
+            (make-instance 'type-interpreter
+                           :oid oid
+                           :use-binary binary-p
+                           :binary-reader
+                           (when binary-p function)
+                           :text-reader
+                           (if binary-p
+                               'interpret-as-text
+                               (lambda (stream size)
+                                 (funcall function
+                                          (enc-read-string stream :byte-length size))))))
+      (remhash oid table))
   table)
 
 (defmacro binary-reader (fields &body value)
