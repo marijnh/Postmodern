@@ -56,7 +56,10 @@
            #:close-db-writer
            #:*ssl-certificate-file*
            #:*ssl-key-file*
-           #+(and sbcl unix) #:*unix-socket-dir*))
+           #+(and sbcl unix) #:*unix-socket-dir*
+           #:+timestamp-oid+
+           #:+timestamptz-oid+
+           #:+time-oid+))
 
 (defpackage :cl-postgres-error
   (:use :common-lisp :cl-postgres)

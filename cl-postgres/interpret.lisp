@@ -319,13 +319,17 @@ used. Correct for sign bit when using integer format."
 
 ;; Public interface for adding date/time readers
 
+(defconstant +timestamp-oid+ 1114)
+(defconstant +timestamptz-oid+ 1184)
+(defconstant +time-oid+ 1083)
+
 (defun set-sql-datetime-readers (&key date timestamp timestamp-with-timezone interval time
                                  (table *sql-readtable*))
   (when date (set-date-reader date table))
-  (when timestamp (set-usec-reader 1114 timestamp table))
-  (when timestamp-with-timezone (set-usec-reader 1184 timestamp-with-timezone table))
+  (when timestamp (set-usec-reader +timestamp-oid+ timestamp table))
+  (when timestamp-with-timezone (set-usec-reader +timestamptz-oid+ timestamp-with-timezone table))
   (when interval (set-interval-reader interval table))
-  (when time (set-usec-reader 1083 time table))
+  (when time (set-usec-reader +time-oid+ time table))
   table)
 
 ;; Provide meaningful defaults for the date/time readers.
