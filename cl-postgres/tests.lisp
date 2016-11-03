@@ -34,6 +34,12 @@
   `(let ((*sql-readtable* (default-sql-readtable)))
     ,@body))
 
+(defmacro with-rollbacked-transaction (&body body)
+  `(progn
+    (exec-query connection "start transaction")
+    (unwind-protect (progn ,@body)
+      (exec-query connection "rollback"))))
+
 (test connect-sanity
   (with-test-connection
     (is (database-open-p connection))))
@@ -67,22 +73,52 @@
         (is (= b 3479467341))
         (is (equal c '((:MONTHS 24) (:DAYS -4) (:SECONDS 0) (:USECONDS 0))))))))
 
+(test timestamp-with-time-zone
+  (with-default-readtable
+    (with-test-connection
+      (with-rollbacked-transaction
+        ;; 1. set local time to GMT -- returned time should be what we
+        ;; pass in -- note we lose the 500 millesconds here :(
+        (exec-query connection "set local time zone 'GMT'")
+        (is (equalp (exec-query connection "select '2010-04-05 14:42:21.500'::timestamp with time zone"
+                                'list-row-reader)
+                    '((3479467341))))
+        ;; 2. set local time to PST8PDT, now we should get back a time
+        ;; that is 7 hours later than. This means that the input time
+        ;; is specified in PST8PDT, but the returned timestamp is in
+        ;; GMT.
+        (exec-query connection "set time zone 'PST8PDT'")
+        (is (equalp (exec-query connection "select '2010-04-05 14:42:21.500'::timestamp with time zone"
+                                'list-row-reader)
+                    '((3479492541))))
+        ;; 3. now we specify the time zone to be GMT but the input time
+        ;; is in EDT, so the returned time should be 4 hours later.
+        (exec-query connection "set time zone 'GMT'")
+        (is (equalp (exec-query connection "select '2010-04-05 14:42:21.500'::timestamp at time zone 'America/New_York'"
+                                'list-row-reader)
+                    '((3479481741))))))))
+
 (test timestamp-with-time-zone-text
   (let ((*sql-readtable* (copy-sql-readtable)))
     (set-sql-reader +timestamptz-oid+ nil)
     (with-test-connection
-      (exec-query connection "set time zone 'GMT'")
-      (is (equalp (exec-query connection "select '2010-04-05 14:42:21.500'::timestamp with time zone"
-                              'list-row-reader)
-                  '(("2010-04-05 14:42:21.5+00"))))
-      (exec-query connection "set time zone 'PST8PDT'")
-      (is (equalp (exec-query connection "select '2010-04-05 14:42:21.500'::timestamp with time zone"
-                              'list-row-reader)
-                  '(("2010-04-05 14:42:21.5-07"))))
-      (exec-query connection "set time zone 'GMT'")
-      (is (equalp (exec-query connection "select '2010-04-05 14:42:21.500'::timestamp at time zone 'America/New_York'"
-                              'list-row-reader)
-                  '(("2010-04-05 18:42:21.5+00")))))))
+      (with-rollbacked-transaction
+        ;; 1. GMT input and GMT output
+        (exec-query connection "set time zone 'GMT'")
+        (is (equalp (exec-query connection "select '2010-04-05 14:42:21.500'::timestamp with time zone"
+                                'list-row-reader)
+                    '(("2010-04-05 14:42:21.5+00"))))
+        ;; 2. PST8PDT input and text representation of the same input
+        ;; time with a -7 hour offset
+        (exec-query connection "set time zone 'PST8PDT'")
+        (is (equalp (exec-query connection "select '2010-04-05 14:42:21.500'::timestamp with time zone"
+                                'list-row-reader)
+                    '(("2010-04-05 14:42:21.5-07"))))
+        ;; 3. EDT input with GMT output (4 hours later, 0 hour offset)
+        (exec-query connection "set time zone 'GMT'")
+        (is (equalp (exec-query connection "select '2010-04-05 14:42:21.500'::timestamp at time zone 'America/New_York'"
+                                'list-row-reader)
+                    '(("2010-04-05 18:42:21.5+00"))))))))
 
 (test alist-row-reader
   (with-test-connection
@@ -372,28 +408,30 @@
 
 (test row-timestamp-with-time-zone
   (with-test-connection
-    (exec-query connection "set time zone 'GMT'")
-    (is (equalp (exec-query connection "select row('2010-04-05 14:42:21.500'::timestamp with time zone)"
-                            'list-row-reader)
-                '(("(\"2010-04-05 14:42:21.5+00\")"))))))
+    (with-rollbacked-transaction
+      (exec-query connection "set time zone 'GMT'")
+      (is (equalp (exec-query connection "select row('2010-04-05 14:42:21.500'::timestamp with time zone)"
+                              'list-row-reader)
+                  '(("(\"2010-04-05 14:42:21.5+00\")")))))))
 
 (test row-timestamp-with-time-zone-binary
   (with-default-readtable
     (with-test-connection
-      (exec-query connection "set time zone 'GMT'")
-      (with-binary-row-values
-        (destructuring-bind (gmt pdt)
-            (caar
-             (exec-query
-              connection
-              (concatenate 'string
-                           "select row('2010-04-05 14:42:21.500'::timestamp with time zone at time zone 'GMT', "
-                           " '2010-04-05 14:42:21.500'::timestamp with time zone at time zone 'PST')")
-              'list-row-reader))
-          (is (equalp (multiple-value-list gmt)
-                      '(3479467341)))
-          (is (equalp (multiple-value-list pdt)
-                      '(3479438541))))))))
+      (with-rollbacked-transaction
+        (exec-query connection "set time zone 'GMT'")
+        (with-binary-row-values
+          (destructuring-bind (gmt pdt)
+              (caar
+               (exec-query
+                connection
+                (concatenate 'string
+                             "select row('2010-04-05 14:42:21.500'::timestamp with time zone at time zone 'GMT', "
+                             " '2010-04-05 14:42:21.500'::timestamp with time zone at time zone 'PST')")
+                'list-row-reader))
+            (is (equalp (multiple-value-list gmt)
+                        '(3479467341)))
+            (is (equalp (multiple-value-list pdt)
+                        '(3479438541)))))))))
 
 (test row-timestamp-array
   (with-default-readtable
