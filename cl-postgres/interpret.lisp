@@ -115,20 +115,20 @@ interpreted as an array of the given type."
   (declare (ignore name)) ;; Names are there just for clarity
   `(set-sql-reader ,oid (binary-reader ,fields ,@value) :binary-p t))
 
-(define-interpreter 18 "char" int 1)
-(define-interpreter 21 "int2" int 2)
-(define-interpreter 23 "int4" int 4)
-(define-interpreter 20 "int8" int 8)
+(define-interpreter oid:+char+ "char" int 1)
+(define-interpreter oid:+int2+ "int2" int 2)
+(define-interpreter oid:+int4+ "int4" int 4)
+(define-interpreter oid:+int8+ "int8" int 8)
 
-(define-interpreter 26 "oid" uint 4)
+(define-interpreter oid:+oid+ "oid" uint 4)
 
-(define-interpreter 16 "bool" ((value int 1))
+(define-interpreter oid:+bool+ "bool" ((value int 1))
   (if (zerop value) nil t))
 
-(define-interpreter 17 "bytea" bytes)
-(define-interpreter 25 "text" string)
-(define-interpreter 1042 "bpchar" string)
-(define-interpreter 1043 "varchar" string)
+(define-interpreter oid:+bytea+ "bytea" bytes)
+(define-interpreter oid:+text+ "text" string)
+(define-interpreter oid:+bpchar+ "bpchar" string)
+(define-interpreter oid:+varchar+ "varchar" string)
 
 (defun read-row-value (stream size)
   (declare (type stream stream)
@@ -242,14 +242,14 @@ executing body so that row values will be returned as t."
 ;; NOTE: need to treat this separately because if we want the record
 ;; (row types) to come back as text, we have to read the array value
 ;; as text.
-(set-sql-reader 2287 #'read-binary-array-value :binary-p (lambda () *read-row-values-as-binary*))
+(set-sql-reader oid:+record-array+ #'read-binary-array-value :binary-p (lambda () *read-row-values-as-binary*))
 
-(define-interpreter 600 "point" ((point-x-bits uint 8)
+(define-interpreter oid:+point+ "point" ((point-x-bits uint 8)
                                  (point-y-bits uint 8))
   (list (cl-postgres-ieee-floats:decode-float64 point-x-bits)
         (cl-postgres-ieee-floats:decode-float64 point-y-bits)))
 
-(define-interpreter 601 "lseg" ((point-x1-bits uint 8)
+(define-interpreter oid:+lseg+ "lseg" ((point-x1-bits uint 8)
                                 (point-y1-bits uint 8)
                                 (point-x2-bits uint 8)
                                 (point-y2-bits uint 8))
@@ -258,7 +258,7 @@ executing body so that row values will be returned as t."
         (list (cl-postgres-ieee-floats:decode-float64 point-x2-bits)
               (cl-postgres-ieee-floats:decode-float64 point-y2-bits))))
 
-(define-interpreter 603 "box" ((point-x1-bits uint 8)
+(define-interpreter oid:+box+ "box" ((point-x1-bits uint 8)
                                (point-y1-bits uint 8)
                                (point-x2-bits uint 8)
                                (point-y2-bits uint 8))
