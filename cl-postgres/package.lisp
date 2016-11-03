@@ -93,119 +93,12 @@
            #:system-error
            #:unique-violation))
 
+(when (find-package :cl-postgres-oid)
+  (do-symbols (sym :cl-postgres-oid)
+    (unexport sym :cl-postgres-oid)))
+
 (defpackage :cl-postgres-oid
-  (:use :common-lisp)
-  (:nicknames :oid)
-  (:export #:+bool+
-           #:+bytea+
-           #:+char+
-           #:+name+
-           #:+int8+
-           #:+int2+
-           #:+int2vector+
-           #:+int4+
-           #:+regproc+
-           #:+text+
-           #:+oid+
-           #:+tid+
-           #:+xid+
-           #:+cid+
-           #:+oid-vector+
-           #:+json+
-           #:+xml+
-           #:+pgnodetree+
-           #:+pgddlcommand+
-           #:+point+
-           #:+lseg+
-           #:+path+
-           #:+box+
-           #:+polygon+
-           #:+line+
-           #:+float4+
-           #:+float8+
-           #:+abstime+
-           #:+reltime+
-           #:+tinterval+
-           #:+unknown+
-           #:+circle+
-           #:+cash+
-           #:+macaddr+
-           #:+inet+
-           #:+cidr+
-           #:+bool-array+
-           #:+bytea-array+
-           #:+char-array+
-           #:+name-array+
-           #:+int2-array+
-           #:+int4-array+
-           #:+text-array+
-           #:+bpchar-array+
-           #:+varchar-array+
-           #:+int8-array+
-           #:+point-array+
-           #:+lseg-array+
-           #:+box-array+
-           #:+float4-array+
-           #:+float8-array+
-           #:+oid-array+
-           #:+aclitem+
-           #:+cstring-array+
-           #:+bpchar+
-           #:+varchar+
-           #:+date+
-           #:+time+
-           #:+timestamp+
-           #:+timestamp-array+
-           #:+date-array+
-           #:+time-array+
-           #:+timestamptz+
-           #:+timestamptz-array+
-           #:+interval+
-           #:+interval-array+
-           #:+timetz+
-           #:+bit+
-           #:+bit-array+
-           #:+varbit+
-           #:+varbit-array+
-           #:+numeric+
-           #:+numeric-array+
-           #:+refcursor+
-           #:+regprocedure+
-           #:+regoper+
-           #:+regoperator+
-           #:+regclass+
-           #:+regtype+
-           #:+regrole+
-           #:+regnamespace+
-           #:+regtype-array+
-           #:+uuid+
-           #:+lsn+
-           #:+tsvector+
-           #:+gtsvector+
-           #:+tsquery+
-           #:+regconfig+
-           #:+regdictionary+
-           #:+jsonb+
-           #:+int4range+
-           #:+record+
-           #:+record-array+
-           #:+cstring+
-           #:+any+
-           #:+any-array+
-           #:+v-oid+
-           #:+trigger+
-           #:+evttrigger+
-           #:+language-handler+
-           #:+internal+
-           #:+opaque+
-           #:+anyelement+
-           #:+anynon-array+
-           #:+anyenum+
-           #:+fdw-handler+
-           #:+index-am-handler+
-           #:+tsm-handler+
-           #:+anyrange+
-           ))
+  (:nicknames :oid))
 
 (in-package :cl-postgres)
 
