@@ -100,7 +100,7 @@
 
 (test timestamp-with-time-zone-text
   (let ((*sql-readtable* (copy-sql-readtable)))
-    (set-sql-reader +timestamptz-oid+ nil)
+    (set-sql-reader oid:+timestamptz+ nil)
     (with-test-connection
       (with-rollbacked-transaction
         ;; 1. GMT input and GMT output
