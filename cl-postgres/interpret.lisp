@@ -151,7 +151,7 @@ interpreted as an array of the given type."
   is nil, specifying that the results be sent back as text. Set this
   to t to cause the results to be read as binary.")
 
-(set-sql-reader 2249 #'read-row-value :binary-p (lambda () *read-row-values-as-binary*))
+(set-sql-reader oid:+record+ #'read-row-value :binary-p (lambda () *read-row-values-as-binary*))
 
 (defmacro with-binary-row-values (&body body)
   "Helper macro to locally set *read-row-values-as-binary* to t while
@@ -179,8 +179,8 @@ executing body so that row values will be returned as t."
                     (ldb (byte 1 (logxor cur-bit 7)) (aref bit-bytes cur-byte)))))
       bit-array)))
 
-(set-sql-reader 1560 #'read-binary-bits :binary-p t)
-(set-sql-reader 1562 #'read-binary-bits :binary-p t)
+(set-sql-reader oid:+bit+ #'read-binary-bits :binary-p t)
+(set-sql-reader oid:+varbit+ #'read-binary-bits :binary-p t)
 
 (defun read-binary-array-value (stream size)
   (declare (type stream stream)
@@ -212,37 +212,37 @@ executing body so that row values will be returned as t."
                              (funcall (interpreter-reader (get-type-interpreter element-type)) stream size)))))
            results))))))
 
-(dolist (oid '(
-               1000 ;; boolean array
-               1001 ;; bytea array
-               1002 ;; char array
-               1003 ;; name (internal PG type) array
-               1005 ;; int2 array
-               1007 ;; integer array
-               1009 ;; text array
-               1014 ;; bpchar array
-               1015 ;; varchar array
-               1016 ;; int8 array
-               1017 ;; point array
-               1018 ;; lseg array
-               1020 ;; box array
-               1021 ;; float4 array
-               1022 ;; float8 array
-               1028 ;; oid array
-               1115 ;; timestamp array
-               1182 ;; date array
-               1187 ;; interval array
-               1561 ;; bit array
-               1563 ;; varbit array
-               1231 ;; numeric array
-               ))
+(dolist (oid (list oid:+bool-array+
+                   oid:+bytea-array+
+                   oid:+char-array+
+                   oid:+name-array+ ;; (internal PG type)
+                   oid:+int2-array+
+                   oid:+int4-array+
+                   oid:+text-array+
+                   oid:+bpchar-array+
+                   oid:+varchar-array+
+                   oid:+int8-array+
+                   oid:+point-array+
+                   oid:+lseg-array+
+                   oid:+box-array+
+                   oid:+float4-array+
+                   oid:+float8-array+
+                   oid:+oid-array+
+                   oid:+timestamp-array+
+                   oid:+date-array+
+                   oid:+time-array+
+                   oid:+timestamptz-array+
+                   oid:+interval-array+
+                   oid:+bit-array+
+                   oid:+varbit-array+
+                   oid:+numeric-array+))
   (set-sql-reader oid #'read-binary-array-value :binary-p t))
 
-;; 2287 record array
+;; record arrays
 ;;
-;; NOTE: need to treat this separately because if we want the record
-;; (row types) to come back as text, we have to read the array value
-;; as text.
+;; NOTE: need to treat this separately because if we want
+;; the record (row types) to come back as text, we have to read the
+;; array value as text.
 (set-sql-reader oid:+record-array+ #'read-binary-array-value :binary-p (lambda () *read-row-values-as-binary*))
 
 (define-interpreter oid:+point+ "point" ((point-x-bits uint 8)
@@ -268,14 +268,14 @@ executing body so that row values will be returned as t."
         (list (cl-postgres-ieee-floats:decode-float64 point-x2-bits)
               (cl-postgres-ieee-floats:decode-float64 point-y2-bits))))
 
-(define-interpreter 700 "float4" ((bits uint 4))
+(define-interpreter oid:+float4+ "float4" ((bits uint 4))
   (cl-postgres-ieee-floats:decode-float32 bits))
-(define-interpreter 701 "float8" ((bits uint 8))
+(define-interpreter oid:+float8+ "float8" ((bits uint 8))
   (cl-postgres-ieee-floats:decode-float64 bits))
 
 ;; Numeric types are rather involved. I got some clues on their
 ;; structure from http://archives.postgresql.org/pgsql-interfaces/2004-08/msg00000.php
-(define-interpreter 1700 "numeric"
+(define-interpreter oid:+numeric+ "numeric"
     ((length uint 2)
      (weight int 2)
      (sign int 2)
@@ -294,8 +294,8 @@ executing body so that row values will be returned as t."
 ;; readers, there is a hook for easily adding binary readers for them.
 
 (defun set-date-reader (f table)
-  (set-sql-reader 1082 (binary-reader ((days int 4))
-                         (funcall f days))
+  (set-sql-reader oid:+date+ (binary-reader ((days int 4))
+                               (funcall f days))
                   :table table
                   :binary-p t))
 
@@ -309,8 +309,8 @@ used. Correct for sign bit when using integer format."
                   bits))))
 
 (defun set-interval-reader (f table)
-  (set-sql-reader 1186 (binary-reader ((usec-bits uint 8) (days int 4) (months int 4))
-                         (funcall f months days (interpret-usec-bits usec-bits)))
+  (set-sql-reader oid:+interval+ (binary-reader ((usec-bits uint 8) (days int 4) (months int 4))
+                                   (funcall f months days (interpret-usec-bits usec-bits)))
                   :table table
                   :binary-p t))
 
@@ -322,17 +322,13 @@ used. Correct for sign bit when using integer format."
 
 ;; Public interface for adding date/time readers
 
-(defconstant +timestamp-oid+ 1114)
-(defconstant +timestamptz-oid+ 1184)
-(defconstant +time-oid+ 1083)
-
 (defun set-sql-datetime-readers (&key date timestamp timestamp-with-timezone interval time
                                  (table *sql-readtable*))
   (when date (set-date-reader date table))
-  (when timestamp (set-usec-reader +timestamp-oid+ timestamp table))
-  (when timestamp-with-timezone (set-usec-reader +timestamptz-oid+ timestamp-with-timezone table))
+  (when timestamp (set-usec-reader oid:+timestamp+ timestamp table))
+  (when timestamp-with-timezone (set-usec-reader oid:+timestamptz+ timestamp-with-timezone table))
   (when interval (set-interval-reader interval table))
-  (when time (set-usec-reader +time-oid+ time table))
+  (when time (set-usec-reader oid:+time+ time table))
   table)
 
 ;; Provide meaningful defaults for the date/time readers.
