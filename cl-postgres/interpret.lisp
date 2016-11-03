@@ -56,6 +56,7 @@ this type."
 (defun set-sql-reader (oid function &key (table *sql-readtable*) binary-p)
   "Add an sql reader to a readtable. When the reader is not binary, it
 is wrapped by a function that will read the string from the socket."
+  (assert (integerp oid))
   (if function
       (setf (gethash oid table)
             (make-instance 'type-interpreter
