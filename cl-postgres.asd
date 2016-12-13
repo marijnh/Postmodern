@@ -18,7 +18,8 @@
   ((:module :cl-postgres
             :components ((:file "trivial-utf-8")
                          (:file "ieee-floats")
-                         (:file "package")
+                         (:file "features")
+                         (:file "package" :depends-on ("features"))
                          (:file "errors" :depends-on ("package"))
                          (:file "sql-string" :depends-on ("package"))
                          (:file #.*string-file* :depends-on ("package" "trivial-utf-8"))

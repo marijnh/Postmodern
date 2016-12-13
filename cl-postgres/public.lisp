@@ -46,7 +46,7 @@ currently connected."
     (initiate-connection conn)
     conn))
 
-#+(and (or sbcl ccl allegro) unix)
+#+(and (or cl-postgres.features:sbcl-available ccl allegro) unix)
 (progn
   (defparameter *unix-socket-dir*
     #-(or freebsd darwin) "/var/run/postgresql/"
@@ -58,7 +58,7 @@ currently connected."
       (setf base-dir (concatenate 'string base-dir "/")))
     (format nil "~a.s.PGSQL.~a" base-dir port))
 
-  #+sbcl
+  #+cl-postgres.features:sbcl-available
   (defun unix-socket-connect (path)
     (let ((sock (make-instance 'sb-bsd-sockets:local-socket :type :stream)))
       (sb-bsd-sockets:socket-connect sock path)
@@ -79,7 +79,7 @@ currently connected."
                         :format :binary
                         :remote-filename path)))
 
-#+sbcl
+#+cl-postgres.features:sbcl-available
 (defun get-host-address (host)
   "Returns valid IPv4 or IPv6 address for the host."
   ;; get all IPv4 and IPv6 addresses as a list
@@ -93,13 +93,19 @@ currently connected."
     (first addresses)))
 
 
-#+sbcl
+#+cl-postgres.features:sbcl-available
 (defun inet-socket-connect (host port)
   (let* ((host-ent (get-host-address host))
-        (sock (make-instance (ecase (sb-bsd-sockets:host-ent-address-type host-ent)
-                               (2  'sb-bsd-sockets:inet-socket)
-                               (10 'sb-bsd-sockets:inet6-socket))
-                             :type :stream :protocol :tcp))
+         (sock (make-instance
+                #+cl-postgres.features:sbcl-ipv6-available
+                (ecase (sb-bsd-sockets:host-ent-address-type host-ent)
+                  (2  'sb-bsd-sockets:inet-socket)
+                  (10 'sb-bsd-sockets:inet6-socket))
+                
+                #-cl-postgres.features:sbcl-ipv6-available
+                'sb-bsd-sockets:inet-socket
+                
+                :type :stream :protocol :tcp))
          (address (sb-bsd-sockets:host-ent-address host-ent)))
     (sb-bsd-sockets:socket-connect sock address port)
     (sb-bsd-sockets:socket-make-stream
@@ -128,12 +134,12 @@ if it isn't."
            #+unix t
            #-unix (error "Unix sockets only available on Unix (really)")))
     (handler-case
-        (let ((socket #-(or allegro sbcl ccl)
+        (let ((socket #-(or allegro cl-postgres.features:sbcl-available ccl)
                       (usocket:socket-stream
                        (usocket:socket-connect (connection-host conn)
                                                (connection-port conn)
                                                :element-type '(unsigned-byte 8)))
-                      #+(or allegro sbcl ccl)
+                      #+(or allegro cl-postgres.features:sbcl-available ccl)
                       (cond
                         ((equal (connection-host conn) :unix)
                          (assert-unix)
@@ -163,10 +169,10 @@ if it isn't."
                      finished t)
             (unless finished
               (ensure-socket-is-closed socket))))
-      #-(or allegro sbcl ccl)(usocket:socket-error (e) (add-restart e))
+      #-(or allegro cl-postgres.features:sbcl-available ccl)(usocket:socket-error (e) (add-restart e))
       #+ccl (ccl:socket-error (e) (add-restart e))
       #+allegro(excl:socket-error (e) (add-restart e))
-      #+sbcl(sb-bsd-sockets:socket-error (e) (add-restart e))
+      #+cl-postgres.features:sbcl-available(sb-bsd-sockets:socket-error (e) (add-restart e))
       (stream-error (e) (add-restart e))))
     (values))
 
