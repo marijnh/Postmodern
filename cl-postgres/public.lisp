@@ -17,6 +17,14 @@
 login information in order to be able to automatically re-establish a
 connection when it is somehow closed."))
 
+(defun connection-spec (connection)
+  (with-slots (database user password host port use-ssl) connection
+    (list database user password host port (unless (eq use-ssl :no) 
+					     use-ssl))))
+
+(defun make-spec (database user password host &key (port 5432) use-ssl &allow-other-keys)
+  (list database user password host port use-ssl))
+
 (defun connection-meta (connection)
   "Retrieves the meta field of a connection, the primary purpose of
 which is to store information about the prepared statements that
