@@ -637,6 +637,21 @@ the proper SQL syntax for joining tables."
 (def-sql-op :for-share (form &rest args)
   (apply #'for-update/share "SHARE" form args))
 
+(defun for-update/share (share-or-update form &rest args)
+  (let* ((of-position (position :of args))
+         (no-wait-position (position :nowait args))
+         (of-tables (when of-position (subseq args (1+ of-position) no-wait-position))))
+    `("(" ,@(sql-expand form) ,(format nil " FOR ~:@(~A~)" share-or-update)
+          ,@(when of-tables (list (format nil " OF ~{~A~^, ~}" (mapcar #'sql-compile of-tables))))
+          ,@(when no-wait-position (list " NOWAIT"))
+          ")")))
+
+(def-sql-op :for-update (form &rest args)
+  (apply #'for-update/share "UPDATE" form args))
+
+(def-sql-op :for-share (form &rest args)
+  (apply #'for-update/share "SHARE" form args))
+
 (defun escape-sql-expression (expr)
   "Try to escape an expression at compile-time, if not possible, delay
 to runtime. Used to create stored procedures."
