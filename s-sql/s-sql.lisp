@@ -442,10 +442,10 @@ with a given arity."
                         :intersect (:intersect-all "intersect all")
                         :except (:except-all "except all"))
 ;; PostGIS operators
-(register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :@ :|\|&>| :|\|>>| :~= :@> :@<)
+(register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :|@| :|\|&>| :|\|>>| :~= :|@>| :|@<|)
 
 ;; hstore operators
-(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :<@ :#= :unary :%% :%#)
+(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :|<@| :#= :unary :%% :%#)
 
 (def-sql-op :|| (&rest args)
   `("(" ,@(sql-expand-list args " || ") ")"))
@@ -472,7 +472,7 @@ with a given arity."
                       :when type :append (list " " (to-type-name type)))
           ")"))))
 
-(def-sql-op :@@ (op1 op2)
+(def-sql-op :|@@| (op1 op2)
   `("(" ,@(sql-expand op1) " @@ " ,@(sql-expand op2) ")"))
 
 (def-sql-op :distinct (&rest forms)
