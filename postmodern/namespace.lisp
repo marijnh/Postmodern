@@ -53,7 +53,7 @@
   "Predicate for schema existence"
   (query (:select (:exists (:select 'schema_name
                             :from 'information_schema.schemata
-                            :where (:= 'schema_name (to-sql-name name))))) :single))
+                            :where (:= 'schema_name (to-sql-name name t))))) :single))
 
 (defun create-schema (schema)
   "Creating a non existing schema.
