@@ -353,7 +353,9 @@ to strings \(which will form an SQL query when concatenated)."
     (lambda (&rest args)
       (with-output-to-string (*standard-output*)
         (dolist (element compiled)
-          (princ (if (eq element '$$) (sql-escape (pop args)) element)))))))
+          (princ (if (eq element '$$)
+                     (cl-postgres:to-sql-string (pop args))
+                     element)))))))
 
 ;; The reader syntax.
 
