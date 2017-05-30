@@ -447,6 +447,9 @@ with a given arity."
 ;; hstore operators
 (register-sql-operators :2+-ary :-> :=> :? :?& :?\| :|<@| :#= :unary :%% :%#)
 
+;; hstore operators
+(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :@> :<@ :#= :unary :%% :%#)
+
 (def-sql-op :|| (&rest args)
   `("(" ,@(sql-expand-list args " || ") ")"))
 
