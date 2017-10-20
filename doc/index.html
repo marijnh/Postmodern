@@ -41,7 +41,6 @@
       <li><a href="#dependencies">Dependencies</a></li>
       <li><a href="#license">License</a></li>
       <li><a href="#download">Download and installation</a></li>
-      <li><a href="#support">Support and mailing lists</a></li>
       <li><a href="#quickstart">Quickstart</a></li>
       <li><a href="#reference">Reference</a></li>
       <li><a href="#caveats">Caveats and to-dos</a></li>
@@ -443,15 +442,10 @@
     <h3>Portability</h3>
 
     <p>The Lisp code in Postmodern is theoretically portable across
-    implementations, and seems to work on all major ones. I am not
-    actively testing against new releases or obscure implementations,
-    but if you run into problems you are welcome to contact me through
-    the <a
-    href="mailto:postmodern-devel+subscribe@common-lisp.net">mailing
-    list</a>, and we can try to solve them. Implementations that do
-    not have meta-object protocol support will not have DAOs, but all
-    other parts of the library should work (all widely used
-    implementations do support this).</p>
+    implementations, and seems to work on all major ones.
+    Implementations that do not have meta-object protocol support will
+    not have DAOs, but all other parts of the library should work (all
+    widely used implementations do support this).</p>
 
     <p>The library will definitely not work for PostgreSQL versions
     older than 7.4 (it uses a client/server protocol that was
