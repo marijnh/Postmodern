@@ -12,14 +12,16 @@
   #+(or allegro clisp ecl lispworks mcl openmcl cmu sbcl)
   (pushnew :postmodern-use-mop *features*))
 
-(defsystem :postmodern
+(defsystem "postmodern"
   :description "PostgreSQL programming API"
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :license "BSD"
-  :depends-on (:cl-postgres :s-sql #+postmodern-use-mop :closer-mop
-                            #+postmodern-thread-safe :bordeaux-threads)
+  :depends-on ("cl-postgres"
+               "s-sql"
+               (:feature :postmodern-use-mop "closer-mop")
+               (:feature :postmodern-thread-safe "bordeaux-threads"))
   :components
-  ((:module :postmodern
+  ((:module "postmodern"
             :components ((:file "package")
                          (:file "connect" :depends-on ("package"))
                          (:file "query" :depends-on ("connect"))
@@ -27,17 +29,17 @@
                          (:file "util" :depends-on ("query"))
                          (:file "transaction" :depends-on ("query"))
                          (:file "namespace" :depends-on ("query"))
-                         #+postmodern-use-mop
-                         (:file "table" :depends-on ("util" "transaction"))
+                         (:file "table" :depends-on ("util" "transaction")
+                                :if-feature :postmodern-use-mop)
                          (:file "deftable" :depends-on
-                                ("query" #+postmodern-use-mop "table")))))
-  :in-order-to ((test-op (test-op :postmodern-tests))))
+                                ("query" (:feature :postmodern-use-mop "table"))))))
+  :in-order-to ((test-op (test-op "postmodern/tests"))))
 
-(defsystem :postmodern-tests
-  :depends-on (:postmodern :fiveam :simple-date :simple-date-postgres-glue
-               :cl-postgres-tests)
+(defsystem "postmodern/tests"
+  :depends-on ("postmodern" "fiveam" "simple-date" "simple-date/postgres-glue"
+                            "cl-postgres/tests")
   :components
-  ((:module :postmodern
+  ((:module "postmodern"
             :components ((:file "tests"))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
