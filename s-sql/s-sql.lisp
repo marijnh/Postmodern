@@ -918,3 +918,12 @@ to runtime. Used to create stored procedures."
       ,@(if (or (null do) (eq do :nothing))
             '(" NOTHING")
             `("(" ,@(sql-expand-list do "; ") ")")))))
+
+(defun create-database (database)
+  "Creating a database.
+   If the database exists an error is raised."
+  ;;(format t "creating database: ~a" database)
+  (execute (format nil "CREATE DATABASE ~a" (s-sql:to-sql-name database t))))
+
+(s-sql::def-drop-op :drop-database "DATABASE")
+
