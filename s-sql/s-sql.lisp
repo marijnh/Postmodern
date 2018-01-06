@@ -924,4 +924,4 @@ to runtime. Used to create stored procedures."
    If the database exists an error is raised."
   (execute (format nil "CREATE DATABASE ~a" (to-sql-name database t))))
 
-(s-sql::def-drop-op :drop-database "DATABASE")
+(def-drop-op :drop-database "DATABASE")
