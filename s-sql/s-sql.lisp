@@ -896,7 +896,7 @@ test. "
   (let ((strings (loop :for m :in members :collect (etypecase m (symbol (string-downcase m)) (string m)))))
     `("CREATE TYPE " ,@(sql-expand name) " AS ENUM (" ,@(sql-expand-list strings) ")")))
 
-;;; http://www.postgresql.org/docs/8.3/interactive/sql-createdomain.html
+;;; https://www.postgresql.org/docs/current/static/sql-createdomain.html
 (def-sql-op :create-domain (name &rest args)
   (split-on-keywords ((type) (default ?) (constraint-name ?) (check ?)) args
     (multiple-value-bind (type may-be-null) (dissect-type (car type))
@@ -909,7 +909,7 @@ test. "
 (def-sql-op :drop-domain (name)
   `("DROP DOMAIN " ,@(sql-expand name)))
 
-;http://www.postgresql.org/docs/8.3/static/sql-createrule.html
+;;; https://www.postgresql.org/docs/current/static/sql-createrule.html
 (def-sql-op :create-rule (name &rest rest)
   (split-on-keywords ((on) (to) (where ?) (instead ? -) (do ? *)) rest
     (check-type (car on) (member :select :insert :update :delete))
