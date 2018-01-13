@@ -97,10 +97,11 @@ it specifies the format in which the results should be returned."
                      :else :collect arg)))
     (destructuring-bind (reader result-form) (reader-for-format format)
       (let ((base (if args
-                      `(progn
-                        (prepare-query *database* "" ,(real-query query))
-                        (exec-prepared *database* "" (list ,@args) ,reader))
-                      `(exec-query *database* ,(real-query query) ,reader))))
+		      (let ((vars (loop :for x :in args :collect (gensym))))
+			`(let ,(loop :for v :in vars :for a :in args :collect `(,v ,a))
+			   (prepare-query *database* "" ,(real-query query))
+			   (exec-prepared *database* "" (list ,@vars) ,reader)))
+		      `(exec-query *database* ,(real-query query) ,reader))))
         `(,result-form ,base)))))
 
 (defmacro execute (query &rest args)
