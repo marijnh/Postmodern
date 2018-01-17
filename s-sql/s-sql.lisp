@@ -138,7 +138,7 @@ escape-p is :auto and the name contains reserved words."
                         (every #'digit-char-p (the string (subseq str 1))))
                    (princ str)
                    (loop :for ch :of-type character :across str
-                         :do (if (or (eq ch #\*) (alphanumericp ch))
+                         :do (if (or (eql ch #\*) (alphanumericp ch))
                                  (write-char ch)
                                  (write-char #\_))))))
         (declare (dynamic-extent (function string-fragment)
