@@ -125,12 +125,14 @@ escape-p is :auto and the name contains reserved words."
   (declare (optimize (speed 3) (debug 0)))
   (let* ((*print-pretty* nil)
          (name (string name))
+         (char-type (array-element-type name))
          (length (length name)))
     (with-output-to-string (*standard-output*)
       (flet ((string-fragment (str from to)
-               (make-array (- to from) :element-type 'character
-                                       :displaced-to str
-                                       :displaced-index-offset from))
+               (make-array (- to from)
+                           :element-type char-type
+                           :displaced-to str
+                           :displaced-index-offset from))
              (write-element (str)
                (declare (type string str))
                (if (and (> (length str) 1) ;; Placeholders like $2
@@ -146,15 +148,14 @@ escape-p is :auto and the name contains reserved words."
         (loop :for start := 0 :then (1+ dot)
               :for dot := (position #\. name) :then (position #\. name :start start)
               :for substring := (string-fragment name start (or dot length))
+              :for downcase := (map 'string #'char-downcase substring)
               :for escape := (or (and (eq escape-p :auto)
-                                      (gethash substring *postgres-reserved-words*))
+                                      (gethash downcase *postgres-reserved-words*))
                                  escape-p)
               :do (progn
                     (if escape
                         (format t "\"~a\"" substring)
-                        (write-element (if *downcase-symbols*
-                                           (map 'string #'char-downcase substring)
-                                           substring)))
+                        (write-element (if *downcase-symbols* downcase substring)))
                     (if (null dot)
                         (return)
                         (princ #\.))))))))
