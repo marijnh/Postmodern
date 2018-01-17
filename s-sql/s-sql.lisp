@@ -152,7 +152,9 @@ escape-p is :auto and the name contains reserved words."
               :do (progn
                     (if escape
                         (format t "\"~a\"" substring)
-                        (write-element (map 'string #'char-downcase substring)))
+                        (write-element (if *downcase-symbols*
+                                           (map 'string #'char-downcase substring)
+                                           substring)))
                     (if (null dot)
                         (return)
                         (princ #\.))))))))
