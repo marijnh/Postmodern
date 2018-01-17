@@ -151,7 +151,7 @@ escape-p is :auto and the name contains reserved words."
               :for downcase := (map 'string #'char-downcase substring)
               :for auto-escape := (and (eq escape-p :auto)
                                        (gethash downcase *postgres-reserved-words*))
-              :for escape := (and (not auto-escape) escape-p)
+              :for escape := (and (not (eq escape-p :auto)) escape-p)
               :do (progn
                     (if escape
                         (format t "\"~a\"" substring)
