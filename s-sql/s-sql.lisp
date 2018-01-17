@@ -123,40 +123,39 @@ only for reserved words.")
 column, or operation name. Add quotes when escape-p is true, or
 escape-p is :auto and the name contains reserved words."
   (declare (optimize (speed 3) (debug 0)))
-  (let ((*print-pretty* nil)
-        (name (string name)))
+  (let* ((*print-pretty* nil)
+         (name (string name))
+         (length (length name)))
     (with-output-to-string (*standard-output*)
-      (flet ((subseq-downcase (str from to)
-               (let ((result (make-string (- to from))))
-                 (loop :for i :from from :below to
-                       :for p :from 0
-                       :do (setf (char result p) (if *downcase-symbols*
-                                                     (char-downcase (char str i))
-                                                     (char str i))))
-                 result))
+      (flet ((string-fragment (str from to)
+               (make-array (- to from) :element-type 'character
+                                       :displaced-to str
+                                       :displaced-index-offset from))
              (write-element (str)
                (declare (type string str))
-               (let ((escape-p (if (eq escape-p :auto)
-                                   (gethash str *postgres-reserved-words*)
-                                   escape-p)))
-                 (when escape-p
-                   (write-char #\"))
-                 (if (and (> (length str) 1) ;; Placeholders like $2
-                          (char= (char str 0) #\$)
-                          (every #'digit-char-p (the string (subseq str 1))))
-                     (princ str)
-                     (loop :for ch :of-type character :across str
-                           :do (if (or (eq ch #\*) (alphanumericp ch))
-                                   (write-char ch)
-                                   (write-char #\_))))
-                 (when escape-p
-                   (write-char #\")))))
-
+               (if (and (> (length str) 1) ;; Placeholders like $2
+                        (char= (char str 0) #\$)
+                        (every #'digit-char-p (the string (subseq str 1))))
+                   (princ str)
+                   (loop :for ch :of-type character :across str
+                         :do (if (or (eq ch #\*) (alphanumericp ch))
+                                 (write-char ch)
+                                 (write-char #\_))))))
+        (declare (dynamic-extent (function string-fragment)
+                                 (function write-element)))
         (loop :for start := 0 :then (1+ dot)
               :for dot := (position #\. name) :then (position #\. name :start start)
-              :do (write-element (subseq-downcase name start (or dot (length name))))
-              :if dot :do (princ #\.)
-              :else :do (return))))))
+              :for substring := (string-fragment name start (or dot length))
+              :for escape := (or (and (eq escape-p :auto)
+                                      (gethash substring *postgres-reserved-words*))
+                                 escape-p)
+              :do (progn
+                    (if escape
+                        (format t "\"~a\"" substring)
+                        (write-element (map 'string #'char-downcase substring)))
+                    (if (null dot)
+                        (return)
+                        (princ #\.))))))))
 
 (defun from-sql-name (str)
   "Convert a string to something that might have been its original
