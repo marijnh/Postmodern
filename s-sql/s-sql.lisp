@@ -139,7 +139,7 @@ escape-p is :auto and the name contains reserved words."
                         (char= (char str 0) #\$)
                         (every #'digit-char-p (the string (subseq str 1))))
                    (princ str)
-                   (loop :for ch :of-type character :across str
+                   (loop :for ch :across str
                          :do (if (or (eql ch #\*) (alphanumericp ch))
                                  (write-char ch)
                                  (write-char #\_))))))
