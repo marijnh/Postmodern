@@ -149,13 +149,16 @@ escape-p is :auto and the name contains reserved words."
               :for dot := (position #\. name) :then (position #\. name :start start)
               :for substring := (string-fragment name start (or dot length))
               :for downcase := (map 'string #'char-downcase substring)
-              :for escape := (or (and (eq escape-p :auto)
-                                      (gethash downcase *postgres-reserved-words*))
-                                 escape-p)
+              :for auto-escape := (and (eq escape-p :auto)
+                                       (gethash downcase *postgres-reserved-words*))
+              :for escape := (and (not auto-escape) escape-p)
               :do (progn
                     (if escape
                         (format t "\"~a\"" substring)
-                        (write-element (if *downcase-symbols* downcase substring)))
+                        (progn
+                          (when auto-escape (princ #\"))
+                          (write-element (if *downcase-symbols* downcase substring))
+                          (when auto-escape (princ #\"))))
                     (if (null dot)
                         (return)
                         (princ #\.))))))))
@@ -163,7 +166,7 @@ escape-p is :auto and the name contains reserved words."
 (defun from-sql-name (str)
   "Convert a string to something that might have been its original
 lisp name \(does not work if this name contained non-alphanumeric
-characters other than #\-)"
+characters other than #\-"
   (intern (map 'string (lambda (x) (if (eq x #\_) #\- x))
                (if (eq (readtable-case *readtable*) :upcase) (string-upcase str) str))
           (find-package :keyword)))
@@ -191,7 +194,7 @@ characters other than #\-)"
 (deftype serial8 () 'integer)
 
 (deftype db-null ()
-  "Type for representing NULL values. Use like \(or integer db-null)
+  ")Type for representing NULL values. Use like \(or integer db-null)
 for declaring a type to be an integer that may be null."
   '(eql :null))
 
