@@ -194,7 +194,7 @@ characters other than #\-"
 (deftype serial8 () 'integer)
 
 (deftype db-null ()
-  ")Type for representing NULL values. Use like \(or integer db-null)
+  "Type for representing NULL values. Use like \(or integer db-null)
 for declaring a type to be an integer that may be null."
   '(eql :null))
 
