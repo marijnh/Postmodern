@@ -121,7 +121,9 @@ only for reserved words.")
 (defun to-sql-name (name &optional (escape-p *escape-sql-names-p*))
   "Convert a symbol or string into a name that can be an sql table,
 column, or operation name. Add quotes when escape-p is true, or
-escape-p is :auto and the name contains reserved words."
+escape-p is :auto and the name contains reserved words. If escape-p is
+:literal,names shall be escaped and not altered in any other way,
+this means that name can contain / or -"
   (declare (optimize (speed 3) (debug 0)))
   (let* ((*print-pretty* nil)
          (name (string name))
@@ -149,16 +151,20 @@ escape-p is :auto and the name contains reserved words."
               :for dot := (position #\. name) :then (position #\. name :start start)
               :for substring := (string-fragment name start (or dot length))
               :for downcase := (map 'string #'char-downcase substring)
-              :for auto-escape := (and (eq escape-p :auto)
-                                       (gethash downcase *postgres-reserved-words*))
-              :for escape := (and (not (eq escape-p :auto)) escape-p)
+              :for escape := (or (and (eq escape-p :auto)
+                                      (gethash downcase *postgres-reserved-words*))
+                                 escape-p)
+              :for literal := (eq escape-p :literal)
+              :for string := (if *downcase-symbols*
+                                 downcase
+                                 substring)
               :do (progn
-                    (if escape
-                        (format t "\"~a\"" substring)
+                    (if literal
+                        (format t "\"~a\"" string)
                         (progn
-                          (when auto-escape (princ #\"))
-                          (write-element (if *downcase-symbols* downcase substring))
-                          (when auto-escape (princ #\"))))
+                          (when escape (princ #\"))
+                          (write-element string)
+                          (when escape (princ #\"))))
                     (if (null dot)
                         (return)
                         (princ #\.))))))))

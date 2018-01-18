@@ -130,8 +130,12 @@
     <code>T</code>, in which case every name is escaped,
     <code>NIL</code>, in which case none is, or <code>:auto</code>,
     which causes only <a
-    href="http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html">reserved
+    href="http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html"> reserved
     words</a> to be escaped.. The default value is <code>:auto</code>.
+    Binding this variable to :literal, shall not only add quotations,
+    but also prevents any additional alteration beyond changing character
+    case in the name. This allows to use names that contains arythmetic operators
+    and other characters that are normally replacde by underscore.
     Be careful when binding this with <code>let</code> and such
     &#x2015; since a lot of SQL compilation tends to happen at
     compile-time, the result might not be what you expect.</p>
