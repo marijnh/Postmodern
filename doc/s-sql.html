@@ -872,6 +872,16 @@
     <pre class="code desc">
       (:create-role 'user23 :options 'SUPERUSER 'NOINHERIT 'LOGIN :password "mypassword" :connection-limit 100 :role 'users)</pre>
 
+    <p class="def"><span>sql-op</span> <a name="create-database"></a>:create-database (name)</p>
+
+    <p class="desc">Create a new database with the given name.</p>
+
+    <p class="def"><span>sql-op</span> <a name="drop-database"></a>:drop-database (name)</p>
+
+    <p class="desc">Drops the named database. You may optionally pass
+    <code>:if-exists</code> before the name to suppress the error
+    message.</p>
+    
     <h2><a name="index"></a>Symbol-index</h2>
 
     <ul class="symbol-index">
@@ -902,6 +912,7 @@
       <li><a href="#types">bytea</a></li>
       <li><a href="#types">bigint</a></li>
       <li><a href="#case">:case</a></li>
+      <li><a href="#create-database">:create-database</a></li>
       <li><a href="#create-index">:create-index</a></li>
       <li><a href="#create-role">:create-role</a></li>
       <li><a href="#create-sequence">:create-sequence</a></li>
@@ -912,6 +923,7 @@
       <li><a href="#desc">:desc</a></li>
       <li><a href="#dot">:dot</a></li>
       <li><a href="#types">double-precision</a></li>
+      <li><a href="#drop-database">:drop-database</a></li>
       <li><a href="#drop-index">:drop-index</a></li>
       <li><a href="#drop-sequence">:drop-sequence</a></li>
       <li><a href="#drop-table">:drop-table</a></li>
