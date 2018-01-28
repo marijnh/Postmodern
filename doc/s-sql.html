@@ -833,6 +833,55 @@
         optional <code>payload</code> string can be used to send
         additional event information to the listeners.</p>
 
+    <p class="def"><span>sql-op</span> <a
+    name="create-role"></a>:create-role (role &amp;rest args)</p>
+
+    <p class="desc">Create a new role (user). Following the role name are optional keywords arguments:</p>
+
+    <div class="desc"><dl>
+      <dt><code>:options</code></dt>
+      <dd>One or more of the no-parameter options to
+      PostgreSQL's <a href="https://www.postgresql.org/docs/current/static/sql-createrole.html">CREATE
+      ROLE</a> SQL command.</dd>
+      <dt><code>:password</code></dt>
+      <dd>Sets the role's password. (A password is only of use for
+      roles having the LOGIN attribute, but you can nonetheless define
+      one for roles without it.) If you do not plan to use password
+      authentication you can omit this option. If no password is
+      specified, the password will be set to null and password
+      authentication will always fail for that user. </dd>
+      <dt><code>:connection-limit</code></dt>
+      <dd>If role can log in, this specifies how many concurrent
+      connections the role can make. -1 (the default) means no
+      limit.</dd>
+      <dt><code>:valid-until</code></dt>
+      <dd>The <code>:valid-until</code> clause sets a date and time
+      after which the role's password is no longer valid. If this
+      clause is omitted the password will be valid for all time.</dd>
+      <dt><code>:role</code></dt>
+      <dd>Lists one or more existing roles which are automatically
+      added as members of the new role. (This in effect makes the new
+      role a “group”.)</dd>
+      <dt><code>:in-role</code></dt>
+      <dd>Lists one or more existing roles to which the new role will
+      be immediately added as a new member.</dd>
+    </dl></div>
+
+    <p class="desc">Here is an example of a <code>:create-role</code> form:</p>
+
+    <pre class="code desc">
+      (:create-role 'user23 :options 'SUPERUSER 'NOINHERIT 'LOGIN :password "mypassword" :connection-limit 100 :role 'users)</pre>
+
+    <p class="def"><span>sql-op</span> <a name="create-database"></a>:create-database (name)</p>
+
+    <p class="desc">Create a new database with the given name.</p>
+
+    <p class="def"><span>sql-op</span> <a name="drop-database"></a>:drop-database (name)</p>
+
+    <p class="desc">Drops the named database. You may optionally pass
+    <code>:if-exists</code> before the name to suppress the error
+    message.</p>
+    
     <h2><a name="index"></a>Symbol-index</h2>
 
     <ul class="symbol-index">
@@ -863,6 +912,7 @@
       <li><a href="#types">bytea</a></li>
       <li><a href="#types">bigint</a></li>
       <li><a href="#case">:case</a></li>
+      <li><a href="#create-database">:create-database</a></li>
       <li><a href="#create-index">:create-index</a></li>
       <li><a href="#create-sequence">:create-sequence</a></li>
       <li><a href="#create-table">:create-table</a></li>
@@ -872,6 +922,7 @@
       <li><a href="#desc">:desc</a></li>
       <li><a href="#dot">:dot</a></li>
       <li><a href="#types">double-precision</a></li>
+      <li><a href="#drop-database">:drop-database</a></li>
       <li><a href="#drop-index">:drop-index</a></li>
       <li><a href="#drop-sequence">:drop-sequence</a></li>
       <li><a href="#drop-table">:drop-table</a></li>
