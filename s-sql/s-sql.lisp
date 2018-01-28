@@ -918,3 +918,37 @@ to runtime. Used to create stored procedures."
       ,@(if (or (null do) (eq do :nothing))
             '(" NOTHING")
             `("(" ,@(sql-expand-list do "; ") ")")))))
+
+
+
+
+
+
+
+
+
+
+
+;;; https://www.postgresql.org/docs/current/static/sql-createrole.html
+(def-sql-op :create-role (name &rest args)
+  "Add a new role. A role is an entity that can own database objects
+and have database privileges; a role can be considered a “user”, a
+“group”, or both depending on how it is used.
+
+:options to create role do not require values, e.g. (:create-role
+'foo :options 'SUPERUSER 'NOINHERIT).
+
+connection-limit, valid-until, role, in-role, admin are keyword options that accept values."
+  (split-on-keywords ((options ? *) (password ?) (connection-limit ?) (valid-until ?) (role * ?) (in-role * ?) (admin * ?)) args
+		     `("CREATE ROLE "
+		       ,@(sql-expand name)
+		       ,@(when args `(" WITH "))
+		       ,@(when options `(,@(sql-expand-list options " ")))
+		       ,@(when password    `(" PASSWORD "    ,@(sql-expand (car password))))
+		       ,@(when connection-limit `(" CONNECTION LIMIT " ,@(sql-expand (car connection-limit))))
+		       ,@(when valid-until `(" VALID UNTIL " ,@(sql-expand (car valid-until))))
+		       ,@(when role        `(" ROLE "        ,@(sql-expand-list role) " "))
+		       ,@(when in-role     `(" IN ROLE "     ,@(sql-expand-list in-role) " "))
+		       ,@(when admin       `(" ADMIN "       ,@(sql-expand-list admin) " ")))))
+
+(def-drop-op :drop-role "ROLE")
