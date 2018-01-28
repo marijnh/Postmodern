@@ -921,7 +921,7 @@ test. "
             '(" NOTHING")
             `("(" ,@(sql-expand-list do "; ") ")")))))
 
-https://www.postgresql.org/docs/current/static/sql-createdatabase.html
+;;; https://www.postgresql.org/docs/current/static/sql-createdatabase.html
 (def-sql-op :create-database (name &rest args)
   "Create a database.
    If the database exists an error is raised."
