@@ -918,3 +918,25 @@ to runtime. Used to create stored procedures."
       ,@(if (or (null do) (eq do :nothing))
             '(" NOTHING")
             `("(" ,@(sql-expand-list do "; ") ")")))))
+
+;;; https://www.postgresql.org/docs/current/static/sql-createdatabase.html
+(def-sql-op :create-database (name &rest args)
+  "Create a database.
+   If the database exists an error is raised."
+  (split-on-keywords ((owner ?) (template ?) (encoding ?) (lc-collate ?) (lc-ctype ?) (tablespace ?)
+		      (allow-connections ?) (connection-limit ?) (is-template ?))
+      args
+    `("CREATE DATABASE "
+      ,@(sql-expand name)
+      ,@(when args `(" WITH"))
+      ,@(when owner    `(" OWNER "    ,@(sql-expand (car owner))))
+      ,@(when template `(" TEMPLATE " ,@(sql-expand (car template))))
+      ,@(when encoding `(" ENCODING " ,@(sql-expand (car encoding))))
+      ,@(when lc-collate `(" LC_COLLATE " ,@(sql-expand (car lc-collate))))
+      ,@(when lc-ctype `(" LC_CTYPE " ,@(sql-expand (car lc-ctype))))
+      ,@(when tablespace `(" TABLESPACE " ,@(sql-expand (car tablespace))))
+      ,@(when allow-connections `(" ALLOW_CONNECTIONS ",@(if (car is-template) `("TRUE") `("FALSE"))))
+      ,@(when connection-limit `(" CONNECTION LIMIT " ,@(sql-expand (car connection-limit))))
+      ,@(when is-template `(" IS_TEMPLATE " ,@(if (car is-template) `("TRUE") `("FALSE")))))))
+
+(def-drop-op :drop-database "DATABASE")
