@@ -602,6 +602,22 @@
     the <code>:insert-into</code> form. This will cause the query to
     return the values of these expressions as a single row.</p>
 
+    <p class="desc">In postgresql versions 9.5 and above, it is possible to add
+    <code>:on-conflict-do-nothing</code> (if the item already exists, do nothing),
+    or <code>:on-conflict-update</code> (if the item already exists, update the values)
+    followed by a list of field names which are checked for the conflict then using
+    <code>:update-set</code> followed by a list of field names or expressions following
+    the syntax for updating a table. This is sometimes called an "upsert".
+    Note that as per the postgresql sql documentation you must prepend the table name to the
+    column in the where statement if you are updating. </p>
+
+    <pre class="code desc">
+(query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
+                     :on-conflict-update 'column-A
+                     :update-set 'column-B '$2
+                     :where (:= 'test-table.column-A '$1)) "c" 37)</pre>
+
+
     <p class="def"><span>sql-op</span> <a name="update"></a>:update (table &amp;rest rest)</p>
 
     <p class="desc">Update values in a table. After the table name
