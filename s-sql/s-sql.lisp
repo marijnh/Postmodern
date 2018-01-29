@@ -654,7 +654,13 @@ to runtime. Used to create stored procedures."
     ") RETURNS " ,(to-type-name return-type) " LANGUAGE SQL " ,(symbol-name stability) " AS " ,(escape-sql-expression body)))
 
 (def-sql-op :insert-into (table &rest rest)
-  (split-on-keywords ((method *) (returning ? *)) (cons :method rest)
+  (split-on-keywords ((method *)
+                      (on-conflict-do-nothing ? -)
+                      (on-conflict-update ? *)
+                      (update-set ? *)
+                       (from * ?)
+                      (where ?) (returning ? *)) (cons :method rest)
+
   `("INSERT INTO " ,@(sql-expand table) " "
     ,@(cond ((eq (car method) :set)
              (cond ((oddp (length (cdr method)))
@@ -667,6 +673,15 @@ to runtime. Used to create stored procedures."
             ((and (not (cdr method)) (consp (car method)) (keywordp (caar method)))
              (sql-expand (car method)))
             (t (sql-error "No :set arguments or select operator passed to insert-into sql operator")))
+    ,@(when on-conflict-do-nothing
+        `(" ON CONFLICT DO NOTHING"))
+    ,@(when on-conflict-update
+        `(" ON CONFLICT (" ,@(sql-expand-list on-conflict-update) ") DO UPDATE SET "
+                                ,@(loop :for (field value) :on update-set :by #'cddr
+                                        :for first = t :then nil
+                                        :append `(,@(if first () '(", ")) ,@(sql-expand field) " = " ,@(sql-expand value)))
+                                ,@(if from (cons " FROM " (expand-joins from)))
+                                ,@(if where (cons " WHERE " (sql-expand (car where))) ())))
     ,@(when returning
         `(" RETURNING " ,@(sql-expand-list returning))))))
 
