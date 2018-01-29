@@ -99,14 +99,17 @@ and a - to indicate it does not take any elements."
 (defparameter *postgres-reserved-words*
   (let ((words (make-hash-table :test 'equal)))
     (dolist (word '("all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric" "authorization"
-                    "between" "binary" "both" "case" "cast" "check" "collate" "column" "constraint" "create"
-                    "cross" "default" "deferrable" "desc" "distinct" "do" "else" "end" "except" "false"
+                    "between" "binary" "both" "case" "cast" "check" "collate" "column" "concurrently"
+                    "constraint" "create" "cross" "current-catalog" "current-date" "current-role" "current-schema"
+                    "current-time" "current-timestamp" "current-user" "default" "deferrable"
+                    "desc" "distinct" "do" "else" "end" "except" "false" "fetch"
                     "for" "foreign" "freeze" "from" "full" "grant" "group" "having" "ilike" "in" "initially"
-                    "inner" "intersect" "into" "is" "isnull" "join" "leading" "left" "like" "limit"
+                    "inner" "intersect" "into" "is" "isnull" "join" "lateral" "leading" "left" "like" "limit"
                     "localtime" "localtimestamp" "natural" "new" "not" "notnull" "null" "off" "offset" "old"
                     "on" "only" "or" "order" "outer" "overlaps" "placing" "primary" "references" "returning"
-                    "right" "select" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
-                    "union" "unique" "user" "using" "verbose" "when" "where" "with" "for" "nowait" "share"))
+                    "right" "select" "session-user" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
+                    "union" "unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"
+                    "for" "nowait" "share"))
       (setf (gethash word words) t))
     words)
   "A set of all PostgreSQL's reserved words, for automatic escaping.")
