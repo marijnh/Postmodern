@@ -37,7 +37,7 @@
 
 (defsystem "postmodern/tests"
   :depends-on ("postmodern" "fiveam" "simple-date" "simple-date/postgres-glue"
-                            "cl-postgres/tests")
+                            "cl-postgres/tests" "s-sql/tests")
   :components
   ((:module "postmodern"
             :components ((:file "tests"))))
