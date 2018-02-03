@@ -120,15 +120,18 @@
 
 (test s-sql:sql-escape-string
   "Testing sql-escape-string"
-    (is (equal )))
+    (is (equal (sql-escape-string "Puss in 'Boots'")
+               "E'Puss in ''Boots'''")))
 
 (test sql-escape
   "Testing sql-escape"
-    (is (equal )))
+    (is (equal (sql-escape (/ 1 13))
+               "0.0769230769230769230769230769230769230")))
 
 (test sql-expand
   "Testing sql-expand"
-    (is (equal )))
+    (is (equal (sql-expand (/ 1 13))
+               "0.0769230769230769230769230769230769230")))
 
 (test sql-expand-list
   "Testing sql-expand-list"
@@ -278,57 +281,11 @@
         WHERE ((regions.id = countries.region_id) and (countries.name = ''US'')))'"))
   (is (equal (sql (:select (:+ 'id 12) 'name :from 'regions :where (:= 'name "South America")))
              "(SELECT (id + 12), name FROM regions WHERE (name = E'South America'))"))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
-  (is (equal ))
   )
+
+
+(test insert-into
+  "Testing Insert-into"
+  (is (equal (sql (:insert-into 'test :set 'id 15 'number-string "12" 'numeric-item 12.45
+                                'ratio-item (/ 1 13) 'created-at "2018-02-01"))))
+  "INSERT INTO test (id, number_string, numeric_item, ratio_item, created_at) VALUES (15, E'12', 12.45, 0.0769230769230769230769230769230769230, E'2018-02-01')")
