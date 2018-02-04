@@ -100,14 +100,17 @@ must appear in the order defined."
 (defparameter *postgres-reserved-words*
   (let ((words (make-hash-table :test 'equal)))
     (dolist (word '("all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric" "authorization"
-                    "between" "binary" "both" "case" "cast" "check" "collate" "column" "constraint" "create"
-                    "cross" "default" "deferrable" "desc" "distinct" "do" "else" "end" "except" "false"
+                    "between" "binary" "both" "case" "cast" "check" "collate" "column" "concurrently"
+                    "constraint" "create" "cross" "current-catalog" "current-date" "current-role" "current-schema"
+                    "current-time" "current-timestamp" "current-user" "default" "deferrable"
+                    "desc" "distinct" "do" "else" "end" "except" "false" "fetch"
                     "for" "foreign" "freeze" "from" "full" "grant" "group" "having" "ilike" "in" "initially"
-                    "inner" "intersect" "into" "is" "isnull" "join" "leading" "left" "like" "limit"
+                    "inner" "intersect" "into" "is" "isnull" "join" "lateral" "leading" "left" "like" "limit"
                     "localtime" "localtimestamp" "natural" "new" "not" "notnull" "null" "off" "offset" "old"
                     "on" "only" "or" "order" "outer" "overlaps" "placing" "primary" "references" "returning"
-                    "right" "select" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
-                    "union" "unique" "user" "using" "verbose" "when" "where" "with" "for" "nowait" "share"))
+                    "right" "select" "session-user" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
+                    "union" "unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"
+                    "for" "nowait" "share"))
       (setf (gethash word words) t))
     words)
   "A set of all PostgreSQL's reserved words, for automatic escaping.")
@@ -652,7 +655,13 @@ to runtime. Used to create stored procedures."
     ") RETURNS " ,(to-type-name return-type) " LANGUAGE SQL " ,(symbol-name stability) " AS " ,(escape-sql-expression body)))
 
 (def-sql-op :insert-into (table &rest rest)
-  (split-on-keywords ((method *) (returning ? *)) (cons :method rest)
+  (split-on-keywords ((method *)
+                      (on-conflict-do-nothing ? -)
+                      (on-conflict-update ? *)
+                      (update-set ? *)
+                       (from * ?)
+                      (where ?) (returning ? *)) (cons :method rest)
+
   `("INSERT INTO " ,@(sql-expand table) " "
     ,@(cond ((eq (car method) :set)
              (cond ((oddp (length (cdr method)))
@@ -665,6 +674,15 @@ to runtime. Used to create stored procedures."
             ((and (not (cdr method)) (consp (car method)) (keywordp (caar method)))
              (sql-expand (car method)))
             (t (sql-error "No :set arguments or select operator passed to insert-into sql operator")))
+    ,@(when on-conflict-do-nothing
+        `(" ON CONFLICT DO NOTHING"))
+    ,@(when on-conflict-update
+        `(" ON CONFLICT (" ,@(sql-expand-list on-conflict-update) ") DO UPDATE SET "
+                                ,@(loop :for (field value) :on update-set :by #'cddr
+                                        :for first = t :then nil
+                                        :append `(,@(if first () '(", ")) ,@(sql-expand field) " = " ,@(sql-expand value)))
+                                ,@(if from (cons " FROM " (expand-joins from)))
+                                ,@(if where (cons " WHERE " (sql-expand (car where))) ())))
     ,@(when returning
         `(" RETURNING " ,@(sql-expand-list returning))))))
 
@@ -966,4 +984,3 @@ connection-limit, valid-until, role, in-role, admin are keyword options that acc
 		       ,@(when admin       `(" ADMIN "       ,@(sql-expand-list admin) " ")))))
 
 (def-drop-op :drop-role "ROLE")
-
