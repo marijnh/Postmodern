@@ -810,7 +810,10 @@ to runtime. Used to create stored procedures."
      ,@(loop :for (option value) :on args :by #'cddr
              :append (case option
                        (:default `(" DEFAULT " ,@(sql-expand value)))
-                       (:primary-key (when value `(" PRIMARY KEY")))
+                       (:primary-key (cond ((and value `(stringp ,value)) `(" PRIMARY KEY " ,value))
+                                           (value `(" PRIMARY KEY "))
+                                           (t nil)))
+                       (:constraint (when value `(" CONSTRAINT " ,@(sql-expand value))))
                        (:unique (when value `(" UNIQUE")))
                        (:check `(" CHECK " ,@(sql-expand value)))
                        (:references
