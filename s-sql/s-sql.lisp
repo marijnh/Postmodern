@@ -318,6 +318,8 @@ to strings \(which will form an SQL query when concatenated)."
         :if rest :collect sep))
 
 (defun sql-expand-names (names &optional (sep ", "))
+  "Takes a list of elements (symbols or strings) and returns a separated list of strings.
+If the element is a cons, then "
   (loop :for (name . rest) :on names
         :if (consp name) :append (let ((*expand-runtime* t))
                                    (sql-expand name))
@@ -597,7 +599,7 @@ the proper SQL syntax for joining tables."
 
 (def-sql-op :select (&rest args)
   (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (where ?) (group-by * ?)
-                      (having ?) (window ?)) (cons :vars args)
+                      (having ?) (window ?))  (cons :vars args)
     `("(SELECT "
       ,@(if distinct '("DISTINCT "))
       ,@(if distinct-on `("DISTINCT ON (" ,@(sql-expand-list distinct-on) ") "))
