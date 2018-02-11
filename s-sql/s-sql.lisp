@@ -599,7 +599,7 @@ the proper SQL syntax for joining tables."
 
 (def-sql-op :select (&rest args)
   (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (where ?) (group-by * ?)
-                      (having ?) (window ?))  (cons :vars args)
+                      (having ?) (window ?)) (cons :vars args)
     `("(SELECT "
       ,@(if distinct '("DISTINCT "))
       ,@(if distinct-on `("DISTINCT ON (" ,@(sql-expand-list distinct-on) ") "))
