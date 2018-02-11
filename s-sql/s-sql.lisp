@@ -449,7 +449,7 @@ string."
 (register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :|@| :|\|&>| :|\|>>| :~= :|@>| :|@<|)
 
 ;; hstore operators
-(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :|<@| :#= :unary :%% :%#)
+(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :|<@| :|#=| :unary :%% :%#)
 
 (def-sql-op :|| (&rest args)
   `("(" ,@(sql-expand-list args " || ") ")"))
@@ -914,11 +914,7 @@ test. "
   (let ((strings (loop :for m :in members :collect (etypecase m (symbol (string-downcase m)) (string m)))))
     `("CREATE TYPE " ,@(sql-expand name) " AS ENUM (" ,@(sql-expand-list strings) ")")))
 
-<<<<<<< HEAD
-;;; https://www.postgresql.org/docs/current/static/sql-createdomain.html
-=======
 ;;; http://www.postgresql.org/docs/current/interactive/sql-createdomain.html
->>>>>>> upstream/master
 (def-sql-op :create-domain (name &rest args)
   (split-on-keywords ((type) (default ?) (constraint-name ?) (check ?)) args
     (multiple-value-bind (type may-be-null) (dissect-type (car type))
@@ -931,11 +927,7 @@ test. "
 (def-sql-op :drop-domain (name)
   `("DROP DOMAIN " ,@(sql-expand name)))
 
-<<<<<<< HEAD
 ;;; https://www.postgresql.org/docs/current/static/sql-createrule.html
-=======
-;http://www.postgresql.org/docs/current/static/sql-createrule.html
->>>>>>> upstream/master
 (def-sql-op :create-rule (name &rest rest)
   (split-on-keywords ((on) (to) (where ?) (instead ? -) (do ? *)) rest
     (check-type (car on) (member :select :insert :update :delete))

@@ -18,7 +18,10 @@ operating on a database assume this contains a connected database.")
          (let ((type (list database user password host port use-ssl)))
            (or (get-from-pool type)
                (let ((connection (open-database database user password host port use-ssl)))
-                 (change-class connection 'pooled-database-connection :pool-type type)
+		 #-genera (change-class connection 'pooled-database-connection :pool-type type)
+		 #+genera (progn
+			      (change-class connection 'pooled-database-connection)
+			      (setf (slot-value connection 'pool-type) type))
                  connection))))
         (t (open-database database user password host port use-ssl service))))
 

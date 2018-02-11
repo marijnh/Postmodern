@@ -6,7 +6,7 @@
 ;; Change this to manually turn threading support on or off.
 (eval-when (:compile-toplevel :load-toplevel :execute)
   #+(or allegro armedbear cmu corman (and digitool ccl-5.1)
-        ecl lispworks openmcl sbcl)
+        ecl lispworks openmcl sbcl genera)
   (pushnew :postmodern-thread-safe *features*)
 
   #+(or allegro clisp ecl lispworks mcl openmcl cmu sbcl)

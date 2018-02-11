@@ -12,7 +12,7 @@
 (defsystem "cl-postgres"
   :description "Low-level client library for PostgreSQL"
   :depends-on ("md5"
-               (:feature (:or :sbcl :allegro :ccl) "usocket")
+               (:feature (:or :sbcl :allegro :ccl :genera) "usocket")
                (:feature :sbcl (:require :sb-bsd-sockets)))
   :components
   ((:module "cl-postgres"
