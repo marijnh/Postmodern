@@ -161,6 +161,7 @@ escape-p is :auto and the name contains reserved words."
               :if dot :do (princ #\.)
               :else :do (return))))))
 
+
 (defun from-sql-name (str)
   "Convert a string to something that might have been its original
 lisp name \(does not work if this name contained non-alphanumeric
@@ -491,6 +492,9 @@ with a given arity."
 
 (def-sql-op :all (query)
   `("ALL " ,@(sql-expand query)))
+
+(def-sql-op :cast (query)
+  `("CAST(" ,@(sql-expand query) ")" ))
 
 (def-sql-op :exists (query)
   `("(EXISTS " ,@(sql-expand query) ")"))
