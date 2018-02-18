@@ -160,7 +160,21 @@ name."
       (signals error (sql-type-name 'array))
       (is (equal (sql-type-name 'array 'integer)
                  "INTEGER[]"))
-      (signals error (sql-type-name 'array "boulder")))
+      (signals error (sql-type-name 'array "boulder"))
+      (is (equal (s-sql::to-sql-name 'George-Harrison :literal)
+                 "\"GEORGE-HARRISON\""))
+      (is (equal (s-sql::to-sql-name "George-Harrison" :literal)
+                 "\"George-Harrison\""))
+      (is (equal (s-sql::to-sql-name "George/Harrison" :literal)
+                 "\"George/Harrison\""))
+      (is (equal (s-sql::to-sql-name "George/Harrison" :auto)
+                 "george_harrison"))
+      (is (equal (s-sql::to-sql-name "George_Harrison" :literal)
+                 "\"George_Harrison\""))
+      (is (equal (s-sql::to-sql-name "George\\Harrison" :literal)
+                 "\"George\\Harrison\""))
+      (is (equal (s-sql::to-sql-name "George-Harrison" :literal)
+                 "\"George-Harrison\"")))
 
 (test to-type-name
   "Testing to-type-name. Turn a Lisp type expression into an SQL typename."

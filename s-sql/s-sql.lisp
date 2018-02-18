@@ -124,7 +124,12 @@ only for reserved words.")
 (defun to-sql-name (name &optional (escape-p *escape-sql-names-p*))
   "Convert a symbol or string into a name that can be an sql table,
 column, or operation name. Add quotes when escape-p is true, or
-escape-p is :auto and the name contains reserved words."
+escape-p is :auto and the name contains reserved words.
+Quoted or delimited identifiers can be used by passing :literal as
+the value of escape-p. If escape-p is :literal, and the name is a string then
+the string is still escaped but the symbol or string is not downcased,
+regardless of the setting for *downcase-symbols* and the hyphen
+and forward slash characters are not replaced with underscores. "
   (declare (optimize (speed 3) (debug 0)))
   (let ((*print-pretty* nil)
         (name (string name)))
@@ -133,7 +138,8 @@ escape-p is :auto and the name contains reserved words."
                (let ((result (make-string (- to from))))
                  (loop :for i :from from :below to
                        :for p :from 0
-                       :do (setf (char result p) (if *downcase-symbols*
+                       :do (setf (char result p) (if (and *downcase-symbols*
+                                                          (not (eq escape-p :literal)))
                                                      (char-downcase (char str i))
                                                      (char str i))))
                  result))
@@ -149,7 +155,9 @@ escape-p is :auto and the name contains reserved words."
                           (every #'digit-char-p (the string (subseq str 1))))
                      (princ str)
                      (loop :for ch :of-type character :across str
-                           :do (if (or (eq ch #\*) (alphanumericp ch))
+                           :do (if (or (eq ch #\*)
+                                       (alphanumericp ch)
+                                       (eq escape-p :literal))
                                    (write-char ch)
                                    (write-char #\_))))
                  (when escape-p
@@ -160,7 +168,6 @@ escape-p is :auto and the name contains reserved words."
               :do (write-element (subseq-downcase name start (or dot (length name))))
               :if dot :do (princ #\.)
               :else :do (return))))))
-
 
 (defun from-sql-name (str)
   "Convert a string to something that might have been its original
