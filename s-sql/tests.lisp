@@ -26,10 +26,6 @@
    :description "Master suite for s-sql")
 
 (fiveam:in-suite s-sql-suite)
-;;;; CURRENT FAILURE POINTS: CAST, INTERVAL
-;;;; cast - SELECT 1 AS "real" UNION SELECT CAST('2.2' AS REAL); from https://www.postgresql.org/docs/current/static/typeconv-union-case.html
-
-
 #|
 (defmacro with-test-connection (&body body)
   `(let ((connection (apply 'open-database *test-connection*)))
