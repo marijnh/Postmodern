@@ -113,8 +113,10 @@ and a - to indicate it does not take any elements."
   "Testing to-sql-name. Convert a symbol or string into a name that can be an sql table,
 column, or operation name. Add quotes when escape-p is true, or
 escape-p is :auto and the name contains reserved words."
-  (is (equal (s-sql::to-sql-name "George-Harriet")
-             "george_harriet"))
+  (is (equal (s-sql::to-sql-name 'George-Harrison)
+             "george_harrison"))
+  (is (equal (s-sql::to-sql-name "George-Harrison")
+             "george_harrison"))
   (is (equal (s-sql::to-sql-name "George/Harriet")
              "george_harriet"))
   (is (equal (s-sql::to-sql-name "George Harriet")
@@ -359,6 +361,17 @@ To join the table films with the table distributors:"
                                           :on (:= 'recs.memid 'mems.recommendedby))
                                  'surname 'firstname))
                  "((SELECT DISTINCT recs.firstname AS firstname, recs.surname AS surname FROM cd.members AS mems INNER JOIN cd.members AS recs ON (recs.memid = mems.recommendedby)) ORDER BY surname, firstname)"))
+
+      ;; inner join with min from
+      (is (equal (sql (:order-by
+                       (:select 'mems.surname 'mems.firstname 'mems.memid (:as (:min 'bks.starttime) 'starttime)
+                                :from (:as 'cd.bookings 'bks)
+                                :inner-join (:as 'cd.members 'mems)
+                                :on (:= 'mems.memid 'bks.memid)
+                                :where (:>= 'starttime "2012-09-01")
+                                :group-by 'mems.surname 'mems.firstname 'mems.memid)
+                       'mems.memid))
+                 "((SELECT mems.surname, mems.firstname, mems.memid, min(bks.starttime) AS starttime FROM cd.bookings AS bks INNER JOIN cd.members AS mems ON (mems.memid = bks.memid) WHERE (starttime >= E'2012-09-01') GROUP BY mems.surname, mems.firstname, mems.memid) ORDER BY mems.memid)"))
 
 ;; Inner Join with using
       (is (equal (sql (:select '* :from 't1 :inner-join 't2 :using ('num)))
@@ -712,6 +725,72 @@ To sum the column len of all films and group the results by kind:"
 "((SELECT facs.facid, facs.name, trim(to_char((sum(bks.slots) / 2.0), E'9999999999999999D99')) AS total_hours FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (facs.facid = bks.facid) GROUP BY facs.facid, facs.name) ORDER BY facs.facid)"))
       )
 
+(test select-over
+  "Testing with over and partition by. From https://www.pgexercises.com/questions/aggregates/countmembers.html"
+  (is (equal (sql (:order-by
+                   (:select  (:over (:count '*)) 'firstname 'surname
+                             :from 'cd.members)
+                   'joindate))
+             "((SELECT (COUNT(*) OVER ()) , firstname, surname FROM cd.members) ORDER BY joindate)"))
+
+  (is (equal (sql (:order-by (:select (:over (:count '*)
+                                             (:partition-by (:date-trunc "month" 'joindate)))
+                                      'firstname 'surname
+                                      :from 'cd.members )
+                             'joindate))
+             "((SELECT (COUNT(*) OVER (PARTITION BY date_trunc(E'month', joindate))), firstname, surname FROM cd.members) ORDER BY joindate)"))
+;; From https://www.pgexercises.com/questions/aggregates/nummembers.html
+  (is (equal (sql (:order-by
+                   (:select (:over (:row-number) (:order-by 'joindate)) 'firstname 'surname
+                            :from 'cd.members)
+                   'joindate))
+             "((SELECT (row_number() OVER ( ORDER BY joindate)), firstname, surname FROM cd.members) ORDER BY joindate)"))
+
+  ;;From https://www.pgexercises.com/questions/aggregates/fachours4.html
+  (is (equal (sql (:select 'facid 'total
+                           :from (:as (:select 'facid (:as (:sum 'slots) 'total)
+                                               (:as (:over (:rank) (:order-by  (:desc (:sum 'slots))))
+                                                    'rank)
+                                               :from 'cd.bookings
+                                               :group-by 'facid)
+                                      'ranked)
+                           :where (:= 'rank 1)))
+             "(SELECT facid, total FROM (SELECT facid, sum(slots) AS total, (rank() OVER ( ORDER BY sum(slots) DESC)) AS rank FROM cd.bookings GROUP BY facid) AS ranked WHERE (rank = 1))"))
+
+  (is (equal (sql (:select 'facid 'total
+                           :from (:as (:select 'facid 'total  (:as (:over (:rank) (:order-by (:desc 'total)))
+                                                                   'rank)
+                                               :from (:as (:select 'facid (:as (:sum 'slots) 'total)
+                                                                   :from 'cd.bookings
+                                                                   :group-by 'facid) 'sumslots))
+                                      'ranked)
+                           :where (:= 'rank 1)))
+             "(SELECT facid, total FROM (SELECT facid, total, (rank() OVER ( ORDER BY total DESC)) AS rank FROM (SELECT facid, sum(slots) AS total FROM cd.bookings GROUP BY facid) AS sumslots) AS ranked WHERE (rank = 1))"))
+
+  ;; from https://www.pgexercises.com/questions/aggregates/classify.html
+  (is (equal (sql (:order-by (:select 'name (:as (:case ((:= 'class 1) "high")
+                                  ((:= 'class 2) "average")
+                                  (:else "low"))
+                                'revenue)
+                     :from (:as
+                            (:select (:as 'facs.name 'name)
+                                     (:as (:over (:ntile 3)
+                                                 (:order-by
+                                                  (:desc
+                                                   (:sum (:case
+                                                             ((:= 'memid 0) (:* 'slots 'facs.guestcost))
+                                                           (:else (:* 'slots 'membercost)))))))
+                                          'class)
+                                     :from (:as 'cd.bookings 'bks)
+                                     :inner-join (:as 'cd.facilities 'facs)
+                                     :on (:= 'bks.facid 'facs.facid)
+                                     :group-by 'facs.name)
+                            'subq))
+                      'class 'name))
+             "((SELECT name, CASE WHEN (class = 1) THEN E'high' WHEN (class = 2) THEN E'average' ELSE E'low' END AS revenue FROM (SELECT facs.name AS name, (ntile(3) OVER ( ORDER BY sum(CASE WHEN (memid = 0) THEN (slots * facs.guestcost) ELSE (slots * membercost) END) DESC)) AS class FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (bks.facid = facs.facid) GROUP BY facs.name) AS subq) ORDER BY class, name)")))
+
+
+
 
 (test select-with-recursive
       "Testing with recursive. When working with recursive queries it is important to be sure that the recursive part of the query will eventually return no tuples, or else the query will loop indefinitely. Sometimes, using UNION instead of UNION ALL can accomplish this by discarding rows that duplicate previous output rows. However, often a cycle does not involve output rows that are completely duplicate: it may be necessary to check just one or a few fields to see if the same point has been reached before. The standard method for handling such situations is to compute an array of the already-visited values."
@@ -956,26 +1035,26 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
 
 
 (test expand-table-column
-      "Testing expand-table-column DANGER NEED TO VALIDATE THAT THIS RESULT ACTUALLY IS VALID SQL"
+      "Testing expand-table-column"
       (is (equal (s-sql::expand-table-column 'code '(:type varchar :primary-key 't))
-                 '("code" " " "VARCHAR" " NOT NULL" " PRIMARY KEY " 'T)))
+                 '("code" " " "VARCHAR" " NOT NULL" " PRIMARY KEY ")))
       (is (equal (s-sql::expand-table-column 'code '(:type (or char db-null) :primary-key 't))
-                 '("code" " " "CHAR" " PRIMARY KEY " 'T)))
+                 '("code" " " "CHAR" " PRIMARY KEY ")))
       (is (equal (s-sql::expand-table-column 'code '(:type (or (string 5) db-null) :primary-key 't))
-                 '("code" " " "CHAR(5)" " PRIMARY KEY " 'T))))
+                 '("code" " " "CHAR(5)" " PRIMARY KEY "))))
 
 ;;; CREATE TABLE TESTS
 (test create-table-1
-      "DANGER DOES NOT WORK Testing Create Table. First example from https://www.postgresql.org/docs/10/static/sql-createtable.html
+      "Testing Create Table. First example from https://www.postgresql.org/docs/10/static/sql-createtable.html
  Right now we do not have the intervals fixed."
       (is (equal (s-sql:sql (:create-table films
-                             ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key t)
+                             ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key 't)
                               (title :type (varchar 40))
                               (did :type integer)
                               (date-prod :type (or date db-null))
                               (kind :type (or (varchar 10) db-null))
                               (len :type (or interval db-null)))))
-                 "CREATE TABLE films (code CHAR(5) CONSTRAINT firstkey PRIMARY KEY, title VARCHAR(40) NOT NULL, did INTEGER NOT NULL, date_prod DATE, kind VARCHAR(10), len INTERVAL)"))) ; Create table films and table distributors:
+                 "CREATE TABLE films (code CHAR(5) CONSTRAINT firstkey PRIMARY KEY , title VARCHAR(40) NOT NULL, did INTEGER NOT NULL, date_prod DATE, kind VARCHAR(10), len INTERVAL)"))) ; Create table films and table distributors:
 
 (test create-table-2
       "Second example from https://www.postgresql.org/docs/10/static/sql-createtable.html"
