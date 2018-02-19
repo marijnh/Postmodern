@@ -21,7 +21,7 @@ textual format for binary data."
   (flet ((fail ()
            (if *silently-truncate-rationals*
                (return-from write-rational-as-floating-point)
-               (error 'database-error :message 
+               (error 'database-error :message
                       (format nil "Can not write the rational ~a with only ~a digits"
                               number digit-length-limit)))))
     (multiple-value-bind (quotient remainder)
