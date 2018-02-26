@@ -212,7 +212,9 @@ to strings \(which will form an SQL query when concatenated)."
   "Testing sql-expand-list. Expand a list of elements, adding a separator in between them."
     (is (equal (s-sql::sql-expand-list '(george paul john "ringo" "mary-ann" carol-anne))
                '((SQL-ESCAPE GEORGE) ", " (SQL-ESCAPE PAUL) ", " (SQL-ESCAPE JOHN) ", "
-                "E'ringo'" ", " "E'mary-ann'" ", " (SQL-ESCAPE CAROL-ANNE)))))
+                 "E'ringo'" ", " "E'mary-ann'" ", " (SQL-ESCAPE CAROL-ANNE))))
+    (is (equal (s-sql::sql-expand-list '((:desc 'today) 'tomorrow 'yesterday))
+               ("today" " DESC" ", " "tomorrow" ", " "yesterday"))))
 
 (test sql-expand-names
   "Testing sql-expand-names"
