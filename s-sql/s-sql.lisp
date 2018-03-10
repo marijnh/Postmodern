@@ -500,6 +500,9 @@ with a given arity."
 (def-sql-op :all (query)
   `("ALL " ,@(sql-expand query)))
 
+(def-sql-op :array (query)
+  `("ARRAY(" ,@(sql-expand query) ")"))
+
 (def-sql-op :cast (query)
   `("CAST(" ,@(sql-expand query) ")" ))
 

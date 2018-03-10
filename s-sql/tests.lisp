@@ -188,7 +188,9 @@ name."
   "Testing sql-escape. Get the representation of a Lisp value so that it
 can be used in a query."
     (is (equal (sql-escape (/ 1 13))
-               "0.0769230769230769230769230769230769230")))
+               "0.0769230769230769230769230769230769230"))
+    (is (equal (sql-escape #("Baden-Wurttemberg" "Bavaria" "Berlin" "Brandenburg"))
+               "ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']")))
 
 (test sql-expand
   "Testing sql-expand. Compile-time expansion of forms into lists of stuff that evaluates
@@ -983,6 +985,41 @@ To sum the column len of all films and group the results by kind:"
                                                                    :from 'cd.bookings
                                                                    :where (:= 'memid 'mems.memid))))))
                  "DELETE FROM cd.members AS mems WHERE (not (EXISTS (SELECT 1 FROM cd.bookings WHERE (memid = mems.memid))))")))
+
+(test arrays
+      "Testing arrays"
+      (is (equal (sql (:create-table array-provinces ((name :type text) (provinces :type text[]))))
+                 "CREATE TABLE array_provinces (name TEXT NOT NULL, provinces TEXT[] NOT NULL)"))
+      (is (equal (sql (:insert-rows-into 'array-provinces
+                                         :columns 'name 'provinces
+                                         :values '(("Germany" #("Baden-Wurttemberg" "Bavaria" "Berlin" "Brandenburg"))
+                                                   ("Switzerland" #("Aargau" "Appenzell Ausserrhoden" "Basel-Landschaft" "Fribourg")))))
+                 "INSERT INTO array_provinces (name, provinces) VALUES (E'Germany', ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']), (E'Switzerland', ARRAY[E'Aargau', E'Appenzell Ausserrhoden', E'Basel-Landschaft', E'Fribourg'])"))
+      (is (equal (sql (:insert-into 'array-provinces :set 'name "Canada" 'provinces #("Alberta" "British Columbia" "Manitoba" "Ontario")))
+                 "INSERT INTO array_provinces (name, provinces) VALUES (E'Canada', ARRAY[E'Alberta', E'British Columbia', E'Manitoba', E'Ontario'])"))
+      (is (equal (sql (:select (:[] 'provinces 2) :from 'array-provinces))
+                 "(SELECT (provinces)[2] FROM array_provinces)"))
+      (is (equal (sql (:select (:[] 'provinces 1) :from 'array-provinces :where (:= 'name "Germany")))
+                 "(SELECT (provinces)[1] FROM array_provinces WHERE (name = E'Germany'))"))
+      (is (equal (sql (:select (:[] 'provinces 2) :from 'array-provinces :where (:= (:[] 'provinces 2) "Bavaria")))
+                 "(SELECT (provinces)[2] FROM array_provinces WHERE ((provinces)[2] = E'Bavaria'))"))
+      (is (equal (sql (:select '* :from 'array-provinces :where (:= (:[] 'provinces 2) "Bavaria")))
+                 "(SELECT * FROM array_provinces WHERE ((provinces)[2] = E'Bavaria'))"))
+
+
+      )
+
+(test multi-dimension-arrays
+      "Testing multi-dimensional arrays"
+      (is (equal (sql (:create-table sal-emp ((name :type text) (pay-by-quarter :type integer[]) (schedule :type  text[][]))))
+                 "CREATE TABLE sal_emp (name TEXT NOT NULL, pay_by_quarter INTEGER[] NOT NULL, schedule TEXT[][] NOT NULL)"))
+      (is (equal (sql (:insert-into 'sal-emp :set 'name "Bill" 'pay-by-quarter #(10000 10000 10000 10000) 'schedule #(#( "meeting" "lunch") #("training" "presentation"))))
+                 "INSERT INTO sal_emp (name, pay_by_quarter, schedule) VALUES (E'Bill', ARRAY[10000, 10000, 10000, 10000], ARRAY[ARRAY[E'meeting', E'lunch'], ARRAY[E'training', E'presentation']])"))
+      (is (equal (sql (:select 'name :from 'sal-emp :where (:<> (:[] 'pay-by-quarter 1) (:[] 'pay-by-quarter 2))))
+                 "(SELECT name FROM sal_emp WHERE ((pay_by_quarter)[1] <> (pay_by_quarter)[2]))"))
+      (is (equal (sql (:update 'sal-emp :set 'schedule #(#( "breakfast" "consulting") #("meeting" "lunch"))
+                               :where (:= 'name "Carol")))
+                 "UPDATE sal_emp SET schedule = ARRAY[ARRAY[E'breakfast', E'consulting'], ARRAY[E'meeting', E'lunch']] WHERE (name = E'Carol')")))
 
 
 #|
