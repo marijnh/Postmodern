@@ -44,112 +44,112 @@ This quickstart is intended to give you a feel of the way coding with Postmodern
 
 Assuming you have already installed it, first load and use the system:
 
-``` Common  Lisp
-(ql:quickload :postmodern)
-(use-package :postmodern)
+``` Common Lisp
+    (ql:quickload :postmodern)
+    (use-package :postmodern)
 ```
 
 If you have a PostgreSQL server running on localhost, with a database called 'testdb' on it, which is accessible for user 'foucault' with password 'surveiller', you can connect like this:
 
-``` Common  Lisp
-(connect-toplevel "testdb" "foucault" "surveiller" "localhost")
+``` Common Lisp
+    (connect-toplevel "testdb" "foucault" "surveiller" "localhost")
 ```
 
 Which will establish a connection to be used by all code, except for that wrapped in a with-connection form, which takes the same arguments but only establishes the connection locally.
 
 Now for a basic sanity test:
 
-``` Common  Lisp
-(query "select 22, 'Folie et déraison', 4.5")
-;; => ((22 "Folie et déraison" 9/2))
+``` Common Lisp
+    (query "select 22, 'Folie et déraison', 4.5")
+    ;; => ((22 "Folie et déraison" 9/2))
 ```
 
 That should work. query is the basic way to send queries to the database. The same query can be expressed like this:
 
-``` Common  Lisp
-(query (:select 22 "Folie et déraison" 4.5))
-;; => ((22 "Folie et déraison" 9/2))
+``` Common Lisp
+    (query (:select 22 "Folie et déraison" 4.5))
+    ;; => ((22 "Folie et déraison" 9/2))
 ```
 
 In many contexts, query strings and lists starting with keywords can be used interchangeably. The lists will be compiled to SQL. The S-SQL manual describes the syntax used by these expressions. Lisp values occurring in them are automatically escaped. In the above query, only constant values are used, but it is possible to transparently use run-time values as well:
 
-``` Common  Lisp
-(defun database-powered-addition (a b)
-  (query (:select (:+ a b)) :single))
-(database-powered-addition 1030 204)
-;; => 1234
+``` Common Lisp
+    (defun database-powered-addition (a b)
+      (query (:select (:+ a b)) :single))
+    (database-powered-addition 1030 204)
+    ;; => 1234
 ```
 
 That last argument, :single, indicates that we want the result not as a list of lists (for the result rows), but as a single value, since we know that we are only selecting one value. Some other options are :rows, :row, :column, :alists, and :none. Their precise effect is documented in the reference manual.
 
 You do not have to pull in the whole result of a query at once, you can also iterate over it with the doquery macro:
 
-``` Common  Lisp
-(doquery (:select 'x 'y :from 'some-imaginary-table) (x y)
-  (format t "On this row, x = ~A and y = ~A.~%" x y))
+``` Common Lisp
+    (doquery (:select 'x 'y :from 'some-imaginary-table) (x y)
+      (format t "On this row, x = ~A and y = ~A.~%" x y))
 ```
 
 This is what a database-access class looks like:
 
-``` Common  Lisp
-(defclass country ()
-  ((name :col-type string :initarg :name
-         :reader country-name)
-   (inhabitants :col-type integer :initarg :inhabitants
-                :accessor country-inhabitants)
-   (sovereign :col-type (or db-null string) :initarg :sovereign
-              :accessor country-sovereign))
-  (:metaclass dao-class)
-  (:keys name))
+``` Common Lisp
+        (defclass country ()
+          ((name :col-type string :initarg :name
+                 :reader country-name)
+          (inhabitants :col-type integer :initarg :inhabitants
+                 :accessor country-inhabitants)
+          (sovereign :col-type (or db-null string) :initarg :sovereign
+                     :accessor country-sovereign))
+      (:metaclass dao-class)
+      (:keys name))
 ```
 
 The above defines a class that can be used to handle records in a table with three columns: name, inhabitants, and sovereign. In simple cases, the information above is enough to define the table as well:
 
-``` Common  Lisp
-(dao-table-definition 'country)
-;; => "CREATE TABLE country (
-;;      name TEXT NOT NULL,
-;;      inhabitants INTEGER NOT NULL,
-;;      sovereign TEXT,
-;;      PRIMARY KEY (name))"
-(execute (dao-table-definition 'country))
+``` Common Lisp
+    (dao-table-definition 'country)
+    ;; => "CREATE TABLE country (
+    ;;      name TEXT NOT NULL,
+    ;;      inhabitants INTEGER NOT NULL,
+    ;;      sovereign TEXT,
+    ;;      PRIMARY KEY (name))"
+    (execute (dao-table-definition 'country))
 ```
 
 This defines our table in the database. execute works like query, but does not expect any results back.
 
 Let us add a few countries:
 
-``` Common  Lisp
-(insert-dao (make-instance 'country :name "The Netherlands"
-                                    :inhabitants 16800000
-                                    :sovereign "Willem-Alexander"))
-(insert-dao (make-instance 'country :name "Croatia"
-                                    :inhabitants 4400000))
+``` Common Lisp
+    (insert-dao (make-instance 'country :name "The Netherlands"
+                                        :inhabitants 16800000
+                                        :sovereign "Willem-Alexander"))
+    (insert-dao (make-instance 'country :name "Croatia"
+                                        :inhabitants 4400000))
 ```
 
 Then, to update Croatia's population, we could do this:
 
-``` Common  Lisp
-(let ((croatia (get-dao 'country "Croatia")))
-  (setf (country-inhabitants croatia) 4500000)
-  (update-dao croatia))
-(query (:select '* :from 'country))
-;; => (("The Netherlands" 16800000 "Willem-Alexander")
-;;     ("Croatia" 4500000 :NULL))
+``` Common Lisp
+    (let ((croatia (get-dao 'country "Croatia")))
+      (setf (country-inhabitants croatia) 4500000)
+      (update-dao croatia))
+    (query (:select '* :from 'country))
+    ;; => (("The Netherlands" 16800000 "Willem-Alexander")
+    ;;     ("Croatia" 4500000 :NULL))
 ```
 
 Next, to demonstrate a bit more of the S-SQL syntax, here is the query the utility function list-tables uses to get a list of the tables in a database:
 
-``` Common  Lisp
-(sql (:select 'relname :from 'pg-catalog.pg-class
-      :inner-join 'pg-catalog.pg-namespace :on (:= 'relnamespace 'pg-namespace.oid)
-      :where (:and (:= 'relkind "r")
-                   (:not-in 'nspname (:set "pg_catalog" "pg_toast"))
-                   (:pg-catalog.pg-table-is-visible 'pg-class.oid))))
-;; => "(SELECT relname FROM pg_catalog.pg_class
-;;      INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
-;;      WHERE ((relkind = 'r') and (nspname NOT IN ('pg_catalog', 'pg_toast'))
-;;             and pg_catalog.pg_table_is_visible(pg_class.oid)))"
+``` Common Lisp
+    (sql (:select 'relname :from 'pg-catalog.pg-class
+          :inner-join 'pg-catalog.pg-namespace :on (:= 'relnamespace 'pg-namespace.oid)
+          :where (:and (:= 'relkind "r")
+                       (:not-in 'nspname (:set "pg_catalog" "pg_toast"))
+                       (:pg-catalog.pg-table-is-visible 'pg-class.oid))))
+    ;; => "(SELECT relname FROM pg_catalog.pg_class
+    ;;      INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
+    ;;      WHERE ((relkind = 'r') and (nspname NOT IN ('pg_catalog', 'pg_toast'))
+    ;;             and pg_catalog.pg_table_is_visible(pg_class.oid)))"
 ```
 
 sql is a macro that will simply compile a query, it can be useful for seeing how your queries are expanded or if you want to do something unexpected with them.
@@ -158,37 +158,40 @@ As you can see, lists starting with keywords are used to express SQL commands an
 
 Finally, here is an example of the use of prepared statements:
 
-``` Common  Lisp
-(defprepared sovereign-of
-  (:select 'sovereign :from 'country :where (:= 'name '$1))
-  :single!)
-(sovereign-of "The Netherlands")
-;; => "Willem-Alexander"
+``` Common Lisp
+    (defprepared sovereign-of
+      (:select 'sovereign :from 'country :where (:= 'name '$1))
+      :single!)
+    (sovereign-of "The Netherlands")
+    ;; => "Willem-Alexander"
 ```
 
 The defprepared macro creates a function that takes the same amount of arguments as there are $X placeholders in the given query. The query will only be parsed and planned once (per database connection), which can be faster, especially for complex queries.
 
-``` Common  Lisp
-(disconnect-toplevel)
+``` Common Lisp
+    (disconnect-toplevel)
 ```
 
 ## Reference
 ---
 The reference manuals for the different components of Postmodern are kept in separate files. For using the library in the most straightforward way, you only really need to read the Postmodern reference and glance over the S-SQL reference. The simple-date reference explains the time-related data types included in Postmodern, and the CL-postgres reference might be useful if you just want a low-level library for talking to a PostgreSQL server.
 
-[Postmodern](http://marijnhaverbeke.nl/postmodern/postmodern.html)
-[S-SQL](http://marijnhaverbeke.nl/postmodern/s-sql.html)
-[Simple-date](http://marijnhaverbeke.nl/postmodern/simple-date.html)
-[CL-postgres](http://marijnhaverbeke.nl/postmodern/cl-postgres.html)
+- [Postmodern](http://marijnhaverbeke.nl/postmodern/postmodern.html)
+- [S-SQL](http://marijnhaverbeke.nl/postmodern/s-sql.html)
+- [Simple-date](http://marijnhaverbeke.nl/postmodern/simple-date.html)
+- [CL-postgres](http://marijnhaverbeke.nl/postmodern/cl-postgres.html)
+
 ## Caveats and to-dos
 ---
 ### Timezones
-[Simple-date](http://marijnhaverbeke.nl/postmodern/simple-date.html) has no concept of time zones. This means that using it is rather error-prone, and if you really need your time-keeping to be reliable and/or universal you should either not use the types it provides or think really hard about the way you handle time zones.
+It is important to understand how postgresql (not postmodern) handles timestamps and timestamps with time zones. Postgresql keeps everything in UTC, it does not store a timezone even in a timezone aware column. If you use a timestamp with timezone column, postgresql will calculate the UTC time and will normalize the timestamp data to UTC. When you later select the record, postgresql will look at the timezone for the postgresql session, retrieve the data and then provide the data recalculated from UTC to the timezone for that postgresql session. There is a good writeup of timezones at [http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html](http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html) and [http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/](http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/).
 
-Recently, a lot of work has been done on local-time, which solves the same problem as simple-date, but does understand time zones. The 1.0 repository currently has code for integration with CL-postgres, though this might not be stable yet.
+With that in mind, [Simple-date](http://marijnhaverbeke.nl/postmodern/simple-date.html) has no concept of time zones. If you really need your time-keeping to be reliable and/or universal you should either not use the types it provides or think really hard about the way you handle time zones.
+
+A lot of work has been done on [local-time](https://github.com/dlowe-net/local-time), which solves the same problem as simple-date, but does understand time zones. We are considering the best ways to make life easier for users of the two libraries.
 
 ### Portability
-The Lisp code in Postmodern is theoretically portable across implementations, and seems to work on all major ones. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).
+The Lisp code in Postmodern is theoretically portable across implementations, and seems to work on all major ones. Some work is currently being done to support Genera. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).
 
 The library will definitely not work for PostgreSQL versions older than 7.4 (it uses a client/server protocol that was introduced in that version). On versions prior to 8.1, retrieving date and time objects is broken, because their binary representation was changed. Part of the functionality of insert-dao (automatic defaulting of unbound slots) only works in PostgreSQL 8.2 and up.
 
@@ -197,6 +200,7 @@ It would be a nice feature if Postmodern could help you with defining your datab
 
 ## Resources
 ---
+- [Mailing List](https://mailman.common-lisp.net/listinfo/postmodern-devel)
 - [A collection of Postmodern examples](https://sites.google.com/site/sabraonthehill/postmodern-examples)
 - [The PostgreSQL manuals](http://www.postgresql.org/docs/current/static/index.html)
 - [The wire protocol Postmodern uses](http://www.postgresql.org/docs/current/static/protocol.html)
