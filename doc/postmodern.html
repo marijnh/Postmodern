@@ -613,7 +613,19 @@
     <p class="def">
         <span>function</span>
         <a name="schema-exist-p"></a>
-        schema-exist-p (schema)
+        schema-exist-p (schema) NOW DEPRECATED IN FAVOR OF schema-exists-p
+        which is more consistent with naming of other functions.
+        <br/>&#8594; boolean
+    </p>
+
+    <p class="desc">Tests the existence of a given <code>schema</code>.
+    Returns <code>T</code> if the schema exists or <code>NIL</code>
+    otherwise.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="schema-exists-p"></a>
+        schema-exists-p (schema)
         <br/>&#8594; boolean
     </p>
 

@@ -157,8 +157,12 @@
     used as an SQL identifier by converting all non-alphanumeric
     characters to underscores. Also lowercases the name to make
     queries look a bit less hideous. When a second argument is given,
-    this overrides the current value of <a
-    href="#*escape-sql-names-p*"><code>*escape-sql-names-p*</code></a>.</p>
+      this overrides the current value of
+      <a href="#*escape-sql-names-p*"><code>*escape-sql-names-p*</code></a>.
+      If the second argument is :literal then the name will be escaped only
+      and this will be a a delimited identifier or quoted identifier. See
+      <a href="https://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS."
+         sql-syntax-lexical in the PostgreSQL documentation</a></p>
 
     <p class="def">
       <span>function</span>
@@ -308,6 +312,21 @@
     using <code><a href="#sql-compile">sql-compile</a></code> or
     <code><a href="#sql-template">sql-template</a></code>, you can
     leave out the quotes entirely).</p>
+
+    <p class="def"><span>sql-op</span> <a name="cast"></a>:cast (query)</p>
+
+    <p class="desc">The CAST operator. Takes a query as an argument,
+      and returns the result explicitly cast by postgresql to a specific type.</p>
+
+    <pre class="code desc">
+(pomo:query (:select (:cast (:as "20" 'integer)))
+            :single)
+20
+
+(pomo:query (:union (:select (:as 1 'real))
+                    (:select (:cast (:as "2.2" 'real)))))
+((1.0) (2.2))
+    </pre>
 
     <p class="def"><span>sql-op</span> <a name="exists"></a>:exists (query)</p>
 
@@ -897,7 +916,7 @@
     <p class="desc">Drops the named database. You may optionally pass
     <code>:if-exists</code> before the name to suppress the error
     message.</p>
-    
+
     <h2><a name="index"></a>Symbol-index</h2>
 
     <ul class="symbol-index">

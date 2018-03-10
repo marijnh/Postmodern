@@ -15,6 +15,7 @@
 (defsystem "postmodern"
   :description "PostgreSQL programming API"
   :author "Marijn Haverbeke <marijnh@gmail.com>"
+  :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "BSD"
   :depends-on ("cl-postgres"
                "s-sql"
@@ -37,7 +38,7 @@
 
 (defsystem "postmodern/tests"
   :depends-on ("postmodern" "fiveam" "simple-date" "simple-date/postgres-glue"
-                            "cl-postgres/tests")
+                            "cl-postgres/tests" "s-sql/tests")
   :components
   ((:module "postmodern"
             :components ((:file "tests"))))

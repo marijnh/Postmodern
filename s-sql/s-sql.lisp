@@ -125,7 +125,12 @@ only for reserved words.")
 (defun to-sql-name (name &optional (escape-p *escape-sql-names-p*))
   "Convert a symbol or string into a name that can be a sql table,
 column, or operation name. Add quotes when escape-p is true, or
-escape-p is :auto and the name contains reserved words."
+escape-p is :auto and the name contains reserved words.
+Quoted or delimited identifiers can be used by passing :literal as
+the value of escape-p. If escape-p is :literal, and the name is a string then
+the string is still escaped but the symbol or string is not downcased,
+regardless of the setting for *downcase-symbols* and the hyphen
+and forward slash characters are not replaced with underscores. "
   (declare (optimize (speed 3) (debug 0)))
   (let ((*print-pretty* nil)
         (name (string name)))
@@ -134,7 +139,8 @@ escape-p is :auto and the name contains reserved words."
                (let ((result (make-string (- to from))))
                  (loop :for i :from from :below to
                        :for p :from 0
-                       :do (setf (char result p) (if *downcase-symbols*
+                       :do (setf (char result p) (if (and *downcase-symbols*
+                                                          (not (eq escape-p :literal)))
                                                      (char-downcase (char str i))
                                                      (char str i))))
                  result))
@@ -150,7 +156,9 @@ escape-p is :auto and the name contains reserved words."
                           (every #'digit-char-p (the string (subseq str 1))))
                      (princ str)
                      (loop :for ch :of-type character :across str
-                           :do (if (or (eq ch #\*) (alphanumericp ch))
+                           :do (if (or (eq ch #\*)
+                                       (alphanumericp ch)
+                                       (eq escape-p :literal))
                                    (write-char ch)
                                    (write-char #\_))))
                  (when escape-p
@@ -319,6 +327,8 @@ to strings (which will form a SQL query when concatenated)."
         :if rest :collect sep))
 
 (defun sql-expand-names (names &optional (sep ", "))
+  "Takes a list of elements (symbols or strings) and returns a separated list of strings.
+If the element is a cons, then "
   (loop :for (name . rest) :on names
         :if (consp name) :append (let ((*expand-runtime* t))
                                    (sql-expand name))
@@ -490,6 +500,9 @@ string."
 
 (def-sql-op :all (query)
   `("ALL " ,@(sql-expand query)))
+
+(def-sql-op :cast (query)
+  `("CAST(" ,@(sql-expand query) ")" ))
 
 (def-sql-op :exists (query)
   `("(EXISTS " ,@(sql-expand query) ")"))
@@ -812,7 +825,10 @@ test. "
      ,@(loop :for (option value) :on args :by #'cddr
              :append (case option
                        (:default `(" DEFAULT " ,@(sql-expand value)))
-                       (:primary-key (when value `(" PRIMARY KEY")))
+                       (:primary-key (cond ((and value (stringp value)) `(" PRIMARY KEY " ,value))
+                                           (value `(" PRIMARY KEY "))
+                                           (t nil)))
+                       (:constraint (when value `(" CONSTRAINT " ,@(sql-expand value))))
                        (:unique (when value `(" UNIQUE")))
                        (:check `(" CHECK " ,@(sql-expand value)))
                        (:references
