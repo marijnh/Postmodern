@@ -38,7 +38,6 @@ if strings-p is not true."
 (defun table-exists-p (table-name)
   "Check whether a table exists. Takes either a string or a symbol for
 the table name."
-;  (setf table-name (to-sql-name table-name))
   (query (make-exists-query "r" (to-sql-name table-name)) :single))
 
 (defun list-sequences (&optional strings-p)
@@ -61,7 +60,6 @@ if strings-p is not true."
 (defun view-exists-p (view)
   "Check whether a view exists. Takes either a string or a symbol for
 the view name."
-
   (query (make-exists-query "v" view) :single))
 
 (defun table-description (table-name &optional schema-name)
