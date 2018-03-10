@@ -142,9 +142,6 @@ giving them a database-connection-error superclass."))
 (deferror "58" system-error)
 (deferror "XX" internal-error)
 
-
-
-
 (defun get-error-type (code)
   (or (gethash code *error-table*)
       (and code (gethash (subseq code 0 2) *error-table*))
