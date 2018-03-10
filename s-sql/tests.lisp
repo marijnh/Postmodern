@@ -216,7 +216,7 @@ to strings \(which will form an SQL query when concatenated)."
                '((SQL-ESCAPE GEORGE) ", " (SQL-ESCAPE PAUL) ", " (SQL-ESCAPE JOHN) ", "
                  "E'ringo'" ", " "E'mary-ann'" ", " (SQL-ESCAPE CAROL-ANNE))))
     (is (equal (s-sql::sql-expand-list '((:desc 'today) 'tomorrow 'yesterday))
-               ("today" " DESC" ", " "tomorrow" ", " "yesterday"))))
+               '("today" " DESC" ", " "tomorrow" ", " "yesterday"))))
 
 (test sql-expand-names
   "Testing sql-expand-names"
