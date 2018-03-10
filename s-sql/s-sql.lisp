@@ -872,8 +872,8 @@ to runtime. Used to create stored procedures."
                                    (if (rest args)
                                        (drop-action (second args))
                                        "")))
-           (:rename-to (list "RENAME TO " (to-sql-name (first args))))
-           (:rename-column-to (list "RENAME COLUMN " (to-sql-name (first args)) " TO " (to-sql-name (second args))))
+           (:rename (list "RENAME TO " (to-sql-name (first args))))
+           (:rename-column (list "RENAME COLUMN " (to-sql-name (first args)) " TO " (to-sql-name (second args))))
            (t (sql-error "Unknown ALTER TABLE action ~A" action))))))
 
 (defun expand-create-index (name args)
