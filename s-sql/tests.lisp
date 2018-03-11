@@ -26,7 +26,7 @@
    :description "Master suite for s-sql")
 
 (fiveam:in-suite s-sql-suite)
-#|
+
 (defmacro with-test-connection (&body body)
   `(let ((connection (apply 'open-database *test-connection*)))
     (unwind-protect (progn ,@body)
@@ -47,7 +47,7 @@
       (is (database-open-p connection))))
 
 (test sql-error)
-|#
+
 (test strcat
   "Testing strcat. Concatenate a list of strings into a single one."
   (is (equal (s-sql::strcat '("a" "b")) "ab"))
@@ -1117,7 +1117,93 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
       (is (equal (sql (:create-table array_int ((vector :type (or int[][] db-null)))))
                  "CREATE TABLE array_int (vector INT[][])")))
 
+(test sequence-tests
+      "sequence testing"
+      (with-test-connection
 
+        (when (pomo:sequence-exists-p :knobo-seq)
+          (pomo:query (:drop-sequence :knobo-seq)))
+
+        ;; Setup new sequence
+        (is (eq
+             (pomo:query (:create-sequence :knobo-seq) :single)
+             nil))
+
+        ;; Test that we can set increment
+        (is (equal (sql (:alter-sequence :knobo-seq :increment 1))
+                   "ALTER SEQUENCE knobo_seq INCREMENT BY 1"))
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :increment 1))
+                nil))
+
+        ;; Test that currval is not yet set
+        (signals error (pomo:query (:select (:currval :knobo-seq)) :single))
+
+        ;; Test next value
+        (is (equal (pomo:query (:select (:nextval :knobo-seq)) :single)
+                   1))
+
+        ;; Test currval
+        (is (eq (pomo:query (:select (:currval :knobo-seq)) :single) 1))
+
+        ;; Test that we can set restart at 2
+        ;; TODO Test that when we restart, we get 2.
+        (is (equal (sql (:alter-sequence :knobo-seq :start 2))
+                   "ALTER SEQUENCE knobo_seq START 2"))
+
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :start 2))
+                nil))
+
+         ;; Testing that we can set max value
+        (is (equal (sql (:alter-sequence :knobo-seq :max-value 5))
+                   "ALTER SEQUENCE knobo_seq MAXVALUE 5"))
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :max-value 5))
+                nil))
+
+  ;; TODO: chech here that we don't can do next past max-value
+        (is (equal (pomo:query (:select (:nextval :knobo-seq)) :single) 2))
+
+        (is (equal (sql (:alter-sequence :knobo-seq :start 3))
+                   "ALTER SEQUENCE knobo_seq START 3"))
+
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :start 3))
+                nil))
+
+
+        ;; Test set min value
+        (is (equal (sql (:alter-sequence :knobo-seq :min-value 2))
+                   "ALTER SEQUENCE knobo_seq MINVALUE 2"))
+        (signals error (pomo:query (:alter-sequence :knobo-seq :min-value 3)))
+        (is (equal (pomo:query (:alter-sequence :knobo-seq :min-value 2)) nil))
+
+        ;; test remove max value
+        (is (equal (sql (:alter-sequence :knobo-seq :no-max))
+                   "ALTER SEQUENCE knobo_seq NO MAXVALUE"))
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :no-max))
+                nil))
+
+        ;; test remove min value
+        (is (equal (sql (:alter-sequence :knobo-seq :no-min))
+                   "ALTER SEQUENCE knobo_seq NO MINVALUE"))
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :no-min))
+                nil))
+
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :cycle))
+                nil))
+
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :no-cycle))
+                nil))
+
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :cache 1))
+                nil))
+
+        (unless (pomo:table-exists-p "seq-test")
+          (pomo:query (:create-table "seq-test" ((:id :type :int)))))
+
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :owned-by :seq-test.id))
+                nil))
+
+        ;; cleanup
+        (pomo:query (:drop-sequence :knobo-seq))))
 
 #|
 (test create-table-with-constraint
