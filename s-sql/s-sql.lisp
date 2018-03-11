@@ -81,12 +81,13 @@ errors."
       result)))
 
 (defmacro split-on-keywords (words form &body body)
-  "Used to handle arguments to some complex SQL operations. Arguments
+  "Handles arguments to some complex SQL operations. Arguments
 are divided by keywords, which are interned with the name of the
 non-keyword symbols in words, and bound to these symbols. After the
 naming symbols, a ? can be used to indicate this argument group is
 optional, an * to indicate it can consist of more than one element,
-and a - to indicate it does not take any elements."
+and a - to indicate it does not take any elements. When used, keywords
+must appear in the order defined."
   (let ((alist (gensym)))
     `(let* ((,alist (split-on-keywords% ',words ,form))
             ,@(mapcar (lambda (word)
@@ -122,7 +123,7 @@ only for reserved words.")
 (defvar *downcase-symbols* t)
 
 (defun to-sql-name (name &optional (escape-p *escape-sql-names-p*))
-  "Convert a symbol or string into a name that can be an sql table,
+  "Convert a symbol or string into a name that can be a sql table,
 column, or operation name. Add quotes when escape-p is true, or
 escape-p is :auto and the name contains reserved words.
 Quoted or delimited identifiers can be used by passing :literal as
@@ -171,8 +172,8 @@ and forward slash characters are not replaced with underscores. "
 
 (defun from-sql-name (str)
   "Convert a string to something that might have been its original
-lisp name \(does not work if this name contained non-alphanumeric
-characters other than #\-)"
+lisp name. Does not work if this name contains non-alphanumeric
+characters other than #\-"
   (intern (map 'string (lambda (x) (if (eq x #\_) #\- x))
                (if (eq (readtable-case *readtable*) :upcase) (string-upcase str) str))
           (find-package :keyword)))
@@ -200,7 +201,7 @@ characters other than #\-)"
 (deftype serial8 () 'integer)
 
 (deftype db-null ()
-  "Type for representing NULL values. Use like \(or integer db-null)
+  "Type for representing NULL values. Use like (or integer db-null)
 for declaring a type to be an integer that may be null."
   '(eql :null))
 
@@ -248,7 +249,7 @@ name.")
     (sql-error "Bad use of ~s." 'db-null)))
 
 (defun to-type-name (type)
-  "Turn a Lisp type expression into an SQL typename."
+  "Turn a Lisp type expression into a SQL typename."
   (if (listp type)
       (apply 'sql-type-name type)
       (sql-type-name type)))
@@ -302,8 +303,8 @@ can be used in a query.")
 (defparameter *expand-runtime* nil)
 
 (defun sql-expand (arg)
-  "Compile-time expansion of forms into lists of stuff that evaluates
-to strings \(which will form an SQL query when concatenated)."
+  "Compile-time expansion of forms into lists of stuff that evaluate
+to strings (which will form a SQL query when concatenated)."
   (cond ((and (consp arg) (keywordp (first arg)))
          (expand-sql-op (car arg) (cdr arg)))
         ((and (consp arg) (eq (first arg) 'quote))
@@ -320,7 +321,7 @@ to strings \(which will form an SQL query when concatenated)."
         (t (list (sql-escape arg)))))
 
 (defun sql-expand-list (elts &optional (sep ", "))
-  "Expand a list of elements, adding a separator in between them."
+  "Expand a list of elements, adding a separator between them."
   (loop :for (elt . rest) :on elts
         :append (sql-expand elt)
         :if rest :collect sep))
@@ -335,7 +336,7 @@ If the element is a cons, then "
         :if rest :collect sep))
 
 (defun reduce-strings (list)
-  "Join adjacent strings in a list, leave other values intact."
+  "Join adjacent strings in a list; leave other values intact."
   (let ((accum ())
         (span ""))
     (dolist (part list)
@@ -349,7 +350,7 @@ If the element is a cons, then "
     (nreverse accum)))
 
 (defmacro sql (form)
-  "Compile form to an sql expression as far as possible."
+  "Compile form to a sql expression as far as possible."
   (let ((list (reduce-strings (sql-expand form))))
     (if (= 1 (length list))
         (car list)
@@ -375,16 +376,16 @@ If the element is a cons, then "
   (list 'sql (read stream)))
 
 (defun enable-s-sql-syntax (&optional (char #\Q))
-  "Enable a syntactic shortcut #Q\(...) for \(sql \(...)). Optionally
+  "Enable a syntactic shortcut #Q(...) for (sql \(...)). Optionally
 takes a character to use instead of #\\Q."
   (set-dispatch-macro-character #\# char 's-sql-reader))
 
 ;; Definitions of sql operators
 
 (defgeneric expand-sql-op (op args)
-  (:documentation "For overriding expansion of operators. Default is
-to just place operator name in front, arguments between parentheses
-behind it.")
+  (:documentation "Override expansion of operators. Default is to just
+place operator name in front, arguments between parentheses and
+nothing behind it.")
   (:method ((op t) args)
     `(,(to-sql-name op) "(" ,@(sql-expand-list args) ")")))
 
@@ -428,15 +429,15 @@ with a given arity."
                            `("(" ,name " " ,@(sql-expand (car args)) ")"))))))))
 
 (defmacro register-sql-operators (arity &rest names)
-  "Define simple operators. Arity is one of :unary \(like
-  'not'), :unary-postfix \(the operator comes after the operand),
-  :n-ary \(like '+': the operator falls away when there is only one
-  operand), :2+-ary (like '=', which is meaningless for one operand),
-  or :n-or-unary (like '-', where the operator is kept in the unary
-  case). After the arity follow any number of operators, either just a
-  keyword, in which case the downcased symbol name is used as the
-  operator, or a two-element list containing a keyword and a name
-  string."
+  "Define simple operators. Arity is one of :unary (like
+'not'), :unary-postfix (the operator comes after the operand),
+:n-ary (like '+': the operator falls away when there is only one
+operand), :2+-ary (like '=', which is meaningless for one operand),
+or :n-or-unary (like '-', where the operator is kept in the unary
+case). After the arity follow any number of operators, either just a
+keyword, in which case the downcased symbol name is used as the
+operator, or a two-element list containing a keyword and a name
+string."
   (declare (type (member :unary :unary-postfix :n-ary :n-or-unary :2+-ary) arity))
   (flet ((define-op (name)
            (let ((name (if (listp name)
@@ -458,7 +459,7 @@ with a given arity."
 (register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :|@| :|\|&>| :|\|>>| :~= :|@>| :|@<|)
 
 ;; hstore operators
-(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :|<@| :#= :unary :%% :%#)
+(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :|<@| :|#=| :unary :%% :%#)
 
 (def-sql-op :|| (&rest args)
   `("(" ,@(sql-expand-list args " || ") ")"))
@@ -778,8 +779,9 @@ to runtime. Used to create stored procedures."
 ;; Data definition
 
 (defun dissect-type (type)
-  ;; todo: better documentation
-  "Return the type and whether it may be NULL."
+  "Return the type and whether it may be NULL. TYPE may be a list
+starting with 'or' containing two, and only two, potential types to
+test. "
   (if (and (consp type) (eq (car type) 'or))
       (if (and (member 'db-null type) (= (length type) 3))
           (if (eq (second type) 'db-null)
@@ -955,7 +957,7 @@ to runtime. Used to create stored procedures."
   (let ((strings (loop :for m :in members :collect (etypecase m (symbol (string-downcase m)) (string m)))))
     `("CREATE TYPE " ,@(sql-expand name) " AS ENUM (" ,@(sql-expand-list strings) ")")))
 
-;;; http://www.postgresql.org/docs/current/interactive/sql-createdomain.html
+;;; https://www.postgresql.org/docs/current/static/sql-createdomain.html
 (def-sql-op :create-domain (name &rest args)
   (split-on-keywords ((type) (default ?) (constraint-name ?) (check ?)) args
     (multiple-value-bind (type may-be-null) (dissect-type (car type))
@@ -968,7 +970,7 @@ to runtime. Used to create stored procedures."
 (def-sql-op :drop-domain (name)
   `("DROP DOMAIN " ,@(sql-expand name)))
 
-;http://www.postgresql.org/docs/current/static/sql-createrule.html
+;;; https://www.postgresql.org/docs/current/static/sql-createrule.html
 (def-sql-op :create-rule (name &rest rest)
   (split-on-keywords ((on) (to) (where ?) (instead ? -) (do ? *)) rest
     (check-type (car on) (member :select :insert :update :delete))
