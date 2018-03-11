@@ -22,10 +22,10 @@
 ;; refers to a valid postgresql database, then after loading the file,
 ;; run the tests with (fiveam:run! :cl-postgres)
 
-(fiveam:def-suite s-sql-suite
+(fiveam:def-suite :s-sql-suite
    :description "Master suite for s-sql")
 
-(fiveam:in-suite s-sql-suite)
+(fiveam:in-suite :s-sql-suite)
 
 (defmacro with-test-connection (&body body)
   `(let ((connection (apply 'open-database *test-connection*)))
