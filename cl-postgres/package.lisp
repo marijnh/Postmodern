@@ -63,9 +63,20 @@
   (:export #:admin-shutdown
            #:cannot-connect-now
            #:check-violation
+           #:columns-error
            #:crash-shutdown
            #:data-exception
            #:db-division-by-zero
+           #:undefined-column
+           #:duplicate-column
+           #:duplicate-cursor
+           #:duplicate-database
+           #:duplicate-function
+           #:duplicate-prepared-statement
+           #:duplicate-schema
+           #:duplicate-table
+           #:duplicate-alias
+           #:duplicate-object
            #:feature-not-supported
            #:floating-point-exception
            #:foreign-key-violation

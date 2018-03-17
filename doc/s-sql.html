@@ -799,6 +799,8 @@
         table.  <code>args</code> should be a constraint in the same
         form as for <a href="#table-constraints"><code>:create-table</code></a>.
         (This is for backwards-compatibility, you should use named constraints.)</dd>
+        <dt><code>:rename</code></dt><dd>Adds the ability to rename a table.</dd>
+        <dt><code>:rename-column</code></dt><dd>Adds the ability to rename a column of a table.</dd>
     </dl></div>
 
     <p class="desc">Here is an example using the table defined above:</p>
@@ -843,7 +845,27 @@
     increment min-value max-value start cache cycle)</p>
 
     <p class="desc">Create a sequence with the given name. The rest of
-    the arguments control the way the sequence selects values.</p>
+      the arguments control the way the sequence selects values.</p>
+
+    <p class="def"><span>sql-op</span> <a name="alter-sequence"></a>:alter-sequence (name)</p>
+
+    <p class="desc">Alters a sequence.
+  See <a href="https://www.postgresql.org/docs/current/static/sql-altersequence.html">Postgresql documentation for parameters.</a>
+      <div class="desc"><dl>
+          <dt><code>:increment</code></dt><dd>Sets the amount by which each subsequent increment will be increased.</dd>
+          <dt><code>:min-value</code></dt><dd></dd>
+          <dt><code>:max-value</code></dt><dd></dd>
+          <dt><code>:no-min</code></dt><dd></dd>
+          <dt><code>:no-max</code></dt><dd></dd>
+          <dt><code>:start</code></dt><dd></dd>
+          <dt><code>:restart</code></dt><dd></dd>
+          <dt><code>:cache</code></dt><dd></dd>
+          <dt><code>:cycle</code></dt><dd></dd>
+          <dt><code>:no-cycle</code></dt><dd></dd>
+          <dt><code>:owned-by</code></dt><dd></dd>
+    </dl></div>
+    <code>:if-exists</code> before the name to suppress the error
+    message.</p>
 
     <p class="def"><span>sql-op</span> <a
     name="drop-sequence"></a>:drop-sequence (name)</p>

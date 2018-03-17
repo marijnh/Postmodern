@@ -22,7 +22,8 @@
 ;; refers to a valid postgresql database, then after loading the file,
 ;; run the tests with (fiveam:run! :cl-postgres)
 
-(def-suite :cl-postgres)
+(def-suite :cl-postgres
+    :description "Test suite for cl-postgres")
 (in-suite :cl-postgres)
 
 (defmacro with-test-connection (&body body)
@@ -138,7 +139,7 @@
     (prepare-query connection "test" "select false")
     (is (equal (exec-prepared connection "test" '() 'list-row-reader)
                '((nil))))))
-      
+
 (test prepared-array-param
   (with-test-connection
     (prepare-query connection "test" "select ($1::int[])[2]")

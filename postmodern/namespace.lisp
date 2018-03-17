@@ -47,19 +47,22 @@
   SELECT schema_name FROM information_schema.schemata where schema_name !~ '(pg_*)|information_schema' ORDER BY schema_name ;"
   (query (:select 'schema_name
           :from 'information_schema.schemata
-          :where (:!~ 'schema_name "pg_.*|information_schema")) :column))
+          :where (:!~ 'schema_name "pg_.*|information_schema"))
+         :column))
 
 (defun schema-exist-p (name)
   "Predicate for schema existence. Deprecated for schema-exits-p."
   (query (:select (:exists (:select 'schema_name
                             :from 'information_schema.schemata
-                            :where (:= 'schema_name (to-sql-name name))))) :single))
+                            :where (:= 'schema_name (to-sql-name name)))))
+         :single))
 
 (defun schema-exists-p (name)
   "Predicate for schema existence. More consistent with naming scheme for other functions."
   (query (:select (:exists (:select 'schema_name
                             :from 'information_schema.schemata
-                            :where (:= 'schema_name (to-sql-name name)))))
+                            :where (:= 'schema_name '$1))))
+         (to-sql-name name)
          :single))
 
 (defun create-schema (schema)

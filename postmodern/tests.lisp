@@ -8,7 +8,8 @@
 ;; currently exists. Then after loading the file, run the tests with
 ;; (fiveam:run! :postmodern)
 
-(def-suite :postmodern)
+(def-suite :postmodern
+    :description "Test suite for postmodern subdirectory files")
 (in-suite :postmodern)
 
 (defmacro with-test-connection (&body body)

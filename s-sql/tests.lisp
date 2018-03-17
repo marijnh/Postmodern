@@ -1,53 +1,29 @@
 (defpackage :s-sql-tests
-  (:use :common-lisp :fiveam :s-sql :cl-postgres :cl-postgres-error)
-  (:export #:prompt-connection #:*test-connection* #:with-test-connection))
+  (:use :common-lisp :fiveam :s-sql :cl-postgres :cl-postgres-error :cl-postgres-tests :postmodern))
 
 (in-package :s-sql-tests)
-
-(defparameter *test-connection* '("test" "test" "" "localhost"))
-
-(defun prompt-connection (&optional (list *test-connection*))
-  (flet ((ask (name pos)
-           (format *query-io* "~a (enter to keep '~a'): " name (nth pos list))
-           (finish-output *query-io*)
-           (let ((answer (read-line *query-io*)))
-             (unless (string= answer "") (setf (nth pos list) answer)))))
-    (format *query-io* "~%To run this test, you must configure a database connection.~%")
-    (ask "Database name" 0)
-    (ask "User" 1)
-    (ask "Password" 2)
-    (ask "Hostname" 3)))
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
 ;; refers to a valid postgresql database, then after loading the file,
 ;; run the tests with (fiveam:run! :cl-postgres)
 
-(fiveam:def-suite s-sql-suite
+(fiveam:def-suite :s-sql-suite
    :description "Master suite for s-sql")
 
-(fiveam:in-suite s-sql-suite)
-#|
+(fiveam:in-suite :s-sql-suite)
+
 (defmacro with-test-connection (&body body)
-  `(let ((connection (apply 'open-database *test-connection*)))
-    (unwind-protect (progn ,@body)
-      (close-database connection))))
+  `(postmodern:with-connection *test-connection* ,@body))
 
-(defmacro with-default-readtable (&body body)
-  `(let ((*sql-readtable* (default-sql-readtable)))
-    ,@body))
-
-(defmacro with-rollbacked-transaction (&body body)
-  `(progn
-    (exec-query connection "start transaction")
-    (unwind-protect (progn ,@body)
-      (exec-query connection "rollback"))))
+(defmacro protect (&body body)
+  `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
 
 (test connect-sanity
   (with-test-connection
-      (is (database-open-p connection))))
+      (is (not (null *database*)))))
 
 (test sql-error)
-|#
+
 (test strcat
   "Testing strcat. Concatenate a list of strings into a single one."
   (is (equal (s-sql::strcat '("a" "b")) "ab"))
@@ -188,7 +164,9 @@ name."
   "Testing sql-escape. Get the representation of a Lisp value so that it
 can be used in a query."
     (is (equal (sql-escape (/ 1 13))
-               "0.0769230769230769230769230769230769230")))
+               "0.0769230769230769230769230769230769230"))
+    (is (equal (sql-escape #("Baden-Wurttemberg" "Bavaria" "Berlin" "Brandenburg"))
+               "ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']")))
 
 (test sql-expand
   "Testing sql-expand. Compile-time expansion of forms into lists of stuff that evaluates
@@ -211,6 +189,11 @@ to strings \(which will form an SQL query when concatenated)."
 (test sql-expand-list
   "Testing sql-expand-list. Expand a list of elements, adding a separator in between them."
     (is (equal (s-sql::sql-expand-list '(george paul john "ringo" "mary-ann" carol-anne))
+               '((SQL-ESCAPE GEORGE) ", " (SQL-ESCAPE PAUL) ", " (SQL-ESCAPE JOHN) ", "
+                 "E'ringo'" ", " "E'mary-ann'" ", " (SQL-ESCAPE CAROL-ANNE))))
+    (is (equal (s-sql::sql-expand-list '((:desc 'today) 'tomorrow 'yesterday))
+               '("today" " DESC" ", " "tomorrow" ", " "yesterday")))
+    (is (equal (s-sql::sql-expand-list (remove nil '(george paul john "ringo" "mary-ann" nil carol-anne nil)))
                '((SQL-ESCAPE GEORGE) ", " (SQL-ESCAPE PAUL) ", " (SQL-ESCAPE JOHN) ", "
                 "E'ringo'" ", " "E'mary-ann'" ", " (SQL-ESCAPE CAROL-ANNE)))))
 
@@ -250,14 +233,6 @@ to strings \(which will form an SQL query when concatenated)."
       "Testing expand-sql-op"
       (is (equal (s-sql::expand-sql-op :max '(1 2 3))
                  '("max" "(" "1" ", " "2" ", " "3" ")"))))
-#|
-(test def-sql-op-macro
-      "Testing def-sql-op-macro"
-      (is (equal (macroexpand-1 '(s-sql::def-sql-op :|>^| (&rest args)
-                                  `("(" ,@(args) ")")))
-                 '(DEFMETHOD S-SQL::EXPAND-SQL-OP ((OP (EQL :>^)) #:G802)
-                   (DESTRUCTURING-BIND (&REST ARGS) #:G802 `("(" ,@(ARGS) ")"))))))
-|#
 (test make-expander
       "Testing make-expander"
       (is (equal (funcall (s-sql::make-expander :unary "unary1") '("like"))
@@ -982,6 +957,41 @@ To sum the column len of all films and group the results by kind:"
                                                                    :where (:= 'memid 'mems.memid))))))
                  "DELETE FROM cd.members AS mems WHERE (not (EXISTS (SELECT 1 FROM cd.bookings WHERE (memid = mems.memid))))")))
 
+(test arrays
+      "Testing arrays"
+      (is (equal (sql (:create-table array-provinces ((name :type text) (provinces :type text[]))))
+                 "CREATE TABLE array_provinces (name TEXT NOT NULL, provinces TEXT[] NOT NULL)"))
+      (is (equal (sql (:insert-rows-into 'array-provinces
+                                         :columns 'name 'provinces
+                                         :values '(("Germany" #("Baden-Wurttemberg" "Bavaria" "Berlin" "Brandenburg"))
+                                                   ("Switzerland" #("Aargau" "Appenzell Ausserrhoden" "Basel-Landschaft" "Fribourg")))))
+                 "INSERT INTO array_provinces (name, provinces) VALUES (E'Germany', ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']), (E'Switzerland', ARRAY[E'Aargau', E'Appenzell Ausserrhoden', E'Basel-Landschaft', E'Fribourg'])"))
+      (is (equal (sql (:insert-into 'array-provinces :set 'name "Canada" 'provinces #("Alberta" "British Columbia" "Manitoba" "Ontario")))
+                 "INSERT INTO array_provinces (name, provinces) VALUES (E'Canada', ARRAY[E'Alberta', E'British Columbia', E'Manitoba', E'Ontario'])"))
+      (is (equal (sql (:select (:[] 'provinces 2) :from 'array-provinces))
+                 "(SELECT (provinces)[2] FROM array_provinces)"))
+      (is (equal (sql (:select (:[] 'provinces 1) :from 'array-provinces :where (:= 'name "Germany")))
+                 "(SELECT (provinces)[1] FROM array_provinces WHERE (name = E'Germany'))"))
+      (is (equal (sql (:select (:[] 'provinces 2) :from 'array-provinces :where (:= (:[] 'provinces 2) "Bavaria")))
+                 "(SELECT (provinces)[2] FROM array_provinces WHERE ((provinces)[2] = E'Bavaria'))"))
+      (is (equal (sql (:select '* :from 'array-provinces :where (:= (:[] 'provinces 2) "Bavaria")))
+                 "(SELECT * FROM array_provinces WHERE ((provinces)[2] = E'Bavaria'))"))
+
+
+      )
+
+(test multi-dimension-arrays
+      "Testing multi-dimensional arrays"
+      (is (equal (sql (:create-table sal-emp ((name :type text) (pay-by-quarter :type integer[]) (schedule :type  text[][]))))
+                 "CREATE TABLE sal_emp (name TEXT NOT NULL, pay_by_quarter INTEGER[] NOT NULL, schedule TEXT[][] NOT NULL)"))
+      (is (equal (sql (:insert-into 'sal-emp :set 'name "Bill" 'pay-by-quarter #(10000 10000 10000 10000) 'schedule #(#( "meeting" "lunch") #("training" "presentation"))))
+                 "INSERT INTO sal_emp (name, pay_by_quarter, schedule) VALUES (E'Bill', ARRAY[10000, 10000, 10000, 10000], ARRAY[ARRAY[E'meeting', E'lunch'], ARRAY[E'training', E'presentation']])"))
+      (is (equal (sql (:select 'name :from 'sal-emp :where (:<> (:[] 'pay-by-quarter 1) (:[] 'pay-by-quarter 2))))
+                 "(SELECT name FROM sal_emp WHERE ((pay_by_quarter)[1] <> (pay_by_quarter)[2]))"))
+      (is (equal (sql (:update 'sal-emp :set 'schedule #(#( "breakfast" "consulting") #("meeting" "lunch"))
+                               :where (:= 'name "Carol")))
+                 "UPDATE sal_emp SET schedule = ARRAY[ARRAY[E'breakfast', E'consulting'], ARRAY[E'meeting', E'lunch']] WHERE (name = E'Carol')")))
+
 
 #|
 
@@ -1080,7 +1090,7 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
 
 (test create-table-full-1
       "Test :create-table with extended table constraints."
-      (is equal (s-sql:sql (:create-table faa.d_airports
+      (is (equal (s-sql:sql (:create-table faa.d_airports
 			    ((AirportID :type integer)
 			     (Name      :type text)
 			     (City      :type text)
@@ -1096,9 +1106,94 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
 			    ()
 			    ((:distributed-by (airport_code)))))
 	  "CREATE TABLE faa.d_airports (airportid INTEGER NOT NULL, name TEXT NOT NULL, city TEXT NOT NULL, country TEXT NOT NULL, airport_code TEXT NOT NULL, icoa_code TEXT NOT NULL, latitude FLOAT8 NOT NULL, longitude FLOAT8 NOT NULL, altitud
-e FLOAT8 NOT NULL, timezoneoffset REAL NOT NULL, dst_flag TEXT NOT NULL, tz TEXT NOT NULL) DISTRIBUTED BY (airport_code) "))
+e FLOAT8 NOT NULL, timezoneoffset REAL NOT NULL, dst_flag TEXT NOT NULL, tz TEXT NOT NULL) DISTRIBUTED BY (airport_code) ")))
+
+(test sequence-tests
+      "sequence testing"
+      (with-test-connection
+        (when (pomo:sequence-exists-p :knobo-seq)
+          (pomo:query (:drop-sequence :knobo-seq)))
+
+        ;; Setup new sequence
+        (is (eq
+             (pomo:query (:create-sequence :knobo-seq) :single)
+             nil))
+
+        ;; Test that we can set increment
+        (is (equal (sql (:alter-sequence :knobo-seq :increment 1))
+                   "ALTER SEQUENCE knobo_seq INCREMENT BY 1"))
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :increment 1))
+                nil))
+
+        ;; Test that currval is not yet set
+        (signals error (pomo:query (:select (:currval :knobo-seq)) :single))
+
+        ;; Test next value
+        (is (equal (pomo:query (:select (:nextval :knobo-seq)) :single)
+                   1))
+
+        ;; Test currval
+        (is (eq (pomo:query (:select (:currval :knobo-seq)) :single) 1))
+
+        ;; Test that we can set restart at 2
+        ;; TODO Test that when we restart, we get 2.
+        (is (equal (sql (:alter-sequence :knobo-seq :start 2))
+                   "ALTER SEQUENCE knobo_seq START 2"))
+
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :start 2))
+                nil))
+
+         ;; Testing that we can set max value
+        (is (equal (sql (:alter-sequence :knobo-seq :max-value 5))
+                   "ALTER SEQUENCE knobo_seq MAXVALUE 5"))
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :max-value 5))
+                nil))
+
+  ;; TODO: chech here that we don't can do next past max-value
+        (is (equal (pomo:query (:select (:nextval :knobo-seq)) :single) 2))
+
+        (is (equal (sql (:alter-sequence :knobo-seq :start 3))
+                   "ALTER SEQUENCE knobo_seq START 3"))
+
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :start 3))
+                nil))
 
 
+        ;; Test set min value
+        (is (equal (sql (:alter-sequence :knobo-seq :min-value 2))
+                   "ALTER SEQUENCE knobo_seq MINVALUE 2"))
+        (signals error (pomo:query (:alter-sequence :knobo-seq :min-value 3)))
+        (is (equal (pomo:query (:alter-sequence :knobo-seq :min-value 2)) nil))
+
+        ;; test remove max value
+        (is (equal (sql (:alter-sequence :knobo-seq :no-max))
+                   "ALTER SEQUENCE knobo_seq NO MAXVALUE"))
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :no-max))
+                nil))
+
+        ;; test remove min value
+        (is (equal (sql (:alter-sequence :knobo-seq :no-min))
+                   "ALTER SEQUENCE knobo_seq NO MINVALUE"))
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :no-min))
+                nil))
+
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :cycle))
+                nil))
+
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :no-cycle))
+                nil))
+
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :cache 1))
+                nil))
+
+        (unless (pomo:table-exists-p "seq-test")
+          (pomo:query (:create-table "seq-test" ((:id :type :int)))))
+
+        (is (eq (pomo:query (:alter-sequence :knobo-seq :owned-by :seq-test.id))
+                nil))
+
+        ;; cleanup
+        (pomo:query (:drop-sequence :knobo-seq))))
 
 #|
 (test create-table-with-constraint

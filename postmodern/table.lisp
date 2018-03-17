@@ -315,11 +315,17 @@ violation, update it instead."
   (handler-case (progn (insert-dao dao) t)
     (cl-postgres-error:unique-violation ()
       (update-dao dao)
+      nil)
+    (cl-postgres-error:columns-error ()
+      (update-dao dao)
       nil)))
 
 (defun save-dao/transaction (dao)
   (handler-case (with-savepoint save-dao/transaction (insert-dao dao) t)
     (cl-postgres-error:unique-violation ()
+      (update-dao dao)
+      nil)
+    (cl-postgres-error:columns-error ()
       (update-dao dao)
       nil)))
 
