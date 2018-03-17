@@ -900,7 +900,26 @@ test. "
                                    (if (rest args)
                                        (drop-action (second args))
                                        "")))
+           (:rename (list "RENAME TO " (to-sql-name (first args))))
+           (:rename-column (list "RENAME COLUMN " (to-sql-name (first args)) " TO " (to-sql-name (second args))))
            (t (sql-error "Unknown ALTER TABLE action ~A" action))))))
+
+(def-sql-op :alter-sequence (name action &optional argument)
+  `("ALTER SEQUENCE "
+    ,(to-sql-name name)
+    ,@(case action
+        (:increment `(" INCREMENT BY " ,(write-to-string argument)))
+        (:min-value `(" MINVALUE " ,(write-to-string argument)))
+        (:max-value `(" MAXVALUE " ,(write-to-string argument)))
+        (:no-min `(" NO MINVALUE"))
+        (:no-max `(" NO MAXVALUE"))
+        (:start `(" START " ,(write-to-string argument)))
+        (:restart `(" RESTART " ,(write-to-string argument)))
+        (:cache `(" CACHE " ,(write-to-string argument)))
+        (:cycle `(" CYCLE"))
+        (:no-cycle `(" NO CYCLE"))
+        (:owned-by `(" OWNED BY " ,(to-sql-name  argument)))
+        (t (sql-error "Unknown ALTER SEQUENCE action ~A" action)))))
 
 (defun expand-create-index (name args)
   (split-on-keywords ((on) (using ?) (fields *) (where ?)) args
