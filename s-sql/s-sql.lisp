@@ -971,7 +971,7 @@ test. "
       ,@(when lc-collate `(" LC_COLLATE " ,@(sql-expand (car lc-collate))))
       ,@(when lc-ctype `(" LC_CTYPE " ,@(sql-expand (car lc-ctype))))
       ,@(when tablespace `(" TABLESPACE " ,@(sql-expand (car tablespace))))
-      ,@(when allow-connections `(" ALLOW_CONNECTIONS ",@(if (car is-template) `("TRUE") `("FALSE"))))
+      ,@(when allow-connections `(" ALLOW_CONNECTIONS ",@(if (car allow-connections) `("TRUE") `("FALSE"))))
       ,@(when connection-limit `(" CONNECTION LIMIT " ,@(sql-expand (car connection-limit))))
       ,@(when is-template `(" IS_TEMPLATE " ,@(if (car is-template) `("TRUE") `("FALSE")))))))
 
@@ -1000,3 +1000,31 @@ connection-limit, valid-until, role, in-role, admin are keyword options that acc
 		       ,@(when admin       `(" ADMIN "       ,@(sql-expand-list admin) " ")))))
 
 (def-drop-op :drop-role "ROLE")
+
+
+;;; https://www.postgresql.org/docs/current/static/sql-copy.html
+(def-sql-op :copy (table &rest args)
+  "Move data between Postgres tables and filesystem files."
+  (split-on-keywords ((columns ? *) (from ?) (to ?) (on-segment ?) (binary ?) (oids ?) (header ?) (delimiter ?) (null ?)
+		      (escape ?) (newline ?) (csv ?) (quote ?) (force-not-null ? *) (fill-missing-fields ?)
+		      (log-errors ?) (segment-reject-limit ? *)) args
+  `("COPY "
+      ,@(sql-expand table) " "
+      ,@(when columns `("(" ,@(sql-expand-list columns) ") "))
+      ,@(when from    `("FROM " ,@(sql-expand (car from)) " "))
+      ,@(when to      `("TO " ,@(sql-expand (car from)) " "))
+      ,@(when on-segment `("ON SEGMENT "))
+      ,@(when binary     `("BINARY "))
+      ,@(when oids       `("OIDS "))
+      ,@(when header     `("HEADER "))
+      ,@(when delimiter  `("DELIMITER " ,@(sql-expand (car delimiter)) " "))
+      ,@(when null       `("NULL "      ,@(sql-expand (car null)) " "))
+      ,@(when escape     `("ESCAPE "    ,@(sql-expand (car escape)) " "))
+      ,@(when newline    `("NEWLINE "   ,@(sql-expand (car newline)) " "))
+      ,@(when csv        `("CSV "))
+      ,@(when quote      `("QUOTE "     ,@(sql-expand (car quote))))
+      ,@(when force-not-null       `("FORCE NOT NULL " ,@(sql-expand-list force-not-null) " "))
+      ,@(when fill-missing-fields  `("FILL MISSING FIELDS "))
+      ,@(when log-errors           `("LOG ERRORS "))
+      ,@(when segment-reject-limit `("SEGMENT REJECT LIMIT " ,@(sql-expand (car segment-reject-limit)) " "
+							     ,@(if (second segment-reject-limit) `(,@(sql-expand (second segment-reject-limit)))))))))
