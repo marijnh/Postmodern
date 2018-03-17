@@ -812,6 +812,10 @@ test. "
     (:check `("CHECK " ,@(sql-expand (car args))))
     (:primary-key `("PRIMARY KEY (" ,@(sql-expand-names args) ")"))
     (:unique `("UNIQUE (" ,@(sql-expand-names args) ")"))
+    (:deferrable `("DEFERRABLE "))
+    (:not-deferrable `("NOT DEFERRABLE "))
+    (:initially-deferred `("INITIALLY DEFERRED "))
+    (:initially-immediate `("INITIALLY IMMEDIATE "))
     (:foreign-key
      (destructuring-bind (columns target &optional (on-delete :restrict) (on-update :restrict)) args
        `("FOREIGN KEY (" ,@(sql-expand-names columns) ")"
