@@ -12,12 +12,6 @@
 
 (fiveam:in-suite :s-sql-suite)
 
-#|
-(defmacro with-test-connection (&body body)
-  `(let ((connection (apply 'open-database *test-connection*)))
-     (unwind-protect (progn ,@body)
-       (close-database connection))))
-|#
 (defmacro with-test-connection (&body body)
   `(postmodern:with-connection *test-connection* ,@body))
 
