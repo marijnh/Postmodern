@@ -184,9 +184,7 @@ to strings \(which will form an SQL query when concatenated)."
     (is (equal (s-sql::sql-expand '(george  "rhythm" :group "Beatles"))
                '((SQL-ESCAPE (GEORGE "rhythm" :GROUP "Beatles")))))
     (is (equal (s-sql::sql-expand '(:= 'facs.facid 1))
-               '("(" "facs.facid" " = " "1" ")")))
-    (is (equal (s-sql::sql-expand '(:george  "paul" nil "Beatles"))
-               '("george" "(" "E'paul'" ", " "E'Beatles'" ")"))))
+               '("(" "facs.facid" " = " "1" ")"))))
 
 (test sql-expand-list
   "Testing sql-expand-list. Expand a list of elements, adding a separator in between them."
@@ -1090,6 +1088,26 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
       (is (equal (sql (:create-table array_int ((vector :type (or int[][] db-null)))))
                  "CREATE TABLE array_int (vector INT[][])")))
 
+(test create-table-full-1
+      "Test :create-table with extended table constraints."
+      (is (equal (s-sql:sql (:create-table faa.d_airports
+			    ((AirportID :type integer)
+			     (Name      :type text)
+			     (City      :type text)
+			     (Country   :type text)
+			     (airport_code :type text)
+			     (ICOA_code :type text)
+			     (Latitude  :type float8)
+			     (Longitude :type float8)
+			     (Altitude  :type float8)
+			     (TimeZoneOffset :type float)
+			     (DST_Flag  :type text)
+			     (TZ        :type text))
+			    ()
+			    ((:distributed-by (airport_code)))))
+	  "CREATE TABLE faa.d_airports (airportid INTEGER NOT NULL, name TEXT NOT NULL, city TEXT NOT NULL, country TEXT NOT NULL, airport_code TEXT NOT NULL, icoa_code TEXT NOT NULL, latitude FLOAT8 NOT NULL, longitude FLOAT8 NOT NULL, altitud
+e FLOAT8 NOT NULL, timezoneoffset REAL NOT NULL, dst_flag TEXT NOT NULL, tz TEXT NOT NULL) DISTRIBUTED BY (airport_code) ")))
+
 (test sequence-tests
       "sequence testing"
       (with-test-connection
@@ -1173,27 +1191,6 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
 
         (is (eq (pomo:query (:alter-sequence :knobo-seq :owned-by :seq-test.id))
                 nil))
-
-(test create-table-full-1
-      "Test :create-table with extended table constraints."
-      (is equal (s-sql:sql (:create-table faa.d_airports
-			    ((AirportID :type integer)
-			     (Name      :type text)
-			     (City      :type text)
-			     (Country   :type text)
-			     (airport_code :type text)
-			     (ICOA_code :type text)
-			     (Latitude  :type float8)
-			     (Longitude :type float8)
-			     (Altitude  :type float8)
-			     (TimeZoneOffset :type float)
-			     (DST_Flag  :type text)
-			     (TZ        :type text))
-			    ()
-			    ((:distributed-by (airport_code)))))
-	  "CREATE TABLE faa.d_airports (airportid INTEGER NOT NULL, name TEXT NOT NULL, city TEXT NOT NULL, country TEXT NOT NULL, airport_code TEXT NOT NULL, icoa_code TEXT NOT NULL, latitude FLOAT8 NOT NULL, longitude FLOAT8 NOT NULL, altitud
-e FLOAT8 NOT NULL, timezoneoffset REAL NOT NULL, dst_flag TEXT NOT NULL, tz TEXT NOT NULL) DISTRIBUTED BY (airport_code) "))
-
 
         ;; cleanup
         (pomo:query (:drop-sequence :knobo-seq))))
