@@ -199,25 +199,6 @@ to strings \(which will form an SQL query when concatenated)."
                '((SQL-ESCAPE GEORGE) ", " (SQL-ESCAPE PAUL) ", " (SQL-ESCAPE JOHN) ", "
                 "E'ringo'" ", " "E'mary-ann'" ", " (SQL-ESCAPE CAROL-ANNE)))))
 
-(test cond
-      "Testing the conditional for s-sql"
-      (is (equal (s-sql:sql (:select 'id (:cond (eq 1 2) 'name) :from 'countries))
-                 "(SELECT id FROM countries)"))
-      (is (equal (s-sql:sql (:select 'id (:cond nil 'name) :from 'countries))
-                 "(SELECT id FROM countries)"))
-      (is (equal (s-sql:sql (:select 'id (:cond (eq 1 1) 'name) :from 'countries))
-                 "(SELECT id, name FROM countries)"))
-      (is (equal (s-sql:sql (:select 'id (:cond (eq 1 1) 'name) 'region :from 'countries))
-                 "(SELECT id, name, region FROM countries)"))
-      (is (equal (s-sql:sql (:select 'id (:cond (eq 1 2) 'name) 'region :from 'countries))
-                 "(SELECT id, region FROM countries)"))
-      (is (equal (s-sql:sql (:select 'id (:cond nil 'name) 'region :from 'countries))
-                 "(SELECT id, region FROM countries)"))
-      (is (equal (s-sql:sql (:select 'id (:cond t 'name) 'region :from 'countries))
-                 "(SELECT id, name, region FROM countries)"))
-      )
-
-
 (test sql-expand-names
   "Testing sql-expand-names"
     (is (equal (s-sql::sql-expand-names '("george" "paul" "john" "ringo" "mary-ann"))
@@ -254,14 +235,6 @@ to strings \(which will form an SQL query when concatenated)."
       "Testing expand-sql-op"
       (is (equal (s-sql::expand-sql-op :max '(1 2 3))
                  '("max" "(" "1" ", " "2" ", " "3" ")"))))
-#|
-(test def-sql-op-macro
-      "Testing def-sql-op-macro"
-      (is (equal (macroexpand-1 '(s-sql::def-sql-op :|>^| (&rest args)
-                                  `("(" ,@(args) ")")))
-                 '(DEFMETHOD S-SQL::EXPAND-SQL-OP ((OP (EQL :>^)) #:G802)
-                   (DESTRUCTURING-BIND (&REST ARGS) #:G802 `("(" ,@(ARGS) ")"))))))
-|#
 (test make-expander
       "Testing make-expander"
       (is (equal (funcall (s-sql::make-expander :unary "unary1") '("like"))
@@ -292,10 +265,6 @@ to strings \(which will form an SQL query when concatenated)."
              "(SELECT DISTINCT item FROM item_table WHERE (col1 = E'Albania'))"))
   (is (equal (sql (:select 'item 'groups :from 'item-table 'item-groups :where (:= 'item-table.group-id 'item-groups.id)))
              "(SELECT item, groups FROM item_table, item_groups WHERE (item_table.group_id = item_groups.id))"))
-  (is (equal (let ((ord 1) (gp 1)) (pomo:sql (:order-by (:select 'id (when gp 'name) :from 'table1) (if (= 1 ord) 'id 'name))))
-             "((SELECT id, name FROM table1) ORDER BY id)"))
-  (is (equal (let ((ord 2) (gp nil)) (pomo:sql (:order-by (:select 'id (when gp 'name) :from 'table1) (if (= 1 ord) 'id 'name))))
-             "((SELECT id FROM table1) ORDER BY name)"))
   (is (equal (sql (:select (:over (:sum 'salary) 'w)
                            (:over (:avg 'salary) 'w)
                            :from 'empsalary :window

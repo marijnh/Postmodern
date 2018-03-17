@@ -322,7 +322,6 @@ to strings (which will form a SQL query when concatenated)."
 
 (defun sql-expand-list (elts &optional (sep ", "))
   "Expand a list of elements, adding a separator between them."
-  (when (listp elts) (setf elts (remove nil elts)))
   (loop :for (elt . rest) :on elts
         :append (sql-expand elt)
         :if rest :collect sep))
