@@ -5,18 +5,18 @@
   (let ((meta (connection-meta connection)))
     (unless (gethash id meta)
       (setf (gethash id meta) t)
-      (prepare-query connection (symbol-name id) query))))
+      (prepare-query connection id query))))
 
 (let ((next-id 0))
   (defun next-statement-id ()
     "Provide unique statement names."
     (incf next-id)
-    (intern (with-standard-io-syntax (format nil "STATEMENT-~A" next-id)) :keyword)))
+    (with-standard-io-syntax (format nil "STATEMENT-~A" next-id))))
 
 (defun generate-prepared (function-form query format)
   "Helper macro for the following two functions."
   (destructuring-bind (reader result-form) (reader-for-format format)
-    (let ((base `(exec-prepared *database* (symbol-name statement-id) params ,reader)))
+    (let ((base `(exec-prepared *database* statement-id params ,reader)))
       `(let ((statement-id (next-statement-id))
              (query ,(real-query query)))
         (,@function-form (&rest params)
