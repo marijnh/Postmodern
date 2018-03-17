@@ -1,22 +1,7 @@
 (defpackage :s-sql-tests
-  (:use :common-lisp :fiveam :s-sql :cl-postgres :cl-postgres-error)
-  (:export #:prompt-connection #:*test-connection* #:with-test-connection))
+  (:use :common-lisp :fiveam :s-sql :cl-postgres :cl-postgres-error :cl-postgres-tests :postmodern))
 
 (in-package :s-sql-tests)
-
-(defparameter *test-connection* '("test" "test" "" "localhost"))
-
-(defun prompt-connection (&optional (list *test-connection*))
-  (flet ((ask (name pos)
-           (format *query-io* "~a (enter to keep '~a'): " name (nth pos list))
-           (finish-output *query-io*)
-           (let ((answer (read-line *query-io*)))
-             (unless (string= answer "") (setf (nth pos list) answer)))))
-    (format *query-io* "~%To run this test, you must configure a database connection.~%")
-    (ask "Database name" 0)
-    (ask "User" 1)
-    (ask "Password" 2)
-    (ask "Hostname" 3)))
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
 ;; refers to a valid postgresql database, then after loading the file,
@@ -27,24 +12,21 @@
 
 (fiveam:in-suite :s-sql-suite)
 
+#|
 (defmacro with-test-connection (&body body)
   `(let ((connection (apply 'open-database *test-connection*)))
-    (unwind-protect (progn ,@body)
-      (close-database connection))))
+     (unwind-protect (progn ,@body)
+       (close-database connection))))
+|#
+(defmacro with-test-connection (&body body)
+  `(postmodern:with-connection *test-connection* ,@body))
 
-(defmacro with-default-readtable (&body body)
-  `(let ((*sql-readtable* (default-sql-readtable)))
-    ,@body))
-
-(defmacro with-rollbacked-transaction (&body body)
-  `(progn
-    (exec-query connection "start transaction")
-    (unwind-protect (progn ,@body)
-      (exec-query connection "rollback"))))
+(defmacro protect (&body body)
+  `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
 
 (test connect-sanity
   (with-test-connection
-      (is (database-open-p connection))))
+      (is (not (null *database*)))))
 
 (test sql-error)
 
@@ -208,7 +190,9 @@ to strings \(which will form an SQL query when concatenated)."
     (is (equal (s-sql::sql-expand '(george  "rhythm" :group "Beatles"))
                '((SQL-ESCAPE (GEORGE "rhythm" :GROUP "Beatles")))))
     (is (equal (s-sql::sql-expand '(:= 'facs.facid 1))
-               '("(" "facs.facid" " = " "1" ")"))))
+               '("(" "facs.facid" " = " "1" ")")))
+    (is (equal (s-sql::sql-expand '(:george  "paul" nil "Beatles"))
+               '("george" "(" "E'paul'" ", " "E'Beatles'" ")"))))
 
 (test sql-expand-list
   "Testing sql-expand-list. Expand a list of elements, adding a separator in between them."
@@ -216,7 +200,29 @@ to strings \(which will form an SQL query when concatenated)."
                '((SQL-ESCAPE GEORGE) ", " (SQL-ESCAPE PAUL) ", " (SQL-ESCAPE JOHN) ", "
                  "E'ringo'" ", " "E'mary-ann'" ", " (SQL-ESCAPE CAROL-ANNE))))
     (is (equal (s-sql::sql-expand-list '((:desc 'today) 'tomorrow 'yesterday))
-               '("today" " DESC" ", " "tomorrow" ", " "yesterday"))))
+               '("today" " DESC" ", " "tomorrow" ", " "yesterday")))
+    (is (equal (s-sql::sql-expand-list (remove nil '(george paul john "ringo" "mary-ann" nil carol-anne nil)))
+               '((SQL-ESCAPE GEORGE) ", " (SQL-ESCAPE PAUL) ", " (SQL-ESCAPE JOHN) ", "
+                "E'ringo'" ", " "E'mary-ann'" ", " (SQL-ESCAPE CAROL-ANNE)))))
+
+(test cond
+      "Testing the conditional for s-sql"
+      (is (equal (s-sql:sql (:select 'id (:cond (eq 1 2) 'name) :from 'countries))
+                 "(SELECT id FROM countries)"))
+      (is (equal (s-sql:sql (:select 'id (:cond nil 'name) :from 'countries))
+                 "(SELECT id FROM countries)"))
+      (is (equal (s-sql:sql (:select 'id (:cond (eq 1 1) 'name) :from 'countries))
+                 "(SELECT id, name FROM countries)"))
+      (is (equal (s-sql:sql (:select 'id (:cond (eq 1 1) 'name) 'region :from 'countries))
+                 "(SELECT id, name, region FROM countries)"))
+      (is (equal (s-sql:sql (:select 'id (:cond (eq 1 2) 'name) 'region :from 'countries))
+                 "(SELECT id, region FROM countries)"))
+      (is (equal (s-sql:sql (:select 'id (:cond nil 'name) 'region :from 'countries))
+                 "(SELECT id, region FROM countries)"))
+      (is (equal (s-sql:sql (:select 'id (:cond t 'name) 'region :from 'countries))
+                 "(SELECT id, name, region FROM countries)"))
+      )
+
 
 (test sql-expand-names
   "Testing sql-expand-names"
@@ -292,6 +298,10 @@ to strings \(which will form an SQL query when concatenated)."
              "(SELECT DISTINCT item FROM item_table WHERE (col1 = E'Albania'))"))
   (is (equal (sql (:select 'item 'groups :from 'item-table 'item-groups :where (:= 'item-table.group-id 'item-groups.id)))
              "(SELECT item, groups FROM item_table, item_groups WHERE (item_table.group_id = item_groups.id))"))
+  (is (equal (let ((ord 1) (gp 1)) (pomo:sql (:order-by (:select 'id (when gp 'name) :from 'table1) (if (= 1 ord) 'id 'name))))
+             "((SELECT id, name FROM table1) ORDER BY id)"))
+  (is (equal (let ((ord 2) (gp nil)) (pomo:sql (:order-by (:select 'id (when gp 'name) :from 'table1) (if (= 1 ord) 'id 'name))))
+             "((SELECT id FROM table1) ORDER BY name)"))
   (is (equal (sql (:select (:over (:sum 'salary) 'w)
                            (:over (:avg 'salary) 'w)
                            :from 'empsalary :window
@@ -1120,7 +1130,6 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
 (test sequence-tests
       "sequence testing"
       (with-test-connection
-
         (when (pomo:sequence-exists-p :knobo-seq)
           (pomo:query (:drop-sequence :knobo-seq)))
 
