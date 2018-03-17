@@ -26,7 +26,7 @@ exists."
   `(sql (:select (:exists (:select 'relname :from 'pg_catalog.pg_class :inner-join 'pg_catalog.pg_namespace :on
                                    (:= 'pg_class.relnamespace 'pg_namespace.oid)
                                    :where (:and (:= 'pg_class.relkind ,relkind)
-                                                (:= 'pg_namespace.nspname (:any* (:current_schemas nil)))
+                                                (:= 'pg_namespace.nspname (:any* (:current_schemas "true")))
                                                 (:= 'pg_class.relname (to-identifier ,name))))))))
 
 (defun list-tables (&optional strings-p)
@@ -64,23 +64,21 @@ the view name."
 
 (defun table-description (table-name &optional schema-name)
   "Return a list of (name type null-allowed) lists for the fields of a
-table.  If SCHEMA-NAME is specified, only fields from that schema are
-returned."
+table."
   (setf table-name (to-sql-name table-name))
   (when schema-name (setf schema-name (to-sql-name schema-name)))
-  (when (and (schema-exists-p schema-name) (table-exists-p table-name) )
- (let ((schema-test (if schema-name
-                        (sql (:= 'pg-namespace.nspname schema-name))
-                        "true")))
-   (mapcar #'butlast
-           (query (:order-by (:select 'attname 'typname (:not 'attnotnull) 'attnum :distinct
-                                      :from 'pg-catalog.pg-attribute
-                                      :inner-join 'pg-catalog.pg-type :on (:= 'pg-type.oid 'atttypid)
-                                      :inner-join 'pg-catalog.pg-class :on (:and (:= 'pg-class.oid 'attrelid)
-                                                                                 (:= 'pg-class.relname (to-identifier table-name)))
-                                      :inner-join 'pg-catalog.pg-namespace :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
-                                      :where (:and (:> 'attnum 0) (:raw schema-test)))
-                             'attnum))))))
+  (let ((schema-test (if (and schema-name (schema-exists-p schema-name) (table-exists-p table-name))
+                         (sql (:= 'pg-namespace.nspname schema-name))
+                         "true")))
+    (mapcar #'butlast
+            (query (:order-by (:select 'attname 'typname (:not 'attnotnull) 'attnum :distinct
+                                       :from 'pg-catalog.pg-attribute
+                                       :inner-join 'pg-catalog.pg-type :on (:= 'pg-type.oid 'atttypid)
+                                       :inner-join 'pg-catalog.pg-class :on (:and (:= 'pg-class.oid 'attrelid)
+                                                                                  (:= 'pg-class.relname (to-identifier table-name)))
+                                       :inner-join 'pg-catalog.pg-namespace :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+                                       :where (:and (:> 'attnum 0) (:raw schema-test)))
+                              'attnum)))))
 
 (defun coalesce (&rest args)
   (some (lambda (x) (if (eq x :null) nil x)) args))
