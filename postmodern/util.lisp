@@ -116,14 +116,14 @@ it will return the result for the currently connected database."
                    (:pg-database-size 'pg-database.oid)
                    :from 'pg-database
                    :where (:= 'datname '$1))
-          name)))
+          (to-sql-name name))))
 
 (defun list-databases (&key (order-by-size nil) (size t))
   "Returns a list of lists where each sub-list contains the name of the
 database, a pretty-print string of the size of that database and the size in bytes.
 The default order is by database name. Pass t as a parameter to :order-by-size for order by size.
 Setting size to nil will return just the database names in a single list
-ordered by name. This function excludes the template databases"
+ordered by name. This function excludes the template databases."
   (if order-by-size
       (setf order-by-size (sql (:desc (:pg-database-size 'pg-database.oid))))
       (setf order-by-size " datname"))
@@ -163,15 +163,15 @@ ordered by name. This function excludes the template databases"
                                    'spcname))
        collect (first x)))
 
-(defun list-types-in-database ()
-  "list the available types in the database."
+(defun list-available-types ()
+  "List the available types in this postgresql version."
   (query (:select 'oid (:as (:format-type :oid :NULL) 'typename)
                   :from 'pg-type
                   :where (:= 'typtype "b"))))
 
 
 ;;; Table info
-(defun list-database-tables (&key (schema "public") (order-by-size nil) (size t))
+(defun list-table-sizes (&key (schema "public") (order-by-size nil) (size t))
   "Returns a list of lists (table-name, size in 8k pages) of tables in the current database.
 Providing a name to the schema parameter will return just the information for tables in that schema.
 It defaults to just the tables in the public schema. Setting schema to nil will return all tables, indexes etc
@@ -210,14 +210,12 @@ Setting order-by-size to t will return the result in order of size instead of by
 
 (defun table-size (table-name)
   "Return the size of a postgresql table in k or m. Table-name can be either a string or quoted."
-  (setf table-name  (to-sql-name table-name))
-  (query (:select (:pg_size_pretty (:pg_total_relation_size'$1)))
+  (query (:select (:pg_size_pretty (:pg_total_relation_size '$1)))
          :single
-         table-name))
+         (to-sql-name table-name)))
 
 (defun more-table-info (table-name)
   "Returns more table info than table-description. Table can be either a string or quoted."
-  (setf table-name (s-sql:to-sql-name table-name))
   (query (:order-by (:select (:as 'a.attnum 'ordinal-position)
                              (:as 'a.attname 'column-name)
                              (:as 'tn.typname 'data-type)
@@ -234,16 +232,15 @@ Setting order-by-size to t will return the result in order of size instead of by
                                      (:= 'a.attrelid 'c.oid)
                                      (:= 'a.atttypid 'tn.oid)))
                     'a.attnum)
-         table-name))
+         (to-sql-name table-name)))
 
 ;; Columns
 (defun list-columns (table-name)
   "Returns a list of strings of just the column names in a table.
 Pulls info from the postmodern table-description function
 rather than directly."
-  (setf table-name (to-sql-name table-name))
   (when (table-exists-p table-name)
-    (loop for x in (table-description "quotations")
+    (loop for x in (table-description table-name)
        collect (first x))))
 
 (defun list-columns-with-types (table-name)
@@ -271,14 +268,13 @@ rather than directly."
 
 (defun column-exists-p (table-name column-name)
   "Determine if a particular column exists. Table name and column-name can be either strings or symbols."
-  (setf table-name (to-sql-name table-name))
-  (setf column-name (to-sql-name column-name))
   (query (:select 'attname :from 'pg_attribute
 		  :where (:= 'attrelid
 			     (:select 'oid :from 'pg-class
 				      :where (:and (:= 'relname '$1)
 						   (:= 'attname '$2)))))
-	 table-name column-name))
+         (to-sql-name table-name) (to-sql-name column-name)
+         :single))
 
 ;;; Views
 (defun describe-views (&optional (schema "public"))
@@ -328,42 +324,42 @@ rather than directly."
     (if strings-p result (mapcar 'from-sql-name result))))
 
 (defun list-table-indices (table-name &optional strings-p)
-  "List the index names in a table. Does not include primary or unique keys."
-  (setf table-name (to-sql-name table-name))
-  (when (table-exists-p table-name)
-    (let ((result (loop for x in
-                       (query
-                        (:select
-                         'relname
-                         :from 'pg_class
-                         :where (:in 'oid
-                                     (:select
-                                      'indexrelid
-                                      :from 'pg_index 'pg_class
-                                      :where (:and
-                                              (:= 'pg_class.relname table-name)
-                                              (:= 'pg_class.oid 'pg_index.indrelid)
-                                              (:!= 'indisunique "t")
-                                              (:!= 'indisprimary "t"))))))
-                       collect (first x))))
+  "List the index names and the related columns in a table. "
+  (when (table-exists-p (to-sql-name table-name))
+    (let ((result (query
+                   (:order-by
+                    (:select
+                     (:as 'i.relname 'index-name) (:as 'a.attname 'column-name)
+                     :from (:as 'pg-class 't1) (:as 'pg-class 'i) (:as 'pg-index 'ix)
+                     (:as 'pg-attribute 'a)
+                     :where
+                     (:and (:= 't1.oid 'ix.indrelid)
+                           (:= 'i.oid 'ix.indexrelid)
+                           (:= 'a.attrelid 't1.oid)
+                           (:= 'a.attnum (:any* 'ix.indkey))
+                           (:= 't1.relkind "r")
+                           (:= 't1.relname '$1)))
+                    'i.relname)
+                   (to-sql-name table-name))))
       (if strings-p result (mapcar 'from-sql-name result)))))
 
 (defun list-indexed-column-and-attributes (table-name)
   "List the indexed columns and their attributes in a table. Includes primary key."
   (setf table-name (to-sql-name table-name))
-  (query
-   (:select 'pg_attribute.attname
-            (:format_type 'pg_attribute.atttypid 'pg_attribute.atttypmod)
-            :from 'pg_index 'pg_class 'pg_attribute
-            :where (:and (:= 'pg_class.oid (:type '$1 :regclass))
-                         (:= 'indrelid 'pg_class.oid)
-                         (:= 'pg_attribute.attrelid 'pg_class.oid)
-                         (:= 'pg_attribute.attnum
-                             (:any* 'pg_index.indkey))))
-   table-name))
+  (when (table-exists-p table-name)
+   (query
+    (:select 'pg_attribute.attname
+             (:format_type 'pg_attribute.atttypid 'pg_attribute.atttypmod)
+             :from 'pg_index 'pg_class 'pg_attribute
+             :where (:and (:= 'pg_class.oid (:type '$1 :regclass))
+                          (:= 'indrelid 'pg_class.oid)
+                          (:= 'pg_attribute.attrelid 'pg_class.oid)
+                          (:= 'pg_attribute.attnum
+                              (:any* 'pg_index.indkey))))
+    table-name)))
 
 (defun list-index-definitions (table-name)
-  "Returns a list of the definitions used to create the current indexes for the table"
+  "Returns a list of the definitions used to create the current indexes for the table."
   (setf table-name (to-sql-name table-name))
   (when (table-exists-p table-name)
     (query (:select (:pg_get_indexdef 'indexrelid)
@@ -373,8 +369,9 @@ rather than directly."
 
 ;;;; Keys
 (defun list-foreign-keys (table-name)
-  "List the foreign keys in a table"
+  "List the foreign keys in a table."
   (setf table-name (to-sql-name table-name))
+  (when (table-exists-p table-name)
   (query (:select 'tc.constraint_name
                   'tc.table_name 'kcu.column_name
                   (:as 'ccu.table_name 'foreign_table_name)
@@ -388,7 +385,7 @@ rather than directly."
                   :on (:= 'ccu.constraint_name 'tc.constraint_name)
                   :where (:and (:= 'constraint_type "FOREIGN KEY")
                                (:= 'tc.table_name '$1)))
-         table-name))
+         table-name)))
 
 ;;;; Constraints
 (defun list-unique-or-primary-constraints (table-name)
@@ -409,7 +406,7 @@ rather than directly."
            table-name)))
 
 (defun list-all-constraints (table-name)
-  "Users information_schema to list all the constraints in a table. Table-name
+  "Uses information_schema to list all the constraints in a table. Table-name
 can be either a string or quoted."
   (setf table-name (to-sql-name table-name))
   (when (table-exists-p table-name)
@@ -419,7 +416,7 @@ can be either a string or quoted."
 	   table-name)))
 
 (defun describe-constraint (table-name constraint-name)
-  "Return a description list of a particular constraint given
+  "Return a list of alists of the descriptions a particular constraint given
 the table-name and the  constraint name using the information_schema
 table."
   (setf table-name (to-sql-name table-name))
@@ -454,10 +451,10 @@ table."
                          (:= 'rc.unique-constraint-schema
                              'ccu.constraint-schema)
                          (:= 'rc.unique-constraint-name 'ccu.constraint-name))
-               :where (:and (:= 'tc.table-name (to-sql-name '$1))
+               :where (:and (:= 'tc.table-name '$1)
                             (:= 'tc.constraint-name
                                 (to-sql-name constraint-name))))
-      table-name))))
+      table-name :alists))))
 
 (defun describe-foreign-key-constraints ()
   "Generates a list of lists of information on the foreign key constraints"
@@ -523,7 +520,7 @@ table."
            collect (first x))))
 
 (defun list-detailed-triggers ()
-  "list detailed information on the triggers from the information_schema table."
+  "List detailed information on the triggers from the information_schema table."
   (query
    (:select '*
             :from 'information-schema.triggers
@@ -546,4 +543,5 @@ table."
   "Just changes the database assuming you are using a toplevel connection.
 Recommended only for development work."
   (disconnect-toplevel)
-  (connect-toplevel (to-sql-name new-database) user password host))
+  (connect-toplevel (to-sql-name new-database) user password host)
+  (current-database))

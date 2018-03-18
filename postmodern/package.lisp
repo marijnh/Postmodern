@@ -29,6 +29,17 @@
    #:with-logical-transaction #:ensure-transaction
    #:abort-hooks #:commit-hooks
    #:db-null #:coalesce
+   #:database-version #:num-records-in-database #:current-database
+   #:database-exists-p #:database-size #:list-databases
+   #:list-schemas #:list-tablespaces #:list-available-types
+   #:list-table-sizes #:table-size #:more-table-info
+   #:list-columns #:list-columns-with-types #:column-exists-p
+   #:describe-views #:list-database-functions #:list-indices
+   #:list-table-indices #:list-indexed-column-and-attributes
+   #:list-index-definitions #:list-foreign-keys #:list-unique-or-primary-constraints
+   #:list-all-constraints #:describe-constraint #:describe-foreign-key-constraints
+   #:list-triggers #:list-detailed-triggers #:list-database-users
+   #:change-toplevel-database
 
    #:deftable #:*table-name* #:*table-symbol*
    #:create-table #:create-all-tables #:create-package-tables

@@ -633,6 +633,294 @@
     Returns <code>T</code> if the schema exists or <code>NIL</code>
     otherwise.</p>
 
+    <p class="def">
+        <span>function</span>
+        <a name="database-version"></a>
+        database-version ()
+        <br/>&#8594; string
+    </p>
+
+    <p class="desc">Returns the version of the current postgresql database.</p>
+
+    <p class="def">
+      <span>function</span>
+        <a name="num-records-in-database"></a>
+        num-records-in-database ()
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Returns a list of lists with schema, table name and approximate number of records
+      in the currently connected database.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="current-database"></a>
+        current-database ()
+        <br/>&#8594; string
+    </p>
+
+    <p class="desc">Returns the string name of the current database.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="database-exists-p"></a>
+        database-exists-p (database-name)
+        <br/>&#8594; boolean
+    </p>
+
+    <p class="desc">Checks to see if a particular database exists.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="database-size"></a>
+        database-size (&optional database-name)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Given the name of a database, will return the name, a pretty-print string of
+the size of the database and the size in bytes. If a database name is not provided,
+      it will return the result for the currently connected database.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-databases"></a>
+        list-databases (&key (order-by-size nil) (size t))
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Returns a list of lists where each sub-list contains the name of the
+database, a pretty-print string of the size of that database and the size in bytes.
+The default order is by database name. Pass t as a parameter to :order-by-size for order by size.
+Setting size to nil will return just the database names in a single list
+      ordered by name. This function excludes the template databases</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-schemas"></a>
+        list-schemas ()
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">List schemas in the current database, excluding the pg_* system schemas.</p>
+
+    <p class="def">
+      <span>function</span>
+        <a name="list-tablespaces"></a>
+        list-tablespaces ()
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Lists the tablespaces in the currently connected database.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-available-types"></a>
+        list-available-types ()
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">List the available types in this postgresql version.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-table-sizes"></a>
+        list-table-sizes (&key (schema "public") (order-by-size nil) (size t))
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Returns a list of lists (table-name, size in 8k pages) of tables in the current database.
+Providing a name to the schema parameter will return just the information for tables in that schema.
+It defaults to just the tables in the public schema. Setting schema to nil will return all tables, indexes etc
+in the database in descending order of size. This would include system tables, so there
+are a lot more than you would expect. If :size is set to nil, it returns only a flat list of table names.
+Setting order-by-size to t will return the result in order of size instead of by table name.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="table-size"></a>
+        table-size (table-name)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Return the size of a postgresql table in k or m. Table-name can be either a string or quoted.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="more-table-info"></a>
+        more-table-info (table-name)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Returns more table info than table-description. Table can be either a string or quoted.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-columns"></a>
+        list-columns (table-name)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Returns a list of strings of just the column names in a table.
+Pulls info from the postmodern table-description function
+rather than directly.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-columns-with-types"></a>
+        list-columns-with-types (table-name)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Return a list of (name type) lists for the fields of a table. Goes directly to the pg-catalog tables.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="column-exists-p"></a>
+        column-exists-p (table-name column-name)
+        <br/>&#8594; boolean
+    </p>
+
+    <p class="desc">Determine if a particular column exists. Table name and column-name can be either strings or symbols.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="describe-views"></a>
+        describe-views (&optional (schema "public")
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Describe the current views in the specified schema. Defaults to public schema.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-database-functions"></a>
+        list-database-functions ()
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Returns a list of the functions in the database from the information_schema.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-indices"></a>
+        list-indices (&optional strings-p)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Return a list of the indexs in a database. Turn them into keywords if strings-p is not true.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-table-indices"></a>
+        list-table-indices (table-name &optional strings-p)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">List the index names and the related columns in a table. </p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-indexed-column-and-attributes"></a>
+        list-indexed-column-and-attributes (table-name)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">List the indexed columns and their attributes in a table. Includes primary key.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-index-definitions"></a>
+        list-index-definitions (table-name)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Returns a list of the definitions used to create the current indexes for the table</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-foreign-keys"></a>
+        list-foreign-keys (table-name)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">List the foreign keys in a table.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-unique-or-primary-constraints"></a>
+        list-unique-or-primary-constraints (table-name)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">List constraints on a table.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-all-constraints"></a>
+        list-all-constraints (table-name)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Users information_schema to list all the constraints in a table. Table-name
+can be either a string or quoted.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="describe-constraint"></a>
+        describe-constraint (table-name constraint-name)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Return a list of alists of the descriptions a particular constraint given
+the table-name and the  constraint name using the information_schema
+table.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="describe-foreign-key-constraints"></a>
+        describe-foreign-key-constraints ()
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">Generates a list of lists of information on the foreign key constraints</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-triggers"></a>
+        list-triggers (&optional table-name)
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">List distinct trigger names from the information_schema table. Table-name can be either quoted or string.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-detailed-triggers"></a>
+        list-detailed-triggers ()
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">List detailed information on the triggers from the information_schema table.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="list-database-users"></a>
+        list-database-users ()
+        <br/>&#8594; list
+    </p>
+
+    <p class="desc">List database users.</p>
+
+    <p class="def">
+        <span>function</span>
+        <a name="change-toplevel-database"></a>
+        change-toplevel-database (new-database user password host)
+        <br/>&#8594; string
+    </p>
+
+    <p class="desc">Just changes the database assuming you are using a toplevel connection.
+Recommended only for development work. Returns the name of the newly connected database as a string.</p>
+
     <h2><a name="daos"></a>Database access objects</h2>
 
     <p>Postmodern contains a simple system for defining CLOS classes
