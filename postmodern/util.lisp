@@ -123,7 +123,7 @@ it will return the result for the currently connected database."
 database, a pretty-print string of the size of that database and the size in bytes.
 The default order is by database name. Pass t as a parameter to :order-by-size for order by size.
 Setting size to nil will return just the database names in a single list
-ordered by name. This function excludes the template databases"
+ordered by name. This function excludes the template databases."
   (if order-by-size
       (setf order-by-size (sql (:desc (:pg-database-size 'pg-database.oid))))
       (setf order-by-size " datname"))
@@ -164,7 +164,7 @@ ordered by name. This function excludes the template databases"
        collect (first x)))
 
 (defun list-available-types ()
-  "list the available types in this postgresql version."
+  "List the available types in this postgresql version."
   (query (:select 'oid (:as (:format-type :oid :NULL) 'typename)
                   :from 'pg-type
                   :where (:= 'typtype "b"))))
@@ -359,7 +359,7 @@ rather than directly."
     table-name)))
 
 (defun list-index-definitions (table-name)
-  "Returns a list of the definitions used to create the current indexes for the table"
+  "Returns a list of the definitions used to create the current indexes for the table."
   (setf table-name (to-sql-name table-name))
   (when (table-exists-p table-name)
     (query (:select (:pg_get_indexdef 'indexrelid)
@@ -369,7 +369,7 @@ rather than directly."
 
 ;;;; Keys
 (defun list-foreign-keys (table-name)
-  "List the foreign keys in a table"
+  "List the foreign keys in a table."
   (setf table-name (to-sql-name table-name))
   (when (table-exists-p table-name)
   (query (:select 'tc.constraint_name
@@ -406,7 +406,7 @@ rather than directly."
            table-name)))
 
 (defun list-all-constraints (table-name)
-  "Users information_schema to list all the constraints in a table. Table-name
+  "Uses information_schema to list all the constraints in a table. Table-name
 can be either a string or quoted."
   (setf table-name (to-sql-name table-name))
   (when (table-exists-p table-name)
@@ -520,7 +520,7 @@ table."
            collect (first x))))
 
 (defun list-detailed-triggers ()
-  "list detailed information on the triggers from the information_schema table."
+  "List detailed information on the triggers from the information_schema table."
   (query
    (:select '*
             :from 'information-schema.triggers
