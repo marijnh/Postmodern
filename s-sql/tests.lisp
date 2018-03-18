@@ -1090,7 +1090,7 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
 
 (test create-table-full-1
       "Test :create-table with extended table constraints."
-      (is (equal (s-sql:sql (:create-table faa.d_airports
+      (is (equal (s-sql:sql (:create-table-full faa.d_airports
 			    ((AirportID :type integer)
 			     (Name      :type text)
 			     (City      :type text)
@@ -1105,8 +1105,7 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
 			     (TZ        :type text))
 			    ()
 			    ((:distributed-by (airport_code)))))
-	  "CREATE TABLE faa.d_airports (airportid INTEGER NOT NULL, name TEXT NOT NULL, city TEXT NOT NULL, country TEXT NOT NULL, airport_code TEXT NOT NULL, icoa_code TEXT NOT NULL, latitude FLOAT8 NOT NULL, longitude FLOAT8 NOT NULL, altitud
-e FLOAT8 NOT NULL, timezoneoffset REAL NOT NULL, dst_flag TEXT NOT NULL, tz TEXT NOT NULL) DISTRIBUTED BY (airport_code) ")))
+	  "CREATE TABLE faa.d_airports (airportid INTEGER NOT NULL, name TEXT NOT NULL, city TEXT NOT NULL, country TEXT NOT NULL, airport_code TEXT NOT NULL, icoa_code TEXT NOT NULL, latitude FLOAT8 NOT NULL, longitude FLOAT8 NOT NULL, altitude FLOAT8 NOT NULL, timezoneoffset REAL NOT NULL, dst_flag TEXT NOT NULL, tz TEXT NOT NULL) DISTRIBUTED BY (airport_code) ")))
 
 (test sequence-tests
       "sequence testing"

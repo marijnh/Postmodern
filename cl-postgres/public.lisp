@@ -22,7 +22,7 @@ connection when it is somehow closed."))
 which is to store information about the prepared statements that
 exists for it."
   (or (slot-value connection 'meta)
-      (let ((meta-data (make-hash-table)))
+      (let ((meta-data (make-hash-table :test 'equal)))
         (setf (slot-value connection 'meta) meta-data)
         meta-data)))
 
@@ -101,10 +101,10 @@ currently connected."
                 (ecase (sb-bsd-sockets:host-ent-address-type host-ent)
                   (2  'sb-bsd-sockets:inet-socket)
                   (10 'sb-bsd-sockets:inet6-socket))
-                
+
                 #-cl-postgres.features:sbcl-ipv6-available
                 'sb-bsd-sockets:inet-socket
-                
+
                 :type :stream :protocol :tcp))
          (address (sb-bsd-sockets:host-ent-address host-ent)))
     (sb-bsd-sockets:socket-connect sock address port)
