@@ -10,7 +10,7 @@
     :components ((:file "s-sql")))))
 
 (defsystem "s-sql/tests"
-  :depends-on ("s-sql" "cl-postgres-tests" "fiveam")
+  :depends-on ("s-sql" "cl-postgres/tests" "fiveam")
   :components
   ((:module "s-sql"
             :components ((:file "tests"))))
