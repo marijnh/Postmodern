@@ -67,9 +67,10 @@ database."
     (unwind-protect (funcall thunk)
       (disconnect *database*))))
 
-(defmacro with-connection (spec &body body)
+(defmacro with-connection (spec &body body &environment env)
   "Locally establish a database connection, and bind *database* to it."
-  (let ((connect-form (if (and (listp spec)
+  (let ((connect-form (if (and (constantp spec env)
+                               (listp spec)
                                (= 2 (length spec))
                                (eq (first spec) 'quote))
                           `(funcall #'connect ,@(second spec))
