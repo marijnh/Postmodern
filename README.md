@@ -44,54 +44,54 @@ This quickstart is intended to give you a feel of the way coding with Postmodern
 
 Assuming you have already installed it, first load and use the system:
 
-``` Common Lisp
+
     (ql:quickload :postmodern)
     (use-package :postmodern)
-```
+
 
 If you have a PostgreSQL server running on localhost, with a database called 'testdb' on it, which is accessible for user 'foucault' with password 'surveiller', you can connect like this:
 
-``` Common Lisp
+
     (connect-toplevel "testdb" "foucault" "surveiller" "localhost")
-```
+
 
 Which will establish a connection to be used by all code, except for that wrapped in a with-connection form, which takes the same arguments but only establishes the connection locally.
 
 Now for a basic sanity test:
 
-``` Common Lisp
+
     (query "select 22, 'Folie et déraison', 4.5")
     ;; => ((22 "Folie et déraison" 9/2))
-```
+
 
 That should work. query is the basic way to send queries to the database. The same query can be expressed like this:
 
-``` Common Lisp
+
     (query (:select 22 "Folie et déraison" 4.5))
     ;; => ((22 "Folie et déraison" 9/2))
-```
+
 
 In many contexts, query strings and lists starting with keywords can be used interchangeably. The lists will be compiled to SQL. The S-SQL manual describes the syntax used by these expressions. Lisp values occurring in them are automatically escaped. In the above query, only constant values are used, but it is possible to transparently use run-time values as well:
 
-``` Common Lisp
+
     (defun database-powered-addition (a b)
       (query (:select (:+ a b)) :single))
     (database-powered-addition 1030 204)
     ;; => 1234
-```
+
 
 That last argument, :single, indicates that we want the result not as a list of lists (for the result rows), but as a single value, since we know that we are only selecting one value. Some other options are :rows, :row, :column, :alists, and :none. Their precise effect is documented in the reference manual.
 
 You do not have to pull in the whole result of a query at once, you can also iterate over it with the doquery macro:
 
-``` Common Lisp
+
     (doquery (:select 'x 'y :from 'some-imaginary-table) (x y)
       (format t "On this row, x = ~A and y = ~A.~%" x y))
-```
+
 
 This is what a database-access class looks like:
 
-``` Common Lisp
+
         (defclass country ()
           ((name :col-type string :initarg :name
                  :reader country-name)
@@ -101,11 +101,11 @@ This is what a database-access class looks like:
                      :accessor country-sovereign))
       (:metaclass dao-class)
       (:keys name))
-```
+
 
 The above defines a class that can be used to handle records in a table with three columns: name, inhabitants, and sovereign. In simple cases, the information above is enough to define the table as well:
 
-``` Common Lisp
+
     (dao-table-definition 'country)
     ;; => "CREATE TABLE country (
     ;;      name TEXT NOT NULL,
@@ -113,34 +113,34 @@ The above defines a class that can be used to handle records in a table with thr
     ;;      sovereign TEXT,
     ;;      PRIMARY KEY (name))"
     (execute (dao-table-definition 'country))
-```
+
 
 This defines our table in the database. execute works like query, but does not expect any results back.
 
 Let us add a few countries:
 
-``` Common Lisp
+
     (insert-dao (make-instance 'country :name "The Netherlands"
                                         :inhabitants 16800000
                                         :sovereign "Willem-Alexander"))
     (insert-dao (make-instance 'country :name "Croatia"
                                         :inhabitants 4400000))
-```
+
 
 Then, to update Croatia's population, we could do this:
 
-``` Common Lisp
+
     (let ((croatia (get-dao 'country "Croatia")))
       (setf (country-inhabitants croatia) 4500000)
       (update-dao croatia))
     (query (:select '* :from 'country))
     ;; => (("The Netherlands" 16800000 "Willem-Alexander")
     ;;     ("Croatia" 4500000 :NULL))
-```
+
 
 Next, to demonstrate a bit more of the S-SQL syntax, here is the query the utility function list-tables uses to get a list of the tables in a database:
 
-``` Common Lisp
+
     (sql (:select 'relname :from 'pg-catalog.pg-class
           :inner-join 'pg-catalog.pg-namespace :on (:= 'relnamespace 'pg-namespace.oid)
           :where (:and (:= 'relkind "r")
@@ -150,7 +150,7 @@ Next, to demonstrate a bit more of the S-SQL syntax, here is the query the utili
     ;;      INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
     ;;      WHERE ((relkind = 'r') and (nspname NOT IN ('pg_catalog', 'pg_toast'))
     ;;             and pg_catalog.pg_table_is_visible(pg_class.oid)))"
-```
+
 
 sql is a macro that will simply compile a query, it can be useful for seeing how your queries are expanded or if you want to do something unexpected with them.
 
@@ -158,19 +158,19 @@ As you can see, lists starting with keywords are used to express SQL commands an
 
 Finally, here is an example of the use of prepared statements:
 
-``` Common Lisp
+
     (defprepared sovereign-of
       (:select 'sovereign :from 'country :where (:= 'name '$1))
       :single!)
     (sovereign-of "The Netherlands")
     ;; => "Willem-Alexander"
-```
+
 
 The defprepared macro creates a function that takes the same amount of arguments as there are $X placeholders in the given query. The query will only be parsed and planned once (per database connection), which can be faster, especially for complex queries.
 
-``` Common Lisp
+
     (disconnect-toplevel)
-```
+
 
 ## Reference
 ---
