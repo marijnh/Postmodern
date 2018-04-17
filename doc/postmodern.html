@@ -960,6 +960,11 @@ Recommended only for development work. Returns the name of the newly connected d
     href="#update-dao"><code>update-dao</code></a> and <a
     href="#get-dao"><code>get-dao</code></a> will not work.</p>
 
+    <p class="desc">IMPORTANT: Class finalization for a dao class
+      instance are wrapped with a thread lock. However, any time you are using threads
+      and a class that inherits from other classes, you should ensure
+      that classes are finalized before you start generating threads
+      that create new instances of that class.</p>
     <p class="desc">Simple example:</p>
 
     <pre class="code">

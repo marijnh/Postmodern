@@ -9,7 +9,13 @@
 
 (defmethod dao-keys :before ((class dao-class))
   (unless (class-finalized-p class)
-    (finalize-inheritance class)))
+               #+postmodern-thread-safe
+               (unless (class-finalized-p class)
+                 (bordeaux-threads:with-lock-held (*class-finalize-lock*)
+                   (unless (class-finalized-p class)
+                     (finalize-inheritance class))))
+                 #-postmodern-thread-safe
+                 (finalize-inheritance class)))
 
 (defmethod validate-superclass ((class dao-class) (super-class standard-class))
   t)
@@ -134,9 +140,15 @@
 (defgeneric get-dao (type &rest args)
   (:method ((class-name symbol) &rest args)
     (let ((class (find-class class-name)))
-      (if (class-finalized-p class)
-          (error "Class ~a has no key slots." (class-name class))
-          (finalize-inheritance class))
+      (unless (class-finalized-p class)
+               #+postmodern-thread-safe
+               (unless (class-finalized-p class)
+                 (bordeaux-threads:with-lock-held (*class-finalize-lock*)
+                   (unless (class-finalized-p class)
+                     (finalize-inheritance class))))
+                 #-postmodern-thread-safe
+                 (finalize-inheritance class-name))
+      (when (not (dao-keys class)) (error "Class ~a has no key slots." (class-name class)))
       (apply 'get-dao class-name args)))
   (:documentation "Get the object corresponding to the given primary
   key, or return nil if it does not exist."))
@@ -146,7 +158,13 @@
       (apply 'make-dao class args)))
   (:method ((class dao-class) &rest args &key &allow-other-keys)
     (unless (class-finalized-p class)
-      (finalize-inheritance class))
+               #+postmodern-thread-safe
+               (unless (class-finalized-p class)
+                 (bordeaux-threads:with-lock-held (*class-finalize-lock*)
+                   (unless (class-finalized-p class)
+                     (finalize-inheritance class))))
+                 #-postmodern-thread-safe
+                 (finalize-inheritance class))
     (let ((instance (apply #'make-instance class args)))
       (insert-dao instance)))
   (:documentation "Make the instance of the given class and insert it into the database"))
@@ -332,6 +350,12 @@ violation, update it instead."
 (defun query-dao% (type query row-reader &rest args)
   (let ((class (find-class type)))
     (unless (class-finalized-p class)
+      #+postmodern-thread-safe
+      (unless (class-finalized-p class)
+        (bordeaux-threads:with-lock-held (*class-finalize-lock*)
+          (unless (class-finalized-p class)
+            (finalize-inheritance class))))
+      #-postmodern-thread-safe
       (finalize-inheritance class))
     (if args
 	(progn
@@ -392,8 +416,14 @@ representing that result."
   "Generate the appropriate CREATE TABLE query for this class."
   (unless (typep table 'dao-class)
     (setf table (find-class table)))
-  (unless (class-finalized-p table)
-    (finalize-inheritance table))
+      (unless (class-finalized-p table)
+      #+postmodern-thread-safe
+      (unless (class-finalized-p table)
+        (bordeaux-threads:with-lock-held (*class-finalize-lock*)
+          (unless (class-finalized-p table)
+            (finalize-inheritance table))))
+      #-postmodern-thread-safe
+      (finalize-inheritance table))
   (sql-compile
    `(:create-table ,(dao-table-name table)
                    ,(loop :for slot :in (dao-column-slots table)
