@@ -1,4 +1,5 @@
 (defpackage :postmodern-tests
+
   (:use :common-lisp :fiveam :postmodern :simple-date :cl-postgres-tests))
 
 (in-package :postmodern-tests)
@@ -185,7 +186,8 @@
 (defclass test-data ()
   ((id :col-type serial :initarg :id :accessor test-id)
    (a :col-type (or (varchar 100) db-null) :initarg :a :accessor test-a)
-   (b :col-type boolean :col-default nil :initarg :b :accessor test-b))
+   (b :col-type boolean :col-default nil :initarg :b :accessor test-b)
+   (c :col-type integer :col-default 0 :initarg :c :accessor test-c))
   (:metaclass dao-class)
   (:table-name dao-test)
   (:keys id))
@@ -226,6 +228,14 @@
         (with-transaction ()
           (is (not (save-dao/transaction dao)))))
       (execute (:drop-table 'dao-test)))))
+
+(test query-drop-table-1
+  (with-test-connection
+    (execute (dao-table-definition 'test-data))
+    (protect
+      (is (member :dao-test (with-test-connection (pomo:list-tables))))
+      (pomo:query (:drop-table :dao-test))
+      (is (not (member :dao-test (with-test-connection (pomo:list-tables))))))))
 
 (defclass test-oid ()
   ((oid :col-type integer :ghost t :accessor test-oid)
@@ -306,3 +316,36 @@
       (execute (:insert-into 'test-data :set 'a #()))
       (execute (:drop-table 'test-data)))
     (is (not (table-exists-p 'test-data)))))
+
+;;; For threading tests
+(defvar *dao-update-lock* (bt:make-lock))
+
+(defun make-class (name) (eval `(defclass ,(intern name) ()
+                                  ((id :col-type serial :initarg :id :accessor test-id)
+                                   (a :col-type (or (varchar 100) db-null) :initarg :a :accessor test-a)
+                                   (b :col-type boolean :col-default nil :initarg :b :accessor test-b)
+                                   (c :col-type integer :col-default 0 :initarg :c :accessor test-c))
+                                  (:metaclass dao-class)
+                                  (:table-name dao-test)
+                                  (:keys id))))
+
+(test make-class
+  (let ((a (make-class (write-to-string (gensym)))))
+    (is (not (equal nil (make-instance a :id 12 :a "six" :b t))))))
+
+;;; THIS IS STILL CREATING TOO MANY LOCKS IN POSTGRESQL
+;;; CHECKING LOCKS WITH (with-test-connection (query (:select 'pid 'wait-event-type 'wait-event 'state 'backend-start :from 'pg-stat-activity)))
+(test dao-class-threads
+  (with-test-connection
+    (protect
+      (execute (dao-table-definition 'test-data))
+      (let ((item (make-instance 'test-data :a "Sabra" :b t :c 0)))
+      (with-test-connection (save-dao item))
+      (let ((id (test-id item)))
+        (loop for x from 1 to 5 do
+          (bt:make-thread
+           (lambda () (with-test-connection
+                        (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (incf (test-c item) 1)) (save-dao item))
+                        (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (decf (test-c item) 1)) (save-dao item))))))
+        (is (not (nil (with-test-connection (get-dao 'test-data id)))))))
+      (execute (:drop-table 'dao-test)))))
