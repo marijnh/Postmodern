@@ -545,3 +545,7 @@ Recommended only for development work."
   (disconnect-toplevel)
   (connect-toplevel (to-sql-name new-database) user password host)
   (current-database))
+
+(defun list-connections ()
+  "Returns info from pg_stat_activity on open connections"
+  (query (:select '* :from 'pg-stat-activity)))
