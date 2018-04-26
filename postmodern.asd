@@ -30,7 +30,7 @@
                          (:file "util" :depends-on ("query"))
                          (:file "transaction" :depends-on ("query"))
                          (:file "namespace" :depends-on ("query"))
-                         (:file "table" :depends-on ("util" "transaction")
+                         (:file "table" :depends-on ("util" "transaction" "query")
                                 :if-feature :postmodern-use-mop)
                          (:file "deftable" :depends-on
                                 ("query" (:feature :postmodern-use-mop "table"))))))

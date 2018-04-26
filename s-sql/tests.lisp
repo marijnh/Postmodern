@@ -7,10 +7,10 @@
 ;; refers to a valid postgresql database, then after loading the file,
 ;; run the tests with (fiveam:run! :cl-postgres)
 
-(fiveam:def-suite :s-sql-suite
+(fiveam:def-suite :s-sql
    :description "Master suite for s-sql")
 
-(fiveam:in-suite :s-sql-suite)
+(fiveam:in-suite :s-sql)
 
 (defmacro with-test-connection (&body body)
   `(postmodern:with-connection *test-connection* ,@body))
