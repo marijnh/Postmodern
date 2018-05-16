@@ -92,13 +92,13 @@ You do not have to pull in the whole result of a query at once, you can also ite
 This is what a database-access class looks like:
 
 
-        (defclass country ()
-          ((name :col-type string :initarg :name
-                 :reader country-name)
-          (inhabitants :col-type integer :initarg :inhabitants
-                 :accessor country-inhabitants)
-          (sovereign :col-type (or db-null string) :initarg :sovereign
-                     :accessor country-sovereign))
+    (defclass country ()
+      ((name :col-type string :initarg :name
+             :reader country-name)
+       (inhabitants :col-type integer :initarg :inhabitants
+                    :accessor country-inhabitants)
+       (sovereign :col-type (or db-null string) :initarg :sovereign
+                  :accessor country-sovereign))
       (:metaclass dao-class)
       (:keys name))
 
