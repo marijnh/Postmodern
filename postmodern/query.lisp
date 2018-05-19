@@ -60,17 +60,17 @@ returned.")
 	    (error "~S is not a valid result style." format))
 	  (let ((class (gensym)))
 	    (list `(let ((,class (find-class ',class-name)))
-               (unless (class-finalized-p class)
-               #+postmodern-thread-safe
-               (bordeaux-threads:with-lock-held (*class-finalize-lock*)
-                 (unless (class-finalized-p ,class)
-                   (finalize-inheritance ,class)))
-                 #-postmodern-thread-safe
-                 (finalize-inheritance class))
-               (dao-row-reader ,class))
-            (if (eq result :single)
-                'single-row
-                'all-rows)))))))
+		     (unless (class-finalized-p ,class)
+		       #+postmodern-thread-safe
+		       (bordeaux-threads:with-lock-held (*class-finalize-lock*)
+			 (unless (class-finalized-p ,class)
+			   (finalize-inheritance ,class)))
+		       #-postmodern-thread-safe
+		       (finalize-inheritance ,class))
+		     (dao-row-reader ,class))
+		  (if (eq result :single)
+		      'single-row
+		      'all-rows)))))))
 
 (defmacro all-rows (form)
   form)
