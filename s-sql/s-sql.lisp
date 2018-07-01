@@ -626,6 +626,32 @@ the proper SQL syntax for joining tables."
       ,@(if window (cons " WINDOW " (sql-expand-list window)))
       ")")))
 
+(def-sql-op :string-agg (&rest args)
+  "Note that order-by must be last. If distinct is used, it must come before order-by. See tests.lisp for examples."
+  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (order-by * ?)) (cons :vars args)
+    `("STRING_AGG("
+      ,@(if distinct '("DISTINCT "))
+      ,@(if distinct-on `("DISTINCT ON (" ,@(sql-expand-list distinct-on) ") "))
+      ,@(sql-expand-list vars)
+      ,@(if order-by `(" ORDER BY " ,@(sql-expand-list order-by)))
+      ")")))
+
+(def-sql-op :array-agg (&rest args)
+  "Note that order-by must be last. If distinct is used, it must come before order-by. See tests.lisp for examples."
+  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?)(order-by * ?)) (cons :vars args)
+    `("ARRAY_AGG("
+      ,@(if distinct '("DISTINCT "))
+      ,@(if distinct-on `("DISTINCT ON (" ,@(sql-expand-list distinct-on) ") "))
+      ,@(sql-expand-list vars)
+      ,@(if order-by `(" ORDER BY " ,@(sql-expand-list order-by)))
+      ")")))
+
+(def-sql-op :mode (&rest args)
+  "Mode is used to find the most frequent input value in a group. See e.g. https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE
+and article at https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-function/."
+  (split-on-keywords ((vars *)) (cons :vars args)
+    `("mode() within group (order by " ,@(sql-expand-list vars) ")")))
+
 (def-sql-op :limit (form amount &optional offset)
   `("(" ,@(sql-expand form) " LIMIT " ,@(if amount (sql-expand amount) (list "ALL")) ,@(if offset (cons " OFFSET " (sql-expand offset)) ()) ")"))
 

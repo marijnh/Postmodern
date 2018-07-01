@@ -710,6 +710,37 @@ To sum the column len of all films and group the results by kind:"
 "((SELECT facs.facid, facs.name, trim(to_char((sum(bks.slots) / 2.0), E'9999999999999999D99')) AS total_hours FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (facs.facid = bks.facid) GROUP BY facs.facid, facs.name) ORDER BY facs.facid)"))
       )
 
+(test select-order-by
+  "Testing with order-by."
+  (is (equal (sql (:order-by
+                   (:select 'firstname 'surname
+                             :from 'cd.members)
+                   'surname))
+             "((SELECT firstname, surname FROM cd.members) ORDER BY surname)"))
+  (is (equal (sql (:select (:over (:first-value 'x) (:order-by 'x))
+                           (:over (:first-value 'x) (:order-by (:desc 'x)))
+                           :from (:as (:generate-series 1 5) 'x)))
+             "(SELECT (first_value(x) OVER ( ORDER BY x)), (first_value(x) OVER ( ORDER BY x DESC)) FROM generate_series(1, 5) AS x)"))
+  (is (equal (sql (:order-by (:select 'studgrades (:as (:string-agg 'studname ",") 'studpergrade)
+                                      :from 'tbl-students
+                                      :group-by 'studgrades)
+                             1))
+             "((SELECT studgrades, STRING_AGG(studname, E',') AS studpergrade FROM tbl_students GROUP BY studgrades) ORDER BY 1)"))
+  (is (equal (sql (:select (:string-agg 'a "," :order-by 'a) :from 'tiny))
+             "(SELECT STRING_AGG(a, E',' ORDER BY a) FROM tiny)"))
+  (is (equal (sql (:select (:string-agg 'a "," :order-by (:desc 'a)) :from 'tiny))
+             "(SELECT STRING_AGG(a, E',' ORDER BY a DESC) FROM tiny)"))
+  )
+
+(test string-agg
+  "Testing string-agg sql-op"
+  (is (equal (sql (:select (:as (:string-agg 'bp.step-type "," ) 'step-summary) :from 'business-process))
+             "(SELECT STRING_AGG(bp.step_type, E',') AS step_summary FROM business_process)"))
+  (is (equal (sql (:select 'mid (:as (:string-agg  'y "," :distinct) 'words) :from 'moves))
+             "(SELECT mid, STRING_AGG(DISTINCT y, E',') AS words FROM moves)"))
+  (is (equal (sql (:select 'mid (:as (:string-agg  'y "," :distinct :order-by (:desc 'y) ) 'words) :from 'moves))
+             "(SELECT mid, STRING_AGG(DISTINCT y, E',' ORDER BY y DESC) AS words FROM moves)")))
+
 (test select-over
   "Testing with over and partition by. From https://www.pgexercises.com/questions/aggregates/countmembers.html"
   (is (equal (sql (:order-by
