@@ -500,18 +500,15 @@ To sum the column len of all films and group the results by kind:"
       (is (equal (sql (:intersect (:select '* :from 'clients) (:select '* :from 'vips)))
                  "((SELECT * FROM clients) intersect (SELECT * FROM vips))")))
 
-(test select-aggregation
-      "Testing aggregation functions."
-      (is (equal (sql (:select (:as (:max 'joindate) 'latest) :from 'cd.members))
-                 "(SELECT max(joindate) AS latest FROM cd.members)"))
-      (is (equal (sql (:select 'firstname 'surname 'joindate
-                               :from 'cd.members
-                               :where (:= 'joindate (:select (:max 'joindate)
-                                                             :from 'cd.members))))
-                 "(SELECT firstname, surname, joindate FROM cd.members WHERE (joindate = (SELECT max(joindate) FROM cd.members)))")))
+;;; Aggregate Tests
 
-(test aggregation-1
-      "Testing Aggregation"
+(test avg-test
+  "Testing the avg aggregate functions"
+  (is (equal (sql (:select (:as (:round (:avg 'replacement-cost) 2) 'avg-replacement-cost) :from 'film ))
+             "(SELECT round(avg(replacement_cost), 2) AS avg_replacement_cost FROM film)")))
+
+(test count-test
+  "Testing the count aggregate function"
 ;; From https://www.pgexercises.com/questions/aggregates/count.html
       (is (equal (sql (:select (:count '*) :from 'cd.facilities))
                  "(SELECT COUNT(*) FROM cd.facilities)"))
@@ -527,7 +524,15 @@ To sum the column len of all films and group the results by kind:"
                                           :group-by 'recommendedby)
                                  'recommendedby))
                  "((SELECT recommendedby, COUNT(*) FROM cd.members WHERE (not (recommendedby IS NULL)) GROUP BY recommendedby) ORDER BY recommendedby)"))
-;; From https://www.pgexercises.com/questions/aggregates/fachours.html
+      ;; From https://www.pgexercises.com/questions/aggregates/members1.html
+      (is (equal (sql (:select (:count 'memid :distinct) :from 'cd.bookings))
+                 "(SELECT COUNT(DISTINCT memid) FROM cd.bookings)"))
+      (is (equal (sql (:select (:as (:count '*) 'unfiltered) (:as (:count '* :filter (:= 1 'bid)) 'filtered) :from 'testtable))
+                 "(SELECT COUNT(*) AS unfiltered, COUNT(*) FILTER (WHERE (1 = bid)) AS filtered FROM testtable)")))
+
+(test sum-test
+  "Testing the sum aggregate function"
+  ;; From https://www.pgexercises.com/questions/aggregates/fachours.html
       (is (equal (sql (:order-by (:select 'facid (:as (:sum 'slots) 'total-slots)
                                           :from 'cd.bookings
                                           :group-by 'facid)
@@ -551,9 +556,7 @@ To sum the column len of all films and group the results by kind:"
                                  'facid 'month))
                  "((SELECT facid, EXTRACT(month FROM starttime) AS month, sum(slots) AS total_slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid, month) ORDER BY facid, month)"))
 
-;; From https://www.pgexercises.com/questions/aggregates/members1.html
-      (is (equal (sql (:select (:count 'memid :distinct) :from 'cd.bookings))
-                 "(SELECT COUNT(DISTINCT memid) FROM cd.bookings)"))
+
 
 ;; From https://www.pgexercises.com/questions/aggregates/fachours1a.html
       (is (equal (sql (:order-by (:select 'facid (:as (:sum 'slots) 'total-slots)
@@ -651,9 +654,37 @@ To sum the column len of all films and group the results by kind:"
                                                       :from 'cd.bookings
                                                       :where (:and (:>= 'starttime "2012-01-01")
                                                                    (:< 'starttime "2013-01-01")))) 'facid 'month))
-                 "(((SELECT facid, EXTRACT(month FROM starttime) AS month, sum(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid, month) union all (SELECT facid, NULL, sum(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid) union all (SELECT NULL, NULL, sum(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')))) ORDER BY facid, month)"))
-      )
+                 "(((SELECT facid, EXTRACT(month FROM starttime) AS month, sum(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid, month) union all (SELECT facid, NULL, sum(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid) union all (SELECT NULL, NULL, sum(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')))) ORDER BY facid, month)")))
 
+(test max-aggregation
+      "Testing aggregation functions."
+      (is (equal (sql (:select (:as (:max 'joindate) 'latest) :from 'cd.members))
+                 "(SELECT max(joindate) AS latest FROM cd.members)"))
+      (is (equal (sql (:select 'firstname 'surname 'joindate
+                               :from 'cd.members
+                               :where (:= 'joindate (:select (:max 'joindate)
+                                                             :from 'cd.members))))
+                 "(SELECT firstname, surname, joindate FROM cd.members WHERE (joindate = (SELECT max(joindate) FROM cd.members)))")))
+
+(test mode-aggregation-test
+  "Testing the aggregate sql-op mode"
+  (is (equal (sql (:select (:mode 'items) :from 'item-table))
+             "(SELECT mode() within group (order by items) FROM item_table)")))
+
+(test string-agg
+  "Testing string-agg sql-op"
+  (is (equal (sql (:select (:as (:string-agg 'bp.step-type "," ) 'step-summary) :from 'business-process))
+             "(SELECT STRING_AGG(bp.step_type, E',') AS step_summary FROM business_process)"))
+  (is (equal (sql (:select 'mid (:as (:string-agg  'y "," :distinct) 'words) :from 'moves))
+             "(SELECT mid, STRING_AGG(DISTINCT y, E',') AS words FROM moves)"))
+  (is (equal (sql (:select 'mid (:as (:string-agg  'y "," :distinct :order-by (:desc 'y) ) 'words) :from 'moves))
+             "(SELECT mid, STRING_AGG(DISTINCT y, E',' ORDER BY y DESC) AS words FROM moves)")))
+
+(test aggregation-other-1
+      "Other Aggregation Tests"
+
+
+      )
 
 (test select-union
       "testing basic union."
@@ -710,6 +741,7 @@ To sum the column len of all films and group the results by kind:"
 "((SELECT facs.facid, facs.name, trim(to_char((sum(bks.slots) / 2.0), E'9999999999999999D99')) AS total_hours FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (facs.facid = bks.facid) GROUP BY facs.facid, facs.name) ORDER BY facs.facid)"))
       )
 
+
 (test select-order-by
   "Testing with order-by."
   (is (equal (sql (:order-by
@@ -729,17 +761,8 @@ To sum the column len of all films and group the results by kind:"
   (is (equal (sql (:select (:string-agg 'a "," :order-by 'a) :from 'tiny))
              "(SELECT STRING_AGG(a, E',' ORDER BY a) FROM tiny)"))
   (is (equal (sql (:select (:string-agg 'a "," :order-by (:desc 'a)) :from 'tiny))
-             "(SELECT STRING_AGG(a, E',' ORDER BY a DESC) FROM tiny)"))
-  )
+             "(SELECT STRING_AGG(a, E',' ORDER BY a DESC) FROM tiny)")))
 
-(test string-agg
-  "Testing string-agg sql-op"
-  (is (equal (sql (:select (:as (:string-agg 'bp.step-type "," ) 'step-summary) :from 'business-process))
-             "(SELECT STRING_AGG(bp.step_type, E',') AS step_summary FROM business_process)"))
-  (is (equal (sql (:select 'mid (:as (:string-agg  'y "," :distinct) 'words) :from 'moves))
-             "(SELECT mid, STRING_AGG(DISTINCT y, E',') AS words FROM moves)"))
-  (is (equal (sql (:select 'mid (:as (:string-agg  'y "," :distinct :order-by (:desc 'y) ) 'words) :from 'moves))
-             "(SELECT mid, STRING_AGG(DISTINCT y, E',' ORDER BY y DESC) AS words FROM moves)")))
 
 (test select-over
   "Testing with over and partition by. From https://www.pgexercises.com/questions/aggregates/countmembers.html"

@@ -103,7 +103,7 @@ must appear in the order defined."
                     "between" "binary" "both" "case" "cast" "check" "collate" "column" "concurrently"
                     "constraint" "create" "cross" "current-catalog" "current-date" "current-role" "current-schema"
                     "current-time" "current-timestamp" "current-user" "default" "deferrable"
-                    "desc" "distinct" "do" "else" "end" "except" "false" "fetch"
+                    "desc" "distinct" "do" "else" "end" "except" "false" "fetch" "filter"
                     "for" "foreign" "freeze" "from" "full" "grant" "group" "having" "ilike" "in" "initially"
                     "inner" "intersect" "into" "is" "isnull" "join" "lateral" "leading" "left" "like" "limit"
                     "localtime" "localtimestamp" "natural" "new" "not" "notnull" "null" "off" "offset" "old"
@@ -525,10 +525,16 @@ string."
 (def-sql-op :extract (unit form)
   `("EXTRACT(" ,@(sql-expand unit) " FROM " ,@(sql-expand form) ")"))
 
-(def-sql-op :count (what &optional distinct)
+(def-sql-op :count (&rest args)
+    "Note that if used, the filter must be last in the count args. If distinct is used, it must come before filter.
+Unlike normal sql, the word where is not used inside the filter clause.
+E.g. (sql (:select (:count '*) (:count-f '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+See tests.lisp for examples."
+  (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
   `("COUNT(" ,@(when (eq distinct :distinct)
                  '("DISTINCT "))
-             ,@(sql-expand what)  ")"))
+    ,@(sql-expand-list vars)
+    ,@(if filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :between (n start end)
   `("(" ,@(sql-expand n) " BETWEEN " ,@(sql-expand start) " AND " ,@(sql-expand end) ")"))
@@ -631,7 +637,6 @@ the proper SQL syntax for joining tables."
   (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (order-by * ?)) (cons :vars args)
     `("STRING_AGG("
       ,@(if distinct '("DISTINCT "))
-      ,@(if distinct-on `("DISTINCT ON (" ,@(sql-expand-list distinct-on) ") "))
       ,@(sql-expand-list vars)
       ,@(if order-by `(" ORDER BY " ,@(sql-expand-list order-by)))
       ")")))
@@ -641,7 +646,6 @@ the proper SQL syntax for joining tables."
   (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?)(order-by * ?)) (cons :vars args)
     `("ARRAY_AGG("
       ,@(if distinct '("DISTINCT "))
-      ,@(if distinct-on `("DISTINCT ON (" ,@(sql-expand-list distinct-on) ") "))
       ,@(sql-expand-list vars)
       ,@(if order-by `(" ORDER BY " ,@(sql-expand-list order-by)))
       ")")))
