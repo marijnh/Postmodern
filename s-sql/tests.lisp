@@ -232,7 +232,8 @@ to strings \(which will form an SQL query when concatenated)."
 (test expand-sql-op
       "Testing expand-sql-op"
       (is (equal (s-sql::expand-sql-op :max '(1 2 3))
-                 '("max" "(" "1" ", " "2" ", " "3" ")"))))
+                 '("MAX(" "1" ", " "2" ", " "3" ")"))))
+
 (test make-expander
       "Testing make-expander"
       (is (equal (funcall (s-sql::make-expander :unary "unary1") '("like"))
@@ -356,7 +357,7 @@ To join the table films with the table distributors:"
                                 :where (:>= 'starttime "2012-09-01")
                                 :group-by 'mems.surname 'mems.firstname 'mems.memid)
                        'mems.memid))
-                 "((SELECT mems.surname, mems.firstname, mems.memid, min(bks.starttime) AS starttime FROM cd.bookings AS bks INNER JOIN cd.members AS mems ON (mems.memid = bks.memid) WHERE (starttime >= E'2012-09-01') GROUP BY mems.surname, mems.firstname, mems.memid) ORDER BY mems.memid)"))
+                 "((SELECT mems.surname, mems.firstname, mems.memid, MIN(bks.starttime) AS starttime FROM cd.bookings AS bks INNER JOIN cd.members AS mems ON (mems.memid = bks.memid) WHERE (starttime >= E'2012-09-01') GROUP BY mems.surname, mems.firstname, mems.memid) ORDER BY mems.memid)"))
 
 ;; Inner Join with using
       (is (equal (sql (:select '* :from 't1 :inner-join 't2 :using ('num)))
@@ -528,7 +529,9 @@ To sum the column len of all films and group the results by kind:"
       (is (equal (sql (:select (:count 'memid :distinct) :from 'cd.bookings))
                  "(SELECT COUNT(DISTINCT memid) FROM cd.bookings)"))
       (is (equal (sql (:select (:as (:count '*) 'unfiltered) (:as (:count '* :filter (:= 1 'bid)) 'filtered) :from 'testtable))
-                 "(SELECT COUNT(*) AS unfiltered, COUNT(*) FILTER (WHERE (1 = bid)) AS filtered FROM testtable)")))
+                 "(SELECT COUNT(*) AS unfiltered, COUNT(*) FILTER (WHERE (1 = bid)) AS filtered FROM testtable)"))
+      (is (equal (sql (:select (:as (:count '* :distinct) 'unfiltered) (:as (:count '* :filter (:= 1 'bid)) 'filtered) :from 'testtable))
+                 "(SELECT COUNT(DISTINCT *) AS unfiltered, COUNT(*) FILTER (WHERE (1 = bid)) AS filtered FROM testtable)")))
 
 (test sum-test
   "Testing the sum aggregate function"
@@ -627,7 +630,7 @@ To sum the column len of all films and group the results by kind:"
                                                                                       :from 'cd.bookings
                                                                                       :group-by 'facid)
                                                                              'sum2)))))
-                 "(SELECT facid, sum(slots) AS totalslots FROM cd.bookings GROUP BY facid HAVING (sum(slots) = (SELECT max(sum2.totalslots) FROM (SELECT sum(slots) AS totalslots FROM cd.bookings GROUP BY facid) AS sum2)))"))
+                 "(SELECT facid, sum(slots) AS totalslots FROM cd.bookings GROUP BY facid HAVING (sum(slots) = (SELECT MAX(sum2.totalslots) FROM (SELECT sum(slots) AS totalslots FROM cd.bookings GROUP BY facid) AS sum2)))"))
 
       ;; From https://www.pgexercises.com/questions/aggregates/fachoursbymonth3.html
       ;; V1
@@ -659,12 +662,12 @@ To sum the column len of all films and group the results by kind:"
 (test max-aggregation
       "Testing aggregation functions."
       (is (equal (sql (:select (:as (:max 'joindate) 'latest) :from 'cd.members))
-                 "(SELECT max(joindate) AS latest FROM cd.members)"))
+                 "(SELECT MAX(joindate) AS latest FROM cd.members)"))
       (is (equal (sql (:select 'firstname 'surname 'joindate
                                :from 'cd.members
                                :where (:= 'joindate (:select (:max 'joindate)
                                                              :from 'cd.members))))
-                 "(SELECT firstname, surname, joindate FROM cd.members WHERE (joindate = (SELECT max(joindate) FROM cd.members)))")))
+                 "(SELECT firstname, surname, joindate FROM cd.members WHERE (joindate = (SELECT MAX(joindate) FROM cd.members)))")))
 
 (test mode-aggregation-test
   "Testing the aggregate sql-op mode"
@@ -679,6 +682,15 @@ To sum the column len of all films and group the results by kind:"
              "(SELECT mid, STRING_AGG(DISTINCT y, E',') AS words FROM moves)"))
   (is (equal (sql (:select 'mid (:as (:string-agg  'y "," :distinct :order-by (:desc 'y) ) 'words) :from 'moves))
              "(SELECT mid, STRING_AGG(DISTINCT y, E',' ORDER BY y DESC) AS words FROM moves)")))
+
+(test array-agg
+  "Testing array-agg. Note the first example filters out null values as well as separating the y and n users."
+  (is (equal (sql (:select 'g.id
+         (:as (:array-agg 'g.users :filter (:= 'g.canonical "Y")) 'canonical-users)
+         (:as (:array-agg 'g.users :filter (:= 'g.canonical "N")) 'non-canonical-users)
+         :from (:as 'groups 'g)
+         :group-by 'g.id))
+             "(SELECT g.id, ARRAY_AGG(g.users) FILTER (WHERE (g.canonical = E'Y')) AS canonical_users, ARRAY_AGG(g.users) FILTER (WHERE (g.canonical = E'N')) AS non_canonical_users FROM groups AS g GROUP BY g.id)")))
 
 (test aggregation-other-1
       "Other Aggregation Tests"
@@ -719,7 +731,7 @@ To sum the column len of all films and group the results by kind:"
                              (:select 'facid 'totalslots
                                       :from 'sum
                                       :where (:= 'totalslots (:select (:max 'totalslots) :from 'sum)))))
-                 "WITH sum AS (SELECT facid, sum(slots) AS totalslots FROM cd.bookings GROUP BY facid)(SELECT facid, totalslots FROM sum WHERE (totalslots = (SELECT max(totalslots) FROM sum)))"))
+                 "WITH sum AS (SELECT facid, sum(slots) AS totalslots FROM cd.bookings GROUP BY facid)(SELECT facid, totalslots FROM sum WHERE (totalslots = (SELECT MAX(totalslots) FROM sum)))"))
 
       ;; From https://www.pgexercises.com/questions/aggregates/fachoursbymonth3.html
       (is (equal (sql (:order-by (:with (:as 'bookings (:select 'facid (:as (:extract 'month 'starttime) 'month) 'slots
@@ -958,12 +970,12 @@ To sum the column len of all films and group the results by kind:"
       (is (equal (sql (:insert-into 'cd.facilities
                                     :set 'facid (:select (:+ (:select (:max 'facid) :from 'cd.facilities) 1))
                                          'name "Spa" 'membercost 20 'guestcost 30 'initialoutlay 100000 'monthlymaintenance 800))
-                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES ((SELECT ((SELECT max(facid) FROM cd.facilities) + 1)), E'Spa', 20, 30, 100000, 800)"))
+                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES ((SELECT ((SELECT MAX(facid) FROM cd.facilities) + 1)), E'Spa', 20, 30, 100000, 800)"))
 ;; Now using rows https://www.pgexercises.com/questions/updates/insert3.html
       (is (equal (sql (:insert-rows-into 'cd.facilities
                          :columns 'facid  'name  'membercost  'guestcost 'initialoutlay 'monthlymaintenance
                          :values '(((:select (:+ (:select (:max 'facid) :from 'cd.facilities) 1)) "Spa" 20 30 100000 800 ))))
-                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES ((SELECT ((SELECT max(facid) FROM cd.facilities) + 1)), E'Spa', 20, 30, 100000, 800)")))
+                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES ((SELECT ((SELECT MAX(facid) FROM cd.facilities) + 1)), E'Spa', 20, 30, 100000, 800)")))
 
 (test update
       "Testing updates"

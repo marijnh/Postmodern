@@ -527,14 +527,69 @@ string."
 
 (def-sql-op :count (&rest args)
     "Note that if used, the filter must be last in the count args. If distinct is used, it must come before filter.
-Unlike normal sql, the word where is not used inside the filter clause.
-E.g. (sql (:select (:count '*) (:count-f '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+Unlike normal sql, the word 'where' is not used inside the filter clause  (s-sql will properly expand it).
+E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
 See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
-  `("COUNT(" ,@(when (eq distinct :distinct)
-                 '("DISTINCT "))
+    `("COUNT("
+      ,@(when distinct '("DISTINCT "))
     ,@(sql-expand-list vars)
-    ,@(if filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
+    ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
+
+(def-sql-op :avg (&rest args)
+    "Note that if used, the filter must be last in the avg args. If distinct is used, it must come before filter.
+Unlike normal sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+See tests.lisp for examples."
+  (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
+    `("AVG("
+      ,@(when distinct '("DISTINCT "))
+    ,@(sql-expand-list vars)
+    ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
+
+(def-sql-op :sum (&rest args)
+    "Note that if used, the filter must be last in the sum args. If distinct is used, it must come before filter.
+Unlike normal sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+See tests.lisp for examples."
+  (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
+    `("SUM("
+      ,@(when distinct '("DISTINCT "))
+    ,@(sql-expand-list vars)
+    ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
+
+(def-sql-op :max (&rest args)
+    "Note that if used, the filter must be last in the max args. If distinct is used, it must come before filter.
+Unlike normal sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+See tests.lisp for examples."
+  (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
+    `("MAX("
+      ,@(when distinct '("DISTINCT "))
+    ,@(sql-expand-list vars)
+    ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
+
+(def-sql-op :min (&rest args)
+    "Note that if used, the filter must be last in the min args. If distinct is used, it must come before filter.
+Unlike normal sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+See tests.lisp for examples."
+  (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
+    `("MIN("
+      ,@(when distinct '("DISTINCT "))
+    ,@(sql-expand-list vars)
+    ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
+
+(def-sql-op :every (&rest args)
+    "Note that if used, the filter must be last in the every args. If distinct is used, it must come before filter.
+Unlike normal sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+See tests.lisp for examples."
+  (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
+    `("EVERY("
+      ,@(when distinct '("DISTINCT "))
+    ,@(sql-expand-list vars)
+    ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :between (n start end)
   `("(" ,@(sql-expand n) " BETWEEN " ,@(sql-expand start) " AND " ,@(sql-expand end) ")"))
@@ -633,21 +688,26 @@ the proper SQL syntax for joining tables."
       ")")))
 
 (def-sql-op :string-agg (&rest args)
-  "Note that order-by must be last. If distinct is used, it must come before order-by. See tests.lisp for examples."
-  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (order-by * ?)) (cons :vars args)
+  "String-agg allows you to concatenate strings using different types of delimiter symbols.
+Note that order-by in string-agg requires postgresql 9.0 or later. Filter requires postgresql 9.4 or later.
+See tests.lisp for examples."
+  (split-on-keywords ((vars *) (distinct - ?) (filter * ?) (order-by * ?)) (cons :vars args)
     `("STRING_AGG("
-      ,@(if distinct '("DISTINCT "))
+      ,@(when distinct '("DISTINCT "))
       ,@(sql-expand-list vars)
-      ,@(if order-by `(" ORDER BY " ,@(sql-expand-list order-by)))
+      ,@(when order-by `(" ORDER BY " ,@(sql-expand-list order-by)))
+      ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))
       ")")))
 
 (def-sql-op :array-agg (&rest args)
-  "Note that order-by must be last. If distinct is used, it must come before order-by. See tests.lisp for examples."
-  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?)(order-by * ?)) (cons :vars args)
+  "Note that order-by in array-agg requires postgresql 9.0 or later.
+Filter requires postgresql 9.4 or later. See tests.lisp for examples."
+  (split-on-keywords ((vars *) (distinct - ?)(order-by * ?) (filter * ?)) (cons :vars args)
     `("ARRAY_AGG("
-      ,@(if distinct '("DISTINCT "))
+      ,@(when distinct '("DISTINCT "))
       ,@(sql-expand-list vars)
-      ,@(if order-by `(" ORDER BY " ,@(sql-expand-list order-by)))
+      ,@(when order-by `(" ORDER BY " ,@(sql-expand-list order-by)))
+      ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))
       ")")))
 
 (def-sql-op :mode (&rest args)
