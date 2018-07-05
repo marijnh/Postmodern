@@ -482,7 +482,8 @@
 
     <p class="desc">Order the results of a query by the given
     expressions. See <a href="#desc"><code>:desc</code></a> for when
-    you want to invert an ordering.</p>
+      you want to invert an ordering. Note: This is not the same as passing an <code>:order-by</code>
+      parameter to an aggregation operator. See <a href="#aggregation-operators">Aggregation Operators</a>.</p>
 
     <p class="def"><span>sql-op</span> <a name="over"></a>:over (form
     &amp;rest args)</p>
@@ -641,7 +642,7 @@
     values to be inserted. Example:</p>
 
     <pre class="code desc">
-(:insert-into 'my-table :set 'field-1 42 'field-2 "foobar")</pre>
+      (:insert-into 'my-table :set 'field-1 42 'field-2 "foobar")</pre>
 
     <p class="desc">It is possible to add <code>:returning</code>,
     followed by a list of field names or expressions, at the end of
@@ -662,6 +663,16 @@
                      :on-conflict-update 'column-A
                      :update-set 'column-B '$2
                      :where (:= 'test-table.column-A '$1)) "c" 37)</pre>
+
+    <p class="def"><span>sql-op</span> <a name="insert-rows-into"></a>:insert-rows-into (table &amp;rest rest)</p>
+
+    <p class="desc">Insert multiple rows into a table. Specify the columns first
+      with the keyword <code>:columns</code> then provide a list of lists of the values as
+      a parameter to the keyword <code>:values</code>. Example:</p>
+
+    <pre class="code desc">
+      (:insert-rows-into 'my-table :columns 'field-1 'field-2
+                                   :values '((42 "foobar") (23 "foobaz")))</pre>
 
 
     <p class="def"><span>sql-op</span> <a name="update"></a>:update (table &amp;rest rest)</p>
