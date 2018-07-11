@@ -606,14 +606,14 @@ See tests.lisp for more examples."
     "Returns true if all input values are true, otherwise false. Note that if the filter keyword used,
 the filter must be last in the every args. If distinct is used, it must come before filter.
 Unlike normal sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-E.g. (query (:select '* (:every (:like 'studname "%h"))
+E.g. (query (:select '* (:every (:like 'studname \"%h\"))
              :from 'tbl-students
              :group-by 'studname 'studid 'studgrades))
 See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("EVERY("
       ,@(when distinct '("DISTINCT "))
-    ,@(sql-expand-list vars)
+      ,@(sql-expand-list vars)
     ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :percentile-cont (&rest args)

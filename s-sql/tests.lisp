@@ -740,19 +740,12 @@ To sum the column len of all films and group the results by kind:"
 (test covar-pop
   "Testing population covariance."
     (is (equal (sql (:select (:covar-pop 'height 'weight) :from 'people))
-             "(SELECT COVAR-POP(height, weight) FROM people)"))
-    )
+               "(SELECT COVAR-POP(height, weight) FROM people)")))
+
 (test covar-samp
   "Testing sample covariance."
     (is (equal (sql (:select (:covar-samp 'height 'weight) :from 'people))
-             "(SELECT COVAR-SAMP(height, weight) FROM people)"))
-)
-
-(test aggregation-other-1
-      "Other Aggregation Tests"
-
-
-      )
+             "(SELECT COVAR-SAMP(height, weight) FROM people)")))
 
 (test stddev
   "Testing standard deviation functions"
@@ -830,11 +823,7 @@ To sum the column len of all films and group the results by kind:"
     (is (equal (format t "~,4f" (query (:select (:regr-syy 'salary 'age) :from 'employee) :single))
                "5748464512.0000"))
     (is (equal (format t "~,4f" (query (:select (:regr-syy 'age 'salary) :from 'employee) :single))
-               "250.8889"))
-    (is (equal ))
-    (is (equal ))
-    (is (equal ))
-    ))
+               "250.8889")))))
 
 (test select-union
       "testing basic union."
