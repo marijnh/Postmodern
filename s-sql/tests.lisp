@@ -50,6 +50,8 @@ associated with the keywords from an argument list, and checks for errors."
   (signals sql-error (s-sql::split-on-keywords% '((a1 * ?) (b2 ) (c3 ? *)) '(:a1 "Alpha1 "  :c3 "Ceta3 ")))
   (signals sql-error (s-sql::split-on-keywords% '((owner ?)) '(:owner "Sabra" :tourist "Geoffrey")))
   (signals sql-error (s-sql::split-on-keywords% '((a1 * ?) (c3 ? )) '(:a1 "Alpha1 " :c3 "Ceta3 " "Ceta3.5")))
+  (is (equal (s-sql::split-on-keywords% '((fraction *)) `(:fraction ,var1))
+             '((FRACTION 0.5))))
 )
 
 (test split-on-keywords
@@ -531,7 +533,10 @@ To sum the column len of all films and group the results by kind:"
       (is (equal (sql (:select (:as (:count '*) 'unfiltered) (:as (:count '* :filter (:= 1 'bid)) 'filtered) :from 'testtable))
                  "(SELECT COUNT(*) AS unfiltered, COUNT(*) FILTER (WHERE (1 = bid)) AS filtered FROM testtable)"))
       (is (equal (sql (:select (:as (:count '* :distinct) 'unfiltered) (:as (:count '* :filter (:= 1 'bid)) 'filtered) :from 'testtable))
-                 "(SELECT COUNT(DISTINCT *) AS unfiltered, COUNT(*) FILTER (WHERE (1 = bid)) AS filtered FROM testtable)")))
+                 "(SELECT COUNT(DISTINCT *) AS unfiltered, COUNT(*) FILTER (WHERE (1 = bid)) AS filtered FROM testtable)"))
+      (is (equal (with-test-connection (pomo:query (:select (:as (:count '*) 'unfiltered) (:as (:count '* :filter (:< 'i 5)) 'filtered)
+                                                            :from (:as (:generate-series 1 10) 's 'i))))
+                 '((10 4)))))
 
 (test sum-test
   "Testing the sum aggregate function"
@@ -674,6 +679,15 @@ To sum the column len of all films and group the results by kind:"
   (is (equal (sql (:select (:mode 'items) :from 'item-table))
              "(SELECT mode() within group (order by items) FROM item_table)")))
 
+(test every-aggregation-test
+  "Testing the aggregation sql-op every"
+  (is (equal (with-test-connection (query (:select '* (:every (:like 'studname "%h"))
+                                                   :from 'tbl-students
+                                                   :group-by 'studname 'studid 'studgrades)))
+             '((4 "Ali" "B" NIL) (7 "Roy" "C" NIL) (6 "Sofia" "A" NIL) (5 "Mukesh" "D" T)
+               (2 "Kimly" "B" NIL) (3 "Jenny" "C" NIL) (1 "Anvesh" "A" T)
+               (8 "Martin" "C" NIL)))))
+
 (test string-agg
   "Testing string-agg sql-op"
   (is (equal (sql (:select (:as (:string-agg 'bp.step-type "," ) 'step-summary) :from 'business-process))
@@ -692,11 +706,135 @@ To sum the column len of all films and group the results by kind:"
          :group-by 'g.id))
              "(SELECT g.id, ARRAY_AGG(g.users) FILTER (WHERE (g.canonical = E'Y')) AS canonical_users, ARRAY_AGG(g.users) FILTER (WHERE (g.canonical = E'N')) AS non_canonical_users FROM groups AS g GROUP BY g.id)")))
 
+(test percentile-cont
+  "Testing percentile-cont."
+  (is (equal (sql (:select (:percentile-cont :fraction 0.5 :order-by 'number-of-staff)
+                           :from 'schools))
+             "(SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY number_of_staff) FROM schools)"))
+  (is (equal (sql (:select (:percentile-cont :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
+                           'schools))
+             "(SELECT PERCENTILE_CONT(ARRAY[0.25 0.5 0.75 1]) WITHIN GROUP (ORDER BY number_of_staff), schools)"))
+  (is (equal (sql (:order-by (:select 'day
+               (:over (:percentile-cont :fraction 0.25 :order-by (:asc 'duration)) (:partition-by 'day))
+               (:over (:percentile-cont :fraction 0.5 :order-by (:asc 'duration)) (:partition-by 'day))
+               (:over (:percentile-cont :fraction 0.75 :order-by (:asc 'duration)) (:partition-by 'day))
+               (:over (:percentile-cont :fraction 0.85 :order-by (:asc 'duration)) (:partition-by 'day))
+               :from 'query-durations :group-by 1 ) 1))
+             "((SELECT day, (PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day)), (PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day)), (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day)), (PERCENTILE_CONT(0.85) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day)) FROM query_durations GROUP BY 1) ORDER BY 1)")))
+
+(test percentile-dist
+  "Testing percentile-dist sql-op"
+  (is (equal (sql (:select (:percentile-dist :fraction 0.5 :order-by 'number-of-staff)
+                           :from 'schools))
+             "(SELECT PERCENTILE_DIST(0.5) WITHIN GROUP (ORDER BY number_of_staff) FROM schools)"))
+  (is (equal (sql (:select (:percentile-dist :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
+                           'schools))
+             "(SELECT PERCENTILE_DIST(ARRAY[0.25 0.5 0.75 1]) WITHIN GROUP (ORDER BY number_of_staff), schools)")))
+
+(test corr
+  "Testing correlation coefficient. To quote from wikipedia (https://en.wikipedia.org/wiki/Covariance)
+ In probability theory and statistics, covariance is a measure of the joint variability of two random variables. If the greater values of one variable mainly correspond with the greater values of the other variable, and the same holds for the lesser values, (i.e., the variables tend to show similar behavior), the covariance is positive. In the opposite case, when the greater values of one variable mainly correspond to the lesser values of the other, (i.e., the variables tend to show opposite behavior), the covariance is negative. The sign of the covariance therefore shows the tendency in the linear relationship between the variables. The magnitude of the covariance is not easy to interpret because it is not normalized and hence depends on the magnitudes of the variables. The normalized version of the covariance, the correlation coefficient, however, shows by its magnitude the strength of the linear relation."
+  (is (equal (sql (:select (:corr 'height 'weight) :from 'people))
+             "(SELECT CORR(height, weight) FROM people)")))
+
+(test covar-pop
+  "Testing population covariance."
+    (is (equal (sql (:select (:covar-pop 'height 'weight) :from 'people))
+             "(SELECT COVAR-POP(height, weight) FROM people)"))
+    )
+(test covar-samp
+  "Testing sample covariance."
+    (is (equal (sql (:select (:covar-samp 'height 'weight) :from 'people))
+             "(SELECT COVAR-SAMP(height, weight) FROM people)"))
+)
+
 (test aggregation-other-1
       "Other Aggregation Tests"
 
 
       )
+
+(test stddev
+  "Testing standard deviation functions"
+  (with-test-connection
+    (when (table-exists-p 'employee)
+      (query (:drop-table 'employee)))
+    (query (:create-table employee ((id :type int)
+                                    (name :type text)
+                                    (salary :type numeric)
+                                    (start_date :type date)
+                                    (city :type text)
+                                    (region :type char)
+                                    (age :type int))))
+    (query (:insert-rows-into 'employee
+                              :columns 'id 'name 'salary 'start-date 'city 'region 'age
+                              :values '((1 "Jason" 40420 "02/01/94" "New York" "W" 29)
+                                        (2 "Robert" 14420 "01/02/95" "Vancouver" "N" 21)
+                                        (3 "Celia" 24020 "12/03/96" "Toronto" "W" 24)
+                                        (4 "Linda" 40620 "11/04/97" "New York" "N" 28)
+                                        (5 "David" 80026 "10/05/98" "Vancouver" "W" 31)
+                                        (6 "James" 70060 "09/06/99" "Toronot" "N" 26)
+                                        (7 "Alison" 90620 "08/07/00" "New York" "W" 38)
+                                        (8 "Chris" 26020 "07/08/01" "Vancouver" "N" 22)
+                                        (9 "Mary" 60020 "06/08/02" "Toronto" "W" 34))))
+    (is (equal (format nil "~,6f" (query (:select (:stddev 'salary) :from 'employee) :single))
+               "26805.934000"))
+    (is (equal (query (:select (:variance 'salary) :from 'employee) :single)
+               718558064))
+    (is (equal (format t "~,4f" (query (:select (:var-pop 'salary) :from 'employee) :single))
+               "638718300.0000"))
+    (is (equal (format t "~,4f" (query (:select (:var-samp 'salary) :from 'employee) :single))
+               "718558100.0000"))
+    (is (equal (format nil "~,4f" (query (:select (:stddev-samp 'salary) :from 'employee) :single))
+               "26805.9340"))
+    (is (equal (format nil "~,4f" (query (:select (:stddev-pop 'salary) :from 'employee) :single))
+               "25272.8770"))
+    (is (equal (format nil "~,4f" (query (:select (:avg 'salary) :from 'employee) :single))
+               "49580.6680"))
+    (is (equal (format nil "~,4f" (query (:select (:max 'salary) :from 'employee) :single))
+               "90620.0000"))
+    (is (equal (format nil "~,4f" (query (:select (:min 'salary) :from 'employee) :single))
+               "14420.0000"))
+    (is (equal (format nil "~,4f" (query (:select (:regr-avgx 'salary 'age) :from 'employee) :single))
+               "28.1111"))
+    (is (equal (format nil "~,4f" (query (:select (:regr-avgx 'age 'salary) :from 'employee) :single))
+               "49580.6667"))
+    (is (equal (format t "~,4f" (query (:select (:regr-avgy 'salary 'age) :from 'employee) :single))
+               "49580.6667"))
+    (is (equal (format t "~,4f" (query (:select (:regr-avgy 'age 'salary) :from 'employee) :single))
+               "28.1111"))
+    (is (equal (format t "~,4f" (query (:select (:regr-count 'salary 'age) :from 'employee) :single))
+               "9.0000"))
+    (is (equal (format t "~,4f" (query (:select (:regr-count 'age 'salary) :from 'employee) :single))
+               "9.0000"))
+    (is (equal (format t "~,4f" (query (:select (:regr-intercept 'salary 'age) :from 'employee) :single))
+               "-62911.0363"))
+    (is (equal (format t "~,4f" (query (:select (:regr-intercept 'age 'salary) :from 'employee) :single))
+               "19.4518"))
+    (is (equal (format t "~,4f" (query (:select (:regr-r2 'salary 'age) :from 'employee) :single))
+               "0.6989")
+    (is (equal (format t "~,4f" (query (:select (:regr-r2 'age 'salary) :from 'employee) :single))
+               "0.6989"))
+    (is (equal (format t "~,4f" (query (:select (:regr-slope 'salary 'age) :from 'employee) :single))
+               "4001.6811"))
+    (is (equal (format t "~,4f" (query (:select (:regr-slope 'age 'salary) :from 'employee) :single))
+               "0.0002"))
+    (is (equal (format t "~,4f" (query (:select (:regr-sxx 'salary 'age) :from 'employee) :single))
+               "250.8889"))
+    (is (equal (format t "~,4f" (query (:select (:regr-sxx 'age 'salary) :from 'employee) :single))
+               "5748464512.0000"))
+    (is (equal (format t "~,4f" (query (:select (:regr-sxy 'salary 'age) :from 'employee) :single))
+               "1003977.3333"))
+    (is (equal (format t "~,4f" (query (:select (:regr-sxy 'age 'salary) :from 'employee) :single))
+               "1003977.3333"))
+    (is (equal (format t "~,4f" (query (:select (:regr-syy 'salary 'age) :from 'employee) :single))
+               "5748464512.0000"))
+    (is (equal (format t "~,4f" (query (:select (:regr-syy 'age 'salary) :from 'employee) :single))
+               "250.8889"))
+    (is (equal ))
+    (is (equal ))
+    (is (equal ))
+    ))
 
 (test select-union
       "testing basic union."
@@ -756,6 +894,18 @@ To sum the column len of all films and group the results by kind:"
 
 (test select-order-by
   "Testing with order-by."
+  (is (equal (sql (:order-by (:select 'id 'name
+                                      :from 'users)
+                             'name))
+             "((SELECT id, name FROM users) ORDER BY name)"))
+  (is (equal (sql (:order-by (:select 'id 'name
+                                      :from 'users)
+                             (:desc 'name)))
+             "((SELECT id, name FROM users) ORDER BY name DESC)"))
+  (is (equal (sql (:order-by (:select 'id 'name
+                                      :from 'users)
+                             (:asc 'name)))
+             "((SELECT id, name FROM users) ORDER BY name ASC)"))
   (is (equal (sql (:order-by
                    (:select 'firstname 'surname
                              :from 'cd.members)
@@ -1261,12 +1411,17 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
         (pomo:query (:drop-sequence :knobo-seq))))
 
 #|
-(test create-table-with-constraint
-      "Create a table with constraint"
-      (is (equal )))
 
 Define a unique table constraint for the table films. Unique table constraints can be defined on one or more columns of the table:
+How do we get the interval to be hour to minute?
 
+(pomo:query (:create-table films
+ ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key 't)
+                              (title :type (varchar 40))
+                              (did :type integer)
+                              (date-prod :type (or date db-null))
+                              (kind :type (or (varchar 10) db-null))
+                              (len :type (or interval db-null)))))
 CREATE TABLE films (
     code        char(5),
     title       varchar(40),
@@ -1291,15 +1446,6 @@ CREATE TABLE distributors (
 );
 Define a primary key table constraint for the table films:
 
-CREATE TABLE films (
-    code        char(5),
-    title       varchar(40),
-    did         integer,
-    date_prod   date,
-    kind        varchar(10),
-    len         interval hour to minute,
-    CONSTRAINT code_title PRIMARY KEY(code,title)
-);
 Define a primary key constraint for table distributors. The following two examples are equivalent, the first using the table constraint syntax, the second the column constraint syntax:
 
 CREATE TABLE distributors (

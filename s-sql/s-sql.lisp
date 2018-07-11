@@ -543,7 +543,7 @@ or it can be a smaller number of rows based on the allowed keyword parameters :d
                 (:as (:count '* :filter (:= 1 'bid)) 'filtered)
                 :from 'testtable))
 
-.Note that if used, the filter must be last in the count args. If distinct is used, it must come before filter.
+Note that if used, the filter must be last in the count args. If distinct is used, it must come before filter.
 Unlike normal sql, the word 'where' is not used inside the filter clause.
 E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
 See tests.lisp for examples."
@@ -557,8 +557,8 @@ See tests.lisp for examples."
 (def-sql-op :avg (&rest args)
     "Avg calculates the average value of a list of values. Note that if the filter keyword is used,
 the filter must be last in the avg args. If distinct is used, it must come before filter.
-Unlike normal sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+E.g. (query (:select (:avg '*) (:avg '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
 See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("AVG("
@@ -569,8 +569,8 @@ See tests.lisp for examples."
 (def-sql-op :sum (&rest args)
     "Sum calculates the total of a list of values. Note that if the keyword filter is used,
 the filter must be last in the sum args. If distinct is used, it must come before filter.
-Unlike normal sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+E.g. (query (:select (:sum '*) (:sum '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
 See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("SUM("
@@ -581,9 +581,9 @@ See tests.lisp for examples."
 (def-sql-op :max (&rest args)
     "Max returns the maximum value of a set of values. Note that if the filter keyword is used,
 the filter must be last in the max args. If distinct is used, it must come before filter.
-Unlike normal sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
-See tests.lisp for examples."
+Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+E.g. (query (:select (:max '*) (:max '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+See tests.lisp for more examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("MAX("
       ,@(when distinct '("DISTINCT "))
@@ -593,9 +593,9 @@ See tests.lisp for examples."
 (def-sql-op :min (&rest args)
     "Returns the minimum value ofa set of values. Note that if the filter keyword is used,
 the filter must be last in the min args. If distinct is used, it must come before filter.
-Unlike normal sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
-See tests.lisp for examples."
+Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+E.g. (query (:select (:min '*) (:min '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+See tests.lisp for more examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("MIN("
       ,@(when distinct '("DISTINCT "))
@@ -606,13 +606,84 @@ See tests.lisp for examples."
     "Returns true if all input values are true, otherwise false. Note that if the filter keyword used,
 the filter must be last in the every args. If distinct is used, it must come before filter.
 Unlike normal sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+E.g. (query (:select '* (:every (:like 'studname "%h"))
+             :from 'tbl-students
+             :group-by 'studname 'studid 'studgrades))
 See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("EVERY("
       ,@(when distinct '("DISTINCT "))
     ,@(sql-expand-list vars)
     ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
+
+(def-sql-op :percentile-cont (&rest args)
+  "Requires Postgresql 9.4 or higher. Percentile-cont returns a value corresponding to the specified fraction in the ordering,
+interpolating between adjacent input items if needed.
+There are two required keyword parameters :fraction and :order-by. If the fraction value is an array,
+then it returns an array of results matching the shape of the fractions parameter, with each non-null
+element replaced by the value corresponding to that percentile.
+
+Examples:
+
+    (query (:select (:percentile-cont :fraction 0.5 :order-by 'number-of-staff)
+                    :from 'schools))
+    (query (:select (:percentile-cont :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
+                    :from  'schools))
+"
+  (split-on-keywords ((fraction *)  (order-by * )) args
+    `("PERCENTILE_CONT"
+      ,@ (when fraction `(,(format nil "~a" fraction)))
+      ,@(when order-by `(" WITHIN GROUP (ORDER BY " ,@(sql-expand-list order-by) ")")))))
+
+(def-sql-op :percentile-dist (&rest args)
+  "Requires Postgresql 9.4 or higher. There are two required keyword parameters :fraction and :order-by.
+Percentile-dist returns the first input value whose position in the ordering equals or exceeds
+the specified fraction. If the fraction parameter is an array eturns an array of results matching
+the shape of the fractions parameter, with each non-null element replaced by the input value
+corresponding to that percentile.
+
+Examples:
+
+    (query (:select (:percentile-dist :fraction 0.5 :order-by 'number-of-staff)
+                    :from 'schools))
+    (query (:select (:percentile-dist :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
+                    :from  'schools))"
+
+  (split-on-keywords ((fraction *)  (order-by * )) args
+    `("PERCENTILE_DIST"
+      ,@ (when fraction `(,(format nil "~a" fraction)))
+      ,@(when order-by `(" WITHIN GROUP (ORDER BY " ,@(sql-expand-list order-by) ")")))))
+
+(def-sql-op :corr (y x)
+  "The corr function returns the correlation coefficient between a set of dependent and independent variables.
+
+Example:
+
+    (query (:select (:corr 'height 'weight) :from 'people))"
+
+  `("CORR(" ,@ (sql-expand y) " , " ,@ (sql-expand x) ")"))
+
+(def-sql-op :covar-pop (y x)
+  "The covar-pop function returns the population covariance between a set of dependent and independent variables.
+
+Example:
+
+    (query (:select (:covar-pop 'height 'weight) :from 'people))"
+
+  `("CORVAR_POP(" ,@(sql-expand y) " , " ,@(sql-expand x) ")")
+)
+
+(def-sql-op :covar-samp (y x)
+  "The covar-samp function returns the sample covariance between a set of dependent and independent variables.
+
+Example:
+
+    (query (:select (:covar-samp 'height 'weight) :from 'people))"
+
+  `("CORVAR_SAMP(" ,@(sql-expand y) " , " ,@(sql-expand x) ")"))
+
+
+
 
 (def-sql-op :between (n start end)
   `("(" ,@(sql-expand n) " BETWEEN " ,@(sql-expand start) " AND " ,@(sql-expand end) ")"))
@@ -758,6 +829,151 @@ Filter requires postgresql 9.4 or later. See tests.lisp for examples.
 and article at https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-function/."
   (split-on-keywords ((vars *)) (cons :vars args)
     `("mode() within group (order by " ,@(sql-expand-list vars) ")")))
+
+
+(def-sql-op :regr_avgx (y x)
+  "The regr_avgx function returns the average of the independent variable (sum(X)/N)
+
+Example:
+
+    (query (:select (:regr_avgx 'height 'weight) :from 'people))"
+
+  `("REGR_AVGX(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
+
+(def-sql-op :regr_avgy (y x)
+  "The regr_avgy function returns the average of the dependent variable (sum(Y)/N).
+
+Example:
+
+    (query (:select (:regr_avgy 'height 'weight) :from 'people))"
+  `("REGR_AVGY(" ,@(sql-expand y) " , " ,@(sql-expand x) ")"))
+
+(def-sql-op :regr_count (y x)
+  "The regr_count function returns the 	number of input rows in which both expressions are nonnull.
+
+Example:
+
+    (query (:select (:regr_count 'height 'weight) :from 'people))"
+
+  `("REGR_COUNT(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
+
+(def-sql-op :regr_intercept (y x)
+  "The regr_intercept function returns the y-intercept of the least-squares-fit linear equation determined by the (X, Y) pairs.
+
+Example:
+
+    (query (:select (:regr_intercept 'height 'weight) :from 'people))"
+
+  `("REGR_INTERCEPT(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
+
+(def-sql-op :regr_r2 (y x)
+  "The regr_r2 function returns the square of the correlation coefficient.
+
+Example:
+
+    (query (:select (:regr_r2 'height 'weight) :from 'people))"
+
+  `("REGR_R2(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
+
+(def-sql-op :regr_slope (y x)
+  "The regr_slope function returns the slope of the least-squares-fit linear equation determined by the (X, Y) pairs.
+
+Example:
+
+    (query (:select (:regr_slope 'height 'weight) :from 'people))"
+
+  `("REGR_SLOPE(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
+
+(def-sql-op :regr_sxx (y x)
+  "The regr_sxx function returns the sum(X^2) - sum(X)^2/N (“sum of squares” of the independent variable).
+
+Example:
+
+    (query (:select (:regr_sxx 'height 'weight) :from 'people))"
+
+  `("REGR_SXX(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
+
+(def-sql-op :regr_sxy (y x)
+  "The regr_sxy function returns the sum(X*Y) - sum(X) * sum(Y)/N (“sum of products” of independent times dependent variable).
+
+Example:
+
+    (query (:select (:regr_sxy 'height 'weight) :from 'people))"
+
+  `("REGR_SXY(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
+
+(def-sql-op :regr_syy (y x)
+  "The regr_syy function returns the sum(Y^2) - sum(Y)^2/N (“sum of squares” of the dependent variable).
+
+Example:
+
+    (query (:select (:regr_syy 'height 'weight) :from 'people))"
+
+  `("REGR_SYY(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
+
+(def-sql-op :stddev (&rest args)
+  "The stddev function returns the the sample standard deviation of the input values. It is a historical alias
+for stddev-samp.
+
+Example:
+
+    (query (:select (:stddev 'salary) :from 'people))"
+
+  (split-on-keywords ((vars *)) (cons :vars args)
+                     `("STDDEV(",@(sql-expand-list vars))))
+
+(def-sql-op :stddev-pop (&rest args)
+  "The stddev-pop function returns the population standard deviation of the input values.
+
+Example:
+
+    (query (:select (:stddev-pop 'salary) :from 'people))"
+
+  (split-on-keywords ((vars *)) (cons :vars args)
+                     `("STDDEV_POP(",@(sql-expand-list vars))))
+
+(def-sql-op :stddev-samp (&rest args)
+  "The stddev-samp function returns the sample standard deviation of the input values.
+
+Example:
+
+    (query (:select (:stddev-samp 'salary) :from 'people))"
+
+  (split-on-keywords ((vars *)) (cons :vars args)
+                     `("STDDEV_SAMP(",@(sql-expand-list vars))))
+
+(def-sql-op :variance (&rest args)
+  "Variance is a historical alias for var_samp. The variance function returns the sample
+variance of the input values (square of the sample standard deviation).
+
+Example:
+
+    (query (:select (:variance 'salary) :from 'people))"
+
+  (split-on-keywords ((vars *)) (cons :vars args)
+                     `("VARIANCE(",@(sql-expand-list vars))))
+
+(def-sql-op :var-pop (&rest args)
+  "The var-pop function returns the population variance of the input values (square of the population standard deviation).
+
+Example:
+
+    (query (:select (:var-pop 'salary) :from 'people))"
+
+  (split-on-keywords ((vars *)) (cons :vars args)
+                     `("VAR_POP(",@(sql-expand-list vars))))
+
+(def-sql-op :var-samp (&rest args)
+  "The var-samp function returns the sample variance of the input values (square of the sample standard deviation).
+
+Example:
+
+    (query (:select (:var-samp 'salary) :from 'people))"
+
+  (split-on-keywords ((vars *)) (cons :vars args)
+                     `("VAR_SAMP(",@(sql-expand-list vars))))
+
+
 
 (def-sql-op :limit (form amount &optional offset)
   `("(" ,@(sql-expand form) " LIMIT " ,@(if amount (sql-expand amount) (list "ALL")) ,@(if offset (cons " OFFSET " (sql-expand offset)) ()) ")"))

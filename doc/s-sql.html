@@ -250,6 +250,37 @@
       compile-time.</li>
     </ul>
 
+    <p class="def"><span>sql-op</span> <a name="select"></a>:select (&amp;rest args)</p>
+
+    <p class="desc">Creates a select query. The arguments are split on
+    the keywords found among them. The group of arguments immediately
+    after <code>:select</code> is interpreted as the expressions that
+    should be selected. After this, an optional <code>:distinct</code>
+    may follow, which will cause the query to only select distinct
+    rows, or alternatively <code>:distinct-on</code> followed by a
+    group of row names. Next comes the optional keyword
+    <code>:from</code>, followed by at least one table name and then
+    any number of join statements. Join statements start with one of
+    <code>:left-join</code>, <code>:right-join</code>,
+    <code>:inner-join</code>, <code>:outer-join</code> or
+    <code>:cross-join</code>, then a table name or subquery, then the
+    keyword <code>:on</code> or <code>:using</code>, if applicable,
+    and then a form. A join can be preceded by <code>:natural</code>
+    (leaving off the
+    <code>:on</code> clause) to use a natural join. After the joins an
+    optional <code>:where</code> followed by a single form may occur.
+    And finally <code>:group-by</code> and <code>:having</code> can
+    optionally be specified. The first takes any number of arguments,
+    and the second only one. An example:</p>
+
+    <pre class="code desc">
+(query (:select (:+ 'field-1 100) 'field-5
+        :from (:as 'my-table 'x)
+        :left-join 'your-table
+        :on (:= 'x.field-2 'your-table.field-1)
+        :where (:not-null 'a.field-3)))</pre>
+
+
     <p>The following operators are defined:</p>
 
     <p class="def"><span>sql-op</span> <a name="infix"></a>:+, :*, :%, :&amp;, :|, :||,
@@ -273,6 +304,20 @@
 
     <p class="desc">Unary operators for bitwise and logical
     negation.</p>
+
+    <p class="def"><span>sql-op</span> <a name="function"></a>:function (name (&amp;rest
+    arg-types) return-type stability body)</p>
+
+    <p class="desc">Create a stored procedure. The argument and return
+    types are interpreted as type names and not evaluated. Stability
+    should be one of <code>:immutable</code>, <code>:stable</code>, or
+    <code>:volatile</code> (see <a
+    href="http://www.postgresql.org/docs/current/static/sql-createfunction.html">the
+    PostgreSQL documentation</a>). For example, a function that gets foobars by
+    id:</p>
+
+    <pre class="desc code">
+(:function 'get-foobar (integer) foobar :stable (:select '* :from 'foobar :where (:= 'id '$1)))</pre>
 
     <p class="def"><span>sql-op</span> <a name="regexp"></a>:~, :~*, :!~, :!~* (string pattern)</p>
 
@@ -375,33 +420,6 @@
     form <code>(test value)</code>. If test is <code>:else</code>,
     an <code>ELSE</code> clause will be generated.</p>
 
-    <p class="def"><span>sql-op</span> <a name="copy"></a>:copy (table &amp;rest args)</p>
-
-    <p class="desc">Move data between Postgres tables and filesystem
-      files. Table name is required followed by one or more of the
-      following keyword
-      arguments. <a href="https://www.postgresql.org/docs/current/static/sql-copy.html">Documentation
-      for the copy command</a> provides a full reference. An
-      example from the Greenplum tutorial:</p>
-
-    <pre class="code desc">
-      (query
-       (:copy 'faa.d_airlines
-        :columns 'airlineid 'airline_desc
-	:from "/home/gpadmin/gpdb-sandbox-tutorials/faa/L_AIRLINE_ID.csv"
-	:on-segment t
-	:binary t
-	:oids t
-	:header t
-	:delimiter ","
-	:null "NULL"
-	:escape "my-escape-string"
-	:newline "CR"
-	:csv t
-	:log-errors t
-	:segment-reject-limit 100 'ROWS))</pre>
-
-
     <p class="def"><span>sql-op</span> <a name="between"></a>:between (n start end)</p>
 
     <p class="desc">Test whether a value lies between two other
@@ -440,35 +458,6 @@
   (query (:delete-from 'baz :where (:raw test)))
   (do-stuff rows))</pre>
 
-    <p class="def"><span>sql-op</span> <a name="select"></a>:select (&amp;rest args)</p>
-
-    <p class="desc">Creates a select query. The arguments are split on
-    the keywords found among them. The group of arguments immediately
-    after <code>:select</code> is interpreted as the expressions that
-    should be selected. After this, an optional <code>:distinct</code>
-    may follow, which will cause the query to only select distinct
-    rows, or alternatively <code>:distinct-on</code> followed by a
-    group of row names. Next comes the optional keyword
-    <code>:from</code>, followed by at least one table name and then
-    any number of join statements. Join statements start with one of
-    <code>:left-join</code>, <code>:right-join</code>,
-    <code>:inner-join</code>, <code>:outer-join</code> or
-    <code>:cross-join</code>, then a table name or subquery, then the
-    keyword <code>:on</code> or <code>:using</code>, if applicable,
-    and then a form. A join can be preceded by <code>:natural</code>
-    (leaving off the
-    <code>:on</code> clause) to use a natural join. After the joins an
-    optional <code>:where</code> followed by a single form may occur.
-    And finally <code>:group-by</code> and <code>:having</code> can
-    optionally be specified. The first takes any number of arguments,
-    and the second only one. An example:</p>
-
-    <pre class="code desc">
-(:select (:+ 'field-1 100) 'field-5
-   :from (:as 'my-table 'x)
-   :left-join 'your-table :on (:= 'x.field-2 'your-table.field-1)
-   :where (:not-null 'a.field-3))</pre>
-
     <p class="def"><span>sql-op</span> <a name="limit"></a>:limit (query amount &amp;optional offset)</p>
 
     <p class="desc">In S-SQL limit is not part of the select operator,
@@ -484,6 +473,340 @@
     expressions. See <a href="#desc"><code>:desc</code></a> for when
       you want to invert an ordering. Note: This is not the same as passing an <code>:order-by</code>
       parameter to an aggregation operator. See <a href="#aggregation-operators">Aggregation Operators</a>.</p>
+
+
+<a name="aggregation-operators"><h3>Aggregation Operators</h3></a>
+<p class="def"><span>sql-op</span> <a name="count"></a>:count (&rest args)</p>
+
+    <p class="desc">Count returns the number of rows. It can be the number of rows collected by the select statement as in
+
+(query (:select (:count '*)
+        :from 'table1
+        :where (:= 'price 100)))
+
+or it can be a smaller number of rows based on the allowed keyword parameters :distinct and :filter as in</p>
+    <pre class="code desc">
+(query (:select (:count 'memid :distinct)
+        :from 'cd.bookings))</pre>
+
+<p class="desc">or</p>
+    <pre class="code desc">
+(query (:select (:as (:count '* :distinct) 'unfiltered)
+                (:as (:count '* :filter (:= 1 'bid)) 'filtered)
+        :from 'testtable))</pre>
+
+<p class="desc">Note that if used, the filter must be last in the count args. If distinct is used, it must come before filter.
+Unlike standard sql, the word 'where' is not used inside the filter clause.  E.g. </p>
+<pre class="code desc">
+(query (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id
+        :from 'pbbench-history))</pre>
+
+<p>See tests.lisp for examples.</p>
+
+<p class="def"><span>sql-op</span> <a name="avg"></a>:avg (&amp;rest rest args)</p>
+
+    <p class="desc">Avg calculates the average value of a list of values. Note that if the filter keyword is used,
+the filter must be last in the avg args. If distinct is used, it must come before filter.
+E.g. See tests.lisp for more examples.</p>
+
+    <pre class="code desc">
+(query (:select (:avg '*) (:avg '* :filter (:= 1 'bid)) 'id
+        :from 'pbbench-history)) </pre>
+
+    <p class="def"><span>sql-op</span> <a name="sum"></a>:sum (&amp;rest rest args) </p>
+
+    <p class="desc">Sum calculates the total of a list of values. Note that if the keyword filter is used,
+the filter must be last in the sum args. If distinct is used, it must come before filter.
+Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+See tests.lisp for more examples.</p>
+
+<pre class="code desc">
+(query (:select (:sum '*) (:sum '* :filter (:= 1 'bid)) 'id
+        :from 'pbbench-history))
+</pre>
+
+    <p class="def"><span>sql-op</span> <a name="max"></a>::max (&rest args)</p>
+
+    <p class="desc">Max returns the maximum value of a set of values. Note that if the filter keyword is used,
+the filter must be last in the max args. If distinct is used, it must come before filter.
+Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+See tests.lisp for more examples.</p>
+
+    <pre class="code desc">
+(query (:select (:max '*) (:max '* :filter (:= 1 'bid)) 'id
+        :from 'pbbench-history))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="min"></a>::min (&rest args)</p>
+
+    <p class="desc">Min returns the minimum value of a set of values. Note that if the filter keyword is used,
+the filter must be last in the min args. If distinct is used, it must come before filter.
+Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+See tests.lisp for more examples.</p>
+
+    <pre class="code desc">
+(query (:select (:min '*) (:min '* :filter (:= 1 'bid)) 'id
+        :from 'pbbench-history))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="every"></a>::every (&rest args)</p>
+
+    <p class="desc">Every returns true if all input values are true, otherwise false. Note that if the filter keyword is used,
+the filter must be last in the every args. If distinct is used, it must come before filter.
+Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+See tests.lisp for more examples.</p>
+
+    <pre class="code desc">
+(query (:select '* (:every (:like 'studname "%h"))
+        :from 'tbl-students
+        :group-by 'studname 'studid 'studgrades))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="percentile-cont"></a>:percentile-cont (&rest args)</p>
+
+    <p class="desc">Requires Postgresql 9.4 or higher. Percentile-cont returns a value corresponding to the specified fraction in the ordering, interpolating between adjacent input items if needed.
+There are two required keyword parameters :fraction and :order-by. If the fraction value is an array,
+then it returns an array of results matching the shape of the fractions parameter, with each non-null
+element replaced by the value corresponding to that percentile.
+
+Examples:</p>
+
+    <pre class="code desc">
+
+(query (:select (:percentile-cont :fraction 0.5 :order-by 'number-of-staff)
+        :from 'schools))
+
+(query (:select (:percentile-cont :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
+        :from  'schools))</pre>
+
+
+    <p class="def"><span>sql-op</span> <a name="percentile-dist"></a>:percentile-dist (&rest args)</p>
+
+    <p class="desc">Requires Postgresql 9.4 or higher. There are two required keyword parameters :fraction and :order-by.
+Percentile-dist returns the first input value whose position in the ordering equals or exceeds
+the specified fraction. If the fraction parameter is an array eturns an array of results matching
+the shape of the fractions parameter, with each non-null element replaced by the input value
+corresponding to that percentile.
+
+Examples:</p>
+
+    <pre class="code desc">
+
+(query (:select (:percentile-dist :fraction 0.5 :order-by 'number-of-staff)
+        :from 'schools))
+
+(query (:select (:percentile-dist :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
+        :from  'schools)) </pre>
+
+    <p class="def"><span>sql-op</span> <a name="corr"></a>:corr (y x)</p>
+
+    <p class="desc">The corr function returns the correlation coefficient between a set of dependent and independent variables.
+
+Example:    </p>
+
+    <pre class="code desc">
+(query (:select (:corr 'height 'weight)
+        :from 'people))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="covar-pop"></a>:covar-pop (y x)</p>
+
+    <p class="desc">The covar-pop function returns the population covariance between a set of dependent and independent variables.
+
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:covar-pop 'height 'weight)
+        :from 'people))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="covar-samp"></a>:covar-samp (y x)</p>
+
+    <p class="desc">The covar-samp function returns the sample covariance between a set of dependent and independent variables.
+
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:covar-samp 'height 'weight)
+        :from 'people))</pre>
+
+
+    <p class="def"><span>sql-op</span> <a name="string-agg"></a>:string-agg (&rest args)</p>
+
+    <p class="desc">String-agg allows you to concatenate strings using different types of delimiter symbols.
+Allowable optional keyword parameters are :distinct, :order-by and :filter
+
+Note that order-by in string-agg requires postgresql 9.0 or later. Filter requires postgresql 9.4 or later.
+See tests.lisp for more examples.</p>
+
+    <pre class="code desc">
+(query (:select (:as (:string-agg 'bp.step-type \",\" ) 'step-summary)
+        :from 'business-process))
+
+(query (:select 'mid (:as (:string-agg  'y \",\" :distinct :order-by (:desc 'y) ) 'words)
+        :from 'moves)) </pre>
+
+    <p class="def"><span>sql-op</span> <a name="array-agg"></a>:array-agg (&rest args)</p>
+
+    <p class="desc">Array-agg returns a list of values concatenated into an arrays.
+Allowable optional keyword parameters are :distinct, :order-by and :filter.
+
+Note that order-by in array-agg requires postgresql 9.0 or later.
+Filter requires postgresql 9.4 or later. See tests.lisp for more examples.</p>
+
+<p class="def">Example with Filter:</p>
+    <pre class="code desc">
+(query (:select 'g.id
+                (:as (:array-agg 'g.users :filter (:= 'g.canonical \"Y\")) 'canonical-users)
+                (:as (:array-agg 'g.users :filter (:= 'g.canonical \"N\")) 'non-canonical-users)
+        :from (:as 'groups 'g)
+        :group-by 'g.id)</pre>
+
+<p class="def"><span>sql-op</span> <a name="mode"></a>:mode (&rest args)</p>
+
+<p class="desc">Mode is used to find the most frequent input value in a group. See e.g.
+  <a href="https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE">
+     https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE</a>
+     and article at <a href="https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-function">
+                       https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-function</a></p>
+
+    <pre class="code desc">
+(query (:select (:mode 'items) :from 'item-table))
+</pre>
+
+    <p class="def"><span>sql-op</span> <a name="regr_avgx"></a>:regr_avgx (y x)</p>
+
+    <p class="desc">The regr_avgx function returns the average of the independent variable (sum(X)/N)
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:regr_avgx 'height 'weight) :from 'people))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="regr_avgy"></a>:regr_avgy (y x)</p>
+
+    <p class="desc">The regr_avgy function returns the average of the dependent variable (sum(Y)/N).
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:regr_avgy 'height 'weight) :from 'people))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="regr_count"></a>:regr_count (y x)</p>
+
+    <p class="desc">The regr_count function returns the 	number of input rows in which both expressions are nonnull.
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:regr_count 'height 'weight) :from 'people))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="regr_intercept"></a>:regr_intercept (y x)</p>
+
+    <p class="desc">The regr_intercept function returns the y-intercept of the least-squares-fit linear equation determined by the (X, Y) pairs. Example:</p>
+
+    <pre class="code desc">
+(query (:select (:regr_intercept 'height 'weight) :from 'people))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="regr_r2"></a>:regr_r2 (y x)</p>
+
+    <p class="desc">The regr_r2 function returns the square of the correlation coefficient. Example:</p>
+
+    <pre class="code desc">
+(query (:select (:regr_r2 'height 'weight) :from 'people))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="regr_slope"></a>:regr_slope (y x)</p>
+
+    <p class="desc">The regr_slope function returns the slope of the least-squares-fit linear equation determined by the (X, Y) pairs.
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:regr_slope 'height 'weight) :from 'people)) </pre>
+
+    <p class="def"><span>sql-op</span> <a name="regr_sxx"></a>:regr_sxx (y x)</p>
+
+    <p class="desc">The regr_sxx function returns the sum(X^2) - sum(X)^2/N (“sum of squares” of the independent variable).
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:regr_sxx 'height 'weight) :from 'people))
+</pre>
+
+    <p class="def"><span>sql-op</span> <a name="regr_sxy"></a>:regr_sxy (y x)</p>
+
+    <p class="desc">The regr_sxy function returns the sum(X*Y) - sum(X) * sum(Y)/N (“sum of products” of independent times dependent variable).
+
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:regr_sxy 'height 'weight) :from 'people))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="regr_syy"></a>:regr_syy (y x)</p>
+
+    <p class="desc">The regr_syy function returns the sum(Y^2) - sum(Y)^2/N (“sum of squares” of the dependent variable).
+
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:regr_syy 'salary 'age) :from 'employee))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="stddev"></a>:stddev (&rest args)</p>
+
+    <p class="desc">The stddev function returns the the sample standard deviation of the input values. It is a historical alias
+for stddev-samp.
+
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:stddev 'salary) :from 'employee))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="stddev-pop"></a>:stddev-pop (&rest args)</p>
+
+    <p class="desc">The stddev-pop function returns the population standard deviation of the input values.
+
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:stddev-pop 'salary) :from 'employee))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="stddev-samp"></a>:stddev-samp (&rest args)</p>
+
+    <p class="desc">The stddev-samp function returns the sample standard deviation of the input values.
+
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:stddev-samp 'salary) :from 'employee))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="variance"></a>:variance (&rest args)</p>
+
+    <p class="desc">Variance is a historical alias for var_samp. The variance function returns the sample
+variance of the input values (square of the sample standard deviation).
+
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:variance 'salary) :from 'employee))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="var-pop"></a>:var-pop (&rest args)</p>
+
+    <p class="desc">The var-pop function returns the population variance of the input values (square of the population standard deviation).
+
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:var-pop 'salary) :from 'employee) :single)</pre>
+
+    <p class="def"><span>sql-op</span> <a name="var-samp"></a>:var-samp (&rest args)</p>
+
+    <p class="desc">The var-samp function returns the sample variance of the input values (square of the sample standard deviation).
+
+Example:</p>
+
+    <pre class="code desc">
+(query (:select (:var-samp 'salary) :from 'employee) :single)</pre>
+
+
+
+
+
+
+
+
+
+<a name="window-functions"><h3>Window Functions</h3></a>
 
     <p class="def"><span>sql-op</span> <a name="over"></a>:over (form
     &amp;rest args)</p>
@@ -599,6 +922,7 @@
                      :where (:and (:= 'g.id 'sg.link)
                                   (:not 'cycle)))))
       (:select '* :from 'search-graph)))</pre>
+<a name="table-functions"><h3>Table Functions</h3></a>
 
     <p class="def"><span>sql-op</span> <a name="for-update"></a>:for-update (query &amp;key of nowait)</p>
 
@@ -618,20 +942,6 @@
     <p class="desc">Similar to <a href="#for-update">:for-update</a>, except it acquires a shared
     lock on the table, allowing other transactions to perform :for-share selects on the locked
     tables.</p>
-
-    <p class="def"><span>sql-op</span> <a name="function"></a>:function (name (&amp;rest
-    arg-types) return-type stability body)</p>
-
-    <p class="desc">Create a stored procedure. The argument and return
-    types are interpreted as type names and not evaluated. Stability
-    should be one of <code>:immutable</code>, <code>:stable</code>, or
-    <code>:volatile</code> (see <a
-    href="http://www.postgresql.org/docs/current/static/sql-createfunction.html">the
-    PostgreSQL documentation</a>). For example, a function that gets foobars by
-    id:</p>
-
-    <pre class="desc code">
-(:function 'get-foobar (integer) foobar :stable (:select '* :from 'foobar :where (:= 'id '$1)))</pre>
 
     <p class="def"><span>sql-op</span> <a name="insert-into"></a>:insert-into (table &amp;rest rest)</p>
 
@@ -671,8 +981,8 @@
       a parameter to the keyword <code>:values</code>. Example:</p>
 
     <pre class="code desc">
-      (:insert-rows-into 'my-table :columns 'field-1 'field-2
-                                   :values '((42 "foobar") (23 "foobaz")))</pre>
+(query (:insert-rows-into 'my-table :columns 'field-1 'field-2
+                                    :values '((42 "foobar") (23 "foobaz"))))</pre>
 
 
     <p class="def"><span>sql-op</span> <a name="update"></a>:update (table &amp;rest rest)</p>
@@ -977,6 +1287,32 @@
     <code>:if-exists</code> before the name to suppress the error
     message.</p>
 
+    <p class="def"><span>sql-op</span> <a name="copy"></a>:copy (table &amp;rest args)</p>
+
+    <p class="desc">Move data between Postgres tables and filesystem
+      files. Table name is required followed by one or more of the
+      following keyword
+      arguments. <a href="https://www.postgresql.org/docs/current/static/sql-copy.html">Documentation
+      for the copy command</a> provides a full reference. An
+      example from the Greenplum tutorial:</p>
+
+    <pre class="code desc">
+(query
+   (:copy 'faa.d_airlines
+    :columns 'airlineid 'airline_desc
+  	:from "/home/gpadmin/gpdb-sandbox-tutorials/faa/L_AIRLINE_ID.csv"
+  	:on-segment t
+  	:binary t
+  	:oids t
+	  :header t
+  	:delimiter ","
+	  :null "NULL"
+  	:escape "my-escape-string"
+  	:newline "CR"
+	  :csv t
+  	:log-errors t
+	  :segment-reject-limit 100 'ROWS))</pre>
+
     <h2><a name="index"></a>Symbol-index</h2>
 
     <ul class="symbol-index">
@@ -1002,12 +1338,18 @@
       <li><a href="#deref">:[]</a></li>
       <li><a href="#sql-template">$$</a></li>
       <li><a href="#infix">:and</a></li>
+      <li><a href="#array-agg">:array-agg</a></li>
       <li><a href="#as">:as</a></li>
+      <li><a href="#avg">:avg</a></li>
       <li><a href="#between">:between</a></li>
       <li><a href="#types">bytea</a></li>
       <li><a href="#types">bigint</a></li>
       <li><a href="#case">:case</a></li>
       <li><a href="#copy">:copy</a></li>
+      <li><a href="#count">:count</a></li>
+      <li><a href="#corr">:corr</a></li>
+      <li><a href="#covar-pop">:covar-pop</a></li>
+      <li><a href="#covar-samp">:covar-samp</a></li>
       <li><a href="#create-database">:create-database</a></li>
       <li><a href="#create-role">:create-role</a></li>
       <li><a href="#create-index">:create-index</a></li>
@@ -1028,6 +1370,7 @@
       <li><a href="#set-constraints">:set-constraints</a></li>
       <li><a href="#enable-s-sql-syntax">enable-s-sql-syntax</a></li>
       <li><a href="#*escape-sql-names-p*">*escape-sql-names-p*</a></li>
+      <li><a href="#every">:every</a></li>
       <li><a href="#infix">:except</a></li>
       <li><a href="#exists">:exists</a></li>
       <li><a href="#extract">:extract</a></li>
@@ -1041,6 +1384,9 @@
       <li><a href="#like">:like</a></li>
       <li><a href="#limit">:limit</a></li>
       <li><a href="#listen">:listen</a></li>
+      <li><a href="#max">:max</a></li>
+      <li><a href="#min">:min</a></li>
+      <li><a href="#mode">:mode</a></li>
       <li><a href="#not">:not</a></li>
       <li><a href="#not-in">:not-in</a></li>
       <li><a href="#not-null">:not-null</a></li>
@@ -1050,9 +1396,20 @@
       <li><a href="#nulls-first">:nulls-last</a></li>
       <li><a href="#infix">:or</a></li>
       <li><a href="#order-by">:order-by</a></li>
+      <li><a href="#percentile-cont">:percentile-cont</a></li>
+      <li><a href="#percentile-dist">:percentile-dist</a></li>
       <li><a href="#raw">:raw</a></li>
       <li><a href="#types">real</a></li>
       <li><a href="#register-sql-operators">:register-sql-operators</a></li>
+      <li><a href="#regr_avgx">:regr_avgx</a></li>
+      <li><a href="#regr_avgy">:regr_avgy</a></li>
+      <li><a href="#regr_count">:regr_count</a></li>
+      <li><a href="#regr_intercept">:regr_intercept</a></li>
+      <li><a href="#regr_r2">:regr_r2</a></li>
+      <li><a href="#regr_slope">:regr_slope</a></li>
+      <li><a href="#regr_sxx">:regr_sxx</a></li>
+      <li><a href="#regr_sxy">:regr_sxy</a></li>
+      <li><a href="#regr_syy">:regr_syy</a></li>
       <li><a href="#*standard-sql-strings*">*standard-sql-strings*</a></li>
       <li><a href="#select">:select</a></li>
       <li><a href="#set">:set</a></li>
@@ -1063,6 +1420,11 @@
       <li><a href="#sql-escape-string">sql-escape-string</a></li>
       <li><a href="#sql-template">sql-template</a></li>
       <li><a href="#sql-type-name">sql-type-name</a></li>
+      <li><a href="#string-agg">:string-agg</a></li>
+      <li><a href="#stddev">:stddev</a></li>
+      <li><a href="#stddev-pop">:stddev-pop</a></li>
+      <li><a href="#stddev-samp">:stddev-samp</a></li>
+      <li><a href="#sum">:sum</a></li>
       <li><a href="#types">text</a></li>
       <li><a href="#to-sql-name">to-sql-name</a></li>
       <li><a href="#type">:type</a></li>
@@ -1071,6 +1433,9 @@
       <li><a href="#unlisten">:unlisten</a></li>
       <li><a href="#update">:update</a></li>
       <li><a href="#types">varchar</a></li>
+      <li><a href="#variance">:variance</a></li>
+      <li><a href="#var-pop">:var-pop</a></li>
+      <li><a href="#var-samp">:var-samp</a></li>
     </ul>
 
   </body>
