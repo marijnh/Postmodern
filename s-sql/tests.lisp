@@ -50,9 +50,8 @@ associated with the keywords from an argument list, and checks for errors."
   (signals sql-error (s-sql::split-on-keywords% '((a1 * ?) (b2 ) (c3 ? *)) '(:a1 "Alpha1 "  :c3 "Ceta3 ")))
   (signals sql-error (s-sql::split-on-keywords% '((owner ?)) '(:owner "Sabra" :tourist "Geoffrey")))
   (signals sql-error (s-sql::split-on-keywords% '((a1 * ?) (c3 ? )) '(:a1 "Alpha1 " :c3 "Ceta3 " "Ceta3.5")))
-  (is (equal (s-sql::split-on-keywords% '((fraction *)) `(:fraction ,var1))
-             '((FRACTION 0.5))))
-)
+  (is (equal (s-sql::split-on-keywords% '((fraction *)) `(:fraction 0.5))
+             '((FRACTION 0.5)))))
 
 (test split-on-keywords
   "Testing split-on-keywords. Used to handle arguments to some complex SQL operations.
@@ -270,7 +269,7 @@ to strings \(which will form an SQL query when concatenated)."
                            (:over (:avg 'salary) 'w)
                            :from 'empsalary :window
                            (:as 'w (:partition-by 'depname :order-by (:desc 'salary)))))
-             "(SELECT (sum(salary) OVER w), (avg(salary) OVER w) FROM empsalary WINDOW w AS (PARTITION BY depname ORDER BY salary DESC))"))
+             "(SELECT (SUM(salary) OVER w), (AVG(salary) OVER w) FROM empsalary WINDOW w AS (PARTITION BY depname ORDER BY salary DESC))"))
   (is (equal (let ((param-latitude nil) (param-longitude t))
          (sql (:select 'id 'name (when param-latitude '0)
                        (when param-longitude 'longitude)
@@ -473,7 +472,7 @@ To join the table films with the table distributors:"
       "https://www.postgresql.org/docs/current/static/sql-select.html
 To sum the column len of all films and group the results by kind:"
       (is (equal (sql (:select 'kind (:as (:sum 'len) 'total) :from 'films :group-by 'kind))
-                 "(SELECT kind, sum(len) AS total FROM films GROUP BY kind)")))
+                 "(SELECT kind, SUM(len) AS total FROM films GROUP BY kind)")))
 
 (test select-sum-group-interval
       "CAUTION: DOES NOT WORK. VALIDATE THAT THIS ACTUALLY WORKS WITH THE ESCAPED INTERVAL. To sum the column len of all films, group the results by kind and show those group totals that are less than 5 hours:"
@@ -486,7 +485,7 @@ To sum the column len of all films and group the results by kind:"
                                :from 'films
                                :group-by 'kind
                                :having (:< (:sum 'len) 'interval "5 hours")))
-                 "(SELECT kind, sum(len) AS total FROM films GROUP BY kind HAVING (sum(len) < interval < E'5 hours'))")))
+                 "(SELECT kind, SUM(len) AS total FROM films GROUP BY kind HAVING (SUM(len) < interval < E'5 hours'))")))
 
 (test select-except
       "Testing the use of except in two select statements. Except removes all matches. Except all is slightly different. If the first select statement has two rows that match a single row in the second select statement, only one is removed."
@@ -512,7 +511,7 @@ To sum the column len of all films and group the results by kind:"
 (test avg-test
   "Testing the avg aggregate functions"
   (is (equal (sql (:select (:as (:round (:avg 'replacement-cost) 2) 'avg-replacement-cost) :from 'film ))
-             "(SELECT round(avg(replacement_cost), 2) AS avg_replacement_cost FROM film)")))
+             "(SELECT round(AVG(replacement_cost), 2) AS avg_replacement_cost FROM film)")))
 
 (test count-test
   "Testing the count aggregate function"
@@ -549,7 +548,7 @@ To sum the column len of all films and group the results by kind:"
                                           :from 'cd.bookings
                                           :group-by 'facid)
                                  'facid))
-                 "((SELECT facid, sum(slots) AS total_slots FROM cd.bookings GROUP BY facid) ORDER BY facid)"))
+                 "((SELECT facid, SUM(slots) AS total_slots FROM cd.bookings GROUP BY facid) ORDER BY facid)"))
 ;; From https://www.pgexercises.com/questions/aggregates/fachoursbymonth.html
       (is (equal (sql (:order-by (:select 'facid (:as (:sum 'slots) 'total-slots)
                                           :from 'cd.bookings
@@ -557,7 +556,7 @@ To sum the column len of all films and group the results by kind:"
                                                        (:< 'starttime "2012-10-01"))
                                           :group-by 'facid)
                                  (:sum 'slots)))
-                 "((SELECT facid, sum(slots) AS total_slots FROM cd.bookings WHERE ((starttime >= E'2012-09-01') and (starttime < E'2012-10-01')) GROUP BY facid) ORDER BY sum(slots))"))
+                 "((SELECT facid, SUM(slots) AS total_slots FROM cd.bookings WHERE ((starttime >= E'2012-09-01') and (starttime < E'2012-10-01')) GROUP BY facid) ORDER BY SUM(slots))"))
       ;; From https://www.pgexercises.com/questions/aggregates/fachoursbymonth2.html
       (is (equal (sql (:order-by (:select 'facid (:as (:extract 'month 'starttime) 'month)
                                           (:as (:sum 'slots) 'total-slots)
@@ -566,7 +565,7 @@ To sum the column len of all films and group the results by kind:"
                                                        (:< 'starttime "2013-01-01"))
                                           :group-by 'facid 'month)
                                  'facid 'month))
-                 "((SELECT facid, EXTRACT(month FROM starttime) AS month, sum(slots) AS total_slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid, month) ORDER BY facid, month)"))
+                 "((SELECT facid, EXTRACT(month FROM starttime) AS month, SUM(slots) AS total_slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid, month) ORDER BY facid, month)"))
 
 
 
@@ -577,7 +576,7 @@ To sum the column len of all films and group the results by kind:"
                                           :having (:> (:sum 'slots)
                                                       1000))
                                  'facid))
-                 "((SELECT facid, sum(slots) AS total_slots FROM cd.bookings GROUP BY facid HAVING (sum(slots) > 1000)) ORDER BY facid)"))
+                 "((SELECT facid, SUM(slots) AS total_slots FROM cd.bookings GROUP BY facid HAVING (SUM(slots) > 1000)) ORDER BY facid)"))
       ;; From https://www.pgexercises.com/questions/aggregates/facrev.html
       (is (equal (sql (:order-by (:select 'facs.name (:as (:sum (:* 'slots
                                                                     (:case ((:= 'memid 0) 'facs.guestcost)
@@ -588,7 +587,7 @@ To sum the column len of all films and group the results by kind:"
                                           :on (:= 'bks.facid 'facs.facid)
                                           :group-by 'facs.name)
                                  'revenue))
-                 "((SELECT facs.name, sum((slots * CASE WHEN (memid = 0) THEN facs.guestcost ELSE facs.membercost END)) AS revenue FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (bks.facid = facs.facid) GROUP BY facs.name) ORDER BY revenue)"))
+                 "((SELECT facs.name, SUM((slots * CASE WHEN (memid = 0) THEN facs.guestcost ELSE facs.membercost END)) AS revenue FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (bks.facid = facs.facid) GROUP BY facs.name) ORDER BY revenue)"))
 
       ;;       From https://www.pgexercises.com/questions/aggregates/facrev2.html
       ;; V1
@@ -605,7 +604,7 @@ To sum the column len of all films and group the results by kind:"
                                            'agg)
                                 :where (:< 'revenue 1000))
                        'revenue))
-                 "((SELECT name, revenue FROM (SELECT facs.name, sum(CASE WHEN (memid = 0) THEN (slots * facs.guestcost) ELSE (slots * membercost) END) AS revenue FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (bks.facid = facs.facid) GROUP BY facs.name) AS agg WHERE (revenue < 1000)) ORDER BY revenue)"))
+                 "((SELECT name, revenue FROM (SELECT facs.name, SUM(CASE WHEN (memid = 0) THEN (slots * facs.guestcost) ELSE (slots * membercost) END) AS revenue FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (bks.facid = facs.facid) GROUP BY facs.name) AS agg WHERE (revenue < 1000)) ORDER BY revenue)"))
       ;; V2
       (is (equal (sql (:order-by
                        (:select 'facs.name (:as (:sum (:case ((:= 'memid 0) (:* 'slots 'facs.guestcost))
@@ -619,7 +618,7 @@ To sum the column len of all films and group the results by kind:"
                                                     (:else (:* 'slots 'membercost))))
                                             1000))
                        'revenue))
-                 "((SELECT facs.name, sum(CASE WHEN (memid = 0) THEN (slots * facs.guestcost) ELSE (slots * membercost) END) AS revenue FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (bks.facid = facs.facid) GROUP BY facs.name HAVING (sum(CASE WHEN (memid = 0) THEN (slots * facs.guestcost) ELSE (slots * membercost) END) < 1000)) ORDER BY revenue)"))
+                 "((SELECT facs.name, SUM(CASE WHEN (memid = 0) THEN (slots * facs.guestcost) ELSE (slots * membercost) END) AS revenue FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (bks.facid = facs.facid) GROUP BY facs.name HAVING (SUM(CASE WHEN (memid = 0) THEN (slots * facs.guestcost) ELSE (slots * membercost) END) < 1000)) ORDER BY revenue)"))
 
 ;; From https://www.pgexercises.com/questions/aggregates/fachours2.html
       ;; V1
@@ -628,7 +627,7 @@ To sum the column len of all films and group the results by kind:"
                                                   :group-by 'facid)
                                          (:desc (:sum 'slots)))
                               1))
-                 "(((SELECT facid, sum(slots) AS total_slots FROM cd.bookings GROUP BY facid) ORDER BY sum(slots) DESC) LIMIT 1)"))
+                 "(((SELECT facid, SUM(slots) AS total_slots FROM cd.bookings GROUP BY facid) ORDER BY SUM(slots) DESC) LIMIT 1)"))
 
       ;; V2
       (is (equal (sql (:select 'facid (:as (:sum 'slots) 'totalslots)
@@ -639,7 +638,7 @@ To sum the column len of all films and group the results by kind:"
                                                                                       :from 'cd.bookings
                                                                                       :group-by 'facid)
                                                                              'sum2)))))
-                 "(SELECT facid, sum(slots) AS totalslots FROM cd.bookings GROUP BY facid HAVING (sum(slots) = (SELECT MAX(sum2.totalslots) FROM (SELECT sum(slots) AS totalslots FROM cd.bookings GROUP BY facid) AS sum2)))"))
+                 "(SELECT facid, SUM(slots) AS totalslots FROM cd.bookings GROUP BY facid HAVING (SUM(slots) = (SELECT MAX(sum2.totalslots) FROM (SELECT SUM(slots) AS totalslots FROM cd.bookings GROUP BY facid) AS sum2)))"))
 
       ;; From https://www.pgexercises.com/questions/aggregates/fachoursbymonth3.html
       ;; V1
@@ -649,7 +648,7 @@ To sum the column len of all films and group the results by kind:"
                                                        (:< 'starttime "2013-01-01"))
                                           :group-by (:rollup 'facid 'month))
                                  'facid 'month))
-                 "((SELECT facid, EXTRACT(month FROM starttime) AS month, sum(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY rollup(facid, month)) ORDER BY facid, month)"))
+                 "((SELECT facid, EXTRACT(month FROM starttime) AS month, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY rollup(facid, month)) ORDER BY facid, month)"))
 
       ;; V2
       (is (equal (sql (:order-by (:union-all (:select 'facid (:as (:extract 'month 'starttime) 'month) (:as (:sum 'slots) 'slots)
@@ -666,7 +665,7 @@ To sum the column len of all films and group the results by kind:"
                                                       :from 'cd.bookings
                                                       :where (:and (:>= 'starttime "2012-01-01")
                                                                    (:< 'starttime "2013-01-01")))) 'facid 'month))
-                 "(((SELECT facid, EXTRACT(month FROM starttime) AS month, sum(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid, month) union all (SELECT facid, NULL, sum(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid) union all (SELECT NULL, NULL, sum(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')))) ORDER BY facid, month)")))
+                 "(((SELECT facid, EXTRACT(month FROM starttime) AS month, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid, month) union all (SELECT facid, NULL, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid) union all (SELECT NULL, NULL, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')))) ORDER BY facid, month)")))
 
 (test max-aggregation
       "Testing aggregation functions."
@@ -739,20 +738,20 @@ To sum the column len of all films and group the results by kind:"
   "Testing correlation coefficient. To quote from wikipedia (https://en.wikipedia.org/wiki/Covariance)
  In probability theory and statistics, covariance is a measure of the joint variability of two random variables. If the greater values of one variable mainly correspond with the greater values of the other variable, and the same holds for the lesser values, (i.e., the variables tend to show similar behavior), the covariance is positive. In the opposite case, when the greater values of one variable mainly correspond to the lesser values of the other, (i.e., the variables tend to show opposite behavior), the covariance is negative. The sign of the covariance therefore shows the tendency in the linear relationship between the variables. The magnitude of the covariance is not easy to interpret because it is not normalized and hence depends on the magnitudes of the variables. The normalized version of the covariance, the correlation coefficient, however, shows by its magnitude the strength of the linear relation."
   (is (equal (sql (:select (:corr 'height 'weight) :from 'people))
-             "(SELECT CORR(height, weight) FROM people)")))
+             "(SELECT CORR(height , weight) FROM people)")))
 
 (test covar-pop
   "Testing population covariance."
     (is (equal (sql (:select (:covar-pop 'height 'weight) :from 'people))
-               "(SELECT COVAR-POP(height, weight) FROM people)")))
+               "(SELECT COVAR_POP(height , weight) FROM people)")))
 
 (test covar-samp
   "Testing sample covariance."
     (is (equal (sql (:select (:covar-samp 'height 'weight) :from 'people))
-             "(SELECT COVAR-SAMP(height, weight) FROM people)")))
+             "(SELECT COVAR_SAMP(height , weight) FROM people)")))
 
-(test stddev
-  "Testing standard deviation functions"
+(test employee-table
+  "Build employee table"
   (with-test-connection
     (when (table-exists-p 'employee)
       (query (:drop-table 'employee)))
@@ -774,60 +773,70 @@ To sum the column len of all films and group the results by kind:"
                                         (7 "Alison" 90620 "08/07/00" "New York" "W" 38)
                                         (8 "Chris" 26020 "07/08/01" "Vancouver" "N" 22)
                                         (9 "Mary" 60020 "06/08/02" "Toronto" "W" 34))))
-    (is (equal (format nil "~,6f" (query (:select (:stddev 'salary) :from 'employee) :single))
-               "26805.934000"))
-    (is (equal (query (:select (:variance 'salary) :from 'employee) :single)
-               718558064))
-    (is (equal (format t "~,4f" (query (:select (:var-pop 'salary) :from 'employee) :single))
-               "638718300.0000"))
-    (is (equal (format t "~,4f" (query (:select (:var-samp 'salary) :from 'employee) :single))
-               "718558100.0000"))
-    (is (equal (format nil "~,4f" (query (:select (:stddev-samp 'salary) :from 'employee) :single))
-               "26805.9340"))
-    (is (equal (format nil "~,4f" (query (:select (:stddev-pop 'salary) :from 'employee) :single))
-               "25272.8770"))
-    (is (equal (format nil "~,4f" (query (:select (:avg 'salary) :from 'employee) :single))
-               "49580.6680"))
-    (is (equal (format nil "~,4f" (query (:select (:max 'salary) :from 'employee) :single))
-               "90620.0000"))
-    (is (equal (format nil "~,4f" (query (:select (:min 'salary) :from 'employee) :single))
-               "14420.0000"))
+    (is-true (table-exists-p 'employee))))
+
+(test stddev1
+  "Testing statistical functions 1"
+  (with-test-connection
+        (is (equal (format nil "~,6f" (query (:select (:stddev 'salary) :from 'employee) :single))
+                   "26805.934000"))
+        (is (equal (query (:select (:variance 'salary) :from 'employee) :single)
+                   718558064))
+        (is (equal (query (:select (:var-pop 'salary) :from 'employee) :single)
+                   63871827911111111/100000000))
+        (is (equal (query (:select (:var-samp 'salary) :from 'employee) :single)
+                   718558064))
+        (is (equal (format nil "~,4f" (query (:select (:stddev-samp 'salary) :from 'employee) :single))
+                   "26805.9340"))
+        (is (equal (format nil "~,4f" (query (:select (:stddev-pop 'salary) :from 'employee) :single))
+                   "25272.8770"))
+        (is (equal (format nil "~,4f" (query (:select (:avg 'salary) :from 'employee) :single))
+                   "49580.6680"))
+        (is (equal (format nil "~,4f" (query (:select (:max 'salary) :from 'employee) :single))
+                   "90620.0000"))
+        (is (equal (format nil "~,4f" (query (:select (:min 'salary) :from 'employee) :single))
+                   "14420.0000"))))
+
+(test regr-functions
+  "Testing standard deviation functions"
+  (with-test-connection
+
     (is (equal (format nil "~,4f" (query (:select (:regr-avgx 'salary 'age) :from 'employee) :single))
                "28.1111"))
     (is (equal (format nil "~,4f" (query (:select (:regr-avgx 'age 'salary) :from 'employee) :single))
                "49580.6667"))
-    (is (equal (format t "~,4f" (query (:select (:regr-avgy 'salary 'age) :from 'employee) :single))
-               "49580.6667"))
-    (is (equal (format t "~,4f" (query (:select (:regr-avgy 'age 'salary) :from 'employee) :single))
-               "28.1111"))
-    (is (equal (format t "~,4f" (query (:select (:regr-count 'salary 'age) :from 'employee) :single))
-               "9.0000"))
-    (is (equal (format t "~,4f" (query (:select (:regr-count 'age 'salary) :from 'employee) :single))
-               "9.0000"))
-    (is (equal (format t "~,4f" (query (:select (:regr-intercept 'salary 'age) :from 'employee) :single))
-               "-62911.0363"))
-    (is (equal (format t "~,4f" (query (:select (:regr-intercept 'age 'salary) :from 'employee) :single))
-               "19.4518"))
-    (is (equal (format t "~,4f" (query (:select (:regr-r2 'salary 'age) :from 'employee) :single))
-               "0.6989")
-    (is (equal (format t "~,4f" (query (:select (:regr-r2 'age 'salary) :from 'employee) :single))
-               "0.6989"))
-    (is (equal (format t "~,4f" (query (:select (:regr-slope 'salary 'age) :from 'employee) :single))
-               "4001.6811"))
-    (is (equal (format t "~,4f" (query (:select (:regr-slope 'age 'salary) :from 'employee) :single))
-               "0.0002"))
-    (is (equal (format t "~,4f" (query (:select (:regr-sxx 'salary 'age) :from 'employee) :single))
-               "250.8889"))
-    (is (equal (format t "~,4f" (query (:select (:regr-sxx 'age 'salary) :from 'employee) :single))
-               "5748464512.0000"))
-    (is (equal (format t "~,4f" (query (:select (:regr-sxy 'salary 'age) :from 'employee) :single))
-               "1003977.3333"))
-    (is (equal (format t "~,4f" (query (:select (:regr-sxy 'age 'salary) :from 'employee) :single))
-               "1003977.3333"))
-    (is (equal (format t "~,4f" (query (:select (:regr-syy 'salary 'age) :from 'employee) :single))
-               "5748464512.0000"))
-    (is (equal (format t "~,4f" (query (:select (:regr-syy 'age 'salary) :from 'employee) :single))
-               "250.8889")))))
+    (is (equal (query (:select (:regr-avgy 'salary 'age) :from 'employee) :single)
+               49580.666666666664d0))
+    (is (equal (query (:select (:regr-avgy 'age 'salary) :from 'employee) :single)
+               28.11111111111111d0))
+    (is (equal (query (:select (:regr-count 'salary 'age) :from 'employee) :single)
+               9))
+    (is (equal (query (:select (:regr-count 'age 'salary) :from 'employee) :single)
+               9))
+    (is (equal (query (:select (:regr-intercept 'salary 'age) :from 'employee) :single)
+               -62911.0363153233d0))
+    (is (equal (query (:select (:regr-intercept 'age 'salary) :from 'employee) :single)
+               19.451778623108986d0))
+    (is (equal (query (:select (:regr-r2 'salary 'age) :from 'employee) :single)
+               0.6988991834467292d0))
+    (is (equal (query (:select (:regr-r2 'age 'salary) :from 'employee) :single)
+               0.6988991834467292d0))
+    (is (equal (query (:select (:regr-slope 'salary 'age) :from 'employee) :single)
+               4001.6811337466784d0))
+    (is (equal (query (:select (:regr-slope 'age 'salary) :from 'employee) :single)
+               1.7465139277410806d-4))
+    (is (equal (query (:select (:regr-sxx 'salary 'age) :from 'employee) :single)
+               250.88888888888889d0))
+    (is (equal (query (:select (:regr-sxx 'age 'salary) :from 'employee) :single)
+               5.748464512d9))
+    (is (equal (query (:select (:regr-sxy 'salary 'age) :from 'employee) :single)
+               1003977.3333333334d0))
+    (is (equal (query (:select (:regr-sxy 'age 'salary) :from 'employee) :single)
+               1003977.3333333334d0))
+    (is (equal (query (:select (:regr-syy 'salary 'age) :from 'employee) :single)
+               5.748464512d9))
+    (is (equal (query (:select (:regr-syy 'age 'salary) :from 'employee) :single)
+               250.88888888888889d0))))
 
 (test select-union
       "testing basic union."
@@ -862,7 +871,7 @@ To sum the column len of all films and group the results by kind:"
                              (:select 'facid 'totalslots
                                       :from 'sum
                                       :where (:= 'totalslots (:select (:max 'totalslots) :from 'sum)))))
-                 "WITH sum AS (SELECT facid, sum(slots) AS totalslots FROM cd.bookings GROUP BY facid)(SELECT facid, totalslots FROM sum WHERE (totalslots = (SELECT MAX(totalslots) FROM sum)))"))
+                 "WITH sum AS (SELECT facid, SUM(slots) AS totalslots FROM cd.bookings GROUP BY facid)(SELECT facid, totalslots FROM sum WHERE (totalslots = (SELECT MAX(totalslots) FROM sum)))"))
 
       ;; From https://www.pgexercises.com/questions/aggregates/fachoursbymonth3.html
       (is (equal (sql (:order-by (:with (:as 'bookings (:select 'facid (:as (:extract 'month 'starttime) 'month) 'slots
@@ -872,7 +881,7 @@ To sum the column len of all films and group the results by kind:"
                                         (:union-all (:select 'facid 'month (:sum 'slots) :from 'bookings :group-by 'facid 'month)
                                                     (:select 'facid :null (:sum 'slots) :from 'bookings :group-by 'facid)
                                                     (:select :null :null (:sum 'slots) :from 'bookings))) 'facid 'month))
-                 "(WITH bookings AS (SELECT facid, EXTRACT(month FROM starttime) AS month, slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')))((SELECT facid, month, sum(slots) FROM bookings GROUP BY facid, month) union all (SELECT facid, NULL, sum(slots) FROM bookings GROUP BY facid) union all (SELECT NULL, NULL, sum(slots) FROM bookings)) ORDER BY facid, month)"))
+                 "(WITH bookings AS (SELECT facid, EXTRACT(month FROM starttime) AS month, slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')))((SELECT facid, month, SUM(slots) FROM bookings GROUP BY facid, month) union all (SELECT facid, NULL, SUM(slots) FROM bookings GROUP BY facid) union all (SELECT NULL, NULL, SUM(slots) FROM bookings)) ORDER BY facid, month)"))
 
       (is (equal (sql (:order-by (:select 'facs.facid 'facs.name
                                           (:as (:trim (:to-char (:/ (:sum 'bks.slots) 2.0) "9999999999999999D99")) 'total-hours)
@@ -881,7 +890,7 @@ To sum the column len of all films and group the results by kind:"
                                           :on (:= 'facs.facid 'bks.facid)
                                           :group-by 'facs.facid 'facs.name)
                                  'facs.facid))
-"((SELECT facs.facid, facs.name, trim(to_char((sum(bks.slots) / 2.0), E'9999999999999999D99')) AS total_hours FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (facs.facid = bks.facid) GROUP BY facs.facid, facs.name) ORDER BY facs.facid)"))
+"((SELECT facs.facid, facs.name, trim(to_char((SUM(bks.slots) / 2.0), E'9999999999999999D99')) AS total_hours FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (facs.facid = bks.facid) GROUP BY facs.facid, facs.name) ORDER BY facs.facid)"))
       )
 
 
@@ -949,7 +958,7 @@ To sum the column len of all films and group the results by kind:"
                                                :group-by 'facid)
                                       'ranked)
                            :where (:= 'rank 1)))
-             "(SELECT facid, total FROM (SELECT facid, sum(slots) AS total, (rank() OVER ( ORDER BY sum(slots) DESC)) AS rank FROM cd.bookings GROUP BY facid) AS ranked WHERE (rank = 1))"))
+             "(SELECT facid, total FROM (SELECT facid, SUM(slots) AS total, (rank() OVER ( ORDER BY SUM(slots) DESC)) AS rank FROM cd.bookings GROUP BY facid) AS ranked WHERE (rank = 1))"))
 
   (is (equal (sql (:select 'facid 'total
                            :from (:as (:select 'facid 'total  (:as (:over (:rank) (:order-by (:desc 'total)))
@@ -959,7 +968,7 @@ To sum the column len of all films and group the results by kind:"
                                                                    :group-by 'facid) 'sumslots))
                                       'ranked)
                            :where (:= 'rank 1)))
-             "(SELECT facid, total FROM (SELECT facid, total, (rank() OVER ( ORDER BY total DESC)) AS rank FROM (SELECT facid, sum(slots) AS total FROM cd.bookings GROUP BY facid) AS sumslots) AS ranked WHERE (rank = 1))"))
+             "(SELECT facid, total FROM (SELECT facid, total, (rank() OVER ( ORDER BY total DESC)) AS rank FROM (SELECT facid, SUM(slots) AS total FROM cd.bookings GROUP BY facid) AS sumslots) AS ranked WHERE (rank = 1))"))
 
   ;; from https://www.pgexercises.com/questions/aggregates/classify.html
   (is (equal (sql (:order-by (:select 'name (:as (:case ((:= 'class 1) "high")
@@ -981,7 +990,7 @@ To sum the column len of all films and group the results by kind:"
                                      :group-by 'facs.name)
                             'subq))
                       'class 'name))
-             "((SELECT name, CASE WHEN (class = 1) THEN E'high' WHEN (class = 2) THEN E'average' ELSE E'low' END AS revenue FROM (SELECT facs.name AS name, (ntile(3) OVER ( ORDER BY sum(CASE WHEN (memid = 0) THEN (slots * facs.guestcost) ELSE (slots * membercost) END) DESC)) AS class FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (bks.facid = facs.facid) GROUP BY facs.name) AS subq) ORDER BY class, name)")))
+             "((SELECT name, CASE WHEN (class = 1) THEN E'high' WHEN (class = 2) THEN E'average' ELSE E'low' END AS revenue FROM (SELECT facs.name AS name, (ntile(3) OVER ( ORDER BY SUM(CASE WHEN (memid = 0) THEN (slots * facs.guestcost) ELSE (slots * membercost) END) DESC)) AS class FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (bks.facid = facs.facid) GROUP BY facs.name) AS subq) ORDER BY class, name)")))
 
 
 
@@ -997,7 +1006,7 @@ To sum the column len of all films and group the results by kind:"
                                                 :from 't1
                                                 :where (:< 'n 100))))
                     (:select (:sum 'n) :from 't1)))
-             "WITH RECURSIVE t1(n) AS (values(1) union all (SELECT n(1) FROM t1 WHERE (n < 100)))(SELECT sum(n) FROM t1)"))
+             "WITH RECURSIVE t1(n) AS (values(1) union all (SELECT n(1) FROM t1 WHERE (n < 100)))(SELECT SUM(n) FROM t1)"))
 
 ;; the following query that searches a table graph using a link field:
   (is (equal (sql
@@ -1027,7 +1036,7 @@ To sum the column len of all films and group the results by kind:"
                     (:select 'sub-part (:as (:sum 'quantity) 'total-quantity)
                              :from 'included-parts
                              :group-by 'sub-part)))
-                 "WITH RECURSIVE included_parts(sub_part, part, quantity) AS ((SELECT sub_part, part, quantity FROM parts WHERE (part = E'our-product')) union all (SELECT p.sub_part, p.part, p.quantity FROM included_parts AS pr, parts AS p WHERE (p.part = pr.sub_part)))(SELECT sub_part, sum(quantity) AS total_quantity FROM included_parts GROUP BY sub_part)"))
+                 "WITH RECURSIVE included_parts(sub_part, part, quantity) AS ((SELECT sub_part, part, quantity FROM parts WHERE (part = E'our-product')) union all (SELECT p.sub_part, p.part, p.quantity FROM included_parts AS pr, parts AS p WHERE (p.part = pr.sub_part)))(SELECT sub_part, SUM(quantity) AS total_quantity FROM included_parts GROUP BY sub_part)"))
 
       ;; This query will loop if the link relationships contain cycles. Because we require a “depth” output, just changing UNION ALL to UNION would not eliminate the looping. Instead we need to recognize whether we have reached the same row again while following a particular path of links. We add two columns path and cycle to the loop-prone query:
 
@@ -1066,7 +1075,7 @@ To sum the column len of all films and group the results by kind:"
                                   :from 'orders
                                   :where (:in 'region (:select 'region :from 'top-regions))
                                   :group-by 'region 'product)))
-                 "WITH regional_sales AS (SELECT region, sum(amount) AS total_sales FROM orders GROUP BY region), top_regions AS (SELECT region FROM regional_sales WHERE (total_sales > (SELECT (sum(total_sales) / 10) FROM regional_sales)))(SELECT region, product, sum(quantity) AS product_units, sum(amount) AS product_sales FROM orders WHERE (region IN (SELECT region FROM top_regions)) GROUP BY region, product)"))
+                 "WITH regional_sales AS (SELECT region, SUM(amount) AS total_sales FROM orders GROUP BY region), top_regions AS (SELECT region FROM regional_sales WHERE (total_sales > (SELECT (SUM(total_sales) / 10) FROM regional_sales)))(SELECT region, product, SUM(quantity) AS product_units, SUM(amount) AS product_sales FROM orders WHERE (region IN (SELECT region FROM top_regions)) GROUP BY region, product)"))
 
       (is (equal (sql
                   (:with-recursive

@@ -670,8 +670,7 @@ Example:
 
     (query (:select (:covar-pop 'height 'weight) :from 'people))"
 
-  `("CORVAR_POP(" ,@(sql-expand y) " , " ,@(sql-expand x) ")")
-)
+  `("COVAR_POP(" ,@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
 (def-sql-op :covar-samp (y x)
   "The covar-samp function returns the sample covariance between a set of dependent and independent variables.
@@ -680,7 +679,7 @@ Example:
 
     (query (:select (:covar-samp 'height 'weight) :from 'people))"
 
-  `("CORVAR_SAMP(" ,@(sql-expand y) " , " ,@(sql-expand x) ")"))
+  `("COVAR_SAMP(" ,@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
 
 
@@ -920,7 +919,7 @@ Example:
     (query (:select (:stddev 'salary) :from 'people))"
 
   (split-on-keywords ((vars *)) (cons :vars args)
-                     `("STDDEV(",@(sql-expand-list vars))))
+                     `("STDDEV(",@(sql-expand-list vars) ")")))
 
 (def-sql-op :stddev-pop (&rest args)
   "The stddev-pop function returns the population standard deviation of the input values.
@@ -930,7 +929,7 @@ Example:
     (query (:select (:stddev-pop 'salary) :from 'people))"
 
   (split-on-keywords ((vars *)) (cons :vars args)
-                     `("STDDEV_POP(",@(sql-expand-list vars))))
+                     `("STDDEV_POP(",@(sql-expand-list vars) ")")))
 
 (def-sql-op :stddev-samp (&rest args)
   "The stddev-samp function returns the sample standard deviation of the input values.
@@ -940,7 +939,7 @@ Example:
     (query (:select (:stddev-samp 'salary) :from 'people))"
 
   (split-on-keywords ((vars *)) (cons :vars args)
-                     `("STDDEV_SAMP(",@(sql-expand-list vars))))
+                     `("STDDEV_SAMP(",@(sql-expand-list vars) ")")))
 
 (def-sql-op :variance (&rest args)
   "Variance is a historical alias for var_samp. The variance function returns the sample
@@ -951,7 +950,7 @@ Example:
     (query (:select (:variance 'salary) :from 'people))"
 
   (split-on-keywords ((vars *)) (cons :vars args)
-                     `("VARIANCE(",@(sql-expand-list vars))))
+                     `("VARIANCE(",@(sql-expand-list vars) ")")))
 
 (def-sql-op :var-pop (&rest args)
   "The var-pop function returns the population variance of the input values (square of the population standard deviation).
@@ -961,7 +960,7 @@ Example:
     (query (:select (:var-pop 'salary) :from 'people))"
 
   (split-on-keywords ((vars *)) (cons :vars args)
-                     `("VAR_POP(",@(sql-expand-list vars))))
+                     `("VAR_POP(",@(sql-expand-list vars) ")")))
 
 (def-sql-op :var-samp (&rest args)
   "The var-samp function returns the sample variance of the input values (square of the sample standard deviation).
@@ -971,7 +970,7 @@ Example:
     (query (:select (:var-samp 'salary) :from 'people))"
 
   (split-on-keywords ((vars *)) (cons :vars args)
-                     `("VAR_SAMP(",@(sql-expand-list vars))))
+                     `("VAR_SAMP(",@(sql-expand-list vars) ")")))
 
 
 
