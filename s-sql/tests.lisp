@@ -298,7 +298,11 @@ to strings \(which will form an SQL query when concatenated)."
                            FROM countries, regions
                            WHERE ((regions.id = countries.region_id) and (countries.name = ''US'')))'"))
   (is (equal (sql (:select (:+ 'id 12) 'name :from 'regions :where (:= 'name "South America")))
-             "(SELECT (id + 12), name FROM regions WHERE (name = E'South America'))")))
+             "(SELECT (id + 12), name FROM regions WHERE (name = E'South America'))"))
+  (is (equal (sql (:select 'ta :from 'a :where (:not (:is-null 'ta))))
+             "(SELECT ta FROM a WHERE (not (ta IS NULL)))"))
+  (is (equal (sql (:select 'ta :from 'a :where (:not-null 'ta)))
+             "(SELECT ta FROM a WHERE (ta IS NOT NULL))")))
 
 (test select-distinct
       "Testing select with distinct. From https://www.pgexercises.com/questions/basic/unique.html"
