@@ -214,7 +214,7 @@ something SQL understands. Default is to just use the type symbol's
 name.")
   (:method ((lisp-type symbol) &rest args)
     (declare (ignore args))
-    (map 'string (lambda (ch) (if (eq ch #\-) #\space ch)) (symbol-name lisp-type)))
+    (substitute #\Space #\- (symbol-name lisp-type) :test #'char=))
   (:method ((lisp-type (eql 'string)) &rest args)
     (cond (args (format nil "CHAR(~A)" (car args)))
           (t "TEXT")))
