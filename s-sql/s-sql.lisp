@@ -544,7 +544,7 @@ or it can be a smaller number of rows based on the allowed keyword parameters :d
                 :from 'testtable))
 
 Note that if used, the filter must be last in the count args. If distinct is used, it must come before filter.
-Unlike normal sql, the word 'where' is not used inside the filter clause.
+Unlike standard sql, the word 'where' is not used inside the filter clause.
 E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
 See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
@@ -555,7 +555,8 @@ See tests.lisp for examples."
     ")")))
 
 (def-sql-op :avg (&rest args)
-    "Avg calculates the average value of a list of values. Note that if the filter keyword is used,
+    "Avg calculates the average value of a list of values. Allowed keyword parameters are distinct and filter.
+Note that if the filter keyword is used,
 the filter must be last in the avg args. If distinct is used, it must come before filter.
 Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
 E.g. (query (:select (:avg '*) (:avg '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
@@ -567,7 +568,8 @@ See tests.lisp for examples."
     ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :sum (&rest args)
-    "Sum calculates the total of a list of values. Note that if the keyword filter is used,
+    "Sum calculates the total of a list of values.  Allowed keyword parameters are distinct and filter.
+Note that if the keyword filter is used,
 the filter must be last in the sum args. If distinct is used, it must come before filter.
 Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
 E.g. (query (:select (:sum '*) (:sum '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
@@ -579,7 +581,8 @@ See tests.lisp for examples."
     ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :max (&rest args)
-    "Max returns the maximum value of a set of values. Note that if the filter keyword is used,
+    "Max returns the maximum value of a set of values.  Allowed keyword parameters are distinct and filter.
+Note that if the filter keyword is used,
 the filter must be last in the max args. If distinct is used, it must come before filter.
 Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
 E.g. (query (:select (:max '*) (:max '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
@@ -591,8 +594,9 @@ See tests.lisp for more examples."
     ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :min (&rest args)
-    "Returns the minimum value ofa set of values. Note that if the filter keyword is used,
-the filter must be last in the min args. If distinct is used, it must come before filter.
+    "Returns the minimum value ofa set of values.  Allowed keyword parameters are distinct and filter.
+Note that if the filter keyword is used, the filter must be last in the min args.
+If distinct is used, it must come before filter.
 Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
 E.g. (query (:select (:min '*) (:min '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
 See tests.lisp for more examples."
@@ -603,9 +607,10 @@ See tests.lisp for more examples."
     ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :every (&rest args)
-    "Returns true if all input values are true, otherwise false. Note that if the filter keyword used,
-the filter must be last in the every args. If distinct is used, it must come before filter.
-Unlike normal sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
+    "Returns true if all input values are true, otherwise false.  Allowed keyword parameters are distinct and filter.
+Note that if the filter keyword used, the filter must be last in the every args.
+If distinct is used, it must come before filter.
+Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
 E.g. (query (:select '* (:every (:like 'studname \"%h\"))
              :from 'tbl-students
              :group-by 'studname 'studid 'studgrades))
@@ -644,7 +649,7 @@ corresponding to that percentile.
 
 Examples:
 
-    (query (:select (:percentile-dist :fraction 0.5 :order-by 'number-of-staff)
+   (query (:select (:percentile-dist :fraction 0.5 :order-by 'number-of-staff)
                     :from 'schools))
     (query (:select (:percentile-dist :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
                     :from  'schools))"

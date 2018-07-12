@@ -703,10 +703,10 @@ To sum the column len of all films and group the results by kind:"
 (test array-agg
   "Testing array-agg. Note the first example filters out null values as well as separating the y and n users."
   (is (equal (sql (:select 'g.id
-         (:as (:array-agg 'g.users :filter (:= 'g.canonical "Y")) 'canonical-users)
-         (:as (:array-agg 'g.users :filter (:= 'g.canonical "N")) 'non-canonical-users)
-         :from (:as 'groups 'g)
-         :group-by 'g.id))
+                           (:as (:array-agg 'g.users :filter (:= 'g.canonical "Y")) 'canonical-users)
+                           (:as (:array-agg 'g.users :filter (:= 'g.canonical "N")) 'non-canonical-users)
+                   :from (:as 'groups 'g)
+                   :group-by 'g.id))
              "(SELECT g.id, ARRAY_AGG(g.users) FILTER (WHERE (g.canonical = E'Y')) AS canonical_users, ARRAY_AGG(g.users) FILTER (WHERE (g.canonical = E'N')) AS non_canonical_users FROM groups AS g GROUP BY g.id)")))
 
 (test percentile-cont
@@ -715,14 +715,14 @@ To sum the column len of all films and group the results by kind:"
                            :from 'schools))
              "(SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY number_of_staff) FROM schools)"))
   (is (equal (sql (:select (:percentile-cont :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
-                           'schools))
-             "(SELECT PERCENTILE_CONT(ARRAY[0.25 0.5 0.75 1]) WITHIN GROUP (ORDER BY number_of_staff), schools)"))
+                    :from  'schools))
+             "(SELECT PERCENTILE_CONT(ARRAY[0.25 0.5 0.75 1]) WITHIN GROUP (ORDER BY number_of_staff) FROM schools)"))
   (is (equal (sql (:order-by (:select 'day
-               (:over (:percentile-cont :fraction 0.25 :order-by (:asc 'duration)) (:partition-by 'day))
-               (:over (:percentile-cont :fraction 0.5 :order-by (:asc 'duration)) (:partition-by 'day))
-               (:over (:percentile-cont :fraction 0.75 :order-by (:asc 'duration)) (:partition-by 'day))
-               (:over (:percentile-cont :fraction 0.85 :order-by (:asc 'duration)) (:partition-by 'day))
-               :from 'query-durations :group-by 1 ) 1))
+                                      (:over (:percentile-cont :fraction 0.25 :order-by (:asc 'duration)) (:partition-by 'day))
+                                      (:over (:percentile-cont :fraction 0.5 :order-by (:asc 'duration)) (:partition-by 'day))
+                                      (:over (:percentile-cont :fraction 0.75 :order-by (:asc 'duration)) (:partition-by 'day))
+                                      (:over (:percentile-cont :fraction 0.85 :order-by (:asc 'duration)) (:partition-by 'day))
+                              :from 'query-durations :group-by 1 ) 1))
              "((SELECT day, (PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day)), (PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day)), (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day)), (PERCENTILE_CONT(0.85) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day)) FROM query_durations GROUP BY 1) ORDER BY 1)")))
 
 (test percentile-dist
@@ -731,8 +731,8 @@ To sum the column len of all films and group the results by kind:"
                            :from 'schools))
              "(SELECT PERCENTILE_DIST(0.5) WITHIN GROUP (ORDER BY number_of_staff) FROM schools)"))
   (is (equal (sql (:select (:percentile-dist :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
-                           'schools))
-             "(SELECT PERCENTILE_DIST(ARRAY[0.25 0.5 0.75 1]) WITHIN GROUP (ORDER BY number_of_staff), schools)")))
+                           :from  'schools))
+             "(SELECT PERCENTILE_DIST(ARRAY[0.25 0.5 0.75 1]) WITHIN GROUP (ORDER BY number_of_staff) FROM schools)")))
 
 (test corr
   "Testing correlation coefficient. To quote from wikipedia (https://en.wikipedia.org/wiki/Covariance)
