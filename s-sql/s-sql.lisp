@@ -550,8 +550,8 @@ See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("COUNT("
       ,@(when distinct '("DISTINCT "))
-    ,@(sql-expand-list vars)
-    ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))
+      ,@(sql-expand-list vars)
+      ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))
     ")")))
 
 (def-sql-op :avg (&rest args)
@@ -564,8 +564,8 @@ See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("AVG("
       ,@(when distinct '("DISTINCT "))
-    ,@(sql-expand-list vars)
-    ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
+      ,@(sql-expand-list vars)
+      ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :sum (&rest args)
     "Sum calculates the total of a list of values.  Allowed keyword parameters are distinct and filter.
@@ -577,8 +577,8 @@ See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("SUM("
       ,@(when distinct '("DISTINCT "))
-    ,@(sql-expand-list vars)
-    ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
+      ,@(sql-expand-list vars)
+      ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :max (&rest args)
     "Max returns the maximum value of a set of values.  Allowed keyword parameters are distinct and filter.
@@ -590,8 +590,8 @@ See tests.lisp for more examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("MAX("
       ,@(when distinct '("DISTINCT "))
-    ,@(sql-expand-list vars)
-    ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
+      ,@(sql-expand-list vars)
+      ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :min (&rest args)
     "Returns the minimum value ofa set of values.  Allowed keyword parameters are distinct and filter.
@@ -603,8 +603,8 @@ See tests.lisp for more examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("MIN("
       ,@(when distinct '("DISTINCT "))
-    ,@(sql-expand-list vars)
-    ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
+      ,@(sql-expand-list vars)
+      ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :every (&rest args)
     "Returns true if all input values are true, otherwise false.  Allowed keyword parameters are distinct and filter.
@@ -619,7 +619,7 @@ See tests.lisp for examples."
     `("EVERY("
       ,@(when distinct '("DISTINCT "))
       ,@(sql-expand-list vars)
-    ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
+      ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :percentile-cont (&rest args)
   "Requires Postgresql 9.4 or higher. Percentile-cont returns a value corresponding to the specified fraction in the ordering,
@@ -635,9 +635,9 @@ Examples:
     (query (:select (:percentile-cont :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
                     :from  'schools))
 "
-  (split-on-keywords ((fraction *)  (order-by * )) args
+  (split-on-keywords ((fraction *) (order-by * )) args
     `("PERCENTILE_CONT"
-      ,@ (when fraction `(,(format nil "~a" fraction)))
+      ,@(when fraction `(,(format nil "~a" fraction)))
       ,@(when order-by `(" WITHIN GROUP (ORDER BY " ,@(sql-expand-list order-by) ")")))))
 
 (def-sql-op :percentile-dist (&rest args)

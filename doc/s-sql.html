@@ -478,13 +478,15 @@
 <a name="aggregation-operators"><h3>Aggregation Operators</h3></a>
 <p class="def"><span>sql-op</span> <a name="count"></a>:count (&rest args)</p>
 
-    <p class="desc">Count returns the number of rows. It can be the number of rows collected by the select statement as in</p>
+<p class="desc">Count returns the number of rows for which the expression is not null.
+  It can be the number of rows collected by the select statement as in</p>
     <pre class="code desc">
 (query (:select (:count '*)
         :from 'table1
         :where (:= 'price 100)))</pre>
 
-    <p class="desc">or it can be a smaller number of rows based on the allowed keyword parameters :distinct and :filter as in</p>
+<p class="desc">or it can be a smaller number of rows based on the allowed keyword parameters :distinct and :filter
+  or some other type of condition as in</p>
     <pre class="code desc">
 (query (:select (:count 'memid :distinct)
         :from 'cd.bookings))</pre>
