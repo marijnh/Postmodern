@@ -528,6 +528,13 @@ string."
 (def-sql-op :extract (unit form)
   `("EXTRACT(" ,@(sql-expand unit) " FROM " ,@(sql-expand form) ")"))
 
+(def-sql-op :values (&rest args) "values statement"
+               (split-on-keywords ((vars *) (order-by * ?)) (cons :vars args)
+                 `("(VALUES "
+                   ,@(sql-expand-list vars)
+                   ,@(when order-by `(" ORDER BY " ,@(sql-expand-list order-by) ")"))
+                   ")")))
+
 (def-sql-op :count (&rest args)
     "Count returns the number of rows. It can be the number of rows collected by the select statement as in
 
@@ -656,7 +663,7 @@ Examples:
 
   (split-on-keywords ((fraction *)  (order-by * )) args
     `("PERCENTILE_DIST"
-      ,@ (when fraction `(,(format nil "~a" fraction)))
+      ,@(when fraction `(,(format nil "~a" fraction)))
       ,@(when order-by `(" WITHIN GROUP (ORDER BY " ,@(sql-expand-list order-by) ")")))))
 
 (def-sql-op :corr (y x)
@@ -725,6 +732,10 @@ Example:
                     (if (null elements) "NULL"
                         (implode ", " (mapcar 'sql-escape elements)))) ")")))))
 
+(def-sql-op :empty-set ()
+  "Returns a list containing a string of two parentheses as an empty set."
+  `("()"))
+
 (def-sql-op :dot (&rest args)
   (sql-expand-list args "."))
 
@@ -785,6 +796,17 @@ the proper SQL syntax for joining tables."
       ,@(if window (cons " WINDOW " (sql-expand-list window)))
       ")")))
 
+(def-sql-op :grouping-sets (&rest args)
+  "Grouping-sets allows multiple group-by in a single query
+
+Examples:
+    (query (:select 'c1 'c2 'c3 (:sum 'c3)
+            :from 'table-name
+            :group-by (:grouping-sets (:set 'c1 'c2) (:set 'c1) (:set 'c2) (:set))))
+Note that this requires postgresql 9.5 or later."
+
+  `("GROUPING SETS ",@(sql-expand-list args) ))
+
 (def-sql-op :string-agg (&rest args)
   "String-agg allows you to concatenate strings using different types of delimiter symbols.
 Allowable optional keyword parameters are :distinct, :order-by and :filter
@@ -795,9 +817,11 @@ Examples:
 
     (query (:select 'mid (:as (:string-agg  'y \",\" :distinct :order-by (:desc 'y) ) 'words) :from 'moves))
 
+    (query (:select (:string-agg  'name \",\" :order-by (:desc 'name) :filter (:< 'id 4)) :from 'employee))
+
 Note that order-by in string-agg requires postgresql 9.0 or later. Filter requires postgresql 9.4 or later.
 See tests.lisp for examples."
-  (split-on-keywords ((vars *) (distinct - ?) (filter * ?) (order-by * ?)) (cons :vars args)
+  (split-on-keywords ((vars *) (distinct - ?)  (order-by * ?)(filter * ?)) (cons :vars args)
     `("STRING_AGG("
       ,@(when distinct '("DISTINCT "))
       ,@(sql-expand-list vars)
