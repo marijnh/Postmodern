@@ -474,6 +474,67 @@
       you want to invert an ordering. Note: This is not the same as passing an <code>:order-by</code>
       parameter to an aggregation operator. See <a href="#aggregation-operators">Aggregation Operators</a>.</p>
 
+    <p class="def"><span>sql-op</span> <a name="values"></a>:values</p>
+
+<p class="desc">Values computes a row value or set of row values for use in a specific query. See the postgresql docs at:
+  <a href="https://www.postgresql.org/docs/current/static/queries-values.html">https://www.postgresql.org/docs/current/static/queries-values.html</a> and <a href= "https://www.postgresql.org/docs/current/static/sql-values.html">https://www.postgresql.org/docs/current/static/sql-values.html</a>
+Example:</p>
+
+<pre class="code desc">
+(query (:select '*
+                :from (:as (:values (:set 1 "one")
+                                    (:set 2 "two")
+                                    (:set 3 "three"))
+                           (:t1 'num 'letter))))
+
+(query (:select 'a 'b 'c (:cast (:as (:* 50 (:random)) 'int))
+                :from (:as (:values (:set "a") (:set "b")) (:d1 'a))
+                (:as (:values (:set "c") (:set "d")) (:d2 'b))
+                (:as (:values (:set "e") (:set "f")) (:d3 'c))))
+
+(query
+ (:with-recursive
+  (:as (:t1 'n)
+       (:union-all (:values (:set 1))
+                   (:select (:+ 'n 1)
+                            :from 't1
+                            :where (:< 'n 100))))
+  (:select (:sum 'n) :from 't1))
+ :single)
+</pre>
+
+    <p class="def"><span>sql-op</span> <a name="empty-set"></a>:empty-set</p>
+
+<p class="desc">This is a fudge. It returns a string "()" where something like '() would return "false" or :()
+would throw an error.
+Example:</p>
+
+    <pre class="code desc">(query (:select 'appnumber 'day (:sum 'inserts) (:sum 'updates) (:sum 'deletes) (:sum 'transactions)
+                                           :from 'db-details
+                                           :group-by (:grouping-sets (:set 'appnumber 'day (:empty-set)))))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="group-by"></a>:group-by</p>
+
+    <p class="desc"><a href= "https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUP">https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS</a> The GROUP BY Clause is used to group together those rows in a table that have the same values in all the columns listed. The order in which the columns are listed does not matter. The effect is to combine each set of rows having common values into one group row that represents all rows in the group. This is done to eliminate redundancy in the output and/or compute aggregates that apply to these groups. Example:</p>
+
+    <pre class="code desc">(query (:order-by
+        (:select 'mems.surname 'mems.firstname 'mems.memid (:as (:min 'bks.starttime) 'starttime)
+                 :from (:as 'cd.bookings 'bks)
+                 :inner-join (:as 'cd.members 'mems)
+                 :on (:= 'mems.memid 'bks.memid)
+                 :where (:>= 'starttime "2012-09-01")
+                 :group-by 'mems.surname 'mems.firstname 'mems.memid)
+        'mems.memid))</pre>
+
+    <p class="def"><span>sql-op</span> <a name="grouping-sets"></a>:grouping-sets</p>
+
+    <p class="desc"><a href= "https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS">https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS</a> More complex grouping operations are possible using the concept of grouping sets. The data selected by the FROM and WHERE clauses is grouped separately by each specified grouping set, aggregates computed for each group just as for simple GROUP BY clauses, and then the results returned. This requires postgresql 9.5 or later. For example:</p>
+
+<pre class="code desc">
+(query (:select 'city (:as (:extract 'year 'start-date)  'joining-year) (:as (:count 1) 'employee_count)
+                :from 'employee
+                :group-by (:grouping-sets (:set 'city (:extract 'year 'start-date)))))</pre>
+
 
 <a name="aggregation-operators"><h3>Aggregation Operators</h3></a>
 <p class="def"><span>sql-op</span> <a name="count"></a>:count (&rest args)</p>
@@ -641,7 +702,10 @@ See tests.lisp for more examples.</p>
         :from 'business-process))
 
 (query (:select 'mid (:as (:string-agg  'y \",\" :distinct :order-by (:desc 'y) ) 'words)
-        :from 'moves)) </pre>
+        :from 'moves))
+
+(query (:select (:string-agg  'name "," :order-by (:desc 'name) :filter (:< 'id 4))
+        :from 'employee)) </pre>
 
     <p class="def"><span>sql-op</span> <a name="array-agg"></a>:array-agg (&rest args)</p>
 
@@ -880,7 +944,7 @@ Example:</p>
     <pre class="code desc">
 (query (:with-recursive
       (:as (:t1 'n)
-           (:union-all (:values 1)
+           (:union-all (:values (:set 1))
                        (:select (:+ 'n 1)
                                 :from 't1
                                 :where (:< 'n 100))))
@@ -986,6 +1050,9 @@ Example:</p>
 (query (:insert-rows-into 'my-table :columns 'field-1 'field-2
                                     :values '((42 "foobar") (23 "foobaz"))))</pre>
 
+    <p class="desc">If you will use the default columns, this can be simplified and the :columns parameters can be dropped. Example:</p>
+    <pre class="code desc">(query (:insert-rows-into 'my-table
+                          :values '((42 "foobar") (23 "foobaz"))))</pre>
 
     <p class="def"><span>sql-op</span> <a name="update"></a>:update (table &amp;rest rest)</p>
 
