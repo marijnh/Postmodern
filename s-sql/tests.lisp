@@ -22,6 +22,31 @@
   (with-test-connection
       (is (not (null *database*)))))
 
+(test employee-table
+  "Build employee table"
+  (with-test-connection
+    (when (table-exists-p 'employee)
+      (query (:drop-table 'employee)))
+    (query (:create-table employee ((id :type int)
+                                    (name :type text)
+                                    (salary :type numeric)
+                                    (start_date :type date)
+                                    (city :type text)
+                                    (region :type char)
+                                    (age :type int))))
+    (query (:insert-rows-into 'employee
+                              :columns 'id 'name 'salary 'start-date 'city 'region 'age
+                              :values '((1 "Jason" 40420 "02/01/94" "New York" "W" 29)
+                                        (2 "Robert" 14420 "01/02/95" "Vancouver" "N" 21)
+                                        (3 "Celia" 24020 "12/03/96" "Toronto" "W" 24)
+                                        (4 "Linda" 40620 "11/04/97" "New York" "N" 28)
+                                        (5 "David" 80026 "10/05/98" "Vancouver" "W" 31)
+                                        (6 "James" 70060 "09/06/99" "Toronto" "N" 26)
+                                        (7 "Alison" 90620 "08/07/00" "New York" "W" 38)
+                                        (8 "Chris" 26020 "07/08/01" "Vancouver" "N" 22)
+                                        (9 "Mary" 60020 "06/08/02" "Toronto" "W" 34))))
+    (is-true (table-exists-p 'employee))))
+
 (test sql-error)
 
 (test strcat
@@ -302,6 +327,24 @@ to strings \(which will form an SQL query when concatenated)."
              "(SELECT ta FROM a WHERE (not (ta IS NULL)))"))
   (is (equal (sql (:select 'ta :from 'a :where (:not-null 'ta)))
              "(SELECT ta FROM a WHERE (ta IS NOT NULL))")))
+
+(test cast
+  "Testing cast using cast and type"
+  (is (equal (sql (:select (:as (:cast (:as (:* 50 (:random)) 'int)) 'x) :from (:generate-series 1 3)))
+             "(SELECT CAST((50 * random()) AS int) AS x FROM generate_series(1, 3))"))
+  (is (equal (sql (:select (:as (:- (:type (:now) date) 'x) 'some-date) :from (:as (:generate-series 1 10) 'x)))
+             "(SELECT (now()::DATE - x) AS some_date FROM generate_series(1, 10) AS x)")))
+
+(test values
+  "Testing values"
+  (is (equal (sql (:select 'a 'b 'c (:cast (:as (:* 50 (:random)) 'int))
+                   :from (:as (:values (:set "a") (:set "b")) (:d1 'a))
+                         (:as (:values (:set "c") (:set "d")) (:d2 'b))
+                         (:as (:values (:set "e") (:set "f")) (:d3 'c))))
+             "(SELECT a, b, c, CAST((50 * random()) AS int) FROM (VALUES (E'a'), (E'b')) AS d1(a), (VALUES (E'c'), (E'd')) AS d2(b), (VALUES (E'e'), (E'f')) AS d3(c))"))
+
+  (is (equal (sql (:select '* :from (:as (:values (:set 1 "one") (:set 2 "two") (:set 3 "three")) (:t1 'num 'letter))))
+             "(SELECT * FROM (VALUES (1, E'one'), (2, E'two'), (3, E'three')) AS t1(num, letter))")))
 
 (test select-distinct
       "Testing select with distinct. From https://www.pgexercises.com/questions/basic/unique.html"
@@ -684,12 +727,62 @@ To sum the column len of all films and group the results by kind:"
 
 (test every-aggregation-test
   "Testing the aggregation sql-op every"
-  (is (equal (with-test-connection (query (:select '* (:every (:like 'studname "%h"))
-                                                   :from 'tbl-students
-                                                   :group-by 'studname 'studid 'studgrades)))
-             '((4 "Ali" "B" NIL) (7 "Roy" "C" NIL) (6 "Sofia" "A" NIL) (5 "Mukesh" "D" T)
-               (2 "Kimly" "B" NIL) (3 "Jenny" "C" NIL) (1 "Anvesh" "A" T)
-               (8 "Martin" "C" NIL)))))
+  (is (equal (with-test-connection
+               (query (:select 'id 'name 'city 'salary (:every (:like 'name "J%"))
+                               :from 'employee
+                               :group-by 'name 'id 'salary 'city)))
+             '((5 "David" "Vancouver" 80026 NIL) (7 "Alison" "New York" 90620 NIL)
+               (4 "Linda" "New York" 40620 NIL) (8 "Chris" "Vancouver" 26020 NIL)
+               (6 "James" "Toronto" 70060 T) (1 "Jason" "New York" 40420 T)
+               (9 "Mary" "Toronto" 60020 NIL) (3 "Celia" "Toronto" 24020 NIL)
+               (2 "Robert" "Vancouver" 14420 NIL))))
+  (is (equal (with-test-connection
+               (query (:select 'id 'name 'city 'salary
+                               (:over (:every (:like 'name "J%")) (:partition-by 'id))
+                               :from 'employee )))
+             '((1 "Jason" "New York" 40420 T) (2 "Robert" "Vancouver" 14420 NIL)
+              (3 "Celia" "Toronto" 24020 NIL) (4 "Linda" "New York" 40620 NIL)
+              (5 "David" "Vancouver" 80026 NIL) (6 "James" "Toronto" 70060 T)
+              (7 "Alison" "New York" 90620 NIL) (8 "Chris" "Vancouver" 26020 NIL)
+               (9 "Mary" "Toronto" 60020 NIL))))
+  (is (equal (with-test-connection
+               (query (:select 'id 'name 'city 'salary (:over (:every (:ilike 'name "j%")) (:partition-by 'id))
+                               :from 'employee )))
+             '((1 "Jason" "New York" 40420 T) (2 "Robert" "Vancouver" 14420 NIL)
+               (3 "Celia" "Toronto" 24020 NIL) (4 "Linda" "New York" 40620 NIL)
+               (5 "David" "Vancouver" 80026 NIL) (6 "James" "Toronto" 70060 T)
+               (7 "Alison" "New York" 90620 NIL) (8 "Chris" "Vancouver" 26020 NIL)
+               (9 "Mary" "Toronto" 60020 NIL)))))
+
+(test grouping-sets-selects
+  "Testing grouping sets in a select clause. Reminder requires postgresql 9.5 or later."
+  (is (equal (sql (:select 'c1 'c2 'c3 (:sum 'c4) :from 'table-name :group-by (:roll-up 'c1 'c2 'c3)))
+             "(SELECT c1, c2, c3, SUM(c4) FROM table_name GROUP BY roll_up(c1, c2, c3))"))
+  (is (equal (sql (:select 'c1 'c2 'c3 (:sum 'c4) :from 'table-name :group-by (:cube 'c1 'c2 'c3)))
+             "(SELECT c1, c2, c3, SUM(c4) FROM table_name GROUP BY cube(c1, c2, c3))"))
+  (is (equal (sql (:select 'c1 'c2 'c3 (:string-agg 'c3)
+                           :from 'table-name
+                           :group-by (:grouping-sets (:set 'c1 'c2) (:set 'c1) (:set 'c2))))
+             "(SELECT c1, c2, c3, STRING_AGG(c3) FROM table_name GROUP BY GROUPING SETS (c1, c2), (c1), (c2))"))
+  (is (equal (sql (:select 'd1 'd2 'd3 (:sum 'v) :from 'test-cube :group-by (:grouping-sets (:set (:set 'd1) (:set 'd2 'd3) ))))
+             "(SELECT d1, d2, d3, SUM(v) FROM test_cube GROUP BY GROUPING SETS ((d1), (d2, d3)))"))
+  (is (equal (with-test-connection
+               (query (:select 'city (:as (:extract 'year 'start-date)  'joining-year) (:as (:count 1) 'employee_count)
+                               :from 'employee
+                               :group-by (:grouping-sets (:set 'city (:extract 'year 'start-date))))))
+             '(("Vancouver" :NULL 3) ("New York" :NULL 3) ("Toronto" :NULL 3)
+              (:NULL 2001.0d0 1) (:NULL 1997.0d0 1) (:NULL 1994.0d0 1) (:NULL 2000.0d0 1)
+              (:NULL 2002.0d0 1) (:NULL 1996.0d0 1) (:NULL 1995.0d0 1) (:NULL 1998.0d0 1)
+               (:NULL 1999.0d0 1))))
+  (is (equal (sql (:select 'appnumber 'day (:sum 'inserts) (:sum 'updates) (:sum 'deletes) (:sum 'transactions)
+                 :from 'db-details
+                 :group-by (:grouping-sets (:set 'appnumber 'day) )))
+           "(SELECT appnumber, day, SUM(inserts), SUM(updates), SUM(deletes), SUM(transactions) FROM db_details GROUP BY GROUPING SETS (appnumber, day))"))
+
+  (is (equal (sql (:select 'appnumber 'day (:sum 'inserts) (:sum 'updates) (:sum 'deletes) (:sum 'transactions)
+                           :from 'db-details
+                           :group-by (:grouping-sets (:set 'appnumber 'day (:empty-set)) )))
+           "(SELECT appnumber, day, SUM(inserts), SUM(updates), SUM(deletes), SUM(transactions) FROM db_details GROUP BY GROUPING SETS (appnumber, day, ()))")))
 
 (test string-agg
   "Testing string-agg sql-op"
@@ -698,7 +791,10 @@ To sum the column len of all films and group the results by kind:"
   (is (equal (sql (:select 'mid (:as (:string-agg  'y "," :distinct) 'words) :from 'moves))
              "(SELECT mid, STRING_AGG(DISTINCT y, E',') AS words FROM moves)"))
   (is (equal (sql (:select 'mid (:as (:string-agg  'y "," :distinct :order-by (:desc 'y) ) 'words) :from 'moves))
-             "(SELECT mid, STRING_AGG(DISTINCT y, E',' ORDER BY y DESC) AS words FROM moves)")))
+             "(SELECT mid, STRING_AGG(DISTINCT y, E',' ORDER BY y DESC) AS words FROM moves)"))
+  (is (equal (with-test-connection
+               (query (:select (:string-agg  'name "," :order-by (:desc 'name) :filter (:< 'id 4)) :from 'employee)))
+             '(("Robert,Jason,Celia")))))
 
 (test array-agg
   "Testing array-agg. Note the first example filters out null values as well as separating the y and n users."
@@ -749,31 +845,6 @@ To sum the column len of all films and group the results by kind:"
   "Testing sample covariance."
     (is (equal (sql (:select (:covar-samp 'height 'weight) :from 'people))
              "(SELECT COVAR_SAMP(height , weight) FROM people)")))
-
-(test employee-table
-  "Build employee table"
-  (with-test-connection
-    (when (table-exists-p 'employee)
-      (query (:drop-table 'employee)))
-    (query (:create-table employee ((id :type int)
-                                    (name :type text)
-                                    (salary :type numeric)
-                                    (start_date :type date)
-                                    (city :type text)
-                                    (region :type char)
-                                    (age :type int))))
-    (query (:insert-rows-into 'employee
-                              :columns 'id 'name 'salary 'start-date 'city 'region 'age
-                              :values '((1 "Jason" 40420 "02/01/94" "New York" "W" 29)
-                                        (2 "Robert" 14420 "01/02/95" "Vancouver" "N" 21)
-                                        (3 "Celia" 24020 "12/03/96" "Toronto" "W" 24)
-                                        (4 "Linda" 40620 "11/04/97" "New York" "N" 28)
-                                        (5 "David" 80026 "10/05/98" "Vancouver" "W" 31)
-                                        (6 "James" 70060 "09/06/99" "Toronot" "N" 26)
-                                        (7 "Alison" 90620 "08/07/00" "New York" "W" 38)
-                                        (8 "Chris" 26020 "07/08/01" "Vancouver" "N" 22)
-                                        (9 "Mary" 60020 "06/08/02" "Toronto" "W" 34))))
-    (is-true (table-exists-p 'employee))))
 
 (test stddev1
   "Testing statistical functions 1"
@@ -992,21 +1063,20 @@ To sum the column len of all films and group the results by kind:"
                       'class 'name))
              "((SELECT name, CASE WHEN (class = 1) THEN E'high' WHEN (class = 2) THEN E'average' ELSE E'low' END AS revenue FROM (SELECT facs.name AS name, (ntile(3) OVER ( ORDER BY SUM(CASE WHEN (memid = 0) THEN (slots * facs.guestcost) ELSE (slots * membercost) END) DESC)) AS class FROM cd.bookings AS bks INNER JOIN cd.facilities AS facs ON (bks.facid = facs.facid) GROUP BY facs.name) AS subq) ORDER BY class, name)")))
 
-
-
-
 (test select-with-recursive
       "Testing with recursive. When working with recursive queries it is important to be sure that the recursive part of the query will eventually return no tuples, or else the query will loop indefinitely. Sometimes, using UNION instead of UNION ALL can accomplish this by discarding rows that duplicate previous output rows. However, often a cycle does not involve output rows that are completely duplicate: it may be necessary to check just one or a few fields to see if the same point has been reached before. The standard method for handling such situations is to compute an array of the already-visited values."
 
-      (is (equal (sql
-                  (:with-recursive
-                      (:as (:t1 'n)
-                           (:union-all (:values 1)
-                                       (:select (:n 1)
-                                                :from 't1
-                                                :where (:< 'n 100))))
-                    (:select (:sum 'n) :from 't1)))
-             "WITH RECURSIVE t1(n) AS (values(1) union all (SELECT n(1) FROM t1 WHERE (n < 100)))(SELECT SUM(n) FROM t1)"))
+      (is (equal (with-test-connection
+                   (query
+                    (:with-recursive
+                        (:as (:t1 'n)
+                             (:union-all (:values (:set 1))
+                                         (:select (:+ 'n 1)
+                                                  :from 't1
+                                                  :where (:< 'n 100))))
+                      (:select (:sum 'n) :from 't1))
+                    :single))
+                 5050))
 
 ;; the following query that searches a table graph using a link field:
   (is (equal (sql
@@ -1111,11 +1181,13 @@ To sum the column len of all films and group the results by kind:"
                                 'ratio-item (/ 1 13) 'created-at "2018-02-01"))
   "INSERT INTO test (id, number_string, numeric_item, ratio_item, created_at) VALUES (15, E'12', 12.45, 0.0769230769230769230769230769230769230, E'2018-02-01')"))
 
+      (is (equal (sql (:insert-rows-into 'my-table :values '((42 "foobar") (23 "foobaz"))))
+                 "INSERT INTO my_table VALUES (42, E'foobar'), (23, E'foobaz')"))
 
 ;; From https://www.pgexercises.com/questions/updates/insert2.html
       (is (equal (sql (:insert-rows-into 'cd.facilities
-            :columns 'facid 'name 'membercost 'guestcost 'initialoutlay 'monthlymaintenance
-            :values '((9 "Spa" 20 30 100000 800) (10 "Squash Court 2" 3.5 17.5 5000 80))))
+                                         :columns 'facid 'name 'membercost 'guestcost 'initialoutlay 'monthlymaintenance
+                                         :values '((9 "Spa" 20 30 100000 800) (10 "Squash Court 2" 3.5 17.5 5000 80))))
                  "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES (9, E'Spa', 20, 30, 100000, 800), (10, E'Squash Court 2', 3.5, 17.5, 5000, 80)"))
 
 ;; From https://www.pgexercises.com/questions/updates/insert3.html
