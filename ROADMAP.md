@@ -75,8 +75,8 @@ No guarantee is given with respect to resolution or timing on any item.
         See https://www.postgresql.org/docs/current/static/transaction-iso.html
 
 ## Error Messages
-- [ ]   Prepared statement error messages. Add number of parameters expected, incorrect number of parameters given
-- [ ]   write-ratio-as-floating-point [rational] See proposed Attila Lendvai commit
+- [X]   Prepared statement error messages. Add number of parameters expected, incorrect number of parameters given
+- [X]   write-ratio-as-floating-point [rational] See proposed Attila Lendvai commit
 
 ## Conditionality and composition
 Consider conditional functionality. For example, how can you compose s-sql fragments?

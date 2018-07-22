@@ -454,7 +454,7 @@ to the result."
         (#\n))
       (unless (= (length parameters) n-parameters)
         (error 'database-error
-               :message (format nil "Incorrect number of parameters given for prepared statement ~A." name)))
+               :message (format nil "Incorrect number of parameters given for prepared statement ~A. ~A parameters expected. ~A parameters received." name n-parameters (length parameters))))
       (bind-message socket name (map 'vector 'field-binary-p row-description)
                     parameters)
       (simple-execute-message socket)
