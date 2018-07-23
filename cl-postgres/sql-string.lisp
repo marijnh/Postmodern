@@ -20,7 +20,7 @@ textual format for binary data."
   "Given a ratio, a stream and a digital-length-limit, if *silently-truncate-ratios* is true,
 will return a potentially truncated ratio. If false and the digital-length-limit is reached,
 it will throw an error noting the loss of precision and offering to continue or reset
-*silently-truncate-ratios* to true."
+*silently-truncate-ratios* to true. Code contributed by Attila Lendvai."
   (declare #.*optimize* (type fixnum digit-length-limit))
   (check-type number ratio)
   (let ((silently-truncate? *silently-truncate-ratios*))
@@ -70,7 +70,7 @@ it will throw an error noting the loss of precision and offering to continue or 
 Given a ratio, a stream and a digital-length-limit, if *silently-truncate-rationals* is true,
 will return a potentially truncated ratio. If false and the digital-length-limit is reached,
 it will throw an error noting the loss of precision and offering to continue or reset
-*silently-truncate-rationals* to true."
+*silently-truncate-rationals* to true. Code contributed by Attila Lendvai."
   (declare #.*optimize* (type fixnum digit-length-limit))
   (check-type number ratio)
   (let ((silently-truncate? *silently-truncate-rationals*))
