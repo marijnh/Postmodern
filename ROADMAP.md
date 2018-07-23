@@ -41,7 +41,8 @@ No guarantee is given with respect to resolution or timing on any item.
 - [ ]   Postgresql regular expression support - see https://www.postgresql.org/docs/current/static/pgtrgm.html
 
 ## Data type support
-- [ ]   json, jsonb (postgresql 9.4, full text search support in postgresql 10)
+- [ ]   json, jsonb (postgresql 9.4, full text search support in postgresql 10) See
+        https://github.com/gtod/postgres-json/blob/master/postgres/s-sql.lisp
 - [ ]   Array support
 - [ ]   Intervals (see e.g. issue 104)
 - [ ]   Ranges
@@ -57,7 +58,7 @@ No guarantee is given with respect to resolution or timing on any item.
 - [ ]   Type validation - make it easier to use col-type to ensure that a slot value is what the database expects
 
 ## Other Support
-- [ ]   Migration Support
+- [ ]   Migration Support (compare with https://pypi.org/project/alembic/)
 - [ ]   Named Prepared Statement explicit arglist
 - [ ]   SQL Read Table Review (comments requested on any work that should be done here)
 - [ ]   Row Reader Review (comments requested on any work that should be done here)
