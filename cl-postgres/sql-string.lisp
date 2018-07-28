@@ -65,29 +65,9 @@ it will throw an error noting the loss of precision and offering to continue or 
 
 (defparameter *silently-truncate-rationals* t)
 
-(defun original-write-rational-as-floating-point (number stream digit-length-limit)
-  (declare #.*optimize*)
-  (flet ((fail ()
-               (if *silently-truncate-rationals*
-                   (return-from original-write-rational-as-floating-point)
-                 (error 'database-error :message
-                        (format nil "Can not write the rational ~a as a floating point number with only ~a digits."
-                                number digit-length-limit)))))
-    (multiple-value-bind (quotient remainder)
-        (truncate (if (< number 0) (prog1 (- number) (write-char #\- stream)) number))
-      (let* ((quotient-part (princ-to-string quotient))
-             (decimal-length-limit (- digit-length-limit (length quotient-part))))
-        (write-string quotient-part stream)
-        (when (<= decimal-length-limit 0) (fail))
-        (unless (zerop remainder) (write-char #\. stream))
-        (loop :for decimal-digits :upfrom 1 :until (zerop remainder)
-              :do (when (> decimal-digits decimal-length-limit) (fail))
-              :do (multiple-value-bind (quotient rem) (floor (* remainder 10))
-                    (princ quotient stream)
-                    (setf remainder rem)))))))
-
 (defun write-rational-as-floating-point (number stream digit-length-limit)
-  "The same as write-ratio-as-floating point. Note the difference between rational and ratio. Kept for backwards compatibility.
+  "DEPRECATED. The same as write-ratio-as-floating point. Note the difference between rational and ratio.
+Kept for backwards compatibility.
 Given a ratio, a stream and a digital-length-limit, if *silently-truncate-rationals* is true,
 will return a potentially truncated ratio. If false and the digital-length-limit is reached,
 it will throw an error noting the loss of precision and offering to continue or reset
