@@ -17,8 +17,11 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "BSD"
-  :depends-on ("cl-postgres"
+  :depends-on ("alexandria"
+               "cl-postgres"
                "s-sql"
+               "global-vars"
+               "log4cl"
                (:feature :postmodern-use-mop "closer-mop")
                (:feature :postmodern-thread-safe "bordeaux-threads"))
   :components

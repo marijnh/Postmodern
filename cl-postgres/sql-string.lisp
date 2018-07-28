@@ -60,13 +60,14 @@ it will throw an error noting the loss of precision and offering to continue or 
                    (fail)
                    (return))
                  (multiple-value-bind (quotient rem) (floor (* remainder 10))
-                   (princ quotient stream)	                     (princ quotient stream)
+                   (princ quotient stream)
                    (setf remainder rem)))))))))
 
 (defparameter *silently-truncate-rationals* t)
 
 (defun write-rational-as-floating-point (number stream digit-length-limit)
-  "The same as write-ratio-as-floating point. Note the difference between rational and ratio. Kept for backwards compatibility.
+  "DEPRECATED. The same as write-ratio-as-floating point. Note the difference between rational and ratio.
+Kept for backwards compatibility.
 Given a ratio, a stream and a digital-length-limit, if *silently-truncate-rationals* is true,
 will return a potentially truncated ratio. If false and the digital-length-limit is reached,
 it will throw an error noting the loss of precision and offering to continue or reset
@@ -110,7 +111,7 @@ it will throw an error noting the loss of precision and offering to continue or 
                    (fail)
                    (return))
                  (multiple-value-bind (quotient rem) (floor (* remainder 10))
-                   (princ quotient stream)	                     (princ quotient stream)
+                   (princ quotient stream)
                    (setf remainder rem)))))))))
 
 (defun write-quoted (string out)
