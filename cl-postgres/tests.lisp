@@ -701,7 +701,7 @@
     (signals error (cl-postgres::write-rational-as-floating-point (/ 1321 7) *standard-output* 5))
     (setf cl-postgres:*silently-truncate-rationals* t)
     (is (equal  (with-output-to-string (s) (cl-postgres::write-rational-as-floating-point (/ 1321 7) s 5))
-                "188.7711"))
+                "188.71"))
     (setf cl-postgres:*silently-truncate-rationals* old-silently-truncate)))
 
 (test write-ratio-as-floating-point
@@ -710,5 +710,5 @@
     (signals error (cl-postgres::write-ratio-as-floating-point (/ 1321 7) *standard-output* 5))
     (setf cl-postgres:*silently-truncate-ratios* t)
     (is (equal  (with-output-to-string (s) (cl-postgres::write-ratio-as-floating-point (/ 1321 7) s 5))
-                "188.7711"))
+                "188.71"))
     (setf cl-postgres:*silently-truncate-ratios* old-silently-truncate)))
