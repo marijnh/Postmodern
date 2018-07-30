@@ -24,6 +24,7 @@
 
 (test employee-table
   "Build employee table"
+  (setf cl-postgres:*sql-readtable* (cl-postgres:copy-sql-readtable cl-postgres::*default-sql-readtable*))
   (with-test-connection
     (when (table-exists-p 'employee)
       (query (:drop-table 'employee)))
@@ -46,6 +47,26 @@
                                         (8 "Chris" 26020 "07/08/01" "Vancouver" "N" 22)
                                         (9 "Mary" 60020 "06/08/02" "Toronto" "W" 34))))
     (is-true (table-exists-p 'employee))))
+
+(test interval-table
+  "Build interval table"
+  (with-test-connection
+    (when (table-exists-p 'interval)
+      (query (:drop-table 'interval)))
+    (query (:create-table interval ((f1 :type interval))))
+    (query (:insert-rows-into 'interval
+                              :columns 'f1
+                              :values '(("@ 1 minute")
+                                        ("@ 5 hour")
+                                        ("@ 10 day")
+                                        ("@ 34 year")
+                                        ("@ 3 months")
+                                        ("@ 14 seconds ago")
+                                        ("1 day 2 hours 3 minutes 4 seconds")
+                                        ("6 years")
+                                        ("5 months")
+                                        ("5 months 12 hours"))))
+    (is-true (table-exists-p 'interval))))
 
 (test sql-error)
 
