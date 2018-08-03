@@ -24,7 +24,9 @@
 
 (test employee-table
   "Build employee table"
-  (setf cl-postgres:*sql-readtable* (cl-postgres:copy-sql-readtable cl-postgres::*default-sql-readtable*))
+  (setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+         cl-postgres::*default-sql-readtable*))
   (with-test-connection
     (when (table-exists-p 'employee)
       (query (:drop-table 'employee)))
@@ -47,26 +49,6 @@
                                         (8 "Chris" 26020 "07/08/01" "Vancouver" "N" 22)
                                         (9 "Mary" 60020 "06/08/02" "Toronto" "W" 34))))
     (is-true (table-exists-p 'employee))))
-
-(test interval-table
-  "Build interval table"
-  (with-test-connection
-    (when (table-exists-p 'interval)
-      (query (:drop-table 'interval)))
-    (query (:create-table interval ((f1 :type interval))))
-    (query (:insert-rows-into 'interval
-                              :columns 'f1
-                              :values '(("@ 1 minute")
-                                        ("@ 5 hour")
-                                        ("@ 10 day")
-                                        ("@ 34 year")
-                                        ("@ 3 months")
-                                        ("@ 14 seconds ago")
-                                        ("1 day 2 hours 3 minutes 4 seconds")
-                                        ("6 years")
-                                        ("5 months")
-                                        ("5 months 12 hours"))))
-    (is-true (table-exists-p 'interval))))
 
 (test sql-error)
 
@@ -107,26 +89,26 @@ naming symbols, a ? can be used to indicate this argument group is
 optional, an * to indicate it can consist of more than one element,
 and a - to indicate it does not take any elements."
   (is (equal (s-sql::split-on-keywords ((a1 * ?) (b2 ?) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2 " :c3 "Ceta3 ")
-         `("Results " ,@ (when a1 a1) ,@ (when c3 c3) ,@(when b2 b2)))
+         `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2)))
              '("Results " "Alpha1 " "Ceta3 " "Beta2 ")))
   (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 ?) (c3 ? *)) '(:a1 "Alpha1 "  :c3 "Ceta3 ")
-                       `("Results " ,@ (when a1 a1) ,@ (when c3 c3) ,@(when b2 b2)))
+                       `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2)))
            '("Results " "Alpha1 " "Ceta3 "))
   (is (equal (s-sql::split-on-keywords ((a1 * ?) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 ")
-         `("Results " ,@ (when a1 a1) ,@ (when c3 c3)))
+         `("Results " ,@(when a1 a1) ,@(when c3 c3)))
              '("Results " "Alpha1 " :B2 "Beta2" "Ceta3 ")))
   ;; Keyword does not take any arguments
   (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 -) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 ")
-                       `("Results " ,@ (when a1 a1) ,@ (when c3 c3) ,@(when b2 b2))))
+                       `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2))))
   ;; Required keyword missing
   (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 ) (c3 ? *)) '(:a1 "Alpha1 "  :c3 "Ceta3 ")
-                       `("Results " ,@ (when a1 a1) ,@ (when c3 c3) ,@(when b2 b2))))
+                       `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2))))
   (is  (equal (s-sql::split-on-keywords ((a1 * ?) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2"  :c3 "Ceta3 ")
-                `("Results " ,@ (when a1 a1) ,@ (when c3 c3)))
+                `("Results " ,@(when a1 a1) ,@ (when c3 c3)))
               '("Results " "Alpha1 " :B2 "Beta2" "Ceta3 ")))
   ;;too many elements for a keyword
   (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (c3 ? )) '(:a1 "Alpha1 " :c3 "Ceta3 " "Ceta3.5")
-         `("Results " ,@ (when a1 a1) ,@ (when c3 c3)))))
+         `("Results " ,@(when a1 a1) ,@(when c3 c3)))))
 
 (test to-sql-name
   "Testing to-sql-name. Convert a symbol or string into a name that can be an sql table,
@@ -893,10 +875,10 @@ To sum the column len of all films and group the results by kind:"
   "Testing standard deviation functions"
   (with-test-connection
 
-    (is (equal (format nil "~,4f" (query (:select (:regr-avgx 'salary 'age) :from 'employee) :single))
-               "28.1111"))
-    (is (equal (format nil "~,4f" (query (:select (:regr-avgx 'age 'salary) :from 'employee) :single))
-               "49580.6667"))
+    (is (equal (query (:select (:regr-avgx 'salary 'age) :from 'employee) :single)
+               28.11111111111111d0))
+    (is (equal (query (:select (:regr-avgx 'age 'salary) :from 'employee) :single)
+               49580.666666666664d0))
     (is (equal (query (:select (:regr-avgy 'salary 'age) :from 'employee) :single)
                49580.666666666664d0))
     (is (equal (query (:select (:regr-avgy 'age 'salary) :from 'employee) :single)
@@ -1303,7 +1285,6 @@ To sum the column len of all films and group the results by kind:"
                                :where (:= 'name "Carol")))
                  "UPDATE sal_emp SET schedule = ARRAY[ARRAY[E'breakfast', E'consulting'], ARRAY[E'meeting', E'lunch']] WHERE (name = E'Carol')")))
 
-
 #|
 
 
@@ -1504,6 +1485,96 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
 
         ;; cleanup
         (pomo:query (:drop-sequence :knobo-seq))))
+
+;;; Intervals
+(test interval-table
+  "Build interval table"
+  (with-test-connection
+    (when (table-exists-p 'interval)
+      (query (:drop-table 'interval)))
+    (query (:create-table interval ((f1 :type interval))))
+    (query (:insert-rows-into 'interval
+                              :columns 'f1
+                              :values '(("@ 1 minute")
+                                        ("@ 5 hour")
+                                        ("@ 10 day")
+                                        ("@ 34 year")
+                                        ("@ 3 months")
+                                        ("@ 14 seconds ago")
+                                        ("1 day 2 hours 3 minutes 4 seconds")
+                                        ("6 years")
+                                        ("5 months")
+                                        ("5 months 12 hours"))))
+    (is-true (table-exists-p 'interval))))
+
+(test intervals
+  "Testing intervals"
+  (with-test-connection
+  (setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+         cl-postgres::*default-sql-readtable*))
+  (is (equal
+       (query (:select (:+ (:interval ("2h 50min")) (:interval ("10min")))))
+      '((((:MONTHS 0) (:DAYS 0) (:SECONDS 10800) (:USECONDS 0))))))
+  (is (equal
+       (query (:select (:+ (:interval ("2h 50min")) (:interval ("10min")))) :single)
+       '((:MONTHS 0) (:DAYS 0) (:SECONDS 10800) (:USECONDS 0))))
+  (is (equal
+       (query (:select
+               (:to-char
+                (:interval ("17h 20min 05s" "HH24:MI:SS"))))
+              :single)
+       "17:20:05"))
+  (is (equal
+       (query (:select
+               (:to-char (:interval ("17h 20m 05s"))
+                         "hh24:mi:ss"))
+              :single)
+       "17:20:05"))
+
+  (is (equal
+       (query (:select (:interval ("6 years 5 months 4 days 3 hours 2 minutes 1 second"))))
+       '((((:MONTHS 77) (:DAYS 4) (:SECONDS 10921) (:USECONDS 0))))))
+  (is (equal
+       (query (:select (:extract "minute" (:interval ("5 hours 21 minutes")))) :single)
+       21.0d0))
+  (is (equal
+       (query (:select (:justify-days (:interval ("30 days")))) :single)
+       '((:MONTHS 1) (:DAYS 0) (:SECONDS 0) (:USECONDS 0))))
+  (is (equal
+       (query (:select (:justify-hours (:interval ("24 hours")))) :single)
+       '((:MONTHS 0) (:DAYS 1) (:SECONDS 0) (:USECONDS 0))))
+  (is (equal
+       (query (:select (:justify-interval (:interval ("1 year - 1 hour")))) :single)
+       '((:MONTHS 11) (:DAYS 29) (:SECONDS 82800) (:USECONDS 0))))
+  (is (equal
+       (query (:select (:interval ("17h 20m 05s" "hh24:mi:ss"))))
+       '((((:MONTHS 0) (:DAYS 0) (:SECONDS 62405) (:USECONDS 0)) "hh24:mi:ss"))))
+  (is (equal
+       (query (:select (:to-char (:interval ("17h 20m 05s" "hh24:mi:ss"))))
+              :single)
+       "17:20:05"))
+  (is (integerp
+       (query (:select (:current-date))
+              :single)))
+  (is (equal
+       (query (:select (:age (:timestamp "2001-04-10")
+                             (:timestamp "1957-06-13"))))
+       '((((:MONTHS 525) (:DAYS 27) (:SECONDS 0) (:USECONDS 0))))))
+  (is (equal
+       (query
+        (:select (:to-char (:age (:timestamp "2001-04-10")
+                                 (:timestamp "1957-06-13"))
+                           "YYYY-MM-DD hh24:mi:ss"))
+        :single)
+       "0043-09-27 00:00:00"))
+  (is (equal
+       (query (:select (:to-char (:+ (:date "2001-09-28")
+                                     (:integer "7"))
+                                 "YYYY-MM-DD hh24:mi:ss")))
+       '(("2001-10-05 00:00:00"))))))
+
+
 
 #|
 
