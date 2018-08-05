@@ -505,7 +505,21 @@ string."
   `("ALL " ,@(sql-expand query)))
 
 (def-sql-op :array (query)
+  "This is used when calling a select query into an array. See sample usage."
   `("ARRAY(" ,@(sql-expand query) ")"))
+
+(def-sql-op :array[] (&rest args)
+  "This handles statements that include functions in the query such as (:+ 1 2), (:pi) in the array whereas just
+passing an array as #(1.0 2.4) does not and you are not selecting into an array, so do not use :array."
+  `("ARRAY[" ,@(sql-expand-list args) "]"))
+
+(def-sql-op :[] (form start &optional end)
+  "This slices arrays. Sample usage would be:
+   (query (:select (:[] 'provinces 1) :from 'array-provinces :where (:= 'name \"Germany\"))
+"
+  (if end
+      `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) ":" ,@(sql-expand end) "]")
+      `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) "]")))
 
 (def-sql-op :interval (query)
   "Interval expects an unquoted list because the value parameter may also have a formating parameter"
@@ -736,11 +750,6 @@ Example:
               :append `(" WHEN " ,@(sql-expand test) " THEN " ,@(sql-expand expr))
             :end)
     " END"))
-
-(def-sql-op :[] (form start &optional end)
-  (if end
-      `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) ":" ,@(sql-expand end) "]")
-      `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) "]")))
 
 ;; This one has two interfaces. When the elements are known at
 ;; compile-time, they can be given as multiple arguments to the
