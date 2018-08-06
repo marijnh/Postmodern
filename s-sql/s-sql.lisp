@@ -1353,9 +1353,12 @@ test. "
 
 (defmacro def-drop-op (op-name word)
   `(def-sql-op ,op-name (&rest args)
-     (let ((if-exists (if (eq (car args) :if-exists) (pop args) nil)))
-       (destructuring-bind (name) args
-         `("DROP " ,,word " " ,@(when if-exists '("IF EXISTS ")) ,@(sql-expand name))))))
+     (let ((if-exists (if (eq (car args) :if-exists) (pop args) nil))
+           (name (pop args))
+           (cascade (if (eq (car args) :cascade) t nil) ))
+       (format t "Cascade ~a Args ~a~%" cascade args)
+       `("DROP " ,,word " " ,@(when if-exists '("IF EXISTS ")) ,@(sql-expand name)
+         ,@(when cascade '(" CASCADE "))))))
 
 (def-drop-op :drop-table "TABLE")
 (def-drop-op :drop-index "INDEX")
