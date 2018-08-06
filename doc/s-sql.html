@@ -364,12 +364,12 @@
       and returns the result explicitly cast by postgresql to a specific type.</p>
 
     <pre class="code desc">
-(pomo:query (:select (:cast (:as "20" 'integer)))
-            :single)
+      (query (:select (:cast (:as "20" 'integer)))
+             :single)
 20
 
-(pomo:query (:union (:select (:as 1 'real))
-                    (:select (:cast (:as "2.2" 'real)))))
+      (query (:union (:select (:as 1 'real))
+                     (:select (:cast (:as "2.2" 'real)))))
 ((1.0) (2.2))
     </pre>
 
@@ -402,10 +402,46 @@
     be given as multiple arguments to the operator. When they are not,
     a single argument that evaluates to a list should be used.</p>
 
+    <p class="def"><span>sql-op</span> <a name="array"></a>:array (query)</p>
+
+    <p class="desc">This is used when calling a select query into an array.</p>
+
+    <pre class="code desc">
+      (query (:order-by
+        (:select 'r.rolename
+                 (:as (:array
+                       (:select 'b.rolename
+                                :from (:as 'pg_catalog.pg-auth-members 'm)
+                                :inner-join (:as 'pg-catalog.pg-roles 'b)
+                                :on (:= 'm.roleid 'b.oid)
+                                :where (:= 'm.member 'r.oid )))
+                      'memberof)
+
+                 :from (:as 'pg-catalog.pg-roles 'r))
+        1))
+    </pre>
+
+    <p class="def"><span>sql-op</span> <a name="array"></a>:array[] (&rest args)</p>
+
+<p class="desc">This is the general operator for arrays. It also handles statements that
+  include functions in the query such as (:+ 1 2), (:pi) in the array. Read the tests.lisp
+  in the s-sql directory for several examples.</p>
+
+<pre class="code desc">
+  (query (:select (:array-prepend 1 (:array[] 2 3))))
+
+  ((#(1 2 3)))
+    </pre>
+
     <p class="def"><span>sql-op</span> <a name="deref"></a>:[] (form start &amp;optional end)</p>
 
     <p class="desc">Dereference an array value. If <code>end</code> is
-    provided, extract a slice of the array.</p>
+      provided, extract a slice of the array. Sample usage below, but also see tests.lisp
+    in the s-sql directory for several examples.</p>
+    <pre class="code desc">
+      (query (:select 'receipe-id (:[] 'tags 2 3)
+                               :from 'receipe-tags-array
+      :where (:= 'receipe-id 3))) </pre>
 
     <p class="def"><span>sql-op</span> <a name="extract"></a>:extract (unit form)</p>
 
@@ -1203,7 +1239,11 @@ Example:</p>
 
     <p class="desc">Drops the named table. You may optionally pass
     <code>:if-exists</code> before the name to suppress the error
-    message.</p>
+    message. You can also optionally pass <code>:cascade</code> after the name
+    to indicate that it should also drop any other tables, indices, etc which
+    depend on that table.</p>
+    <pre class="code desc">
+    (query (:drop-table :if-exists 'table1 :cascade))</pre>
 
     <p class="def"><span>sql-op</span> <a
     name="create-index"></a>:create-index (name &amp;rest args)</p>
