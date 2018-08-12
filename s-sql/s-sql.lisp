@@ -864,7 +864,7 @@ See tests.lisp for examples."
       ")")))
 
 (def-sql-op :array-agg (&rest args)
-  "Array-agg returns a list of values concatenated into an arrays.
+  "Array-agg returns a list of values concatenated into an array.
 Allowable optional keyword parameters are :distinct, :order-by and :filter.
 
 Example:
