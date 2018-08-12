@@ -1,413 +1,927 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-08-11 Sat 14:03 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>S-SQL Reference Manual</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
 
-  <head>
-    <title>S-SQL reference manual</title>
-    <link rel="stylesheet" type="text/css" href="style.css"/>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  </head>
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
 
-  <body>
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
-    <h1>S-SQL reference manual</h1>
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
 
-    <p>This is the reference manual for the S-SQL component of the <a
-    href="index.html">postmodern</a> library.</p>
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
 
-    <p>S-SQL provides a lispy syntax for SQL queries, and knows how to
-    convert various lisp types to their textual SQL representation. It
-    takes care to do as much of the work as possible at compile-time,
-    so that at runtime a string concatenation is all that is needed to
-    produce the final SQL query.</p>
 
-    <h2>Contents</h2>
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
 
-    <ol>
-      <li><a href="#interface">Interface</a></li>
-      <li><a href="#types">SQL Types</a></li>
-      <li><a href="#syntax">SQL Syntax</a></li>
-      <li><a href="#index">Symbol-index</a></li>
-    </ol>
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">S-SQL Reference Manual</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org11341a2">Interface</a>
+<ul>
+<li><a href="#orgd0d78dd">macro sql (form)</a></li>
+<li><a href="#orgadf171c">function sql-compile (form)</a></li>
+<li><a href="#org3c0cc21">function sql-template (form)</a></li>
+<li><a href="#org5f51c8a">function enable-s-sql-syntax (&amp;optional (char #\Q))</a></li>
+<li><a href="#orgd0c94d4">function sql-escape-string (string)</a></li>
+<li><a href="#orge745104">method sql-escape (value)</a></li>
+<li><a href="#org787d499">variable <b>standard-sql-strings</b></a></li>
+<li><a href="#org2695800">variable <b>escape-sql-names-p</b></a></li>
+<li><a href="#org0a1fe93">function sql-type-name (type)</a></li>
+<li><a href="#orgdaf4f58">function to-sql-name (name &amp;optional (escape-p <b>escape-sql-names-p</b>))</a></li>
+<li><a href="#org8ee124b">function from-sql-name (string)</a></li>
+<li><a href="#orgb51eda9">macro register-sql-operators (arity &amp;rest names)</a></li>
+</ul>
+</li>
+<li><a href="#org4ccc6f8">SQL Types</a></li>
+<li><a href="#org94fc35e">SQL Syntax</a>
+<ul>
+<li><a href="#orgb0af82c">sql-op :select (&amp;rest args)</a></li>
+<li><a href="#orgcd58d05">sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</a></li>
+<li><a href="#org6f3cadd">sql-op :~, :not (arg)</a></li>
+<li><a href="#org8db4ddf">sql-op :function (name (&amp;rest arg-types) return-type stability body)</a></li>
+<li><a href="#orgb732e70">sql-op :~, :~*, :!~, :!~* (string pattern)</a></li>
+<li><a href="#org8a01a30">sql-op :like, :ilike (string pattern)</a></li>
+<li><a href="#org6190527">sql-op :@@</a></li>
+<li><a href="#org23305ae">sql-op :desc (column)</a></li>
+<li><a href="#org94cc683">sql-op :nulls-first, :nulls-last (column)</a></li>
+<li><a href="#orgf2e581d">sql-op :as (form name &amp;rest fields)</a></li>
+<li><a href="#orgd94908d">sql-op :cast (query)</a></li>
+<li><a href="#org2b28db2">sql-op :exists (query)</a></li>
+<li><a href="#org377e898">sql-op :is-null (arg)</a></li>
+<li><a href="#org319ef8e">sql-op :not-null (arg)</a></li>
+<li><a href="#orgce7f718">sql-op :in (value set)</a></li>
+<li><a href="#orgaa5fe47">sql-op :not-in (value set)</a></li>
+<li><a href="#org1857f8c">sql-op :set (&amp;rest elements)</a></li>
+<li><a href="#org5e3851d">sql-op :array (query)</a></li>
+<li><a href="#orgbd67edb">sql-op :array[] (&amp;rest args)</a></li>
+<li><a href="#org3a3c135">sql-op :[] (form start &amp;optional end)</a></li>
+<li><a href="#org0472c16">sql-op :extract (unit form)</a></li>
+<li><a href="#org9e3075a">sql-op :case (&amp;rest clauses)</a></li>
+<li><a href="#org70e241b">sql-op :between (n start end)</a></li>
+<li><a href="#org61b5371">sql-op :between-symmetric (n start end)</a></li>
+<li><a href="#org3f43835">sql-op :dot (&amp;rest names)</a></li>
+<li><a href="#org6c38c8f">sql-op :type (form type)</a></li>
+<li><a href="#org762ca60">sql-op :raw (string)</a></li>
+<li><a href="#org24507c5">sql-op :limit (query amount &amp;optional offset)</a></li>
+<li><a href="#org037c15e">sql-op :order-by (query &amp;rest exprs)</a></li>
+<li><a href="#org24f4568">sql-op :values</a></li>
+<li><a href="#org768fa96">sql-op :empty-set</a></li>
+<li><a href="#org228f52e">sql-op :group-by</a></li>
+<li><a href="#orgf2516e0">sql-op :grouping-sets</a></li>
+</ul>
+</li>
+<li><a href="#orgd64642d">Aggregation Operators</a>
+<ul>
+<li><a href="#org20fee59">sql-op :count (&amp;rest args)</a></li>
+<li><a href="#org5300e08">sql-op :avg (&amp;rest rest args)</a></li>
+<li><a href="#org30ac7bd">sql-op :sum (&amp;rest rest args)</a></li>
+<li><a href="#orgde74e40">sql-op ::max (&amp;rest args)</a></li>
+<li><a href="#org8a33b09">sql-op ::min (&amp;rest args)</a></li>
+<li><a href="#orgbf0cf30">sql-op ::every (&amp;rest args)</a></li>
+<li><a href="#orga82cd76">sql-op :percentile-cont (&amp;rest args)</a></li>
+<li><a href="#org0a4fc89">sql-op :percentile-dist (&amp;rest args)</a></li>
+<li><a href="#orgd0c069e">sql-op :corr (y x)</a></li>
+<li><a href="#org494a0c4">sql-op :covar-pop (y x)</a></li>
+<li><a href="#orged68157">sql-op :covar-samp (y x)</a></li>
+<li><a href="#org49556fd">sql-op :string-agg (&amp;rest args)</a></li>
+<li><a href="#org84cda73">sql-op :array-agg (&amp;rest args)</a></li>
+<li><a href="#org3c4ac4b">sql-op :mode (&amp;rest args)</a></li>
+<li><a href="#orgfe2c903">sql-op :regr<sub>avgx</sub> (y x)</a></li>
+<li><a href="#org8bf6933">sql-op :regr<sub>avgy</sub> (y x)</a></li>
+<li><a href="#org67ff270">sql-op :regr<sub>count</sub> (y x)</a></li>
+<li><a href="#org9c6edfb">sql-op :regr<sub>intercept</sub> (y x)</a></li>
+<li><a href="#org678f930">sql-op :regr<sub>r2</sub> (y x)</a></li>
+<li><a href="#orgd497a52">sql-op :regr<sub>slope</sub> (y x)</a></li>
+<li><a href="#org0951561">sql-op :regr<sub>sxx</sub> (y x)</a></li>
+<li><a href="#org915ba54">sql-op :regr<sub>sxy</sub> (y x)</a></li>
+<li><a href="#org6b6d85e">sql-op :regr<sub>syy</sub> (y x)</a></li>
+<li><a href="#org0f96241">sql-op :stddev (&amp;rest args)</a></li>
+<li><a href="#orgf28f461">sql-op :stddev-pop (&amp;rest args)</a></li>
+<li><a href="#orgd8ed2f5">sql-op :stddev-samp (&amp;rest args)</a></li>
+<li><a href="#orgf0ce28f">sql-op :variance (&amp;rest args)</a></li>
+<li><a href="#orgdd4727b">sql-op :var-pop (&amp;rest args)</a></li>
+<li><a href="#orgbfd7feb">sql-op :var-samp (&amp;rest args)</a></li>
+<li><a href="#orgc9da207">sql-op :over (form &amp;rest args)</a></li>
+<li><a href="#org6d05006">sql-op :partition-by (&amp;rest args)</a></li>
+<li><a href="#org88bf138">sql-op :window (form)</a></li>
+<li><a href="#org0d0b25a">sql-op :with (&amp;rest args)</a></li>
+<li><a href="#orgf106808">sql-op :with-recursive (&amp;rest args)</a></li>
+</ul>
+</li>
+<li><a href="#org3e64afc">Table Functions</a>
+<ul>
+<li><a href="#org465dcd0">sql-op :for-update (query &amp;key of nowait)</a></li>
+<li><a href="#orga3280fc">sql-op :for-share (query &amp;key of nowait)</a></li>
+<li><a href="#org4441d8c">sql-op :insert-into (table &amp;rest rest)</a></li>
+<li><a href="#org6f794e7">sql-op :insert-rows-into (table &amp;rest rest)</a></li>
+<li><a href="#org988f6df">sql-op :update (table &amp;rest rest)</a></li>
+<li><a href="#org86ae7d2">sql-op :delete-from (table &amp;rest rest)</a></li>
+<li><a href="#org7d7ccd1">sql-op :create-table (name (&amp;rest columns) &amp;rest options)</a>
+<ul>
+<li><a href="#orgd7ff7b0">Column Definition parameters</a></li>
+<li><a href="#orged43739">Table Constraints</a></li>
+</ul>
+</li>
+<li><a href="#org4959f6d">sql-op :alter-table (name action &amp;rest args)</a></li>
+<li><a href="#org51126fd">sql-op :drop-table (name)</a></li>
+<li><a href="#orge2c7611">sql-op :create-index (name &amp;rest args)</a></li>
+<li><a href="#orgf61073f">sql-op :create-unique-index (name &amp;rest args)</a></li>
+<li><a href="#orgaecdc60">sql-op :drop-index (name)</a></li>
+<li><a href="#org35dd893">sql-op :create-sequence (name &amp;key increment min-value max-value start cache cycle)</a></li>
+<li><a href="#org39afcc6">sql-op :alter-sequence (name)</a></li>
+<li><a href="#org0003338">sql-op :drop-sequence (name)</a></li>
+<li><a href="#org0bc8863">sql-op :create-view (name query)</a></li>
+<li><a href="#orgc82c6d8">sql-op :drop-view (name)</a></li>
+<li><a href="#org8c108f0">sql-op :set-constraints (state &amp;rest constraints)</a></li>
+<li><a href="#orge9cbb00">sql-op :listen (channel)</a></li>
+<li><a href="#org105f96b">sql-op :unlisten (channel)</a></li>
+<li><a href="#org203260f">sql-op :notify (channel &amp;optional payload)</a></li>
+<li><a href="#orgd541089">sql-op :create-role (role &amp;rest args)</a></li>
+<li><a href="#org0076eb7">sql-op :create-database (name)</a></li>
+<li><a href="#org322e61c">sql-op :drop-database (name)</a></li>
+<li><a href="#org5070746">sql-op :copy (table &amp;rest args)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<p>
+This is the reference manual for the S-SQL component of the postmodern library.
+</p>
 
-    <h2><a name="interface"></a>Interface</h2>
+<p>
+S-SQL provides a lispy syntax for SQL queries, and knows how to convert various
+lisp types to their textual SQL representation. It takes care to do as much of
+the work as possible at compile-time, so that at runtime a string concatenation
+is all that is needed to produce the final SQL query.
+</p>
 
-    <p class="def">
-      <span>macro</span>
-      <a name="sql"></a>
-      sql (form)
-      <br/>&#8594; string
-    </p>
+<div id="outline-container-org11341a2" class="outline-2">
+<h2 id="org11341a2">Interface</h2>
+<div class="outline-text-2" id="text-org11341a2">
+</div>
+<div id="outline-container-orgd0d78dd" class="outline-3">
+<h3 id="orgd0d78dd">macro sql (form)</h3>
+<div class="outline-text-3" id="text-orgd0d78dd">
+<p>
+→ string
+</p>
 
-    <p class="desc">Convert the given form (a list starting with a
-    keyword) to an SQL query string at compile time, according to the
-    rules described <a href="#syntax">here</a>.</p>
+<p>
+Convert the given form (a list starting with a keyword) to an SQL query string
+at compile time, according to the rules described here.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>function</span>
-      <a name="sql-compile"></a>
-      sql-compile (form)
-      <br/>&#8594; string
-    </p>
+<div id="outline-container-orgadf171c" class="outline-3">
+<h3 id="orgadf171c">function sql-compile (form)</h3>
+<div class="outline-text-3" id="text-orgadf171c">
+<p>
+→ string
+</p>
 
-    <p class="desc">This is the run-time variant of the <a
-    href="#sql"><code>sql</code></a> macro. It converts the given list
-    to an SQL query, with the same rules except that symbols in this
-    list do not have to be quoted to be interpreted as
-    identifiers.</p>
+<p>
+This is the run-time variant of the sql macro. It converts the given list to
+an SQL query, with the same rules except that symbols in this list do not
+have to be quoted to be interpreted as identifiers.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>function</span>
-      <a name="sql-template"></a>
-      sql-template (form)
-    </p>
+<div id="outline-container-org3c0cc21" class="outline-3">
+<h3 id="org3c0cc21">function sql-template (form)</h3>
+<div class="outline-text-3" id="text-org3c0cc21">
+<p>
+In cases where you do need to build the query at run time, yet you do not
+want to re-compile it all the time, this function can be used to compile it
+once and store the result. It takes an S-SQL form, which may contain
+\[ placeholder symbols, and returns a function that takes one argument for
+every \]. When called, this returned function produces an SQL string in
+which the placeholders have been replaced by the values of the arguments.
+</p>
+</div>
+</div>
 
-    <p class="desc">In cases where you do need to build the query at
-    run time, yet you do not want to re-compile it all the time, this
-    function can be used to compile it once and store the result. It
-    takes an S-SQL form, which may contain <code>$$</code> placeholder
-    symbols, and returns a function that takes one argument for every
-    <code>$$</code>. When called, this returned function produces an
-    SQL string in which the placeholders have been replaced by the
-    values of the arguments.</p>
+<div id="outline-container-org5f51c8a" class="outline-3">
+<h3 id="org5f51c8a">function enable-s-sql-syntax (&amp;optional (char #\Q))</h3>
+<div class="outline-text-3" id="text-org5f51c8a">
+<p>
+Modifies the current readtable to add a #Q syntax that is read as (sql &#x2026;).
+The character to use can be overridden by passing an argument.
+</p>
+</div>
+</div>
+<div id="outline-container-orgd0c94d4" class="outline-3">
+<h3 id="orgd0c94d4">function sql-escape-string (string)</h3>
+<div class="outline-text-3" id="text-orgd0c94d4">
+<p>
+→ string
+</p>
 
-    <p class="def">
-      <span>function</span>
-      <a name="enable-s-sql-syntax"></a>
-      enable-s-sql-syntax (&amp;optional (char #\Q))
-    </p>
+<p>
+<a href="http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS">Escapes</a> a string for inclusion in a PostgreSQL query.
+</p>
+</div>
+</div>
 
-    <p class="desc">Modifies the current readtable to add a #Q syntax
-    that is read as <code>(sql ...)</code>. The character to use can
-    be overridden by passing an argument.</p>
+<div id="outline-container-orge745104" class="outline-3">
+<h3 id="orge745104">method sql-escape (value)</h3>
+<div class="outline-text-3" id="text-orge745104">
+<p>
+→ string
+</p>
 
-    <p class="def">
-      <span>function</span>
-      <a name="sql-escape-string"></a>
-      sql-escape-string (string)
-      <br/>&#8594; string
-    </p>
+<p>
+A generalisation of sql-escape-string Looks at the type of the value passed,
+and properly writes it out it for inclusion in an SQL query. Symbols will be
+converted to SQL names.
+</p>
+</div>
+</div>
 
-    <p class="desc"><a
-    href="http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS">Escapes</a>
-    a string for inclusion in a PostgreSQL query.</p>
+<div id="outline-container-org787d499" class="outline-3">
+<h3 id="org787d499">variable <b>standard-sql-strings</b></h3>
+<div class="outline-text-3" id="text-org787d499">
+<p>
+Used to configure whether S-SQL will use standard SQL strings (just replace #\'
+with ''), or backslash-style escaping. Setting this to NIL is always safe, but
+when the server is configured to allow standard strings (compile-time
+parameter 'standard<sub>conforming</sub><sub>strings</sub>' is 'on', which will become the default
+in future versions of PostgreSQL), the noise in queries can be reduced by setting
+this to T.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>method</span>
-      <a name="sql-escape"></a>
-      sql-escape (value)
-      <br/>&#8594; string
-    </p>
+<div id="outline-container-org2695800" class="outline-3">
+<h3 id="org2695800">variable <b>escape-sql-names-p</b></h3>
+<div class="outline-text-3" id="text-org2695800">
+<p>
+Determines whether double quotes are added around column, table, and ** function names in
+queries. May be T, in which case every name is escaped, NIL, in which case none is, or :auto,
+which causes only <a href="http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html">reserved words</a> to be escaped. The default value is :auto. Be careful when
+binding this with let and such ― since a lot of SQL compilation tends to happen at
+compile-time, the result might not be what you expect.
+</p>
+</div>
+</div>
 
-    <p class="desc">A generalisation of <a
-    href="#sql-escape-string"><code>sql-escape-string</code></a>.
-    Looks at the type of the value passed, and properly writes it out
-    it for inclusion in an SQL query. Symbols will be converted to SQL
-    names.</p>
+<div id="outline-container-org0a1fe93" class="outline-3">
+<h3 id="org0a1fe93">function sql-type-name (type)</h3>
+<div class="outline-text-3" id="text-org0a1fe93">
+<p>
+→ string
+</p>
 
-    <p class="def">
-      <span>variable</span>
-      <a name="*standard-sql-strings*"></a>
-      *standard-sql-strings*
-    </p>
+<p>
+Create the SQL equivalent of the given Lisp type, if one is known. See types.
+</p>
+</div>
+</div>
 
-    <p class="desc">Used to configure whether S-SQL will use standard
-    SQL strings (just replace #\' with ''), or backslash-style
-    escaping. Setting this to <code>NIL</code> is always safe, but
-    when the server is configured to allow standard strings
-    (compile-time parameter '<code>standard_conforming_strings</code>'
-    is '<code>on</code>', which will become the default in future
-    versions of PostgreSQL), the noise in queries can be reduced by
-    setting this to <code>T</code>.</p>
+<div id="outline-container-orgdaf4f58" class="outline-3">
+<h3 id="orgdaf4f58">function to-sql-name (name &amp;optional (escape-p <b>escape-sql-names-p</b>))</h3>
+<div class="outline-text-3" id="text-orgdaf4f58">
+<p>
+→ string
+</p>
 
-    <p class="def">
-      <span>variable</span>
-      <a name="*escape-sql-names-p*"></a>
-      *escape-sql-names-p*
-    </p>
+<p>
+Convert a symbol or string to a name that can be used as an SQL identifier by
+converting all non-alphanumeric characters to underscores. Also lowercases the name
+to make queries look a bit less hideous. When a second argument is given, this
+overrides the current value of <b>escape-sql-names-p</b>. If the second argument
+is :literal then the name will be escaped only and this will be a a delimited
+identifier or quoted identifier. See
+</p>
+</div>
+</div>
 
-    <p class="desc">Determines whether double quotes are added around
-    column, table, and function names in queries. May be
-    <code>T</code>, in which case every name is escaped,
-    <code>NIL</code>, in which case none is, or <code>:auto</code>,
-    which causes only <a
-    href="http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html">reserved
-    words</a> to be escaped.. The default value is <code>:auto</code>.
-    Be careful when binding this with <code>let</code> and such
-    &#x2015; since a lot of SQL compilation tends to happen at
-    compile-time, the result might not be what you expect.</p>
+<div id="outline-container-org8ee124b" class="outline-3">
+<h3 id="org8ee124b">function from-sql-name (string)</h3>
+<div class="outline-text-3" id="text-org8ee124b">
+<p>
+→ keyword
+</p>
 
-    <p class="def">
-      <span>function</span>
-      <a name="sql-type-name"></a>
-      sql-type-name (type)
-      <br/>&#8594; string
-    </p>
+<p>
+Convert a string that represents an SQL identifier to a keyword by uppercasing
+it and converting the underscores to dashes.
+</p>
+</div>
+</div>
 
-    <p class="desc">Create the SQL equivalent of the given Lisp type,
-    if one is known. See <a href="#types">types</a>.</p>
+<div id="outline-container-orgb51eda9" class="outline-3">
+<h3 id="orgb51eda9">macro register-sql-operators (arity &amp;rest names)</h3>
+<div class="outline-text-3" id="text-orgb51eda9">
+<p>
+Define simple SQL operators. Arity is one of :unary (like 'not'), :unary-postfix
+(the operator comes after the operand), :n-ary (like '\+': the operator falls away
+when there is only one operand), :2+-ary (like '=', which is meaningless for one
+operand), or :n-or-unary (like '-', where the operator is kept in the unary case).
+After the arity may follow any number of operators, either just a keyword, in
+which case the downcased symbol name is used as the SQL operator, or a two-element
+list containing a keyword and a name string.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org4ccc6f8" class="outline-2">
+<h2 id="org4ccc6f8">SQL Types</h2>
+<div class="outline-text-2" id="text-org4ccc6f8">
+<p>
+S-SQL knows the SQL equivalents to a number of Lisp types, and defines some
+extra types that can be used to denote other SQL types. The following
+table shows the correspondence:
+</p>
 
-    <p class="def">
-      <span>function</span>
-      <a name="to-sql-name"></a>
-      to-sql-name (name &amp;optional (escape-p *escape-sql-names-p*))
-      <br/>&#8594; string
-    </p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
-    <p class="desc">Convert a symbol or string to a name that can be
-    used as an SQL identifier by converting all non-alphanumeric
-    characters to underscores. Also lowercases the name to make
-    queries look a bit less hideous. When a second argument is given,
-      this overrides the current value of
-      <a href="#*escape-sql-names-p*"><code>*escape-sql-names-p*</code></a>.
-      If the second argument is :literal then the name will be escaped only
-      and this will be a a delimited identifier or quoted identifier. See
-      <a href="https://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS."
-         sql-syntax-lexical in the PostgreSQL documentation</a></p>
 
-    <p class="def">
-      <span>function</span>
-      <a name="from-sql-name"></a>
-      from-sql-name (string)
-      <br/>&#8594; keyword
-    </p>
+<colgroup>
+<col  class="org-left" />
 
-    <p class="desc">Convert a string that represents an SQL identifier
-    to a keyword by uppercasing it and converting the underscores to
-    dashes.</p>
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">Lisp type</td>
+<td class="org-left">SQL type</td>
+</tr>
 
-    <p class="def">
-      <span>macro</span>
-      <a name="register-sql-operators"></a>
-      register-sql-operators (arity &amp;rest names)
-    </p>
+<tr>
+<td class="org-left">smallint</td>
+<td class="org-left">smallint</td>
+</tr>
 
-    <p class="desc">Define simple SQL operators. Arity is one of
-    <code>:unary</code> (like '<code>not</code>'),
-    <code>:unary-postfix</code> (the operator comes after the
-    operand), <code>:n-ary</code> (like '<code>+</code>': the operator
-    falls away when there is only one operand), <code>:2+-ary</code>
-    (like '<code>=</code>', which is meaningless for one operand), or
-    <code>:n-or-unary</code> (like '<code>-</code>', where the
-    operator is kept in the unary case). After the arity may follow
-    any number of operators, either just a keyword, in which case the
-    downcased symbol name is used as the SQL operator, or a
-    two-element list containing a keyword and a name string.</p>
+<tr>
+<td class="org-left">integer</td>
+<td class="org-left">integer</td>
+</tr>
 
-    <h2><a name="types"></a>SQL Types</h2>
+<tr>
+<td class="org-left">bigint</td>
+<td class="org-left">bigint</td>
+</tr>
 
-    <p>S-SQL knows the SQL equivalents to a number of Lisp types, and
-    defines some extra types that can be used to denote other SQL
-    types. The following table shows the correspondence:</p>
+<tr>
+<td class="org-left">(numeric X Y)</td>
+<td class="org-left">numeric(X, Y)</td>
+</tr>
 
-    <table>
-      <thead>
-        <tr><th>Lisp type</th><th>SQL type</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>smallint</td><td>smallint</td></tr>
-        <tr><td>integer</td><td>integer</td></tr>
-        <tr><td>bigint</td><td>bigint</td></tr>
-        <tr><td>(numeric X Y)</td><td>numeric(X, Y)</td></tr>
-        <tr><td>float, real</td><td>real</td></tr>
-        <tr><td>double-float, double-precision</td><td>double-precision</td></tr>
-        <tr><td>string, text</td><td>text</td></tr>
-        <tr><td>(string X)</td><td>char(X)</td></tr>
-        <tr><td>(varchar X)</td><td>varchar(X)</td></tr>
-        <tr><td>boolean</td><td>boolean</td></tr>
-        <tr><td>bytea</td><td>bytea</td></tr>
-        <tr><td><a href="simple-date.html#date">date</a></td><td>date</td></tr>
-        <tr><td><a href="simple-date.html#timestamp">timestamp</a></td><td>timestamp</td></tr>
-        <tr><td><a href="simple-date.html#interval">interval</a></td><td>interval</td></tr>
-      </tbody>
-    </table>
+<tr>
+<td class="org-left">float, real</td>
+<td class="org-left">real</td>
+</tr>
 
-    <p class="def">
-      <span>type</span>
-      <a name="db-null"></a>
-      db-null
-    </p>
+<tr>
+<td class="org-left">double-float, double-precision</td>
+<td class="org-left">double-precision</td>
+</tr>
 
-    <p class="desc">This is a type of which only the keyword
-    <code>:null</code> is a member. It is used to represent NULL
-    values from the database.</p>
+<tr>
+<td class="org-left">string, text</td>
+<td class="org-left">text</td>
+</tr>
 
-    <h2><a name="syntax"></a>SQL Syntax</h2>
+<tr>
+<td class="org-left">(string X)</td>
+<td class="org-left">char(X)</td>
+</tr>
 
-    <p>An S-SQL form is converted to a query through the following rules:</p>
+<tr>
+<td class="org-left">(varchar X)</td>
+<td class="org-left">varchar(X)</td>
+</tr>
 
-    <ul>
-      <li>Lists starting with a keyword are operators. They are
-      expanded as described below if they are known, otherwise they
-      are expanded in the standard way: <code>operator(arguments,
-      ...)</code></li>
-      <li>Quoted symbols or keywords are interpreted as names of
-      columns or tables, and converted to strings with <a
-      href="#to-sql-name"><code>to-sql-name</code></a>.</li>
-      <li>Anything else is evaluated and the resulting Lisp value is
-      converted to its textual SQL representation (or an error is
-      raised when there is no rule for converting objects of this
-      type). Self-quoting atoms may be converted to strings at
-      compile-time.</li>
-    </ul>
+<tr>
+<td class="org-left">boolean</td>
+<td class="org-left">boolean</td>
+</tr>
 
-    <p class="def"><span>sql-op</span> <a name="select"></a>:select (&amp;rest args)</p>
+<tr>
+<td class="org-left">bytea</td>
+<td class="org-left">bytea</td>
+</tr>
 
-    <p class="desc">Creates a select query. The arguments are split on
-    the keywords found among them. The group of arguments immediately
-    after <code>:select</code> is interpreted as the expressions that
-    should be selected. After this, an optional <code>:distinct</code>
-    may follow, which will cause the query to only select distinct
-    rows, or alternatively <code>:distinct-on</code> followed by a
-    group of row names. Next comes the optional keyword
-    <code>:from</code>, followed by at least one table name and then
-    any number of join statements. Join statements start with one of
-    <code>:left-join</code>, <code>:right-join</code>,
-    <code>:inner-join</code>, <code>:outer-join</code> or
-    <code>:cross-join</code>, then a table name or subquery, then the
-    keyword <code>:on</code> or <code>:using</code>, if applicable,
-    and then a form. A join can be preceded by <code>:natural</code>
-    (leaving off the
-    <code>:on</code> clause) to use a natural join. After the joins an
-    optional <code>:where</code> followed by a single form may occur.
-    And finally <code>:group-by</code> and <code>:having</code> can
-    optionally be specified. The first takes any number of arguments,
-    and the second only one. An example:</p>
+<tr>
+<td class="org-left">date</td>
+<td class="org-left">date</td>
+</tr>
 
-    <pre class="code desc">
-(query (:select (:+ 'field-1 100) 'field-5
+<tr>
+<td class="org-left">timestamp</td>
+<td class="org-left">timestamp</td>
+</tr>
+
+<tr>
+<td class="org-left">interval</td>
+<td class="org-left">interval</td>
+</tr>
+
+<tr>
+<td class="org-left">array</td>
+<td class="org-left">array</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+**type db-null
+</p>
+
+<p>
+This is a type of which only the keyword :null is a member. It is used to represent
+NULL values from the database.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org94fc35e" class="outline-2">
+<h2 id="org94fc35e">SQL Syntax</h2>
+<div class="outline-text-2" id="text-org94fc35e">
+<p>
+An S-SQL form is converted to a query through the following rules:
+</p>
+
+<ul class="org-ul">
+<li>Lists starting with a keyword are operators. They are expanded as described below if they are known, otherwise they are expanded in the standard way: operator(arguments, &#x2026;)</li>
+
+<li>Quoted symbols or keywords are interpreted as names of columns or tables, and converted to strings with to-sql-name.</li>
+
+<li>Anything else is evaluated and the resulting Lisp value is converted to its textual SQL representation (or an error is raised when there is no rule for converting objects of this type). Self-quoting atoms may be converted to strings at compile-time.</li>
+</ul>
+</div>
+
+<div id="outline-container-orgb0af82c" class="outline-3">
+<h3 id="orgb0af82c">sql-op :select (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgb0af82c">
+<p>
+Creates a select query. The arguments are split on the keywords found among
+them. The group of arguments immediately after :select is interpreted as
+the expressions that should be selected. After this, an optional :distinct
+may follow, which will cause the query to only select distinct rows, or
+alternatively :distinct-on followed by a group of row names. Next comes the
+optional keyword :from, followed by at least one table name and then any
+number of join statements. Join statements start with one of :left-join,
+:right-join, :inner-join, :outer-join or :cross-join, then a table name or
+subquery, then the keyword :on or :using, if applicable, and then a form.
+A join can be preceded by :natural (leaving off the :on clause) to use a
+natural join. After the joins an optional :where followed by a single form
+may occur. And finally :group-by and :having can optionally be specified.
+The first takes any number of arguments, and the second only one. An example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:+ 'field-1 100) 'field-5
         :from (:as 'my-table 'x)
         :left-join 'your-table
         :on (:= 'x.field-2 'your-table.field-1)
-        :where (:not-null 'a.field-3)))</pre>
+        :where (:not-null 'a.field-3)))
+</pre>
+</div>
 
+<p>
+The following operators are defined:
+</p>
+</div>
+</div>
 
-    <p>The following operators are defined:</p>
+<div id="outline-container-orgcd58d05" class="outline-3">
+<h3 id="orgcd58d05">sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgcd58d05">
+<p>
+These are expanded as infix operators. When meaningful, they allow more than
+two arguments. :- can also be used as a unary operator to negate a value.
+Note that the arguments to :union, :union-all, :intersect, and :except
+should be queries (:select forms).
+</p>
 
-    <p class="def"><span>sql-op</span> <a name="infix"></a>:+, :*, :%, :&amp;, :|, :||,
-    :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all,
-    :intersect, :intersect-all, :except, :except-all (&amp;rest args)</p>
+<p>
+Note that you'll have to escape pipe characters to enter them as keywords. S-SQL
+handles the empty keyword symbol (written :||) specially, and treats it like :\|\|,
+so that it can be written without escapes. With :\|, this doesn't work.
+</p>
+</div>
+</div>
 
-    <p class="desc">These are expanded as infix operators. When
-    meaningful, they allow more than two arguments. <code>:-</code>
-    can also be used as a unary operator to negate a value. Note that
-    the arguments to <code>:union</code>, <code>:union-all</code>,
-    <code>:intersect</code>, and <code>:except</code> should be
-    queries (<code>:select</code> forms).</p>
+<div id="outline-container-org6f3cadd" class="outline-3">
+<h3 id="org6f3cadd">sql-op :~, :not (arg)</h3>
+<div class="outline-text-3" id="text-org6f3cadd">
+<p>
+Unary operators for bitwise and logical negation.
+</p>
+</div>
+</div>
 
-    <p class="desc">Note that you'll have to escape pipe characters to
-    enter them as keywords. S-SQL handles the empty keyword symbol
-    (written <code>:||</code>) specially, and treats it
-    like <code>:\|\|</code>, so that it can be written without
-    escapes. With <code>:\|</code>, this doesn't work.</p>
+<div id="outline-container-org8db4ddf" class="outline-3">
+<h3 id="org8db4ddf">sql-op :function (name (&amp;rest arg-types) return-type stability body)</h3>
+<div class="outline-text-3" id="text-org8db4ddf">
+<p>
+Create a stored procedure. The argument and return types are interpreted as
+type names and not evaluated. Stability should be one of :immutable, :stable,
+or :volatile (see the PostgreSQL documentation). For example, a function that
+gets foobars by id:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(:function 'get-foobar (integer) foobar :stable (:select '* :from 'foobar :where (:= 'id '$1)))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="unary"></a>:~, :not (arg)</p>
+<div id="outline-container-orgb732e70" class="outline-3">
+<h3 id="orgb732e70">sql-op :~, :~*, :!~, :!~* (string pattern)</h3>
+<div class="outline-text-3" id="text-orgb732e70">
+<p>
+Regular expression matching operators. The exclamation mark means 'does not match',
+the asterisk makes the match case-insensitive.
+</p>
+</div>
+</div>
 
-    <p class="desc">Unary operators for bitwise and logical
-    negation.</p>
+<div id="outline-container-org8a01a30" class="outline-3">
+<h3 id="org8a01a30">sql-op :like, :ilike (string pattern)</h3>
+<div class="outline-text-3" id="text-org8a01a30">
+<p>
+Simple SQL string matching operators (:ilike is case-insensitive).
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="function"></a>:function (name (&amp;rest
-    arg-types) return-type stability body)</p>
+<div id="outline-container-org6190527" class="outline-3">
+<h3 id="org6190527">sql-op :@@</h3>
+<div class="outline-text-3" id="text-org6190527">
+<p>
+Fast Text Search match operator.
+</p>
+</div>
+</div>
 
-    <p class="desc">Create a stored procedure. The argument and return
-    types are interpreted as type names and not evaluated. Stability
-    should be one of <code>:immutable</code>, <code>:stable</code>, or
-    <code>:volatile</code> (see <a
-    href="http://www.postgresql.org/docs/current/static/sql-createfunction.html">the
-    PostgreSQL documentation</a>). For example, a function that gets foobars by
-    id:</p>
+<div id="outline-container-org23305ae" class="outline-3">
+<h3 id="org23305ae">sql-op :desc (column)</h3>
+<div class="outline-text-3" id="text-org23305ae">
+<p>
+Used to invert the meaning of an operator in an :order-by clause.
+</p>
+</div>
+</div>
 
-    <pre class="desc code">
-(:function 'get-foobar (integer) foobar :stable (:select '* :from 'foobar :where (:= 'id '$1)))</pre>
+<div id="outline-container-org94cc683" class="outline-3">
+<h3 id="org94cc683">sql-op :nulls-first, :nulls-last (column)</h3>
+<div class="outline-text-3" id="text-org94cc683">
+<p>
+Used to determine where :null values appear in an :order-by clause.
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="regexp"></a>:~, :~*, :!~, :!~* (string pattern)</p>
+<div id="outline-container-orgf2e581d" class="outline-3">
+<h3 id="orgf2e581d">sql-op :as (form name &amp;rest fields)</h3>
+<div class="outline-text-3" id="text-orgf2e581d">
+<p>
+Assigns a name to a column or table in a :select form. When fields are given,
+they are added after the name, in parentheses. For example, (:as 'table1 't1 'foo 'bar)
+becomes table1 AS t1(foo, bar). When you need to specify types for the fields,
+you can do something like (:as 'table2 't2 ('foo integer)). Note that names are
+quoted, types are not (when using sql-compile or sql-template, you can leave
+out the quotes entirely).
+</p>
+</div>
+</div>
 
-    <p class="desc">Regular expression matching operators. The
-    exclamation mark means 'does not match', the asterisk makes the
-    match case-insensitive.</p>
-
-    <p class="def"><span>sql-op</span> <a name="like"></a>:like, :ilike (string pattern)</p>
-
-    <p class="desc">Simple SQL string matching operators
-    (<code>:ilike</code> is case-insensitive).</p>
-
-    <p class="def"><span>sql-op</span> <a name="match"></a>:@@</p>
-
-    <p class="desc">Fast Text Search match operator.</p>
-
-    <p class="def"><span>sql-op</span> <a name="desc"></a>:desc (column)</p>
-
-    <p class="desc">Used to invert the meaning of an operator in an <a
-    href="#order-by"><code>:order-by</code></a> clause.</p>
-
-    <p class="def"><span>sql-op</span> <a name="nulls-first"></a>:nulls-first, :nulls-last (column)</p>
-
-    <p class="desc">Used to determine where <code>:null</code> values
-    appear in an <a href="#order-by"><code>:order-by</code></a>
-    clause.</p>
-
-    <p class="def"><span>sql-op</span> <a name="as"></a>:as (form name &amp;rest fields)</p>
-
-    <p class="desc">Assigns a name to a column or table in a <a
-    href="#select"><code>:select</code></a> form. When fields are
-    given, they are added after the name, in parentheses. For example,
-    <code>(:as 'table1 't1 'foo 'bar)</code> becomes <code>table1 AS
-    t1(foo, bar)</code>. When you need to specify types for the
-    fields, you can do something like <code>(:as 'table2 't2 ('foo
-    integer))</code>. Note that names are quoted, types are not (when
-    using <code><a href="#sql-compile">sql-compile</a></code> or
-    <code><a href="#sql-template">sql-template</a></code>, you can
-    leave out the quotes entirely).</p>
-
-    <p class="def"><span>sql-op</span> <a name="cast"></a>:cast (query)</p>
-
-    <p class="desc">The CAST operator. Takes a query as an argument,
-      and returns the result explicitly cast by postgresql to a specific type.</p>
-
-    <pre class="code desc">
-      (query (:select (:cast (:as "20" 'integer)))
-             :single)
+<div id="outline-container-orgd94908d" class="outline-3">
+<h3 id="orgd94908d">sql-op :cast (query)</h3>
+<div class="outline-text-3" id="text-orgd94908d">
+<p>
+The CAST operator. Takes a query as an argument, and returns the result
+explicitly cast by postgresql to a specific type.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:cast (:as "20" 'integer)))
+        :single)
 20
 
-      (query (:union (:select (:as 1 'real))
-                     (:select (:cast (:as "2.2" 'real)))))
+(query (:union (:select (:as 1 'real))
+               (:select (:cast (:as "2.2" 'real)))))
 ((1.0) (2.2))
-    </pre>
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="exists"></a>:exists (query)</p>
 
-    <p class="desc">The EXISTS operator. Takes a query as an argument,
-    and returns true or false depending on whether that query returns
-    any rows.</p>
+<div id="outline-container-org2b28db2" class="outline-3">
+<h3 id="org2b28db2">sql-op :exists (query)</h3>
+<div class="outline-text-3" id="text-org2b28db2">
+<p>
+The EXISTS operator. Takes a query as an argument, and returns true or false
+depending on whether that query returns any rows.
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="is-null"></a>:is-null (arg)</p>
+<div id="outline-container-org377e898" class="outline-3">
+<h3 id="org377e898">sql-op :is-null (arg)</h3>
+<div class="outline-text-3" id="text-org377e898">
+<p>
+Test whether a value is null.
+</p>
+</div>
+</div>
 
-    <p class="desc">Test whether a value is null.</p>
+<div id="outline-container-org319ef8e" class="outline-3">
+<h3 id="org319ef8e">sql-op :not-null (arg)</h3>
+<div class="outline-text-3" id="text-org319ef8e">
+<p>
+Test whether a value is not null.
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="not-null"></a>:not-null (arg)</p>
+<div id="outline-container-orgce7f718" class="outline-3">
+<h3 id="orgce7f718">sql-op :in (value set)</h3>
+<div class="outline-text-3" id="text-orgce7f718">
+<p>
+Test whether a value is in a set of values.
+</p>
+</div>
+</div>
 
-    <p class="desc">Test whether a value is not null.</p>
+<div id="outline-container-orgaa5fe47" class="outline-3">
+<h3 id="orgaa5fe47">sql-op :not-in (value set)</h3>
+<div class="outline-text-3" id="text-orgaa5fe47">
+<p>
+Inverse of the above.
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="in"></a>:in (value set)</p>
+<div id="outline-container-org1857f8c" class="outline-3">
+<h3 id="org1857f8c">sql-op :set (&amp;rest elements)</h3>
+<div class="outline-text-3" id="text-org1857f8c">
+<p>
+Denote a set of values. This operator has two interfaces. When
+the elements are known at compile-time, they can be given as
+multiple arguments to the operator. When they are not, a
+single argument that evaluates to a list should be used.
+</p>
+</div>
+</div>
 
-    <p class="desc">Test whether a value is in a set of values.</p>
-
-    <p class="def"><span>sql-op</span> <a name="not-in"></a>:not-in (value set)</p>
-
-    <p class="desc">Inverse of the above.</p>
-
-    <p class="def"><span>sql-op</span> <a name="set"></a>:set (&amp;rest elements)</p>
-
-    <p class="desc">Denote a set of values. This one has two
-    interfaces. When the elements are known at compile-time, they can
-    be given as multiple arguments to the operator. When they are not,
-    a single argument that evaluates to a list should be used.</p>
-
-    <p class="def"><span>sql-op</span> <a name="array"></a>:array (query)</p>
-
-    <p class="desc">This is used when calling a select query into an array.</p>
-
-    <pre class="code desc">
-      (query (:order-by
+<div id="outline-container-org5e3851d" class="outline-3">
+<h3 id="org5e3851d">sql-op :array (query)</h3>
+<div class="outline-text-3" id="text-org5e3851d">
+<p>
+This is used when calling a select query into an array.  See <a href="array-notes.html">array-notes.html</a>
+for more detailed notes on the use of arrays.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:order-by
         (:select 'r.rolename
                  (:as (:array
                        (:select 'b.rolename
@@ -419,105 +933,168 @@
 
                  :from (:as 'pg-catalog.pg-roles 'r))
         1))
-    </pre>
 
-    <p class="def"><span>sql-op</span> <a name="array"></a>:array[] (&rest args)</p>
+</pre>
+</div>
+</div>
+</div>
 
-<p class="desc">This is the general operator for arrays. It also handles statements that
-  include functions in the query such as (:+ 1 2), (:pi) in the array. Read the tests.lisp
-  in the s-sql directory for several examples.</p>
+<div id="outline-container-orgbd67edb" class="outline-3">
+<h3 id="orgbd67edb">sql-op :array[] (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgbd67edb">
+<p>
+This is the general operator for arrays. It also handles statements that include
+functions in the query such as (:+ 1 2), (:pi) in the array. See <a href="array-notes.html">array-notes.html</a>
+for more detailed notes on the use of arrays.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:array-prepend 1 (:array[] 2 3))))
 
-<pre class="code desc">
-  (query (:select (:array-prepend 1 (:array[] 2 3))))
+((#(1 2 3)))
 
-  ((#(1 2 3)))
-    </pre>
+(query (:select (:array-prepend 1 (:array[] 2 3)))
+       :single)
 
-    <p class="def"><span>sql-op</span> <a name="deref"></a>:[] (form start &amp;optional end)</p>
+#(1 2 3)
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="desc">Dereference an array value. If <code>end</code> is
-      provided, extract a slice of the array. Sample usage below, but also see tests.lisp
-    in the s-sql directory for several examples.</p>
-    <pre class="code desc">
-      (query (:select 'receipe-id (:[] 'tags 2 3)
-                               :from 'receipe-tags-array
-      :where (:= 'receipe-id 3))) </pre>
 
-    <p class="def"><span>sql-op</span> <a name="extract"></a>:extract (unit form)</p>
+<div id="outline-container-org3a3c135" class="outline-3">
+<h3 id="org3a3c135">sql-op :[] (form start &amp;optional end)</h3>
+<div class="outline-text-3" id="text-org3a3c135">
+<p>
+Dereference an array value. If end is provided, extract a slice of the array.
+Sample usage below, but also see <a href="array-notes.html">array-notes.html</a> for more detailed notes on
+the use of arrays.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select 'receipe-id (:[] 'tags 2 3)
+                :from 'receipe-tags-array
+                :where (:= 'receipe-id 3)))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="desc"><a
-    href="http://www.postgresql.org/docs/current/static/functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT">Extract</a>
-    a field from a date/time value. For example, <code>(:extract
-    :month (:now))</code>.</p>
+<div id="outline-container-org0472c16" class="outline-3">
+<h3 id="org0472c16">sql-op :extract (unit form)</h3>
+<div class="outline-text-3" id="text-org0472c16">
+<p>
+Extract a field from a date/time value. For example, (:extract :month (:now)).
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="case"></a>:case (&amp;rest clauses)</p>
+<div id="outline-container-org9e3075a" class="outline-3">
+<h3 id="org9e3075a">sql-op :case (&amp;rest clauses)</h3>
+<div class="outline-text-3" id="text-org9e3075a">
+<p>
+A conditional expression. Clauses should take the form (test value). If
+test is :else, an ELSE clause will be generated.
+</p>
+</div>
+</div>
 
-    <p class="desc">A conditional expression. Clauses should take the
-    form <code>(test value)</code>. If test is <code>:else</code>,
-    an <code>ELSE</code> clause will be generated.</p>
+<div id="outline-container-org70e241b" class="outline-3">
+<h3 id="org70e241b">sql-op :between (n start end)</h3>
+<div class="outline-text-3" id="text-org70e241b">
+<p>
+Test whether a value lies between two other values.
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="between"></a>:between (n start end)</p>
+<div id="outline-container-org61b5371" class="outline-3">
+<h3 id="org61b5371">sql-op :between-symmetric (n start end)</h3>
+<div class="outline-text-3" id="text-org61b5371">
+<p>
+Works like :between, except that the start value is not required to be
+less than the end value.
+</p>
+</div>
+</div>
 
-    <p class="desc">Test whether a value lies between two other
-    values.</p>
+<div id="outline-container-org3f43835" class="outline-3">
+<h3 id="org3f43835">sql-op :dot (&amp;rest names)</h3>
+<div class="outline-text-3" id="text-org3f43835">
+<p>
+Can be used to combine multiple names into a name of the form A.B to
+refer to a column in a table, or a table in a schema. Note that you
+can also just use a symbol with a dot in it.
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="between"></a>:between-symmetric (n start end)</p>
+<div id="outline-container-org6c38c8f" class="outline-3">
+<h3 id="org6c38c8f">sql-op :type (form type)</h3>
+<div class="outline-text-3" id="text-org6c38c8f">
+<p>
+Add a type declaration to a value, as in in "4.3::real". The second
+argument is not evaluated normally, but put through sql-type-name to
+get a type identifier.
+</p>
+</div>
+</div>
 
-    <p class="desc">Works
-    like <a href="#between"><code>:between</code></a>, except that the
-    start value is not required to be less than the end value.</p>
-
-    <p class="def"><span>sql-op</span> <a name="dot"></a>:dot (&amp;rest names)</p>
-
-    <p class="desc">Can be used to combine multiple names into a name
-    of the form A.B to refer to a column in a table, or a table in a
-    schema. Note that you can also just use a symbol with a dot in
-    it.</p>
-
-    <p class="def"><span>sql-op</span> <a name="type"></a>:type (form type)</p>
-
-    <p class="desc">Add a type declaration to a value, as in in
-    "4.3::real". The second argument is not evaluated normally, but
-    put through <a
-    href="#sql-type-name"><code>sql-type-name</code></a> to get a type
-    identifier.</p>
-
-    <p class="def"><span>sql-op</span> <a name="raw"></a>:raw (string)</p>
-
-    <p class="desc">Insert a string as-is into the query. This can be
-    useful for doing things that the syntax does not support, or to
-    re-use parts of a query across multiple queries:</p>
-
-    <pre class="code desc">
-(let* ((test (sql (:and (:= 'foo 22) (:not-null 'bar))))
+<div id="outline-container-org762ca60" class="outline-3">
+<h3 id="org762ca60">sql-op :raw (string)</h3>
+<div class="outline-text-3" id="text-org762ca60">
+<p>
+Insert a string as-is into the query. This can be useful for doing things
+that the syntax does not support, or to re-use parts of a query across
+multiple queries:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(let* ((test (sql (:and (:= 'foo 22) (:not-null 'bar))))
        (rows (query (:select '* :from 'baz :where (:raw test)))))
   (query (:delete-from 'baz :where (:raw test)))
-  (do-stuff rows))</pre>
+  (do-stuff rows))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="limit"></a>:limit (query amount &amp;optional offset)</p>
+<div id="outline-container-org24507c5" class="outline-3">
+<h3 id="org24507c5">sql-op :limit (query amount &amp;optional offset)</h3>
+<div class="outline-text-3" id="text-org24507c5">
+<p>
+In S-SQL limit is not part of the select operator, but an extra
+operator that is applied to a query (this works out better when limiting
+the union or intersection of multiple queries, same for sorting).
+It limits the number of results to the amount given as the second
+argument, and optionally offsets the result by the amount given
+as the third argument.
+</p>
+</div>
+</div>
 
-    <p class="desc">In S-SQL limit is not part of the select operator,
-    but an extra operator that is applied to a query (this works out
-    better when limiting the union or intersection of multiple
-    queries, same for sorting). It limits the number of results to the
-    amount given as the second argument, and optionally offsets the
-    result by the amount given as the third argument.</p>
+<div id="outline-container-org037c15e" class="outline-3">
+<h3 id="org037c15e">sql-op :order-by (query &amp;rest exprs)</h3>
+<div class="outline-text-3" id="text-org037c15e">
+<p>
+Order the results of a query by the given expressions. See :desc for
+when you want to invert an ordering. Note: This is not the same as
+passing an :order-by parameter to an aggregation operator.
+See Aggregation Operators.
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="order-by"></a>:order-by (query &amp;rest exprs)</p>
-
-    <p class="desc">Order the results of a query by the given
-    expressions. See <a href="#desc"><code>:desc</code></a> for when
-      you want to invert an ordering. Note: This is not the same as passing an <code>:order-by</code>
-      parameter to an aggregation operator. See <a href="#aggregation-operators">Aggregation Operators</a>.</p>
-
-    <p class="def"><span>sql-op</span> <a name="values"></a>:values</p>
-
-<p class="desc">Values computes a row value or set of row values for use in a specific query. See the postgresql docs at:
-  <a href="https://www.postgresql.org/docs/current/static/queries-values.html">https://www.postgresql.org/docs/current/static/queries-values.html</a> and <a href= "https://www.postgresql.org/docs/current/static/sql-values.html">https://www.postgresql.org/docs/current/static/sql-values.html</a>
-Example:</p>
-
-<pre class="code desc">
-(query (:select '*
+<div id="outline-container-org24f4568" class="outline-3">
+<h3 id="org24f4568">sql-op :values</h3>
+<div class="outline-text-3" id="text-org24f4568">
+<p>
+Values computes a row value or set of row values for use in a specific
+query. See the postgresql docs at:
+<a href="https://www.postgresql.org/docs/current/static/queries-values.html">https://www.postgresql.org/docs/current/static/queries-values.html</a>
+and <a href="https://www.postgresql.org/docs/current/static/sql-values.html">https://www.postgresql.org/docs/current/static/sql-values.html</a>
+Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select '*
                 :from (:as (:values (:set 1 "one")
                                     (:set 2 "two")
                                     (:set 3 "three"))
@@ -534,456 +1111,721 @@ Example:</p>
        (:union-all (:values (:set 1))
                    (:select (:+ 'n 1)
                             :from 't1
-                            :where (:< 'n 100))))
+                            :where (:&lt; 'n 100))))
   (:select (:sum 'n) :from 't1))
  :single)
 </pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="empty-set"></a>:empty-set</p>
+<div id="outline-container-org768fa96" class="outline-3">
+<h3 id="org768fa96">sql-op :empty-set</h3>
+<div class="outline-text-3" id="text-org768fa96">
+<p>
+This is a fudge. It returns a string "()" where something like '()
+would return "false" or :() would throw an error. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select 'appnumber 'day (:sum 'inserts)
+                (:sum 'updates) (:sum 'deletes) (:sum 'transactions)
+                :from 'db-details
+                :group-by (:grouping-sets (:set 'appnumber 'day (:empty-set)))))
+</pre>
+</div>
+</div>
+</div>
 
-<p class="desc">This is a fudge. It returns a string "()" where something like '() would return "false" or :()
-would throw an error.
-Example:</p>
-
-    <pre class="code desc">(query (:select 'appnumber 'day (:sum 'inserts) (:sum 'updates) (:sum 'deletes) (:sum 'transactions)
-                                           :from 'db-details
-                                           :group-by (:grouping-sets (:set 'appnumber 'day (:empty-set)))))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="group-by"></a>:group-by</p>
-
-    <p class="desc"><a href= "https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUP">https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS</a> The GROUP BY Clause is used to group together those rows in a table that have the same values in all the columns listed. The order in which the columns are listed does not matter. The effect is to combine each set of rows having common values into one group row that represents all rows in the group. This is done to eliminate redundancy in the output and/or compute aggregates that apply to these groups. Example:</p>
-
-    <pre class="code desc">(query (:order-by
+<div id="outline-container-org228f52e" class="outline-3">
+<h3 id="org228f52e">sql-op :group-by</h3>
+<div class="outline-text-3" id="text-org228f52e">
+<p>
+<a href="https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS">https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS</a>
+The GROUP BY Clause is used to group together those rows in a table that
+have the same values in all the columns listed. The order in which the
+columns are listed does not matter. The effect is to combine each set of
+rows having common values into one group row that represents all rows in
+the group. This is done to eliminate redundancy in the output and/or compute
+aggregates that apply to these groups. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:order-by
         (:select 'mems.surname 'mems.firstname 'mems.memid (:as (:min 'bks.starttime) 'starttime)
                  :from (:as 'cd.bookings 'bks)
                  :inner-join (:as 'cd.members 'mems)
                  :on (:= 'mems.memid 'bks.memid)
-                 :where (:>= 'starttime "2012-09-01")
+                 :where (:&gt;= 'starttime "2012-09-01")
                  :group-by 'mems.surname 'mems.firstname 'mems.memid)
-        'mems.memid))</pre>
+        'mems.memid))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="grouping-sets"></a>:grouping-sets</p>
-
-    <p class="desc"><a href= "https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS">https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS</a> More complex grouping operations are possible using the concept of grouping sets. The data selected by the FROM and WHERE clauses is grouped separately by each specified grouping set, aggregates computed for each group just as for simple GROUP BY clauses, and then the results returned. This requires postgresql 9.5 or later. For example:</p>
-
-<pre class="code desc">
-(query (:select 'city (:as (:extract 'year 'start-date)  'joining-year) (:as (:count 1) 'employee_count)
+<div id="outline-container-orgf2516e0" class="outline-3">
+<h3 id="orgf2516e0">sql-op :grouping-sets</h3>
+<div class="outline-text-3" id="text-orgf2516e0">
+<p>
+<a href="https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS">https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS</a>
+More complex grouping operations are possible using the concept of grouping
+sets. The data selected by the FROM and WHERE clauses is grouped separately
+by each specified grouping set, aggregates computed for each group just as
+for simple GROUP BY clauses, and then the results returned.
+This operator requires postgresql 9.5 or later. For example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select 'city (:as (:extract 'year 'start-date)  'joining-year) (:as (:count 1) 'employee_count)
                 :from 'employee
-                :group-by (:grouping-sets (:set 'city (:extract 'year 'start-date)))))</pre>
-
-
-<a name="aggregation-operators"><h3>Aggregation Operators</h3></a>
-<p class="def"><span>sql-op</span> <a name="count"></a>:count (&rest args)</p>
-
-<p class="desc">Count returns the number of rows for which the expression is not null.
-  It can be the number of rows collected by the select statement as in</p>
-    <pre class="code desc">
-(query (:select (:count '*)
-        :from 'table1
-        :where (:= 'price 100)))</pre>
-
-<p class="desc">or it can be a smaller number of rows based on the allowed keyword parameters :distinct and :filter
-  or some other type of condition as in</p>
-    <pre class="code desc">
-(query (:select (:count 'memid :distinct)
-        :from 'cd.bookings))</pre>
-
-<p class="desc">or</p>
-    <pre class="code desc">
-(query (:select (:as (:count '* :distinct) 'unfiltered)
-                (:as (:count '* :filter (:= 1 'bid)) 'filtered)
-        :from 'testtable))</pre>
-
-<p class="desc">Note that if used, the filter must be last in the count args. If distinct is used, it must come before filter.
-Unlike standard sql, the word 'where' is not used inside the filter clause.  E.g. </p>
-<pre class="code desc">
-(query (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id
-        :from 'pbbench-history))</pre>
-
-<p>See tests.lisp for examples.</p>
-
-<p class="def"><span>sql-op</span> <a name="avg"></a>:avg (&amp;rest rest args)</p>
-
-    <p class="desc">Avg calculates the average value of a list of values. Note that if the filter keyword is used,
-the filter must be last in the avg args. If distinct is used, it must come before filter.
-E.g. See tests.lisp for more examples.</p>
-
-    <pre class="code desc">
-(query (:select (:avg '*) (:avg '* :filter (:= 1 'bid)) 'id
-        :from 'pbbench-history)) </pre>
-
-    <p class="def"><span>sql-op</span> <a name="sum"></a>:sum (&amp;rest rest args) </p>
-
-    <p class="desc">Sum calculates the total of a list of values. Note that if the keyword filter is used,
-the filter must be last in the sum args. If distinct is used, it must come before filter.
-Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-See tests.lisp for more examples.</p>
-
-<pre class="code desc">
-(query (:select (:sum '*) (:sum '* :filter (:= 1 'bid)) 'id
-        :from 'pbbench-history))
+                :group-by (:grouping-sets (:set 'city (:extract 'year 'start-date)))))
 </pre>
+</div>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="max"></a>::max (&rest args)</p>
+<div id="outline-container-orgd64642d" class="outline-2">
+<h2 id="orgd64642d">Aggregation Operators</h2>
+<div class="outline-text-2" id="text-orgd64642d">
+</div>
+<div id="outline-container-org20fee59" class="outline-3">
+<h3 id="org20fee59">sql-op :count (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org20fee59">
+<p>
+Count returns the number of rows for which the expression is not null.
+It can be the number of rows collected by the select statement as in:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:count '*)
+                :from 'table1
+                :where (:= 'price 100)))
+</pre>
+</div>
 
-    <p class="desc">Max returns the maximum value of a set of values. Note that if the filter keyword is used,
-the filter must be last in the max args. If distinct is used, it must come before filter.
-Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-See tests.lisp for more examples.</p>
+<p>
+or it can be a smaller number of rows based on the allowed keyword
+parameters :distinct and :filter or some other type of condition as in:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:count 'memid :distinct)
+                :from 'cd.bookings))
+</pre>
+</div>
+<p>
+or
+</p>
 
-    <pre class="code desc">
-(query (:select (:max '*) (:max '* :filter (:= 1 'bid)) 'id
-        :from 'pbbench-history))</pre>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:as (:count '* :distinct) 'unfiltered)
+                (:as (:count '* :filter (:= 1 'bid))
+                     'filtered)
+                :from 'testtable))
+</pre>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="min"></a>::min (&rest args)</p>
+<p>
+Note that if used, the filter must be last in the count args. If distinct
+is used, it must come before filter. Unlike standard sql, the word 'where'
+is not used inside the filter clause. E.g.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:count '*)
+                (:count '* :filter (:= 1 'bid))
+                'id
+                :from 'pbbench-history))
+</pre>
+</div>
 
-    <p class="desc">Min returns the minimum value of a set of values. Note that if the filter keyword is used,
-the filter must be last in the min args. If distinct is used, it must come before filter.
-Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-See tests.lisp for more examples.</p>
+<p>
+See tests.lisp for examples.
+</p>
+</div>
+</div>
 
-    <pre class="code desc">
-(query (:select (:min '*) (:min '* :filter (:= 1 'bid)) 'id
-        :from 'pbbench-history))</pre>
+<div id="outline-container-org5300e08" class="outline-3">
+<h3 id="org5300e08">sql-op :avg (&amp;rest rest args)</h3>
+<div class="outline-text-3" id="text-org5300e08">
+<p>
+Avg calculates the average value of a list of values. Note that if the
+filter keyword is used, the filter must be last in the avg args. If distinct
+is used, it must come before filter. E.g. See tests.lisp for more examples.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:avg '*) (:avg '* :filter (:= 1 'bid)) 'id
+                :from 'pbbench-history))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="every"></a>::every (&rest args)</p>
+<div id="outline-container-org30ac7bd" class="outline-3">
+<h3 id="org30ac7bd">sql-op :sum (&amp;rest rest args)</h3>
+<div class="outline-text-3" id="text-org30ac7bd">
+<p>
+Sum calculates the total of a list of values. Note that if the keyword filter
+is used, the filter must be last in the sum args. If distinct is used, it
+must come before filter. Unlike standard sql, the word 'where' is not used
+inside the filter clause (s-sql will properly expand it). See tests.lisp
+for more examples.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:sum '*) (:sum '* :filter (:= 1 'bid)) 'id
+                :from 'pbbench-history))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="desc">Every returns true if all input values are true, otherwise false. Note that if the filter keyword is used,
-the filter must be last in the every args. If distinct is used, it must come before filter.
-Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-See tests.lisp for more examples.</p>
+<div id="outline-container-orgde74e40" class="outline-3">
+<h3 id="orgde74e40">sql-op ::max (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgde74e40">
+<p>
+max returns the maximum value of a set of values. Note that if the filter
+keyword is used, the filter must be last in the max args. If distinct is
+used, it must come before filter. Unlike standard sql, the word 'where'
+is not used inside the filter clause (s-sql will properly expand it).
+See tests.lisp for more examples.
+</p>
 
-    <pre class="code desc">
-(query (:select '* (:every (:like 'studname "%h"))
-        :from 'tbl-students
-        :group-by 'studname 'studid 'studgrades))</pre>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:max '*) (:max '* :filter (:= 1 'bid)) 'id
+                :from 'pbbench-history))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org8a33b09" class="outline-3">
+<h3 id="org8a33b09">sql-op ::min (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org8a33b09">
+<p>
+min returns the minimum value of a set of values. Note that if the filter
+keyword is used, the filter must be last in the min args. If distinct is
+used, it must come before filter. Unlike standard sql, the word 'where'
+is not used inside the filter clause (s-sql will properly expand it).
+See tests.lisp for more examples.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:min '*) (:min '* :filter (:= 1 'bid)) 'id
+                :from 'pbbench-history))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="percentile-cont"></a>:percentile-cont (&rest args)</p>
+<div id="outline-container-orgbf0cf30" class="outline-3">
+<h3 id="orgbf0cf30">sql-op ::every (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgbf0cf30">
+<p>
+Every returns true if all input values are true, otherwise false. Note
+that if the filter keyword is used, the filter must be last in the every
+args. If distinct is used, it must come before filter. Unlike standard sql,
+the word 'where' is not used inside the filter clause (s-sql will
+properly expand it). See tests.lisp for more examples.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select '* (:every (:like 'studname "%h"))
+                :from 'tbl-students
+                :group-by 'studname 'studid 'studgrades))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="desc">Requires Postgresql 9.4 or higher. Percentile-cont returns a value corresponding to the specified fraction in the ordering, interpolating between adjacent input items if needed.
-There are two required keyword parameters :fraction and :order-by. If the fraction value is an array,
-then it returns an array of results matching the shape of the fractions parameter, with each non-null
-element replaced by the value corresponding to that percentile.
+<div id="outline-container-orga82cd76" class="outline-3">
+<h3 id="orga82cd76">sql-op :percentile-cont (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orga82cd76">
+<p>
+Requires Postgresql 9.4 or higher. Percentile-cont returns a value
+corresponding to the specified fraction in the ordering, interpolating
+between adjacent input items if needed. There are two required keyword
+parameters :fraction and :order-by. If the fraction value is an array,
+then it returns an array of results matching the shape of the fractions
+parameter, with each non-null element replaced by the value corresponding
+to that percentile. Examples:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:percentile-cont :fraction 0.5 :order-by 'number-of-staff)
+                :from 'schools))
 
-Examples:</p>
-
-    <pre class="code desc">
-
-(query (:select (:percentile-cont :fraction 0.5 :order-by 'number-of-staff)
-        :from 'schools))
-
-(query (:select (:percentile-cont :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
-        :from  'schools))</pre>
-
-
-    <p class="def"><span>sql-op</span> <a name="percentile-dist"></a>:percentile-dist (&rest args)</p>
-
-    <p class="desc">Requires Postgresql 9.4 or higher. There are two required keyword parameters :fraction and :order-by.
-Percentile-dist returns the first input value whose position in the ordering equals or exceeds
-the specified fraction. If the fraction parameter is an array eturns an array of results matching
-the shape of the fractions parameter, with each non-null element replaced by the input value
-corresponding to that percentile.
-
-Examples:</p>
-
-    <pre class="code desc">
-
-(query (:select (:percentile-dist :fraction 0.5 :order-by 'number-of-staff)
-        :from 'schools))
-
-(query (:select (:percentile-dist :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
-        :from  'schools)) </pre>
-
-    <p class="def"><span>sql-op</span> <a name="corr"></a>:corr (y x)</p>
-
-    <p class="desc">The corr function returns the correlation coefficient between a set of dependent and independent variables.
-
-Example:    </p>
-
-    <pre class="code desc">
-(query (:select (:corr 'height 'weight)
-        :from 'people))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="covar-pop"></a>:covar-pop (y x)</p>
-
-    <p class="desc">The covar-pop function returns the population covariance between a set of dependent and independent variables.
-
-Example:</p>
-
-    <pre class="code desc">
-(query (:select (:covar-pop 'height 'weight)
-        :from 'people))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="covar-samp"></a>:covar-samp (y x)</p>
-
-    <p class="desc">The covar-samp function returns the sample covariance between a set of dependent and independent variables.
-
-Example:</p>
-
-    <pre class="code desc">
-(query (:select (:covar-samp 'height 'weight)
-        :from 'people))</pre>
+(query (:select (:percentile-cont :fraction array[0.25 0.5 0.75 1]
+                                  :order-by 'number-of-staff)
+                :from  'schools))
+</pre>
+</div>
+</div>
+</div>
 
 
-    <p class="def"><span>sql-op</span> <a name="string-agg"></a>:string-agg (&rest args)</p>
+<div id="outline-container-org0a4fc89" class="outline-3">
+<h3 id="org0a4fc89">sql-op :percentile-dist (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org0a4fc89">
+<p>
+Requires Postgresql 9.4 or higher. There are two required keyword parameters
+:fraction and :order-by. Percentile-dist returns the first input value whose
+position in the ordering equals or exceeds the specified fraction. If the
+fraction parameter is an array eturns an array of results matching the shape
+of the fractions parameter, with each non-null element replaced by the input
+value corresponding to that percentile. Examples:
+</p>
 
-    <p class="desc">String-agg allows you to concatenate strings using different types of delimiter symbols.
-Allowable optional keyword parameters are :distinct, :order-by and :filter
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:percentile-dist :fraction 0.5
+                                  :order-by 'number-of-staff)
+                :from 'schools))
 
-Note that order-by in string-agg requires postgresql 9.0 or later. Filter requires postgresql 9.4 or later.
-See tests.lisp for more examples.</p>
+(query (:select (:percentile-dist :fraction array[0.25 0.5 0.75 1]
+                                  :order-by 'number-of-staff)
+                :from  'schools))
 
-    <pre class="code desc">
-(query (:select (:as (:string-agg 'bp.step-type \",\" ) 'step-summary)
-        :from 'business-process))
+</pre>
+</div>
+</div>
+</div>
 
-(query (:select 'mid (:as (:string-agg  'y \",\" :distinct :order-by (:desc 'y) ) 'words)
-        :from 'moves))
+<div id="outline-container-orgd0c069e" class="outline-3">
+<h3 id="orgd0c069e">sql-op :corr (y x)</h3>
+<div class="outline-text-3" id="text-orgd0c069e">
+<p>
+The corr function returns the correlation coefficient between a set of
+dependent and independent variables. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:corr 'height 'weight)
+                :from 'people))
+</pre>
+</div>
+</div>
+</div>
 
-(query (:select (:string-agg  'name "," :order-by (:desc 'name) :filter (:< 'id 4))
-        :from 'employee)) </pre>
+<div id="outline-container-org494a0c4" class="outline-3">
+<h3 id="org494a0c4">sql-op :covar-pop (y x)</h3>
+<div class="outline-text-3" id="text-org494a0c4">
+<p>
+The covar-pop function returns the population covariance between a set of
+dependent and independent variables. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:covar-pop 'height 'weight)
+                :from 'people))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="array-agg"></a>:array-agg (&rest args)</p>
+<div id="outline-container-orged68157" class="outline-3">
+<h3 id="orged68157">sql-op :covar-samp (y x)</h3>
+<div class="outline-text-3" id="text-orged68157">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:covar-samp 'height 'weight)
+                :from 'people))
+</pre>
+</div>
+<p>
+The covar-samp function returns the sample covariance between a set of
+dependent and independent variables. Example:
+</p>
+</div>
+</div>
 
-    <p class="desc">Array-agg returns a list of values concatenated into an arrays.
-Allowable optional keyword parameters are :distinct, :order-by and :filter.
+<div id="outline-container-org49556fd" class="outline-3">
+<h3 id="org49556fd">sql-op :string-agg (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org49556fd">
+<p>
+String-agg allows you to concatenate strings using different types of
+delimiter symbols. Allowable optional keyword parameters are :distinct,
+:order-by and :filter Note that order-by in string-agg requires
+postgresql 9.0 or later. Filter requires postgresql 9.4 or later.
+See tests.lisp for more examples.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:as (:string-agg 'bp.step-type \",\" )
+                     'step-summary)
+                :from 'business-process))
 
+(query (:select 'mid (:as (:string-agg  'y \",\" :distinct :order-by (:desc 'y))
+                          'words)
+                :from 'moves))
+
+(query (:select (:string-agg  'name "," :order-by (:desc 'name) :filter (:&lt; 'id 4))
+                :from 'employee))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org84cda73" class="outline-3">
+<h3 id="org84cda73">sql-op :array-agg (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org84cda73">
+<p>
+Array-agg returns a list of values concatenated into an arrays.
+Allowable optional keyword parameters are :distinct, :order-by
+and :filter.
+</p>
+
+<p>
 Note that order-by in array-agg requires postgresql 9.0 or later.
-Filter requires postgresql 9.4 or later. See tests.lisp for more examples.</p>
+Filter requires postgresql 9.4 or later. See <a href="array-notes.html">array-notes.html</a> for more
+detailed notes on the use of arrays.
+</p>
 
-<p class="def">Example with Filter:</p>
-    <pre class="code desc">
-(query (:select 'g.id
-                (:as (:array-agg 'g.users :filter (:= 'g.canonical \"Y\")) 'canonical-users)
-                (:as (:array-agg 'g.users :filter (:= 'g.canonical \"N\")) 'non-canonical-users)
-        :from (:as 'groups 'g)
-        :group-by 'g.id)</pre>
-
-<p class="def"><span>sql-op</span> <a name="mode"></a>:mode (&rest args)</p>
-
-<p class="desc">Mode is used to find the most frequent input value in a group. See e.g.
-  <a href="https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE">
-     https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE</a>
-     and article at <a href="https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-function">
-                       https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-function</a></p>
-
-    <pre class="code desc">
-(query (:select (:mode 'items) :from 'item-table))
+<p>
+Example with Filter:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select 'g.id
+                (:as (:array-agg 'g.users :filter (:= 'g.canonical \"Y\"))
+                     'canonical-users)
+                (:as (:array-agg 'g.users :filter (:= 'g.canonical \"N\"))
+                     'non-canonical-users)
+                :from (:as 'groups 'g)
+                :group-by 'g.id))
 </pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="regr_avgx"></a>:regr_avgx (y x)</p>
-
-    <p class="desc">The regr_avgx function returns the average of the independent variable (sum(X)/N)
-Example:</p>
-
-    <pre class="code desc">
-(query (:select (:regr_avgx 'height 'weight) :from 'people))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="regr_avgy"></a>:regr_avgy (y x)</p>
-
-    <p class="desc">The regr_avgy function returns the average of the dependent variable (sum(Y)/N).
-Example:</p>
-
-    <pre class="code desc">
-(query (:select (:regr_avgy 'height 'weight) :from 'people))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="regr_count"></a>:regr_count (y x)</p>
-
-    <p class="desc">The regr_count function returns the 	number of input rows in which both expressions are nonnull.
-Example:</p>
-
-    <pre class="code desc">
-(query (:select (:regr_count 'height 'weight) :from 'people))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="regr_intercept"></a>:regr_intercept (y x)</p>
-
-    <p class="desc">The regr_intercept function returns the y-intercept of the least-squares-fit linear equation determined by the (X, Y) pairs. Example:</p>
-
-    <pre class="code desc">
-(query (:select (:regr_intercept 'height 'weight) :from 'people))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="regr_r2"></a>:regr_r2 (y x)</p>
-
-    <p class="desc">The regr_r2 function returns the square of the correlation coefficient. Example:</p>
-
-    <pre class="code desc">
-(query (:select (:regr_r2 'height 'weight) :from 'people))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="regr_slope"></a>:regr_slope (y x)</p>
-
-    <p class="desc">The regr_slope function returns the slope of the least-squares-fit linear equation determined by the (X, Y) pairs.
-Example:</p>
-
-    <pre class="code desc">
-(query (:select (:regr_slope 'height 'weight) :from 'people)) </pre>
-
-    <p class="def"><span>sql-op</span> <a name="regr_sxx"></a>:regr_sxx (y x)</p>
-
-    <p class="desc">The regr_sxx function returns the sum(X^2) - sum(X)^2/N (“sum of squares” of the independent variable).
-Example:</p>
-
-    <pre class="code desc">
-(query (:select (:regr_sxx 'height 'weight) :from 'people))
+<div id="outline-container-org3c4ac4b" class="outline-3">
+<h3 id="org3c4ac4b">sql-op :mode (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org3c4ac4b">
+<p>
+Mode is used to find the most frequent input value in a group.
+See e.g. <a href="https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE">https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE</a>
+and article at <a href="https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-function">https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-function</a>
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:mode 'items)
+                :from 'item-table))
 </pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="regr_sxy"></a>:regr_sxy (y x)</p>
+<div id="outline-container-orgfe2c903" class="outline-3">
+<h3 id="orgfe2c903">sql-op :regr<sub>avgx</sub> (y x)</h3>
+<div class="outline-text-3" id="text-orgfe2c903">
+<p>
+The regr<sub>avgx</sub> function returns the average of the independent variable
+(sum(X)/N) Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:regr_avgx 'height 'weight)
+                :from 'people))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="desc">The regr_sxy function returns the sum(X*Y) - sum(X) * sum(Y)/N (“sum of products” of independent times dependent variable).
+<div id="outline-container-org8bf6933" class="outline-3">
+<h3 id="org8bf6933">sql-op :regr<sub>avgy</sub> (y x)</h3>
+<div class="outline-text-3" id="text-org8bf6933">
+<p>
+The regr<sub>avgy</sub> function returns the average of the dependent variable
+(sum(Y)/N). Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">
+</pre>
+</div>
+<p>
+(query (:select (:regr<sub>avgy</sub> 'height 'weight)
+                :from 'people))
+</p>
+</div>
+</div>
+<div id="outline-container-org67ff270" class="outline-3">
+<h3 id="org67ff270">sql-op :regr<sub>count</sub> (y x)</h3>
+<div class="outline-text-3" id="text-org67ff270">
+<p>
+The regr<sub>count</sub> function returns the number of input rows in which both
+expressions are nonnull. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:regr_count 'height 'weight)
+                :from 'people))
+</pre>
+</div>
+</div>
+</div>
 
-Example:</p>
+<div id="outline-container-org9c6edfb" class="outline-3">
+<h3 id="org9c6edfb">sql-op :regr<sub>intercept</sub> (y x)</h3>
+<div class="outline-text-3" id="text-org9c6edfb">
+<p>
+The regr<sub>intercept</sub> function returns the y-intercept of the least-squares-fit
+linear equation determined by the (X, Y) pairs. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:regr_intercept 'height 'weight)
+                :from 'people))
+</pre>
+</div>
+</div>
+</div>
 
-    <pre class="code desc">
-(query (:select (:regr_sxy 'height 'weight) :from 'people))</pre>
+<div id="outline-container-org678f930" class="outline-3">
+<h3 id="org678f930">sql-op :regr<sub>r2</sub> (y x)</h3>
+<div class="outline-text-3" id="text-org678f930">
+<p>
+The regr<sub>r2</sub> function returns the square of the correlation coefficient. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:regr_r2 'height 'weight)
+                :from 'people))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="regr_syy"></a>:regr_syy (y x)</p>
+<div id="outline-container-orgd497a52" class="outline-3">
+<h3 id="orgd497a52">sql-op :regr<sub>slope</sub> (y x)</h3>
+<div class="outline-text-3" id="text-orgd497a52">
+<p>
+The regr<sub>slope</sub> function returns the slope of the least-squares-fit linear
+equation determined by the (X, Y) pairs. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:regr_slope 'height 'weight)
+                :from 'people))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="desc">The regr_syy function returns the sum(Y^2) - sum(Y)^2/N (“sum of squares” of the dependent variable).
+<div id="outline-container-org0951561" class="outline-3">
+<h3 id="org0951561">sql-op :regr<sub>sxx</sub> (y x)</h3>
+<div class="outline-text-3" id="text-org0951561">
+<p>
+The regr<sub>sxx</sub> function returns the sum(X<sup>2</sup>) - sum(X)<sup>2</sup>/N (“sum of squares” of
+the independent variable). Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:regr_sxx 'height 'weight)
+                :from 'people))
+</pre>
+</div>
+</div>
+</div>
 
-Example:</p>
+<div id="outline-container-org915ba54" class="outline-3">
+<h3 id="org915ba54">sql-op :regr<sub>sxy</sub> (y x)</h3>
+<div class="outline-text-3" id="text-org915ba54">
+<p>
+The regr<sub>sxy</sub> function returns the sum(X*Y) - sum(X) * sum(Y)/N (“sum of products”
+of independent times dependent variable). Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:regr_sxy 'height 'weight)
+                :from 'people))
+</pre>
+</div>
+</div>
+</div>
 
-    <pre class="code desc">
-(query (:select (:regr_syy 'salary 'age) :from 'employee))</pre>
+<div id="outline-container-org6b6d85e" class="outline-3">
+<h3 id="org6b6d85e">sql-op :regr<sub>syy</sub> (y x)</h3>
+<div class="outline-text-3" id="text-org6b6d85e">
+<p>
+The regr<sub>syy</sub> function returns the sum(Y<sup>2</sup>) - sum(Y)<sup>2</sup>/N (“sum of squares”
+of the dependent variable). Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:regr_syy 'salary 'age)
+                :from 'employee))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="stddev"></a>:stddev (&rest args)</p>
+<div id="outline-container-org0f96241" class="outline-3">
+<h3 id="org0f96241">sql-op :stddev (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org0f96241">
+<p>
+The stddev function returns the the sample standard deviation of the input
+values. It is a historical alias for stddev-samp. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:stddev 'salary)
+                :from 'employee))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="desc">The stddev function returns the the sample standard deviation of the input values. It is a historical alias
-for stddev-samp.
+<div id="outline-container-orgf28f461" class="outline-3">
+<h3 id="orgf28f461">sql-op :stddev-pop (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgf28f461">
+<p>
+The stddev-pop function returns the population standard deviation of the
+input values. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:stddev-pop 'salary)
+                :from 'employee))
+</pre>
+</div>
+</div>
+</div>
 
-Example:</p>
+<div id="outline-container-orgd8ed2f5" class="outline-3">
+<h3 id="orgd8ed2f5">sql-op :stddev-samp (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgd8ed2f5">
+<p>
+The stddev-samp function returns the sample standard deviation of the
+input values. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:stddev-samp 'salary)
+                :from 'employee))
+</pre>
+</div>
+</div>
+</div>
 
-    <pre class="code desc">
-(query (:select (:stddev 'salary) :from 'employee))</pre>
+<div id="outline-container-orgf0ce28f" class="outline-3">
+<h3 id="orgf0ce28f">sql-op :variance (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgf0ce28f">
+<p>
+Variance is a historical alias for var<sub>samp</sub>. The variance function returns
+the sample variance of the input values (square of the sample standard deviation).
+Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:variance 'salary)
+                :from 'employee))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="stddev-pop"></a>:stddev-pop (&rest args)</p>
+<div id="outline-container-orgdd4727b" class="outline-3">
+<h3 id="orgdd4727b">sql-op :var-pop (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgdd4727b">
+<p>
+The var-pop function returns the population variance of the input values
+(square of the population standard deviation). Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:var-pop 'salary)
+                :from 'employee)
+       :single)
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="desc">The stddev-pop function returns the population standard deviation of the input values.
+<div id="outline-container-orgbfd7feb" class="outline-3">
+<h3 id="orgbfd7feb">sql-op :var-samp (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgbfd7feb">
+<p>
+The var-samp function returns the sample variance of the input values
+(square of the sample standard deviation). Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:var-samp 'salary)
+                :from 'employee)
+       :single)
+</pre>
+</div>
 
-Example:</p>
+<p>
+Window Functions
+</p>
+</div>
+</div>
+<div id="outline-container-orgc9da207" class="outline-3">
+<h3 id="orgc9da207">sql-op :over (form &amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgc9da207">
+<p>
+Over, partition-by and window are so-called window functions. A window
+function performs a calculation across a set of table rows that are
+somehow related to the current row.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select 'salary (:over (:sum 'salary))
+                :from 'empsalary))
+</pre>
+</div>
+</div>
+</div>
 
-    <pre class="code desc">
-(query (:select (:stddev-pop 'salary) :from 'employee))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="stddev-samp"></a>:stddev-samp (&rest args)</p>
-
-    <p class="desc">The stddev-samp function returns the sample standard deviation of the input values.
-
-Example:</p>
-
-    <pre class="code desc">
-(query (:select (:stddev-samp 'salary) :from 'employee))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="variance"></a>:variance (&rest args)</p>
-
-    <p class="desc">Variance is a historical alias for var_samp. The variance function returns the sample
-variance of the input values (square of the sample standard deviation).
-
-Example:</p>
-
-    <pre class="code desc">
-(query (:select (:variance 'salary) :from 'employee))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="var-pop"></a>:var-pop (&rest args)</p>
-
-    <p class="desc">The var-pop function returns the population variance of the input values (square of the population standard deviation).
-
-Example:</p>
-
-    <pre class="code desc">
-(query (:select (:var-pop 'salary) :from 'employee) :single)</pre>
-
-    <p class="def"><span>sql-op</span> <a name="var-samp"></a>:var-samp (&rest args)</p>
-
-    <p class="desc">The var-samp function returns the sample variance of the input values (square of the sample standard deviation).
-
-Example:</p>
-
-    <pre class="code desc">
-(query (:select (:var-samp 'salary) :from 'employee) :single)</pre>
-
-
-
-
-
-
-
-
-
-<a name="window-functions"><h3>Window Functions</h3></a>
-
-    <p class="def"><span>sql-op</span> <a name="over"></a>:over (form
-    &amp;rest args)</p>
-
-    <p class="desc"><code>Over</code>, <code>partition-by</code> and <code>window</code> are so-called window
-    functions. A window function performs a calculation across a set
-    of table rows that are somehow related to the current row.</p>
-
-    <pre class="code desc">
-(query (:select 'salary (:over (:sum 'salary))
-                :from 'empsalary))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="partition-by"></a>:partition-by
-    (&amp;rest args)</p>
-
-    <p class="desc"><code>Args</code> is a list of one or more columns
-    to partition by, optionally followed by an <code>:order-by</code>
-    clause.</p>
-
-    <pre class="code desc">
-(query (:select 'depname 'subdepname 'empno 'salary
+<div id="outline-container-org6d05006" class="outline-3">
+<h3 id="org6d05006">sql-op :partition-by (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org6d05006">
+<p>
+Args is a list of one or more columns to partition by, optionally
+followed by an :order-by clause.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select 'depname 'subdepname 'empno 'salary
                 (:over (:avg 'salary)
                        (:partition-by 'depname 'subdepname))
-                :from 'empsalary))</pre>
+                :from 'empsalary))
+</pre>
+</div>
 
-    <p class="desc">Note the use of <code>:order-by</code> without parens:</p>
-
-    <pre class="code desc">
-(query (:select 'depname 'empno 'salary
+<p>
+Note the use of :order-by without parens:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select 'depname 'empno 'salary
                 (:over (:rank)
                        (:partition-by 'depname :order-by (:desc 'salary)))
                 :from 'empsalary))
-    </pre>
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="window"></a>:window (form)</p>
 
-    <pre class="code desc">
-(query (:select (:over (:sum 'salary) 'w)
-              (:over (:avg 'salary) 'w)
-              :from 'empsalary :window
-              (:as 'w (:partition-by 'depname :order-by (:desc 'salary)))))</pre>
+<div id="outline-container-org88bf138" class="outline-3">
+<h3 id="org88bf138">sql-op :window (form)</h3>
+<div class="outline-text-3" id="text-org88bf138">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:over (:sum 'salary) 'w)
+                (:over (:avg 'salary) 'w)
+                :from 'empsalary :window
+                (:as 'w (:partition-by 'depname :order-by (:desc 'salary)))))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="with"></a>:with
-    (&amp;rest args)</p>
+<div id="outline-container-org0d0b25a" class="outline-3">
+<h3 id="org0d0b25a">sql-op :with (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org0d0b25a">
+<p>
+With provides a way to write auxillary statements for use in a larger query,
+often referred to as Common Table Expressions or CTEs.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:with (:as 'upd
+                   (:parens
+                    (:update 'employees :set 'sales-count (:+ 'sales-count 1)
+                             :where (:= 'id
+                                        (:select 'sales-person
+                                                 :from 'accounts
+                                                 :where (:= 'name "Acme Corporation")))
+                             :returning '*)))
+              (:insert-into 'employees-log
+                            (:select '* (:current-timestamp) :from
+                                     'upd))))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="desc">With provides a way to write auxillary statements
-    for use in a larger query, often referred to as Common Table
-    Expressions or CTEs.</p>
-
-    <pre class="code desc">
-(query (:with (:as 'upd
-                 (:parens
-                  (:update 'employees :set 'sales-count (:+ 'sales-count 1)
-                           :where (:= 'id
-                                      (:select 'sales-person
-                                               :from 'accounts
-                                               :where (:= 'name "Acme Corporation")))
-                           :returning '*)))
-            (:insert-into 'employees-log
-                          (:select '* (:current-timestamp) :from
-                 'upd))))</pre>
-
-    <p class="def"><span>sql-op</span> <a name="with-recursive"></a>:with-recursive
-    (&amp;rest args)</p>
-
-    <p class="desc">Recursive modifier to a WITH statement, allowing
-    the query to refer to its own output.</p>
-
-    <pre class="code desc">
-(query (:with-recursive
+<div id="outline-container-orgf106808" class="outline-3">
+<h3 id="orgf106808">sql-op :with-recursive (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgf106808">
+<p>
+Recursive modifier to a WITH statement, allowing the query to refer to its own output.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:with-recursive
       (:as (:t1 'n)
            (:union-all (:values (:set 1))
                        (:select (:+ 'n 1)
                                 :from 't1
-                                :where (:< 'n 100))))
+                                :where (:&lt; 'n 100))))
       (:select (:sum 'n) :from 't1)))
 
 (query (:with-recursive
@@ -1023,529 +1865,673 @@ Example:</p>
                      (:as 'search-graph 'sg)
                      :where (:and (:= 'g.id 'sg.link)
                                   (:not 'cycle)))))
-      (:select '* :from 'search-graph)))</pre>
-<a name="table-functions"><h3>Table Functions</h3></a>
+      (:select '* :from 'search-graph)))
+</pre>
+</div>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="for-update"></a>:for-update (query &amp;key of nowait)</p>
+<div id="outline-container-org3e64afc" class="outline-2">
+<h2 id="org3e64afc">Table Functions</h2>
+<div class="outline-text-2" id="text-org3e64afc">
+</div>
+<div id="outline-container-org465dcd0" class="outline-3">
+<h3 id="org465dcd0">sql-op :for-update (query &amp;key of nowait)</h3>
+<div class="outline-text-3" id="text-org465dcd0">
+<p>
+Locks the selected rows against concurrent updates. This will prevent the
+rows from being modified or deleted by other transactions until the current
+transaction ends. The :of keyword should be followed by one or more table
+names. If provided, PostgreSQL will lock these tables instead of the ones
+detected in the select statement. The :nowait keyword should be provided
+by itself (with no argument attached to it), after all the :of arguments.
+If :nowait is provided, PostgreSQL will throw an error if a table cannot be
+locked immediately, instead of pausing until it's possible.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:for-update (:select :* :from 'foo 'bar 'baz) :of 'bar 'baz :nowait))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="desc">Locks the selected rows against concurrent updates. This will prevent the rows
-    from being modified or deleted by other transactions until the current transaction ends. The :of
-    keyword should be followed by one or more table names. If provided, PostgreSQL will lock
-    these tables instead of the ones detected in the select statement. The :nowait keyword should be
-    provided by itself (with no argument attached to it), after all the :of arguments . If :nowait
-    is provided, PostgreSQL will throw an error if a table cannot be locked immediately, instead of
-    pausing until it's possible.</p>
+<div id="outline-container-orga3280fc" class="outline-3">
+<h3 id="orga3280fc">sql-op :for-share (query &amp;key of nowait)</h3>
+<div class="outline-text-3" id="text-orga3280fc">
+<p>
+Similar to :for-update, except it acquires a shared lock on the table,
+allowing other transactions to perform :for-share selects on the locked
+tables.
+</p>
+</div>
+</div>
 
-    <pre class="desc code">
-(:for-update (:select :* :from 'foo 'bar 'baz) :of 'bar 'baz :nowait)</pre>
+<div id="outline-container-org4441d8c" class="outline-3">
+<h3 id="org4441d8c">sql-op :insert-into (table &amp;rest rest)</h3>
+<div class="outline-text-3" id="text-org4441d8c">
+<p>
+Insert a row into a table. When the second argument is :set, the other
+arguments should be alternating field names and values, otherwise it
+should be a :select form that will produce the values to be inserted.
+Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:insert-into 'my-table :set 'field-1 42 'field-2 "foobar"))
+</pre>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="for-share"></a>:for-share (query &amp;key of nowait)</p>
+<p>
+It is possible to add :returning, followed by a list of field names or
+expressions, at the end of the :insert-into form. This will cause the
+query to return the values of these expressions as a single row.
+</p>
 
-    <p class="desc">Similar to <a href="#for-update">:for-update</a>, except it acquires a shared
-    lock on the table, allowing other transactions to perform :for-share selects on the locked
-    tables.</p>
-
-    <p class="def"><span>sql-op</span> <a name="insert-into"></a>:insert-into (table &amp;rest rest)</p>
-
-    <p class="desc">Insert a row into a table. When the second
-    argument is <code>:set</code>, the other arguments should be
-    alternating field names and values, otherwise it should be a <a
-    href="#select"><code>:select</code></a> form that will produce the
-    values to be inserted. Example:</p>
-
-    <pre class="code desc">
-      (:insert-into 'my-table :set 'field-1 42 'field-2 "foobar")</pre>
-
-    <p class="desc">It is possible to add <code>:returning</code>,
-    followed by a list of field names or expressions, at the end of
-    the <code>:insert-into</code> form. This will cause the query to
-    return the values of these expressions as a single row.</p>
-
-    <p class="desc">In postgresql versions 9.5 and above, it is possible to add
-    <code>:on-conflict-do-nothing</code> (if the item already exists, do nothing),
-    or <code>:on-conflict-update</code> (if the item already exists, update the values)
-    followed by a list of field names which are checked for the conflict then using
-    <code>:update-set</code> followed by a list of field names or expressions following
-    the syntax for updating a table. This is sometimes called an "upsert".
-    Note that as per the postgresql sql documentation you must prepend the table name to the
-    column in the where statement if you are updating. </p>
-
-    <pre class="code desc">
-(query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
+<p>
+In postgresql versions 9.5 and above, it is possible to add
+:on-conflict-do-nothing (if the item already exists, do nothing),
+or :on-conflict-update (if the item already exists, update the values)
+followed by a list of field names which are checked for the conflict
+then using :update-set followed by a list of field names or expressions
+following the syntax for updating a table. This is sometimes called
+an "upsert". Note that as per the postgresql sql documentation you must
+prepend the table name to the column in the where statement if you are updating.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
                      :on-conflict-update 'column-A
                      :update-set 'column-B '$2
-                     :where (:= 'test-table.column-A '$1)) "c" 37)</pre>
+                     :where (:= 'test-table.column-A '$1)) "c" 37)
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="insert-rows-into"></a>:insert-rows-into (table &amp;rest rest)</p>
+<div id="outline-container-org6f794e7" class="outline-3">
+<h3 id="org6f794e7">sql-op :insert-rows-into (table &amp;rest rest)</h3>
+<div class="outline-text-3" id="text-org6f794e7">
+<p>
+Insert multiple rows into a table. Specify the columns first with the
+keyword :columns then provide a list of lists of the values as a
+parameter to the keyword :values. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:insert-rows-into 'my-table :columns 'field-1 'field-2
+                                    :values '((42 "foobar") (23 "foobaz"))))
+</pre>
+</div>
 
-    <p class="desc">Insert multiple rows into a table. Specify the columns first
-      with the keyword <code>:columns</code> then provide a list of lists of the values as
-      a parameter to the keyword <code>:values</code>. Example:</p>
+<p>
+If you will use the default columns, this can be simplified and the :columns
+parameters can be dropped. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:insert-rows-into 'my-table
+                          :values '((42 "foobar") (23 "foobaz"))))
+</pre>
+</div>
+</div>
+</div>
 
-    <pre class="code desc">
-(query (:insert-rows-into 'my-table :columns 'field-1 'field-2
-                                    :values '((42 "foobar") (23 "foobaz"))))</pre>
+<div id="outline-container-org988f6df" class="outline-3">
+<h3 id="org988f6df">sql-op :update (table &amp;rest rest)</h3>
+<div class="outline-text-3" id="text-org988f6df">
+<p>
+Update values in a table. After the table name there should follow the
+keyword :set and any number of alternating field names and values, like
+for :insert-into. Next comes the optional keyword :from, followed by at
+least one table name and then any number of join statements, like for
+:select. After the joins, an optional :where keyword followed by the condition,
+and :returning keyword followed by a list of field names or expressions
+indicating values to be returned as query result.
+</p>
+</div>
+</div>
 
-    <p class="desc">If you will use the default columns, this can be simplified and the :columns parameters can be dropped. Example:</p>
-    <pre class="code desc">(query (:insert-rows-into 'my-table
-                          :values '((42 "foobar") (23 "foobaz"))))</pre>
+<div id="outline-container-org86ae7d2" class="outline-3">
+<h3 id="org86ae7d2">sql-op :delete-from (table &amp;rest rest)</h3>
+<div class="outline-text-3" id="text-org86ae7d2">
+<p>
+Delete rows from the named table. Can be given a :where argument followed
+by a condition, and a :returning argument, followed by one or more
+expressions that should be returned for every deleted row.
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="update"></a>:update (table &amp;rest rest)</p>
+<div id="outline-container-org7d7ccd1" class="outline-3">
+<h3 id="org7d7ccd1">sql-op :create-table (name (&amp;rest columns) &amp;rest options)</h3>
+<div class="outline-text-3" id="text-org7d7ccd1">
+<p>
+Create a new table.
+</p>
+</div>
+<div id="outline-container-orgd7ff7b0" class="outline-4">
+<h4 id="orgd7ff7b0">Column Definition parameters</h4>
+<div class="outline-text-4" id="text-orgd7ff7b0">
+<p>
+After the table name a list of column definitions
+follows, which are lists that start with a name, followed by one or
+more of the following keyword arguments:
+</p>
 
-    <p class="desc">Update values in a table. After the table name
-    there should follow the keyword <code>:set</code> and any number
-    of alternating field names and values, like
-    for <a href="#insert-into"><code>:insert-into</code></a>. Next comes
-    the optional keyword <code>:from</code>, followed by at least one table name
-    and then any number of join statements, like for
-    <a href="#select"><code>:select</code></a>. After the joins,
-    an optional <code>:where</code> keyword followed by the condition,
-    and <code>:returning</code> keyword followed by a list of field
-    names or expressions indicating values to be returned as query
-    result.</p>
+<ul class="org-ul">
+<li>:type</li>
+</ul>
 
-    <p class="def"><span>sql-op</span> <a name="delete-from"></a>:delete-from (table &amp;rest rest)</p>
+<p>
+This one is required. It specifies the type of the column. Use a type like
+(or db-null integer) to specify a column that may have NULL values.
+</p>
 
-    <p class="desc">Delete rows from the named table. Can be given a
-    <code>:where</code> argument followed by a condition, and a
-    <code>:returning</code> argument, followed by one or more
-    expressions that should be returned for every deleted row.</p>
+<ul class="org-ul">
+<li>:default</li>
+</ul>
 
-    <p class="def"><span>sql-op</span> <a name="create-table"></a>:create-table (name (&amp;rest columns) &amp;rest options)</p>
+<p>
+Provides a default value for the field.
+</p>
 
-    <p class="desc">Create a new table. After the table name a list of
-    column definitions follows, which are lists that start with a
-    name, followed by one or more of the following keyword
-    arguments:</p>
+<ul class="org-ul">
+<li>:unique</li>
+</ul>
 
-    <div class="desc"><dl>
-      <dt><code>:type</code></dt>
-      <dd>This one is required. It specifies the type of the column.
-      Use a type like <code>(or db-null integer)</code> to specify a
-      column that may have NULL values.</dd>
-      <dt><code>:default</code></dt>
-      <dd>Provides a default value for the field.</dd>
-      <dt><code>:unique</code></dt>
-      <dd>If this argument is non-nil, the values of the column must
-      be unique.</dd>
-      <dt><code>:primary-key</code></dt>
-      <dd>When non-nil, the column is a primary key of the table.</dd>
-      <dt><code>:check</code></dt>
-      <dd>Adds a constraint to this column. The value provided for
-      this argument must be an S-SQL expression that returns a boolean
-      value. It can refer to other columns in the table if
-      needed.</dd>
-      <dt><code>:references</code></dt>
-      <dd>Adds a foreign key constraint to this table. The argument
-      provided must be a list of the form <code>(target &amp;optional
-      on-delete on-update)</code>. When target is a symbol, it names
-      the table to whose primary key this constraint refers. When it
-      is a list, its first element is the table, and its second
-      element the column within that table that the key refers to.
-      <code>on-delete</code> and <code>on-update</code> can be used to
-      specify the actions that must be taken when the row that this
-      key refers to is deleted or changed. Allowed values are
-      <code>:restrict</code>, <code>:set-null</code>,
-      <code>:set-default</code>, <code>:cascade</code>, and
-      <code>:no-action</code>.</dd>
-    </dl></div>
+<p>
+If this argument is non-nil, the values of the column must be unique.
+</p>
 
-    <p class="desc"><a name="table-constraints"></a>After the list of
-    columns, zero or more extra options (table constraints) can be
-    specified. These are lists starting with one of the following
-    keywords:</p>
+<ul class="org-ul">
+<li>:primary-key</li>
+</ul>
 
-    <div class="desc"><dl>
-      <dt><code>:check</code></dt>
-      <dd>Adds a constraint to the table. Takes a single S-SQL
-      expression that produces a boolean as its argument.</dd>
-      <dt><code>:primary-key</code></dt>
-      <dd>Specifies a primary key for the table. The arguments to this
-      option are the names of the columns that this key consists
-      of.</dd>
-      <dt><code>:unique</code></dt>
-      <dd>Adds a unique constraint to a group of columns. Again, the
-      arguments are a list of symbols that indicate the relevant
-      columns.</dd>
-      <dt><code>:foreign-key</code></dt>
-      <dd>Create a foreign key. The arguments should have the form
-      <code>(columns target &amp;optional on-delete on-update)</code>,
-      where <code>columns</code> is a list of columns that are used by
-      this key, while the rest of the arguments have the same meaning
-      as they have in the <code>:references</code> option for
-      columns.</dd>
-    </dl></div>
+<p>
+When non-nil, the column is a primary key of the table.
+</p>
 
-    <p class="desc">Every list can start with <code>:constraint
-    name</code> to create a specifically named constraint.</p>
+<ul class="org-ul">
+<li>:check</li>
+</ul>
 
-    <p class="desc">Note that, unlike most other operators,
-    <code>:create-table</code> expects most of its arguments to be
-    <em>unquoted</em> symbols. The exception to this is the value of
-    <code>:check</code> constraints: These must be normal S-SQL
-    expressions, which means that any column names they contain should
-    be quoted. When programmatically generating table definitions,
-    <code><a href="#sql-compile">sql-compile</a></code> is usually
-    more practical than the <code><a href="#sql">sql</a></code>
-    macro.</p>
+<p>
+Adds a constraint to this column. The value provided for this argument must
+be an S-SQL expression that returns a boolean value. It can refer to other
+columns in the table if needed.
+</p>
 
-    <p class="desc">Here is an example of a <code>:create-table</code>
-    form:</p>
+<ul class="org-ul">
+<li>:references</li>
+</ul>
 
-    <pre class="code desc">
-(:create-table enemy
+<p>
+Adds a foreign key constraint to this table. The argument provided must be a
+list of the form (target &amp;optional on-delete on-update). When target is a
+symbol, it names the table to whose primary key this constraint refers. When
+it is a list, its first element is the table, and its second element the
+column within that table that the key refers to. on-delete and on-update
+can be used to specify the actions that must be taken when the row that this
+key refers to is deleted or changed. Allowed values are :restrict, :set-null,
+</p>
+
+<ul class="org-ul">
+<li>:set-default, :cascade, and :no-action.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orged43739" class="outline-4">
+<h4 id="orged43739">Table Constraints</h4>
+<div class="outline-text-4" id="text-orged43739">
+<p>
+After the list of columns, zero or more extra options (table constraints) can
+be specified. These are lists starting with one of the following keywords:
+</p>
+
+<ul class="org-ul">
+<li>:check</li>
+</ul>
+
+<p>
+Adds a constraint to the table. Takes a single S-SQL expression that produces
+a boolean as its argument.
+</p>
+
+<ul class="org-ul">
+<li>:primary-key</li>
+</ul>
+
+<p>
+Specifies a primary key for the table. The arguments to this option are the
+names of the columns that this key consists of.
+</p>
+
+<ul class="org-ul">
+<li>:unique</li>
+</ul>
+
+<p>
+Adds a unique constraint to a group of columns. Again, the arguments are a
+list of symbols that indicate the relevant columns.
+</p>
+
+<ul class="org-ul">
+<li>:foreign-key</li>
+</ul>
+
+<p>
+Create a foreign key. The arguments should have the form
+(columns target &amp;optional on-delete on-update), where columns is a list of
+columns that are used by this key, while the rest of the arguments have
+the same meaning as they have in the :references option for columns.
+Every list can start with :constraint name to create a specifically named
+constraint.
+</p>
+
+<p>
+Note that, unlike most other operators, :create-table expects most of its
+arguments to be unquoted symbols. The exception to this is the value
+of :check constraints: These must be normal S-SQL expressions, which means
+that any column names they contain should be quoted. When programmatically
+generating table definitions, sql-compile is usually more practical than
+the sql macro.
+</p>
+
+<p>
+Here is an example of a :create-table form:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(:create-table enemy
   ((name :type string :primary-key t)
    (age :type integer)
    (address :type (or db-null string) :references (important-addresses :cascade :cascade))
    (fatal-weakness :type text :default "None")
    (identifying-color :type (string 20) :unique t))
   (:foreign-key (identifying-color) (colors name))
-  (:constraint enemy-age-check :check (:> 'age 12))</pre>
+  (:constraint enemy-age-check :check (:&gt; 'age 12)))
+</pre>
+</div>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</apen><a name="alter-table"></a>:alter-table (name action &amp;rest args)</p>
+<div id="outline-container-org4959f6d" class="outline-3">
+<h3 id="org4959f6d">sql-op :alter-table (name action &amp;rest args)</h3>
+<div class="outline-text-3" id="text-org4959f6d">
+<p>
+Alters named table. Currently changing a column's data type is not supported.
+The meaning of args depends on action:
+</p>
 
-    <p class="desc">Alters named table. Currently changing a column's data
-    type is not supported. The meaning of <code>args</code> depends on
-    <code>action</code>:</p>
+<ul class="org-ul">
+<li>:add-column</li>
+</ul>
 
-    <div class="desc"><dl>
-        <dt><code>:add-column</code></dt><dd>Adds column to table.
-        <code>args</code> should be a column in the same form as for
-        <a href="#create-table"><code>:create-table</code></a>.</dd>
-        <dt><code>:drop-column</code></dt><dd>Drops a column from the
-        table.</dd>
-        <dt><code>:add-constraint</code></dt><dd>Adds a named constraint
-        to the table.</dd>
-        <dt><code>:drop-constraint</code><dd>Drops constraint.  First
-        of <code>args</code> should name a constraint to be dropped;
-        second, optional argument specifies behaviour regarding
-        objects dependent on the constraint and it may
-        equal <code>:cascade</code> or <code>:restrict</code>.</dd>
-        <dt><code>:add</code></dt><dd>Adds an unnamed constraint to
-        table.  <code>args</code> should be a constraint in the same
-        form as for <a href="#table-constraints"><code>:create-table</code></a>.
-        (This is for backwards-compatibility, you should use named constraints.)</dd>
-        <dt><code>:rename</code></dt><dd>Adds the ability to rename a table.</dd>
-        <dt><code>:rename-column</code></dt><dd>Adds the ability to rename a column of a table.</dd>
-    </dl></div>
+<p>
+Adds column to table. args should be a column in the same form as for :create-table.
+</p>
 
-    <p class="desc">Here is an example using the table defined above:</p>
+<ul class="org-ul">
+<li>:drop-column</li>
+</ul>
 
-    <pre class="code desc">
-(:alter-table enemy :drop-constraint enemy-age-check)
-(:alter-table enemy :add-constraint enemy-age-check :check (:> 'age 21))</pre>
+<p>
+Drops a column from the table.
+</p>
 
-    <p class="def"><span>sql-op</span> <a name="drop-table"></a>:drop-table (name)</p>
+<ul class="org-ul">
+<li>:add-constraint</li>
+</ul>
 
-    <p class="desc">Drops the named table. You may optionally pass
-    <code>:if-exists</code> before the name to suppress the error
-    message. You can also optionally pass <code>:cascade</code> after the name
-    to indicate that it should also drop any other tables, indices, etc which
-    depend on that table.</p>
-    <pre class="code desc">
-    (query (:drop-table :if-exists 'table1 :cascade))</pre>
+<p>
+Adds a named constraint to the table.
+</p>
 
-    <p class="def"><span>sql-op</span> <a
-    name="create-index"></a>:create-index (name &amp;rest args)</p>
+<ul class="org-ul">
+<li>:drop-constraint</li>
+</ul>
 
-    <p class="desc">Create an index on a table. After the name of the
-    index the keyword <code>:on</code> should follow, with the table
-    name after it. Then the keyword <code>:fields</code>, followed by
-    one or more column names. Optionally, a <code>:where</code> clause
-    with a condition can be added at the end to make a partial
-    index.</p>
+<p>
+Drops constraint. First of args should name a constraint to be dropped; second,
+optional argument specifies behaviour regarding objects dependent on the
+constraint and it may equal :cascade or :restrict.
+</p>
 
-    <p class="def"><span>sql-op</span> <a
-    name="create-unique-index"></a>:create-unique-index (name
-    &amp;rest args)</p>
+<ul class="org-ul">
+<li>:add</li>
+</ul>
 
-    <p class="desc">Works like <a
-    href="#create-index"><code>:create-index</code></a>, except that
-    the index created is unique.</p>
+<p>
+Adds an unnamed constraint to table. args should be a constraint in the same
+form as for :create-table. (This is for backwards-compatibility, you should
+use named constraints.)
+</p>
 
-    <p class="def"><span>sql-op</span> <a
-    name="drop-index"></a>:drop-index (name)</p>
+<ul class="org-ul">
+<li>:rename</li>
+</ul>
 
-    <p class="desc">Drop an index. Takes an <code>:if-exists</code>
-    argument like <a
-    href="#drop-table"><code>:drop-table</code></a>.</p>
+<p>
+Adds the ability to rename a table.
+</p>
 
-    <p class="def"><span>sql-op</span> <a
-    name="create-sequence"></a>:create-sequence (name &amp;key
-    increment min-value max-value start cache cycle)</p>
+<ul class="org-ul">
+<li>:rename-column</li>
+</ul>
 
-    <p class="desc">Create a sequence with the given name. The rest of
-      the arguments control the way the sequence selects values.</p>
+<p>
+Adds the ability to rename a column of a table.
+</p>
 
-    <p class="def"><span>sql-op</span> <a name="alter-sequence"></a>:alter-sequence (name)</p>
+<p>
+Here is an example using the table defined above:
+</p>
+<div class="org-src-container">
+<pre class="src src-lsip">(query (alter-table enemy :drop-constraint enemy-age-check))
 
-    <p class="desc">Alters a sequence.
-  See <a href="https://www.postgresql.org/docs/current/static/sql-altersequence.html">Postgresql documentation for parameters.</a>
-      <div class="desc"><dl>
-          <dt><code>:increment</code></dt><dd>Sets the amount by which each subsequent increment will be increased.</dd>
-          <dt><code>:min-value</code></dt><dd></dd>
-          <dt><code>:max-value</code></dt><dd></dd>
-          <dt><code>:no-min</code></dt><dd></dd>
-          <dt><code>:no-max</code></dt><dd></dd>
-          <dt><code>:start</code></dt><dd></dd>
-          <dt><code>:restart</code></dt><dd></dd>
-          <dt><code>:cache</code></dt><dd></dd>
-          <dt><code>:cycle</code></dt><dd></dd>
-          <dt><code>:no-cycle</code></dt><dd></dd>
-          <dt><code>:owned-by</code></dt><dd></dd>
-    </dl></div>
-    <code>:if-exists</code> before the name to suppress the error
-    message.</p>
+(query (:alter-table enemy :add-constraint enemy-age-check :check (:&gt; 'age 21)))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a
-    name="drop-sequence"></a>:drop-sequence (name)</p>
+<div id="outline-container-org51126fd" class="outline-3">
+<h3 id="org51126fd">sql-op :drop-table (name)</h3>
+<div class="outline-text-3" id="text-org51126fd">
+<p>
+Drops the named table. You may optionally pass :if-exists before the name
+to suppress the error message. You can also optionally pass :cascade after
+the name to indicate that it should also drop any other tables, indices,
+etc which depend on that table.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:drop-table :if-exists 'table1 :cascade))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="desc">Drop a sequence. You may pass
-    <code>:if-exists</code> as an extra first argument.</p>
+<div id="outline-container-orge2c7611" class="outline-3">
+<h3 id="orge2c7611">sql-op :create-index (name &amp;rest args)</h3>
+<div class="outline-text-3" id="text-orge2c7611">
+<p>
+Create an index on a table. After the name of the index the keyword :on should
+follow, with the table name after it. Then the keyword :fields, followed by
+one or more column names. Optionally, a :where clause with a condition can
+be added at the end to make a partial index.
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a
-    name="create-view"></a>:create-view (name query)</p>
+<div id="outline-container-orgf61073f" class="outline-3">
+<h3 id="orgf61073f">sql-op :create-unique-index (name &amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgf61073f">
+<p>
+Works like :create-index, except that the index created is unique.
+</p>
+</div>
+</div>
 
-    <p class="desc">Create a view from an S-SQL-style query.</p>
+<div id="outline-container-orgaecdc60" class="outline-3">
+<h3 id="orgaecdc60">sql-op :drop-index (name)</h3>
+<div class="outline-text-3" id="text-orgaecdc60">
+<p>
+Drop an index. Takes an :if-exists argument like :drop-table.
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a
-    name="drop-view"></a>:drop-view (name)</p>
+<div id="outline-container-org35dd893" class="outline-3">
+<h3 id="org35dd893">sql-op :create-sequence (name &amp;key increment min-value max-value start cache cycle)</h3>
+<div class="outline-text-3" id="text-org35dd893">
+<p>
+Create a sequence with the given name. The rest of the arguments control
+the way the sequence selects values.
+</p>
+</div>
+</div>
 
-    <p class="desc">Drop a view. Takes optional
-    <code>:if-exists</code> argument.</p>
+<div id="outline-container-org39afcc6" class="outline-3">
+<h3 id="org39afcc6">sql-op :alter-sequence (name)</h3>
+<div class="outline-text-3" id="text-org39afcc6">
+<p>
+Alters a sequence. See <a href="https://www.postgresql.org/docs/10/static/sql-altersequence.html">Postgresql documentation</a> for parameters.
+</p>
 
-    <p class="def"><span>sql-op</span> <a
-    name="set-constraints"></a>:set-constraints (state &amp;rest
-    constraints)</p>
+<ul class="org-ul">
+<li>:increment</li>
+</ul>
 
-    <p class="desc">Configure whether deferrable constraints should be
-    checked when a statement is executed, or when the transaction
-    containing that statement is completed. The provided state must be
-    either <code>:immediate</code>, indicating the former, or
-    <code>:deferred</code>, indicating the latter.  The constraints
-    must be either the names of the constraints to be configured, or
-    unspecified, indicating that all deferrable constraints should be
-    thus configured.</p>
+<p>
+Sets the amount by which each subsequent increment will be increased.
+</p>
 
-    <p class="def"><span>sql-op</span> <a
-    name="listen"></a>:listen (channel)</p>
+<ul class="org-ul">
+<li>:min-value</li>
 
-    <p class="desc">Tell the server to listen for notification events
-      on channel <code>channel</code>, a string, on the current
-      connection.</p>
+<li>:max-value</li>
 
-    <p class="def"><span>sql-op</span> <a
-    name="unlisten"></a>:unlisten (channel)</p>
+<li>:no-min</li>
 
-    <p class="desc">Stop listening for events on <code>channel</code>.</p>
+<li>:no-max</li>
 
-    <p class="def"><span>sql-op</span> <a
-    name="notify"></a>:notify (channel &optional payload)</p>
+<li>:start</li>
 
-    <p class="desc">Signal a notification event on
-        channel <code>channel</code>, a string.  The
-        optional <code>payload</code> string can be used to send
-        additional event information to the listeners.</p>
+<li>:restart</li>
 
-    <p class="def"><span>sql-op</span> <a
-    name="create-role"></a>:create-role (role &amp;rest args)</p>
+<li>:cache</li>
 
-    <p class="desc">Create a new role (user). Following the role name are optional keywords arguments:</p>
+<li>:cycle</li>
 
-    <div class="desc"><dl>
-      <dt><code>:options</code></dt>
-      <dd>One or more of the no-parameter options to
-      PostgreSQL's <a href="https://www.postgresql.org/docs/current/static/sql-createrole.html">CREATE
-      ROLE</a> SQL command.</dd>
-      <dt><code>:password</code></dt>
-      <dd>Sets the role's password. (A password is only of use for
-      roles having the LOGIN attribute, but you can nonetheless define
-      one for roles without it.) If you do not plan to use password
-      authentication you can omit this option. If no password is
-      specified, the password will be set to null and password
-      authentication will always fail for that user. </dd>
-      <dt><code>:connection-limit</code></dt>
-      <dd>If role can log in, this specifies how many concurrent
-      connections the role can make. -1 (the default) means no
-      limit.</dd>
-      <dt><code>:valid-until</code></dt>
-      <dd>The <code>:valid-until</code> clause sets a date and time
-      after which the role's password is no longer valid. If this
-      clause is omitted the password will be valid for all time.</dd>
-      <dt><code>:role</code></dt>
-      <dd>Lists one or more existing roles which are automatically
-      added as members of the new role. (This in effect makes the new
-      role a “group”.)</dd>
-      <dt><code>:in-role</code></dt>
-      <dd>Lists one or more existing roles to which the new role will
-      be immediately added as a new member.</dd>
-    </dl></div>
+<li>:no-cycle</li>
 
-    <p class="desc">Here is an example of a <code>:create-role</code> form:</p>
+<li>:owned-by</li>
 
-    <pre class="code desc">
-      (:create-role 'user23 :options 'SUPERUSER 'NOINHERIT 'LOGIN :password "mypassword" :connection-limit 100 :role 'users)</pre>
+<li>:if-exists before the name to suppress the error message.</li>
+</ul>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="create-database"></a>:create-database (name)</p>
+<div id="outline-container-org0003338" class="outline-3">
+<h3 id="org0003338">sql-op :drop-sequence (name)</h3>
+<div class="outline-text-3" id="text-org0003338">
+<p>
+Drop a sequence. You may pass :if-exists as an extra first argument.
+</p>
+</div>
+</div>
 
-    <p class="desc">Create a new database with the given name.</p>
+<div id="outline-container-org0bc8863" class="outline-3">
+<h3 id="org0bc8863">sql-op :create-view (name query)</h3>
+<div class="outline-text-3" id="text-org0bc8863">
+<p>
+Create a view from an S-SQL-style query.
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="drop-database"></a>:drop-database (name)</p>
+<div id="outline-container-orgc82c6d8" class="outline-3">
+<h3 id="orgc82c6d8">sql-op :drop-view (name)</h3>
+<div class="outline-text-3" id="text-orgc82c6d8">
+<p>
+Drop a view. Takes optional :if-exists argument.
+</p>
+</div>
+</div>
 
-    <p class="desc">Drops the named database. You may optionally pass
-    <code>:if-exists</code> before the name to suppress the error
-    message.</p>
+<div id="outline-container-org8c108f0" class="outline-3">
+<h3 id="org8c108f0">sql-op :set-constraints (state &amp;rest constraints)</h3>
+<div class="outline-text-3" id="text-org8c108f0">
+<p>
+Configure whether deferrable constraints should be checked when a statement
+is executed, or when the transaction containing that statement is completed.
+The provided state must be either :immediate, indicating the former,
+or :deferred, indicating the latter. The constraints must be either the
+names of the constraints to be configured, or unspecified, indicating that
+all deferrable constraints should be thus configured.
+</p>
+</div>
+</div>
 
-    <p class="def"><span>sql-op</span> <a name="copy"></a>:copy (table &amp;rest args)</p>
+<div id="outline-container-orge9cbb00" class="outline-3">
+<h3 id="orge9cbb00">sql-op :listen (channel)</h3>
+<div class="outline-text-3" id="text-orge9cbb00">
+<p>
+Tell the server to listen for notification events on channel channel,
+a string, on the current connection.
+</p>
+</div>
+</div>
 
-    <p class="desc">Move data between Postgres tables and filesystem
-      files. Table name is required followed by one or more of the
-      following keyword
-      arguments. <a href="https://www.postgresql.org/docs/current/static/sql-copy.html">Documentation
-      for the copy command</a> provides a full reference. An
-      example from the Greenplum tutorial:</p>
+<div id="outline-container-org105f96b" class="outline-3">
+<h3 id="org105f96b">sql-op :unlisten (channel)</h3>
+<div class="outline-text-3" id="text-org105f96b">
+<p>
+Stop listening for events on channel.
+</p>
+</div>
+</div>
 
-    <pre class="code desc">
-(query
+<div id="outline-container-org203260f" class="outline-3">
+<h3 id="org203260f">sql-op :notify (channel &amp;optional payload)</h3>
+<div class="outline-text-3" id="text-org203260f">
+<p>
+Signal a notification event on channel channel, a string. The optional
+payload string can be used to send additional event information to the listeners.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd541089" class="outline-3">
+<h3 id="orgd541089">sql-op :create-role (role &amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgd541089">
+<p>
+Create a new role (user). Following the role name are optional keywords
+arguments:
+</p>
+
+<ul class="org-ul">
+<li>:options</li>
+</ul>
+
+<p>
+One or more of the no-parameter options to PostgreSQL's CREATE ROLE SQL command.
+</p>
+
+<ul class="org-ul">
+<li>:password</li>
+</ul>
+
+<p>
+Sets the role's password. (A password is only of use for roles having the LOGIN
+attribute, but you can nonetheless define one for roles without it.) If you do
+not plan to use password authentication you can omit this option. If no
+password is specified, the password will be set to null and password
+authentication will always fail for that user.
+</p>
+
+<ul class="org-ul">
+<li>:connection-limit</li>
+</ul>
+
+<p>
+If role can log in, this specifies how many concurrent connections the role can
+make. -1 (the default) means no limit.
+</p>
+
+<ul class="org-ul">
+<li>:valid-until</li>
+</ul>
+
+<p>
+The :valid-until clause sets a date and time after which the role's password
+is no longer valid. If this clause is omitted the password will be valid for
+all time.
+</p>
+
+<ul class="org-ul">
+<li>:role</li>
+</ul>
+
+<p>
+Lists one or more existing roles which are automatically added as members of
+the new role. (This in effect makes the new role a “group”.)
+</p>
+
+<ul class="org-ul">
+<li>:in-role</li>
+</ul>
+
+<p>
+Lists one or more existing roles to which the new role will be immediately
+added as a new member.
+</p>
+
+<p>
+Here is an example of a :create-role form:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-role 'user23
+                     :options 'SUPERUSER 'NOINHERIT 'LOGIN
+                     :password "mypassword"
+                     :connection-limit 100 :role 'users))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org0076eb7" class="outline-3">
+<h3 id="org0076eb7">sql-op :create-database (name)</h3>
+<div class="outline-text-3" id="text-org0076eb7">
+<p>
+Create a new database with the given name.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org322e61c" class="outline-3">
+<h3 id="org322e61c">sql-op :drop-database (name)</h3>
+<div class="outline-text-3" id="text-org322e61c">
+<p>
+Drops the named database. You may optionally pass :if-exists before the
+name to suppress the error message.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org5070746" class="outline-3">
+<h3 id="org5070746">sql-op :copy (table &amp;rest args)</h3>
+<div class="outline-text-3" id="text-org5070746">
+<p>
+Move data between Postgres tables and filesystem files. Table name is required
+followed by one or more of the following keyword arguments. Documentation for
+the copy command provides a full reference. An example from the Greenplum
+tutorial:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
    (:copy 'faa.d_airlines
     :columns 'airlineid 'airline_desc
-  	:from "/home/gpadmin/gpdb-sandbox-tutorials/faa/L_AIRLINE_ID.csv"
-  	:on-segment t
-  	:binary t
-  	:oids t
-	  :header t
-  	:delimiter ","
-	  :null "NULL"
-  	:escape "my-escape-string"
-  	:newline "CR"
-	  :csv t
-  	:log-errors t
-	  :segment-reject-limit 100 'ROWS))</pre>
+    :from "/home/gpadmin/gpdb-sandbox-tutorials/faa/L_AIRLINE_ID.csv"
+    :on-segment t
+    :binary t
+    :oids t
+    :header t
+    :delimiter ","
+    :null "NULL"
+    :escape "my-escape-string"
+    :newline "CR"
+    :csv t
+    :log-errors t
+    :segment-reject-limit 100 'ROWS))
 
-    <h2><a name="index"></a>Symbol-index</h2>
-
-    <ul class="symbol-index">
-      <li><a href="#infix">:+</a></li>
-      <li><a href="#unary">:-</a></li>
-      <li><a href="#infix">:*</a></li>
-      <li><a href="#infix">:&amp;</a></li>
-      <li><a href="#infix">:|</a></li>
-      <li><a href="#infix">:||</a></li>
-      <li><a href="#infix">:=</a></li>
-      <li><a href="#infix">:/</a></li>
-      <li><a href="#infix">:!=</a></li>
-      <li><a href="#infix">:&lt;</a></li>
-      <li><a href="#infix">:&gt;</a></li>
-      <li><a href="#infix">:&lt;=</a></li>
-      <li><a href="#infix">:&gt;=</a></li>
-      <li><a href="#infix">:^</a></li>
-      <li><a href="#unary">:~</a></li>
-      <li><a href="#regexp">:!~</a></li>
-      <li><a href="#regexp">:!~*</a></li>
-      <li><a href="#regexp">:~*</a></li>
-      <li><a href="#match">:@@</a></li>
-      <li><a href="#deref">:[]</a></li>
-      <li><a href="#sql-template">$$</a></li>
-      <li><a href="#infix">:and</a></li>
-      <li><a href="#array-agg">:array-agg</a></li>
-      <li><a href="#as">:as</a></li>
-      <li><a href="#avg">:avg</a></li>
-      <li><a href="#between">:between</a></li>
-      <li><a href="#types">bytea</a></li>
-      <li><a href="#types">bigint</a></li>
-      <li><a href="#case">:case</a></li>
-      <li><a href="#copy">:copy</a></li>
-      <li><a href="#count">:count</a></li>
-      <li><a href="#corr">:corr</a></li>
-      <li><a href="#covar-pop">:covar-pop</a></li>
-      <li><a href="#covar-samp">:covar-samp</a></li>
-      <li><a href="#create-database">:create-database</a></li>
-      <li><a href="#create-role">:create-role</a></li>
-      <li><a href="#create-index">:create-index</a></li>
-      <li><a href="#create-role">:create-role</a></li>
-      <li><a href="#create-sequence">:create-sequence</a></li>
-      <li><a href="#create-table">:create-table</a></li>
-      <li><a href="#create-unique-index">:create-unique-index</a></li>
-      <li><a href="#db-null">db-null</a></li>
-      <li><a href="#delete-from">:delete-from</a></li>
-      <li><a href="#desc">:desc</a></li>
-      <li><a href="#dot">:dot</a></li>
-      <li><a href="#types">double-precision</a></li>
-      <li><a href="#drop-database">:drop-database</a></li>
-      <li><a href="#drop-index">:drop-index</a></li>
-      <li><a href="#drop-sequence">:drop-sequence</a></li>
-      <li><a href="#drop-table">:drop-table</a></li>
-      <li><a href="#drop-view">:drop-view</a></li>
-      <li><a href="#set-constraints">:set-constraints</a></li>
-      <li><a href="#enable-s-sql-syntax">enable-s-sql-syntax</a></li>
-      <li><a href="#*escape-sql-names-p*">*escape-sql-names-p*</a></li>
-      <li><a href="#every">:every</a></li>
-      <li><a href="#infix">:except</a></li>
-      <li><a href="#exists">:exists</a></li>
-      <li><a href="#extract">:extract</a></li>
-      <li><a href="#from-sql-name">from-sql-name</a></li>
-      <li><a href="#function">:function</a></li>
-      <li><a href="#like">:ilike</a></li>
-      <li><a href="#in">:in</a></li>
-      <li><a href="#insert-into">:insert-into</a></li>
-      <li><a href="#infix">:intersect</a></li>
-      <li><a href="#is-null">:is-null</a></li>
-      <li><a href="#like">:like</a></li>
-      <li><a href="#limit">:limit</a></li>
-      <li><a href="#listen">:listen</a></li>
-      <li><a href="#max">:max</a></li>
-      <li><a href="#min">:min</a></li>
-      <li><a href="#mode">:mode</a></li>
-      <li><a href="#not">:not</a></li>
-      <li><a href="#not-in">:not-in</a></li>
-      <li><a href="#not-null">:not-null</a></li>
-      <li><a href="#notify">:notify</a></li>
-      <li><a href="#types">numeric</a></li>
-      <li><a href="#nulls-first">:nulls-first</a></li>
-      <li><a href="#nulls-first">:nulls-last</a></li>
-      <li><a href="#infix">:or</a></li>
-      <li><a href="#order-by">:order-by</a></li>
-      <li><a href="#percentile-cont">:percentile-cont</a></li>
-      <li><a href="#percentile-dist">:percentile-dist</a></li>
-      <li><a href="#raw">:raw</a></li>
-      <li><a href="#types">real</a></li>
-      <li><a href="#register-sql-operators">:register-sql-operators</a></li>
-      <li><a href="#regr_avgx">:regr_avgx</a></li>
-      <li><a href="#regr_avgy">:regr_avgy</a></li>
-      <li><a href="#regr_count">:regr_count</a></li>
-      <li><a href="#regr_intercept">:regr_intercept</a></li>
-      <li><a href="#regr_r2">:regr_r2</a></li>
-      <li><a href="#regr_slope">:regr_slope</a></li>
-      <li><a href="#regr_sxx">:regr_sxx</a></li>
-      <li><a href="#regr_sxy">:regr_sxy</a></li>
-      <li><a href="#regr_syy">:regr_syy</a></li>
-      <li><a href="#*standard-sql-strings*">*standard-sql-strings*</a></li>
-      <li><a href="#select">:select</a></li>
-      <li><a href="#set">:set</a></li>
-      <li><a href="#types">smallint</a></li>
-      <li><a href="#sql">sql</a></li>
-      <li><a href="#sql-compile">sql-compile</a></li>
-      <li><a href="#sql-escape">sql-escape</a></li>
-      <li><a href="#sql-escape-string">sql-escape-string</a></li>
-      <li><a href="#sql-template">sql-template</a></li>
-      <li><a href="#sql-type-name">sql-type-name</a></li>
-      <li><a href="#string-agg">:string-agg</a></li>
-      <li><a href="#stddev">:stddev</a></li>
-      <li><a href="#stddev-pop">:stddev-pop</a></li>
-      <li><a href="#stddev-samp">:stddev-samp</a></li>
-      <li><a href="#sum">:sum</a></li>
-      <li><a href="#types">text</a></li>
-      <li><a href="#to-sql-name">to-sql-name</a></li>
-      <li><a href="#type">:type</a></li>
-      <li><a href="#infix">:union</a></li>
-      <li><a href="#infix">:union-all</a></li>
-      <li><a href="#unlisten">:unlisten</a></li>
-      <li><a href="#update">:update</a></li>
-      <li><a href="#types">varchar</a></li>
-      <li><a href="#variance">:variance</a></li>
-      <li><a href="#var-pop">:var-pop</a></li>
-      <li><a href="#var-samp">:var-samp</a></li>
-    </ul>
-
-  </body>
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2018-08-11 Sat 14:03</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
 </html>

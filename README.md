@@ -191,7 +191,7 @@ With that in mind, [Simple-date](http://marijnhaverbeke.nl/postmodern/simple-dat
 A lot of work has been done on [local-time](https://github.com/dlowe-net/local-time), which solves the same problem as simple-date, but does understand time zones. We are considering the best ways to make life easier for users of the two libraries.
 
 ### Portability
-The Lisp code in Postmodern is theoretically portable across implementations, and seems to work on all major ones. Some work is currently being done to support Genera. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).
+The Lisp code in Postmodern is theoretically portable across implementations, and seems to work on all major ones and even less major ones such as  Genera. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).
 
 The library will definitely not work for PostgreSQL versions older than 7.4 (it uses a client/server protocol that was introduced in that version). On versions prior to 8.1, retrieving date and time objects is broken, because their binary representation was changed. Part of the functionality of insert-dao (automatic defaulting of unbound slots) only works in PostgreSQL 8.2 and up.
 

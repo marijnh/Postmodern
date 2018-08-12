@@ -1,670 +1,1079 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-
-  <head>
-    <title>CL-postgres reference manual</title>
-    <link rel="stylesheet" type="text/css" href="style.css"/>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  </head>
-
-  <body>
-
-    <h1>CL-postgres reference manual</h1>
-
-    <p>The CL-postgres module implements a rather low-level interface
-    for communicating with a <a
-    href="http://postgresql.org">PostgreSQL</a> database server. It is
-    part of the <a href="index.html">Postmodern</a> library, but can
-    be used separately.</p>
-
-    <h2>Contents</h2>
-
-    <ol>
-      <li><a href="#connecting">Connecting</a></li>
-      <li><a href="#querying">Querying</a></li>
-      <li><a href="#reading">Reading values</a></li>
-      <li><a href="#row-readers">Row readers</a></li>
-      <li><a href="#bulk-copying">Bulk Copying</a></li>
-      <li><a href="#conditions">Conditions</a></li>
-      <li><a href="#index">Symbol-index</a></li>
-    </ol>
-
-    <h2><a name="connecting">Connecting</a></h2>
-
-    <p class="def">
-      <span>class</span>
-      <a name="database-connection"></a>
-      database-connection
-    </p>
-
-    <p class="desc">Objects of this type represent database
-    connections.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="open-database"></a>
-      open-database (database user password host &amp;optional (port 5432) (use-ssl :no))
-      <br/>&#8594; database-connection
-    </p>
-
-    <p class="desc">Create and open a connection for the specified
-    server, database, and user. <code>use-ssl</code> may be
-    <code>:no</code>, <code>:yes</code>, or <code>:try</code>, where
-    <code>:try</code> means 'if the server supports it'. When it is
-    anything but <code>:no</code>, you must have the <a
-    href="http://common-lisp.net/project/cl-plus-ssl/">CL+SSL</a>
-    package loaded to initiate the connection.</p>
-
-    <p class="desc">On SBCL and Clozure CL, the value
-    <code>:unix</code> may be passed for <code>host</code>, in order
-    to connect using a Unix domain socket instead of a TCP socket.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="close-database"></a>
-      close-database (database-connection)
-    </p>
-
-    <p class="desc">Close a database connection. It is advisable to
-    call this on connections when you are done with them. Otherwise
-    the open socket will stick around until it is garbage collected,
-    and no one will tell the database server that we are done
-    with it.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="reopen-database"></a>
-      reopen-database (database-connection)
-    </p>
-
-    <p class="desc">Re-establish a database connection for a
-    previously closed connection object. (Calling this on a connection
-    that is still open is harmless.)</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="database-open-p"></a>
-      database-open-p (database-connection)
-      <br/>&#8594; boolean
-    </p>
-
-    <p class="desc">Test whether a database connection is still
-    open.</p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="connection-meta"></a>
-      connection-meta (database-connection)
-      <br/>&#8594; hash-table
-    </p>
-
-    <p class="desc">This method provides access to a hash table that
-    is associated with the current database connection. When the
-    connection is closed and re-opened this hash table is reset. The
-    most obvious use for this is for storing information about the
-    prepared statements that have been parsed for this connection.</p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="connection-parameters"></a>
-      connection-parameters (database-connection)
-      <br/>&#8594; hash-table
-    </p>
-
-    <p class="desc">This method returns a mapping (string to string)
-    containing all the <a
-    href="http://www.postgresql.org/docs/current/static/runtime-config.html">configuration
-    parameters</a> for the connection.</p>
-
-    <p class="def">
-      <span>variable</span>
-      <a name="*unix-socket-dir*"></a>
-      *unix-socket-dir*
-    </p>
-
-    <p class="desc">On SBCL, when using the <code>:unix</code> keyword
-    as host argument when creating a connection, this variable
-    determines the directory in which CL-Postgres will look for the
-    socket file.</p>
-
-    <p class="def">
-      <span>variable</span>
-      <a name="*ssl-certificate-file*"></a>
-      *ssl-certificate-file*<br/>
-      <span>variable</span>
-      <a name="*ssl-key-file*"></a>
-      *ssl-key-file*
-    </p>
-
-    <p class="desc">When using SSL (see <a
-    href="#open-database"><code>open-database</code></a>), these can
-    be used to provide client key and certificate files. They can be
-    either <code>NIL</code>, for no file, or a pathname.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="wait-for-notification"></a>
-      wait-for-notification (database-connection)
-    </p>
-
-    <p class="desc">This function blocks until a notification is
-      received on the connection.  The PostgreSQL <code>LISTEN</code>
-      command must be used to enable listening for notifications.</p>
-
-    <h2><a name="querying">Querying</a></h2>
-
-    <p class="def">
-      <span>function</span>
-      <a name="exec-query"></a>
-      exec-query (database-connection query &amp;optional (row-reader '<a href="#ignore-row-reader"><code>ignore-row-reader</code></a>))
-      <br/>&#8594; result
-    </p>
-
-    <p class="desc">Sends the given query to the given connection, and
-    interprets the results (if there are any) with the given <a
-    href="#reading">row-reader</a>. If the database returns
-    information about the amount of rows affected, this is returned as
-    a second value.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="prepare-query"></a>
-      prepare-query (database-connection name query)
-    </p>
-
-    <p class="desc">Parse and plan the given query, and store it under
-    the given name. Note that prepared statements are per-connection,
-    so they can only be executed through the same connection that
-    prepared them.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="exec-prepared"></a>
-      exec-prepared (database-connection name parameters &amp;optional (row-reader '<a href="#ignore-row-reader"><code>ignore-row-reader</code></a>))
-      <br/>&#8594; result
-    </p>
-
-    <p class="desc">Execute the prepared statement by the given name.
-    Parameters should be given as a list. Each value in this list
-    should be of a type that <a
-    href="#to-sql-string"><code>to-sql-string</code></a> has been
-    specialised on. (Byte arrays will be passed in their binary form,
-    without being put through <a
-    href="#to-sql-string"><code>to-sql-string</code></a>.) The result
-    of the executing the statement, if any, is interpreted by the
-    given <a href="#row-readers">row reader</a>, and returned. Again,
-    the number or affected rows is optionally returned as a second
-    value.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="unprepare-query"></a>
-      unprepare-query (database-connection name)
-    </p>
-
-    <p class="desc">Close the prepared statement by the given name.
-    This will free resources and allow the name to be associated with
-    a new prepared query.</p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="to-sql-string"></a>
-      to-sql-string (value)
-      <br/>&#8594; (values string needs-escaping)
-    </p>
-
-    <p class="desc">Convert a Lisp value to its textual
-    <em>unescaped</em> SQL representation. Returns a second value
-    indicating whether this value should be escaped if it is to be put
-    directly into a query.</p>
-
-    <p class="desc">You can define <code>to-sql-string</code> methods
-    for your own datatypes if you want to be able to pass them to <a
-    href="#exec-prepared"><code>exec-prepared</code></a>. When a
-    non-<code>NIL</code> second value is returned, this may be
-    <code>T</code> to indicate that the first value should simply be
-    escaped as a string, or a second string providing a type prefix
-    for the value. (This is used by <a
-    href="s-sql.html">S-SQL</a>.)</p>
-
-    <p class="def">
-      <span>variable</span>
-      <a name="*silently-truncate-rationals*"></a>
-      *silently-truncate-rationals*
-    </p>
-
-    <p class="desc">When a rational number is passed into a query (as
-    per <a href="#to-sql-string"><code>to-sql-string</code></a>), but
-    it can not be expressed within 38 decimal digits (for example
-    <code>1/3</code>), it will be truncated, and lose some precision.
-    Set this variable to <code>nil</code> to suppress that behaviour
-    and raise an error instead.</p>
-
-    <p class="def">
-      <span>variable</span>
-      <a name="*query-log*"></a>
-      *query-log*
-    </p>
-
-    <p class="desc">When debugging, it can be helpful to inspect the
-    queries that are being sent to the database. Set this variable to
-    an output stream value (<code>*standard-output*</code>, for
-    example) to have CL-postgres log every query it makes.</p>
-
-    <p class="def">
-      <span>variable</span>
-      <a name="*query-callback*"></a>
-      *query-callback*
-    </p>
-
-    <p class="desc">
-      When profiling or debugging,
-      the <a href="#*query-log*"><code>*query-log*</code></a> may not
-      give enough information, or reparsing its output may not be
-      feasible.  This variable may be set to a designator of function
-      taking two arguments.  This function will be then called after
-      every query, and receive query string and internal time units
-      (as in <code>(CL:GET-INTERNAL-REAL-TIME)</code>) spent in query
-      as its arguments.
-    </p>
-
-    <p class="desc">
-      Default value of this variable
-      is <a href="#log-query"><code>'LOG-QUERY</code></a>, which takes
-      care of <a href="#*query-log*"><code>*QUERY-LOG*</code></a>
-      processing.  If you provide custom query callback and wish to
-      keep <a href="#*query-log*"><code>*QUERY-LOG*</code></a>
-      functionality, you will have to
-      call <a href="#log-query"><code>LOG-QUERY</code></a> from your
-      callback function
-    </p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="log-query"></a>
-      log-query (query internal-time)
-    </p>
-
-    <p class="desc">
-      This function is default value
-      of <a href="#*query-callback*"><code>*QUERY-CALLBACK*</code></a>
-      and logs queries
-      to <a href="#*query-log*"><code>*QUERY-LOG*</code></a> if it is
-      not <code>NIL</code>.
-    </p>
-
-    <h2><a name="reading">Reading values</a></h2>
-
-    <p>CL-postgres knows how to convert commonly used PostgreSQL data
-    types to Lisp values. This table shows the mapping:</p>
-
-    <table>
-      <thead>
-        <tr><th>PostgreSQL</th><th>Lisp</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>smallint</td><td>integer</td></tr>
-        <tr><td>integer</td><td>integer</td></tr>
-        <tr><td>bigint</td><td>integer</td></tr>
-        <tr><td>numeric</td><td>ratio</td></tr>
-        <tr><td>real</td><td>float</td></tr>
-        <tr><td>double precision</td><td>double-float</td></tr>
-        <tr><td>boolean</td><td>boolean</td></tr>
-        <tr><td>varchar</td><td>string</td></tr>
-        <tr><td>text</td><td>string</td></tr>
-        <tr><td>bytea</td><td>(vector (unsigned-byte 8))</td></tr>
-      </tbody>
-    </table>
-
-    <p>The mapping from PostgreSQL types (identified by OID numbers)
-    to the functions that interpret them is kept in so-called SQL
-    readtables. All types for which no reader is defined will be
-    returned as string values containing their PostgreSQL
-    representation.</p>
-
-    <p class="def">
-      <span>variable</span>
-      <a name="*sql-readtable*"></a>
-      *sql-readtable*
-    </p>
-
-    <p class="desc">This variable is used to choose the current
-    readtable. For simple use, you will not have to touch this, but it
-    is possible that code within a Lisp image requires different
-    readers in different situations, in which case you can create
-    separate read tables.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="copy-sql-readtable"></a>
-      copy-sql-readtable (table)
-      <br/>&#8594; readtable
-    </p>
-
-    <p class="desc">Copies a given readtable.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="default-sql-readtable"></a>
-      default-sql-readtable ()
-      <br/>&#8594; readtable
-    </p>
-
-    <p class="desc">Returns the default readtable, containing only the
-    readers defined by CL-postgres itself.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="set-sql-reader"></a>
-      set-sql-reader (oid function &amp;key table binary-p)
-    </p>
-
-    <p class="desc">Define a new reader for a given type.
-    <code>table</code> defaults to <a
-    href="#*sql-readtable"><code>*sql-readtable*</code></a>. The
-    reader function should take a single argument, a string, and
-    transform that into some kind of equivalent Lisp value. When
-    <code>binary-p</code> is true, the reader function is supposed to
-    directly read the binary representation of the value. In most
-    cases this is not recommended, but if you want to use it: provide
-    a function that takes a binary input stream and an integer (the
-    size of the value, in bytes), and reads the value from that
-    stream. Note that reading less or more bytes than the given size
-    will horribly break your connection.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="set-sql-datetime-readers"></a>
-      set-sql-datetime-readers (&amp;key date timestamp timestamp-with-timezone time interval table)
-    </p>
-
-    <p class="desc">Since there is no widely recognised standard way
-    of representing dates and times in Common Lisp, and reading these
-    from string representation is clunky and slow, this function
-    provides a way to easily plug in binary readers for the
-    <code>date</code>, <code>time</code>, <code>timestamp</code>, and
-    <code>interval</code> types. It should be given functions with the
-    following signatures:</p>
-
-    <dl class="desc">
-      <dt><code>:date (days)</code></dt>
-      <dd>Where <code>days</code> is the amount of days since January
-      1st, 2000.</dd>
-      <dt><code>:timestamp (useconds)</code></dt>
-      <dd>Timestamps have a microsecond resolution. Again, the zero
-      point is the start of the year 2000, UTC.</dd>
-      <dt><code>:timestamp-with-timezone</code></dt>
-      <dd>Like <code>:timestamp</code>, but for values of the
-      'timestamp with time zone' type (which PostgreSQL internally
-      stores exactly the same as regular timestamps).</dd>
-      <dt><code>:time (useconds)</code></dt>
-      <dd>Refers to a time of day, counting from midnight.</dd>
-      <dt><code>:interval (months days useconds)</code></dt>
-      <dd>An interval is represented as several separate components.
-      The reason that days and microseconds are separated is that you
-      might want to take leap seconds into account.</dd>
-    </dl>
-
-    <h2><a name="row-readers"></a>Row readers</h2>
-
-    <p>Row readers are a way to read and group the results of queries.
-    Roughly, they are functions that perform the iteration over the
-    rows and cells in the result, and do <em>something</em> with the
-    returned values.</p>
-
-    <p class="def">
-      <span>macro</span>
-      <a name="row-reader"></a>
-      row-reader ((fields) &amp;body body)
-      <br/>&#8594; function
-    </p>
-
-    <p class="desc">Creates a row-reader, using the given name for the
-    variable. Inside the body this variable refers to a vector of
-    field descriptions. On top of that, two local functions are bound,
-    <code>next-row</code> and <code>next-field</code>. The first will
-    start reading the next row in the result, and returns a boolean
-    indicating whether there is another row. The second will read and
-    return one field, and should be passed the corresponding field
-    description from the fields argument as a parameter.</p>
-
-    <p class="desc">A row reader should take care to iterate over all
-    the rows in a result, and within each row iterate over all the
-    fields. This means it should contain an outer loop that calls
-    <code>next-row</code>, and every time <code>next-row</code>
-    returns <code>T</code> it should iterate over the fields vector
-    and call <code>next-field</code> for every field.</p>
-
-    <p class="desc">The definition of <a
-    href="#list-row-reader"><code>list-row-reader</code></a> should
-    give you an idea what a row reader looks like:</p>
-
-    <pre class="desc code">
-(row-reader (fields)
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-08-11 Sat 19:21 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cl-Postgres Reference Manual</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Cl-Postgres Reference Manual</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgf29937b">Connecting</a>
+<ul>
+<li><a href="#org96fcd45">class database-connection</a></li>
+<li><a href="#orgae53cdf">function open-database (database user password host &amp;optional (port 5432) (use-ssl :no))</a></li>
+<li><a href="#orga987e5c">function close-database (database-connection)</a></li>
+<li><a href="#org2b8dc4b">function reopen-database (database-connection)</a></li>
+<li><a href="#orgde74ee2">function database-open-p (database-connection)</a></li>
+<li><a href="#org9aefb46">method connection-meta (database-connection)</a></li>
+<li><a href="#org3097fa6">method connection-parameters (database-connection)</a></li>
+<li><a href="#org031e71e">function wait-for-notification (database-connection)</a></li>
+</ul>
+</li>
+<li><a href="#orgbae28be">Querying</a>
+<ul>
+<li><a href="#org5ba1b82">function exec-query (database-connection query &amp;optional (row-reader 'ignore-row-reader))</a></li>
+<li><a href="#org86538fc">function prepare-query (database-connection name query)</a></li>
+<li><a href="#orga71f3f4">function exec-prepared (database-connection name parameters &amp;optional (row-reader 'ignore-row-reader))</a></li>
+<li><a href="#org375a2d3">function unprepare-query (database-connection name)</a></li>
+<li><a href="#org330eb92">method to-sql-string (value)</a></li>
+<li><a href="#org44f8a58">variable <b>silently-truncate-rationals</b></a></li>
+<li><a href="#orgadf0f7b">variable <b>query-log</b></a></li>
+<li><a href="#orgc43b623">variable <b>query-callback</b></a></li>
+<li><a href="#orgef84ce3">function log-query (query internal-time)</a></li>
+</ul>
+</li>
+<li><a href="#orga3d2e14">Reading values</a>
+<ul>
+<li><a href="#orgf129507">function copy-sql-readtable (table)</a></li>
+<li><a href="#org3862efc">function default-sql-readtable ()</a></li>
+<li><a href="#org8463f86">function set-sql-reader (oid function &amp;key table binary-p)</a></li>
+<li><a href="#org936cef2">function set-sql-datetime-readers (&amp;key date timestamp timestamp-with-timezone time interval table)</a></li>
+</ul>
+</li>
+<li><a href="#orgce70c47">Row readers</a>
+<ul>
+<li><a href="#org2edfa50">macro row-reader ((fields) &amp;body body)</a></li>
+<li><a href="#org7d6383a">macro def-row-reader (name (fields) &amp;body body)</a></li>
+<li><a href="#org6fda0bd">method field-name (field)</a></li>
+<li><a href="#org18d0b73">method field-type (field)</a></li>
+<li><a href="#org3be7c66">function list-row-reader (socket fields)</a></li>
+<li><a href="#org1ff4238">function alist-row-reader (socket fields)</a></li>
+<li><a href="#org67bd1a9">function ignore-row-reader (socket fields)</a></li>
+</ul>
+</li>
+<li><a href="#orge175f19">Bulk Copying</a>
+<ul>
+<li><a href="#org7a40458">function open-db-writer (db table &amp;optional columns)</a></li>
+<li><a href="#org801f211">function close-db-writer (writer &amp;key abort)</a></li>
+<li><a href="#org1f82726">function db-write-row (writer row-data)</a></li>
+</ul>
+</li>
+<li><a href="#org770bb2f">Conditions</a>
+<ul>
+<li><a href="#orgb1d60fb">condition database-error</a></li>
+<li><a href="#orgd459dcb">method database-error-message (database-error)</a></li>
+<li><a href="#org4152f59">method database-error-detail (database-error)</a></li>
+<li><a href="#org18a5245">method database-error-code (database-error)</a></li>
+<li><a href="#orgdaebdbf">method database-error-query (database-error)</a></li>
+<li><a href="#org89436ac">method database-error-cause (database-error)</a></li>
+<li><a href="#org5a12301">function database-error-constraint-name (database-error)</a></li>
+<li><a href="#orge7114e2">condition database-connection-error</a></li>
+<li><a href="#orga41c786">condition postgresql-notification</a></li>
+<li><a href="#org9f97877">method postgresql-notification-channel (postgresql-notification)</a></li>
+<li><a href="#org5a703b1">method postgresql-notification-payload (postgresql-notification)</a></li>
+<li><a href="#org44ea096">method postgresql-notification-pid (postgresql-notification)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<p>
+The CL-postgres module implements a rather low-level interface for
+communicating with a PostgreSQL database server. It is part of the Postmodern
+library, but can be used separately.
+</p>
+
+
+<div id="outline-container-orgf29937b" class="outline-2">
+<h2 id="orgf29937b">Connecting</h2>
+<div class="outline-text-2" id="text-orgf29937b">
+</div>
+<div id="outline-container-org96fcd45" class="outline-3">
+<h3 id="org96fcd45">class database-connection</h3>
+<div class="outline-text-3" id="text-org96fcd45">
+<p>
+Objects of this type represent database connections.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgae53cdf" class="outline-3">
+<h3 id="orgae53cdf">function open-database (database user password host &amp;optional (port 5432) (use-ssl :no))</h3>
+<div class="outline-text-3" id="text-orgae53cdf">
+<p>
+→ database-connection
+</p>
+
+<p>
+Create and open a connection for the specified server, database, and user.
+use-ssl may be :no, :yes, or :try, where :try means 'if the server supports
+it'. When it is anything but :no, you must have the CL+SSL package loaded to
+initiate the connection.
+</p>
+
+<p>
+On SBCL and Clozure CL, the value :unix may be passed for host, in order to
+connect using a Unix domain socket instead of a TCP socket.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga987e5c" class="outline-3">
+<h3 id="orga987e5c">function close-database (database-connection)</h3>
+<div class="outline-text-3" id="text-orga987e5c">
+<p>
+Close a database connection. It is advisable to call this on connections when
+you are done with them. Otherwise the open socket will stick around until it
+is garbage collected, and no one will tell the database server that we are done
+with it.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2b8dc4b" class="outline-3">
+<h3 id="org2b8dc4b">function reopen-database (database-connection)</h3>
+<div class="outline-text-3" id="text-org2b8dc4b">
+<p>
+Re-establish a database connection for a previously closed connection object.
+(Calling this on a connection that is still open is harmless.)
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgde74ee2" class="outline-3">
+<h3 id="orgde74ee2">function database-open-p (database-connection)</h3>
+<div class="outline-text-3" id="text-orgde74ee2">
+<p>
+→ boolean
+</p>
+
+<p>
+Test whether a database connection is still open.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org9aefb46" class="outline-3">
+<h3 id="org9aefb46">method connection-meta (database-connection)</h3>
+<div class="outline-text-3" id="text-org9aefb46">
+<p>
+→ hash-table
+</p>
+
+<p>
+This method provides access to a hash table that is associated with the current
+database connection. When the connection is closed and re-opened this hash
+table is reset. The most obvious use for this is for storing information
+about the prepared statements that have been parsed for this connection.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3097fa6" class="outline-3">
+<h3 id="org3097fa6">method connection-parameters (database-connection)</h3>
+<div class="outline-text-3" id="text-org3097fa6">
+<p>
+→ hash-table
+</p>
+
+<p>
+This method returns a mapping (string to string) containing all the
+configuration parameters for the connection.
+</p>
+
+<p>
+variable <b>unix-socket-dir</b>
+</p>
+
+<p>
+On SBCL, when using the :unix keyword as host argument when creating a
+connection, this variable determines the directory in which CL-Postgres
+will look for the socket file.
+</p>
+
+<p>
+variable <b>ssl-certificate-file</b>
+variable <b>ssl-key-file</b>
+</p>
+
+<p>
+When using SSL (see open-database), these can be used to provide client key
+and certificate files. They can be either NIL, for no file, or a pathname.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org031e71e" class="outline-3">
+<h3 id="org031e71e">function wait-for-notification (database-connection)</h3>
+<div class="outline-text-3" id="text-org031e71e">
+<p>
+This function blocks until a notification is received on the connection.
+The PostgreSQL LISTEN command must be used to enable listening for
+notifications.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbae28be" class="outline-2">
+<h2 id="orgbae28be">Querying</h2>
+<div class="outline-text-2" id="text-orgbae28be">
+</div>
+<div id="outline-container-org5ba1b82" class="outline-3">
+<h3 id="org5ba1b82">function exec-query (database-connection query &amp;optional (row-reader 'ignore-row-reader))</h3>
+<div class="outline-text-3" id="text-org5ba1b82">
+<p>
+→ result
+</p>
+
+<p>
+Sends the given query to the given connection, and interprets the results (if
+there are any) with the given row-reader. If the database returns information
+about the amount of rows affected, this is returned as a second value.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org86538fc" class="outline-3">
+<h3 id="org86538fc">function prepare-query (database-connection name query)</h3>
+<div class="outline-text-3" id="text-org86538fc">
+<p>
+Parse and plan the given query, and store it under the given name. Note that
+prepared statements are per-connection, so they can only be executed through
+the same connection that prepared them.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga71f3f4" class="outline-3">
+<h3 id="orga71f3f4">function exec-prepared (database-connection name parameters &amp;optional (row-reader 'ignore-row-reader))</h3>
+<div class="outline-text-3" id="text-orga71f3f4">
+<p>
+→ result
+</p>
+
+<p>
+Execute the prepared statement by the given name. Parameters should be given
+as a list. Each value in this list should be of a type that to-sql-string has
+been specialised on. (Byte arrays will be passed in their binary form,
+without being put through to-sql-string.) The result of the executing the
+statement, if any, is interpreted by the given row reader, and returned.
+Again, the number or affected rows is optionally returned as a second value.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org375a2d3" class="outline-3">
+<h3 id="org375a2d3">function unprepare-query (database-connection name)</h3>
+<div class="outline-text-3" id="text-org375a2d3">
+<p>
+Close the prepared statement by the given name. This will free resources and
+allow the name to be associated with a new prepared query.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org330eb92" class="outline-3">
+<h3 id="org330eb92">method to-sql-string (value)</h3>
+<div class="outline-text-3" id="text-org330eb92">
+<p>
+→ (values string needs-escaping)
+</p>
+
+<p>
+Convert a Lisp value to its textual unescaped SQL representation. Returns a
+second value indicating whether this value should be escaped if it is to be
+put directly into a query.
+</p>
+
+<p>
+You can define to-sql-string methods for your own datatypes if you want to be
+able to pass them to exec-prepared. When a non-NIL second value is returned,
+this may be T to indicate that the first value should simply be escaped as a
+string, or a second string providing a type prefix for the value. (This is
+used by S-SQL.)
+</p>
+</div>
+</div>
+
+<div id="outline-container-org44f8a58" class="outline-3">
+<h3 id="org44f8a58">variable <b>silently-truncate-rationals</b></h3>
+<div class="outline-text-3" id="text-org44f8a58">
+<p>
+When a rational number is passed into a query (as per to-sql-string), but it
+can not be expressed within 38 decimal digits (for example 1/3), it will be
+truncated, and lose some precision. Set this variable to nil to suppress
+that behaviour and raise an error instead.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgadf0f7b" class="outline-3">
+<h3 id="orgadf0f7b">variable <b>query-log</b></h3>
+<div class="outline-text-3" id="text-orgadf0f7b">
+<p>
+When debugging, it can be helpful to inspect the queries that are being sent
+to the database. Set this variable to an output stream value (<b>standard-output</b>,
+for example) to have CL-postgres log every query it makes.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc43b623" class="outline-3">
+<h3 id="orgc43b623">variable <b>query-callback</b></h3>
+<div class="outline-text-3" id="text-orgc43b623">
+<p>
+When profiling or debugging, the <b>query-log</b> may not give enough information,
+or reparsing its output may not be feasible. This variable may be set to a
+designator of function taking two arguments. This function will be then called
+after every query, and receive query string and internal time units (as in
+(CL:GET-INTERNAL-REAL-TIME)) spent in query as its arguments.
+</p>
+
+<p>
+Default value of this variable is 'LOG-QUERY, which takes care of <b>QUERY-LOG</b>
+processing. If you provide custom query callback and wish to keep <b>QUERY-LOG</b>
+functionality, you will have to call LOG-QUERY from your callback function
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgef84ce3" class="outline-3">
+<h3 id="orgef84ce3">function log-query (query internal-time)</h3>
+<div class="outline-text-3" id="text-orgef84ce3">
+<p>
+This function is default value of <b>QUERY-CALLBACK</b> and logs queries
+to <b>QUERY-LOG</b> if it is not NIL.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga3d2e14" class="outline-2">
+<h2 id="orga3d2e14">Reading values</h2>
+<div class="outline-text-2" id="text-orga3d2e14">
+<p>
+CL-postgres knows how to convert commonly used PostgreSQL data types to Lisp
+values. This table shows the mapping:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">PostgreSQL</td>
+<td class="org-left">Lisp</td>
+</tr>
+
+<tr>
+<td class="org-left">smallint</td>
+<td class="org-left">integer</td>
+</tr>
+
+<tr>
+<td class="org-left">integer</td>
+<td class="org-left">integer</td>
+</tr>
+
+<tr>
+<td class="org-left">bigint</td>
+<td class="org-left">integer</td>
+</tr>
+
+<tr>
+<td class="org-left">numeric</td>
+<td class="org-left">ratio</td>
+</tr>
+
+<tr>
+<td class="org-left">real</td>
+<td class="org-left">float</td>
+</tr>
+
+<tr>
+<td class="org-left">double precision</td>
+<td class="org-left">double-float</td>
+</tr>
+
+<tr>
+<td class="org-left">boolean	boolean</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">varchar</td>
+<td class="org-left">string</td>
+</tr>
+
+<tr>
+<td class="org-left">text</td>
+<td class="org-left">string</td>
+</tr>
+
+<tr>
+<td class="org-left">bytea</td>
+<td class="org-left">(vector (unsigned-byte 8))</td>
+</tr>
+
+<tr>
+<td class="org-left">array</td>
+<td class="org-left">array</td>
+</tr>
+</tbody>
+</table>
+<p>
+The mapping from PostgreSQL types (identified by OID numbers) to the functions
+that interpret them is kept in so-called SQL readtables. All types for which
+no reader is defined will be returned as string values containing their
+PostgreSQL representation.
+</p>
+
+<p>
+variable <b>sql-readtable</b>
+</p>
+
+<p>
+This variable is used to choose the current readtable. For simple use, you
+will not have to touch this, but it is possible that code within a Lisp image
+requires different readers in different situations, in which case you can
+create separate read tables.
+</p>
+</div>
+
+<div id="outline-container-orgf129507" class="outline-3">
+<h3 id="orgf129507">function copy-sql-readtable (table)</h3>
+<div class="outline-text-3" id="text-orgf129507">
+<p>
+→ readtable
+</p>
+
+<p>
+Copies a given readtable.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3862efc" class="outline-3">
+<h3 id="org3862efc">function default-sql-readtable ()</h3>
+<div class="outline-text-3" id="text-org3862efc">
+<p>
+→ readtable
+</p>
+
+<p>
+Returns the default readtable, containing only the readers defined by
+CL-postgres itself.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org8463f86" class="outline-3">
+<h3 id="org8463f86">function set-sql-reader (oid function &amp;key table binary-p)</h3>
+<div class="outline-text-3" id="text-org8463f86">
+<p>
+Define a new reader for a given type. table defaults to <b>sql-readtable</b>.
+The reader function should take a single argument, a string, and transform
+that into some kind of equivalent Lisp value. When binary-p is true, the reader
+function is supposed to directly read the binary representation of the value.
+In most cases this is not recommended, but if you want to use it: provide a
+function that takes a binary input stream and an integer (the size of the
+value, in bytes), and reads the value from that stream. Note that reading
+less or more bytes than the given size will horribly break your connection.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org936cef2" class="outline-3">
+<h3 id="org936cef2">function set-sql-datetime-readers (&amp;key date timestamp timestamp-with-timezone time interval table)</h3>
+<div class="outline-text-3" id="text-org936cef2">
+<p>
+Since there is no widely recognised standard way of representing dates and
+times in Common Lisp, and reading these from string representation is clunky
+and slow, this function provides a way to easily plug in binary readers for
+the date, time, timestamp, and interval types. It should be given functions
+with the following signatures:
+</p>
+
+<ul class="org-ul">
+<li>:date (days)</li>
+</ul>
+
+<p>
+Where days is the amount of days since January 1st, 2000.
+</p>
+
+<ul class="org-ul">
+<li>:timestamp (useconds)</li>
+</ul>
+
+<p>
+Timestamps have a microsecond resolution. Again, the zero point is the start
+of the year 2000, UTC.
+</p>
+
+<ul class="org-ul">
+<li>:timestamp-with-timezone</li>
+</ul>
+
+<p>
+Like :timestamp, but for values of the 'timestamp with time zone' type (which
+PostgreSQL internally stores exactly the same as regular timestamps).
+</p>
+
+<ul class="org-ul">
+<li>:time (useconds)</li>
+</ul>
+
+<p>
+Refers to a time of day, counting from midnight.
+</p>
+
+<ul class="org-ul">
+<li>:interval (months days useconds)</li>
+</ul>
+
+<p>
+An interval is represented as several separate components. The reason that days
+and microseconds are separated is that you might want to take leap seconds into
+account.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgce70c47" class="outline-2">
+<h2 id="orgce70c47">Row readers</h2>
+<div class="outline-text-2" id="text-orgce70c47">
+<p>
+Row readers are a way to read and group the results of queries. Roughly, they
+are functions that perform the iteration over the rows and cells in the
+result, and do something with the returned values.
+</p>
+</div>
+
+<div id="outline-container-org2edfa50" class="outline-3">
+<h3 id="org2edfa50">macro row-reader ((fields) &amp;body body)</h3>
+<div class="outline-text-3" id="text-org2edfa50">
+<p>
+→ function
+</p>
+
+<p>
+Creates a row-reader, using the given name for the variable. Inside the body
+this variable refers to a vector of field descriptions. On top of that, two
+local functions are bound, next-row and next-field. The first will start
+reading the next row in the result, and returns a boolean indicating whether
+there is another row. The second will read and return one field, and should
+be passed the corresponding field description from the fields argument as a
+parameter.
+</p>
+
+<p>
+A row reader should take care to iterate over all the rows in a result, and
+within each row iterate over all the fields. This means it should contain
+an outer loop that calls next-row, and every time next-row returns T it
+should iterate over the fields vector and call next-field for every field.
+</p>
+
+<p>
+The definition of list-row-reader should give you an idea what a row reader
+looks like:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(row-reader (fields)
   (loop :while (next-row)
         :collect (loop :for field :across fields
-                       :collect (next-field field))))</pre>
+                       :collect (next-field field))))
+</pre>
+</div>
 
-    <p class="desc">Obviously, row readers should <em>not</em> do
-    things with the database connection like, say, close it or start a
-    new query, since it still reading out the results from the current
-    query.</p>
+<p>
+Obviously, row readers should not do things with the database connection
+like, say, close it or start a new query, since it still reading out the
+results from the current query.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>macro</span>
-      <a name="def-row-reader"></a>
-      def-row-reader (name (fields) &amp;body body)
-    </p>
+<div id="outline-container-org7d6383a" class="outline-3">
+<h3 id="org7d6383a">macro def-row-reader (name (fields) &amp;body body)</h3>
+<div class="outline-text-3" id="text-org7d6383a">
+<p>
+The defun-like variant of row-reader: creates a row reader and gives it a
+top-level function name.
+</p>
+</div>
+</div>
 
-    <p class="desc">The <code>defun</code>-like variant of <a
-    href="#row-reader"><code>row-reader</code></a>: creates a row
-    reader and gives it a top-level function name.</p>
+<div id="outline-container-org6fda0bd" class="outline-3">
+<h3 id="org6fda0bd">method field-name (field)</h3>
+<div class="outline-text-3" id="text-org6fda0bd">
+<p>
+→ string
+</p>
 
-    <p class="def">
-      <span>method</span>
-      <a name="field-name"></a>
-      field-name (field)
-      <br/>&#8594; string
-    </p>
+<p>
+This can be used to get information about the fields read by a row reader.
+Given a field description, it returns the name the database associated with
+this column.
+</p>
+</div>
+</div>
 
-    <p class="desc">This can be used to get information about the
-    fields read by a row reader. Given a field description, it returns
-    the name the database associated with this column.</p>
+<div id="outline-container-org18d0b73" class="outline-3">
+<h3 id="org18d0b73">method field-type (field)</h3>
+<div class="outline-text-3" id="text-org18d0b73">
+<p>
+→ oid
+</p>
 
-    <p class="def">
-      <span>method</span>
-      <a name="field-type"></a>
-      field-type (field)
-      <br/>&#8594; oid
-    </p>
+<p>
+This extracts the PostgreSQL OID associated with this column. You can, if
+you really want to, query the pg<sub>types</sub> table to find out more about the
+types denoted by OIDs.
+</p>
+</div>
+</div>
 
-    <p class="desc">This extracts the PostgreSQL <a
-    href="http://www.postgresql.org/docs/current/static/datatype-oid.html">OID</a>
-    associated with this column. You can, if you really want to, query
-    the pg_types table to find out more about the types denoted by
-    OIDs.</p>
+<div id="outline-container-org3be7c66" class="outline-3">
+<h3 id="org3be7c66">function list-row-reader (socket fields)</h3>
+<div class="outline-text-3" id="text-org3be7c66">
+<p>
+→ list
+</p>
 
-    <p class="def">
-      <span>function</span>
-      <a name="list-row-reader"></a>
-      list-row-reader (socket fields)
-      <br/>&#8594; list
-    </p>
+<p>
+A row reader that builds a list of lists from the query results.
+</p>
+</div>
+</div>
 
-    <p class="desc">A row reader that builds a list of lists from the
-    query results.</p>
+<div id="outline-container-org1ff4238" class="outline-3">
+<h3 id="org1ff4238">function alist-row-reader (socket fields)</h3>
+<div class="outline-text-3" id="text-org1ff4238">
+<p>
+→ alist
+</p>
 
-    <p class="def">
-      <span>function</span>
-      <a name="alist-row-reader"></a>
-      alist-row-reader (socket fields)
-      <br/>&#8594; alist
-    </p>
+<p>
+A row reader that returns a list of alists, which associate column names with
+values.
+</p>
+</div>
+</div>
 
-    <p class="desc">A row reader that returns a list of alists, which
-    associate column names with values.</p>
+<div id="outline-container-org67bd1a9" class="outline-3">
+<h3 id="org67bd1a9">function ignore-row-reader (socket fields)</h3>
+<div class="outline-text-3" id="text-org67bd1a9">
+<p>
+A row reader that completely ignores the result of a query.
+</p>
+</div>
+</div>
+</div>
 
-    <p class="def">
-      <span>function</span>
-      <a name="ignore-row-reader"></a>
-      ignore-row-reader (socket fields)
-    </p>
+<div id="outline-container-orge175f19" class="outline-2">
+<h2 id="orge175f19">Bulk Copying</h2>
+<div class="outline-text-2" id="text-orge175f19">
+<p>
+When loading large amounts of data into PostgreSQL, it can be done
+significantly faster using the bulk copying feature. The drawback to this
+approach is that you don't find out about data integrity errors until the
+entire batch is completed but sometimes the speed is worth it
+</p>
+</div>
 
-    <p class="desc">A row reader that completely ignores the result of
-    a query.</p>
+<div id="outline-container-org7a40458" class="outline-3">
+<h3 id="org7a40458">function open-db-writer (db table &amp;optional columns)</h3>
+<div class="outline-text-3" id="text-org7a40458">
+<p>
+Opens a table stream into which rows can be written one at a time using
+db-write-row. db is either a connection object or a list of arguments that
+could be passed to open-database. table is the name of an existing table
+into which this writer will write rows. If you don't have data for all
+columns, use columns to indicate those that you do.
+</p>
+</div>
+</div>
 
-    <h2><a name="bulk-copying">Bulk Copying</a></h2>
+<div id="outline-container-org801f211" class="outline-3">
+<h3 id="org801f211">function close-db-writer (writer &amp;key abort)</h3>
+<div class="outline-text-3" id="text-org801f211">
+<p>
+Closes a bulk writer opened by open-db-writer. Will close the associated
+database connection when it was created for this copier, or abort is true.
+</p>
+</div>
+</div>
 
-    <p>When loading large amounts of data into PostgreSQL, it can be done
-    significantly faster using the bulk copying feature.  The drawback to
-    this approach is that you don't find out about data integrity errors
-    until the entire batch is completed but sometimes the speed is worth it
-    </p>
+<div id="outline-container-org1f82726" class="outline-3">
+<h3 id="org1f82726">function db-write-row (writer row-data)</h3>
+<div class="outline-text-3" id="text-org1f82726">
+<p>
+Writes row-data into the table and columns referenced by the writer.
+row-data is a list of Lisp objects, one for each column included when
+opening the writer. Arrays (the elements of which must all be the same type)
+will be serialized into their PostgreSQL representation before being written
+into the DB.
+</p>
+</div>
+</div>
+</div>
 
-    <p class="def">
-      <span>function</span>
-      <a name="open-db-writer"></a>
-      open-db-writer (db table &optional columns)
-    </p>
+<div id="outline-container-org770bb2f" class="outline-2">
+<h2 id="org770bb2f">Conditions</h2>
+<div class="outline-text-2" id="text-org770bb2f">
+<p>
+Opening or querying a database may raise errors. CL-postgres will wrap the
+errors that the server returns in a lisp condition, and raise conditions of
+the same type when it detects some problem itself. Socket errors are let
+through as they are.
+</p>
+</div>
 
-    <p class="desc">Opens a table stream into which rows can be
-    written one at a time
-    using <code>db-write-row</code>. <code>db</code> is either
-    a <a href="#database-connection">connection</a> object or a list
-    of arguments that could be passed to <code>open-database</code>.
-    <code>table</code> is the name of an existing table into which this writer
-    will write rows.  If you don't have data for all columns, use
-    <code>columns</code> to indicate those that you do.
-    </p>
+<div id="outline-container-orgb1d60fb" class="outline-3">
+<h3 id="orgb1d60fb">condition database-error</h3>
+<div class="outline-text-3" id="text-orgb1d60fb">
+<p>
+The type of database-related conditions. For errors that you may want to
+catch by type, the cl-postgres-error package defines a bucket of subtypes
+used for specific errors. See the cl-postgres/package.lisp file for a list.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>function</span>
-      <a name="close-db-writer"></a>
-      close-db-writer (writer &key abort)
-    </p>
+<div id="outline-container-orgd459dcb" class="outline-3">
+<h3 id="orgd459dcb">method database-error-message (database-error)</h3>
+<div class="outline-text-3" id="text-orgd459dcb">
+<p>
+→ string
+</p>
 
-    <p class="desc">Closes a bulk writer opened
-    by <code>open-db-writer</code>. Will close the associated database
-    connection when it was created for this copier,
-    or <code>abort</code> is true.</p>
+<p>
+A short message associated with this error.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>function</span>
-      <a name="db-write-row"></a>
-      db-write-row (writer row-data)
-    </p>
+<div id="outline-container-org4152f59" class="outline-3">
+<h3 id="org4152f59">method database-error-detail (database-error)</h3>
+<div class="outline-text-3" id="text-org4152f59">
+<p>
+→ string
+</p>
 
-    <p class="desc">Writes <code>row-data</code> into the table and columns
-    referenced by the writer.  <code>row-data</code> is a list of Lisp objects,
-    one for each column included when opening the writer.  Arrays (the elements
-    of which must all be the same type) will be serialized into their PostgreSQL
-    representation before being written into the DB.
-    </p>
+<p>
+A longer description of the problem, or NIL if none is available.
+</p>
+</div>
+</div>
 
-    <h2><a name="conditions">Conditions</a></h2>
+<div id="outline-container-org18a5245" class="outline-3">
+<h3 id="org18a5245">method database-error-code (database-error)</h3>
+<div class="outline-text-3" id="text-org18a5245">
+<p>
+→ string
+</p>
 
-    <p>Opening or querying a database may raise errors. CL-postgres
-    will wrap the errors that the server returns in a lisp condition,
-    and raise conditions of the same type when it detects some problem
-    itself. Socket errors are let through as they are.</p>
+<p>
+The error code PostgreSQL associated with this error, if any. See the
+PostgreSQL manual for their meaning.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>condition</span>
-      <a name="database-error"></a>
-      database-error
-    </p>
+<div id="outline-container-orgdaebdbf" class="outline-3">
+<h3 id="orgdaebdbf">method database-error-query (database-error)</h3>
+<div class="outline-text-3" id="text-orgdaebdbf">
+<p>
+→ string
+</p>
 
-    <p class="desc">The type of database-related conditions. For
-    errors that you may want to catch by type, the
-    <code>cl-postgres-error</code> package defines a bucket of
-    subtypes used for specific errors. See the
-    <code>cl-postgres/package.lisp</code> file for a list.</p>
+<p>
+The query that led to this error, or NIL if no query was involved.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>method</span>
-      <a name="database-error-message"></a>
-      database-error-message (database-error)
-      <br/>&#8594; string
-    </p>
+<div id="outline-container-org89436ac" class="outline-3">
+<h3 id="org89436ac">method database-error-cause (database-error)</h3>
+<div class="outline-text-3" id="text-org89436ac">
+<p>
+→ condition
+</p>
 
-    <p class="desc">A short message associated with this error.</p>
+<p>
+The condition that caused this error, or NIL when it was not caused by another
+condition.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>method</span>
-      <a name="database-error-detail"></a>
-      database-error-detail (database-error)
-      <br/>&#8594; string
-    </p>
+<div id="outline-container-org5a12301" class="outline-3">
+<h3 id="org5a12301">function database-error-constraint-name (database-error)</h3>
+<div class="outline-text-3" id="text-org5a12301">
+<p>
+→ string
+</p>
 
-    <p class="desc">A longer description of the problem, or
-    <code>NIL</code> if none is available.</p>
+<p>
+For integrity-violation errors, returns the name of the constraint that was
+violated (or nil if no constraint was found.)
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>method</span>
-      <a name="database-error-code"></a>
-      database-error-code (database-error)
-      <br/>&#8594; string
-    </p>
+<div id="outline-container-orge7114e2" class="outline-3">
+<h3 id="orge7114e2">condition database-connection-error</h3>
+<div class="outline-text-3" id="text-orge7114e2">
+<p>
+Subtype of database-error. An error of this type (or one of its subclasses)
+is signaled when a query is attempted with a connection object that is no
+longer connected, or a database connection becomes invalid during a query.
+Always provides a :reconnect restart, which will cause the library to make an
+attempt to restore the connection and re-try the query.
+</p>
 
-    <p class="desc">The error code PostgreSQL associated with this
-    error, if any. See the <a
-    href="http://www.postgresql.org/docs/current/static/errcodes-appendix.html">PostgreSQL
-    manual</a> for their meaning.</p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="database-error-query"></a>
-      database-error-query (database-error)
-      <br/>&#8594; string
-    </p>
-
-    <p class="desc">The query that led to this error, or
-    <code>NIL</code> if no query was involved.</p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="database-error-cause"></a>
-      database-error-cause (database-error)
-      <br/>&#8594; condition
-    </p>
-
-    <p class="desc">The condition that caused this error, or
-    <code>NIL</code> when it was not caused by another condition.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="database-error-constraint-name"></a>
-      database-error-constraint-name (database-error)
-      <br/>&#8594; string
-    </p>
-
-    <p class="desc">For integrity-violation errors, returns the name
-    of the constraint that was violated (or <code>nil</code> if no
-    constraint was found.)</p>
-
-    <p class="def">
-      <span>condition</span>
-      <a name="database-connection-error"></a>
-      database-connection-error
-    </p>
-
-    <p class="desc">Subtype of <a
-    href="#database-error"><code>database-error</code></a>. An error
-    of this type (or one of its subclasses) is signaled when a query
-    is attempted with a connection object that is no longer connected,
-    or a database connection becomes invalid during a query. Always
-    provides a <code>:reconnect</code> restart, which will cause the
-    library to make an attempt to restore the connection and re-try
-    the query.</p>
-
-    <p class="desc">The following shows an example use of this
-    feature, a way to ensure that the first connection error causes a
-    reconnect attempt, while others pass through as normal. A
-    variation on this theme could continue trying to reconnect, with
-    successively longer pauses.</p>
-
-    <pre class="desc code">
-(defun call-with-single-reconnect (fun)
+<p>
+The following shows an example use of this feature, a way to ensure that the
+first connection error causes a reconnect attempt, while others pass through
+as normal. A variation on this theme could continue trying to reconnect, with
+successively longer pauses.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(defun call-with-single-reconnect (fun)
   (let ((reconnected nil))
     (handler-bind
         ((database-connection-error
@@ -672,99 +1081,67 @@
             (when (not reconnected)
               (setf reconnected t)
               (invoke-restart :reconnect)))))
-      (funcall fun))))</pre>
+      (funcall fun))))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def">
-      <span>condition</span>
-      <a name="postgresql-notification"></a>
-      postgresql-notification
-    </p>
+<div id="outline-container-orga41c786" class="outline-3">
+<h3 id="orga41c786">condition postgresql-notification</h3>
+<div class="outline-text-3" id="text-orga41c786">
+<p>
+The condition that is signalled when a notification message is received from
+the PostgreSQL server. This is a WARNING condition which is caught by the
+WAIT-FOR-NOTIFICATION function that implements synchronous waiting for
+notifications.
+</p>
+</div>
+</div>
 
-    <p class="desc">The condition that is signalled when a
-      notification message is received from the PostgreSQL server.
-      This is a <code>WARNING</code> condition which is caught by
-      the <code>WAIT-FOR-NOTIFICATION</code> function that implements
-      synchronous waiting for notifications.</p>
+<div id="outline-container-org9f97877" class="outline-3">
+<h3 id="org9f97877">method postgresql-notification-channel (postgresql-notification)</h3>
+<div class="outline-text-3" id="text-org9f97877">
+<p>
+→ string
+</p>
 
-    <p class="def">
-      <span>method</span>
-      <a name="postgresql-notification-channel"></a>
-      postgresql-notification-channel (postgresql-notification)
-      <br/>&#8594; string
-    </p>
+<p>
+The channel string of this notification.
+</p>
+</div>
+</div>
 
-    <p class="desc">The channel string of this notification.</p>
+<div id="outline-container-org5a703b1" class="outline-3">
+<h3 id="org5a703b1">method postgresql-notification-payload (postgresql-notification)</h3>
+<div class="outline-text-3" id="text-org5a703b1">
+<p>
+→ string
+</p>
 
-    <p class="def">
-      <span>method</span>
-      <a name="postgresql-notification-payload"></a>
-      postgresql-notification-payload (postgresql-notification)
-      <br/>&#8594; string
-    </p>
+<p>
+The payload of this notification.
+</p>
+</div>
+</div>
 
-    <p class="desc">The payload of this notification.</p>
+<div id="outline-container-org44ea096" class="outline-3">
+<h3 id="org44ea096">method postgresql-notification-pid (postgresql-notification)</h3>
+<div class="outline-text-3" id="text-org44ea096">
+<p>
+→ integer
+</p>
 
-    <p class="def">
-      <span>method</span>
-      <a name="postgresql-notification-pid"></a>
-      postgresql-notification-pid (postgresql-notification)
-      <br/>&#8594; integer
-    </p>
-
-    <p class="desc">The process ID of the process that sent the
-    notification.</p>
-
-    <h2><a name="index">Symbol-index</a></h2>
-
-    <ul class="symbol-index">
-      <li><a href="#alist-row-reader">alist-row-reader</a></li>
-      <li><a href="#close-database">close-database</a></li>
-      <li><a href="#close-db-writer">close-db-writer</a></li>
-      <li><a href="#connection-meta">connection-meta</a></li>
-      <li><a href="#connection-parameters">connection-parameters</a></li>
-      <li><a href="#copy-sql-readtable">copy-sql-readtable</a></li>
-      <li><a href="#database-connection">database-connection</a></li>
-      <li><a href="#database-connection-error">database-connection-error</a></li>
-      <li><a href="#database-error">database-error</a></li>
-      <li><a href="#database-error-cause">database-error-cause</a></li>
-      <li><a href="#database-error-code">database-error-code</a></li>
-      <li><a href="#database-error-constraint-name">database-error-constraint-name</a></li>
-      <li><a href="#database-error-detail">database-error-detail</a></li>
-      <li><a href="#database-error-message">database-error-message</a></li>
-      <li><a href="#database-error-query">database-error-query</a></li>
-      <li><a href="#database-open-p">database-open-p</a></li>
-      <li><a href="#def-row-reader">def-row-reader</a></li>
-      <li><a href="#default-sql-readtable">default-sql-readtable</a></li>
-      <li><a href="#exec-prepared">exec-prepared</a></li>
-      <li><a href="#exec-query">exec-query</a></li>
-      <li><a href="#field-name">field-name</a></li>
-      <li><a href="#field-type">field-type</a></li>
-      <li><a href="#ignore-row-reader">ignore-row-reader</a></li>
-      <li><a href="#list-row-reader">list-row-reader</a></li>
-      <li><a href="#log-query">log-query</a></li>
-      <li><a href="#row-reader">next-field</a></li>
-      <li><a href="#row-reader">next-row</a></li>
-      <li><a href="#open-database">open-database</a></li>
-      <li><a href="#open-db-writer">open-db-writer</a></li>
-      <li><a href="#postgresql-notification">postgresql-notification</a></li>
-      <li><a href="#postgresql-notification-channel">postgresql-notification-channel</a></li>
-      <li><a href="#postgresql-notification-payload">postgresql-notification-payload</a></li>
-      <li><a href="#postgresql-notification-pid">postgresql-notification-pid</a></li>
-      <li><a href="#prepare-query">prepare-query</a></li>
-      <li><a href="#*query-callback*">*query-callback*</a></li>
-      <li><a href="#*query-log*">*query-log*</a></li>
-      <li><a href="#reopen-database">reopen-database</a></li>
-      <li><a href="#row-reader">row-reader</a></li>
-      <li><a href="#set-sql-datetime-readers">set-sql-datetime-readers</a></li>
-      <li><a href="#set-sql-reader">set-sql-reader</a></li>
-      <li><a href="#write-db-row">write-db-row</a></li>
-      <li><a href="#*silently-truncate-rationals*">*silently-truncate-rationals*</a></li>
-      <li><a href="#*sql-readtable*">*sql-readtable*</a></li>
-      <li><a href="#*ssl-certificate-file*">*ssl-certificate-file*</a></li>
-      <li><a href="#*ssl-key-file*">*ssl-key-file*</a></li>
-      <li><a href="#to-sql-string">to-sql-string</a></li>
-      <li><a href="#*unix-socket-dir*">*unix-socket-dir*</a></li>
-      <li><a href="#wait-for-notification">wait-for-notification</a></li>
-    </ul>
-  </body>
+<p>
+The process ID of the process that sent the notification.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2018-08-11 Sat 19:21</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
 </html>
