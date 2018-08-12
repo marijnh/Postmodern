@@ -64,7 +64,7 @@
                (= min* min)
                (= sec* sec)
                (= millisec* millisec))))))
-  
+
 (test timestamp-universal-times
   (with-random-dates 100
     (declare (ignore millisec))
@@ -115,3 +115,11 @@
                (encode-timestamp year month day hour min (1+ sec) millisec)))
     (is (time< (encode-interval :month month :hour hour)
                (encode-interval :month month :hour hour :minute 30)))))
+
+(test sql-interval-addition
+  (is (equal (simple-date::millisecs
+              (pomo:with-connection '("test" "wol" "jFL7pBz" "localhost")
+                (pomo:query
+                 (:select (:+ (:interval ("2h 50min")) (:interval ("10min"))))
+                 :single)))
+             10800000)))

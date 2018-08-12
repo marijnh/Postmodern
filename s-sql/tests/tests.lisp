@@ -18,12 +18,21 @@
 (defmacro protect (&body body)
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
 
+(fiveam:def-suite :s-sql-base
+    :description "Base test suite for s-sql"
+    :in :s-sql)
+
+(fiveam:in-suite :s-sql-base)
+
 (test connect-sanity
   (with-test-connection
       (is (not (null *database*)))))
 
 (test employee-table
   "Build employee table"
+  (setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+         cl-postgres::*default-sql-readtable*))
   (with-test-connection
     (when (table-exists-p 'employee)
       (query (:drop-table 'employee)))
@@ -86,26 +95,26 @@ naming symbols, a ? can be used to indicate this argument group is
 optional, an * to indicate it can consist of more than one element,
 and a - to indicate it does not take any elements."
   (is (equal (s-sql::split-on-keywords ((a1 * ?) (b2 ?) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2 " :c3 "Ceta3 ")
-         `("Results " ,@ (when a1 a1) ,@ (when c3 c3) ,@(when b2 b2)))
+         `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2)))
              '("Results " "Alpha1 " "Ceta3 " "Beta2 ")))
   (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 ?) (c3 ? *)) '(:a1 "Alpha1 "  :c3 "Ceta3 ")
-                       `("Results " ,@ (when a1 a1) ,@ (when c3 c3) ,@(when b2 b2)))
+                       `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2)))
            '("Results " "Alpha1 " "Ceta3 "))
   (is (equal (s-sql::split-on-keywords ((a1 * ?) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 ")
-         `("Results " ,@ (when a1 a1) ,@ (when c3 c3)))
+         `("Results " ,@(when a1 a1) ,@(when c3 c3)))
              '("Results " "Alpha1 " :B2 "Beta2" "Ceta3 ")))
   ;; Keyword does not take any arguments
   (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 -) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 ")
-                       `("Results " ,@ (when a1 a1) ,@ (when c3 c3) ,@(when b2 b2))))
+                       `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2))))
   ;; Required keyword missing
   (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 ) (c3 ? *)) '(:a1 "Alpha1 "  :c3 "Ceta3 ")
-                       `("Results " ,@ (when a1 a1) ,@ (when c3 c3) ,@(when b2 b2))))
+                       `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2))))
   (is  (equal (s-sql::split-on-keywords ((a1 * ?) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2"  :c3 "Ceta3 ")
-                `("Results " ,@ (when a1 a1) ,@ (when c3 c3)))
+                `("Results " ,@(when a1 a1) ,@ (when c3 c3)))
               '("Results " "Alpha1 " :B2 "Beta2" "Ceta3 ")))
   ;;too many elements for a keyword
   (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (c3 ? )) '(:a1 "Alpha1 " :c3 "Ceta3 " "Ceta3.5")
-         `("Results " ,@ (when a1 a1) ,@ (when c3 c3)))))
+         `("Results " ,@(when a1 a1) ,@(when c3 c3)))))
 
 (test to-sql-name
   "Testing to-sql-name. Convert a symbol or string into a name that can be an sql table,
@@ -517,19 +526,6 @@ To sum the column len of all films and group the results by kind:"
       (is (equal (sql (:select 'kind (:as (:sum 'len) 'total) :from 'films :group-by 'kind))
                  "(SELECT kind, SUM(len) AS total FROM films GROUP BY kind)")))
 
-(test select-sum-group-interval
-      "CAUTION: DOES NOT WORK. VALIDATE THAT THIS ACTUALLY WORKS WITH THE ESCAPED INTERVAL. To sum the column len of all films, group the results by kind and show those group totals that are less than 5 hours:"
-;;; SELECT kind, sum(len) AS total
-;;;    FROM films
-;;;    GROUP BY kind
-;;; HAVING sum(len) < interval '5 hours';
-
-      (is (equal (sql (:select 'kind (:as (:sum 'len) 'total)
-                               :from 'films
-                               :group-by 'kind
-                               :having (:< (:sum 'len) 'interval "5 hours")))
-                 "(SELECT kind, SUM(len) AS total FROM films GROUP BY kind HAVING (SUM(len) < interval < E'5 hours'))")))
-
 (test select-except
       "Testing the use of except in two select statements. Except removes all matches. Except all is slightly different. If the first select statement has two rows that match a single row in the second select statement, only one is removed."
       (is (equal (sql (:except (:select 'id 'name
@@ -796,15 +792,6 @@ To sum the column len of all films and group the results by kind:"
                (query (:select (:string-agg  'name "," :order-by (:desc 'name) :filter (:< 'id 4)) :from 'employee)))
              '(("Robert,Jason,Celia")))))
 
-(test array-agg
-  "Testing array-agg. Note the first example filters out null values as well as separating the y and n users."
-  (is (equal (sql (:select 'g.id
-                           (:as (:array-agg 'g.users :filter (:= 'g.canonical "Y")) 'canonical-users)
-                           (:as (:array-agg 'g.users :filter (:= 'g.canonical "N")) 'non-canonical-users)
-                   :from (:as 'groups 'g)
-                   :group-by 'g.id))
-             "(SELECT g.id, ARRAY_AGG(g.users) FILTER (WHERE (g.canonical = E'Y')) AS canonical_users, ARRAY_AGG(g.users) FILTER (WHERE (g.canonical = E'N')) AS non_canonical_users FROM groups AS g GROUP BY g.id)")))
-
 (test percentile-cont
   "Testing percentile-cont."
   (is (equal (sql (:select (:percentile-cont :fraction 0.5 :order-by 'number-of-staff)
@@ -872,10 +859,10 @@ To sum the column len of all films and group the results by kind:"
   "Testing standard deviation functions"
   (with-test-connection
 
-    (is (equal (format nil "~,4f" (query (:select (:regr-avgx 'salary 'age) :from 'employee) :single))
-               "28.1111"))
-    (is (equal (format nil "~,4f" (query (:select (:regr-avgx 'age 'salary) :from 'employee) :single))
-               "49580.6667"))
+    (is (equal (query (:select (:regr-avgx 'salary 'age) :from 'employee) :single)
+               28.11111111111111d0))
+    (is (equal (query (:select (:regr-avgx 'age 'salary) :from 'employee) :single)
+               49580.666666666664d0))
     (is (equal (query (:select (:regr-avgy 'salary 'age) :from 'employee) :single)
                49580.666666666664d0))
     (is (equal (query (:select (:regr-avgy 'age 'salary) :from 'employee) :single)
@@ -1247,41 +1234,6 @@ To sum the column len of all films and group the results by kind:"
                                                                    :where (:= 'memid 'mems.memid))))))
                  "DELETE FROM cd.members AS mems WHERE (not (EXISTS (SELECT 1 FROM cd.bookings WHERE (memid = mems.memid))))")))
 
-(test arrays
-      "Testing arrays"
-      (is (equal (sql (:create-table array-provinces ((name :type text) (provinces :type text[]))))
-                 "CREATE TABLE array_provinces (name TEXT NOT NULL, provinces TEXT[] NOT NULL)"))
-      (is (equal (sql (:insert-rows-into 'array-provinces
-                                         :columns 'name 'provinces
-                                         :values '(("Germany" #("Baden-Wurttemberg" "Bavaria" "Berlin" "Brandenburg"))
-                                                   ("Switzerland" #("Aargau" "Appenzell Ausserrhoden" "Basel-Landschaft" "Fribourg")))))
-                 "INSERT INTO array_provinces (name, provinces) VALUES (E'Germany', ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']), (E'Switzerland', ARRAY[E'Aargau', E'Appenzell Ausserrhoden', E'Basel-Landschaft', E'Fribourg'])"))
-      (is (equal (sql (:insert-into 'array-provinces :set 'name "Canada" 'provinces #("Alberta" "British Columbia" "Manitoba" "Ontario")))
-                 "INSERT INTO array_provinces (name, provinces) VALUES (E'Canada', ARRAY[E'Alberta', E'British Columbia', E'Manitoba', E'Ontario'])"))
-      (is (equal (sql (:select (:[] 'provinces 2) :from 'array-provinces))
-                 "(SELECT (provinces)[2] FROM array_provinces)"))
-      (is (equal (sql (:select (:[] 'provinces 1) :from 'array-provinces :where (:= 'name "Germany")))
-                 "(SELECT (provinces)[1] FROM array_provinces WHERE (name = E'Germany'))"))
-      (is (equal (sql (:select (:[] 'provinces 2) :from 'array-provinces :where (:= (:[] 'provinces 2) "Bavaria")))
-                 "(SELECT (provinces)[2] FROM array_provinces WHERE ((provinces)[2] = E'Bavaria'))"))
-      (is (equal (sql (:select '* :from 'array-provinces :where (:= (:[] 'provinces 2) "Bavaria")))
-                 "(SELECT * FROM array_provinces WHERE ((provinces)[2] = E'Bavaria'))"))
-
-
-      )
-
-(test multi-dimension-arrays
-      "Testing multi-dimensional arrays"
-      (is (equal (sql (:create-table sal-emp ((name :type text) (pay-by-quarter :type integer[]) (schedule :type  text[][]))))
-                 "CREATE TABLE sal_emp (name TEXT NOT NULL, pay_by_quarter INTEGER[] NOT NULL, schedule TEXT[][] NOT NULL)"))
-      (is (equal (sql (:insert-into 'sal-emp :set 'name "Bill" 'pay-by-quarter #(10000 10000 10000 10000) 'schedule #(#( "meeting" "lunch") #("training" "presentation"))))
-                 "INSERT INTO sal_emp (name, pay_by_quarter, schedule) VALUES (E'Bill', ARRAY[10000, 10000, 10000, 10000], ARRAY[ARRAY[E'meeting', E'lunch'], ARRAY[E'training', E'presentation']])"))
-      (is (equal (sql (:select 'name :from 'sal-emp :where (:<> (:[] 'pay-by-quarter 1) (:[] 'pay-by-quarter 2))))
-                 "(SELECT name FROM sal_emp WHERE ((pay_by_quarter)[1] <> (pay_by_quarter)[2]))"))
-      (is (equal (sql (:update 'sal-emp :set 'schedule #(#( "breakfast" "consulting") #("meeting" "lunch"))
-                               :where (:= 'name "Carol")))
-                 "UPDATE sal_emp SET schedule = ARRAY[ARRAY[E'breakfast', E'consulting'], ARRAY[E'meeting', E'lunch']] WHERE (name = E'Carol')")))
-
 
 #|
 
@@ -1319,9 +1271,6 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
 
 |#
 
-
-
-
 (test dissect-type-0
       "Testing dissect-type"
       (multiple-value-bind (type null?)
@@ -1342,60 +1291,6 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
           (s-sql::dissect-type '(or "char(5)" db-null))
         (is (equal type "char(5)"))
         (is (eq null? t))))
-
-
-(test expand-table-column
-      "Testing expand-table-column"
-      (is (equal (s-sql::expand-table-column 'code '(:type varchar :primary-key 't))
-                 '("code" " " "VARCHAR" " NOT NULL" " PRIMARY KEY ")))
-      (is (equal (s-sql::expand-table-column 'code '(:type (or char db-null) :primary-key 't))
-                 '("code" " " "CHAR" " PRIMARY KEY ")))
-      (is (equal (s-sql::expand-table-column 'code '(:type (or (string 5) db-null) :primary-key 't))
-                 '("code" " " "CHAR(5)" " PRIMARY KEY "))))
-
-;;; CREATE TABLE TESTS
-(test create-table-1
-      "Testing Create Table. First example from https://www.postgresql.org/docs/10/static/sql-createtable.html
- Right now we do not have the intervals fixed."
-      (is (equal (s-sql:sql (:create-table films
-                             ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key 't)
-                              (title :type (varchar 40))
-                              (did :type integer)
-                              (date-prod :type (or date db-null))
-                              (kind :type (or (varchar 10) db-null))
-                              (len :type (or interval db-null)))))
-                 "CREATE TABLE films (code CHAR(5) CONSTRAINT firstkey PRIMARY KEY , title VARCHAR(40) NOT NULL, did INTEGER NOT NULL, date_prod DATE, kind VARCHAR(10), len INTERVAL)"))) ; Create table films and table distributors:
-
-(test create-table-2
-      "Second example from https://www.postgresql.org/docs/10/static/sql-createtable.html"
-      (is (equal (s-sql:sql (:create-table distributors ((did :type (or integer db-null)
-                                                              :primary-key "generated by default as identity")
-                                                         (name :type (varchar 40) :check (:<> 'name "")))))
-                 "CREATE TABLE distributors (did INTEGER PRIMARY KEY generated by default as identity, name VARCHAR(40) NOT NULL CHECK (name <> E''))")))
-
-(test create-table-with-a-2-dimensional-array
-      "Create a table with a 2-dimensional array"
-      (is (equal (sql (:create-table array_int ((vector :type (or int[][] db-null)))))
-                 "CREATE TABLE array_int (vector INT[][])")))
-
-(test create-table-full-1
-      "Test :create-table with extended table constraints."
-      (is (equal (s-sql:sql (:create-table-full faa.d_airports
-			    ((AirportID :type integer)
-			     (Name      :type text)
-			     (City      :type text)
-			     (Country   :type text)
-			     (airport_code :type text)
-			     (ICOA_code :type text)
-			     (Latitude  :type float8)
-			     (Longitude :type float8)
-			     (Altitude  :type float8)
-			     (TimeZoneOffset :type float)
-			     (DST_Flag  :type text)
-			     (TZ        :type text))
-			    ()
-			    ((:distributed-by (airport_code)))))
-	  "CREATE TABLE faa.d_airports (airportid INTEGER NOT NULL, name TEXT NOT NULL, city TEXT NOT NULL, country TEXT NOT NULL, airport_code TEXT NOT NULL, icoa_code TEXT NOT NULL, latitude FLOAT8 NOT NULL, longitude FLOAT8 NOT NULL, altitude FLOAT8 NOT NULL, timezoneoffset REAL NOT NULL, dst_flag TEXT NOT NULL, tz TEXT NOT NULL) DISTRIBUTED BY (airport_code) ")))
 
 (test sequence-tests
       "sequence testing"
@@ -1484,169 +1379,13 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
         ;; cleanup
         (pomo:query (:drop-sequence :knobo-seq))))
 
-#|
-
-Define a unique table constraint for the table films. Unique table constraints can be defined on one or more columns of the table:
-How do we get the interval to be hour to minute?
-
-(pomo:query (:create-table films
- ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key 't)
-                              (title :type (varchar 40))
-                              (did :type integer)
-                              (date-prod :type (or date db-null))
-                              (kind :type (or (varchar 10) db-null))
-                              (len :type (or interval db-null)))))
-CREATE TABLE films (
-    code        char(5),
-    title       varchar(40),
-    did         integer,
-    date_prod   date,
-    kind        varchar(10),
-    len         interval hour to minute,
-    CONSTRAINT production UNIQUE(date_prod)
-);
-Define a check column constraint:
-
-CREATE TABLE distributors (
-    did     integer CHECK (did > 100),
-    name    varchar(40)
-);
-Define a check table constraint:
-
-CREATE TABLE distributors (
-    did     integer,
-    name    varchar(40)
-    CONSTRAINT con1 CHECK (did > 100 AND name <> '')
-);
-Define a primary key table constraint for the table films:
-
-Define a primary key constraint for table distributors. The following two examples are equivalent, the first using the table constraint syntax, the second the column constraint syntax:
-
-CREATE TABLE distributors (
-    did     integer,
-    name    varchar(40),
-    PRIMARY KEY(did)
-);
-
-CREATE TABLE distributors (
-    did     integer PRIMARY KEY,
-    name    varchar(40)
-);
-Assign a literal constant default value for the column name, arrange for the default value of column did to be generated by selecting the next value of a sequence object, and make the default value of modtime be the time at which the row is inserted:
-
-CREATE TABLE distributors (
-    name      varchar(40) DEFAULT 'Luso Films',
-    did       integer DEFAULT nextval('distributors_serial'),
-    modtime   timestamp DEFAULT current_timestamp
-);
-
-
-(test create-table-two-column-constraints
-      "Define two NOT NULL column constraints on the table distributors, one of which is explicitly given a name.
-Note the need for quoting the no-null constraint in the column. Is there any way to fix this?"
-      (is (equal (s-sql:sql (:create-table distributors ((did :type integer :constraint 'no-null) (name :type (varchar 40 )))))
-                 "CREATE TABLE distributors (did INTEGER NOT NULL CONSTRAINT no_null, name VARCHAR(40) NOT NULL)")))
-
-Define a unique constraint for the name column:
-
-CREATE TABLE distributors (
-    did     integer,
-    name    varchar(40) UNIQUE
-);
-The same, specified as a table constraint:
-
-CREATE TABLE distributors (
-    did     integer,
-    name    varchar(40),
-    UNIQUE(name)
-);
-Create the same table, specifying 70% fill factor for both the table and its unique index:
-
-CREATE TABLE distributors (
-    did     integer,
-    name    varchar(40),
-    UNIQUE(name) WITH (fillfactor=70)
-)
-WITH (fillfactor=70);
-Create table circles with an exclusion constraint that prevents any two circles from overlapping:
-
-CREATE TABLE circles (
-    c circle,
-    EXCLUDE USING gist (c WITH &&)
-);
-Create table cinemas in tablespace diskvol1:
-
-CREATE TABLE cinemas (
-        id serial,
-        name text,
-        location text
-) TABLESPACE diskvol1;
-Create a composite type and a typed table:
-
-CREATE TYPE employee_type AS (name text, salary numeric);
-
-CREATE TABLE employees OF employee_type (
-    PRIMARY KEY (name),
-    salary WITH OPTIONS DEFAULT 1000
-);
-Create a range partitioned table:
-
-CREATE TABLE measurement (
-    logdate         date not null,
-    peaktemp        int,
-    unitsales       int
-) PARTITION BY RANGE (logdate);
-Create a range partitioned table with multiple columns in the partition key:
-
-CREATE TABLE measurement_year_month (
-    logdate         date not null,
-    peaktemp        int,
-    unitsales       int
-) PARTITION BY RANGE (EXTRACT(YEAR FROM logdate), EXTRACT(MONTH FROM logdate));
-Create a list partitioned table:
-
-CREATE TABLE cities (
-    city_id      bigserial not null,
-    name         text not null,
-    population   bigint
-) PARTITION BY LIST (left(lower(name), 1));
-Create partition of a range partitioned table:
-
-CREATE TABLE measurement_y2016m07
-    PARTITION OF measurement (
-    unitsales DEFAULT 0
-) FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');
-Create a few partitions of a range partitioned table with multiple columns in the partition key:
-
-CREATE TABLE measurement_ym_older
-    PARTITION OF measurement_year_month
-    FOR VALUES FROM (MINVALUE, MINVALUE) TO (2016, 11);
-
-CREATE TABLE measurement_ym_y2016m11
-    PARTITION OF measurement_year_month
-    FOR VALUES FROM (2016, 11) TO (2016, 12);
-
-CREATE TABLE measurement_ym_y2016m12
-    PARTITION OF measurement_year_month
-    FOR VALUES FROM (2016, 12) TO (2017, 01);
-
-CREATE TABLE measurement_ym_y2017m01
-    PARTITION OF measurement_year_month
-    FOR VALUES FROM (2017, 01) TO (2017, 02);
-Create partition of a list partitioned table:
-
-CREATE TABLE cities_ab
-    PARTITION OF cities (
-    CONSTRAINT city_id_nonzero CHECK (city_id != 0)
-) FOR VALUES IN ('a', 'b');
-Create partition of a list partitioned table that is itself further partitioned and then add a partition to it:
-
-CREATE TABLE cities_ab
-    PARTITION OF cities (
-    CONSTRAINT city_id_nonzero CHECK (city_id != 0)
-) FOR VALUES IN ('a', 'b') PARTITION BY RANGE (population);
-
-CREATE TABLE cities_ab_10000_to_100000
-    PARTITION OF cities_ab FOR VALUES FROM (10000) TO (100000);
-
-|#
+(test create-index
+  "Testing create-index"
+  (is (equal (sql (:create-index 'films_idx :on "films" :fields 'title))
+             "CREATE INDEX films_idx ON films (title)"))
+  (is (equal (sql (:create-index 'films_idx :on "films" :using gin :fields 'title))
+      "CREATE INDEX films_idx ON films USING GIN (title)"))
+  (is (equal (sql (:create-index 'doc-tags-id-tags :on "doc-tags-array" :using gin :fields 'tags))
+             "CREATE INDEX doc_tags_id_tags ON doc_tags_array USING GIN (tags)"))
+  (is (equal (sql (:create-unique-index 'doc-tags-id-doc-id :on "doc-tags-array"  :fields 'doc-id))
+             "CREATE UNIQUE INDEX doc_tags_id_doc_id ON doc_tags_array (doc_id)")))

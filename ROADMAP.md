@@ -43,7 +43,7 @@ No guarantee is given with respect to resolution or timing on any item.
 ## Data type support
 - [ ]   json, jsonb (postgresql 9.4, full text search support in postgresql 10) See
         https://github.com/gtod/postgres-json/blob/master/postgres/s-sql.lisp
-- [ ]   Array support
+- [X]   Array support (see issue 121)
 - [ ]   Intervals (see e.g. issue 104)
 - [ ]   Ranges
 - [ ]   Postgis

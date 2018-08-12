@@ -505,7 +505,46 @@ string."
   `("ALL " ,@(sql-expand query)))
 
 (def-sql-op :array (query)
+  "This is used when calling a select query into an array. See sample usage."
   `("ARRAY(" ,@(sql-expand query) ")"))
+
+(def-sql-op :array[] (&rest args)
+  "This handles statements that include functions in the query such as (:+ 1 2), (:pi) in the array whereas just
+passing an array as #(1.0 2.4) does not and you are not selecting into an array, so do not use :array."
+  `("ARRAY[" ,@(sql-expand-list args) "]"))
+
+(def-sql-op :[] (form start &optional end)
+  "This slices arrays. Sample usage would be:
+   (query (:select (:[] 'provinces 1) :from 'array-provinces :where (:= 'name \"Germany\"))
+"
+  (if end
+      `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) ":" ,@(sql-expand end) "]")
+      `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) "]")))
+
+(def-sql-op :interval (query)
+  "Interval expects an unquoted list because the value parameter may also have a formating parameter"
+  `("INTERVAL  " ,@(sql-expand-list query)))
+
+(def-sql-op :current-date ()
+  `("current_date"))
+
+(def-sql-op :current-timestamp ()
+  `("current_timestamp"))
+
+(def-sql-op :current-time ()
+  `("current_time"))
+
+(def-sql-op :timestamp (arg)
+  `("timestamp " ,@(sql-expand arg)))
+
+(def-sql-op :age (&rest args)
+  `("AGE (" ,@(sql-expand-list args) ")"))
+
+(def-sql-op :date (arg)
+  `("date " ,@(sql-expand arg)))
+
+(def-sql-op :integer (arg)
+  `("integer " ,@(sql-expand arg)))
 
 (def-sql-op :cast (query)
   `("CAST(" ,@(sql-expand query) ")" ))
@@ -601,7 +640,7 @@ See tests.lisp for more examples."
       ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :min (&rest args)
-    "Returns the minimum value ofa set of values.  Allowed keyword parameters are distinct and filter.
+    "Returns the minimum value of a set of values.  Allowed keyword parameters are distinct and filter.
 Note that if the filter keyword is used, the filter must be last in the min args.
 If distinct is used, it must come before filter.
 Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
@@ -711,11 +750,6 @@ Example:
               :append `(" WHEN " ,@(sql-expand test) " THEN " ,@(sql-expand expr))
             :end)
     " END"))
-
-(def-sql-op :[] (form start &optional end)
-  (if end
-      `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) ":" ,@(sql-expand end) "]")
-      `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) "]")))
 
 ;; This one has two interfaces. When the elements are known at
 ;; compile-time, they can be given as multiple arguments to the
@@ -830,7 +864,7 @@ See tests.lisp for examples."
       ")")))
 
 (def-sql-op :array-agg (&rest args)
-  "Array-agg returns a list of values concatenated into an arrays.
+  "Array-agg returns a list of values concatenated into an array.
 Allowable optional keyword parameters are :distinct, :order-by and :filter.
 
 Example:
@@ -859,83 +893,83 @@ and article at https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-f
     `("mode() within group (order by " ,@(sql-expand-list vars) ")")))
 
 
-(def-sql-op :regr_avgx (y x)
-  "The regr_avgx function returns the average of the independent variable (sum(X)/N)
+(def-sql-op :regr-avgx (y x)
+  "The regr-avgx function returns the average of the independent variable (sum(X)/N)
 
 Example:
 
-    (query (:select (:regr_avgx 'height 'weight) :from 'people))"
+    (query (:select (:regr-avgx 'height 'weight) :from 'people))"
 
   `("REGR_AVGX(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
-(def-sql-op :regr_avgy (y x)
-  "The regr_avgy function returns the average of the dependent variable (sum(Y)/N).
+(def-sql-op :regr-avgy (y x)
+  "The regr-avgy function returns the average of the dependent variable (sum(Y)/N).
 
 Example:
 
-    (query (:select (:regr_avgy 'height 'weight) :from 'people))"
+    (query (:select (:regr-avgy 'height 'weight) :from 'people))"
   `("REGR_AVGY(" ,@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
-(def-sql-op :regr_count (y x)
-  "The regr_count function returns the 	number of input rows in which both expressions are nonnull.
+(def-sql-op :regr-count (y x)
+  "The regr-count function returns the 	number of input rows in which both expressions are nonnull.
 
 Example:
 
-    (query (:select (:regr_count 'height 'weight) :from 'people))"
+    (query (:select (:regr-count 'height 'weight) :from 'people))"
 
   `("REGR_COUNT(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
-(def-sql-op :regr_intercept (y x)
-  "The regr_intercept function returns the y-intercept of the least-squares-fit linear equation determined by the (X, Y) pairs.
+(def-sql-op :regr-intercept (y x)
+  "The regr-intercept function returns the y-intercept of the least-squares-fit linear equation determined by the (X, Y) pairs.
 
 Example:
 
-    (query (:select (:regr_intercept 'height 'weight) :from 'people))"
+    (query (:select (:regr-intercept 'height 'weight) :from 'people))"
 
   `("REGR_INTERCEPT(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
-(def-sql-op :regr_r2 (y x)
-  "The regr_r2 function returns the square of the correlation coefficient.
+(def-sql-op :regr-r2 (y x)
+  "The regr-r2 function returns the square of the correlation coefficient.
 
 Example:
 
-    (query (:select (:regr_r2 'height 'weight) :from 'people))"
+    (query (:select (:regr-r2 'height 'weight) :from 'people))"
 
   `("REGR_R2(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
-(def-sql-op :regr_slope (y x)
-  "The regr_slope function returns the slope of the least-squares-fit linear equation determined by the (X, Y) pairs.
+(def-sql-op :regr-slope (y x)
+  "The regr-slope function returns the slope of the least-squares-fit linear equation determined by the (X, Y) pairs.
 
 Example:
 
-    (query (:select (:regr_slope 'height 'weight) :from 'people))"
+    (query (:select (:regr-slope 'height 'weight) :from 'people))"
 
   `("REGR_SLOPE(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
-(def-sql-op :regr_sxx (y x)
-  "The regr_sxx function returns the sum(X^2) - sum(X)^2/N (“sum of squares” of the independent variable).
+(def-sql-op :regr-sxx (y x)
+  "The regr-sxx function returns the sum(X^2) - sum(X)^2/N (“sum of squares” of the independent variable).
 
 Example:
 
-    (query (:select (:regr_sxx 'height 'weight) :from 'people))"
+    (query (:select (:regr-sxx 'height 'weight) :from 'people))"
 
   `("REGR_SXX(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
-(def-sql-op :regr_sxy (y x)
-  "The regr_sxy function returns the sum(X*Y) - sum(X) * sum(Y)/N (“sum of products” of independent times dependent variable).
+(def-sql-op :regr-sxy (y x)
+  "The regr-sxy function returns the sum(X*Y) - sum(X) * sum(Y)/N (“sum of products” of independent times dependent variable).
 
 Example:
 
-    (query (:select (:regr_sxy 'height 'weight) :from 'people))"
+    (query (:select (:regr-sxy 'height 'weight) :from 'people))"
 
   `("REGR_SXY(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
-(def-sql-op :regr_syy (y x)
-  "The regr_syy function returns the sum(Y^2) - sum(Y)^2/N (“sum of squares” of the dependent variable).
+(def-sql-op :regr-syy (y x)
+  "The regr-syy function returns the sum(Y^2) - sum(Y)^2/N (“sum of squares” of the dependent variable).
 
 Example:
 
-    (query (:select (:regr_syy 'height 'weight) :from 'people))"
+    (query (:select (:regr-syy 'height 'weight) :from 'people))"
 
   `("REGR_SYY(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
@@ -1319,9 +1353,12 @@ test. "
 
 (defmacro def-drop-op (op-name word)
   `(def-sql-op ,op-name (&rest args)
-     (let ((if-exists (if (eq (car args) :if-exists) (pop args) nil)))
-       (destructuring-bind (name) args
-         `("DROP " ,,word " " ,@(when if-exists '("IF EXISTS ")) ,@(sql-expand name))))))
+     (let ((if-exists (if (eq (car args) :if-exists) (pop args) nil))
+           (name (pop args))
+           (cascade (if (eq (car args) :cascade) t nil) ))
+       (format t "Cascade ~a Args ~a~%" cascade args)
+       `("DROP " ,,word " " ,@(when if-exists '("IF EXISTS ")) ,@(sql-expand name)
+         ,@(when cascade '(" CASCADE "))))))
 
 (def-drop-op :drop-table "TABLE")
 (def-drop-op :drop-index "INDEX")

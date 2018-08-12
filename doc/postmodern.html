@@ -1,1592 +1,2117 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-08-11 Sat 20:00 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Postmodern Reference Manual</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
 
-  <head>
-    <title>Postmodern reference manual</title>
-    <link rel="stylesheet" type="text/css" href="style.css"/>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  </head>
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
 
-  <body>
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
-    <h1>Postmodern reference manual</h1>
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
 
-    <p>This is the reference manual for the component named
-    <code>postmodern</code>, which is part of a <a
-    href="index.html">library</a> of the same name.</p>
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
 
-    <p>Note that this package also exports the <a
-    href="cl-postgres.html#database-connection"><code>database-connection</code></a>
-    and <a
-    href="cl-postgres.html#database-error"><code>database-error</code></a>
-    types from <a href="cl-postgres.html">CL-postgres</a> and a few
-    operators from <a href="s-sql.html">S-SQL</a>.</p>
 
-    <p><a href="#query"><code>query</code></a>, <a
-    href="#execute"><code>execute</code></a>, and any other function
-    that would logically need to communicate with the database will
-    raise a condition of the type <a
-    href="cl-postgres.html#conditions"><code>database-error</code></a>
-    when something goes wrong. As a special case, errors that break
-    the connection (socket errors, database shutdowns) will be raised
-    as subtypes of <a
-    href="cl-postgres.html#database-connection-error"><code>database-connection-error</code></a>,
-    providing a <code>:reconnect</code> restart to re-try the
-    operation that encountered to the error.</p>
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Postmodern Reference Manual</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org41ad3a7">Connecting</a>
+<ul>
+<li><a href="#org16047f6">class database-connection</a></li>
+<li><a href="#org1324a15">function connect (database user password host &amp;key (port 5432) pooled-p use-ssl)</a></li>
+<li><a href="#org9cbc355">variable <b>default-use-ssl</b></a></li>
+<li><a href="#orge7e09aa">method disconnect (database-connection)</a></li>
+<li><a href="#org7022b61">function connected-p (database-connection)</a></li>
+<li><a href="#orgb357674">method reconnect (database-connection)</a></li>
+<li><a href="#org1c3cf0b">variable <b>database</b></a></li>
+<li><a href="#org19a858b">macro with-connection (spec &amp;body body)</a></li>
+<li><a href="#orgf603140">macro call-with-connection (spec thunk)</a></li>
+<li><a href="#orgaf93a1e">function connect-toplevel (database user password host &amp;key (port 5432))</a></li>
+<li><a href="#org2c329fe">function disconnect-toplevel ()</a></li>
+<li><a href="#org111e702">function clear-connection-pool ()</a></li>
+<li><a href="#org7cfedf0">variable <b>max-pool-size</b></a></li>
+</ul>
+</li>
+<li><a href="#org1aee8ff">Querying</a>
+<ul>
+<li><a href="#orgaa868cd">macro query (query &amp;rest args/format)</a></li>
+<li><a href="#orgf3ecdd9">macro execute (query &amp;rest args)</a></li>
+<li><a href="#org79e4e1e">macro doquery (query (&amp;rest names) &amp;body body)</a></li>
+<li><a href="#org63d983c">macro prepare (query &amp;optional (format :rows))</a></li>
+<li><a href="#org1c4872b">macro defprepared (name query &amp;optional (format :rows))</a></li>
+<li><a href="#org95d9032">macro defprepared-with-names (name (&amp;rest args) (query &amp;rest query-args) &amp;optional (format :rows))</a></li>
+<li><a href="#orgbfb927e">macro with-transaction ((&amp;optional name) &amp;body body)</a></li>
+<li><a href="#orgf71c73d">function commit-transaction (transaction)</a></li>
+<li><a href="#orgf847006">function abort-transaction (transaction)</a></li>
+<li><a href="#org2e4f103">macro with-savepoint (name &amp;body body)</a></li>
+<li><a href="#org1e01691">function release-savepoint (savepoint)</a></li>
+<li><a href="#org763b22f">function rollback-savepoint (savepoint)</a></li>
+<li><a href="#org98941b1">function commit-hooks (transaction-or-savepoint), setf (commit-hooks transaction-or-savepoint)</a></li>
+<li><a href="#orga1023a0">function abort-hooks (transaction-or-savepoint), setf (abort-hooks transaction-or-savepoint)</a></li>
+<li><a href="#org2823946">macro with-logical-transaction ((&amp;optional name) &amp;body body)</a></li>
+<li><a href="#org7f65c91">function abort-logical-transaction (transaction-or-savepoint)</a></li>
+<li><a href="#orgdaeb32a">function commit-logical-transaction (transaction-or-savepoint)</a></li>
+<li><a href="#orgb767910">variable <b>current-logical-transaction</b></a></li>
+<li><a href="#org8c1a03c">macro ensure-transaction (&amp;body body)</a></li>
+<li><a href="#orge407acf">macro with-schema ((namespace &amp;key :strict t :if-not-exist :create :drop-after) &amp;body body)</a></li>
+<li><a href="#orgc76d2c0">function sequence-next (sequence)</a></li>
+<li><a href="#org34a8888">function coalesce (&amp;rest arguments)</a></li>
+</ul>
+</li>
+<li><a href="#org868514f">Inspecting the database</a>
+<ul>
+<li><a href="#orgbbc34ae">function list-tables (&amp;optional strings-p)</a></li>
+<li><a href="#org691be0f">function table-exists-p (name)</a></li>
+<li><a href="#org1f2a898">function table-description (name &amp;optional schema-name)</a></li>
+<li><a href="#org77bf5e8">function list-sequences (&amp;optional strings-p)</a></li>
+<li><a href="#org673c5cb">function sequence-exists-p (name)</a></li>
+<li><a href="#orgb23b47f">function list-views (&amp;optional strings-p)</a></li>
+<li><a href="#org29e9f9b">function view-exists-p (name)</a></li>
+<li><a href="#org604f57f">function list-schemata ()</a></li>
+<li><a href="#org5cb5498">function schema-exist-p (schema) NOW DEPRECATED IN FAVOR OF schema-exists-p which is more consistent with naming of other functions.</a></li>
+<li><a href="#orgd42abc6">function schema-exists-p (schema)</a></li>
+<li><a href="#orgdb30f09">function database-version ()</a></li>
+<li><a href="#orgb83fa4f">function num-records-in-database ()</a></li>
+<li><a href="#orgd08e9c4">function current-database ()</a></li>
+<li><a href="#orgb0e14c5">function database-exists-p (database-name)</a></li>
+<li><a href="#orga714e8d">function database-size (&amp;optional database-name)</a></li>
+<li><a href="#org3dc8479">function list-databases (&amp;key (order-by-size nil) (size t))</a></li>
+<li><a href="#org76e3f6a">function list-schemas ()</a></li>
+<li><a href="#orgf8ed3d2">function list-tablespaces ()</a></li>
+<li><a href="#orga04ef47">function list-available-types ()</a></li>
+<li><a href="#orgbfe5e00">function list-table-sizes (&amp;key (schema "public") (order-by-size nil) (size t))</a></li>
+<li><a href="#org0f079b0">function table-size (table-name)</a></li>
+<li><a href="#orgc280c15">function more-table-info (table-name)</a></li>
+<li><a href="#org6250e37">function list-columns (table-name)</a></li>
+<li><a href="#org15757d6">function list-columns-with-types (table-name)</a></li>
+<li><a href="#orge927d6b">function column-exists-p (table-name column-name)</a></li>
+<li><a href="#org92bd4ee">function describe-views (&amp;optional (schema "public")</a></li>
+<li><a href="#org2f56533">function list-database-functions ()</a></li>
+<li><a href="#org2b8c171">function list-indices (&amp;optional strings-p)</a></li>
+<li><a href="#org43b5670">function list-table-indices (table-name &amp;optional strings-p)</a></li>
+<li><a href="#orgf9a87c2">function list-indexed-column-and-attributes (table-name)</a></li>
+<li><a href="#org04e53ef">function list-index-definitions (table-name)</a></li>
+<li><a href="#org913139b">function list-foreign-keys (table-name)</a></li>
+<li><a href="#org08202c8">function list-unique-or-primary-constraints (table-name)</a></li>
+<li><a href="#org61ccc27">function list-all-constraints (table-name)</a></li>
+<li><a href="#org6e13985">function describe-constraint (table-name constraint-name)</a></li>
+<li><a href="#org2a704ab">function describe-foreign-key-constraints ()</a></li>
+<li><a href="#orga3784b7">function list-triggers (&amp;optional table-name)</a></li>
+<li><a href="#orgd09029b">function list-detailed-triggers ()</a></li>
+<li><a href="#org0c9e9f9">function list-database-users ()</a></li>
+<li><a href="#org21e6cb7">function change-toplevel-database (new-database user password host)</a></li>
+</ul>
+</li>
+<li><a href="#org00207e6">Database access objects</a>
+<ul>
+<li><a href="#org841b506">metaclass dao-class</a></li>
+<li><a href="#org01f46ef">method dao-keys (class)</a></li>
+<li><a href="#orgbddb9c7">method dao-keys (dao)</a></li>
+<li><a href="#org63c8766">method dao-exists-p (dao)</a></li>
+<li><a href="#orga2273af">method make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)</a></li>
+<li><a href="#orga8f1d62">macro define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)</a></li>
+<li><a href="#orgb80db1e">method get-dao (type &amp;rest keys)</a></li>
+<li><a href="#org3e66f17">macro select-dao (type &amp;optional (test t) &amp;rest sort)</a></li>
+<li><a href="#org01592fc">macro do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)</a></li>
+<li><a href="#orgef6c4d3">macro query-dao (type query &amp;rest args)</a></li>
+<li><a href="#org2946618">function do-query-dao (((type type-var) query &amp;rest args) &amp;body body)</a></li>
+<li><a href="#org213b819">variable <b>ignore-unknown-columns</b></a></li>
+<li><a href="#org112977f">method insert-dao (dao)</a></li>
+<li><a href="#org7949047">method update-dao (dao)</a></li>
+<li><a href="#org97b3733">function save-dao (dao)</a></li>
+<li><a href="#org156dacc">function save-dao/transaction (dao)</a></li>
+<li><a href="#orge4bc9c5">method upsert-dao (dao)</a></li>
+<li><a href="#org539b51d">method delete-dao (dao)</a></li>
+<li><a href="#org5bade60">function dao-table-name (class)</a></li>
+<li><a href="#org7e43de5">function dao-table-definition (class)</a></li>
+<li><a href="#org052ee19">macro with-column-writers ((&amp;rest writers) &amp;body body)</a></li>
+</ul>
+</li>
+<li><a href="#org2a813a6">Table definition and creation</a>
+<ul>
+<li><a href="#org452ce06">macro deftable (name &amp;body definition)</a></li>
+<li><a href="#orga55f8be">function !dao-def ()</a></li>
+<li><a href="#org2724621">function !index (&amp;rest columns), !unique-index (&amp;rest columns)</a></li>
+<li><a href="#orga0e6dc9">function !foreign (target-table columns &amp;optional target-columns &amp;key on-delete on-update deferrable initially-deferred)</a></li>
+<li><a href="#org7627ea2">function !unique (target-fields &amp;key deferrable initially-deferred)</a></li>
+<li><a href="#orgd0ca2cf">function create-table (symbol)</a></li>
+<li><a href="#org4377119">function create-all-tables ()</a></li>
+<li><a href="#org73b1908">function create-package-tables (package)</a></li>
+<li><a href="#org66749a0">variables <b>table-name</b>, <b>table-symbol</b></a></li>
+</ul>
+</li>
+<li><a href="#org5822c12">Schemata</a>
+<ul>
+<li><a href="#org34e7e49">function create-schema (schema)</a></li>
+<li><a href="#orgd2d302c">function drop-schema (schema)</a></li>
+<li><a href="#org3b45923">function get-search-path ()</a></li>
+<li><a href="#org8d4c2e7">function set-search-path (path)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<p>
+This is the reference manual for the component named postmodern, which is
+part of a library of the same name.
+</p>
 
-    <h2>Contents</h2>
+<p>
+Note that this package also exports the database-connection and
+database-error types from CL-postgres and a few operators from S-SQL.
+</p>
 
-    <ol>
-      <li><a href="#connecting">Connecting</a></li>
-      <li><a href="#querying">Querying</a></li>
-      <li><a href="#inspect">Inspecting the database</a></li>
-      <li><a href="#daos">Database access objects</a></li>
-      <li><a href="#tabledef">Table definition and creation</a></li>
-      <li><a href="#schemata">Schemata</a></li>
-      <li><a href="#index">Symbol-index</a></li>
-    </ol>
+<p>
+query, execute, and any other function that would logically need to
+communicate with the database will raise a condition of the type
+database-error when something goes wrong. As a special case, errors
+that break the connection (socket errors, database shutdowns) will be
+raised as subtypes of database-connection-error, providing a :reconnect
+restart to re-try the operation that encountered to the error.
+</p>
 
-    <h2><a name="connecting"></a>Connecting</h2>
 
-    <p class="def">
-      <span>class</span>
-      <a name="database-connection"></a>
-      database-connection
-    </p>
+<div id="outline-container-org41ad3a7" class="outline-2">
+<h2 id="org41ad3a7">Connecting</h2>
+<div class="outline-text-2" id="text-org41ad3a7">
+</div>
+<div id="outline-container-org16047f6" class="outline-3">
+<h3 id="org16047f6">class database-connection</h3>
+<div class="outline-text-3" id="text-org16047f6">
+<p>
+Objects of this type represent database connections.
+</p>
+</div>
+</div>
 
-    <p class="desc">Objects of this type represent database connections.</p>
+<div id="outline-container-org1324a15" class="outline-3">
+<h3 id="org1324a15">function connect (database user password host &amp;key (port 5432) pooled-p use-ssl)</h3>
+<div class="outline-text-3" id="text-org1324a15">
+<p>
+→ database-connection
+</p>
 
-    <p class="def">
-      <span>function</span>
-      <a name="connect"></a>
-      connect (database user password host &amp;key (port 5432) pooled-p use-ssl)
-      <br/>&#8594; database-connection
-    </p>
+<p>
+Create a new database connection for the given user and the database.
+Port will default to 5432, which is where most PostgreSQL servers are
+running. If pooled-p is T, a connection will be taken from a pool of
+connections of this type, if one is available there, and when the connection
+is disconnected it will be put back into this pool instead. use-ssl can
+be :no, :yes, or :try, as in open-database, and defaults to the value
+of <b>default-use-ssl</b>.
+</p>
+</div>
+</div>
 
-    <p class="desc">Create a new database connection for the given
-    <code>user</code> and the <code>database</code>. Port will default
-    to 5432, which is where most PostgreSQL servers are running. If
-    <code>pooled-p</code> is <code>T</code>, a connection will be taken
-    from a pool of connections of this type, if one is available there,
-    and when the connection is disconnected it will be put back into this
-    pool instead. <code>use-ssl</code> can be <code>:no</code>,
-    <code>:yes</code>, or <code>:try</code>, as in <a
-    href="cl-postgres.html#open-database"><code>open-database</code></a>,
-    and defaults to the value of <a
-    href="#*default-use-ssl*"><code>*default-use-ssl*</code></a>.</p>
+<div id="outline-container-org9cbc355" class="outline-3">
+<h3 id="org9cbc355">variable <b>default-use-ssl</b></h3>
+<div class="outline-text-3" id="text-org9cbc355">
+<p>
+The default for connect's use-ssl argument. This starts at :no. If you
+set it to anything else, be sure to also load the CL+SSL library.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>variable</span>
-      <a name="*default-use-ssl*"></a>
-      *default-use-ssl*
-    </p>
+<div id="outline-container-orge7e09aa" class="outline-3">
+<h3 id="orge7e09aa">method disconnect (database-connection)</h3>
+<div class="outline-text-3" id="text-orge7e09aa">
+<p>
+Disconnects a normal database connection, or moves a pooled connection
+into the pool.
+</p>
+</div>
+</div>
 
-    <p class="desc">The default for <a
-    href="#connect"><code>connect</code></a>'s <code>use-ssl</code>
-    argument. This starts at <code>:no</code>. If you set it to
-    anything else, be sure to also load the <a
-    href="http://common-lisp.net/project/cl-plus-ssl/">CL+SSL</a>
-    library.</p>
+<div id="outline-container-org7022b61" class="outline-3">
+<h3 id="org7022b61">function connected-p (database-connection)</h3>
+<div class="outline-text-3" id="text-org7022b61">
+<p>
+→ boolean
+</p>
 
-    <p class="def">
-      <span>method</span>
-      <a name="disconnect"></a>
-      disconnect (database-connection)
-    </p>
+<p>
+Returns a boolean indicating whether the given connection is still connected
+to the server.
+</p>
+</div>
+</div>
 
-    <p class="desc">Disconnects a normal database connection, or moves
-    a pooled connection into the pool.</p>
+<div id="outline-container-orgb357674" class="outline-3">
+<h3 id="orgb357674">method reconnect (database-connection)</h3>
+<div class="outline-text-3" id="text-orgb357674">
+<p>
+Reconnect a disconnected database connection. This is not allowed for pooled
+connections ― after they are disconnected they might be in use by some other
+process, and should no longer be used.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>function</span>
-      <a name="connected-p"></a>
-      connected-p (database-connection)
-      <br/>&#8594; boolean
-    </p>
+<div id="outline-container-org1c3cf0b" class="outline-3">
+<h3 id="org1c3cf0b">variable <b>database</b></h3>
+<div class="outline-text-3" id="text-org1c3cf0b">
+<p>
+Special variable holding the current database. Most functions and macros
+operating on a database assume this binds to a connected database.
+</p>
+</div>
+</div>
 
-    <p class="desc">Returns a boolean indicating whether the given
-    connection is still connected to the server.</p>
+<div id="outline-container-org19a858b" class="outline-3">
+<h3 id="org19a858b">macro with-connection (spec &amp;body body)</h3>
+<div class="outline-text-3" id="text-org19a858b">
+<p>
+Evaluates the body with <b>database</b> bound to a connection as specified by
+spec, which should be list that connect can be applied to.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>method</span>
-      <a name="reconnect"></a>
-      reconnect (database-connection)
-    </p>
+<div id="outline-container-orgf603140" class="outline-3">
+<h3 id="orgf603140">macro call-with-connection (spec thunk)</h3>
+<div class="outline-text-3" id="text-orgf603140">
+<p>
+The functional backend to with-connection. Binds <b>database</b> to a new
+connection as specified by spec, which should be a list that connect can
+be applied to, and runs the zero-argument function given as second argument
+in the new environment. When the function returns or throws, the new
+connection is disconnected.
+</p>
+</div>
+</div>
 
-    <p class="desc">Reconnect a disconnected database connection. This
-    is not allowed for pooled connections &#x2015; after they are
-    disconnected they might be in use by some other process, and
-    should no longer be used.</p>
+<div id="outline-container-orgaf93a1e" class="outline-3">
+<h3 id="orgaf93a1e">function connect-toplevel (database user password host &amp;key (port 5432))</h3>
+<div class="outline-text-3" id="text-orgaf93a1e">
+<p>
+Bind the <b>database</b> to a new connection. Use this if you only need one
+connection, or if you want a connection for debugging from the REPL.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>variable</span>
-      <a name="*database*"></a>
-      *database*
-    </p>
+<div id="outline-container-org2c329fe" class="outline-3">
+<h3 id="org2c329fe">function disconnect-toplevel ()</h3>
+<div class="outline-text-3" id="text-org2c329fe">
+<p>
+Disconnect the <b>database</b>.
+</p>
+</div>
+</div>
 
-    <p class="desc">Special variable holding the current database.
-    Most functions and macros operating on a database assume this
-    binds to a connected database.</p>
+<div id="outline-container-org111e702" class="outline-3">
+<h3 id="org111e702">function clear-connection-pool ()</h3>
+<div class="outline-text-3" id="text-org111e702">
+<p>
+Disconnect and remove all connections from the connection pools.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>macro</span>
-      <a name="with-connection"></a>
-      with-connection (spec &amp;body body)
-    </p>
+<div id="outline-container-org7cfedf0" class="outline-3">
+<h3 id="org7cfedf0">variable <b>max-pool-size</b></h3>
+<div class="outline-text-3" id="text-org7cfedf0">
+<p>
+Set the maximum amount of connections kept in a single connection pool, where
+a pool consists of all the stored connections with the exact same connect
+arguments. Defaults to NIL, which means there is no maximum.
+</p>
+</div>
+</div>
+</div>
 
-    <p class="desc">Evaluates the <code>body</code> with <a
-    href="#*database*"><code>*database*</code></a> bound to a
-    connection as specified by <code>spec</code>, which should be list
-    that <a href="#connect"><code>connect</code></a> can be applied
-    to.</p>
+<div id="outline-container-org1aee8ff" class="outline-2">
+<h2 id="org1aee8ff">Querying</h2>
+<div class="outline-text-2" id="text-org1aee8ff">
+</div>
+<div id="outline-container-orgaa868cd" class="outline-3">
+<h3 id="orgaa868cd">macro query (query &amp;rest args/format)</h3>
+<div class="outline-text-3" id="text-orgaa868cd">
+<p>
+→ result
+</p>
 
-    <p class="def">
-      <span>macro</span>
-      <a name="call-with-connection"></a>
-      call-with-connection (spec thunk)
-    </p>
+<p>
+Execute the given query, which can be either a string or an S-SQL form
+(list starting with a keyword). If the query contains placeholders ($1, $2, etc)
+their values can be given as extra arguments. If one of these arguments
+is a keyword occurring in the table below, it will not be used as a query
+argument, but will determine the format in which the results are returned
+instead. Any of the following formats can be used, with the default being :rows:
+</p>
 
-    <p class="desc">The functional backend to <a
-    href="#with-connection"><code>with-connection</code></a>. Binds <a
-    href="#*database*"><code>*database*</code></a> to a new connection
-    as specified by <code>spec</code>, which should be a list that <a
-    href="#connect"><code>connect</code></a> can be applied to, and
-    runs the zero-argument function given as second argument in the
-    new environment. When the function returns or throws, the new
-    connection is disconnected.</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
-    <p class="def">
-      <span>function</span>
-      <a name="connect-toplevel"></a>
-      connect-toplevel  (database user password host &amp;key (port 5432))
-    </p>
 
-    <p class="desc">Bind the <a
-    href="#*database*"><code>*database*</code></a> to a new
-    connection. Use this if you only need one connection, or if you
-    want a connection for debugging from the REPL.</p>
+<colgroup>
+<col  class="org-left" />
 
-    <p class="def">
-      <span>function</span>
-      <a name="disconnect-toplevel"></a>
-      disconnect-toplevel ()
-    </p>
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">:none</td>
+<td class="org-left">Ignore the result values.</td>
+</tr>
 
-    <p class="desc">Disconnect the <a
-    href="#*database*"><code>*database*</code></a>.</p>
+<tr>
+<td class="org-left">:lists, :rows</td>
+<td class="org-left">Return a list of lists, each list containing the values for a row.</td>
+</tr>
 
-    <p class="def">
-      <span>function</span>
-      <a name="clear-connection-pool"></a>
-      clear-connection-pool ()
-    </p>
+<tr>
+<td class="org-left">:list, :row</td>
+<td class="org-left">Return a single row as a list.</td>
+</tr>
 
-    <p class="desc">Disconnect and remove all connections from the
-    connection pools.</p>
+<tr>
+<td class="org-left">:alists</td>
+<td class="org-left">Return a list of alists which map column names to values, with the names represented as keywords.</td>
+</tr>
 
-    <p class="def">
-      <span>variable</span>
-      <a name="*max-pool-size*"></a>
-      *max-pool-size*
-    </p>
+<tr>
+<td class="org-left">:alist</td>
+<td class="org-left">Return a single row as an alist.</td>
+</tr>
 
-    <p class="desc">Set the maximum amount of connections kept in a
-    <em>single</em> connection pool, where a pool consists of all the
-    stored connections with the exact same connect arguments. Defaults
-    to <code>NIL</code>, which means there is no maximum.</p>
+<tr>
+<td class="org-left">:str-alists</td>
+<td class="org-left">Like :alists, but use the original column names.</td>
+</tr>
 
-    <h2><a name="querying"></a>Querying</h2>
+<tr>
+<td class="org-left">:str-alist</td>
+<td class="org-left">Return a single row as an alist, with strings for names.</td>
+</tr>
 
-    <p class="def">
-      <span>macro</span>
-      <a name="query"></a>
-      query (query &amp;rest args/format)
-      <br/>&#8594; result
-    </p>
+<tr>
+<td class="org-left">:plists</td>
+<td class="org-left">Return a list of plists which map column names to values,with the names represented as keywords.</td>
+</tr>
 
-    <p class="desc">Execute the given <code>query</code>, which can be
-    either a string or an <a href="s-sql.html">S-SQL</a> form (list starting
-    with a keyword). If the query contains placeholders
-    (<code>$1</code>, <code>$2</code>, etc) their values can be given
-    as extra arguments. If one of these arguments is a keyword
-    occurring in the table below, it will not be used as a <code>query</code>
-    argument, but will determine the <code>format</code> in which the results
-    are returned instead. Any of the following formats can be used, with
-    the default being <code>:rows</code>:</p>
+<tr>
+<td class="org-left">:plist</td>
+<td class="org-left">Return a single row as a plist.</td>
+</tr>
 
-    <table class="desc">
-      <tr><td><code>:none</code></td><td>Ignore the result values.</td></tr>
-      <tr><td><code>:lists</code>, <code>:rows</code></td><td>Return a
-      list of lists, each list containing the values for a
-      row.</td></tr>
-      <tr><td><code>:list</code>, <code>:row</code></td><td>Return a
-      single row as a list.</td></tr>
-      <tr><td><code>:alists</code></td><td>Return a list of alists which map column
-      names to values, with the names represented as
-      keywords.</td></tr>
-      <tr><td><code>:alist</code></td><td>Return a single row as an alist.</td></tr>
-      <tr><td><code>:str-alists</code></td><td>Like
-      <code>:alists</code>, but use the original column
-      names.</td></tr>
-      <tr><td><code>:str-alist</code></td><td>Return a single row as an alist, with
-      strings for names.</td></tr>
-      <tr><td><code>:plists</code></td><td>Return a list of plists which map column
-      names to values,with the names represented as keywords.</td></tr>
-      <tr><td><code>:plist</code></td><td>Return a single row as a plist.</td></tr>
-      <tr><td><code>:column</code></td><td>Return a single column as a list.</td></tr>
-      <tr><td><code>:single</code></td><td>Return a single value.</td></tr>
-      <tr><td><code>:single!</code></td><td>Like <code>:single</code>,
-      but raise an error when the number of selected rows is not equal
-      to 1.</td></tr>
-      <tr><td><code>(:dao type)</code></td><td>Return a list of DAOs of the given type. The names of the fields returned by the query must match slots in the DAO class the same way as with <a href="#query-dao"><code>query-dao</code></a>.</td></tr>
-      <tr><td><code>(:dao type :single)</code></td><td>Return a single DAO of the given type.</td></tr>
-     </table>
+<tr>
+<td class="org-left">:column</td>
+<td class="org-left">Return a single column as a list.</td>
+</tr>
 
-    <p class="desc">If the database returns information about the
-    amount rows that were affected, such as with updating or deleting
-    queries, this is returned as a second value.</p>
+<tr>
+<td class="org-left">:single</td>
+<td class="org-left">Return a single value.</td>
+</tr>
 
-    <p class="def">
-      <span>macro</span>
-      <a name="execute"></a>
-      execute (query &amp;rest args)
-    </p>
+<tr>
+<td class="org-left">:single!</td>
+<td class="org-left">Like :single, but raise an error when the number of selected rows is not equal to 1.</td>
+</tr>
 
-    <p class="desc">Like <a href="#query"><code>query</code></a>
-    called with <code>format :none</code>. Returns the amount of
-    affected rows as its first returned value. (Also returns this
-    amount as the second returned value, but use of this is
-    deprecated.)</p>
+<tr>
+<td class="org-left">(:dao type)</td>
+<td class="org-left">Return a list of DAOs of the given type. The names of the fields returned by the query must match slots in the DAO class the same way as with query-dao.</td>
+</tr>
 
-    <p class="def">
-      <span>macro</span>
-      <a name="doquery"></a>
-      doquery (query (&amp;rest names) &amp;body body)
-    </p>
+<tr>
+<td class="org-left">(:dao type :single)</td>
+<td class="org-left">Return a single DAO of the given type.</td>
+</tr>
+</tbody>
+</table>
 
-    <p class="desc">Execute the given <code>query</code> (a string or a list
-    starting with a keyword), iterating over the rows in the result.
-    The <code>body</code> will be executed with the values in the row bound to the
-    symbols given in <code>names</code>. To iterate over a
-    parameterised query, one can specify a list whose <em>car</em> is the
-    query, and whose <em>cdr</em> contains the arguments. For example:</p>
+<p>
+If the database returns information about the amount rows that were affected,
+such as with updating or deleting queries, this is returned as a second value.
+</p>
+</div>
+</div>
 
-    <pre class="code">
-(doquery (:select 'name 'score :from 'scores) (n s)
+<div id="outline-container-orgf3ecdd9" class="outline-3">
+<h3 id="orgf3ecdd9">macro execute (query &amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgf3ecdd9">
+<p>
+Like query called with format :none. Returns the amount of affected rows as
+its first returned value. (Also returns this amount as the second returned
+value, but use of this is deprecated.)
+</p>
+</div>
+</div>
+
+<div id="outline-container-org79e4e1e" class="outline-3">
+<h3 id="org79e4e1e">macro doquery (query (&amp;rest names) &amp;body body)</h3>
+<div class="outline-text-3" id="text-org79e4e1e">
+<p>
+Execute the given query (a string or a list starting with a keyword),
+iterating over the rows in the result. The body will be executed with the
+values in the row bound to the symbols given in names. To iterate over a
+parameterised query, one can specify a list whose car is the query, and
+whose cdr contains the arguments. For example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(doquery (:select 'name 'score :from 'scores) (n s)
   (incf (gethash n *scores*) s))
 
-(doquery ((:select 'name :from 'scores :where (:> 'score '$1)) 100) (name)
-  (print name))</pre>
+(doquery ((:select 'name :from 'scores :where (:&gt; 'score '$1)) 100) (name)
+  (print name))
+</pre>
+</div>
+</div>
+</div>
 
-    <p class="def">
-      <span>macro</span>
-      <a name="prepare"></a>
-      prepare (query &amp;optional (format :rows))
-      <br/>&#8594; function
-    </p>
+<div id="outline-container-org63d983c" class="outline-3">
+<h3 id="org63d983c">macro prepare (query &amp;optional (format :rows))</h3>
+<div class="outline-text-3" id="text-org63d983c">
+<p>
+→ function
+</p>
 
-    <p class="desc">Creates a function that can be used as the
-    interface to a prepared statement. The given <code>query</code>
-    (either a string or an <a href="s-sql.html">S-SQL</a> form) may contain
-    placeholders, which look like <code>$1</code>, <code>$2</code>,
-    etc. The resulting function takes one argument for every
-    placeholder in the <code>query</code>, executes the prepared query,
-    and returns the result in the <code>format</code> specified. (Allowed
-    formats are the same as for <a href="#query"><code>query</code></a>.)</p>
+<p>
+Creates a function that can be used as the interface to a prepared statement.
+The given query (either a string or an S-SQL form) may contain placeholders,
+which look like $1, $2, etc. The resulting function takes one argument for
+every placeholder in the query, executes the prepared query, and returns the
+result in the format specified. (Allowed formats are the same as for query.)
+</p>
 
-    <p class="desc">For queries that have to be run very often,
-    especially when they are complex, it may help performance since the
-    server only has to plan them once. See <a
-    href="http://www.postgresql.org/docs/current/static/sql-prepare.html">the
-    PostgreSQL manual</a> for details.</p>
+<p>
+For queries that have to be run very often, especially when they are complex,
+it may help performance since the server only has to plan them once. See
+the <a href="http://www.postgresql.org/docs/current/static/sql-prepare.html">PostgreSQL manual</a> for details.
+</p>
 
-    <p class="desc">In some cases, the server will complain about not
-    being able to deduce the type of the arguments in a statement. In
-    that case you should add type declarations (either with the PostgreSQL's
-    <code>CAST</code> SQL-conforming syntax or historical <code>::</code>
-    syntax, or with S-SQL's <a href="s-sql.html#type"><code>:type</code></a>
-    construct) to help it out.</p>
+<p>
+In some cases, the server will complain about not being able to deduce the
+type of the arguments in a statement. In that case you should add type
+declarations (either with the PostgreSQL's CAST SQL-conforming syntax or
+historical :: syntax, or with S-SQL's :type construct) to help it out.
+</p>
+</div>
+</div>
 
-    <p class="def">
-      <span>macro</span>
-      <a name="defprepared"></a>
-      defprepared (name query &amp;optional (format :rows))
-    </p>
+<div id="outline-container-org1c4872b" class="outline-3">
+<h3 id="org1c4872b">macro defprepared (name query &amp;optional (format :rows))</h3>
+<div class="outline-text-3" id="text-org1c4872b">
+<p>
+This is the defun-style variant of prepare. It will define a top-level
+function for the prepared statement.
+</p>
+</div>
+</div>
 
-    <p class="desc">This is the <code>defun</code>-style variant of <a
-    href="#prepare"><code>prepare</code></a>. It will define a
-    top-level function for the prepared statement.</p>
-
-    <p class="def">
-      <span>macro</span>
-      <a name="defprepared-with-names"></a>
-      defprepared-with-names (name (&amp;rest args) (query &amp;rest query-args) &amp;optional (format :rows))
-    </p>
-
-    <p class="desc">Like <a href="#defprepared"><code>defprepared</code></a>,
-    but allows to specify names of the function arguments as well as arguments
-    supplied to the <code>query</code>.</p>
-
-    <pre class="code">
-(defprepared-with-names user-messages (user &amp;key (limit 10))
+<div id="outline-container-org95d9032" class="outline-3">
+<h3 id="org95d9032">macro defprepared-with-names (name (&amp;rest args) (query &amp;rest query-args) &amp;optional (format :rows))</h3>
+<div class="outline-text-3" id="text-org95d9032">
+<p>
+Like defprepared, but allows to specify names of the function arguments as
+well as arguments supplied to the query.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(defprepared-with-names user-messages (user &amp;key (limit 10))
   ("select * from messages
     where user_id = $1
     order by date desc
     limit $2" (user-id user) limit)
   :plists)
-    </pre>
-
-    <p class="def">
-      <span>macro</span>
-      <a name="with-transaction"></a>
-      with-transaction ((&amp;optional name) &amp;body body)
-    </p>
-
-    <p class="desc">Execute the given <code>body</code> within a database
-    transaction, committing it when the <code>body</code> exits normally, and
-    aborting otherwise. An optional <code>name</code> can be given to the
-    transaction, which can be used to force a commit or abort before
-    the <code>body</code> unwinds.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="commit-transaction"></a>
-      commit-transaction (transaction)
-    </p>
-
-    <p class="desc">Commit the given <code>transaction</code>.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="abort-transaction"></a>
-      abort-transaction (transaction)
-    </p>
-
-    <p class="desc">Roll back the given <code>transaction</code>.</p>
-
-     <p class="def">
-      <span>macro</span>
-      <a name="with-savepoint"></a>
-      with-savepoint (name &amp;body body)
-    </p>
-
-    <p class="desc">Can only be used within a transaction. Establishes
-    a savepoint with the given <code>name</code> at the start of
-    <code>body</code>, and binds the same <code>name</code> to a handle
-    for that savepoint. At the end of <code>body</code>, the savepoint
-    is released, unless a condition is thrown, in which case it is rolled
-    back.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="release-savepoint"></a>
-      release-savepoint (savepoint)
-    </p>
-
-    <p class="desc">Release the given <code>savepoint</code>.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="rollback-savepoint"></a>
-      rollback-savepoint (savepoint)
-    </p>
-
-    <p class="desc">Roll back the given <code>savepoint</code>.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="commit-hooks"></a>
-      commit-hooks (transaction-or-savepoint),
-      setf (commit-hooks transaction-or-savepoint)
-    </p>
-
-    <p class="desc">An accessor for the transaction or savepoint's list
-    of commit hooks, each of which should be a function with no required
-    arguments. These functions will be executed when a transaction is
-    committed or a savepoint released.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="abort-hooks"></a>
-      abort-hooks (transaction-or-savepoint),
-      setf (abort-hooks transaction-or-savepoint)
-    </p>
-
-    <p class="desc">An accessor for the transaction or savepoint's list
-    of abort hooks, each of which should be a function with no required
-    arguments. These functions will be executed when a transaction is
-    aborted or a savepoint rolled back (whether via a non-local transfer
-    of control or explicitly by either <a href="#abort-transaction">
-    <code>abort-transaction</code></a> or <a href="#rollback-savepoint">
-    <code>rollback-savepoint</code></a>).
-
-    <p class="def">
-      <span>macro</span>
-      <a name="with-logical-transaction"></a>
-      with-logical-transaction ((&amp;optional name) &amp;body body)
-    </p>
-
-    <p class="desc">Executes <code>body</code> within
-    a <a href="#with-transaction"><code>with-transaction</code></a>
-    form if no transaction is currently in progress, otherwise simulates
-    a nested transaction by executing it within a <code>with-savepoint</code>
-    form. The transaction or savepoint is bound to <code>name</code> if one is
-    supplied.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="abort-logical-transaction"></a>
-      abort-logical-transaction (transaction-or-savepoint)
-    </p>
-
-    <p class="desc">Roll back the given logical transaction, regardless of
-    whether it is an actual transaction or a savepoint.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="commit-logical-transaction"></a>
-      commit-logical-transaction (transaction-or-savepoint)
-    </p>
-
-    <p class="desc">Commit the given logical transaction, regardless of
-    whether it is an actual transaction or a savepoint.</p>
-
-    <p class="def">
-      <a name="*current-logical-transaction*"></a>
-      <span>variable</span>
-      *current-logical-transaction*
-    </p>
-
-    <p class="desc">This is bound to the
-    current <code>transaction-handle</code>
-    or <code>savepoint-handle</code> instance representing the
-    innermost open logical transaction.</p>
-
-
-    <p class="def">
-      <span>macro</span>
-      <a name="ensure-transaction"></a>
-      ensure-transaction (&amp;body body)
-    </p>
-
-    <p class="desc">Ensures that <code>body</code> is executed within
-    a transaction, but does not begin a new transaction if one is
-    already in progress.</p>
-
-    <p class="def">
-      <span>macro</span>
-      <a name="with-schema"></a>
-      with-schema ((namespace &amp;key :strict t :if-not-exist
-                               :create :drop-after) &amp;body body)
-    </p>
-
-    <p class="desc">Sets the current schema to <code>namespace</code> and
-    executes the <code>body</code>. Before executing <code>body</code> the
-    PostgreSQL's session variable <code>search_path</code> is set to
-    the given <code>namespace</code>. After executing <code>body</code> the
-    <code>search_path</code> variable is restored to the original value.
-
-    If the keyword <code>:strict</code> is set to <code>T</code> then
-    the <code>namespace</code> is only the scheme on the search path upon
-    the <code>body</code> execution. Otherwise the <code>namespace</code> is
-    just first schema on the search path upon the the <code>body</code>
-    execution. If <code>:if-not-exist</code> is <code>NIL</code>,
-    an error is signaled. If <code>:drop-after</code> is <code>T</code>
-    the <code>namespace</code> is dropped from the database after the
-    <code>body</code> execution.
-    </p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="sequence-next"></a>
-      sequence-next (sequence)
-      <br/>&#8594; integer
-    </p>
-
-    <p class="desc">Get the next value from a <code>sequence</code>.
-    The sequence identifier can be either a string or a symbol, in the latter
-    case it will be converted to a string according to <a
-    href="s-sql.html">S-SQL</a> rules.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="coalesce"></a>
-      coalesce (&amp;rest arguments)
-      <br/>&#8594; value
-    </p>
-
-    <p class="desc">Returns the first non-<code>NIL</code>, non-NULL
-    (as in <code>:null</code>) argument, or <code>NIL</code> if none
-    are present. Useful for providing a fall-back value for the result
-    of a query, or, when given only one argument, for transforming
-    <code>:null</code>s to <code>NIL</code>.</p>
-
-    <h2><a name="inspect"></a>Inspecting the database</h2>
-
-    <p class="def">
-      <span>function</span>
-      <a name="list-tables"></a>
-      list-tables (&amp;optional strings-p)
-      <br/>&#8594; list
-    </p>
-
-    <p class="desc">Returns a list of the tables in the current
-    database. When <code>strings-p</code> is <code>T</code>, the
-    names will be given as strings, otherwise as keywords.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="table-exists-p"></a>
-      table-exists-p (name)
-      <br/>&#8594; boolean
-    </p>
-
-    <p class="desc">Tests whether a table with the given <code>name</code>
-    exists. The <code>name</code> can be either a string or a symbol.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="table-description"></a>
-      table-description (name &amp;optional schema-name)
-      <br/>&#8594; list
-    </p>
-
-    <p class="desc">Returns a list of the fields in the named table.
-    Each field is represented by a list of three elements: the field
-    name, the type, and a boolean indicating whether the field may be
-    NULL.  Optionally, <code>schema-name</code> can be specified to
-    restrict the result to fields from the named schema. Without it,
-    all fields in the table are returned, regardless of their schema.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="list-sequences"></a>
-      list-sequences (&amp;optional strings-p)
-      <br/>&#8594; list
-    </p>
-
-    <p class="desc">Returns a list of the sequences in the current
-    database. When <code>strings-p</code> is <code>T</code>, the names
-    will be given as strings, otherwise as keywords.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="sequence-exists-p"></a>
-      sequence-exists-p (name)
-      <br/>&#8594; boolean
-    </p>
-
-    <p class="desc">Tests whether a sequence with the given <code>name</code>
-    exists. The <code>name</code> can be either a string or a symbol.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="list-views"></a>
-      list-views (&amp;optional strings-p)
-      <br/>&#8594; list
-    </p>
-
-    <p class="desc">Returns list of the user defined views in the current
-    database. When <code>strings-p</code> is <code>T</code>, the names will
-    be returned as strings, otherwise as keywords.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="view-exists-p"></a>
-      view-exists-p (name)
-      <br/>&#8594; boolean
-    </p>
-
-    <p class="desc">Tests whether a view with the given <code>name</code>
-    exists. The <code>name</code> can be either a string or a symbol.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="list-schemata"></a>
-      list-schemata ()
-      <br/>&#8594; list
-    </p>
-
-    <p class="desc">Returns list of the user defined schemata (as strings)
-    and the quantity of existing schemata.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="schema-exist-p"></a>
-        schema-exist-p (schema) NOW DEPRECATED IN FAVOR OF schema-exists-p
-        which is more consistent with naming of other functions.
-        <br/>&#8594; boolean
-    </p>
-
-    <p class="desc">Tests the existence of a given <code>schema</code>.
-    Returns <code>T</code> if the schema exists or <code>NIL</code>
-    otherwise.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="schema-exists-p"></a>
-        schema-exists-p (schema)
-        <br/>&#8594; boolean
-    </p>
-
-    <p class="desc">Tests the existence of a given <code>schema</code>.
-    Returns <code>T</code> if the schema exists or <code>NIL</code>
-    otherwise.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="database-version"></a>
-        database-version ()
-        <br/>&#8594; string
-    </p>
-
-    <p class="desc">Returns the version of the current postgresql database.</p>
-
-    <p class="def">
-      <span>function</span>
-        <a name="num-records-in-database"></a>
-        num-records-in-database ()
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Returns a list of lists with schema, table name and approximate number of records
-      in the currently connected database.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="current-database"></a>
-        current-database ()
-        <br/>&#8594; string
-    </p>
-
-    <p class="desc">Returns the string name of the current database.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="database-exists-p"></a>
-        database-exists-p (database-name)
-        <br/>&#8594; boolean
-    </p>
-
-    <p class="desc">Checks to see if a particular database exists.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="database-size"></a>
-        database-size (&optional database-name)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Given the name of a database, will return the name, a pretty-print string of
-the size of the database and the size in bytes. If a database name is not provided,
-      it will return the result for the currently connected database.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-databases"></a>
-        list-databases (&key (order-by-size nil) (size t))
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Returns a list of lists where each sub-list contains the name of the
-database, a pretty-print string of the size of that database and the size in bytes.
-The default order is by database name. Pass t as a parameter to :order-by-size for order by size.
-Setting size to nil will return just the database names in a single list
-      ordered by name. This function excludes the template databases</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-schemas"></a>
-        list-schemas ()
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">List schemas in the current database, excluding the pg_* system schemas.</p>
-
-    <p class="def">
-      <span>function</span>
-        <a name="list-tablespaces"></a>
-        list-tablespaces ()
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Lists the tablespaces in the currently connected database.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-available-types"></a>
-        list-available-types ()
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">List the available types in this postgresql version.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-table-sizes"></a>
-        list-table-sizes (&key (schema "public") (order-by-size nil) (size t))
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Returns a list of lists (table-name, size in 8k pages) of tables in the current database.
-Providing a name to the schema parameter will return just the information for tables in that schema.
-It defaults to just the tables in the public schema. Setting schema to nil will return all tables, indexes etc
-in the database in descending order of size. This would include system tables, so there
-are a lot more than you would expect. If :size is set to nil, it returns only a flat list of table names.
-Setting order-by-size to t will return the result in order of size instead of by table name.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="table-size"></a>
-        table-size (table-name)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Return the size of a postgresql table in k or m. Table-name can be either a string or quoted.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="more-table-info"></a>
-        more-table-info (table-name)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Returns more table info than table-description. Table can be either a string or quoted.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-columns"></a>
-        list-columns (table-name)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Returns a list of strings of just the column names in a table.
-Pulls info from the postmodern table-description function
-rather than directly.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-columns-with-types"></a>
-        list-columns-with-types (table-name)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Return a list of (name type) lists for the fields of a table. Goes directly to the pg-catalog tables.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="column-exists-p"></a>
-        column-exists-p (table-name column-name)
-        <br/>&#8594; boolean
-    </p>
-
-    <p class="desc">Determine if a particular column exists. Table name and column-name can be either strings or symbols.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="describe-views"></a>
-        describe-views (&optional (schema "public")
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Describe the current views in the specified schema. Defaults to public schema.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-database-functions"></a>
-        list-database-functions ()
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Returns a list of the functions in the database from the information_schema.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-indices"></a>
-        list-indices (&optional strings-p)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Return a list of the indexs in a database. Turn them into keywords if strings-p is not true.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-table-indices"></a>
-        list-table-indices (table-name &optional strings-p)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">List the index names and the related columns in a table. </p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-indexed-column-and-attributes"></a>
-        list-indexed-column-and-attributes (table-name)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">List the indexed columns and their attributes in a table. Includes primary key.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-index-definitions"></a>
-        list-index-definitions (table-name)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Returns a list of the definitions used to create the current indexes for the table</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-foreign-keys"></a>
-        list-foreign-keys (table-name)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">List the foreign keys in a table.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-unique-or-primary-constraints"></a>
-        list-unique-or-primary-constraints (table-name)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">List constraints on a table.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-all-constraints"></a>
-        list-all-constraints (table-name)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Users information_schema to list all the constraints in a table. Table-name
-can be either a string or quoted.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="describe-constraint"></a>
-        describe-constraint (table-name constraint-name)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Return a list of alists of the descriptions a particular constraint given
-the table-name and the  constraint name using the information_schema
-table.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="describe-foreign-key-constraints"></a>
-        describe-foreign-key-constraints ()
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">Generates a list of lists of information on the foreign key constraints</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-triggers"></a>
-        list-triggers (&optional table-name)
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">List distinct trigger names from the information_schema table. Table-name can be either quoted or string.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-detailed-triggers"></a>
-        list-detailed-triggers ()
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">List detailed information on the triggers from the information_schema table.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="list-database-users"></a>
-        list-database-users ()
-        <br/>&#8594; list
-    </p>
-
-    <p class="desc">List database users.</p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="change-toplevel-database"></a>
-        change-toplevel-database (new-database user password host)
-        <br/>&#8594; string
-    </p>
-
-    <p class="desc">Just changes the database assuming you are using a toplevel connection.
-Recommended only for development work. Returns the name of the newly connected database as a string.</p>
-
-    <h2><a name="daos"></a>Database access objects</h2>
-
-    <p>Postmodern contains a simple system for defining CLOS classes
-    that represent rows in the database. This is not intended as a
-    full-fledged object-relational magic system &#x2015; while serious
-    ORM systems have their place, they are notoriously hard to get
-    right, and are outside of the scope of a humble SQL library like
-    this.</p>
-
-    <p class="def">
-      <span>metaclass</span>
-      <a name="dao-class"></a>
-      dao-class
-    </p>
-
-    <p class="desc">At the heart of Postmodern's DAO system is the
-    <code>dao-class</code> metaclass. It allows you to define classes
-    for your database-access objects as regular CLOS classes. Some of
-    the slots in these classes will refer to columns in the database.
-    To specify that a slot refers to a column, give it a
-    <code>:col-type</code> option containing
-    an <a href="s-sql.html">S-SQL</a> type expression (useful if you
-    want to be able to derive a table definition from the class
-    definition), or simply a <code>:column</code> option with
-    value <code>T</code>. Such slots can also take
-    a <code>:col-default</code> option, used to provide a
-    database-side default value as an S-SQL expression. You can use
-    the <code>:col-name</code> initarg (whose unevaluated value will
-    be passed to <code>to-sql-name</code>) to specify the slot's column's
-    name.</p>
-
-    <p class="desc">DAO class definitions support two extra class
-    options: <code>:table-name</code> to give the name of the table
-    that the class refers to (defaults to the class name), and
-    <code>:keys</code> to provide a set of primary keys for the table.
-    When no primary keys are defined, operations such as <a
-    href="#update-dao"><code>update-dao</code></a> and <a
-    href="#get-dao"><code>get-dao</code></a> will not work.</p>
-
-    <p class="desc">IMPORTANT: Class finalization for a dao class
-      instance are wrapped with a thread lock. However, any time you are using threads
-      and a class that inherits from other classes, you should ensure
-      that classes are finalized before you start generating threads
-      that create new instances of that class.</p>
-    <p class="desc">Simple example:</p>
-
-    <pre class="code">
-(defclass user ()
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbfb927e" class="outline-3">
+<h3 id="orgbfb927e">macro with-transaction ((&amp;optional name) &amp;body body)</h3>
+<div class="outline-text-3" id="text-orgbfb927e">
+<p>
+Execute the given body within a database transaction, committing it when the
+body exits normally, and aborting otherwise. An optional name can be given
+to the transaction, which can be used to force a commit or abort before the
+body unwinds.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf71c73d" class="outline-3">
+<h3 id="orgf71c73d">function commit-transaction (transaction)</h3>
+<div class="outline-text-3" id="text-orgf71c73d">
+<p>
+Commit the given transaction.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf847006" class="outline-3">
+<h3 id="orgf847006">function abort-transaction (transaction)</h3>
+<div class="outline-text-3" id="text-orgf847006">
+<p>
+Roll back the given transaction.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2e4f103" class="outline-3">
+<h3 id="org2e4f103">macro with-savepoint (name &amp;body body)</h3>
+<div class="outline-text-3" id="text-org2e4f103">
+<p>
+Can only be used within a transaction. Establishes a savepoint with the given
+name at the start of body, and binds the same name to a handle for that
+savepoint. At the end of body, the savepoint is released, unless a
+condition is thrown, in which case it is rolled back.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1e01691" class="outline-3">
+<h3 id="org1e01691">function release-savepoint (savepoint)</h3>
+<div class="outline-text-3" id="text-org1e01691">
+<p>
+Release the given savepoint.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org763b22f" class="outline-3">
+<h3 id="org763b22f">function rollback-savepoint (savepoint)</h3>
+<div class="outline-text-3" id="text-org763b22f">
+<p>
+Roll back the given savepoint.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org98941b1" class="outline-3">
+<h3 id="org98941b1">function commit-hooks (transaction-or-savepoint), setf (commit-hooks transaction-or-savepoint)</h3>
+<div class="outline-text-3" id="text-org98941b1">
+<p>
+An accessor for the transaction or savepoint's list of commit hooks, each of
+which should be a function with no required arguments. These functions will
+be executed when a transaction is committed or a savepoint released.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga1023a0" class="outline-3">
+<h3 id="orga1023a0">function abort-hooks (transaction-or-savepoint), setf (abort-hooks transaction-or-savepoint)</h3>
+<div class="outline-text-3" id="text-orga1023a0">
+<p>
+An accessor for the transaction or savepoint's list of abort hooks, each of
+which should be a function with no required arguments. These functions will
+be executed when a transaction is aborted or a savepoint rolled back
+(whether via a non-local transfer of control or explicitly by either
+abort-transaction or rollback-savepoint).
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2823946" class="outline-3">
+<h3 id="org2823946">macro with-logical-transaction ((&amp;optional name) &amp;body body)</h3>
+<div class="outline-text-3" id="text-org2823946">
+<p>
+Executes body within a with-transaction form if no transaction is currently
+in progress, otherwise simulates a nested transaction by executing it
+within a with-savepoint form. The transaction or savepoint is bound to name
+if one is supplied.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org7f65c91" class="outline-3">
+<h3 id="org7f65c91">function abort-logical-transaction (transaction-or-savepoint)</h3>
+<div class="outline-text-3" id="text-org7f65c91">
+<p>
+Roll back the given logical transaction, regardless of whether it is an
+actual transaction or a savepoint.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgdaeb32a" class="outline-3">
+<h3 id="orgdaeb32a">function commit-logical-transaction (transaction-or-savepoint)</h3>
+<div class="outline-text-3" id="text-orgdaeb32a">
+<p>
+Commit the given logical transaction, regardless of whether it is an
+actual transaction or a savepoint.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgb767910" class="outline-3">
+<h3 id="orgb767910">variable <b>current-logical-transaction</b></h3>
+<div class="outline-text-3" id="text-orgb767910">
+<p>
+This is bound to the current transaction-handle or savepoint-handle instance
+representing the innermost open logical transaction.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org8c1a03c" class="outline-3">
+<h3 id="org8c1a03c">macro ensure-transaction (&amp;body body)</h3>
+<div class="outline-text-3" id="text-org8c1a03c">
+<p>
+Ensures that body is executed within a transaction, but does not begin a
+new transaction if one is already in progress.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge407acf" class="outline-3">
+<h3 id="orge407acf">macro with-schema ((namespace &amp;key :strict t :if-not-exist :create :drop-after) &amp;body body)</h3>
+<div class="outline-text-3" id="text-orge407acf">
+<p>
+Sets the current schema to namespace and executes the body. Before executing
+body the PostgreSQL's session variable search_path is set to the given
+namespace. After executing body the search_path variable is restored
+to the original value. If the keyword :strict is set to T then the namespace
+is only the scheme on the search path upon the body execution. Otherwise the
+namespace is just first schema on the search path upon the the body execution.
+If :if-not-exist is NIL, an error is signaled. If :drop-after is T the
+namespace is dropped from the database after the body execution.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc76d2c0" class="outline-3">
+<h3 id="orgc76d2c0">function sequence-next (sequence)</h3>
+<div class="outline-text-3" id="text-orgc76d2c0">
+<p>
+→ integer
+</p>
+
+<p>
+Get the next value from a sequence. The sequence identifier can be either a
+string or a symbol, in the latter case it will be converted to a string
+according to S-SQL rules.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org34a8888" class="outline-3">
+<h3 id="org34a8888">function coalesce (&amp;rest arguments)</h3>
+<div class="outline-text-3" id="text-org34a8888">
+<p>
+→ value
+</p>
+
+<p>
+Returns the first non-NIL, non-NULL (as in :null) argument, or NIL if none are
+present. Useful for providing a fall-back value for the result of a query, or,
+when given only one argument, for transforming :nulls to NIL.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org868514f" class="outline-2">
+<h2 id="org868514f">Inspecting the database</h2>
+<div class="outline-text-2" id="text-org868514f">
+</div>
+<div id="outline-container-orgbbc34ae" class="outline-3">
+<h3 id="orgbbc34ae">function list-tables (&amp;optional strings-p)</h3>
+<div class="outline-text-3" id="text-orgbbc34ae">
+<p>
+→ list
+</p>
+
+<p>
+Returns a list of the tables in the current database. When strings-p is T,
+the names will be given as strings, otherwise as keywords.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org691be0f" class="outline-3">
+<h3 id="org691be0f">function table-exists-p (name)</h3>
+<div class="outline-text-3" id="text-org691be0f">
+<p>
+→ boolean
+</p>
+
+<p>
+Tests whether a table with the given name exists. The name can be either a
+string or a symbol.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1f2a898" class="outline-3">
+<h3 id="org1f2a898">function table-description (name &amp;optional schema-name)</h3>
+<div class="outline-text-3" id="text-org1f2a898">
+<p>
+→ list
+</p>
+
+<p>
+Returns a list of the fields in the named table. Each field is represented by
+a list of three elements: the field name, the type, and a boolean indicating
+whether the field may be NULL. Optionally, schema-name can be specified to
+restrict the result to fields from the named schema. Without it, all fields in
+the table are returned, regardless of their schema.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org77bf5e8" class="outline-3">
+<h3 id="org77bf5e8">function list-sequences (&amp;optional strings-p)</h3>
+<div class="outline-text-3" id="text-org77bf5e8">
+<p>
+→ list
+</p>
+
+<p>
+Returns a list of the sequences in the current database. When strings-p is T,
+the names will be given as strings, otherwise as keywords.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org673c5cb" class="outline-3">
+<h3 id="org673c5cb">function sequence-exists-p (name)</h3>
+<div class="outline-text-3" id="text-org673c5cb">
+<p>
+→ boolean
+</p>
+
+<p>
+Tests whether a sequence with the given name exists. The name can be either a
+string or a symbol.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgb23b47f" class="outline-3">
+<h3 id="orgb23b47f">function list-views (&amp;optional strings-p)</h3>
+<div class="outline-text-3" id="text-orgb23b47f">
+<p>
+→ list
+</p>
+
+<p>
+Returns list of the user defined views in the current database. When strings-p
+is T, the names will be returned as strings, otherwise as keywords.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org29e9f9b" class="outline-3">
+<h3 id="org29e9f9b">function view-exists-p (name)</h3>
+<div class="outline-text-3" id="text-org29e9f9b">
+<p>
+→ boolean
+</p>
+
+<p>
+Tests whether a view with the given name exists. The name can be either a
+string or a symbol.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org604f57f" class="outline-3">
+<h3 id="org604f57f">function list-schemata ()</h3>
+<div class="outline-text-3" id="text-org604f57f">
+<p>
+→ list
+</p>
+
+<p>
+Returns list of the user defined schemata (as strings) and the quantity of
+existing schemata.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org5cb5498" class="outline-3">
+<h3 id="org5cb5498">function schema-exist-p (schema) NOW DEPRECATED IN FAVOR OF schema-exists-p which is more consistent with naming of other functions.</h3>
+<div class="outline-text-3" id="text-org5cb5498">
+<p>
+→ boolean
+</p>
+
+<p>
+Tests the existence of a given schema. Returns T if the schema exists or NIL
+otherwise.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd42abc6" class="outline-3">
+<h3 id="orgd42abc6">function schema-exists-p (schema)</h3>
+<div class="outline-text-3" id="text-orgd42abc6">
+<p>
+→ boolean
+</p>
+
+<p>
+Tests the existence of a given schema. Returns T if the schema exists or NIL
+otherwise.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgdb30f09" class="outline-3">
+<h3 id="orgdb30f09">function database-version ()</h3>
+<div class="outline-text-3" id="text-orgdb30f09">
+<p>
+→ string
+</p>
+
+<p>
+Returns the version of the current postgresql database.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgb83fa4f" class="outline-3">
+<h3 id="orgb83fa4f">function num-records-in-database ()</h3>
+<div class="outline-text-3" id="text-orgb83fa4f">
+<p>
+→ list
+</p>
+
+<p>
+Returns a list of lists with schema, table name and approximate number of
+records in the currently connected database.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd08e9c4" class="outline-3">
+<h3 id="orgd08e9c4">function current-database ()</h3>
+<div class="outline-text-3" id="text-orgd08e9c4">
+<p>
+→ string
+</p>
+
+<p>
+Returns the string name of the current database.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgb0e14c5" class="outline-3">
+<h3 id="orgb0e14c5">function database-exists-p (database-name)</h3>
+<div class="outline-text-3" id="text-orgb0e14c5">
+<p>
+→ boolean
+</p>
+
+<p>
+Checks to see if a particular database exists.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga714e8d" class="outline-3">
+<h3 id="orga714e8d">function database-size (&amp;optional database-name)</h3>
+<div class="outline-text-3" id="text-orga714e8d">
+<p>
+→ list
+</p>
+
+<p>
+Given the name of a database, will return the name, a pretty-print string of
+the size of the database and the size in bytes. If a database name is not
+provided, it will return the result for the currently connected database.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3dc8479" class="outline-3">
+<h3 id="org3dc8479">function list-databases (&amp;key (order-by-size nil) (size t))</h3>
+<div class="outline-text-3" id="text-org3dc8479">
+<p>
+→ list
+</p>
+
+<p>
+Returns a list of lists where each sub-list contains the name of the database,
+a pretty-print string of the size of that database and the size in bytes. The
+default order is by database name. Pass t as a parameter to :order-by-size
+for order by size. Setting size to nil will return just the database names
+in a single list ordered by name. This function excludes the template databases
+</p>
+</div>
+</div>
+
+<div id="outline-container-org76e3f6a" class="outline-3">
+<h3 id="org76e3f6a">function list-schemas ()</h3>
+<div class="outline-text-3" id="text-org76e3f6a">
+<p>
+→ list
+</p>
+
+<p>
+List schemas in the current database, excluding the pg_* system schemas.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf8ed3d2" class="outline-3">
+<h3 id="orgf8ed3d2">function list-tablespaces ()</h3>
+<div class="outline-text-3" id="text-orgf8ed3d2">
+<p>
+→ list
+</p>
+
+<p>
+Lists the tablespaces in the currently connected database.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga04ef47" class="outline-3">
+<h3 id="orga04ef47">function list-available-types ()</h3>
+<div class="outline-text-3" id="text-orga04ef47">
+<p>
+→ list
+</p>
+
+<p>
+List the available types in this postgresql version.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgbfe5e00" class="outline-3">
+<h3 id="orgbfe5e00">function list-table-sizes (&amp;key (schema "public") (order-by-size nil) (size t))</h3>
+<div class="outline-text-3" id="text-orgbfe5e00">
+<p>
+→ list
+</p>
+
+<p>
+Returns a list of lists (table-name, size in 8k pages) of tables in the current
+database. Providing a name to the schema parameter will return just the
+information for tables in that schema. It defaults to just the tables in the
+public schema. Setting schema to nil will return all tables, indexes etc in
+the database in descending order of size. This would include system tables, so
+there are a lot more than you would expect. If :size is set to nil, it returns
+only a flat list of table names. Setting order-by-size to t will return the
+result in order of size instead of by table name.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org0f079b0" class="outline-3">
+<h3 id="org0f079b0">function table-size (table-name)</h3>
+<div class="outline-text-3" id="text-org0f079b0">
+<p>
+→ list
+</p>
+
+<p>
+Return the size of a postgresql table in k or m. Table-name can be either a
+string or quoted.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc280c15" class="outline-3">
+<h3 id="orgc280c15">function more-table-info (table-name)</h3>
+<div class="outline-text-3" id="text-orgc280c15">
+<p>
+→ list
+</p>
+
+<p>
+Returns more table info than table-description. Table can be either a string
+or quoted.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org6250e37" class="outline-3">
+<h3 id="org6250e37">function list-columns (table-name)</h3>
+<div class="outline-text-3" id="text-org6250e37">
+<p>
+→ list
+</p>
+
+<p>
+Returns a list of strings of just the column names in a table. Pulls info
+from the postmodern table-description function rather than directly.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org15757d6" class="outline-3">
+<h3 id="org15757d6">function list-columns-with-types (table-name)</h3>
+<div class="outline-text-3" id="text-org15757d6">
+<p>
+→ list
+</p>
+
+<p>
+Return a list of (name type) lists for the fields of a table. Goes directly
+to the pg-catalog tables.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge927d6b" class="outline-3">
+<h3 id="orge927d6b">function column-exists-p (table-name column-name)</h3>
+<div class="outline-text-3" id="text-orge927d6b">
+<p>
+→ boolean
+</p>
+
+<p>
+Determine if a particular column exists. Table name and column-name can be
+either strings or symbols.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org92bd4ee" class="outline-3">
+<h3 id="org92bd4ee">function describe-views (&amp;optional (schema "public")</h3>
+<div class="outline-text-3" id="text-org92bd4ee">
+<p>
+→ list
+</p>
+
+<p>
+Describe the current views in the specified schema. Defaults to public schema.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2f56533" class="outline-3">
+<h3 id="org2f56533">function list-database-functions ()</h3>
+<div class="outline-text-3" id="text-org2f56533">
+<p>
+→ list
+</p>
+
+<p>
+Returns a list of the functions in the database from the information_schema.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2b8c171" class="outline-3">
+<h3 id="org2b8c171">function list-indices (&amp;optional strings-p)</h3>
+<div class="outline-text-3" id="text-org2b8c171">
+<p>
+→ list
+</p>
+
+<p>
+Return a list of the indexs in a database. Turn them into keywords if
+strings-p is not true.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org43b5670" class="outline-3">
+<h3 id="org43b5670">function list-table-indices (table-name &amp;optional strings-p)</h3>
+<div class="outline-text-3" id="text-org43b5670">
+<p>
+→ list
+</p>
+
+<p>
+List the index names and the related columns in a table.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf9a87c2" class="outline-3">
+<h3 id="orgf9a87c2">function list-indexed-column-and-attributes (table-name)</h3>
+<div class="outline-text-3" id="text-orgf9a87c2">
+<p>
+→ list
+</p>
+
+<p>
+List the indexed columns and their attributes in a table. Includes primary
+key.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org04e53ef" class="outline-3">
+<h3 id="org04e53ef">function list-index-definitions (table-name)</h3>
+<div class="outline-text-3" id="text-org04e53ef">
+<p>
+→ list
+</p>
+
+<p>
+Returns a list of the definitions used to create the current indexes for
+the table
+</p>
+</div>
+</div>
+
+<div id="outline-container-org913139b" class="outline-3">
+<h3 id="org913139b">function list-foreign-keys (table-name)</h3>
+<div class="outline-text-3" id="text-org913139b">
+<p>
+→ list
+</p>
+
+<p>
+List the foreign keys in a table.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org08202c8" class="outline-3">
+<h3 id="org08202c8">function list-unique-or-primary-constraints (table-name)</h3>
+<div class="outline-text-3" id="text-org08202c8">
+<p>
+→ list
+</p>
+
+<p>
+List constraints on a table.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org61ccc27" class="outline-3">
+<h3 id="org61ccc27">function list-all-constraints (table-name)</h3>
+<div class="outline-text-3" id="text-org61ccc27">
+<p>
+→ list
+</p>
+
+<p>
+Users information_schema to list all the constraints in a table. Table-name
+can be either a string or quoted.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org6e13985" class="outline-3">
+<h3 id="org6e13985">function describe-constraint (table-name constraint-name)</h3>
+<div class="outline-text-3" id="text-org6e13985">
+<p>
+→ list
+</p>
+
+<p>
+Return a list of alists of the descriptions a particular constraint given
+the table-name and the constraint name using the information_schema table.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2a704ab" class="outline-3">
+<h3 id="org2a704ab">function describe-foreign-key-constraints ()</h3>
+<div class="outline-text-3" id="text-org2a704ab">
+<p>
+→ list
+</p>
+
+<p>
+Generates a list of lists of information on the foreign key constraints
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga3784b7" class="outline-3">
+<h3 id="orga3784b7">function list-triggers (&amp;optional table-name)</h3>
+<div class="outline-text-3" id="text-orga3784b7">
+<p>
+→ list
+</p>
+
+<p>
+List distinct trigger names from the information_schema table. Table-name
+can be either quoted or string.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd09029b" class="outline-3">
+<h3 id="orgd09029b">function list-detailed-triggers ()</h3>
+<div class="outline-text-3" id="text-orgd09029b">
+<p>
+→ list
+</p>
+
+<p>
+List detailed information on the triggers from the information_schema table.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org0c9e9f9" class="outline-3">
+<h3 id="org0c9e9f9">function list-database-users ()</h3>
+<div class="outline-text-3" id="text-org0c9e9f9">
+<p>
+→ list
+</p>
+
+<p>
+List database users.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org21e6cb7" class="outline-3">
+<h3 id="org21e6cb7">function change-toplevel-database (new-database user password host)</h3>
+<div class="outline-text-3" id="text-org21e6cb7">
+<p>
+→ string
+</p>
+
+<p>
+Just changes the database assuming you are using a toplevel connection.
+Recommended only for development work. Returns the name of the newly
+connected database as a string.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org00207e6" class="outline-2">
+<h2 id="org00207e6">Database access objects</h2>
+<div class="outline-text-2" id="text-org00207e6">
+<p>
+Postmodern contains a simple system for defining CLOS classes that
+represent rows in the database. This is not intended as a full-fledged
+object-relational magic system ― while serious ORM systems have their place,
+they are notoriously hard to get right, and are outside of the scope of
+a humble SQL library like this.
+</p>
+</div>
+
+<div id="outline-container-org841b506" class="outline-3">
+<h3 id="org841b506">metaclass dao-class</h3>
+<div class="outline-text-3" id="text-org841b506">
+<p>
+At the heart of Postmodern's DAO system is the dao-class metaclass. It
+allows you to define classes for your database-access objects as regular
+CLOS classes. Some of the slots in these classes will refer to columns in the
+database. To specify that a slot refers to a column, give it a :col-type
+option containing an S-SQL type expression (useful if you want to be able
+to derive a table definition from the class definition), or simply a :column
+option with value T. Such slots can also take a :col-default option, used
+to provide a database-side default value as an S-SQL expression. You can
+use the :col-name initarg (whose unevaluated value will be passed to
+to-sql-name) to specify the slot's column's name.
+</p>
+
+<p>
+DAO class definitions support two extra class options: :table-name to give
+the name of the table that the class refers to (defaults to the class name),
+and :keys to provide a set of primary keys for the table. When no primary
+keys are defined, operations such as update-dao and get-dao will not work.
+</p>
+
+<p>
+IMPORTANT: Class finalization for a dao class instance are wrapped with a
+thread lock. However, any time you are using threads and a class that inherits
+from other classes, you should ensure that classes are finalized before you
+start generating threads that create new instances of that class.
+</p>
+
+<p>
+Simple example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(defclass user ()
   ((name :col-type string :initarg :name :accessor user-name)
    (creditcard :col-type (or db-null integer) :initarg :card :col-default :null)
    (score :col-type bigint :col-default 0 :accessor user-score))
   (:metaclass dao-class)
-  (:keys name))</pre>
-
-    <p class="desc">The <code>(or db-null integer)</code> form is used
-    to indicate a column can have NULL values.</p>
-
-    <p class="desc">When inheriting from DAO classes, a subclass' set
-    of columns also contains all the columns of its superclasses. The
-    primary key for such a class is the union of its own keys and all
-    the keys from its superclasses. Classes inheriting from DAO
-    classes should probably always use the <code>dao-class</code>
-    metaclass themselves.</p>
-
-    <p class="desc">When a DAO is created with
-    <code>make-instance</code>, the <code>:fetch-defaults</code> keyword
-    argument can be passed, which, when <code>T</code>, will cause a query
-    to fetch the default values for all slots that refers to columns with
-    defaults and were not bound through initargs. In some cases, such as
-    <code>serial</code> columns, which have an implicit default, this will
-    not work. You can work around this by creating your own sequence, e.g.
-    <code>"my_sequence"</code>, and defining a
-    <code>(:nextval "my_sequence")</code> default.</p>
-
-    <p class="desc">Finally, DAO class slots can have an option
-    <code>:ghost t</code> to specify them as ghost slots. These are
-    selected when retrieving instances, but not written when updating
-    or inserting, or even included in the table definition. The only
-    known use for this to date is for creating the table with
-    <code>(oids=true)</code>, and specify a slot like this:</p>
-
-    <pre class="code">
-(oid :col-type integer :ghost t :accessor get-oid)</pre>
-
-    <p class="def">
-      <span>method</span>
-      <a name="dao-keys"></a>
-      dao-keys (class)
-      <br/>&#8594; list
-    </p>
-
-    <p class="desc">
-      Returns list of slot names that are the primary key of DAO
-      <code>class</code>.
-    </p>
-
-    <p class="def">
-      <span>method</span>
-      dao-keys (dao)
-      <br/>&#8594; list
-    </p>
-
-    <p class="desc">
-      Returns list of values that are the primary key of <code>dao</code>.
-    </p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="dao-exists-p"></a>
-      dao-exists-p (dao)
-      <br/>&#8594; boolean
-    </p>
-
-    <p class="desc">Test whether a row with the same primary key as
-    the given <code>dao</code> exists in the database. Will also return
-    <code>NIL</code> when any of the key slots in the object are
-    unbound.</p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="make-dao"></a>
-      make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)
-      <br/>&#8594; dao
-    </p>
-
-    <p class="desc">Combines <code>make-instance</code> with
-    <a href="#insert-dao"><code>insert-dao</code></a>. Return the
-    created dao.</p>
-
-    <p class="def">
-      <span>macro</span>
-      <a name="define-dao-finalization"></a>
-      define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)
-    </p>
-
-    <p class="desc">Create an <code>:around</code>-method for <a href="#make-dao">
-    <code>make-dao</code></a>. The <code>body</code> is executed in
-    a lexical environment where <code>dao-name</code> is bound
-    to a freshly created and inserted DAO. The representation of the DAO in the
-    database is then updated to reflect changes that <code>body</code> might
-    have introduced. Useful for processing values of slots with the type
-    <code>serial</code>, which are unknown before <a href="#insert-dao">
-    <code>insert-dao</code></a>.</p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="get-dao"></a>
-      get-dao (type &amp;rest keys)
-      <br/>&#8594; dao
-    </p>
-
-    <p class="desc">Select the DAO object from the row that has the
-    given primary key values, or <code>NIL</code> if no such row
-    exists. Objects created by this function will have
-    <code>initialize-instance</code> called on them (after loading in
-    the values from the database) without any arguments &#x2015; even
-    <code>:default-initargs</code> are skipped. The same goes for <a
-    href="#select-dao"><code>select-dao</code></a> and <a
-    href="#query-dao"><code>query-dao</code></a>.</p>
-
-    <p class="def">
-      <span>macro</span>
-      <a name="select-dao"></a>
-      select-dao (type &amp;optional (test t) &amp;rest sort)
-      <br/>&#8594; list
-    </p>
-
-    <p class="desc">Select DAO objects for the rows in the associated
-    table for which the given <code>test</code> (either an <a
-    href="s-sql.html">S-SQL</a> expression or a string) holds. When
-    sorting arguments are given, which can also be S-SQL forms or
-    strings, these are used to sort the result. (Note that, if you
-    want to sort, you <em>have</em> to pass the <code>test</code>
-    argument.)</p>
-
-    <pre class="code">(select-dao 'user (:> 'score 10000) 'name)</pre>
-
-    <p class="def">
-      <span>macro</span>
-      <a name="do-select-dao"></a>
-      do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)
-    </p>
-
-    <p class="desc">Like <a href="#select-dao"><code>select-dao</code></a>,
-    but iterates over the results rather than returning them. For each matching
-    DAO, <code>body</code> is evaluated with <code>type-var</code> bound to the
-    DAO instance.</p>
-
-    <pre class="code">(do-select-dao (('user user) (:> 'score 10000) 'name)
-  (pushnew user high-scorers))</pre>
-
-    <p class="def">
-      <span>macro</span>
-      <a name="query-dao"></a>
-      query-dao (type query &amp;rest args)
-      <br/>&#8594; list
-    </p>
-
-    <p class="desc">Execute the given <code>query</code> (which can be either
-    a string or an <a href="s-sql.html">S-SQL</a> expression) and return
-    the result as DAOs of the given <code>type</code>. If the <code>query</code>
-    contains placeholders ($1, $2, etc) their values can be given as extra
-    arguments. The names of the fields returned by the <code>query</code> must
-    either match slots in the DAO class, or be bound through <a
-    href="#with-column-writers"><code>with-column-writers</code></a>.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="do-query-dao"></a>
-      do-query-dao (((type type-var) query &amp;rest args) &body body)
-      <br/>&#8594; list
-    </p>
-
-    <p class="desc">Like <a href="#query-dao"><code>query-dao</code></a>, but
-    iterates over the results rather than returning them. For each matching DAO,
-    <code>body</code> is evaluated with <code>type-var</code> bound to the
-    instance.</p>
-
-    <pre class="code">(do-query-dao (('user user) (:order-by (:select '* :from 'user :where (:> 'score 10000)) 'name))
-  (pushnew user high-scorers))</pre>
-
-    <p class="def">
-      <span>variable</span>
-      <a name="*ignore-unknown-columns*"></a>
-      *ignore-unknown-columns*
-    </p>
-
-    <p class="desc">Normally,
-    when <code><a href="#get-dao">get-dao</a></code>,
-    <code><a href="#select-dao">select-dao</a></code>,
-    or <code><a href="#query-dao">query-dao</a></code> finds a column
-    in the database that's not in the DAO class, it will raise an
-    error. Setting this variable to a non-<code>NIL</code> will cause it to
-    simply ignore the unknown column.</p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="insert-dao"></a>
-      insert-dao (dao)
-      <br/>&#8594; dao
-    </p>
-
-    <p class="desc">Insert the given <code>dao</code> into the database.
-    Column slots of the object which are unbound implies the database defaults.
-    Hence, if these columns has no defaults defined in the database, the
-    the insertion of the <code>dao</code> will be failed.
-    (This feature only works on PostgreSQL 8.2 and up.)</p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="update-dao"></a>
-      update-dao (dao)
-      <br/>&#8594; dao
-    </p>
-
-    <p class="desc">Update the representation of the given <code>dao</code>
-    in the database to the values in the object. This is not defined for
-    tables that do not have any non-primary-key columns. Raises an
-    error when no row matching the <code>dao</code> exists.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="save-dao"></a>
-      save-dao (dao)
-      <br/>&#8594; boolean
-    </p>
-
-    <p class="desc">Tries to insert the given <code>dao</code> using <a
-    href="#insert-dao"><code>insert-dao</code></a>. If this raises a
-    unique key violation error, it tries to update it by using <a
-    href="#update-dao"><code>update-dao</code></a> instead. Be aware
-    that there is a possible race condition here &#x2015; if some
-    other process deletes the row at just the right moment, the update
-    fails as well. Returns a boolean telling you whether a new row was
-    inserted.</p>
-
-    <p class="desc">This function is unsafe to use inside of a
-    transaction &#x2015; when a row with the given keys already
-    exists, the transaction will be aborted. Use <a
-    href="#save-dao/transaction"><code>save-dao/transaction</code></a>
-    instead in such a situation.</p>
-
-    <p class="desc"><b>See also:</b> <a href="#upsert-dao">
-    <code>upsert-dao</code></a>.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="save-dao/transaction"></a>
-      save-dao/transaction (dao)
-      <br/>&#8594; boolean
-    </p>
-
-    <p class="desc">Acts exactly like <a
-    href="#save-dao"><code>save-dao</code></a>, except that it
-    protects its attempt to insert the object with a rollback point,
-    so that a failure will not abort the transaction.</p>
-
-    <p class="desc"><b>See also:</b> <a href="#upsert-dao">
-    <code>upsert-dao</code></a>.</p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="upsert-dao"></a>
-      upsert-dao (dao)
-      <br/>&#8594; dao
-    </p>
-
-    <p class="desc">
-      Like <a href="#save-dao"><code>save-dao</code></a>
-      or <a href="#save-dao/transaction"><code>save-dao/transaction</code></a>
-      but using a different method that doesn't involve a database
-      exception. This is safe to use both in and outside a transaction,
-      though it's advisable to always do it in a transaction to prevent a
-      race condition.  The way it works is:
-    </p>
-
-    <ol class="desc">
-      <li>If the object contains unbound slots, we
-      call <a href="#insert-dao"><code>insert-dao</code></a> directly, thus
-      the behavior is like <code>save-dao</code>.</li>
-      <li>Otherwise we try to update a record with the same primary key. If
-      the PostgreSQL returns a non-zero number of rows updated it
-      <em>treated</em> as the record is already exists in the database, and
-      we stop here.</li>
-      <li>If the PostgreSQL returns a zero number of rows updated, it
-      <em>treated</em> as the record does not exist and we call
-      <code>insert-dao</code>.</li>
-    </ol>
-
-    <p class="desc">
-      The race condition might occur at step 3 <em>if there's no
-      transaction:</em> if UPDATE returns zero number of rows updated and
-      another thread inserts the record at that moment, the insertion
-      implied by step 3 will fail.
-    </p>
-
-    <p class="desc">
-      Note, that triggers and rules may affect the number of inserted or
-      updated rows returned by PostgreSQL, so zero or non-zero number of
-      affected rows may not <em>actually</em> indicate the existence of
-      record in the database.
-    </p>
-
-    <p class="desc">
-      This method returns two values: the DAO object and a boolean
-      (<code>T</code> if the object was inserted, <code>NIL</code> if
-      it was updated).
-    </p>
-
-    <p class="def">
-      <span>method</span>
-      <a name="delete-dao"></a>
-      delete-dao (dao)
-    </p>
-
-    <p class="desc">Delete the given <code>dao</code> from the database.</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="dao-table-name"></a>
-      dao-table-name (class)
-      <br/>&#8594; string
-    </p>
-
-    <p class="desc">Get the name of the <code>table</code> associated with
-    the given DAO <code>class</code> (or symbol naming such a class).</p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="dao-table-definition"></a>
-      dao-table-definition (class)
-      <br/>&#8594; string
-    </p>
-
-    <p class="desc">Given a DAO <code>class</code>, or the name of one,
-    this will produce an SQL query string with a definition of the table.
-    This is just the bare simple definition, so if you need any extra
-    indices or or constraints, you'll have to write your own queries
-    to add them.</p>
-
-    <p class="def">
-      <span>macro</span>
-      <a name="with-column-writers"></a>
-      with-column-writers ((&amp;rest writers) &amp;body body)
-    </p>
-
-    <p class="desc">Provides control over the way <code><a
-    href="#get-dao">get-dao</a></code>, <code><a
-    href="#select-dao">select-dao</a></code>, and <code><a
-    href="#query-dao">query-dao</a></code> read values from the
-    database. This is not commonly needed, but can be used to reduce
-    the amount of queries a system makes. <code>writers</code> should
-    be a list of alternating column names (strings or symbols) and
-    writers, where writers are either symbols referring to a slot in
-    the objects, or functions taking two arguments &#x2015; an
-    instance and a value &#x2015; which can be used to somehow store
-    the value in the new instance. When any DAO-fetching function is
-    called in the <code>body</code>, and columns matching the given
-    names are encountered in the result, the writers are used instead
-    of the default behaviour (try and store the value in the slot that
-    matches the column name).</p>
-
-    <p class="desc">An example of using this is to add some non-column
-    slots to a DAO class, and use <code><a
-    href="#query-dao">query-dao</a></code> within a
-    <code>with-column-writers</code> form to pull in extra information
-    about the objects, and immediately store it in the new
-    instances.</p>
-
-    <h2 id="tabledef">Table definition and creation</h2>
-
-    <p>It can be useful to have the SQL statements needed to build an
-    application's tables available from the source code, to do things like
-    automatically deploying a database. The following macro and
-    functions allow you to group sets of SQL statements under symbols,
-    with some shortcuts for common elements in table definitions.</p>
-
-    <p class="def" id="deftable">
-      <span>macro</span>
-      deftable (name &amp;body definition)
-    </p>
-
-    <p class="desc">Define a table. <code>name</code> can be either a symbol
-    or a <code>(symbol string)</code> list. In the first case, the table
-    name is derived from the symbol's name by <a
-    href="s-sql.html">S-SQL</a>'s rules. In the second case, the
-    <code>name</code> is given explicitly. The body of definitions can contain
-    anything that evaluates to a string, as well as S-SQL expressions. The
-    variables <a href="#*table-name*"><code>*table-name*</code></a> and
-    <a href="#*table-name*"><code>*table-symbol*</code></a> are bound to
-    the relevant values in the body. Note that the evaluation of the
-    <code>definition</code> is ordered, so you'll generally want to create your
-    table first and then define indices on it.</p>
-
-    <p class="def">
-      <a name="!dao-def"></a>
-      <span>function</span>
-      !dao-def ()
-    </p>
-
-    <p class="desc">Should only be used inside <a
-    href="#deftable"><code>deftable</code></a>'s body. Adds the result
-    of calling <a
-    href="#dao-table-definition"><code>dao-table-definition</code></a>
-    on <a href="#*table-symbol*"><code>*table-symbol*</code></a> to
-    the <code>definition</code>.</p>
-
-    <p class="def">
-      <a name="!index"></a>
-      <span>function</span>
-      !index (&amp;rest columns), !unique-index (&amp;rest columns)
-    </p>
-
-    <p class="desc">Define an index on the table being defined. The
-      <code>columns</code> can be given as symbols or strings.</p>
-
-    <p class="def">
-      <a name="!foreign"></a>
-      <span>function</span>
-      !foreign (target-table columns &amp;optional target-columns &amp;key on-delete on-update deferrable initially-deferred)
-    </p>
-
-    <p class="desc">Add a foreign key to the table being defined.
-      <code>target-table</code> is the referenced table.
-      <code>columns</code> is a list of column names or single name in
-      <em>this</em> table, and, if the columns have different names in
-      the referenced table, <code>target-columns</code> must be
-      another list of column names or single column name of the
-      <code>target-table</code>, or <code>:primary-key</code> to denote
-      the column(s) of the <code>target-table</code>'s primary key
-      as referenced column(s).
-    </p>
-
-    <p class="desc">The <code>on-delete</code> and
-      <code>on-update</code> arguments can be used to specify ON DELETE
-      and ON UPDATE actions, as per the keywords allowed in <a
-    href="s-sql.html#create-table"><code>create-table</code></a>. In
-      addition, the <code>deferrable</code> and <code>initially-deferred</code>
-      arguments can be used to indicate whether constraint checking can be
-      deferred until the current transaction completed, and whether this should
-      be done by default. Note that none of these are really &amp;key
-      arguments, but rather are picked out of a &amp;rest arg at
-      runtime, so that they can be specified even when
-      <code>target-columns</code> is not given.</p>
-
-    <p class="def">
-      <a name="!unique"></a>
-      <span>function</span>
-      !unique (target-fields &amp;key deferrable initially-deferred)
-    </p>
-
-    <p class="desc">Constrains one or more columns to only contain
-      unique (combinations of) values, with <code>deferrable</code> and
-      <code>initially-deferred</code> defined as in <a
-    href="#!foreign"><code>!foreign</code></a></p>
-
-    <p class="def" id="create-table">
-      <span>function</span>
-      create-table (symbol)
-    </p>
-
-    <p class="desc">Creates the table identified by
-    <code>symbol</code> by <a href="#execute">executing</a> all forms in
-    its definition.</p>
-
-    <p class="def" id="create-all-tables">
-      <span>function</span>
-      create-all-tables ()
-    </p>
-
-    <p class="desc">Creates all defined tables.</p>
-
-    <p class="def" id="create-package-tables">
-      <span>function</span>
-      create-package-tables (package)
-    </p>
-
-    <p class="desc">Creates all tables identified by symbols
-    interned in the given <code>package</code>.</p>
-
-    <p class="def">
-      <a name="*table-name*"></a>
-      <span>variables</span>
-      *table-name*, *table-symbol*
-    </p>
-
-    <p class="desc">These variables are bound to the relevant name and
-    symbol while the forms of a table definition are evaluated. Can be
-    used to define shorthands like the ones below.</p>
-
-    <h2 id="schemata">Schemata</h2>
-
-    Schema allow you to separate tables into differnet name spaces. In
-    different schemata two tables with the same name are allowed to
-    exists. The tables can be referred by fully qualified names or
-    with the macro <a href="#with-schema">with-schema</a>. You could
-    also set the search path
-    with <a href="#set-search-path">set-search-path<a/>. For listing
-    end checking there are also the
-    functions <a href="#list-schemata">list-schemata</a>
-    and <a href="#schema-exist-p">schema-exist-p</a>. The following
-    functions allow you to create, drop schemata and to set the search
-    path.
-
-    <p class="def">
-        <span>function</span>
-        <a name="create-schema"></a>
-        create-schema (schema)
-    </p>
-
-    <p class="desc">
-        Creates a new schema. Raises an error if the schema is already exists.
-    </p>
-
-    <p class="def">
-        <span>function</span>
-        <a name="drop-schema"></a>
-        drop-schema (schema)
-    </p>
-
-    <p class="desc">
-        Removes a schema. Raises an error if the schema is not empty.
-    </p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="get-search-path"></a>
-      get-search-path ()
-    </p>
-
-    <p class="desc">
-        Retrieve the current search path.
-    </p>
-
-    <p class="def">
-      <span>function</span>
-      <a name="set-search-path"></a>
-      set-search-path (path)
-    </p>
-
-    <p class="desc">
-      Sets the search path to the <code>path</code>. This function is used
-      by <a href="#with-schema">with-schema</a>.
-    </p>
-
-    <h2 id="index">Symbol-index</h2>
-
-    <ul class="symbol-index">
-      <li><a href="#abort-transaction">abort-transaction</a></li>
-      <li><a href="#deftable">deftable</a></li>
-      <li><a href="#call-with-connection">call-with-connection</a></li>
-      <li><a href="#clear-connection-pool">clear-connection-pool</a></li>
-      <li><a href="#clear-template">clear-template</a></li>
-      <li><a href="#commit-transaction">commit-transaction</a></li>
-      <li><a href="#connect">connect</a></li>
-      <li><a href="#connect-toplevel">connect-toplevel</a></li>
-      <li><a href="#connected-p">connected-p</a></li>
-      <li><a href="#create-all-tables">create-all-tables</a></li>
-      <li><a href="#create-package-tables">create-package-tables</a></li>
-      <li><a href="#create-schema">create-schema</a></li>
-      <li><a href="#create-table">create-table</a></li>
-      <li><a href="#dao-class">dao-class</a></li>
-      <li><a href="#!dao-def">!dao-def</a></li>
-      <li><a href="#dao-exists-p">dao-exists-p</a></li>
-      <li><a href="#dao-keys">dao-keys</a></li>
-      <li><a href="#dao-table-definition">dao-table-definition</a></li>
-      <li><a href="#dao-table-name">dao-table-name</a></li>
-      <li><a href="#*database*">*database*</a></li>
-      <li><a href="#database-connection">database-connection</a></li>
-      <li><a href="#define-dao-finalization">define-dao-finalization</a></li>
-      <li><a href="cl-postgres.html#database-connection-lost">database-connection-lost</a></li>
-      <li><a href="cl-postgres.html#database-error">database-error</a></li>
-      <li><a href="cl-postgres.html#database-error-cause">database-error-cause</a></li>
-      <li><a href="cl-postgres.html#database-error-code">database-error-code</a></li>
-      <li><a href="cl-postgres.html#database-error-detail">database-error-detail</a></li>
-      <li><a href="cl-postgres.html#database-error-query">database-error-query</a></li>
-      <li><a href="cl-postgres.html#database-error-message">database-error-message</a></li>
-      <li><a href="#*default-use-ssl*">*default-use-ssl*</a></li>
-      <li><a href="#defprepared">defprepared</a></li>
-      <li><a href="#defprepared">defprepared-with-names</a></li>
-      <li><a href="#delete-dao">delete-dao</a></li>
-      <li><a href="#disconnect">disconnect</a></li>
-      <li><a href="#disconnect-toplevel">disconnect-toplevel</a></li>
-      <li><a href="#doquery">doquery</a></li>
-      <li><a href="#drop-schema">drop-schema</a></li>
-      <li><a href="#execute">execute</a></li>
-      <li><a href="#!foreign">!foreign</a></li>
-      <li><a href="#!unique">!unique</a></li>
-      <li><a href="#get-dao">get-dao</a></li>
-      <li><a href="#get-search-path">get-search-path</a></li>
-      <li><a href="#*ignore-unknown-columns*">*ignore-unknown-columns*</a></li>
-      <li><a href="#!index">!index</a></li>
-      <li><a href="#insert-dao">insert-dao</a></li>
-      <li><a href="#list-sequences">list-sequences</a></li>
-      <li><a href="#list-schemata">list-schemata</a></li>
-      <li><a href="#list-tables">list-tables</a></li>
-      <li><a href="#list-views">list-views</a></li>
-      <li><a href="#make-dao">make-dao</a></li>
-      <li><a href="#*max-pool-size*">*max-pool-size*</a></li>
-      <li><a href="#prepare">prepare</a></li>
-      <li><a href="#query">query</a></li>
-      <li><a href="#query-dao">query-dao</a></li>
-      <li><a href="#reconnect">reconnect</a></li>
-      <li><a href="#release-savepoint">release-savepoint</a></li>
-      <li><a href="#reset-table">reset-table</a></li>
-      <li><a href="#rollback-savepoint">rollback-savepoint</a></li>
-      <li><a href="#save-dao">save-dao</a></li>
-      <li><a href="#save-dao/transaction">save-dao/transaction</a></li>
-      <li><a href="#select-dao">select-dao</a></li>
-      <li><a href="#set-search-path">set-search-path</a></li>
-      <li><a href="#schema-exist-p">schema-exist-p</a></li>
-      <li><a href="#sequence-exists-p">sequence-exists-p</a></li>
-      <li><a href="#sequence-next">sequence-next</a></li>
-      <li><a href="#table-description">table-description</a></li>
-      <li><a href="#table-exists-p">table-exists-p</a></li>
-      <li><a href="#*table-name*">*table-name*</a></li>
-      <li><a href="#*table-name*">*table-symbol*</a></li>
-      <li><a href="#!index">!unique-index</a></li>
-      <li><a href="#update-dao">update-dao</a></li>
-      <li><a href="#view-exists-p">view-exists-p</a></li>
-      <li><a href="#with-column-writers">with-column-writers</a></li>
-      <li><a href="#with-connection">with-connection</a></li>
-      <li><a href="#with-savepoint">with-savepoint</a></li>
-      <li><a href="#with-schema">with-schema</a></li>
-      <li><a href="#with-transaction">with-transaction</a></li>
-    </ul>
-
-  </body>
+  (:keys name))
+</pre>
+</div>
+
+<p>
+The (or db-null integer) form is used to indicate a column can have NULL values.
+</p>
+
+<p>
+When inheriting from DAO classes, a subclass' set of columns also contains all
+the columns of its superclasses. The primary key for such a class is the
+union of its own keys and all the keys from its superclasses. Classes
+inheriting from DAO classes should probably always use the dao-class
+metaclass themselves.
+</p>
+
+<p>
+When a DAO is created with make-instance, the :fetch-defaults keyword
+argument can be passed, which, when T, will cause a query to fetch the
+default values for all slots that refers to columns with defaults and were
+not bound through initargs. In some cases, such as serial columns, which
+have an implicit default, this will not work. You can work around this by
+creating your own sequence, e.g. "my_sequence", and defining
+a (:nextval "my_sequence") default.
+</p>
+
+<p>
+Finally, DAO class slots can have an option :ghost t to specify them as
+ghost slots. These are selected when retrieving instances, but not written
+when updating or inserting, or even included in the table definition. The
+only known use for this to date is for creating the table with (oids=true),
+and specify a slot like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(oid :col-type integer :ghost t :accessor get-oid)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org01f46ef" class="outline-3">
+<h3 id="org01f46ef">method dao-keys (class)</h3>
+<div class="outline-text-3" id="text-org01f46ef">
+<p>
+→ list
+</p>
+
+<p>
+Returns list of slot names that are the primary key of DAO class.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgbddb9c7" class="outline-3">
+<h3 id="orgbddb9c7">method dao-keys (dao)</h3>
+<div class="outline-text-3" id="text-orgbddb9c7">
+<p>
+→ list
+</p>
+
+<p>
+Returns list of values that are the primary key of dao.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org63c8766" class="outline-3">
+<h3 id="org63c8766">method dao-exists-p (dao)</h3>
+<div class="outline-text-3" id="text-org63c8766">
+<p>
+→ boolean
+</p>
+
+<p>
+Test whether a row with the same primary key as the given dao exists in the
+database. Will also return NIL when any of the key slots in the object are
+unbound.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga2273af" class="outline-3">
+<h3 id="orga2273af">method make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)</h3>
+<div class="outline-text-3" id="text-orga2273af">
+<p>
+→ dao
+</p>
+
+<p>
+Combines make-instance with insert-dao. Return the created dao.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga8f1d62" class="outline-3">
+<h3 id="orga8f1d62">macro define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)</h3>
+<div class="outline-text-3" id="text-orga8f1d62">
+<p>
+Create an :around-method for make-dao. The body is executed in a lexical
+environment where dao-name is bound to a freshly created and inserted DAO.
+The representation of the DAO in the database is then updated to reflect
+changes that body might have introduced. Useful for processing values of
+slots with the type serial, which are unknown before insert-dao.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgb80db1e" class="outline-3">
+<h3 id="orgb80db1e">method get-dao (type &amp;rest keys)</h3>
+<div class="outline-text-3" id="text-orgb80db1e">
+<p>
+→ dao
+</p>
+
+<p>
+Select the DAO object from the row that has the given primary key values, or
+NIL if no such row exists. Objects created by this function will have
+initialize-instance called on them (after loading in the values from the
+database) without any arguments ― even :default-initargs are skipped.
+The same goes for select-dao and query-dao.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3e66f17" class="outline-3">
+<h3 id="org3e66f17">macro select-dao (type &amp;optional (test t) &amp;rest sort)</h3>
+<div class="outline-text-3" id="text-org3e66f17">
+<p>
+→ list
+</p>
+
+<p>
+Select DAO objects for the rows in the associated table for which the given
+test (either an S-SQL expression or a string) holds. When sorting arguments
+are given, which can also be S-SQL forms or strings, these are used to sort
+the result.
+</p>
+
+<p>
+(Note that, if you want to sort, you have to pass the test argument.)
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(select-dao 'user (:&gt; 'score 10000) 'name)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org01592fc" class="outline-3">
+<h3 id="org01592fc">macro do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)</h3>
+<div class="outline-text-3" id="text-org01592fc">
+<p>
+Like select-dao, but iterates over the results rather than returning them.
+For each matching DAO, body is evaluated with type-var bound to the DAO
+instance.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(do-select-dao (('user user) (:&gt; 'score 10000) 'name)
+  (pushnew user high-scorers))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgef6c4d3" class="outline-3">
+<h3 id="orgef6c4d3">macro query-dao (type query &amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgef6c4d3">
+<p>
+→ list
+</p>
+
+<p>
+Execute the given query (which can be either a string or an S-SQL expression)
+and return the result as DAOs of the given type. If the query contains
+placeholders ($1, $2, etc) their values can be given as extra arguments.
+The names of the fields returned by the query must either match slots in
+the DAO class, or be bound through with-column-writers.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2946618" class="outline-3">
+<h3 id="org2946618">function do-query-dao (((type type-var) query &amp;rest args) &amp;body body)</h3>
+<div class="outline-text-3" id="text-org2946618">
+<p>
+→ list
+</p>
+
+<p>
+Like query-dao, but iterates over the results rather than returning them.
+For each matching DAO, body is evaluated with type-var bound to the instance.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(do-query-dao (('user user) (:order-by (:select '* :from 'user :where (:&gt; 'score 10000)) 'name))
+  (pushnew user high-scorers))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org213b819" class="outline-3">
+<h3 id="org213b819">variable <b>ignore-unknown-columns</b></h3>
+<div class="outline-text-3" id="text-org213b819">
+<p>
+Normally, when get-dao, select-dao, or query-dao finds a column in the database
+that's not in the DAO class, it will raise an error. Setting this variable to
+a non-NIL will cause it to simply ignore the unknown column.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org112977f" class="outline-3">
+<h3 id="org112977f">method insert-dao (dao)</h3>
+<div class="outline-text-3" id="text-org112977f">
+<p>
+→ dao
+</p>
+
+<p>
+Insert the given dao into the database. Column slots of the object which
+are unbound implies the database defaults. Hence, if these columns has
+no defaults defined in the database, the the insertion of the dao will
+be failed. (This feature only works on PostgreSQL 8.2 and up.)
+</p>
+</div>
+</div>
+
+<div id="outline-container-org7949047" class="outline-3">
+<h3 id="org7949047">method update-dao (dao)</h3>
+<div class="outline-text-3" id="text-org7949047">
+<p>
+→ dao
+</p>
+
+<p>
+Update the representation of the given dao in the database to the values
+in the object. This is not defined for tables that do not have any
+non-primary-key columns. Raises an error when no row matching the dao exists.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org97b3733" class="outline-3">
+<h3 id="org97b3733">function save-dao (dao)</h3>
+<div class="outline-text-3" id="text-org97b3733">
+<p>
+→ boolean
+</p>
+
+<p>
+Tries to insert the given dao using insert-dao. If this raises a unique key
+violation error, it tries to update it by using update-dao instead. Be
+aware that there is a possible race condition here ― if some other process
+deletes the row at just the right moment, the update fails as well. Returns
+a boolean telling you whether a new row was inserted.
+</p>
+
+<p>
+This function is unsafe to use inside of a transaction ― when a row with the
+given keys already exists, the transaction will be aborted. Use
+save-dao/transaction instead in such a situation.
+</p>
+
+<p>
+See also: upsert-dao.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org156dacc" class="outline-3">
+<h3 id="org156dacc">function save-dao/transaction (dao)</h3>
+<div class="outline-text-3" id="text-org156dacc">
+<p>
+→ boolean
+</p>
+
+<p>
+Acts exactly like save-dao, except that it protects its attempt to insert the
+object with a rollback point, so that a failure will not abort the transaction.
+</p>
+
+<p>
+See also: upsert-dao.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge4bc9c5" class="outline-3">
+<h3 id="orge4bc9c5">method upsert-dao (dao)</h3>
+<div class="outline-text-3" id="text-orge4bc9c5">
+<p>
+→ dao
+</p>
+
+<p>
+Like save-dao or save-dao/transaction but using a different method that doesn't
+involve a database exception. This is safe to use both in and outside a
+transaction, though it's advisable to always do it in a transaction to
+prevent a race condition. The way it works is:
+</p>
+
+<p>
+If the object contains unbound slots, we call insert-dao directly, thus
+the behavior is like save-dao.
+</p>
+
+<p>
+Otherwise we try to update a record with the same primary key. If the
+PostgreSQL returns a non-zero number of rows updated it treated as the
+record is already exists in the database, and we stop here.
+</p>
+
+<p>
+If the PostgreSQL returns a zero number of rows updated, it treated as
+the record does not exist and we call insert-dao.
+</p>
+
+<p>
+The race condition might occur at step 3 if there's no transaction:
+if UPDATE returns zero number of rows updated and another thread inserts
+the record at that moment, the insertion implied by step 3 will fail.
+</p>
+
+<p>
+Note, that triggers and rules may affect the number of inserted or updated
+rows returned by PostgreSQL, so zero or non-zero number of affected rows may
+not actually indicate the existence of record in the database.
+</p>
+
+<p>
+This method returns two values: the DAO object and a boolean (T if the object
+was inserted, NIL if it was updated).
+</p>
+</div>
+</div>
+
+<div id="outline-container-org539b51d" class="outline-3">
+<h3 id="org539b51d">method delete-dao (dao)</h3>
+<div class="outline-text-3" id="text-org539b51d">
+<p>
+Delete the given dao from the database.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org5bade60" class="outline-3">
+<h3 id="org5bade60">function dao-table-name (class)</h3>
+<div class="outline-text-3" id="text-org5bade60">
+<p>
+→ string
+</p>
+
+<p>
+Get the name of the table associated with the given DAO class (or
+symbol naming such a class).
+</p>
+</div>
+</div>
+
+<div id="outline-container-org7e43de5" class="outline-3">
+<h3 id="org7e43de5">function dao-table-definition (class)</h3>
+<div class="outline-text-3" id="text-org7e43de5">
+<p>
+→ string
+</p>
+
+<p>
+Given a DAO class, or the name of one, this will produce an SQL query string
+with a definition of the table. This is just the bare simple definition, so
+if you need any extra indices or or constraints, you'll have to write your
+own queries to add them.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org052ee19" class="outline-3">
+<h3 id="org052ee19">macro with-column-writers ((&amp;rest writers) &amp;body body)</h3>
+<div class="outline-text-3" id="text-org052ee19">
+<p>
+Provides control over the way get-dao, select-dao, and query-dao read values
+from the database. This is not commonly needed, but can be used to reduce the
+amount of queries a system makes. writers should be a list of alternating
+column names (strings or symbols) and writers, where writers are either symbols
+referring to a slot in the objects, or functions taking two arguments ― an
+instance and a value ― which can be used to somehow store the value in the
+new instance. When any DAO-fetching function is called in the body, and columns
+matching the given names are encountered in the result, the writers are used
+instead of the default behaviour (try and store the value in the slot that
+matches the column name).
+</p>
+
+<p>
+An example of using this is to add some non-column slots to a DAO class, and
+use query-dao within a with-column-writers form to pull in extra information
+about the objects, and immediately store it in the new instances.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2a813a6" class="outline-2">
+<h2 id="org2a813a6">Table definition and creation</h2>
+<div class="outline-text-2" id="text-org2a813a6">
+<p>
+It can be useful to have the SQL statements needed to build an application's
+tables available from the source code, to do things like automatically
+deploying a database. The following macro and functions allow you to group
+sets of SQL statements under symbols, with some shortcuts for common elements
+in table definitions.
+</p>
+</div>
+
+<div id="outline-container-org452ce06" class="outline-3">
+<h3 id="org452ce06">macro deftable (name &amp;body definition)</h3>
+<div class="outline-text-3" id="text-org452ce06">
+<p>
+Define a table. name can be either a symbol or a (symbol string) list.
+In the first case, the table name is derived from the symbol's name by
+S-SQL's rules. In the second case, the name is given explicitly. The body
+of definitions can contain anything that evaluates to a string, as well
+as S-SQL expressions. The variables <b>table-name</b> and <b>table-symbol</b> are
+bound to the relevant values in the body. Note that the evaluation of the
+definition is ordered, so you'll generally want to create your table first
+and then define indices on it.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga55f8be" class="outline-3">
+<h3 id="orga55f8be">function !dao-def ()</h3>
+<div class="outline-text-3" id="text-orga55f8be">
+<p>
+Should only be used inside deftable's body. Adds the result of calling
+dao-table-definition on <b>table-symbol</b> to the definition.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2724621" class="outline-3">
+<h3 id="org2724621">function !index (&amp;rest columns), !unique-index (&amp;rest columns)</h3>
+<div class="outline-text-3" id="text-org2724621">
+<p>
+Define an index on the table being defined. The columns can be given as
+symbols or strings.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga0e6dc9" class="outline-3">
+<h3 id="orga0e6dc9">function !foreign (target-table columns &amp;optional target-columns &amp;key on-delete on-update deferrable initially-deferred)</h3>
+<div class="outline-text-3" id="text-orga0e6dc9">
+<p>
+Add a foreign key to the table being defined. target-table is the referenced
+table. columns is a list of column names or single name in this table, and,
+if the columns have different names in the referenced table, target-columns
+must be another list of column names or single column name of the target-table,
+or :primary-key to denote the column(s) of the target-table's primary key
+as referenced column(s).
+</p>
+
+<p>
+The on-delete and on-update arguments can be used to specify ON DELETE and
+ON UPDATE actions, as per the keywords allowed in create-table. In addition,
+the deferrable and initially-deferred arguments can be used to indicate whether
+constraint checking can be deferred until the current transaction completed,
+and whether this should be done by default. Note that none of these are
+really &amp;key arguments, but rather are picked out of a &amp;rest arg at runtime,
+so that they can be specified even when target-columns is not given.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org7627ea2" class="outline-3">
+<h3 id="org7627ea2">function !unique (target-fields &amp;key deferrable initially-deferred)</h3>
+<div class="outline-text-3" id="text-org7627ea2">
+<p>
+Constrains one or more columns to only contain unique (combinations of) values,
+with deferrable and initially-deferred defined as in !foreign
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd0ca2cf" class="outline-3">
+<h3 id="orgd0ca2cf">function create-table (symbol)</h3>
+<div class="outline-text-3" id="text-orgd0ca2cf">
+<p>
+Creates the table identified by symbol by executing all forms in its definition.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org4377119" class="outline-3">
+<h3 id="org4377119">function create-all-tables ()</h3>
+<div class="outline-text-3" id="text-org4377119">
+<p>
+Creates all defined tables.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org73b1908" class="outline-3">
+<h3 id="org73b1908">function create-package-tables (package)</h3>
+<div class="outline-text-3" id="text-org73b1908">
+<p>
+Creates all tables identified by symbols interned in the given package.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org66749a0" class="outline-3">
+<h3 id="org66749a0">variables <b>table-name</b>, <b>table-symbol</b></h3>
+<div class="outline-text-3" id="text-org66749a0">
+<p>
+These variables are bound to the relevant name and symbol while the forms of a
+table definition are evaluated. Can be used to define shorthands like the ones
+below.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5822c12" class="outline-2">
+<h2 id="org5822c12">Schemata</h2>
+<div class="outline-text-2" id="text-org5822c12">
+<p>
+Schema allow you to separate tables into differnet name spaces. In different
+schemata two tables with the same name are allowed to exists. The tables can
+be referred by fully qualified names or with the macro with-schema. You could
+also set the search path with set-search-path. For listing end checking there
+are also the functions list-schemata and schema-exist-p. The following
+functions allow you to create, drop schemata and to set the search path.
+</p>
+</div>
+
+<div id="outline-container-org34e7e49" class="outline-3">
+<h3 id="org34e7e49">function create-schema (schema)</h3>
+<div class="outline-text-3" id="text-org34e7e49">
+<p>
+Creates a new schema. Raises an error if the schema is already exists.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd2d302c" class="outline-3">
+<h3 id="orgd2d302c">function drop-schema (schema)</h3>
+<div class="outline-text-3" id="text-orgd2d302c">
+<p>
+Removes a schema. Raises an error if the schema is not empty.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3b45923" class="outline-3">
+<h3 id="org3b45923">function get-search-path ()</h3>
+<div class="outline-text-3" id="text-org3b45923">
+<p>
+Retrieve the current search path.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org8d4c2e7" class="outline-3">
+<h3 id="org8d4c2e7">function set-search-path (path)</h3>
+<div class="outline-text-3" id="text-org8d4c2e7">
+<p>
+Sets the search path to the path. This function is used by with-schema.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2018-08-11 Sat 20:00</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
 </html>
