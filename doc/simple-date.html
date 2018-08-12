@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-08-12 Sun 07:50 -->
+<!-- 2018-08-12 Sun 08:19 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Simple-Date</title>
@@ -234,31 +234,31 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org1de7f68">Date type</a>
+<li><a href="#org4e6611b">Date type</a>
 <ul>
-<li><a href="#orgd70dd08">class date</a></li>
-<li><a href="#org2b415e5">function encode-date (year month day)</a></li>
-<li><a href="#orga8dd625">function decode-date (date)</a></li>
-<li><a href="#orge20466a">function day-of-week (date)</a></li>
-<li><a href="#org68aa74d">Timestamp type</a></li>
-<li><a href="#org0c91e9f">function encode-timestamp (year month day &amp;optional (hour 0) (minute 0) (second 0) (millisecond 0))</a></li>
-<li><a href="#orgb25e122">function decode-timestamp (timestamp)</a></li>
-<li><a href="#org0c6631f">function timestamp-to-universal-time (timestamp)</a></li>
-<li><a href="#orgda89349">function universal-time-to-timestamp (universal-time)</a></li>
-<li><a href="#orged57bb7">Interval type</a></li>
-<li><a href="#org8f0b8f7">function encode-interval (&amp;key (year 0) (month 0) (week 0) (day 0) (hour 0) (minute 0) (second 0) (millisecond 0))</a></li>
-<li><a href="#org64bec71">function decode-interval (interval)</a></li>
+<li><a href="#orgdaeb106">class date</a></li>
+<li><a href="#org2fd160f">function encode-date (year month day)</a></li>
+<li><a href="#org9f8abb8">function decode-date (date)</a></li>
+<li><a href="#org625056c">function day-of-week (date)</a></li>
+<li><a href="#orgec52ec5">Timestamp type</a></li>
+<li><a href="#org1f478b6">function encode-timestamp (year month day &amp;optional (hour 0) (minute 0) (second 0) (millisecond 0))</a></li>
+<li><a href="#org3ae169c">function decode-timestamp (timestamp)</a></li>
+<li><a href="#org8a97b76">function timestamp-to-universal-time (timestamp)</a></li>
+<li><a href="#org11a857e">function universal-time-to-timestamp (universal-time)</a></li>
+<li><a href="#org2517cde">Interval type</a></li>
+<li><a href="#org00903c2">function encode-interval (&amp;key (year 0) (month 0) (week 0) (day 0) (hour 0) (minute 0) (second 0) (millisecond 0))</a></li>
+<li><a href="#org3c356e8">function decode-interval (interval)</a></li>
 </ul>
 </li>
-<li><a href="#org79e745b">Operations</a>
+<li><a href="#org53a1669">Operations</a>
 <ul>
-<li><a href="#org2dc1e66">method time-add (a b)</a></li>
-<li><a href="#orgbf25fb2">method time-subtract (a b)</a></li>
-<li><a href="#org6b38ca8">method time= (a b)</a></li>
-<li><a href="#org8e1fb99">method time&lt; (a b)</a></li>
-<li><a href="#org95b2162">method time&gt; (a b)</a></li>
-<li><a href="#org2056a09">function time&lt;= (a b)</a></li>
-<li><a href="#orge8e886d">function time&gt;= (a b)</a></li>
+<li><a href="#orgaa124c6">method time-add (a b)</a></li>
+<li><a href="#orged87d71">method time-subtract (a b)</a></li>
+<li><a href="#org59edc52">method time= (a b)</a></li>
+<li><a href="#orga33eedb">method time&lt; (a b)</a></li>
+<li><a href="#org2fdfa7d">method time&gt; (a b)</a></li>
+<li><a href="#org938a9d7">function time&lt;= (a b)</a></li>
+<li><a href="#orgd495e90">function time&gt;= (a b)</a></li>
 </ul>
 </li>
 </ul>
@@ -302,22 +302,32 @@ To use the simple-date reader when cl-postgres is using the default:
 </pre>
 </div>
 
-<div id="outline-container-org1de7f68" class="outline-2">
-<h2 id="org1de7f68">Date type</h2>
-<div class="outline-text-2" id="text-org1de7f68">
+<p>
+As a reminder for those who want to use local-time, to enable the local-time
+reader:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(local-time:set-local-time-cl-postgres-readers)
+</pre>
 </div>
-<div id="outline-container-orgd70dd08" class="outline-3">
-<h3 id="orgd70dd08">class date</h3>
-<div class="outline-text-3" id="text-orgd70dd08">
+
+
+<div id="outline-container-org4e6611b" class="outline-2">
+<h2 id="org4e6611b">Date type</h2>
+<div class="outline-text-2" id="text-org4e6611b">
+</div>
+<div id="outline-container-orgdaeb106" class="outline-3">
+<h3 id="orgdaeb106">class date</h3>
+<div class="outline-text-3" id="text-orgdaeb106">
 <p>
 Represents a date, with no time-of-day information.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org2b415e5" class="outline-3">
-<h3 id="org2b415e5">function encode-date (year month day)</h3>
-<div class="outline-text-3" id="text-org2b415e5">
+<div id="outline-container-org2fd160f" class="outline-3">
+<h3 id="org2fd160f">function encode-date (year month day)</h3>
+<div class="outline-text-3" id="text-org2fd160f">
 <p>
 → date
 </p>
@@ -328,9 +338,9 @@ Creates a date object.
 </div>
 </div>
 
-<div id="outline-container-orga8dd625" class="outline-3">
-<h3 id="orga8dd625">function decode-date (date)</h3>
-<div class="outline-text-3" id="text-orga8dd625">
+<div id="outline-container-org9f8abb8" class="outline-3">
+<h3 id="org9f8abb8">function decode-date (date)</h3>
+<div class="outline-text-3" id="text-org9f8abb8">
 <p>
 → (values year month day)
 </p>
@@ -341,9 +351,9 @@ Extract the elements from a date object.
 </div>
 </div>
 
-<div id="outline-container-orge20466a" class="outline-3">
-<h3 id="orge20466a">function day-of-week (date)</h3>
-<div class="outline-text-3" id="text-orge20466a">
+<div id="outline-container-org625056c" class="outline-3">
+<h3 id="org625056c">function day-of-week (date)</h3>
+<div class="outline-text-3" id="text-org625056c">
 <p>
 → integer
 </p>
@@ -355,9 +365,9 @@ Determine the day of the week that the given date falls on. Value ranges from
 </div>
 </div>
 
-<div id="outline-container-org68aa74d" class="outline-3">
-<h3 id="org68aa74d">Timestamp type</h3>
-<div class="outline-text-3" id="text-org68aa74d">
+<div id="outline-container-orgec52ec5" class="outline-3">
+<h3 id="orgec52ec5">Timestamp type</h3>
+<div class="outline-text-3" id="text-orgec52ec5">
 <p>
 class timestamp
 </p>
@@ -368,9 +378,9 @@ Represents an absolute timestamp, with a millisecond precision.
 </div>
 </div>
 
-<div id="outline-container-org0c91e9f" class="outline-3">
-<h3 id="org0c91e9f">function encode-timestamp (year month day &amp;optional (hour 0) (minute 0) (second 0) (millisecond 0))</h3>
-<div class="outline-text-3" id="text-org0c91e9f">
+<div id="outline-container-org1f478b6" class="outline-3">
+<h3 id="org1f478b6">function encode-timestamp (year month day &amp;optional (hour 0) (minute 0) (second 0) (millisecond 0))</h3>
+<div class="outline-text-3" id="text-org1f478b6">
 <p>
 → timestamp
 </p>
@@ -382,9 +392,9 @@ range (i.e. 60 for minutes, 1000 for milliseconds) should be passed.
 </div>
 </div>
 
-<div id="outline-container-orgb25e122" class="outline-3">
-<h3 id="orgb25e122">function decode-timestamp (timestamp)</h3>
-<div class="outline-text-3" id="text-orgb25e122">
+<div id="outline-container-org3ae169c" class="outline-3">
+<h3 id="org3ae169c">function decode-timestamp (timestamp)</h3>
+<div class="outline-text-3" id="text-org3ae169c">
 <p>
 → (values year month day hour minute second millisecond)
 </p>
@@ -395,9 +405,9 @@ Decode a timestamp into its components.
 </div>
 </div>
 
-<div id="outline-container-org0c6631f" class="outline-3">
-<h3 id="org0c6631f">function timestamp-to-universal-time (timestamp)</h3>
-<div class="outline-text-3" id="text-org0c6631f">
+<div id="outline-container-org8a97b76" class="outline-3">
+<h3 id="org8a97b76">function timestamp-to-universal-time (timestamp)</h3>
+<div class="outline-text-3" id="text-org8a97b76">
 <p>
 → universal-time
 </p>
@@ -409,9 +419,9 @@ Note that this will treat the timestamp as if it were in UTC.
 </div>
 </div>
 
-<div id="outline-container-orgda89349" class="outline-3">
-<h3 id="orgda89349">function universal-time-to-timestamp (universal-time)</h3>
-<div class="outline-text-3" id="text-orgda89349">
+<div id="outline-container-org11a857e" class="outline-3">
+<h3 id="org11a857e">function universal-time-to-timestamp (universal-time)</h3>
+<div class="outline-text-3" id="text-org11a857e">
 <p>
 → timestamp
 </p>
@@ -423,9 +433,9 @@ be treated as if it were in UTC.
 </div>
 </div>
 
-<div id="outline-container-orged57bb7" class="outline-3">
-<h3 id="orged57bb7">Interval type</h3>
-<div class="outline-text-3" id="text-orged57bb7">
+<div id="outline-container-org2517cde" class="outline-3">
+<h3 id="org2517cde">Interval type</h3>
+<div class="outline-text-3" id="text-org2517cde">
 <p>
 class interval
 </p>
@@ -439,9 +449,9 @@ represents is not always the same.
 </div>
 </div>
 
-<div id="outline-container-org8f0b8f7" class="outline-3">
-<h3 id="org8f0b8f7">function encode-interval (&amp;key (year 0) (month 0) (week 0) (day 0) (hour 0) (minute 0) (second 0) (millisecond 0))</h3>
-<div class="outline-text-3" id="text-org8f0b8f7">
+<div id="outline-container-org00903c2" class="outline-3">
+<h3 id="org00903c2">function encode-interval (&amp;key (year 0) (month 0) (week 0) (day 0) (hour 0) (minute 0) (second 0) (millisecond 0))</h3>
+<div class="outline-text-3" id="text-org00903c2">
 <p>
 → interval
 </p>
@@ -452,9 +462,9 @@ Create an interval. Arguments may be negative and of any size.
 </div>
 </div>
 
-<div id="outline-container-org64bec71" class="outline-3">
-<h3 id="org64bec71">function decode-interval (interval)</h3>
-<div class="outline-text-3" id="text-org64bec71">
+<div id="outline-container-org3c356e8" class="outline-3">
+<h3 id="org3c356e8">function decode-interval (interval)</h3>
+<div class="outline-text-3" id="text-org3c356e8">
 <p>
 → (values year month day hour minute second millisecond)
 </p>
@@ -468,9 +478,9 @@ of 1 hour.
 </div>
 </div>
 
-<div id="outline-container-org79e745b" class="outline-2">
-<h2 id="org79e745b">Operations</h2>
-<div class="outline-text-2" id="text-org79e745b">
+<div id="outline-container-org53a1669" class="outline-2">
+<h2 id="org53a1669">Operations</h2>
+<div class="outline-text-2" id="text-org53a1669">
 <p>
 To prevent a proliferation of different function names, generic functions
 are used for operations on time values. The semantics of these differ for
@@ -478,9 +488,9 @@ the type of the operands.
 </p>
 </div>
 
-<div id="outline-container-org2dc1e66" class="outline-3">
-<h3 id="org2dc1e66">method time-add (a b)</h3>
-<div class="outline-text-3" id="text-org2dc1e66">
+<div id="outline-container-orgaa124c6" class="outline-3">
+<h3 id="orgaa124c6">method time-add (a b)</h3>
+<div class="outline-text-3" id="text-orgaa124c6">
 <p>
 → value
 </p>
@@ -495,9 +505,9 @@ interpreted as an amount of milliseconds.
 </div>
 </div>
 
-<div id="outline-container-orgbf25fb2" class="outline-3">
-<h3 id="orgbf25fb2">method time-subtract (a b)</h3>
-<div class="outline-text-3" id="text-orgbf25fb2">
+<div id="outline-container-orged87d71" class="outline-3">
+<h3 id="orged87d71">method time-subtract (a b)</h3>
+<div class="outline-text-3" id="text-orged87d71">
 <p>
 → value
 </p>
@@ -510,9 +520,9 @@ them. Similarly, subtracting two intervals also gives their difference.
 </div>
 </div>
 
-<div id="outline-container-org6b38ca8" class="outline-3">
-<h3 id="org6b38ca8">method time= (a b)</h3>
-<div class="outline-text-3" id="text-org6b38ca8">
+<div id="outline-container-org59edc52" class="outline-3">
+<h3 id="org59edc52">method time= (a b)</h3>
+<div class="outline-text-3" id="text-org59edc52">
 <p>
 → boolean
 </p>
@@ -524,9 +534,9 @@ they denote the same time or period.
 </div>
 </div>
 
-<div id="outline-container-org8e1fb99" class="outline-3">
-<h3 id="org8e1fb99">method time&lt; (a b)</h3>
-<div class="outline-text-3" id="text-org8e1fb99">
+<div id="outline-container-orga33eedb" class="outline-3">
+<h3 id="orga33eedb">method time&lt; (a b)</h3>
+<div class="outline-text-3" id="text-orga33eedb">
 <p>
 → boolean
 </p>
@@ -538,9 +548,9 @@ first is less than the second.
 </div>
 </div>
 
-<div id="outline-container-org95b2162" class="outline-3">
-<h3 id="org95b2162">method time&gt; (a b)</h3>
-<div class="outline-text-3" id="text-org95b2162">
+<div id="outline-container-org2fdfa7d" class="outline-3">
+<h3 id="org2fdfa7d">method time&gt; (a b)</h3>
+<div class="outline-text-3" id="text-org2fdfa7d">
 <p>
 → boolean
 </p>
@@ -552,9 +562,9 @@ first is greater than the second.
 </div>
 </div>
 
-<div id="outline-container-org2056a09" class="outline-3">
-<h3 id="org2056a09">function time&lt;= (a b)</h3>
-<div class="outline-text-3" id="text-org2056a09">
+<div id="outline-container-org938a9d7" class="outline-3">
+<h3 id="org938a9d7">function time&lt;= (a b)</h3>
+<div class="outline-text-3" id="text-org938a9d7">
 <p>
 → boolean
 </p>
@@ -565,9 +575,9 @@ The inverse of time&gt;.
 </div>
 </div>
 
-<div id="outline-container-orge8e886d" class="outline-3">
-<h3 id="orge8e886d">function time&gt;= (a b)</h3>
-<div class="outline-text-3" id="text-orge8e886d">
+<div id="outline-container-orgd495e90" class="outline-3">
+<h3 id="orgd495e90">function time&gt;= (a b)</h3>
+<div class="outline-text-3" id="text-orgd495e90">
 <p>
 → boolean
 </p>
@@ -580,7 +590,7 @@ The inverse of time&lt;.
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-08-12 Sun 07:50</p>
+<p class="date">Created: 2018-08-12 Sun 08:19</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
