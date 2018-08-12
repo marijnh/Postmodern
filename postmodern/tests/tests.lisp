@@ -59,13 +59,21 @@
     (is (= (query (:select '* :from (:as (:select (:as 1 'as)) 'where) :where (:= 'where.as 1)) :single!) 1))))
 
 (test time-types
+  "Ensure that we are using a readtable that reads into simple-dates."
+  (setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+         simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
   (with-test-connection
     (is (time= (query (:select (:type (encode-date 1980 2 1) date)) :single)
                (encode-date 1980 2 1)))
     (is (time= (query (:select (:type (encode-timestamp 2040 3 19 12 15 0 2) timestamp)) :single)
                (encode-timestamp 2040 3 19 12 15 0 2)))
     (is (time= (query (:select (:type (encode-interval :month -1 :hour 24) interval)) :single)
-               (encode-interval :month -1 :hour 24)))))
+               (encode-interval :month -1 :hour 24))))
+  ;;; Reset readtable to default
+  (setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+         cl-postgres::*default-sql-readtable*)))
 
 (test table
   (with-test-connection
