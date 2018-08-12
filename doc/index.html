@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-08-11 Sat 20:52 -->
+<!-- 2018-08-12 Sun 06:03 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Postmodern</title>
@@ -234,19 +234,19 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org51a396f">Dependencies</a></li>
-<li><a href="#org9c28f04">License</a></li>
-<li><a href="#org4fada29">Download and installation</a></li>
-<li><a href="#orgecf8325">Quickstart</a></li>
-<li><a href="#orgb07cb83">Reference</a></li>
-<li><a href="#org6021bd2">Caveats and to-dos</a>
+<li><a href="#org5a8c355">Dependencies</a></li>
+<li><a href="#org571ec06">License</a></li>
+<li><a href="#org23ab60c">Download and installation</a></li>
+<li><a href="#org807d34f">Quickstart</a></li>
+<li><a href="#org0fc9312">Reference</a></li>
+<li><a href="#orga1aee74">Caveats and to-dos</a>
 <ul>
-<li><a href="#org209cb77">Timezones</a></li>
-<li><a href="#orgbbfefc4">Portability</a></li>
-<li><a href="#org4f0b08a">Things that should be implemented</a></li>
+<li><a href="#org6fea0b8">Timezones</a></li>
+<li><a href="#org319b3d4">Portability</a></li>
+<li><a href="#org5e7ef79">Things that should be implemented</a></li>
 </ul>
 </li>
-<li><a href="#orgf103810">Resources</a></li>
+<li><a href="#orgf582af0">Resources</a></li>
 </ul>
 </div>
 </div>
@@ -273,9 +273,9 @@ me, your mileage may vary.
 </p>
 
 
-<div id="outline-container-org51a396f" class="outline-2">
-<h2 id="org51a396f">Dependencies</h2>
-<div class="outline-text-2" id="text-org51a396f">
+<div id="outline-container-org5a8c355" class="outline-2">
+<h2 id="org5a8c355">Dependencies</h2>
+<div class="outline-text-2" id="text-org5a8c355">
 <p>
 The library depends on <a href="http://quickdocs.org/usocket/">usocket</a> (except on <a href="http://sbcl.org/">SBCL</a> and <a href="https://franz.com/products/allegrocl/">ACL</a>, where the built-in
 socket library is used), <a href="https://github.com/pmai/md5.git">md5</a>, <a href="https://github.com/pcostanza/closer-mop.git">closer-mop</a>, <a href="https://github.com/sionescu/bordeaux-threads.git">bordeaux-threads</a> if you want
@@ -296,9 +296,9 @@ programming interface.
 </div>
 </div>
 
-<div id="outline-container-org9c28f04" class="outline-2">
-<h2 id="org9c28f04">License</h2>
-<div class="outline-text-2" id="text-org9c28f04">
+<div id="outline-container-org571ec06" class="outline-2">
+<h2 id="org571ec06">License</h2>
+<div class="outline-text-2" id="text-org571ec06">
 <p>
 Postmodern is released under a zlib-style license. Which approximately
 means you can use the code in whatever way you like, except for passing
@@ -308,28 +308,26 @@ that it is not the original.
 </div>
 </div>
 
-<div id="outline-container-org4fada29" class="outline-2">
-<h2 id="org4fada29">Download and installation</h2>
-<div class="outline-text-2" id="text-org4fada29">
+<div id="outline-container-org23ab60c" class="outline-2">
+<h2 id="org23ab60c">Download and installation</h2>
+<div class="outline-text-2" id="text-org23ab60c">
 <p>
-It is highly recommended that you use postmodern via the common lisp
-library service of <a href="https://quicklisp.org">quicklisp.org</a>.
+We suggest using <a href="https://quicklisp.org">quicklisp.org</a> for installation.
 </p>
 
 <p>
-A git repository with the most recent changes can be checked out with:
+A git repository with the most recent changes can be viewed or checked out at:
 </p>
 
 <p>
 &gt; git clone <a href="https://github.com/marijnh/Postmodern">https://github.com/marijnh/Postmodern</a>
-You can also view the repository on github.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgecf8325" class="outline-2">
-<h2 id="orgecf8325">Quickstart</h2>
-<div class="outline-text-2" id="text-orgecf8325">
+<div id="outline-container-org807d34f" class="outline-2">
+<h2 id="org807d34f">Quickstart</h2>
+<div class="outline-text-2" id="text-org807d34f">
 <p>
 This quickstart is intended to give you a feel of the way coding with
 Postmodern works. Further details about the workings of the library
@@ -341,6 +339,7 @@ Assuming you have already installed quicklisp, load postmodern.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(ql:quickload :postmodern)
+(use-package :postmodern)
 </pre>
 </div>
 
@@ -532,9 +531,9 @@ faster, especially for complex queries.
 </div>
 </div>
 
-<div id="outline-container-orgb07cb83" class="outline-2">
-<h2 id="orgb07cb83">Reference</h2>
-<div class="outline-text-2" id="text-orgb07cb83">
+<div id="outline-container-org0fc9312" class="outline-2">
+<h2 id="org0fc9312">Reference</h2>
+<div class="outline-text-2" id="text-org0fc9312">
 <p>
 The reference manuals for the different components of Postmodern are kept
 in separate files. For using the library in the most straightforward way,
@@ -559,22 +558,31 @@ if you just want a low-level library for talking to a PostgreSQL server.
 </div>
 
 
-<div id="outline-container-org6021bd2" class="outline-2">
-<h2 id="org6021bd2">Caveats and to-dos</h2>
-<div class="outline-text-2" id="text-org6021bd2">
+<div id="outline-container-orga1aee74" class="outline-2">
+<h2 id="orga1aee74">Caveats and to-dos</h2>
+<div class="outline-text-2" id="text-orga1aee74">
 </div>
-<div id="outline-container-org209cb77" class="outline-3">
-<h3 id="org209cb77">Timezones</h3>
-<div class="outline-text-3" id="text-org209cb77">
+<div id="outline-container-org6fea0b8" class="outline-3">
+<h3 id="org6fea0b8">Timezones</h3>
+<div class="outline-text-3" id="text-org6fea0b8">
 <p>
-Simple-date has no concept of time zones. This means that using it is rather
-error-prone, and if you really need your time-keeping to be reliable and/or
-universal you should either not use the types it provides or think really
-hard about the way you handle time zones.
+It is important to understand how postgresql (not postmodern) handles
+timestamps and timestamps with time zones. Postgresql keeps everything
+in UTC, it does not store a timezone even in a timezone aware column.
+If you use a timestamp with timezone column, postgresql will calculate
+the UTC time and will normalize the timestamp data to UTC. When you
+later select the record, postgresql will look at the timezone for the
+postgresql session, retrieve the data and then provide the data
+recalculated from UTC to the timezone for that postgresql session.
+There is a good writeup of timezones at
+<a href="http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html">http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html</a>
+and <a href="http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/">http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/</a>.
 </p>
 
 <p>
-Another library, <a href="https://github.com/dlowe-net/local-time">local-time</a>, solves the same problem as simple-date, but
+Keeping that in mind, <a href="http://marijnhaverbeke.nl/postmodern/simple-date.html">Simple-date</a> has no concept of time zones. If you really
+need your time-keeping to be reliable and/or universal then you might consider
+using another library, <a href="https://github.com/dlowe-net/local-time">local-time</a>, which solves the same problem as simple-date, but
 does understand time zones. It does have some code for integrating with
 cl-postgres. See
 <a href="https://github.com/dlowe-net/local-time/blob/master/src/integration/cl-postgres.lisp">https://github.com/dlowe-net/local-time/blob/master/src/integration/cl-postgres.lisp</a>
@@ -582,12 +590,12 @@ cl-postgres. See
 </div>
 </div>
 
-<div id="outline-container-orgbbfefc4" class="outline-3">
-<h3 id="orgbbfefc4">Portability</h3>
-<div class="outline-text-3" id="text-orgbbfefc4">
+<div id="outline-container-org319b3d4" class="outline-3">
+<h3 id="org319b3d4">Portability</h3>
+<div class="outline-text-3" id="text-org319b3d4">
 <p>
 The Lisp code in Postmodern is theoretically portable across implementations,
-and seems to work on all major ones as well as some minor ones such as geneva.
+and seems to work on all major ones as well as some minor ones such as Genera.
 Implementations that do not have meta-object protocol support will not have
 DAOs, but all other parts of the library should work (all widely used
 implementations do support this).
@@ -601,9 +609,9 @@ were only introduced in those newer versions.
 </div>
 </div>
 
-<div id="outline-container-org4f0b08a" class="outline-3">
-<h3 id="org4f0b08a">Things that should be implemented</h3>
-<div class="outline-text-3" id="text-org4f0b08a">
+<div id="outline-container-org5e7ef79" class="outline-3">
+<h3 id="org5e7ef79">Things that should be implemented</h3>
+<div class="outline-text-3" id="text-org5e7ef79">
 <p>
 Postmodern is under active development so Issues and feature requests should
 be flagged on <a href="https://github.com/marijnh/Postmodern">Postmodern's site on github</a>.
@@ -629,27 +637,23 @@ file.
 </div>
 </div>
 
-<div id="outline-container-orgf103810" class="outline-2">
-<h2 id="orgf103810">Resources</h2>
-<div class="outline-text-2" id="text-orgf103810">
+<div id="outline-container-orgf582af0" class="outline-2">
+<h2 id="orgf582af0">Resources</h2>
+<div class="outline-text-2" id="text-orgf582af0">
 <ul class="org-ul">
+<li><a href="https://mailman.common-lisp.net/listinfo/postmodern-devel">Mailing List</a></li>
 <li><a href="https://sites.google.com/site/sabraonthehill/postmodern-examples">A collection of Postmodern examples</a></li>
-
 <li><a href="http://www.postgresql.org/docs/current/static/index.html">The PostgreSQL manuals</a></li>
-
 <li><a href="http://www.postgresql.org/docs/current/static/protocol.html">The wire protocol Postmodern uses</a></li>
-
 <li><a href="http://clsql.b9.com/">CLSQL</a></li>
-
 <li><a href="https://github.com/filonenko-mikhail/cl-ewkb">Common Lisp Postgis library</a></li>
-
 <li><a href="http://common-lisp.net/project/local-time/">Local-time</a></li>
 </ul>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-08-11 Sat 20:52</p>
+<p class="date">Created: 2018-08-12 Sun 06:03</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

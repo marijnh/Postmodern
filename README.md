@@ -176,27 +176,42 @@ The defprepared macro creates a function that takes the same amount of arguments
 ---
 The reference manuals for the different components of Postmodern are kept in separate files. For using the library in the most straightforward way, you only really need to read the Postmodern reference and glance over the S-SQL reference. The simple-date reference explains the time-related data types included in Postmodern, and the CL-postgres reference might be useful if you just want a low-level library for talking to a PostgreSQL server.
 
-- [Postmodern](http://marijnhaverbeke.nl/postmodern/postmodern.html)
-- [S-SQL](http://marijnhaverbeke.nl/postmodern/s-sql.html)
-- [Simple-date](http://marijnhaverbeke.nl/postmodern/simple-date.html)
-- [CL-postgres](http://marijnhaverbeke.nl/postmodern/cl-postgres.html)
+- [Postmodern](/doc/postmodern.html)
+- [S-SQL](/doc/s-sql.html)
+- [Simple-date](/doc/simple-date.html)
+- [CL-postgres](/doc/cl-postgres.html)
 
 ## Caveats and to-dos
 ---
 ### Timezones
 It is important to understand how postgresql (not postmodern) handles timestamps and timestamps with time zones. Postgresql keeps everything in UTC, it does not store a timezone even in a timezone aware column. If you use a timestamp with timezone column, postgresql will calculate the UTC time and will normalize the timestamp data to UTC. When you later select the record, postgresql will look at the timezone for the postgresql session, retrieve the data and then provide the data recalculated from UTC to the timezone for that postgresql session. There is a good writeup of timezones at [http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html](http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html) and [http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/](http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/).
 
-With that in mind, [Simple-date](http://marijnhaverbeke.nl/postmodern/simple-date.html) has no concept of time zones. If you really need your time-keeping to be reliable and/or universal you should either not use the types it provides or think really hard about the way you handle time zones.
-
-A lot of work has been done on [local-time](https://github.com/dlowe-net/local-time), which solves the same problem as simple-date, but does understand time zones. We are considering the best ways to make life easier for users of the two libraries.
+Keeping that in mind, [Simple-date](http://marijnhaverbeke.nl/postmodern/simple-date.html) has no concept of time zones. If you really need your time-keeping to be reliable and/or universal you might consider using [local-time](https://github.com/dlowe-net/local-time), which solves the same problem as simple-date, but does understand time zones. We are considering the best ways to make life easier for users of the two libraries.
 
 ### Portability
 The Lisp code in Postmodern is theoretically portable across implementations, and seems to work on all major ones and even less major ones such as  Genera. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).
 
-The library will definitely not work for PostgreSQL versions older than 7.4 (it uses a client/server protocol that was introduced in that version). On versions prior to 8.1, retrieving date and time objects is broken, because their binary representation was changed. Part of the functionality of insert-dao (automatic defaulting of unbound slots) only works in PostgreSQL 8.2 and up.
+The library is not likely to work for PostgreSQL versions older than 8.4.
+Other features only work in newer Postgresql versions as the features
+were only introduced in those newer versions.
+
 
 ### Things that should be implemented
-It would be a nice feature if Postmodern could help you with defining your database schemas and, more importantly, updating your databases when your code changes. It would theoretically not be hard to build a function that compares a schema on the Lisp side with the state of the database, and helps you to interactively update your database. PostgreSQL has a quite complete introspection system. Unfortunately it would be a lot of work to implement this, since databases can contain so many different types of entities (tables, views, indices, procedures, constraints, sequences, etc.) which are all created, changed, and dropped in different ways.
+Postmodern is under active development so Issues and feature requests should
+be flagged on [[https://github.com/marijnh/Postmodern][Postmodern's site on github]].
+
+It would be a nice feature if Postmodern could help you with defining your
+database schemas and, more importantly, updating your databases when your code
+changes. It would theoretically not be hard to build a function that compares
+a schema on the Lisp side with the state of the database, and helps you to
+interactively update your database. PostgreSQL has a quite complete
+introspection system. Unfortunately it would be a lot of work to implement
+this, since databases can contain so many different types of entities
+(tables, views, indices, procedures, constraints, sequences, etc.) which are
+all created, changed, and dropped in different ways.
+
+Some areas that are currently under consideration can be found in the ROADMAP.md
+file.
 
 ## Resources
 ---
