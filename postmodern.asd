@@ -43,7 +43,7 @@
   :depends-on ("postmodern" "fiveam" "simple-date" "simple-date/postgres-glue"
                             "cl-postgres/tests" "s-sql/tests")
   :components
-  ((:module "postmodern"
+  ((:module "postmodern/tests"
             :components ((:file "tests"))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
