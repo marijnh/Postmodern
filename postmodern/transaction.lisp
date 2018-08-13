@@ -137,6 +137,9 @@ transaction or savepoint to NAME (if supplied)"
 transaction is already in progress."
   `(call-with-ensured-transaction (lambda () ,@body)))
 
+;;;; The following code is copyright Gregory Tod and used
+;;;; with permission under an MIT license.
+;;;; See https://github.com/gtod/postgres-json
 
 ;;;; Postmodern transactions with isolation levels and RO, RW
 ;;;; settings plus serialization failure handling.
