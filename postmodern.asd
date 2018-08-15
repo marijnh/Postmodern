@@ -21,7 +21,6 @@
                "cl-postgres"
                "s-sql"
                "global-vars"
-               "log4cl"
                (:feature :postmodern-use-mop "closer-mop")
                (:feature :postmodern-thread-safe "bordeaux-threads"))
   :components

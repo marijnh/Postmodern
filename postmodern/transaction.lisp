@@ -252,44 +252,34 @@ inside a previous invocation with an incongruent isolation level."))
 ;;;; Semi public - some clients may need/want these
 
 (defun call-with-transaction-level (label isolation-level thunk)
-  (log:debug "Starting transaction ~A" label)
-  ;; See postgres/postmodern.lisp for our proposed mods to Postmodern
   (let ((pomo:*transaction-mode* (symbol-value isolation-level))
         (*top-isolation-level* isolation-level))
-    (multiple-value-prog1 (pomo:call-with-transaction thunk)
-      (log:debug "Completing transaction ~A" label))))
+    (multiple-value-prog1 (pomo:call-with-transaction thunk))))
 
 (defun call-with-logical-transaction-level (label isolation-level thunk)
   (multiple-value-prog1
       (if *top-isolation-level*
           (progn
             (check-isolation-level label isolation-level)
-            (log:debug "Nesting logical transaction ~A" label)
             (pomo:call-with-logical-transaction label thunk))
-          (call-with-transaction-level label isolation-level thunk))
-    (log:debug "Completing logical transaction ~A" label)))
+          (call-with-transaction-level label isolation-level thunk))))
 
 (defun call-with-ensured-transaction-level (label isolation-level thunk)
   (multiple-value-prog1
       (if *top-isolation-level*
           (progn
             (check-isolation-level label isolation-level)
-            (log:trace "Nesting ensured transaction ~A" label)
             ;; There is no "real" transaction to abort, so don't pass in label
             (funcall thunk nil))
           (progn
-            (log:trace "Starting ensured transaction ~A" label)
-            (call-with-transaction-level label isolation-level thunk)))
-    (log:trace "Completing ensured transaction ~A" label)))
+            (call-with-transaction-level label isolation-level thunk)))))
 
 (defun call-with-retry-serialization-failure (label thunk)
   (if *serialization-failure-sleep-times*
       (dolist (sleep *serialization-failure-sleep-times* (funcall thunk))
-        (log:trace "In retry serial loop with sleep: ~A" sleep)
         (handler-case
             (return (funcall thunk))
           (cl-postgres-error:serialization-failure ()
-            (log:debug "Handle serialization failure of ~A.  Sleeping around: ~A" label sleep)
             (unless (zerop sleep) ; Do not wait the first time through
               (sleep (+ sleep (/ (random 2000) 1000)))))))
       (funcall thunk)))
