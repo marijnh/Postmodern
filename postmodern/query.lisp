@@ -99,22 +99,22 @@ $X elements. If one of the arguments is a known result style or a class name,
 it specifies the format in which the results should be returned."
   (let* ((format :rows)
          (args (loop :for arg :in args/format
-		     :if (or (dao-spec-for-format arg)
-			     (assoc arg *result-styles*)) :do (setf format arg)
-                     :else :collect arg)))
+		              :if (or (dao-spec-for-format arg)
+			                    (assoc arg *result-styles*)) :do (setf format arg)
+                  :else :collect arg)))
     (destructuring-bind (reader result-form) (reader-for-format format)
       (let ((base (if args
-		      (let ((vars (loop :for x :in args :collect (gensym))))
-			`(let ,(loop :for v :in vars :for a :in args :collect `(,v ,a))
-			   (prepare-query *database* "" ,(real-query query))
-			   (exec-prepared *database* "" (list ,@vars) ,reader)))
-		      `(exec-query *database* ,(real-query query) ,reader))))
+		                  (let ((vars (loop :for x :in args :collect (gensym))))
+			                  `(let ,(loop :for v :in vars :for a :in args :collect `(,v ,a))
+			                     (prepare-query *database* "" ,(real-query query))
+			                     (exec-prepared *database* "" (list ,@vars) ,reader)))
+		                  `(exec-query *database* ,(real-query query) ,reader))))
         `(,result-form ,base)))))
 
 (defmacro execute (query &rest args)
   "Execute a query, ignore the results."
   `(let ((rows (nth-value 1 (query ,query ,@args :none))))
-    (if rows (values rows rows) 0)))
+     (if rows (values rows rows) 0)))
 
 (defmacro doquery (query (&rest names) &body body)
  "Iterate over the rows in the result of a query, binding the given
