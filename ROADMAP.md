@@ -25,7 +25,7 @@ No guarantee is given with respect to resolution or timing on any item.
         This is a current work-around using the def-sql-op :empty-set which is overly verbose. Better ideas would be welcomed.
 - [ ]   UUID (see e.g  https://github.com/michaeljforster/cl-postgres-plus-uuid)
 - [ ]   Generate-Series needs testing and interval work
-- [ ]   Extract needs testing
+- [X]   Extract needs testing
 - [ ]   Lateral Join (postgresql 9.3)
 - [ ]   Identity columns (postgresql 10)
 - [ ]   Transition tables for triggers (postgresql 10)
@@ -43,8 +43,9 @@ No guarantee is given with respect to resolution or timing on any item.
 ## Data type support
 - [ ]   json, jsonb (postgresql 9.4, full text search support in postgresql 10) See
         https://github.com/gtod/postgres-json/blob/master/postgres/s-sql.lisp
+        Include exporting to json strings acceptable to the different common lisp libraries
 - [X]   Array support (see issue 121)
-- [ ]   Intervals (see e.g. issue 104)
+- [X]   Intervals (see e.g. issue 104)
 - [ ]   Ranges
 - [ ]   Postgis
 - [ ]   XML (see also xmltable in postgresql 10)
@@ -56,6 +57,7 @@ No guarantee is given with respect to resolution or timing on any item.
 - [ ]   Fix issue 70 - build-dao-methods fails when a slot is named "from". Also check whether it fails for any reserved words.
 - [ ]   Review errors with *ignore-unknown-columns*. Sometimes hangs without raising an error.
 - [ ]   Type validation - make it easier to use col-type to ensure that a slot value is what the database expects
+- [ ]   Export to dao similar to :alist, alists, plist, plists and add json
 
 ## Other Support
 - [ ]   Migration Support (compare with https://pypi.org/project/alembic/)
@@ -67,6 +69,7 @@ No guarantee is given with respect to resolution or timing on any item.
         have a chunk API so the network is handling the content as a whole.
 - [ ]   SCRAM authentication (postgresql 10)
 - [ ]   Alter system (postgresql 9.4)
+- [ ]   Create temp tables
 
 ## Connections/Reconnections and Transactions
 - [ ]   Ensure transactions can deal with reconnections/restarts
@@ -91,6 +94,7 @@ Consider conditional functionality. For example, how can you compose s-sql fragm
 - [ ]   Setup
 - [ ]   Usage examples for sql users
 - [ ]   Usage examples for non-sql users
+- [ ]   More examples of create table
 - [ ]   Creation of new datatypes
 - [ ]   Links in README should point to pages updated on github, not marijn's personal page
 - [ ]   Pooling with external pooling applications

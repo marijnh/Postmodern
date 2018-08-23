@@ -521,9 +521,11 @@ passing an array as #(1.0 2.4) does not and you are not selecting into an array,
       `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) ":" ,@(sql-expand end) "]")
       `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) "]")))
 
-(def-sql-op :interval (query)
-  "Interval expects an unquoted list because the value parameter may also have a formating parameter"
-  `("INTERVAL  " ,@(sql-expand-list query)))
+(def-sql-op :interval (arg)
+  "Interval takes a string.
+See https://www.postgresql.org/docs/current/static/datatype-datetime.html#DATATYPE-INTERVAL-INPUT-EXAMPLES.
+If someone really wants, consider adding the optional precision argument."
+  `("INTERVAL  " ,@(sql-expand arg)))
 
 (def-sql-op :current-date ()
   `("current_date"))
