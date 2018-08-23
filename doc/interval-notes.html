@@ -1,0 +1,697 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-08-23 Thu 14:55 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Interval Notes</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Interval Notes</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org3560efa">Setting the Baseline Default Reader</a></li>
+<li><a href="#org898d323">Universal Time and Timestamp Libraries</a></li>
+<li><a href="#org80415b8">Intervals - Introduction and Use Cases</a>
+<ul>
+<li><a href="#org012c0f4">Sample Interval</a></li>
+<li><a href="#org90f22cc">Allowable Formats of the parameter to Interval</a>
+<ul>
+<li><a href="#orgd205838">SQL Standard Format</a></li>
+<li><a href="#org2988b17">Traditional Postgresql Format</a></li>
+<li><a href="#orgc7ca9c8">ISO 8601 Format with Designators</a></li>
+<li><a href="#orga6f85aa">ISO 8601 Alternative Format</a></li>
+</ul>
+</li>
+<li><a href="#orgb303133">Formatting Intervals to String</a></li>
+<li><a href="#orga393752">Math with Intervals</a></li>
+<li><a href="#org1556b81">Extracting Subparts</a></li>
+<li><a href="#orgc18ee0e">Justify Days and Hours</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org3560efa" class="outline-2">
+<h2 id="org3560efa">Setting the Baseline Default Reader</h2>
+<div class="outline-text-2" id="text-org3560efa">
+<p>
+Just to ensure that we have the same baseline readtable, we are going
+to make sure that the cl-postgres:*sql-readtable* is set to the default.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+         cl-postgres::*default-sql-readtable*))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org898d323" class="outline-2">
+<h2 id="org898d323">Universal Time and Timestamp Libraries</h2>
+<div class="outline-text-2" id="text-org898d323">
+<p>
+Absent anthing else, a query to postgresql through postmodern will return a
+universal time. E.g.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:current-timestamp)) :single)
+
+3743806998
+</pre>
+</div>
+<p>
+To get a timestamp, you could use the local-time library or the simple-date
+library. Just for comparison sake, we will use both and get the universal time
+from both the system and from postgresql.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(local-time:universal-to-timestamp
+  (query (:select (:current-timestamp))
+    :single))
+
+@2018-08-20T19:23:34.000000-07:00
+
+(local-time:universal-to-timestamp (get-universal-time))
+
+@2018-08-20T19:23:42.000000-07:00
+
+(simple-date:universal-time-to-timestamp (get-universal-time))
+
+#&lt;SIMPLE-DATE:TIMESTAMP 21-08-2018T02:26:00&gt;
+
+(simple-date:universal-time-to-timestamp
+  (query (:select (:current-timestamp))
+    :single))
+
+#&lt;SIMPLE-DATE:TIMESTAMP 21-08-2018T02:26:18&gt;
+</pre>
+</div>
+<p>
+Notice something interesting about the simple-date timestamp compared to the
+local-time timestamp? The local-time timestamp is (at least on the machine
+I am using as I write this and the postgresql server it is connected to)
+showing a Pacific Daylight time, 7 hours earlier than GMT. The simple-date
+timestamp is showing the GMT time. If you care about
+timezones, you will need to pay attention to where your server is, where the
+clients are and what do you want to be tracking or calculating to.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org80415b8" class="outline-2">
+<h2 id="org80415b8">Intervals - Introduction and Use Cases</h2>
+<div class="outline-text-2" id="text-org80415b8">
+<p>
+For a simple tutorial on the Postgresql interval data type, there are
+several online articles, see, e.g. the official documentation at
+<a href="https://www.postgresql.org/docs/current/static/datatype-datetime.html">https://www.postgresql.org/docs/current/static/datatype-datetime.html</a>,
+<a href="https://www.postgresql.org/docs/current/static/functions-datetime.html">https://www.postgresql.org/docs/current/static/functions-datetime.html</a>
+<a href="http://www.postgresqltutorial.com/postgresql-interval/">http://www.postgresqltutorial.com/postgresql-interval/</a> or
+</p>
+
+<p>
+Intervals are a way of adding, subtracting, etc a time period with a date.
+</p>
+</div>
+
+<div id="outline-container-org012c0f4" class="outline-3">
+<h3 id="org012c0f4">Sample Interval</h3>
+<div class="outline-text-3" id="text-org012c0f4">
+<p>
+Just to see what an interval looks like returned from a query using s-sql. Note
+that the interval parameter is a string within a form provided to the :interval sql-op.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second"))
+  :single)
+
+((:MONTHS 77) (:DAYS 4) (:SECONDS 10921) (:USECONDS 0))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org90f22cc" class="outline-3">
+<h3 id="org90f22cc">Allowable Formats of the parameter to Interval</h3>
+<div class="outline-text-3" id="text-org90f22cc">
+<p>
+There are four different formats available for providing the interval parameter.
+Choose whichever one you like:
+</p>
+</div>
+<div id="outline-container-orgd205838" class="outline-4">
+<h4 id="orgd205838">SQL Standard Format</h4>
+<div class="outline-text-4" id="text-orgd205838">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:interval "1-2"))
+  :single)
+
+((:MONTHS 14) (:DAYS 0) (:SECONDS 0) (:USECONDS 0))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org2988b17" class="outline-4">
+<h4 id="org2988b17">Traditional Postgresql Format</h4>
+<div class="outline-text-4" id="text-org2988b17">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:interval "3 4:05:06"))
+  :single)
+
+((:MONTHS 0) (:DAYS 3) (:SECONDS 14706) (:USECONDS 0))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgc7ca9c8" class="outline-4">
+<h4 id="orgc7ca9c8">ISO 8601 Format with Designators</h4>
+<div class="outline-text-4" id="text-orgc7ca9c8">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:interval "1 year 2 months 3 days 4 hours 5 minutes 6 seconds"))
+  :single)
+
+((:MONTHS 14) (:DAYS 3) (:SECONDS 14706) (:USECONDS 0))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orga6f85aa" class="outline-4">
+<h4 id="orga6f85aa">ISO 8601 Alternative Format</h4>
+<div class="outline-text-4" id="text-orga6f85aa">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:interval "P0001-02-03T04:05:06"))
+  :single)
+
+((:MONTHS 14) (:DAYS 3) (:SECONDS 14706) (:USECONDS 0))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb303133" class="outline-3">
+<h3 id="orgb303133">Formatting Intervals to String</h3>
+<div class="outline-text-3" id="text-orgb303133">
+<p>
+You can use the :to-char sql-op with a format string to provide a single
+string version of the date/time. The ISO 8601 interval format allows
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">Abbreviation</td>
+<td class="org-left">Description</td>
+</tr>
+
+<tr>
+<td class="org-left">Y</td>
+<td class="org-left">Year</td>
+</tr>
+
+<tr>
+<td class="org-left">M</td>
+<td class="org-left">MOnths</td>
+</tr>
+
+<tr>
+<td class="org-left">W</td>
+<td class="org-left">Weeks</td>
+</tr>
+
+<tr>
+<td class="org-left">D</td>
+<td class="org-left">Days</td>
+</tr>
+
+<tr>
+<td class="org-left">H</td>
+<td class="org-left">Hours</td>
+</tr>
+
+<tr>
+<td class="org-left">M</td>
+<td class="org-left">Minutes</td>
+</tr>
+
+<tr>
+<td class="org-left">S</td>
+<td class="org-left">Seconds</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+where hours can be specified to 12 or 24.
+</p>
+<pre class="example">
+(query
+  (:select
+    (:to-char
+      (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second") "YYYY:MM:DD:HH24:MI:SS"))
+  :single)
+
+"0006:05:04:03:02:01"
+
+(query
+  (:select
+    (:to-char
+      (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second") "HH24:MI:SS"))
+  :single)
+
+"03:02:01"
+</pre>
+<p>
+Just to be different, we can add weeks and days instead of years and months. E.g.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+  (:select
+    (:to-char
+      (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second") "WW:DD:HH24:MI:SS"))
+  :single)
+
+"331:04:03:02:01"
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga393752" class="outline-3">
+<h3 id="orga393752">Math with Intervals</h3>
+<div class="outline-text-3" id="text-orga393752">
+<p>
+Adding or subtracting intervals from each other will result in an interval.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:+ (:interval "2h 50min") (:interval "10min")))
+  :single)
+
+((:MONTHS 0) (:DAYS 0) (:SECONDS 10800) (:USECONDS 0))
+</pre>
+</div>
+
+<p>
+The difference between two timestamps is always an interval. Note: you
+cannot add, multiple or divide two timestamps.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+ (:select (:- (:timestamp "1999-12-30") (:timestamp "1999-12-11")))
+ :single)
+
+((:MONTHS 0) (:DAYS 19) (:SECONDS 0) (:USECONDS 0))
+</pre>
+</div>
+
+<p>
+The difference between two dates is an integer number of days, not an
+interval.
+</p>
+
+<p>
+Adding or subtracting an interval from another date will provide a universal time
+which you can convert into a string using to-char E.g
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+  (:select (:- (:now) (:interval ("6 years 5 months 4 days 3 hours 2 minutes 1 second"))))
+  :single)
+
+3540933266
+
+(query
+ (:select
+  (:to-char
+    (:+ (:date "2016-12-31") (:interval "25 hours"))
+    "YYYY-MM-DD"))
+ :single)
+
+"2017-01-01"
+
+(query
+ (:select
+  (:to-char
+   (:- (:now) (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second"))
+   "YYYY-MM-DD hh24:mm:ss"))
+ :single)
+
+"2012-03-19 10:03:53"
+</pre>
+</div>
+<p>
+They can be cast back to the alist interval style:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+  (:select
+    (:type (:- (:timestamp "2016-12-31 03:00") (:timestamp "2016-12-29 13:00"))
+           interval))
+  :single)
+
+((:MONTHS 0) (:DAYS 1) (:SECONDS 50400) (:USECONDS
+</pre>
+</div>
+<p>
+Or you can use local-time or simple-date to convert the result into some
+type of timestamp.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(local-time:universal-to-timestamp
+  (query (:select (:- (:now) (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second")))
+    :single))
+
+@2012-03-16T17:35:32.000000-07:00
+
+(simple-date:universal-time-to-timestamp
+  (query (:select (:- (:now) (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second")))
+    :single))
+
+#&lt;SIMPLE-DATE:TIMESTAMP 17-03-2012T00:36:14&gt;
+</pre>
+</div>
+
+<p>
+You can also do the more expected sums and groupings using intervals. In
+the following example, we sum the total employment days by city of the
+employees with more than 1 year of service.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+ (:select 'city (:as (:sum (:- (:timestamp "2018-04-10")
+                               'start-date))
+                     'total-days)
+          :from 'employee
+          :group-by 'city
+          :having (:&gt; (:sum (:- (:timestamp "2018-04-10") 'start-date))
+                      (:interval "1 year"))))
+
+(("Vancouver" ((:MONTHS 0) (:DAYS 21746) (:SECONDS 0) (:USECONDS 0)))
+ ("New York" ((:MONTHS 0) (:DAYS 22751) (:SECONDS 0) (:USECONDS 0)))
+ ("Toronto" ((:MONTHS 0) (:DAYS 20374) (:SECONDS 0) (:USECONDS 0))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1556b81" class="outline-3">
+<h3 id="org1556b81">Extracting Subparts</h3>
+<div class="outline-text-3" id="text-org1556b81">
+<p>
+You can extract a part of an interval using :extract.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select (:extract "minute" (:interval "5 hours 21 minutes")))
+  :single)
+
+21.0d0
+
+(query (:select (:extract "hour" (:interval "35 hours 21 minutes")))
+  :single)
+
+35.0d0
+
+(query (:select (:extract "day" (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second")))
+  :single)
+
+4.0d0
+
+(query (:select (:extract "year" (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second")))
+  :single)
+
+6.0d0
+
+(query (:select (:extract "year" (:interval "6 years 15 months 4 days 3 hours 2 minutes 1 second")))
+  :single)
+
+7.0d0
+
+(query (:select (:extract "month" (:interval "6 years 15 months 4 days 3 hours 2 minutes 1 second")))
+  :single)
+
+3.0d0
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgc18ee0e" class="outline-3">
+<h3 id="orgc18ee0e">Justify Days and Hours</h3>
+<div class="outline-text-3" id="text-orgc18ee0e">
+<p>
+You can adjust a period of days to be 30 day months and adjust a period
+of hours to be 24 hour days. For example:
+</p>
+
+<pre class="example">
+(query (:select (:interval "47 days 3 hours 2 minutes 1 second"))
+  :single)
+
+((:MONTHS 0) (:DAYS 47) (:SECONDS 10921) (:USECONDS 0))
+
+(query (:select (:justify-days (:interval "47 days 3 hours 2 minutes 1 second")))
+  :single)
+
+((:MONTHS 1) (:DAYS 17) (:SECONDS 10921) (:USECONDS 0))
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2018-08-23 Thu 14:55</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
