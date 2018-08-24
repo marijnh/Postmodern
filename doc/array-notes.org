@@ -1,0 +1,1020 @@
+#+TITLE: S-SQL and Postgresql Arrays
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+OPTIONS: ^:nil
+
+[[file:s-sql.html][Return to s-sql.html]]
+* Summary
+Postmodern/s-sql can be used to insert ommon lisp arrays into postgresql databases,
+pull postgresql database arrays out of databases into a common lisp array,
+and generally engage in all the ways that sql can use postgresql arrays.
+Postgresql arrays are documented at https://www.postgresql.org/docs/current/static/arrays.html
+and https://www.postgresql.org/docs/current/static/functions-array.html.
+
+This page will go into more detail on how to use the available operators and functions
+in s-sql.
+
+* Use cases for arrays in a database
+
+** General Usage
+Arrays are a first class datatype within postgresql. The contents can only be of a single
+datatype and postgresql will enforce that typing. You can either use arrays as a datatype
+stored in the database or there may be reasons why you want to use them as an intermediate
+datatype in a query.
+
+There is a bit of controversy over the use of the array datatype in a database. There are those
+who adamantly oppose it, claiming that it is a violation of 1NF form (normalization).
+It is easy to use arrays for the wrong reason in a database and there can be other
+consequences which need to be taken into consideration - loss of referential integrity,
+updating one slot in the array will require re-reading the entire array, and some other
+lost search flexibility immediately come to mind. Like any design process decision, there
+are reasons when you should design a database that is fully normalized
+and use cases when denormalization can lead to speed and memory savings. You can read
+some of the points at  https://news.ycombinator.com/item?id=4415754. Another article
+suggests that yould should not use arrays if you are going to have to keep accessing
+items in the array by position for types that are variable in length
+(hstores, jsonb, varchars, text). In such a case postgresql has to scan the array to
+find the nth element because it stores variable length items as arrays of values,
+not as an array of pointers to values. The article does not discuss using GIN indexes
+on the array. It does suggest using the postgresql unnest sql function to resolve
+some of these issues since it parses an array and returns a set of sets of entries
+(one entry per row (the subset) and the total as the superset. An example of using
+unnest in s-sql is set out below.
+
+I would agree with Dimitri Fontaine who points out that "arrays can be used to denormalize data
+and avoid lookup tables. A good rule of thumb for using them is you mostly use the array as a
+whole, even if you might at times search for elements in the array." As he notes, "..heavier
+processing is going to be more complex than a lookup table."
+https://tapoueh.org/blog/2018/04/postgresql-data-types-arrays/
+
+Another way of saying it is to use arrays if you are storing "lists" of things, not if you are
+storing lists of "things".
+
+It really depends on your use case. If you need speed and very simple lookups, then arrays might
+be what you want because your physical storage looking at fewer table pages. If it is not a really
+simple lookup, use many-to-many tables because the lookup will take more time with an array than
+the physical storage seeking cost.
+
+At the same time, do not forget that you can use postgresql arrays in an intermediate
+step in a query or as the result of the query. They can be used in ways other than
+database table storage.
+
+The postgresql documentation provides an employee pay example where the pay-by-quarter is a
+one-dimensional array and the schedule is a two dimensional array.
+#+BEGIN_SRC sql
+ CREATE TABLE sal_emp (
+     name            text,
+     pay_by_quarter  integer[],
+     schedule        text[][]
+ );
+#+END_SRC
+
+
+I have seen suggestions that arrays can replace separate many-to-many tables in
+relationships, e.g.
+#+BEGIN_SRC sql
+CREATE TABLE posts (
+    title TEXT,
+    tags TEXT[]
+);
+
+-- Select all posts with tag 'kitty'
+SELECT * FROM posts WHERE tags @> '{kitty}';
+#+END_SRC
+THIS IS NOT THE SAME AS PUTTING FOREIGN KEYS INTO THE ARRAY! DO NOT DO THAT!
+Part of the reason for using an [[https://www.essentialsql.com/what-is-meant-by-acid/][ACID]] database is to ensure integrity and putting
+foreign keys into an array prevents the database from enforcing the integrity of
+the foreign keys.
+
+One very interesting write-up took a slightly different approach. Instead of
+putting the one-to-many relationship directly in the posts table, it replaced
+a many-to-many table (linking a document table with a tag table)
+with a tags-array table (linking to the document table) and compared the size
+and speed metrics with the normal m-t-m table. See:
+
+http://www.databasesoup.com/2015/01/tag-all-things.html,
+http://www.databasesoup.com/2015/01/tag-all-things-part-2.html,
+http://www.databasesoup.com/2015/01/tag-all-things-part-3.html
+
+In this case, it found searching for documents using the tag array approach to be much faster
+than the normal normalized approach, as well as having a smaller storage size.
+
+The s-sql version for creating the table currently requires a separate create table and
+two separate create index commands
+#+BEGIN_SRC lisp
+(query (:create-table documents
+                      ((doc-id :type integer :constraint 'dockey-id :primary-key 't :unique)
+                       (text :type text))))
+
+(query (:create-table doc-tags-array ((doc-id :type integer :references ((documents doc-id)))
+                                      (tags :type text[] :default "{}"))))
+
+
+(query (:create-unique-index 'doc-tags-id-doc-id :on "doc-tags-array"  :fields 'doc-id))
+
+(query (:create-index 'doc-tags-id-tags :on "doc-tags-array" :using gin :fields 'tags))
+
+#+END_SRC
+And then the corresponding searches for one tag and two (or more) tags would be:
+#+BEGIN_SRC lisp
+(query (:limit
+        (:order-by
+         (:select 'doc-id
+                  :from 'doc-tags-array
+                  :where (:@> 'tags (:array[] "math")))
+         'doc-id)
+        25 0))
+
+(query (:limit
+        (:order-by
+         (:select 'doc-id
+                  :from 'doc-tags-array
+                  :where (:@> 'tags (:array[] "math" "physics")))
+         'doc-id)
+        25))
+
+#+END_SRC
+
+Note that is was a one-to-many relationship. If you need a
+many-to-many (mtm or m-t-m) relationship, you would need two sets of arrays.
+
+A similar approach was examined in
+ [[https://medium.com/@leshchuk/mtm-on-arrays-in-postgresql-a97f3c50b8c6]]
+which concluded that if you do not need referential integrity in the
+one-to-many or many-to-many relationship, the array length is in
+the tens rather than hundreds or thousands, and you use a GIN index,
+there is a speed and memory benefit to using an array to contain
+the relationship ids compared to a mtm table. This is particularly
+the case if the relations are disproportionate - e.g. 1 million
+documents and 100 tags. In those tests, the cost of joins exceeded
+the indexed access speed of using arrays.
+
+One use case is to reduce the number of columns in a table
+where you are using the array as an atomic data unit.  If you
+discover that you are doing a lot of searches and joins on
+array slots, this is likely to be a bad design.
+
+Another use case is to store machine learning model weights which
+are a 2d array of numbers.
+
+The [[https://madlib.apache.org/][MADlib]] advanced statistical and machine learning addon extension
+for [[https://www.postgresql.org][postgresql]] and [[https://greenplum.org/][greenplum]] uses arrays for intputs into its algorithms.
+
+Sidenote: The greenplum massively parallel database project is a
+fork from postgresql and is a bit behind on the standard postgresql
+functionality.
+
+In any case, s-sql may have available calls to postgresql functions
+which are not in the database version you are programming to.
+
+See also [[https://www.compose.com/articles/take-a-dip-into-postgresql-arrays/]]
+
+** Rules of Thumb - Do Not Use Arrays If:
+
+- Do not use arrays where you need to maintain integrity for foreign relationships. That is what
+foreign keys are for.
+
+- Do not use arrays if you have to change the items in the array frequently.
+
+- Do not use arrays if you rely on an ORM unless you have ensured
+that the ORM can utilize arrays.
+
+
+
+** Data Type Enforcement
+Compared to jsonb, postgresql arrays allow you to enforce
+the data type. This can be critical in both maintaining
+the integrity of your data as well as optimization
+in your appliction code. This database enforeced type
+safety does not, however, enforce the dimensionality
+of the array.
+
+** Indices on Arrays
+It is highly recommended that you use GIN or GIST indexes to search
+for items in array column. You should remember that GIST indices are
+lossy while GIN indices are lossless.
+
+
+* S-SQL Array Support
+S-sql can feel a little messy with respect to arrays but that
+is in large part because (a) sql dealing with arrays is messy and
+(b) postgresql has both an array[] constructor and an array function.
+
+If you are just translating between a lisp array and a
+postgresql array, then postmodern handles the data type translation
+fairly easily as can be seen in the examples below.
+
+Generally speaking, there are three base s-sql array operators
+to know:
+
+** :array (used inside a query calling a subquery, selecting into an array)
+The format of the call is:
+#+BEGIN_SRC lisp
+(:array (query))
+#+END_SRC
+Example:
+#+BEGIN_SRC lisp
+(query (:order-by
+        (:select 'r.rolename
+                 (:as (:array
+                       (:select 'b.rolename
+                                :from (:as 'pg_catalog.pg-auth-members 'm)
+                                :inner-join (:as 'pg-catalog.pg-roles 'b)
+                                :on (:= 'm.roleid 'b.oid)
+                                :where (:= 'm.member 'r.oid )))
+                      'memberof)
+                 :from (:as 'pg-catalog.pg-roles 'r))
+        1))
+#+END_SRC
+
+** :array[] (declares an array and returns an array
+
+The format of the call is:
+#+BEGIN_SRC lisp
+(:array[] (&rest args))
+#+END_SRC
+Examples:
+#+BEGIN_SRC lisp
+(query (:select (:array[] 2 6))
+       :single)
+#(2 6)
+
+(query (:select (:array[] (:/ 15 3) (:pi) 6))
+       :single)
+
+#(5.0d0 3.141592653589793d0 6.0d0)
+#+END_SRC
+Note that in the second example, the value of 6 is returned as a
+float because the entire array must be the same type.
+
+** :[] (used when you want a slice of an array
+The format of the call is:
+#+BEGIN_SRC lisp
+(:[] (form start &optional end))
+#+END_SRC
+Example:
+#+BEGIN_SRC lisp
+(let ((arry1 #(2 6 7 12)))
+     (query (:select (:[] arry1 2 3))
+            :single))
+
+#(6 7)
+#+END_SRC
+** General Usage Examples
+Just to make these usage examples really simple, we will use the
+simplest use case version discussed above, with a tags array in a table
+with the name of the item. In this case the name is the name of a
+receipe and the tags are ingredients that either go in the receipe
+or accompany the receipe.
+
+First to create the table and the indexes. The index on 'name is the
+default B-tree index. The index on the tags is a GIN index.
+
+#+BEGIN_SRC sql
+(query (:create-table receipes
+                       ((name :type text)
+                        (tags :type text[] :default "{}"))))
+
+(query (:create-unique-index 'receipe-tags-id-name
+                              :on "receipes"
+                              :fields 'name))
+
+(query (:create-index 'receipe-tags-id-tags
+                       :on "receipes"
+                       :using gin
+                       :fields 'tags))
+#+END_SRC
+Now use :insert-rows-into to populate the table. Notice we are actually
+passing in lisp arrays and it is automatically inserted in the table
+as a postgresql array.
+#+BEGIN_SRC lisp
+(query (:insert-rows-into
+        'receipes
+        :columns 'name 'tags
+        :values
+        '(("Fattoush" #("greens" "pita bread" "olive oil" "garlic" "lemon" "salt" "spices"))
+          ("Shawarma" #("meat" "tahini sauce" "pita bread"))
+          ("Baba Ghanoush" #("pita bread" "olive oil" "eggplant" "tahini sauce"))
+          ("Shish Taouk" #("chicken" "lemon juice" "garlic" "paprika" "yogurt" "tomato paste" "pita bread"))
+          ("Kibbe nayeh" #("raw meat" "bulgur" "onion" "spices" "pita bread"))
+          ("Manakeesh" #("meat" "cheese" "zaatar" "kishik" "tomatoes" "cucumbers" "mint leaves" "olives"))
+          ("Fakafek" #("chickpeas" "pita bread" "tahini sauce"))
+          ("Tabbouleh" #("bulgur" "tomatoes" "onions" "parsley"))
+          ("Kofta" #("minced meat" "parsley" "spices" "onions"))
+          ("Kunafeh" #("cheese" "sugar syrup" "pistachios"))
+          ("Baklava" #("filo dough" "honey" "nuts")))))
+#+END_SRC
+
+
+This will automatically insert the required square brackets into the sql statement
+being passed to postgresql. This automatic translation between lisp and
+postgresql arrays does not work where you need a postgresql function in a query.
+(The database function is not going to be in a lisp array.)
+For that you need to use the :array[] sql-op. E.g.
+
+Sample desired sql statement:
+#+BEGIN_SRC sql
+(SELECT ARRAY[(1 / 2)]::FLOATS[]);
+#+END_SRC
+S-sql version
+#+BEGIN_SRC lisp
+(query (:select (:type (:array[] (:/ 1 2)) float[])))
+#+END_SRC
+
+First we can start by checking for records that have a specific tag
+#+BEGIN_SRC lisp
+(query (:select 'receipe-id 'tags
+                :from 'receipe-tags-array
+                :where (:@> 'tags
+                            (:array[] "bulgur"))))
+(("Tabbouleh" #("bulgur" "tomatoes" "onions" "parsley"))
+ ("Kibbe nayeh" #("raw meat" "bulgur" "onions" "spices" "pita bread")))
+
+#+END_SRC
+We should look at this return a bit closer. As you might expect in postmodern,
+this query returns list of lists and each sublist contains the string name.
+What may be unexpected is that the second item in each sublist is actually
+a lisp array.
+
+Extending this to checking for items with two specific tags:
+#+BEGIN_SRC lisp
+(query (:select 'receipe-id 'tags
+                :from 'receipe-tags-array
+                :where (:@> 'tags
+                            (:array[] "bulgur" "parsley"))))
+
+(("Tabbouleh" #("bulgur" "tomatoes" "onions" "parsley")))
+#+END_SRC
+As you should expect, we can also pass in a lisp variable which
+is an array, in this case we are using the :&& operator which
+acts as an 'or' logical test:
+#+BEGIN_SRC lisp
+(let ((tst-arry #("parsley" "cheese")))
+  (query (:order-by (:select '*
+                             :from 'receipes
+                             :where (:&& 'tags tst-arry))
+                    'name)))
+'(("Manakeesh"
+   #("meat" "cheese" "zaatar" "kishik" "tomatoes" "cucumbers" "mint leaves"
+     "olives"))
+  ("Tabbouleh" #("bulgur" "tomatoes" "onions" "parsley"))
+  ("Kofta" #("minced meat" "parsley" "spices" "onions"))
+  ("Kunafeh" #("cheese" "sugar syrup" "pistachios")))
+
+#+END_SRC
+
+
+Validating that this is returning a vector:
+#+BEGIN_SRC lisp
+(type-of (query (:select 'tags
+                         :from 'receipes
+                         :where (:= 'name "Manakeesh"))
+                :single))
+
+'(SIMPLE-VECTOR 8)
+#+END_SRC
+We can also check the length of the array or cardinality:
+#+BEGIN_SRC lisp
+(query (:select (:cardinality 'tags)
+                :from 'receipes
+                :where (:= 'name "Manakeesh"))
+       :single)
+#+END_SRC
+
+Updating the array can be done either explicitly:
+#+BEGIN_SRC lisp
+;;; Update array with an lisp array (changing onion to onions in the one row where it is singular
+(query (:update 'receipes
+                :set 'tags #("raw meat" "bulgur" "onions" "spices" "pita bread")
+                :where (:= 'name "Kibbe nayeh")))
+#+END_SRC
+or passing in a lisp variable:
+#+BEGIN_SRC lisp
+;;; checking passing a lisp array as a variable
+(let ((lisp-arry #("wine" "garlic" "soy sauce")))
+  (query (:update 'receipes
+                  :set 'tags '$1
+                  :where (:= 'name 11))
+         lisp-arry))
+#+END_SRC
+
+If you are selecting a slice of a postgresql array, then use :[].
+At this point it is a good reminder that postgresql arrays start
+at 1, not at 0. The first parameter following the field name is
+the starting point of the slice to return. The second parameter
+is the end point of the slice to return (defaulting to the
+starting point).
+
+#+BEGIN_SRC lisp
+(query (:select (:[] 'tags 2)
+                :from 'receipes
+                :where (:= 'name 3)))
+
+'(("olive oil"))
+
+(query (:select (:[] 'tags 2 3)
+                :from 'receipes
+                :where (:= 'name 3)))
+
+'((#("olive oil" "eggplant")))
+
+#+END_SRC
+If you are sub-selecting into a postgresql array, postgresql switches
+from square brackets to parens, so in s-sql you need to
+use :array. E.g.
+
+Sample desired sql statement:
+#+BEGIN_SRC sql
+
+SELECT r.rolname,
+  ARRAY(SELECT b.rolname
+        FROM pg_catalog.pg_auth_members m
+        JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)
+        WHERE m.member = r.oid) as memberof
+FROM pg_catalog.pg_roles r
+ORDER BY 1;
+**************************
+#+END_SRC
+
+And now the s-sql version. Here, because we are selecting into an array,
+we need to use just :array
+#+BEGIN_SRC lisp
+(query (:order-by
+        (:select 'r.rolename
+                 (:as (:array
+                       (:select 'b.rolename
+                                :from (:as 'pg_catalog.pg-auth-members 'm)
+                                :inner-join (:as 'pg-catalog.pg-roles 'b)
+                                :on (:= 'm.roleid 'b.oid)
+                                :where (:= 'm.member 'r.oid )))
+                      'memberof)
+                 :from (:as 'pg-catalog.pg-roles 'r))
+        1))
+#+END_SRC
+
+The postgresql unnest function (:unnest ..)  expands every
+array entry into a separate row. In the following select, we pull out all
+the distinct tags in a list of lists where every list has a single tag entry.
+#+BEGIN_SRC lisp
+(query (:order-by
+        (:select (:as (:unnest 'tags) 'tag) :distinct
+                 :from 'receipes)
+        'tag))
+
+'(("bulgur") ("cheese") ("chicken") ("chickpeas") ("cucumbers") ("eggplant")
+  ("filo dough") ("garlic") ("greens") ("honey") ("kishik") ("lemon")
+  ("lemon juice") ("meat") ("minced meat") ("mint leaves") ("nuts")
+  ("olive oil") ("olives") ("onions") ("paprika") ("parsley")
+  ("pistachios") ("pita bread") ("raw meat") ("salt") ("spices") ("sugar syrup")
+  ("tahini sauce") ("tomatoes") ("tomato paste") ("yogurt") ("zaatar"))
+#+END_SRC
+
+We can use with and group-by operators to count the unique tags:
+#+BEGIN_SRC lisp
+(query (:order-by
+        (:with
+         (:as 'p
+              (:select (:as (:unnest 'tags) 'tag)
+                       :from 'receipes))
+         (:select 'tag (:as (:count 'tag) 'cnt)
+                  :from 'p
+                  :group-by 'tag))
+        (:desc 'cnt) 'tag))
+'(("pita bread" 6) ("onions" 3) ("spices" 3) ("tahini sauce" 3) ("bulgur" 2)
+  ("cheese" 2) ("garlic" 2) ("meat" 2) ("olive oil" 2) ("parsley" 2)
+  ("tomatoes" 2) ("chicken" 1) ("chickpeas" 1) ("cucumbers" 1) ("eggplant" 1)
+  ("filo dough" 1) ("greens" 1) ("honey" 1) ("kishik" 1) ("lemon" 1)
+  ("lemon juice" 1) ("minced meat" 1) ("mint leaves" 1) ("nuts" 1) ("olives" 1)
+  ("paprika" 1) ("pistachios" 1) ("raw meat" 1) ("salt" 1) ("sugar syrup" 1)
+  ("tomato paste" 1) ("yogurt" 1) ("zaatar" 1))
+#+END_SRC
+
+Yes, there are array-append, array-replace etc operators
+#+BEGIN_SRC lisp
+(query (:update 'receipes
+                :set 'tags (:array-append 'tags "appended-items")
+                :where (:= 'name "Kibbe nayeh")))
+
+(query (:update 'receipes
+                :set 'tags (:array-replace 'tags "spices" "chocolate")))
+#+END_SRC
+The above two versions checked all the row, even those without the target string,
+effectively the equivalent of not using the index.
+
+You can use a different operator that more effectively uses the GIN index and
+just touches the rows with the targeted string in the array:
+#+BEGIN_SRC lisp
+(query (:update 'receipes
+                :set 'tags (:array-replace 'tags  "chocolate" "spices")
+                :where (:<@ "{\"chocolate\"}" 'tags)))
+#+END_SRC
+
+The use of the :any* operator needs to be considered as a special case. Quoting
+Marijn Haverbeke here,"Postgres has both a function-call-style any and an infix any,
+and S-SQL's syntax doesn't allow them to be distinguished." As a result, s-sql
+has a regular :any sql-op and a :any* sql-op, which expand slightly differently.
+
+To show the difference, look at the sql statements that are generated by the two
+operators :any* and :any
+#+BEGIN_SRC lisp
+(sql (:select '*
+                :from 'receipes
+                :where (:= "chicken" (:any* 'tags ))))
+
+"(SELECT * FROM receipes WHERE (E'chicken' = ANY(tags)))"
+
+(sql (:select '*
+                :from 'receipes
+                :where (:= "chicken" (:any 'tags ))))
+
+"(SELECT * FROM receipes WHERE (E'chicken' = ANY tags))"
+#+END_SRC
+
+In the following two cases we want to use ':any*'. In the first simple query,
+we are looking for everything in the rows where the name of the receipe is in
+the lisp array we passed in.
+
+In the second query we look for all the rows where the string "chicken"
+appears in any of the tag arrays.
+#+BEGIN_SRC lisp
+(query (:select '*
+                :from 'receipes
+                :where (:= 'name (:any* '$1)))
+       #("Trout" "Shish Taouk" "Hamburger"))
+
+'(("Shish Taouk"
+   #("chicken" "lemon juice" "garlic" "paprika" "yogurt" "tomato paste"
+     "pita bread")))
+
+(query (:select '*
+                :from 'receipes
+                :where (:= '$1 (:any* 'tags )))
+       "chicken")
+
+'(("Shish Taouk"
+   #("chicken" "lemon juice" "garlic" "paprika" "yogurt" "tomato paste"
+     "pita bread")))
+#+END_SRC
+
+We can look for rows where x or y is found in the tags array. This uses
+the or operator which looks like :&&.
+#+BEGIN_SRC lisp
+(query (:order-by
+        (:select '*
+                 :from 'receipes
+                 :where (:&& 'tags (:array[] '$1 '$2)))
+        'name)
+       "parsley" "cheese")
+'(("Manakeesh"
+   #("meat" "cheese" "zaatar" "kishik" "tomatoes" "cucumbers" "mint leaves"
+     "olives"))
+  ("Tabbouleh" #("bulgur" "tomatoes" "onions" "parsley"))
+  ("Kofta" #("minced meat" "parsley" "spices" "onions"))
+  ("Kunafeh" #("cheese" "sugar syrup" "pistachios")))
+#+END_SRC
+
+There are also specific operators for "contains" (:@>) and "contained-by" (:<@).
+This comparison is done on an element by element basis, so is easily
+thought of as whether the elements in array1 are a subset of the elements
+in array2 or vice versa.
+
+The following examples should be easy to follow.
+
+In the first example we are looking for rows where the elements of an
+array composed of the two strings passed in as parameters is contained
+by the row in the database.
+
+In the second example, we have flipped the parameters and operator around.
+We are looking for rows from the database table which contain the elements
+of an array composed of the two strings passed in as parameters.
+#+BEGIN_SRC lisp
+(query (:order-by
+        (:select '* :from 'receipes
+                 :where (:<@ (:array[] '$1 '$2)
+                             'tags))
+        'name)
+       "tomatoes" "cheese")
+
+'(("Manakeesh"
+   #("meat" "cheese" "zaatar" "kishik" "tomatoes" "cucumbers" "mint leaves"
+     "olives")))
+
+(query (:order-by
+        (:select '* :from 'receipes
+                 :where (:@> 'tags
+                             (:array[] '$1 '$2)))
+        'name)
+       "tomatoes" "cheese")
+
+'(("Manakeesh"
+   #("meat" "cheese" "zaatar" "kishik" "tomatoes" "cucumbers" "mint leaves"
+     "olives")))
+#+END_SRC
+In the following two examples, we do something similar, but we are looking
+to see if the tags array in any row in the database table is a subset of
+the small two element array we are passing in. The answer is nil.
+
+#+BEGIN_SRC lisp
+(query (:order-by
+        (:select '* :from 'receipes
+                 :where (:@> (:array[] '$1 '$2)
+                             'tags))
+        'name)
+       "tomatoes" "cheese")
+
+nil
+
+(query (:order-by
+        (:select '* :from 'receipes
+                 :where (:<@ 'tags
+                             (:array[] '$1 '$2)))
+        'name)
+       "tomatoes" "cheese")
+
+nil
+#+END_SRC
+* Array Operators
+** Array Comparison Operators
+
+Per postgresql [[https://www.postgresql.org/docs/current/static/functions-array.html][documentation]] array comparisons compare the array contents
+element-by-element,  using the default B-tree comparison function for the
+element data type. In multidimensional arrays the elements are visited in
+row-major order (last subscript varies most rapidly). If the contents of
+two arrays are equal but the dimensionality is different, the first
+difference in the dimensionality information determines the sort order.
+
+Form is (:operator array1 array2)
+*** := Equality Comparison (Are two arrays equal on an element by element basis)
+#+BEGIN_SRC lisp
+(query (:select (:= (:array[] 1 2 3) (:array[] 1 2 3)))
+       :single)
+T
+
+(query (:select (:= (:array[] "a" "b" "c") (:array[] "a" "b" "c")))
+       :single)
+T
+
+(query (:select (:= (:type (:array[] 1 2 3) integer[]) (:array[] 1 2 3)))
+       :single)
+T
+
+(query (:select (:= (:array[] 1 2 3) (:array[] 1 4 3)))
+       :single)
+nil
+
+(query (:select (:= (:type (:array[] 1 2 3) integer[]) (:array[] 1 2 3 5)))
+       :single)
+
+nil
+
+(let ((arry1 #(1 2 3)) (arry2 #(1 2 3)))
+  (query (:select (:= arry1 arry2))
+         :single))
+T
+#+END_SRC
+
+*** :<> Not Equal Comparison
+#+BEGIN_SRC lisp
+(query (:select (:<> (:array[] 1 2 3) (:array[] 1 2 4)))
+       :single)
+T
+#+END_SRC
+
+*** :< Less Than Comparison
+#+BEGIN_SRC lisp
+(query (:select (:< (:array[] 1 2 3) (:array[] 1 2 4)))
+       :single)
+T
+#+END_SRC
+
+*** :> Greater Than Comparison
+#+BEGIN_SRC lisp
+(query (:select (:> (:array[] 1 4 3) (:array[] 1 2 4)))
+       :single)
+T
+#+END_SRC
+
+*** :>= Greater Than or Equal to Comparison
+#+BEGIN_SRC lisp
+(query (:select (:>= (:array[] 1 4 3) (:array[] 1 4 3)))
+       :single)
+T
+#+END_SRC
+
+*** :<= Less Than or Equal To Comparison
+#+BEGIN_SRC lisp
+(query (:select (:<= (:array[] 1 2 3) (:array[] 1 2 3)))
+       :single)
+T
+#+END_SRC
+
+*** :@> Contains Comparison
+#+BEGIN_SRC lisp
+(query (:select (:@> (:array[] 1 4 3) (:array[] 3 1)))
+       :single)
+T
+
+(query (:select (:@> (:array[] 1 4 73) (:array[] 3 0)))
+       :single)
+nil
+#+END_SRC
+*** :<@ Is Contained By Comparison
+#+BEGIN_SRC lisp
+(query (:select (:<@ (:array[] 2 7) (:array[] 1 7 4 2 6)))
+        :single)
+T
+
+(query (:select (:<@ (:array[] 1 4 3) (:array[] 3 1)))
+       :single)
+nil
+#+END_SRC
+*** :&& Has Elements in Common Comparison
+#+BEGIN_SRC lisp
+(query (:select (:&& (:array[] 1 4 3) (:array[] 3 1)))
+       :single)
+T
+#+END_SRC
+
+** Array Concatenation Operators
+Form (:|| item1 item2 ...)
+*** :|| Concatentation Arrays and Elements
+#+BEGIN_SRC lisp
+(query (:select (:|| 3 (:array[] 4 5 6)))
+       :single)
+
+#(3 4 5 6)
+
+(query (:select (:|| (:array[] 4 5 6) 7))
+       :single)
+
+#(4 5 6 7)
+
+(query (:select (:|| (:array[] 1 2) (:array[] 3 4)))
+       :single)
+
+#(1 2 3 4)
+
+(query (:select (:|| 1 (:type "[0:1]={2,3}" int[])))
+       :single)
+
+#(1 2 3)
+
+(query (:select (:|| 3 (:array[] 4 5 6) (:array[] 7 8 9) 10))
+       :single)
+#(3 4 5 6 7 8 9 10)
+#+END_SRC
+
+*** :|| Concatenation with Multi-Dimensional Arrays
+
+#+BEGIN_SRC lisp
+(query (:select (:|| (:array[] 1 2 3) (:array[] (:array[] 4 5 6) (:array[] 7 8 9))))
+       :single)
+
+#2A((1 2 3) (4 5 6) (7 8 9))
+#+END_SRC
+
+* Array functions
+
+*** Array-prepend
+Form: (:array-prepend (array1 element))
+Appends an element to the beginning of an array
+#+BEGIN_SRC lisp
+(query (:select (:array-prepend 1 (:array[] 2 3)))
+       :single)
+
+#(1 2 3)
+#+END_SRC
+
+*** array-append
+Form: (:array-append (array1 element))
+Appends an element to the end of an array.
+#+BEGIN_SRC lisp
+(query (:select (:array-append (:array[] 4 5 6) 7))
+       :single)
+
+#(4 5 6 7)
+#+END_SRC
+
+*** array-cat
+Form: (:array-cat (array1 array2))
+Concatenates two arrays. No more, no less. Both arrays need to have the same
+data type. They do not need to be the same length.
+#+BEGIN_SRC lisp
+(query (:select (:array-cat (:array[] 1 2) (:array[] 3 4)))
+       :single)
+
+#(1 2 3 4)
+
+(query (:select (:array-cat (:array[] (:array[] 1 2) (:array[] 3 4)) (:array[] 5 6)))
+       :single)
+
+#2A((1 2) (3 4) (5 6))
+
+(query (:select (:array-cat (:array[] 1 2) (:array[] 3 4 5)))
+       :single)
+
+#(1 2 3 4 5)
+#+END_SRC
+
+*** array-ndims
+Form: (:array-ndims (array))
+Array-ndims returns the number of dimensions of an array.
+#+BEGIN_SRC lisp
+(query (:select (:array-ndims (:array[] (:array[] 1 2 3) (:array[] 4 5 6))))
+       :single)
+2
+#+END_SRC
+
+*** array-dims
+Form: (:array-dims (array1))
+Array-dims returns a text representation of an array's dimensions.
+#+BEGIN_SRC lisp
+(query (:select (:array-dims (:array[] (:array[] 1 2 3) (:array[] 4 5 6))))
+       :single)
+"[1:2][1:3]"
+#+END_SRC
+
+*** array-fill
+Form: (:array-fill (value array-dimension))
+Array-fill returns an array initialized with supplied value and length.
+This only works with one dimensional arrays
+#+BEGIN_SRC lisp
+
+#+END_SRC
+(query (:select (:array-fill 7 (:array[] 3)))
+       :single)
+
+#(7 7 7)
+*** array-length
+Form: (:array-length (array1 array-dimension))
+Returns the length of the requested array dimension.
+In the following example, we request the first array
+dimension.
+#+BEGIN_SRC lisp
+(query (:select (:array-length (:array[] 1 2 3) 1 ))
+       :single)
+3
+
+(query (:select (:array-length (:array[] #(#(1 2 3)#(4 5 6))) 1)) :single)
+
+1
+
+(query (:select (:array-length (:array[] #(#(1 2 3)#(4 5 6))) 2)) :single)
+
+2
+#+END_SRC
+
+*** array-lower
+Form: (:array-lower (&rest args))
+Array-lower returns the lower bound of the requested array dimension.
+#+BEGIN_SRC lisp
+(query (:select (:array-lower (:type "[0:2]={1,2,3}" integer[]) 1))
+       :single)
+0
+#+END_SRC
+
+*** array-position
+Form: (:array-position (array element starting-point-if-not-one))
+Array-position returns the subscript of the first occurrence of the
+second argument in the array, starting at the element indicated by the third
+argument or at the first element. The array must be one-dimensional.
+Requires postgresql version 9.5 or newer.
+#+BEGIN_SRC lisp
+(query (:select (:array-position (:array[] "sun" "mon" "tue" "wed" "thu" "fri" "sat") "mon"))
+       :single)
+2
+#+END_SRC
+
+
+*** array-positions
+Form: (:array-positions (array element))
+Array-positions (note the plural) returns an array of subscripts
+of all occurrences of the second argument in the array given as
+the first argument. The array must be one-dimensional.
+Requires postgresql version 9.5 or newer.
+#+BEGIN_SRC lisp
+(query (:select (:array-positions (:array[] "A" "A" "B" "A") "A"))
+       :single)
+
+#(1 2 4)
+#+END_SRC
+
+*** array-remove
+Form: (:array-remove (array element))
+Array-remove removes all elements equal to the given value
+from the array (array must be one-dimensional).
+Requires postgresql 9.3 or newer.
+#+BEGIN_SRC lisp
+(query (:select (:array-remove (:array[] "A" "A" "B" "A") "B"))
+       :single)
+
+#("A" "A" "A")
+#+END_SRC
+Obviously inside a selection query array-remove only removes the elements
+from the returning set and does not change the underlying data..
+
+*** array-replace
+Form: (:array-replace (array element-to-be-replaced element-used-as-replacement))
+Array-replaces replaces each array element equal to the given value
+with a new value. Requires postgresql 9.3 or newer.
+#+BEGIN_SRC lisp
+(query (:select (:array-replace (:array[] 1 2 5 4) 5 3))
+       :single)
+
+#(1 2 3 4)
+#+END_SRC
+
+*** array-to-string
+Form: (:array-to-string (array delimiter optional-null-string))
+Array-to-string concatenates array elements using supplied
+delimiter and optional null string.
+#+BEGIN_SRC lisp
+(query (:select (:array-to-string (:array[] 1 2 3 :NULL 5) "," "*"))
+       :single)
+
+"1,2,3,*,5"
+#+END_SRC
+
+
+*** array-upper
+Form: (:array-upper (array int))
+Array-upper returns upper bound of the requested array dimension.
+#+BEGIN_SRC lisp
+(query (:select (:array-upper (:array[] 1 8 3 7) 1))
+       :single)
+4
+#+END_SRC
+
+*** cardinality
+Form: (:cardinality (array))
+Returns the total number of elements in the array or 0 if
+the array is empty. Requires postgresql 9.4 or newer.
+#+BEGIN_SRC lisp
+(query (:select (:array-length (:array[] 1 2 3) 1 ))
+       :single)
+3
+#+END_SRC
+
+*** string-to-array
+Form: (:string-to-array (text delimiter optional-null-string))
+String-to-array splits a string into array elements using
+the supplied delimiter and optional null string.
+#+BEGIN_SRC lisp
+(query (:select (:string-to-array "xx~^~yy~^~zz" "~^~" "yy"))
+       :single)
+
+#("xx" :NULL "zz")
+#+END_SRC
+
+*** unnest
+Form: (:unnest (array))
+Unnest expands an array to a set of rows.
+#+BEGIN_SRC lisp
+(query (:select (:unnest (:array[] 1 2))))
+
+'((1) (2))
+#+END_SRC
+It is possible to call unnest with multiple arrays, but this is only
+allowed in the from clause of the query. See
+[[https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-TABLEFUNCTIONS]]
+
+*** array-agg
+Form: (:array-agg (expression))
+Array-agg returns the result in an array (both sql and, in postmodern, a lisp array).
+
+Note the fourth example (available only in postgresql versions 9.4 or newer)
+filters out null values.
+
+Like all the aggregate functions, you can pass :filter, :distinct or :order-by
+(in that order) as additional parameters.
+
+#+BEGIN_SRC lisp
+(query (:select (:array-agg 'name) :from 'receipes) :single)
+
+#("Fattoush" "Shawarma" "Baba Ghanoush" "Shish Taouk" "Kibbe nayeh" "Manakeesh"
+  "Fakafek" "Tabbouleh" "Kofta" "Kunafeh" "Baklava")
+
+(query (:select (:array-agg 'city :distinct)
+        :from 'employee)
+  :single)
+
+#("New York" "Toronto" "Vancouver")
+
+(query (:select (:array-agg 'city :distinct :order-by (:desc 'city))
+        :from 'employee)
+  :single)
+
+#("Vancouver" "Toronto" "New York")
+
+(query (:select 'city (:array-agg 'salary :filter (:< 'salary 50000))
+        :from 'employee
+        :group-by 'city))
+
+(("Vancouver" #(14420 26020)) ("New York" #(40420 40620)) ("Toronto" #(24020)))
+#+END_SRC
+
+
+** NULL and nil
+An empty array will be returned by postmodern as nil.
+
+[[file:s-sql.html][Return to s-sql.html]]

@@ -1,0 +1,155 @@
+#+TITLE: Simple-Date
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+OPTIONS: ^:nil
+
+Simple-date provides types (CLOS classes) for dates, timestamps, and intervals
+similar to the ones SQL databases use, in order to be able to store and read
+these to and from a database in a straighforward way. A few obvious operations
+are defined on these types.
+
+The most glaring defect of this library is its ignorance of time zones. It
+pretends the whole world lives in UTC. Use with care.
+
+To use this library with cl-postgres or postmodern,
+load simple-date-cl-postgres-glue to register suitable SQL
+readers and writers for the associated database types.
+
+To get back to the default cl-postgres reader:
+#+BEGIN_SRC lisp
+(setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+         cl-postgres::*default-sql-readtable*))
+#+END_SRC
+
+To use the simple-date reader when cl-postgres is using the default:
+#+BEGIN_SRC lisp
+(setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+         simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
+#+END_SRC
+
+As a reminder for those who want to use local-time, to enable the local-time
+reader:
+#+BEGIN_SRC lisp
+(local-time:set-local-time-cl-postgres-readers)
+#+END_SRC
+
+
+* Date type
+** class date
+
+Represents a date, with no time-of-day information.
+
+** function encode-date (year month day)
+→ date
+
+Creates a date object.
+
+** function decode-date (date)
+→ (values year month day)
+
+Extract the elements from a date object.
+
+** function day-of-week (date)
+→ integer
+
+Determine the day of the week that the given date falls on. Value ranges from
+0 to 6, with 0 being Sunday and 6 being Saturday.
+
+** Timestamp type
+class timestamp
+
+Represents an absolute timestamp, with a millisecond precision.
+
+** function encode-timestamp (year month day &optional (hour 0) (minute 0) (second 0) (millisecond 0))
+→ timestamp
+
+Create a timestamp. No negative values or values outside of an arguments normal
+range (i.e. 60 for minutes, 1000 for milliseconds) should be passed.
+
+** function decode-timestamp (timestamp)
+→ (values year month day hour minute second millisecond)
+
+Decode a timestamp into its components.
+
+** function timestamp-to-universal-time (timestamp)
+→ universal-time
+
+Convert a timestamp to the corresponding universal-time, rounding to seconds.
+Note that this will treat the timestamp as if it were in UTC.
+
+** function universal-time-to-timestamp (universal-time)
+→ timestamp
+
+Create a timestamp from a universal time. Again, the resulting timestamp should
+be treated as if it were in UTC.
+
+** Interval type
+class interval
+
+An interval represents a period of time. It contains both an absolute part in
+milliseconds (days, weeks, minutes, etc are always the same length), and a
+relative part for months and years ― the amount of time that a month or year
+represents is not always the same.
+
+** function encode-interval (&key (year 0) (month 0) (week 0) (day 0) (hour 0) (minute 0) (second 0) (millisecond 0))
+→ interval
+
+Create an interval. Arguments may be negative and of any size.
+
+** function decode-interval (interval)
+→ (values year month day hour minute second millisecond)
+
+Decompose an interval into parts. Note that these may be different from the
+parameters that created it ― an interval of 3600 seconds is the same as one
+of 1 hour.
+
+* Operations
+To prevent a proliferation of different function names, generic functions
+are used for operations on time values. The semantics of these differ for
+the type of the operands.
+
+** method time-add (a b)
+→ value
+
+Adds two time-related objects. Adding an interval to a date or timestamp
+will return a new date or timestamp, increased by the value of the interval.
+Adding two intervals returns a new interval with the sum of the two
+arguments. Integers can be used in place of intervals, and will be
+interpreted as an amount of milliseconds.
+
+** method time-subtract (a b)
+→ value
+
+Subtracts time-related objects from each other. Subtracting two dates or
+timestamps results in an interval that represents the difference between
+them. Similarly, subtracting two intervals also gives their difference.
+
+** method time= (a b)
+→ boolean
+
+Compare two time-related values, returns a boolean indicating whether
+they denote the same time or period.
+
+** method time< (a b)
+→ boolean
+
+Compare two time-related values, returns a boolean indicating whether the
+first is less than the second.
+
+** method time> (a b)
+→ boolean
+
+Compare two time-related values, returns a boolean indicating whether the
+first is greater than the second.
+
+** function time<= (a b)
+→ boolean
+
+The inverse of time>.
+
+** function time>= (a b)
+→ boolean
+
+The inverse of time<.

@@ -1,0 +1,862 @@
+#+TITLE: Postmodern Reference Manual
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+OPTIONS: ^:nil
+
+This is the reference manual for the component named postmodern, which is
+part of a library of the same name.
+
+Note that this package also exports the database-connection and
+database-error types from CL-postgres and a few operators from S-SQL.
+
+query, execute, and any other function that would logically need to
+communicate with the database will raise a condition of the type
+database-error when something goes wrong. As a special case, errors
+that break the connection (socket errors, database shutdowns) will be
+raised as subtypes of database-connection-error, providing a :reconnect
+restart to re-try the operation that encountered to the error.
+
+
+* Connecting
+** class database-connection
+
+Objects of this type represent database connections.
+
+** function connect (database user password host &key (port 5432) pooled-p use-ssl)
+→ database-connection
+
+Create a new database connection for the given user and the database.
+Port will default to 5432, which is where most PostgreSQL servers are
+running. If pooled-p is T, a connection will be taken from a pool of
+connections of this type, if one is available there, and when the connection
+is disconnected it will be put back into this pool instead. use-ssl can
+be :no, :yes, or :try, as in open-database, and defaults to the value
+of *default-use-ssl*.
+
+** variable *default-use-ssl*
+
+The default for connect's use-ssl argument. This starts at :no. If you
+set it to anything else, be sure to also load the CL+SSL library.
+
+** method disconnect (database-connection)
+
+Disconnects a normal database connection, or moves a pooled connection
+into the pool.
+
+** function connected-p (database-connection)
+→ boolean
+
+Returns a boolean indicating whether the given connection is still connected
+to the server.
+
+** method reconnect (database-connection)
+
+Reconnect a disconnected database connection. This is not allowed for pooled
+connections ― after they are disconnected they might be in use by some other
+process, and should no longer be used.
+
+** variable *database*
+
+Special variable holding the current database. Most functions and macros
+operating on a database assume this binds to a connected database.
+
+** macro with-connection (spec &body body)
+
+Evaluates the body with *database* bound to a connection as specified by
+spec, which should be list that connect can be applied to.
+
+** macro call-with-connection (spec thunk)
+
+The functional backend to with-connection. Binds *database* to a new
+connection as specified by spec, which should be a list that connect can
+be applied to, and runs the zero-argument function given as second argument
+in the new environment. When the function returns or throws, the new
+connection is disconnected.
+
+** function connect-toplevel (database user password host &key (port 5432))
+
+Bind the *database* to a new connection. Use this if you only need one
+connection, or if you want a connection for debugging from the REPL.
+
+** function disconnect-toplevel ()
+
+Disconnect the *database*.
+
+** function clear-connection-pool ()
+
+Disconnect and remove all connections from the connection pools.
+
+** variable *max-pool-size*
+
+Set the maximum amount of connections kept in a single connection pool, where
+a pool consists of all the stored connections with the exact same connect
+arguments. Defaults to NIL, which means there is no maximum.
+
+* Querying
+** macro query (query &rest args/format)
+→ result
+
+Execute the given query, which can be either a string or an S-SQL form
+(list starting with a keyword). If the query contains placeholders ($1, $2, etc)
+their values can be given as extra arguments. If one of these arguments
+is a keyword occurring in the table below, it will not be used as a query
+argument, but will determine the format in which the results are returned
+instead. Any of the following formats can be used, with the default being :rows:
+
+| :none	             | Ignore the result values.                                                                                                                                 |
+| :lists, :rows       | 	Return a list of lists, each list containing the values for a row.                                                                                     |
+| :list, :row         | 	Return a single row as a list.                                                                                                                         |
+| :alists	           | Return a list of alists which map column names to values, with the names represented as keywords.                                                        |
+| :alist	            | Return a single row as an alist.                                                                                                                         |
+| :str-alists         | 	Like :alists, but use the original column names.                                                                                                       |
+| :str-alist	        | Return a single row as an alist, with strings for names.                                                                                                 |
+| :plists	           | Return a list of plists which map column names to values,with the names represented as keywords.                                                         |
+| :plist	            | Return a single row as a plist.                                                                                                                          |
+| :column	           | Return a single column as a list.                                                                                                                        |
+| :single	           | Return a single value.                                                                                                                                   |
+| :single!	          | Like :single, but raise an error when the number of selected rows is not equal to 1.                                                                     |
+| (:dao type)	       | Return a list of DAOs of the given type. The names of the fields returned by the query must match slots in the DAO class the same way as with query-dao. |
+| (:dao type :single) | 	Return a single DAO of the given type.                                                                                                                 |
+
+If the database returns information about the amount rows that were affected,
+such as with updating or deleting queries, this is returned as a second value.
+
+** macro execute (query &rest args)
+
+Like query called with format :none. Returns the amount of affected rows as
+its first returned value. (Also returns this amount as the second returned
+value, but use of this is deprecated.)
+
+** macro doquery (query (&rest names) &body body)
+
+Execute the given query (a string or a list starting with a keyword),
+iterating over the rows in the result. The body will be executed with the
+values in the row bound to the symbols given in names. To iterate over a
+parameterised query, one can specify a list whose car is the query, and
+whose cdr contains the arguments. For example:
+#+BEGIN_SRC lisp
+(doquery (:select 'name 'score :from 'scores) (n s)
+  (incf (gethash n *scores*) s))
+
+(doquery ((:select 'name :from 'scores :where (:> 'score '$1)) 100) (name)
+  (print name))
+#+END_SRC
+
+** macro prepare (query &optional (format :rows))
+→ function
+
+Creates a function that can be used as the interface to a prepared statement.
+The given query (either a string or an S-SQL form) may contain placeholders,
+which look like $1, $2, etc. The resulting function takes one argument for
+every placeholder in the query, executes the prepared query, and returns the
+result in the format specified. (Allowed formats are the same as for query.)
+
+For queries that have to be run very often, especially when they are complex,
+it may help performance since the server only has to plan them once. See
+the [[http://www.postgresql.org/docs/current/static/sql-prepare.html][PostgreSQL manual]] for details.
+
+In some cases, the server will complain about not being able to deduce the
+type of the arguments in a statement. In that case you should add type
+declarations (either with the PostgreSQL's CAST SQL-conforming syntax or
+historical :: syntax, or with S-SQL's :type construct) to help it out.
+
+** macro defprepared (name query &optional (format :rows))
+
+This is the defun-style variant of prepare. It will define a top-level
+function for the prepared statement.
+
+** macro defprepared-with-names (name (&rest args) (query &rest query-args) &optional (format :rows))
+
+Like defprepared, but allows to specify names of the function arguments as
+well as arguments supplied to the query.
+#+BEGIN_SRC lisp
+(defprepared-with-names user-messages (user &key (limit 10))
+  ("select * from messages
+    where user_id = $1
+    order by date desc
+    limit $2" (user-id user) limit)
+  :plists)
+#+END_SRC
+
+** macro with-transaction ((&optional name) &body body)
+
+Execute the given body within a database transaction, committing it when the
+body exits normally, and aborting otherwise. An optional name can be given
+to the transaction, which can be used to force a commit or abort before the
+body unwinds.
+
+** function commit-transaction (transaction)
+
+Commit the given transaction.
+
+** function abort-transaction (transaction)
+
+Roll back the given transaction.
+
+** macro with-savepoint (name &body body)
+
+Can only be used within a transaction. Establishes a savepoint with the given
+name at the start of body, and binds the same name to a handle for that
+savepoint. At the end of body, the savepoint is released, unless a
+condition is thrown, in which case it is rolled back.
+
+** function release-savepoint (savepoint)
+
+Release the given savepoint.
+
+** function rollback-savepoint (savepoint)
+
+Roll back the given savepoint.
+
+** function commit-hooks (transaction-or-savepoint), setf (commit-hooks transaction-or-savepoint)
+
+An accessor for the transaction or savepoint's list of commit hooks, each of
+which should be a function with no required arguments. These functions will
+be executed when a transaction is committed or a savepoint released.
+
+** function abort-hooks (transaction-or-savepoint), setf (abort-hooks transaction-or-savepoint)
+
+An accessor for the transaction or savepoint's list of abort hooks, each of
+which should be a function with no required arguments. These functions will
+be executed when a transaction is aborted or a savepoint rolled back
+(whether via a non-local transfer of control or explicitly by either
+abort-transaction or rollback-savepoint).
+
+** macro with-logical-transaction ((&optional name) &body body)
+
+Executes body within a with-transaction form if no transaction is currently
+in progress, otherwise simulates a nested transaction by executing it
+within a with-savepoint form. The transaction or savepoint is bound to name
+if one is supplied.
+
+** function abort-logical-transaction (transaction-or-savepoint)
+
+Roll back the given logical transaction, regardless of whether it is an
+actual transaction or a savepoint.
+
+** function commit-logical-transaction (transaction-or-savepoint)
+
+Commit the given logical transaction, regardless of whether it is an
+actual transaction or a savepoint.
+
+** variable *current-logical-transaction*
+
+This is bound to the current transaction-handle or savepoint-handle instance
+representing the innermost open logical transaction.
+
+** macro ensure-transaction (&body body)
+
+Ensures that body is executed within a transaction, but does not begin a
+new transaction if one is already in progress.
+
+** macro with-schema ((namespace &key :strict t :if-not-exist :create :drop-after) &body body)
+
+Sets the current schema to namespace and executes the body. Before executing
+body the PostgreSQL's session variable search_path is set to the given
+namespace. After executing body the search_path variable is restored
+to the original value. If the keyword :strict is set to T then the namespace
+is only the scheme on the search path upon the body execution. Otherwise the
+namespace is just first schema on the search path upon the the body execution.
+If :if-not-exist is NIL, an error is signaled. If :drop-after is T the
+namespace is dropped from the database after the body execution.
+
+** function sequence-next (sequence)
+→ integer
+
+Get the next value from a sequence. The sequence identifier can be either a
+string or a symbol, in the latter case it will be converted to a string
+according to S-SQL rules.
+
+** function coalesce (&rest arguments)
+→ value
+
+Returns the first non-NIL, non-NULL (as in :null) argument, or NIL if none are
+present. Useful for providing a fall-back value for the result of a query, or,
+when given only one argument, for transforming :nulls to NIL.
+
+* Inspecting the database
+** function list-tables (&optional strings-p)
+→ list
+
+Returns a list of the tables in the current database. When strings-p is T,
+the names will be given as strings, otherwise as keywords.
+
+** function table-exists-p (name)
+→ boolean
+
+Tests whether a table with the given name exists. The name can be either a
+string or a symbol.
+
+** function table-description (name &optional schema-name)
+→ list
+
+Returns a list of the fields in the named table. Each field is represented by
+a list of three elements: the field name, the type, and a boolean indicating
+whether the field may be NULL. Optionally, schema-name can be specified to
+restrict the result to fields from the named schema. Without it, all fields in
+the table are returned, regardless of their schema.
+
+** function list-sequences (&optional strings-p)
+→ list
+
+Returns a list of the sequences in the current database. When strings-p is T,
+the names will be given as strings, otherwise as keywords.
+
+** function sequence-exists-p (name)
+→ boolean
+
+Tests whether a sequence with the given name exists. The name can be either a
+string or a symbol.
+
+** function list-views (&optional strings-p)
+→ list
+
+Returns list of the user defined views in the current database. When strings-p
+is T, the names will be returned as strings, otherwise as keywords.
+
+** function view-exists-p (name)
+→ boolean
+
+Tests whether a view with the given name exists. The name can be either a
+string or a symbol.
+
+** function list-schemata ()
+→ list
+
+Returns list of the user defined schemata (as strings) and the quantity of
+existing schemata.
+
+** function schema-exist-p (schema) NOW DEPRECATED IN FAVOR OF schema-exists-p which is more consistent with naming of other functions.
+→ boolean
+
+Tests the existence of a given schema. Returns T if the schema exists or NIL
+otherwise.
+
+** function schema-exists-p (schema)
+→ boolean
+
+Tests the existence of a given schema. Returns T if the schema exists or NIL
+otherwise.
+
+** function database-version ()
+→ string
+
+Returns the version of the current postgresql database.
+
+** function num-records-in-database ()
+→ list
+
+Returns a list of lists with schema, table name and approximate number of
+records in the currently connected database.
+
+** function current-database ()
+→ string
+
+Returns the string name of the current database.
+
+** function database-exists-p (database-name)
+→ boolean
+
+Checks to see if a particular database exists.
+
+** function database-size (&optional database-name)
+→ list
+
+Given the name of a database, will return the name, a pretty-print string of
+the size of the database and the size in bytes. If a database name is not
+provided, it will return the result for the currently connected database.
+
+** function list-databases (&key (order-by-size nil) (size t))
+→ list
+
+Returns a list of lists where each sub-list contains the name of the database,
+a pretty-print string of the size of that database and the size in bytes. The
+default order is by database name. Pass t as a parameter to :order-by-size
+for order by size. Setting size to nil will return just the database names
+in a single list ordered by name. This function excludes the template databases
+
+** function list-schemas ()
+→ list
+
+List schemas in the current database, excluding the pg_* system schemas.
+
+** function list-tablespaces ()
+→ list
+
+Lists the tablespaces in the currently connected database.
+
+** function list-available-types ()
+→ list
+
+List the available types in this postgresql version.
+
+** function list-table-sizes (&key (schema "public") (order-by-size nil) (size t))
+→ list
+
+Returns a list of lists (table-name, size in 8k pages) of tables in the current
+database. Providing a name to the schema parameter will return just the
+information for tables in that schema. It defaults to just the tables in the
+public schema. Setting schema to nil will return all tables, indexes etc in
+the database in descending order of size. This would include system tables, so
+there are a lot more than you would expect. If :size is set to nil, it returns
+only a flat list of table names. Setting order-by-size to t will return the
+result in order of size instead of by table name.
+
+** function table-size (table-name)
+→ list
+
+Return the size of a postgresql table in k or m. Table-name can be either a
+string or quoted.
+
+** function more-table-info (table-name)
+→ list
+
+Returns more table info than table-description. Table can be either a string
+or quoted.
+
+** function list-columns (table-name)
+→ list
+
+Returns a list of strings of just the column names in a table. Pulls info
+from the postmodern table-description function rather than directly.
+
+** function list-columns-with-types (table-name)
+→ list
+
+Return a list of (name type) lists for the fields of a table. Goes directly
+to the pg-catalog tables.
+
+** function column-exists-p (table-name column-name)
+→ boolean
+
+Determine if a particular column exists. Table name and column-name can be
+either strings or symbols.
+
+** function describe-views (&optional (schema "public")
+→ list
+
+Describe the current views in the specified schema. Defaults to public schema.
+
+** function list-database-functions ()
+→ list
+
+Returns a list of the functions in the database from the information_schema.
+
+** function list-indices (&optional strings-p)
+→ list
+
+Return a list of the indexs in a database. Turn them into keywords if
+strings-p is not true.
+
+** function list-table-indices (table-name &optional strings-p)
+→ list
+
+List the index names and the related columns in a table.
+
+** function list-indexed-column-and-attributes (table-name)
+→ list
+
+List the indexed columns and their attributes in a table. Includes primary
+key.
+
+** function list-index-definitions (table-name)
+→ list
+
+Returns a list of the definitions used to create the current indexes for
+the table
+
+** function list-foreign-keys (table-name)
+→ list
+
+List the foreign keys in a table.
+
+** function list-unique-or-primary-constraints (table-name)
+→ list
+
+List constraints on a table.
+
+** function list-all-constraints (table-name)
+→ list
+
+Users information_schema to list all the constraints in a table. Table-name
+can be either a string or quoted.
+
+** function describe-constraint (table-name constraint-name)
+→ list
+
+Return a list of alists of the descriptions a particular constraint given
+the table-name and the constraint name using the information_schema table.
+
+** function describe-foreign-key-constraints ()
+→ list
+
+Generates a list of lists of information on the foreign key constraints
+
+** function list-triggers (&optional table-name)
+→ list
+
+List distinct trigger names from the information_schema table. Table-name
+can be either quoted or string.
+
+** function list-detailed-triggers ()
+→ list
+
+List detailed information on the triggers from the information_schema table.
+
+** function list-database-users ()
+→ list
+
+List database users.
+
+** function change-toplevel-database (new-database user password host)
+→ string
+
+Just changes the database assuming you are using a toplevel connection.
+Recommended only for development work. Returns the name of the newly
+connected database as a string.
+
+* Database access objects
+Postmodern contains a simple system for defining CLOS classes that
+represent rows in the database. This is not intended as a full-fledged
+object-relational magic system ― while serious ORM systems have their place,
+they are notoriously hard to get right, and are outside of the scope of
+a humble SQL library like this.
+
+** metaclass dao-class
+
+At the heart of Postmodern's DAO system is the dao-class metaclass. It
+allows you to define classes for your database-access objects as regular
+CLOS classes. Some of the slots in these classes will refer to columns in the
+database. To specify that a slot refers to a column, give it a :col-type
+option containing an S-SQL type expression (useful if you want to be able
+to derive a table definition from the class definition), or simply a :column
+option with value T. Such slots can also take a :col-default option, used
+to provide a database-side default value as an S-SQL expression. You can
+use the :col-name initarg (whose unevaluated value will be passed to
+to-sql-name) to specify the slot's column's name.
+
+DAO class definitions support two extra class options: :table-name to give
+the name of the table that the class refers to (defaults to the class name),
+and :keys to provide a set of primary keys for the table. When no primary
+keys are defined, operations such as update-dao and get-dao will not work.
+
+IMPORTANT: Class finalization for a dao class instance are wrapped with a
+thread lock. However, any time you are using threads and a class that inherits
+from other classes, you should ensure that classes are finalized before you
+start generating threads that create new instances of that class.
+
+Simple example:
+#+BEGIN_SRC lisp
+(defclass user ()
+  ((name :col-type string :initarg :name :accessor user-name)
+   (creditcard :col-type (or db-null integer) :initarg :card :col-default :null)
+   (score :col-type bigint :col-default 0 :accessor user-score))
+  (:metaclass dao-class)
+  (:keys name))
+#+END_SRC
+
+The (or db-null integer) form is used to indicate a column can have NULL values.
+
+When inheriting from DAO classes, a subclass' set of columns also contains all
+the columns of its superclasses. The primary key for such a class is the
+union of its own keys and all the keys from its superclasses. Classes
+inheriting from DAO classes should probably always use the dao-class
+metaclass themselves.
+
+When a DAO is created with make-instance, the :fetch-defaults keyword
+argument can be passed, which, when T, will cause a query to fetch the
+default values for all slots that refers to columns with defaults and were
+not bound through initargs. In some cases, such as serial columns, which
+have an implicit default, this will not work. You can work around this by
+creating your own sequence, e.g. "my_sequence", and defining
+a (:nextval "my_sequence") default.
+
+Finally, DAO class slots can have an option :ghost t to specify them as
+ghost slots. These are selected when retrieving instances, but not written
+when updating or inserting, or even included in the table definition. The
+only known use for this to date is for creating the table with (oids=true),
+and specify a slot like this:
+#+BEGIN_SRC lisp
+(oid :col-type integer :ghost t :accessor get-oid)
+#+END_SRC
+
+** method dao-keys (class)
+→ list
+
+Returns list of slot names that are the primary key of DAO class.
+
+** method dao-keys (dao)
+→ list
+
+Returns list of values that are the primary key of dao.
+
+** method dao-exists-p (dao)
+→ boolean
+
+Test whether a row with the same primary key as the given dao exists in the
+database. Will also return NIL when any of the key slots in the object are
+unbound.
+
+** method make-dao (type &rest args &key &allow-other-keys)
+→ dao
+
+Combines make-instance with insert-dao. Return the created dao.
+
+** macro define-dao-finalization (((dao-name class) &rest keyword-args) &body body)
+
+Create an :around-method for make-dao. The body is executed in a lexical
+environment where dao-name is bound to a freshly created and inserted DAO.
+The representation of the DAO in the database is then updated to reflect
+changes that body might have introduced. Useful for processing values of
+slots with the type serial, which are unknown before insert-dao.
+
+** method get-dao (type &rest keys)
+→ dao
+
+Select the DAO object from the row that has the given primary key values, or
+NIL if no such row exists. Objects created by this function will have
+initialize-instance called on them (after loading in the values from the
+database) without any arguments ― even :default-initargs are skipped.
+The same goes for select-dao and query-dao.
+
+** macro select-dao (type &optional (test t) &rest sort)
+→ list
+
+Select DAO objects for the rows in the associated table for which the given
+test (either an S-SQL expression or a string) holds. When sorting arguments
+are given, which can also be S-SQL forms or strings, these are used to sort
+the result.
+
+(Note that, if you want to sort, you have to pass the test argument.)
+#+BEGIN_SRC lisp
+(select-dao 'user (:> 'score 10000) 'name)
+#+END_SRC
+
+** macro do-select-dao (((type type-var) &optional (test t) &rest sort) &body body)
+
+Like select-dao, but iterates over the results rather than returning them.
+For each matching DAO, body is evaluated with type-var bound to the DAO
+instance.
+#+BEGIN_SRC lisp
+(do-select-dao (('user user) (:> 'score 10000) 'name)
+  (pushnew user high-scorers))
+#+END_SRC
+
+** macro query-dao (type query &rest args)
+→ list
+
+Execute the given query (which can be either a string or an S-SQL expression)
+and return the result as DAOs of the given type. If the query contains
+placeholders ($1, $2, etc) their values can be given as extra arguments.
+The names of the fields returned by the query must either match slots in
+the DAO class, or be bound through with-column-writers.
+
+** function do-query-dao (((type type-var) query &rest args) &body body)
+→ list
+
+Like query-dao, but iterates over the results rather than returning them.
+For each matching DAO, body is evaluated with type-var bound to the instance.
+#+BEGIN_SRC lisp
+(do-query-dao (('user user) (:order-by (:select '* :from 'user :where (:> 'score 10000)) 'name))
+  (pushnew user high-scorers))
+#+END_SRC
+
+** variable *ignore-unknown-columns*
+
+Normally, when get-dao, select-dao, or query-dao finds a column in the database
+that's not in the DAO class, it will raise an error. Setting this variable to
+a non-NIL will cause it to simply ignore the unknown column.
+
+** method insert-dao (dao)
+→ dao
+
+Insert the given dao into the database. Column slots of the object which
+are unbound implies the database defaults. Hence, if these columns has
+no defaults defined in the database, the the insertion of the dao will
+be failed. (This feature only works on PostgreSQL 8.2 and up.)
+
+** method update-dao (dao)
+→ dao
+
+Update the representation of the given dao in the database to the values
+in the object. This is not defined for tables that do not have any
+non-primary-key columns. Raises an error when no row matching the dao exists.
+
+** function save-dao (dao)
+→ boolean
+
+Tries to insert the given dao using insert-dao. If this raises a unique key
+violation error, it tries to update it by using update-dao instead. Be
+aware that there is a possible race condition here ― if some other process
+deletes the row at just the right moment, the update fails as well. Returns
+a boolean telling you whether a new row was inserted.
+
+This function is unsafe to use inside of a transaction ― when a row with the
+given keys already exists, the transaction will be aborted. Use
+save-dao/transaction instead in such a situation.
+
+See also: upsert-dao.
+
+** function save-dao/transaction (dao)
+→ boolean
+
+Acts exactly like save-dao, except that it protects its attempt to insert the
+object with a rollback point, so that a failure will not abort the transaction.
+
+See also: upsert-dao.
+
+** method upsert-dao (dao)
+→ dao
+
+Like save-dao or save-dao/transaction but using a different method that doesn't
+involve a database exception. This is safe to use both in and outside a
+transaction, though it's advisable to always do it in a transaction to
+prevent a race condition. The way it works is:
+
+If the object contains unbound slots, we call insert-dao directly, thus
+the behavior is like save-dao.
+
+Otherwise we try to update a record with the same primary key. If the
+PostgreSQL returns a non-zero number of rows updated it treated as the
+record is already exists in the database, and we stop here.
+
+If the PostgreSQL returns a zero number of rows updated, it treated as
+the record does not exist and we call insert-dao.
+
+The race condition might occur at step 3 if there's no transaction:
+if UPDATE returns zero number of rows updated and another thread inserts
+the record at that moment, the insertion implied by step 3 will fail.
+
+Note, that triggers and rules may affect the number of inserted or updated
+rows returned by PostgreSQL, so zero or non-zero number of affected rows may
+not actually indicate the existence of record in the database.
+
+This method returns two values: the DAO object and a boolean (T if the object
+was inserted, NIL if it was updated).
+
+** method delete-dao (dao)
+
+Delete the given dao from the database.
+
+** function dao-table-name (class)
+→ string
+
+Get the name of the table associated with the given DAO class (or
+symbol naming such a class).
+
+** function dao-table-definition (class)
+→ string
+
+Given a DAO class, or the name of one, this will produce an SQL query string
+with a definition of the table. This is just the bare simple definition, so
+if you need any extra indices or or constraints, you'll have to write your
+own queries to add them.
+
+** macro with-column-writers ((&rest writers) &body body)
+
+Provides control over the way get-dao, select-dao, and query-dao read values
+from the database. This is not commonly needed, but can be used to reduce the
+amount of queries a system makes. writers should be a list of alternating
+column names (strings or symbols) and writers, where writers are either symbols
+referring to a slot in the objects, or functions taking two arguments ― an
+instance and a value ― which can be used to somehow store the value in the
+new instance. When any DAO-fetching function is called in the body, and columns
+matching the given names are encountered in the result, the writers are used
+instead of the default behaviour (try and store the value in the slot that
+matches the column name).
+
+An example of using this is to add some non-column slots to a DAO class, and
+use query-dao within a with-column-writers form to pull in extra information
+about the objects, and immediately store it in the new instances.
+
+* Table definition and creation
+It can be useful to have the SQL statements needed to build an application's
+tables available from the source code, to do things like automatically
+deploying a database. The following macro and functions allow you to group
+sets of SQL statements under symbols, with some shortcuts for common elements
+in table definitions.
+
+** macro deftable (name &body definition)
+
+Define a table. name can be either a symbol or a (symbol string) list.
+In the first case, the table name is derived from the symbol's name by
+S-SQL's rules. In the second case, the name is given explicitly. The body
+of definitions can contain anything that evaluates to a string, as well
+as S-SQL expressions. The variables *table-name* and *table-symbol* are
+bound to the relevant values in the body. Note that the evaluation of the
+definition is ordered, so you'll generally want to create your table first
+and then define indices on it.
+
+** function !dao-def ()
+
+Should only be used inside deftable's body. Adds the result of calling
+dao-table-definition on *table-symbol* to the definition.
+
+** function !index (&rest columns), !unique-index (&rest columns)
+
+Define an index on the table being defined. The columns can be given as
+symbols or strings.
+
+** function !foreign (target-table columns &optional target-columns &key on-delete on-update deferrable initially-deferred)
+
+Add a foreign key to the table being defined. target-table is the referenced
+table. columns is a list of column names or single name in this table, and,
+if the columns have different names in the referenced table, target-columns
+must be another list of column names or single column name of the target-table,
+or :primary-key to denote the column(s) of the target-table's primary key
+as referenced column(s).
+
+The on-delete and on-update arguments can be used to specify ON DELETE and
+ON UPDATE actions, as per the keywords allowed in create-table. In addition,
+the deferrable and initially-deferred arguments can be used to indicate whether
+constraint checking can be deferred until the current transaction completed,
+and whether this should be done by default. Note that none of these are
+really &key arguments, but rather are picked out of a &rest arg at runtime,
+so that they can be specified even when target-columns is not given.
+
+** function !unique (target-fields &key deferrable initially-deferred)
+
+Constrains one or more columns to only contain unique (combinations of) values,
+with deferrable and initially-deferred defined as in !foreign
+
+** function create-table (symbol)
+
+Creates the table identified by symbol by executing all forms in its definition.
+
+** function create-all-tables ()
+
+Creates all defined tables.
+
+** function create-package-tables (package)
+
+Creates all tables identified by symbols interned in the given package.
+
+** variables *table-name*, *table-symbol*
+
+These variables are bound to the relevant name and symbol while the forms of a
+table definition are evaluated. Can be used to define shorthands like the ones
+below.
+
+* Schemata
+Schema allow you to separate tables into differnet name spaces. In different
+schemata two tables with the same name are allowed to exists. The tables can
+be referred by fully qualified names or with the macro with-schema. You could
+also set the search path with set-search-path. For listing end checking there
+are also the functions list-schemata and schema-exist-p. The following
+functions allow you to create, drop schemata and to set the search path.
+
+** function create-schema (schema)
+
+Creates a new schema. Raises an error if the schema is already exists.
+
+** function drop-schema (schema)
+
+Removes a schema. Raises an error if the schema is not empty.
+
+** function get-search-path ()
+
+Retrieve the current search path.
+
+** function set-search-path (path)
+
+Sets the search path to the path. This function is used by with-schema.
