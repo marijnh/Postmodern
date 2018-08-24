@@ -88,7 +88,7 @@
   (setf (slot-value slot 'sql-name) (to-sql-name
                                      (if col-name-p
                                          col-name
-                                         (slot-definition-name slot))))
+                                         (slot-definition-name slot)) nil))
   ;; The default for nullable columns defaults to :null.
   (when (and (null col-default) (consp col-type) (eq (car col-type) 'or)
              (member 'db-null col-type) (= (length col-type) 3))
@@ -300,7 +300,7 @@ arguments.")
 
 (defmacro with-column-writers ((&rest defs) &body body)
   `(let ((*custom-column-writers* (append (list ,@(loop :for (field writer) :on defs :by #'cddr
-                                                        :collect `(cons (to-sql-name ,field) ,writer)))
+                                                        :collect `(cons (to-sql-name ,field nil) ,writer)))
                                           *custom-column-writers*)))
     ,@body))
 
