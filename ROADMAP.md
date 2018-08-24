@@ -83,12 +83,12 @@ No guarantee is given with respect to resolution or timing on any item.
 - [X]   write-ratio-as-floating-point [rational] See proposed Attila Lendvai commit
 
 ## Conditionality and composition
-Consider conditional functionality. For example, how can you compose s-sql fragments?
+- [X]   Document ways to generate dynamic queries from sql fragments. Issue 127 and 111
 
 ## Date and Time Sanity
-- [ ]   Simple-Date manual loading
-- [ ]   Local-time manual loading
-- [ ]   Intervals
+- [X]   Simple-Date manual loading documented
+- [X]   Local-time manual loading documented
+- [X]   Intervals documented
 
 ## Documentation
 - [ ]   Setup
@@ -96,7 +96,7 @@ Consider conditional functionality. For example, how can you compose s-sql fragm
 - [ ]   Usage examples for non-sql users
 - [ ]   More examples of create table
 - [ ]   Creation of new datatypes
-- [ ]   Links in README should point to pages updated on github, not marijn's personal page
+- [X]   Links in README should point to pages updated on github, not marijn's personal page
 - [ ]   Pooling with external pooling applications
 
 ## Security Audit
