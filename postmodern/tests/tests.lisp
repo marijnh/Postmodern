@@ -366,3 +366,35 @@
 
 ;;; Note that if you drop the table at the end of a thread test, it is almost certain that threads are still running.
 ;;; As a result, the subsequent attempts to save-dao will fail. So do not
+
+(test prepared-statement-over-reconnect
+  (let ((terminate-backend
+          (prepare
+              "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
+              :rows))
+         (getpid (prepare "SELECT pg_backend_pid()" :single)))
+    ;; Ensure our prepared statement terminates connection.
+    (with-test-connection
+      (signals database-connection-error
+        (funcall terminate-backend (funcall getpid))))
+
+    (with-test-connection
+      (let ((original-pid (funcall getpid))
+            (reconnectedp nil))
+        (block done
+          (handler-bind
+              ((database-connection-error
+                 (lambda (condition)
+                   (let ((restart (find-restart :reconnect condition)))
+                     (is (not (null restart)))
+                     (setq reconnectedp t)
+                     (invoke-restart restart)))))
+            (funcall terminate-backend original-pid)))
+        (is-true reconnectedp)
+        (is (/= original-pid (funcall getpid)))
+
+        ;; Re-using the prepared statement on the new connection.
+        (multiple-value-bind (rows count)
+            (funcall terminate-backend 0)
+          (is (null rows))
+          (is (zerop count)))))))

@@ -158,8 +158,7 @@ if it isn't."
                                               (connection-port conn)))))
               (finished nil)
               (*connection-params* (make-hash-table :test 'equal)))
-          (setf (slot-value conn 'meta) nil
-                (connection-parameters conn) *connection-params*)
+          (setf (connection-parameters conn) *connection-params*)
           (unwind-protect
                (setf socket (authenticate socket conn)
                      (connection-timestamp-format conn)
@@ -168,7 +167,10 @@ if it isn't."
                      (connection-socket conn) socket
                      finished t)
             (unless finished
-              (ensure-socket-is-closed socket))))
+              (ensure-socket-is-closed socket)))
+          (maphash (lambda (id query)
+                     (prepare-query conn id query))
+                   (connection-meta conn)))
       #-(or allegro cl-postgres.features:sbcl-available ccl)(usocket:socket-error (e) (add-restart e))
       #+ccl (ccl:socket-error (e) (add-restart e))
       #+allegro(excl:socket-error (e) (add-restart e))
