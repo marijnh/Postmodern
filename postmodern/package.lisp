@@ -39,6 +39,7 @@
    #:list-index-definitions #:list-foreign-keys #:list-unique-or-primary-constraints
    #:list-all-constraints #:describe-constraint #:describe-foreign-key-constraints
    #:list-triggers #:list-detailed-triggers #:list-database-users
+   #:find-primary-key-info
    #:change-toplevel-database
 
    #:deftable #:*table-name* #:*table-symbol*

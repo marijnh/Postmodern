@@ -215,7 +215,9 @@ Setting order-by-size to t will return the result in order of size instead of by
          (to-sql-name table-name)))
 
 (defun more-table-info (table-name)
-  "Returns more table info than table-description. Table can be either a string or quoted."
+  "Returns more table info than table-description. Table can be either a string or quoted.
+Specifically returns ordinal-position, column-name, data-type, character-maximum-length,
+modifier, whether it is not-null and the default value. "
   (query (:order-by (:select (:as 'a.attnum 'ordinal-position)
                              (:as 'a.attname 'column-name)
                              (:as 'tn.typname 'data-type)
@@ -599,6 +601,18 @@ and executing.")
   "Return a string of the Postgres 'qualified name' of NAME and SCHEMA,
 both symbols."
   (sql-compile (qualified-name name schema)))
+
+(defun find-primary-key-info (table)
+  "Returns a list of two strings. First the column name of the primary
+ key of the tableand second the string name for the datatype."
+  (when (symbolp table) (setf table (s-sql:to-sql-name table)))
+  (query (:select 'a.attname (:as (:format-type 'a.atttypid 'a.atttypmod) 'data-type)
+                  :from (:as 'pg-index 'i)
+                  :left-join (:as 'pg-attribute 'a)
+                  :on (:and (:= 'a.attrelid 'i.indrelid)
+                            (:= 'a.attnum (:any* 'i.indkey)))
+                  :where (:and (:= 'i.indrelid (:type table regclass))
+                               'i.indisprimary))))
 
 ;;;; Utility
 
