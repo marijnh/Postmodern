@@ -88,7 +88,8 @@
   (setf (slot-value slot 'sql-name) (to-sql-name
                                      (if col-name-p
                                          col-name
-                                         (slot-definition-name slot)) nil))
+                                         (slot-definition-name slot))
+                                     nil))
   ;; The default for nullable columns defaults to :null.
   (when (and (null col-default) (consp col-type) (eq (car col-type) 'or)
              (member 'db-null col-type) (= (length col-type) 3))

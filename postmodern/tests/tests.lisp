@@ -354,15 +354,26 @@
 (test dao-class-threads
   (with-test-connection
     (unless (pomo:table-exists-p 'dao-test)
-      (execute (dao-table-definition 'test-data))))
+      (execute (dao-table-definition 'test-data)))
   (let ((item (make-instance 'test-data :a "Sabra" :b t :c 0)))
-    (with-test-connection (save-dao item))
+    (save-dao item)
     (loop for x from 1 to 5 do
          (bt:make-thread
-          (lambda () (with-test-connection
-                       (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (incf (test-c item) 1)) (save-dao item))
-                       (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (decf (test-c item) 1)) (save-dao item))))))
-    (is (eq 0 (test-c item)))))
+          (lambda ()
+            (with-test-connection
+            (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (incf (test-c item) 1)) (save-dao item))
+            (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (decf (test-c item) 1)) (save-dao item))))))
+    (is (eq 0 (test-c item))))))
 
 ;;; Note that if you drop the table at the end of a thread test, it is almost certain that threads are still running.
 ;;; As a result, the subsequent attempts to save-dao will fail. So do not
+
+(test find-primary-key-info
+  "Testing find-primary-key-info function. Given a table name, it returns
+ a list of two strings. First the column name of the primary key of the table
+and second the string name for the datatype."
+  (with-test-connection
+    (is (equal (postmodern:find-primary-key-info (s-sql:to-sql-name "tasks_lists"))
+               '(("id" "integer"))))
+    (is (equal (postmodern:find-primary-key-info (s-sql:to-sql-name "tasks_lists") t)
+               "id"))))
