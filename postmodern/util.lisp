@@ -370,24 +370,78 @@ rather than directly."
 	   table-name)))
 
 ;;;; Keys
-(defun list-foreign-keys (table-name)
-  "List the foreign keys in a table."
-  (setf table-name (to-sql-name table-name))
-  (when (table-exists-p table-name)
-  (query (:select 'tc.constraint_name
-                  'tc.table_name 'kcu.column_name
-                  (:as 'ccu.table_name 'foreign_table_name)
-                  (:as 'ccu.column_name 'foreign_column_name)
-                  :from (:as 'information_schema.table_constraints 'tc)
-                  :inner-join
-                  (:as 'information_schema.key_column_usage 'kcu)
-                  :on (:= 'tc.constraint_name 'kcu.constraint_name)
-                  :inner-join
-                  (:as 'information_schema.constraint_column_usage 'ccu)
-                  :on (:= 'ccu.constraint_name 'tc.constraint_name)
-                  :where (:and (:= 'constraint_type "FOREIGN KEY")
-                               (:= 'tc.table_name '$1)))
-         table-name)))
+(defun find-primary-key-info (table &optional (just-key nil))
+  "Returns a list of sublists where the sublist contains two strings.
+If a table primary key consists of only one column, such as 'id' there
+will be a single sublist where the first string is the name of the column
+and the second string is the string name for the datatype for that column.
+If the primary key for the table consists of more than one column, there
+will be a sublist for each column subpart of the key. The sublists will
+be in the order they are used in the key, not in the order they appear
+in the table. If just-key is set to t, the list being returned will
+contain just the column names in the primary key as string names
+with no sublists."
+  (when (symbolp table) (setf table (s-sql:to-sql-name table)))
+  (let ((info (query (:order-by
+         (:select
+          'a.attname
+          (:format-type 'a.atttypid 'a.atttypmod)
+          :from
+          (:as 'pg-attribute 'a)
+          :inner-join (:as (:select '*
+                                   (:as (:generate-subscripts 'indkey 1) 'indkey-subscript)
+                                   :from 'pg-index)
+                          'i)
+          :on
+          (:and 'i.indisprimary
+                (:= 'i.indrelid  'a.attrelid)
+                (:= 'a.attnum  (:[] 'i.indkey 'i.indkey-subscript)))
+          :where
+          (:= 'a.attrelid  (:type '$1 regclass)))
+         'i.indkey-subscript)
+                     table)))
+    (if just-key (loop for x in info collect (first x)) info)))
+
+(defun list-foreign-keys (table schema)
+  "Returns a list of sublists of foreign key info in the form of
+   '(((:LOCAL-COLUMN . 'so_id') (:FOREIGN-TABLE-NAME . 'so_headers')
+    (:FOREIGN-TABLE-COLUMN . 'id') (:CONSTRAINT-NAME . 'so_items_so_id_fkey')))"
+  (query
+   (:select
+    (:as 'att2.attname 'local-column)
+    (:as 'cl.relname 'foreign-table-name)
+    (:as 'att.attname 'foreign-table-column)
+    (:as 'conname 'constraint-name)
+    :from
+    (:as (:select
+          (:as (:unnest 'con1.conkey) 'parent)
+          (:as (:unnest 'con1.confkey) 'child)
+          'con1.confrelid
+          'con1.conrelid
+          'con1.conname
+          :from
+          (:as 'pg-class 'cl)
+          :inner-join (:as 'pg-namespace 'ns)
+          :on (:= 'cl.relnamespace 'ns.oid)
+          :inner-join (:as 'pg-constraint 'con1)
+          :on (:= 'con1.conrelid 'cl.oid)
+          :where
+          (:and (:= 'cl.relname '$1)
+                (:= 'ns.nspname '$2)
+                (:= 'con1.contype "f")))
+         'con)
+    :inner-join (:as 'pg-attribute 'att)
+    :on
+    (:and (:= 'att.attrelid 'con.confrelid)
+          (:= 'att.attnum 'con.child))
+    :inner-join (:as 'pg-class 'cl)
+    :on
+    (:= 'cl.oid 'con.confrelid)
+    :inner-join (:as 'pg-attribute 'att2)
+    :on
+    (:and (:= 'att2.attrelid 'con.conrelid)
+          (:= 'att2.attnum 'con.parent)))
+   table schema :alists))
 
 ;;;; Constraints
 (defun list-unique-or-primary-constraints (table-name)
@@ -601,20 +655,6 @@ and executing.")
   "Return a string of the Postgres 'qualified name' of NAME and SCHEMA,
 both symbols."
   (sql-compile (qualified-name name schema)))
-
-(defun find-primary-key-info (table)
-  "Returns a list of two strings. First the column name of the primary
- key of the tableand second the string name for the datatype."
-  (when (symbolp table) (setf table (s-sql:to-sql-name table)))
-  (query (:select 'a.attname (:as (:format-type 'a.atttypid 'a.atttypmod) 'data-type)
-                  :from (:as 'pg-index 'i)
-                  :left-join (:as 'pg-attribute 'a)
-                  :on (:and (:= 'a.attrelid 'i.indrelid)
-                            (:= 'a.attnum (:any* 'i.indkey)))
-                  :where (:and (:= 'i.indrelid (:type table regclass))
-                               'i.indisprimary))))
-
-;;;; Utility
 
 (defun run (form)
   "Compile and then run the S-SQL form FORM, unless *DEBUG-SQL* is true
