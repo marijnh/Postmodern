@@ -477,8 +477,9 @@ primary key as a string.
 → list
 
 Returns a list of sublists of foreign key info in the form of
-   '(((:LOCAL-COLUMN . 'so_id') (:FOREIGN-TABLE-NAME . 'so_headers')
-    (:FOREIGN-TABLE-COLUMN . 'id') (:CONSTRAINT-NAME . 'so_items_so_id_fkey')))
+   '((constraint-name local-table local-table-column
+     foreign-table-name foreign-column-name))
+
 
 ** function list-unique-or-primary-constraints (table-name)
 → list

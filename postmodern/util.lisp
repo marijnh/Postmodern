@@ -404,14 +404,16 @@ with no sublists."
 
 (defun list-foreign-keys (table schema)
   "Returns a list of sublists of foreign key info in the form of
-   '(((:LOCAL-COLUMN . 'so_id') (:FOREIGN-TABLE-NAME . 'so_headers')
-    (:FOREIGN-TABLE-COLUMN . 'id') (:CONSTRAINT-NAME . 'so_items_so_id_fkey')))"
+   '((constraint-name local-table local-table-column
+     foreign-table-name foreign-column-name))"
+  (setf table (s-sql:to-sql-name table))
   (query
    (:select
+    (:as 'conname 'constraint-name)
+    table
     (:as 'att2.attname 'local-column)
     (:as 'cl.relname 'foreign-table-name)
     (:as 'att.attname 'foreign-table-column)
-    (:as 'conname 'constraint-name)
     :from
     (:as (:select
           (:as (:unnest 'con1.conkey) 'parent)
@@ -441,7 +443,7 @@ with no sublists."
     :on
     (:and (:= 'att2.attrelid 'con.conrelid)
           (:= 'att2.attnum 'con.parent)))
-   table schema :alists))
+   table schema))
 
 ;;;; Constraints
 (defun list-unique-or-primary-constraints (table-name)
