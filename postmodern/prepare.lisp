@@ -4,7 +4,7 @@
   "Make sure a statement has been prepared for this connection."
   (let ((meta (connection-meta connection)))
     (unless (gethash id meta)
-      (setf (gethash id meta) t)
+      (setf (gethash id meta) query)
       (prepare-query connection id query))))
 
 (let ((next-id 0))
@@ -38,8 +38,8 @@ it."
 				  (query &rest query-args)
 				  &optional (format :rows))
   "Like defprepared, but with lambda list for statement arguments."
-  (let ((prepared-name (gensym "STATEMENT")))
-    `(progn
-       (defprepared ,prepared-name ,query ,format)
+  (let ((prepared-name (gensym "PREPARED")))
+    `(let ((,prepared-name (prepare ,query ,format)))
+       (declare (type function ,prepared-name))
        (defun ,name ,args
-	 (,prepared-name ,@query-args)))))
+	       (funcall ,prepared-name ,@query-args)))))

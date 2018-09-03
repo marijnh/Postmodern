@@ -13,7 +13,7 @@
 
 (declaim (inline enc-read-string))
 (declaim (ftype (function (t &key (:null-terminated t)
-                                  (:byte-length unsigned-byte))
+                                  (:byte-length fixnum))
                           string)
                 enc-read-string))
 (defun enc-read-string (input &key null-terminated (byte-length -1))
