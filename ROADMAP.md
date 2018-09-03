@@ -39,6 +39,7 @@ No guarantee is given with respect to resolution or timing on any item.
 - [ ]   WITH ORDINALITY clause (postgresql 9.4)
 - [ ]   Table Creation with different indexes (various postgresql version additions)
 - [ ]   Postgresql regular expression support - see https://www.postgresql.org/docs/current/static/pgtrgm.html
+- [ ]   Multiple row upserts
 
 ## Data type support
 - [ ]   json, jsonb (postgresql 9.4, full text search support in postgresql 10) See
@@ -54,7 +55,9 @@ No guarantee is given with respect to resolution or timing on any item.
 - [ ]   Others?
 
 ## DAO Support
-- [ ]   Fix issue 70 - build-dao-methods fails when a slot is named "from". Also check whether it fails for any reserved words.
+- [X]   Fix issue 70 - build-dao-methods fails when a slot is named "from".
+Will fix solely for daos. Do not expect this to work with building table columns.
+There is a reason for reserved words and it is upstream in postgresql.
 - [ ]   Review errors with *ignore-unknown-columns*. Sometimes hangs without raising an error.
 - [ ]   Type validation - make it easier to use col-type to ensure that a slot value is what the database expects
 - [ ]   Export to dao similar to :alist, alists, plist, plists and add json
@@ -73,7 +76,7 @@ No guarantee is given with respect to resolution or timing on any item.
 
 ## Connections/Reconnections and Transactions
 - [ ]   Ensure transactions can deal with reconnections/restarts
-- [ ]   Ensure prepared statements and reconnect restart work together
+- [X]   Ensure prepared statements and reconnect restart work together
 - [ ]   IPV6 connections
 - [ ]   Expand transaction isolation. Currently with-transaction does not allow specifying the isolation level.
         See https://www.postgresql.org/docs/current/static/transaction-iso.html

@@ -192,18 +192,19 @@
       (is (eql postmodern::*transaction-level* 1)))))
 
 (defclass test-data ()
-  ((id :col-type serial :initarg :id :accessor test-id)
-   (a :col-type (or (varchar 100) db-null) :initarg :a :accessor test-a)
-   (b :col-type boolean :col-default nil :initarg :b :accessor test-b)
-   (c :col-type integer :col-default 0 :initarg :c :accessor test-c))
-  (:metaclass dao-class)
-  (:table-name dao-test)
-  (:keys id))
+    ((id :col-type serial :initarg :id :accessor test-id)
+     (a :col-type (or (varchar 100) db-null) :initarg :a :accessor test-a)
+     (b :col-type boolean :col-default nil :initarg :b :accessor test-b)
+     (c :col-type integer :col-default 0 :initarg :c :accessor test-c)
+     (d :col-type numeric :col-default 0.0 :initarg :d :accessor test-d))
+    (:metaclass dao-class)
+    (:table-name dao-test)
+    (:keys id))
 
 (test dao-class
   (with-test-connection
     (if (pomo:table-exists-p 'dao-test)
-        (query (:delete-from 'dao-test))
+        (query (:drop-table 'dao-test))
         (execute (dao-table-definition 'test-data)))
     (protect
       (is (member :dao-test (list-tables)))
@@ -366,7 +367,37 @@
     (is (eq 0 (test-c item))))))
 
 ;;; Note that if you drop the table at the end of a thread test, it is almost certain that threads are still running.
-;;; As a result, the subsequent attempts to save-dao will fail. So do not
+;;; As a result, the subsequent attempts to save-dao will fail. So do not do that.
+
+(test prepared-statement-over-reconnect
+  (let ((terminate-backend
+          (prepare
+              "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
+              :rows))
+         (getpid (prepare "SELECT pg_backend_pid()" :single)))
+    ;; Ensure our prepared statement terminates connection.
+    (with-test-connection
+      (signals database-connection-error
+        (funcall terminate-backend (funcall getpid))))
+     (with-test-connection
+      (let ((original-pid (funcall getpid))
+            (reconnectedp nil))
+        (block done
+          (handler-bind
+              ((database-connection-error
+                 (lambda (condition)
+                   (let ((restart (find-restart :reconnect condition)))
+                     (is (not (null restart)))
+                     (setq reconnectedp t)
+                     (invoke-restart restart)))))
+            (funcall terminate-backend original-pid)))
+        (is-true reconnectedp)
+        (is (/= original-pid (funcall getpid)))
+         ;; Re-using the prepared statement on the new connection.
+        (multiple-value-bind (rows count)
+            (funcall terminate-backend 0)
+          (is (null rows))
+          (is (zerop count)))))))
 
 (test find-primary-key-info
   "Testing find-primary-key-info function. Given a table name, it returns
@@ -376,4 +407,4 @@ and second the string name for the datatype."
     (is (equal (postmodern:find-primary-key-info (s-sql:to-sql-name "tasks_lists"))
                '(("id" "integer"))))
     (is (equal (postmodern:find-primary-key-info (s-sql:to-sql-name "tasks_lists") t)
-               "id"))))
+               '("id")))))

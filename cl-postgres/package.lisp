@@ -91,6 +91,7 @@
            #:integrity-violation
            #:internal-error
            #:invalid-datetime-format
+           #:invalid-sql-statement-name
            #:lock-not-available
            #:not-null-violation
            #:numeric-value-out-of-range

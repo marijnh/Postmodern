@@ -131,6 +131,13 @@ interpreted as an array of the given type."
 (define-interpreter oid:+bpchar+ "bpchar" string)
 (define-interpreter oid:+varchar+ "varchar" string)
 
+(define-interpreter oid:+json+ "json" string)
+(define-interpreter oid:+jsonb+ "jsnob" ((version int 1)
+                                         (content string))
+  (unless (= 1 version)
+    (warn "Unexpected JSONB version: ~S." version))
+  content)
+
 (defun read-row-value (stream size)
   (declare (type stream stream)
            (type integer size)
