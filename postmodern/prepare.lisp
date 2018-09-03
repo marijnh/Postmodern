@@ -4,7 +4,7 @@
   "Make sure a statement has been prepared for this connection."
   (let ((meta (connection-meta connection)))
     (unless (gethash id meta)
-      (setf (gethash id meta) t)
+      (setf (gethash id meta) query)
       (prepare-query connection id query))))
 
 (let ((next-id 0))

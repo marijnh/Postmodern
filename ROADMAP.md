@@ -73,7 +73,7 @@ No guarantee is given with respect to resolution or timing on any item.
 
 ## Connections/Reconnections and Transactions
 - [ ]   Ensure transactions can deal with reconnections/restarts
-- [ ]   Ensure prepared statements and reconnect restart work together
+- [X]   Ensure prepared statements and reconnect restart work together
 - [ ]   IPV6 connections
 - [ ]   Expand transaction isolation. Currently with-transaction does not allow specifying the isolation level.
         See https://www.postgresql.org/docs/current/static/transaction-iso.html
