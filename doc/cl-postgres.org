@@ -47,6 +47,7 @@ Test whether a database connection is still open.
 This method provides access to a hash table that is associated with the
 current database connection, and is used to store information about the
 prepared statements that have been parsed for this connection.
+
 ** method connection-parameters (database-connection)
 → hash-table
 

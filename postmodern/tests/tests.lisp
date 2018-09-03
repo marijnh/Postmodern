@@ -367,7 +367,7 @@
     (is (eq 0 (test-c item))))))
 
 ;;; Note that if you drop the table at the end of a thread test, it is almost certain that threads are still running.
-;;; As a result, the subsequent attempts to save-dao will fail. So do not do that.
+;;; As a result, the subsequent attempts to save-dao will fail. So do not
 
 (test prepared-statement-over-reconnect
   (let ((terminate-backend
@@ -379,7 +379,8 @@
     (with-test-connection
       (signals database-connection-error
         (funcall terminate-backend (funcall getpid))))
-     (with-test-connection
+
+    (with-test-connection
       (let ((original-pid (funcall getpid))
             (reconnectedp nil))
         (block done
@@ -393,7 +394,8 @@
             (funcall terminate-backend original-pid)))
         (is-true reconnectedp)
         (is (/= original-pid (funcall getpid)))
-         ;; Re-using the prepared statement on the new connection.
+
+        ;; Re-using the prepared statement on the new connection.
         (multiple-value-bind (rows count)
             (funcall terminate-backend 0)
           (is (null rows))
