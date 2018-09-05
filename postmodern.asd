@@ -43,7 +43,8 @@
                             "cl-postgres/tests" "s-sql/tests")
   :components
   ((:module "postmodern/tests"
-            :components ((:file "tests"))))
+            :components ((:file "tests")
+                         (:file "test-dao"))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
              (uiop:symbol-call :fiveam '#:run! :postmodern)))
