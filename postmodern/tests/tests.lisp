@@ -1,6 +1,6 @@
 (defpackage :postmodern-tests
-
-  (:use :common-lisp :fiveam :postmodern :simple-date :cl-postgres-tests))
+  (:use :common-lisp :fiveam :postmodern :simple-date :cl-postgres-tests)
+  (:shadow #:with-test-connection))
 
 (in-package :postmodern-tests)
 
@@ -15,7 +15,7 @@
 (fiveam:in-suite :postmodern)
 
 (defmacro with-test-connection (&body body)
-  `(with-connection *test-connection* ,@body))
+  `(with-connection (prompt-connection) ,@body))
 
 (defmacro protect (&body body)
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
@@ -31,13 +31,14 @@
     (is (not (null *database*)))))
 
 (test connection-pool
-  (let ((pooled (apply 'connect (append *test-connection* '(:pooled-p t)))))
+  (let* ((db-params (append (prompt-connection) '(:pooled-p t)))
+         (pooled (apply 'connect db-params)))
     (disconnect pooled)
-    (let ((pooled* (apply 'connect (append *test-connection* '(:pooled-p t)))))
+    (let ((pooled* (apply 'connect db-params)))
       (is (eq pooled pooled*))
       (disconnect pooled*))
     (clear-connection-pool)
-    (let ((pooled* (apply 'connect (append *test-connection* '(:pooled-p t)))))
+    (let ((pooled* (apply 'connect db-params)))
       (is (not (eq pooled pooled*)))
       (disconnect pooled*))
     (clear-connection-pool)))

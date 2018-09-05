@@ -12,9 +12,6 @@
 
 (fiveam:in-suite :s-sql)
 
-(defmacro with-test-connection (&body body)
-  `(postmodern:with-connection *test-connection* ,@body))
-
 (defmacro protect (&body body)
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
 
