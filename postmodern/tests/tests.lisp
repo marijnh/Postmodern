@@ -203,8 +203,7 @@
 
 (test dao-class
   (with-test-connection
-    (when (pomo:table-exists-p 'dao-test)
-      (query (:drop-table 'dao-test)))
+    (query (:drop-table :if-exists 'dao-test :cascade))
     (execute (dao-table-definition 'test-data))
     (protect
       (is (member :dao-test (list-tables)))
@@ -229,8 +228,7 @@
 
 (test save-dao
   (with-test-connection
-    (when (pomo:table-exists-p 'dao-test)
-      (query (:drop-table 'dao-test)))
+    (query (:drop-table :if-exists 'dao-test :cascade))
     (execute (dao-table-definition 'test-data))
     (protect
       (let ((dao (make-instance 'test-data :a "quux")))
