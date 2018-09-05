@@ -192,19 +192,19 @@
       (is (eql postmodern::*transaction-level* 1)))))
 
 (defclass test-data ()
-  ((id :col-type serial :initarg :id :accessor test-id)
-   (a :col-type (or (varchar 100) db-null) :initarg :a :accessor test-a)
-   (b :col-type boolean :col-default nil :initarg :b :accessor test-b)
-   (c :col-type integer :col-default 0 :initarg :c :accessor test-c))
-  (:metaclass dao-class)
-  (:table-name dao-test)
-  (:keys id))
+    ((id :col-type serial :initarg :id :accessor test-id)
+     (a :col-type (or (varchar 100) db-null) :initarg :a :accessor test-a)
+     (b :col-type boolean :col-default nil :initarg :b :accessor test-b)
+     (c :col-type integer :col-default 0 :initarg :c :accessor test-c)
+     (d :col-type numeric :col-default 0.0 :initarg :d :accessor test-d))
+    (:metaclass dao-class)
+    (:table-name dao-test)
+    (:keys id))
 
 (test dao-class
   (with-test-connection
-    (if (pomo:table-exists-p 'dao-test)
-        (query (:delete-from 'dao-test))
-        (execute (dao-table-definition 'test-data)))
+    (query (:drop-table :if-exists 'dao-test :cascade))
+    (execute (dao-table-definition 'test-data))
     (protect
       (is (member :dao-test (list-tables)))
       (is (null (select-dao 'test-data)))
@@ -224,14 +224,12 @@
             (is (eq (test-b database-dao) nil))
             (delete-dao dao))))
       (is (not (select-dao 'test-data)))
-      (execute (:drop-table 'dao-test)))))
+      (execute (:drop-table 'dao-test :cascade)))))
 
 (test save-dao
   (with-test-connection
-    (unless (pomo:table-exists-p 'dao-test)
-      (execute (dao-table-definition 'test-data)))
-    (when (pomo:table-exists-p 'dao-test)
-      (query (:delete-from 'dao-test)))
+    (query (:drop-table :if-exists 'dao-test :cascade))
+    (execute (dao-table-definition 'test-data))
     (protect
       (let ((dao (make-instance 'test-data :a "quux")))
         (is (save-dao dao))
@@ -242,7 +240,7 @@
           (with-transaction () (save-dao dao)))
         (with-transaction ()
           (is (not (save-dao/transaction dao)))))
-      (execute (:drop-table 'dao-test)))))
+      (execute (:drop-table 'dao-test :cascade)))))
 
 (test query-drop-table-1
   (with-test-connection
@@ -250,7 +248,7 @@
       (execute (dao-table-definition 'test-data)))
     (protect
       (is (member :dao-test (with-test-connection (pomo:list-tables))))
-      (pomo:query (:drop-table :dao-test))
+      (query (:drop-table :if-exists 'dao-test :cascade))
       (is (not (member :dao-test (with-test-connection (pomo:list-tables))))))))
 
 (defclass test-oid ()
@@ -354,15 +352,16 @@
 (test dao-class-threads
   (with-test-connection
     (unless (pomo:table-exists-p 'dao-test)
-      (execute (dao-table-definition 'test-data))))
+      (execute (dao-table-definition 'test-data)))
   (let ((item (make-instance 'test-data :a "Sabra" :b t :c 0)))
-    (with-test-connection (save-dao item))
+    (save-dao item)
     (loop for x from 1 to 5 do
          (bt:make-thread
-          (lambda () (with-test-connection
-                       (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (incf (test-c item) 1)) (save-dao item))
-                       (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (decf (test-c item) 1)) (save-dao item))))))
-    (is (eq 0 (test-c item)))))
+          (lambda ()
+            (with-test-connection
+            (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (incf (test-c item) 1)) (save-dao item))
+            (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (decf (test-c item) 1)) (save-dao item))))))
+    (is (eq 0 (test-c item))))))
 
 ;;; Note that if you drop the table at the end of a thread test, it is almost certain that threads are still running.
 ;;; As a result, the subsequent attempts to save-dao will fail. So do not
@@ -398,3 +397,13 @@
             (funcall terminate-backend 0)
           (is (null rows))
           (is (zerop count)))))))
+
+(test find-primary-key-info
+  "Testing find-primary-key-info function. Given a table name, it returns
+ a list of two strings. First the column name of the primary key of the table
+and second the string name for the datatype."
+  (with-test-connection
+    (is (equal (postmodern:find-primary-key-info (s-sql:to-sql-name "tasks_lists"))
+               '(("id" "integer"))))
+    (is (equal (postmodern:find-primary-key-info (s-sql:to-sql-name "tasks_lists") t)
+               '("id")))))

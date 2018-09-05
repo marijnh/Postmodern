@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-08-11 Sat 19:21 -->
+<!-- 2018-09-02 Sun 07:42 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Cl-Postgres Reference Manual</title>
@@ -179,6 +179,7 @@
   .org-svg { width: 90%; }
   /*]]>*/-->
 </style>
+<link rel="stylesheet" type="text/css" href="style.css" />
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -233,71 +234,71 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgf29937b">Connecting</a>
+<li><a href="#org2e171b9">Connecting</a>
 <ul>
-<li><a href="#org96fcd45">class database-connection</a></li>
-<li><a href="#orgae53cdf">function open-database (database user password host &amp;optional (port 5432) (use-ssl :no))</a></li>
-<li><a href="#orga987e5c">function close-database (database-connection)</a></li>
-<li><a href="#org2b8dc4b">function reopen-database (database-connection)</a></li>
-<li><a href="#orgde74ee2">function database-open-p (database-connection)</a></li>
-<li><a href="#org9aefb46">method connection-meta (database-connection)</a></li>
-<li><a href="#org3097fa6">method connection-parameters (database-connection)</a></li>
-<li><a href="#org031e71e">function wait-for-notification (database-connection)</a></li>
+<li><a href="#org41014cb">class database-connection</a></li>
+<li><a href="#orgea81ebe">function open-database (database user password host &amp;optional (port 5432) (use-ssl :no))</a></li>
+<li><a href="#org3c403ea">function close-database (database-connection)</a></li>
+<li><a href="#org519b144">function reopen-database (database-connection)</a></li>
+<li><a href="#orgfb21b45">function database-open-p (database-connection)</a></li>
+<li><a href="#orgdea4b42">method connection-meta (database-connection)</a></li>
+<li><a href="#orgbb2163a">method connection-parameters (database-connection)</a></li>
+<li><a href="#orge57e486">function wait-for-notification (database-connection)</a></li>
 </ul>
 </li>
-<li><a href="#orgbae28be">Querying</a>
+<li><a href="#orgd4de93b">Querying</a>
 <ul>
-<li><a href="#org5ba1b82">function exec-query (database-connection query &amp;optional (row-reader 'ignore-row-reader))</a></li>
-<li><a href="#org86538fc">function prepare-query (database-connection name query)</a></li>
-<li><a href="#orga71f3f4">function exec-prepared (database-connection name parameters &amp;optional (row-reader 'ignore-row-reader))</a></li>
-<li><a href="#org375a2d3">function unprepare-query (database-connection name)</a></li>
-<li><a href="#org330eb92">method to-sql-string (value)</a></li>
-<li><a href="#org44f8a58">variable <b>silently-truncate-rationals</b></a></li>
-<li><a href="#orgadf0f7b">variable <b>query-log</b></a></li>
-<li><a href="#orgc43b623">variable <b>query-callback</b></a></li>
-<li><a href="#orgef84ce3">function log-query (query internal-time)</a></li>
+<li><a href="#org87134bc">function exec-query (database-connection query &amp;optional (row-reader 'ignore-row-reader))</a></li>
+<li><a href="#orge157c72">function prepare-query (database-connection name query)</a></li>
+<li><a href="#org264de59">function exec-prepared (database-connection name parameters &amp;optional (row-reader 'ignore-row-reader))</a></li>
+<li><a href="#org6d1a6e5">function unprepare-query (database-connection name)</a></li>
+<li><a href="#org64b4ca7">method to-sql-string (value)</a></li>
+<li><a href="#orgb1c0210">variable <b>silently-truncate-rationals</b></a></li>
+<li><a href="#org7d2ae12">variable <b>query-log</b></a></li>
+<li><a href="#orgd8e6756">variable <b>query-callback</b></a></li>
+<li><a href="#orge08d274">function log-query (query internal-time)</a></li>
 </ul>
 </li>
-<li><a href="#orga3d2e14">Reading values</a>
+<li><a href="#orgafb9b88">Reading values</a>
 <ul>
-<li><a href="#orgf129507">function copy-sql-readtable (table)</a></li>
-<li><a href="#org3862efc">function default-sql-readtable ()</a></li>
-<li><a href="#org8463f86">function set-sql-reader (oid function &amp;key table binary-p)</a></li>
-<li><a href="#org936cef2">function set-sql-datetime-readers (&amp;key date timestamp timestamp-with-timezone time interval table)</a></li>
+<li><a href="#org0d937c3">function copy-sql-readtable (table)</a></li>
+<li><a href="#org8de63a6">function default-sql-readtable ()</a></li>
+<li><a href="#org94bc150">function set-sql-reader (oid function &amp;key table binary-p)</a></li>
+<li><a href="#orga55e648">function set-sql-datetime-readers (&amp;key date timestamp timestamp-with-timezone time interval table)</a></li>
 </ul>
 </li>
-<li><a href="#orgce70c47">Row readers</a>
+<li><a href="#org1be36c4">Row readers</a>
 <ul>
-<li><a href="#org2edfa50">macro row-reader ((fields) &amp;body body)</a></li>
-<li><a href="#org7d6383a">macro def-row-reader (name (fields) &amp;body body)</a></li>
-<li><a href="#org6fda0bd">method field-name (field)</a></li>
-<li><a href="#org18d0b73">method field-type (field)</a></li>
-<li><a href="#org3be7c66">function list-row-reader (socket fields)</a></li>
-<li><a href="#org1ff4238">function alist-row-reader (socket fields)</a></li>
-<li><a href="#org67bd1a9">function ignore-row-reader (socket fields)</a></li>
+<li><a href="#orgdeb814e">macro row-reader ((fields) &amp;body body)</a></li>
+<li><a href="#orgdfd42f3">macro def-row-reader (name (fields) &amp;body body)</a></li>
+<li><a href="#org50c6504">method field-name (field)</a></li>
+<li><a href="#org914a5b2">method field-type (field)</a></li>
+<li><a href="#orgfba7f87">function list-row-reader (socket fields)</a></li>
+<li><a href="#org8fd1c4f">function alist-row-reader (socket fields)</a></li>
+<li><a href="#org305d59e">function ignore-row-reader (socket fields)</a></li>
 </ul>
 </li>
-<li><a href="#orge175f19">Bulk Copying</a>
+<li><a href="#orgcd13f3b">Bulk Copying</a>
 <ul>
-<li><a href="#org7a40458">function open-db-writer (db table &amp;optional columns)</a></li>
-<li><a href="#org801f211">function close-db-writer (writer &amp;key abort)</a></li>
-<li><a href="#org1f82726">function db-write-row (writer row-data)</a></li>
+<li><a href="#org1957117">function open-db-writer (db table &amp;optional columns)</a></li>
+<li><a href="#orge36a00c">function close-db-writer (writer &amp;key abort)</a></li>
+<li><a href="#org3a94784">function db-write-row (writer row-data)</a></li>
 </ul>
 </li>
-<li><a href="#org770bb2f">Conditions</a>
+<li><a href="#org9f741e7">Conditions</a>
 <ul>
-<li><a href="#orgb1d60fb">condition database-error</a></li>
-<li><a href="#orgd459dcb">method database-error-message (database-error)</a></li>
-<li><a href="#org4152f59">method database-error-detail (database-error)</a></li>
-<li><a href="#org18a5245">method database-error-code (database-error)</a></li>
-<li><a href="#orgdaebdbf">method database-error-query (database-error)</a></li>
-<li><a href="#org89436ac">method database-error-cause (database-error)</a></li>
-<li><a href="#org5a12301">function database-error-constraint-name (database-error)</a></li>
-<li><a href="#orge7114e2">condition database-connection-error</a></li>
-<li><a href="#orga41c786">condition postgresql-notification</a></li>
-<li><a href="#org9f97877">method postgresql-notification-channel (postgresql-notification)</a></li>
-<li><a href="#org5a703b1">method postgresql-notification-payload (postgresql-notification)</a></li>
-<li><a href="#org44ea096">method postgresql-notification-pid (postgresql-notification)</a></li>
+<li><a href="#org436298c">condition database-error</a></li>
+<li><a href="#orgd3f99de">method database-error-message (database-error)</a></li>
+<li><a href="#orgdc2b421">method database-error-detail (database-error)</a></li>
+<li><a href="#org9fcd1a1">method database-error-code (database-error)</a></li>
+<li><a href="#orge0e3083">method database-error-query (database-error)</a></li>
+<li><a href="#orgcaf14a3">method database-error-cause (database-error)</a></li>
+<li><a href="#org721f27f">function database-error-constraint-name (database-error)</a></li>
+<li><a href="#orgea749ec">condition database-connection-error</a></li>
+<li><a href="#org37e5d1b">condition postgresql-notification</a></li>
+<li><a href="#orge62533e">method postgresql-notification-channel (postgresql-notification)</a></li>
+<li><a href="#org1ad01e5">method postgresql-notification-payload (postgresql-notification)</a></li>
+<li><a href="#org5d3d780">method postgresql-notification-pid (postgresql-notification)</a></li>
 </ul>
 </li>
 </ul>
@@ -310,22 +311,22 @@ library, but can be used separately.
 </p>
 
 
-<div id="outline-container-orgf29937b" class="outline-2">
-<h2 id="orgf29937b">Connecting</h2>
-<div class="outline-text-2" id="text-orgf29937b">
+<div id="outline-container-org2e171b9" class="outline-2">
+<h2 id="org2e171b9">Connecting</h2>
+<div class="outline-text-2" id="text-org2e171b9">
 </div>
-<div id="outline-container-org96fcd45" class="outline-3">
-<h3 id="org96fcd45">class database-connection</h3>
-<div class="outline-text-3" id="text-org96fcd45">
+<div id="outline-container-org41014cb" class="outline-3">
+<h3 id="org41014cb">class database-connection</h3>
+<div class="outline-text-3" id="text-org41014cb">
 <p>
 Objects of this type represent database connections.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgae53cdf" class="outline-3">
-<h3 id="orgae53cdf">function open-database (database user password host &amp;optional (port 5432) (use-ssl :no))</h3>
-<div class="outline-text-3" id="text-orgae53cdf">
+<div id="outline-container-orgea81ebe" class="outline-3">
+<h3 id="orgea81ebe">function open-database (database user password host &amp;optional (port 5432) (use-ssl :no))</h3>
+<div class="outline-text-3" id="text-orgea81ebe">
 <p>
 → database-connection
 </p>
@@ -344,9 +345,9 @@ connect using a Unix domain socket instead of a TCP socket.
 </div>
 </div>
 
-<div id="outline-container-orga987e5c" class="outline-3">
-<h3 id="orga987e5c">function close-database (database-connection)</h3>
-<div class="outline-text-3" id="text-orga987e5c">
+<div id="outline-container-org3c403ea" class="outline-3">
+<h3 id="org3c403ea">function close-database (database-connection)</h3>
+<div class="outline-text-3" id="text-org3c403ea">
 <p>
 Close a database connection. It is advisable to call this on connections when
 you are done with them. Otherwise the open socket will stick around until it
@@ -356,9 +357,9 @@ with it.
 </div>
 </div>
 
-<div id="outline-container-org2b8dc4b" class="outline-3">
-<h3 id="org2b8dc4b">function reopen-database (database-connection)</h3>
-<div class="outline-text-3" id="text-org2b8dc4b">
+<div id="outline-container-org519b144" class="outline-3">
+<h3 id="org519b144">function reopen-database (database-connection)</h3>
+<div class="outline-text-3" id="text-org519b144">
 <p>
 Re-establish a database connection for a previously closed connection object.
 (Calling this on a connection that is still open is harmless.)
@@ -366,9 +367,9 @@ Re-establish a database connection for a previously closed connection object.
 </div>
 </div>
 
-<div id="outline-container-orgde74ee2" class="outline-3">
-<h3 id="orgde74ee2">function database-open-p (database-connection)</h3>
-<div class="outline-text-3" id="text-orgde74ee2">
+<div id="outline-container-orgfb21b45" class="outline-3">
+<h3 id="orgfb21b45">function database-open-p (database-connection)</h3>
+<div class="outline-text-3" id="text-orgfb21b45">
 <p>
 → boolean
 </p>
@@ -379,9 +380,9 @@ Test whether a database connection is still open.
 </div>
 </div>
 
-<div id="outline-container-org9aefb46" class="outline-3">
-<h3 id="org9aefb46">method connection-meta (database-connection)</h3>
-<div class="outline-text-3" id="text-org9aefb46">
+<div id="outline-container-orgdea4b42" class="outline-3">
+<h3 id="orgdea4b42">method connection-meta (database-connection)</h3>
+<div class="outline-text-3" id="text-orgdea4b42">
 <p>
 → hash-table
 </p>
@@ -394,10 +395,9 @@ connection.
 </p>
 </div>
 </div>
-
-<div id="outline-container-org3097fa6" class="outline-3">
-<h3 id="org3097fa6">method connection-parameters (database-connection)</h3>
-<div class="outline-text-3" id="text-org3097fa6">
+<div id="outline-container-orgbb2163a" class="outline-3">
+<h3 id="orgbb2163a">method connection-parameters (database-connection)</h3>
+<div class="outline-text-3" id="text-orgbb2163a">
 <p>
 → hash-table
 </p>
@@ -429,9 +429,9 @@ and certificate files. They can be either NIL, for no file, or a pathname.
 </div>
 </div>
 
-<div id="outline-container-org031e71e" class="outline-3">
-<h3 id="org031e71e">function wait-for-notification (database-connection)</h3>
-<div class="outline-text-3" id="text-org031e71e">
+<div id="outline-container-orge57e486" class="outline-3">
+<h3 id="orge57e486">function wait-for-notification (database-connection)</h3>
+<div class="outline-text-3" id="text-orge57e486">
 <p>
 This function blocks until a notification is received on the connection.
 The PostgreSQL LISTEN command must be used to enable listening for
@@ -441,13 +441,13 @@ notifications.
 </div>
 </div>
 
-<div id="outline-container-orgbae28be" class="outline-2">
-<h2 id="orgbae28be">Querying</h2>
-<div class="outline-text-2" id="text-orgbae28be">
+<div id="outline-container-orgd4de93b" class="outline-2">
+<h2 id="orgd4de93b">Querying</h2>
+<div class="outline-text-2" id="text-orgd4de93b">
 </div>
-<div id="outline-container-org5ba1b82" class="outline-3">
-<h3 id="org5ba1b82">function exec-query (database-connection query &amp;optional (row-reader 'ignore-row-reader))</h3>
-<div class="outline-text-3" id="text-org5ba1b82">
+<div id="outline-container-org87134bc" class="outline-3">
+<h3 id="org87134bc">function exec-query (database-connection query &amp;optional (row-reader 'ignore-row-reader))</h3>
+<div class="outline-text-3" id="text-org87134bc">
 <p>
 → result
 </p>
@@ -460,9 +460,9 @@ about the amount of rows affected, this is returned as a second value.
 </div>
 </div>
 
-<div id="outline-container-org86538fc" class="outline-3">
-<h3 id="org86538fc">function prepare-query (database-connection name query)</h3>
-<div class="outline-text-3" id="text-org86538fc">
+<div id="outline-container-orge157c72" class="outline-3">
+<h3 id="orge157c72">function prepare-query (database-connection name query)</h3>
+<div class="outline-text-3" id="text-orge157c72">
 <p>
 Parse and plan the given query, and store it under the given name. Note that
 prepared statements are per-connection, so they can only be executed through
@@ -471,9 +471,9 @@ the same connection that prepared them.
 </div>
 </div>
 
-<div id="outline-container-orga71f3f4" class="outline-3">
-<h3 id="orga71f3f4">function exec-prepared (database-connection name parameters &amp;optional (row-reader 'ignore-row-reader))</h3>
-<div class="outline-text-3" id="text-orga71f3f4">
+<div id="outline-container-org264de59" class="outline-3">
+<h3 id="org264de59">function exec-prepared (database-connection name parameters &amp;optional (row-reader 'ignore-row-reader))</h3>
+<div class="outline-text-3" id="text-org264de59">
 <p>
 → result
 </p>
@@ -489,9 +489,9 @@ Again, the number or affected rows is optionally returned as a second value.
 </div>
 </div>
 
-<div id="outline-container-org375a2d3" class="outline-3">
-<h3 id="org375a2d3">function unprepare-query (database-connection name)</h3>
-<div class="outline-text-3" id="text-org375a2d3">
+<div id="outline-container-org6d1a6e5" class="outline-3">
+<h3 id="org6d1a6e5">function unprepare-query (database-connection name)</h3>
+<div class="outline-text-3" id="text-org6d1a6e5">
 <p>
 Close the prepared statement by the given name. This will free resources and
 allow the name to be associated with a new prepared query.
@@ -499,9 +499,9 @@ allow the name to be associated with a new prepared query.
 </div>
 </div>
 
-<div id="outline-container-org330eb92" class="outline-3">
-<h3 id="org330eb92">method to-sql-string (value)</h3>
-<div class="outline-text-3" id="text-org330eb92">
+<div id="outline-container-org64b4ca7" class="outline-3">
+<h3 id="org64b4ca7">method to-sql-string (value)</h3>
+<div class="outline-text-3" id="text-org64b4ca7">
 <p>
 → (values string needs-escaping)
 </p>
@@ -522,9 +522,9 @@ used by S-SQL.)
 </div>
 </div>
 
-<div id="outline-container-org44f8a58" class="outline-3">
-<h3 id="org44f8a58">variable <b>silently-truncate-rationals</b></h3>
-<div class="outline-text-3" id="text-org44f8a58">
+<div id="outline-container-orgb1c0210" class="outline-3">
+<h3 id="orgb1c0210">variable <b>silently-truncate-rationals</b></h3>
+<div class="outline-text-3" id="text-orgb1c0210">
 <p>
 When a rational number is passed into a query (as per to-sql-string), but it
 can not be expressed within 38 decimal digits (for example 1/3), it will be
@@ -534,9 +534,9 @@ that behaviour and raise an error instead.
 </div>
 </div>
 
-<div id="outline-container-orgadf0f7b" class="outline-3">
-<h3 id="orgadf0f7b">variable <b>query-log</b></h3>
-<div class="outline-text-3" id="text-orgadf0f7b">
+<div id="outline-container-org7d2ae12" class="outline-3">
+<h3 id="org7d2ae12">variable <b>query-log</b></h3>
+<div class="outline-text-3" id="text-org7d2ae12">
 <p>
 When debugging, it can be helpful to inspect the queries that are being sent
 to the database. Set this variable to an output stream value (<b>standard-output</b>,
@@ -545,9 +545,9 @@ for example) to have CL-postgres log every query it makes.
 </div>
 </div>
 
-<div id="outline-container-orgc43b623" class="outline-3">
-<h3 id="orgc43b623">variable <b>query-callback</b></h3>
-<div class="outline-text-3" id="text-orgc43b623">
+<div id="outline-container-orgd8e6756" class="outline-3">
+<h3 id="orgd8e6756">variable <b>query-callback</b></h3>
+<div class="outline-text-3" id="text-orgd8e6756">
 <p>
 When profiling or debugging, the <b>query-log</b> may not give enough information,
 or reparsing its output may not be feasible. This variable may be set to a
@@ -564,9 +564,9 @@ functionality, you will have to call LOG-QUERY from your callback function
 </div>
 </div>
 
-<div id="outline-container-orgef84ce3" class="outline-3">
-<h3 id="orgef84ce3">function log-query (query internal-time)</h3>
-<div class="outline-text-3" id="text-orgef84ce3">
+<div id="outline-container-orge08d274" class="outline-3">
+<h3 id="orge08d274">function log-query (query internal-time)</h3>
+<div class="outline-text-3" id="text-orge08d274">
 <p>
 This function is default value of <b>QUERY-CALLBACK</b> and logs queries
 to <b>QUERY-LOG</b> if it is not NIL.
@@ -575,9 +575,9 @@ to <b>QUERY-LOG</b> if it is not NIL.
 </div>
 </div>
 
-<div id="outline-container-orga3d2e14" class="outline-2">
-<h2 id="orga3d2e14">Reading values</h2>
-<div class="outline-text-2" id="text-orga3d2e14">
+<div id="outline-container-orgafb9b88" class="outline-2">
+<h2 id="orgafb9b88">Reading values</h2>
+<div class="outline-text-2" id="text-orgafb9b88">
 <p>
 CL-postgres knows how to convert commonly used PostgreSQL data types to Lisp
 values. This table shows the mapping:
@@ -672,9 +672,9 @@ create separate read tables.
 </p>
 </div>
 
-<div id="outline-container-orgf129507" class="outline-3">
-<h3 id="orgf129507">function copy-sql-readtable (table)</h3>
-<div class="outline-text-3" id="text-orgf129507">
+<div id="outline-container-org0d937c3" class="outline-3">
+<h3 id="org0d937c3">function copy-sql-readtable (table)</h3>
+<div class="outline-text-3" id="text-org0d937c3">
 <p>
 → readtable
 </p>
@@ -685,9 +685,9 @@ Copies a given readtable.
 </div>
 </div>
 
-<div id="outline-container-org3862efc" class="outline-3">
-<h3 id="org3862efc">function default-sql-readtable ()</h3>
-<div class="outline-text-3" id="text-org3862efc">
+<div id="outline-container-org8de63a6" class="outline-3">
+<h3 id="org8de63a6">function default-sql-readtable ()</h3>
+<div class="outline-text-3" id="text-org8de63a6">
 <p>
 → readtable
 </p>
@@ -699,9 +699,9 @@ CL-postgres itself.
 </div>
 </div>
 
-<div id="outline-container-org8463f86" class="outline-3">
-<h3 id="org8463f86">function set-sql-reader (oid function &amp;key table binary-p)</h3>
-<div class="outline-text-3" id="text-org8463f86">
+<div id="outline-container-org94bc150" class="outline-3">
+<h3 id="org94bc150">function set-sql-reader (oid function &amp;key table binary-p)</h3>
+<div class="outline-text-3" id="text-org94bc150">
 <p>
 Define a new reader for a given type. table defaults to <b>sql-readtable</b>.
 The reader function should take a single argument, a string, and transform
@@ -715,9 +715,9 @@ less or more bytes than the given size will horribly break your connection.
 </div>
 </div>
 
-<div id="outline-container-org936cef2" class="outline-3">
-<h3 id="org936cef2">function set-sql-datetime-readers (&amp;key date timestamp timestamp-with-timezone time interval table)</h3>
-<div class="outline-text-3" id="text-org936cef2">
+<div id="outline-container-orga55e648" class="outline-3">
+<h3 id="orga55e648">function set-sql-datetime-readers (&amp;key date timestamp timestamp-with-timezone time interval table)</h3>
+<div class="outline-text-3" id="text-orga55e648">
 <p>
 Since there is no widely recognised standard way of representing dates and
 times in Common Lisp, and reading these from string representation is clunky
@@ -773,9 +773,9 @@ account.
 </div>
 </div>
 
-<div id="outline-container-orgce70c47" class="outline-2">
-<h2 id="orgce70c47">Row readers</h2>
-<div class="outline-text-2" id="text-orgce70c47">
+<div id="outline-container-org1be36c4" class="outline-2">
+<h2 id="org1be36c4">Row readers</h2>
+<div class="outline-text-2" id="text-org1be36c4">
 <p>
 Row readers are a way to read and group the results of queries. Roughly, they
 are functions that perform the iteration over the rows and cells in the
@@ -783,9 +783,9 @@ result, and do something with the returned values.
 </p>
 </div>
 
-<div id="outline-container-org2edfa50" class="outline-3">
-<h3 id="org2edfa50">macro row-reader ((fields) &amp;body body)</h3>
-<div class="outline-text-3" id="text-org2edfa50">
+<div id="outline-container-orgdeb814e" class="outline-3">
+<h3 id="orgdeb814e">macro row-reader ((fields) &amp;body body)</h3>
+<div class="outline-text-3" id="text-orgdeb814e">
 <p>
 → function
 </p>
@@ -827,9 +827,9 @@ results from the current query.
 </div>
 </div>
 
-<div id="outline-container-org7d6383a" class="outline-3">
-<h3 id="org7d6383a">macro def-row-reader (name (fields) &amp;body body)</h3>
-<div class="outline-text-3" id="text-org7d6383a">
+<div id="outline-container-orgdfd42f3" class="outline-3">
+<h3 id="orgdfd42f3">macro def-row-reader (name (fields) &amp;body body)</h3>
+<div class="outline-text-3" id="text-orgdfd42f3">
 <p>
 The defun-like variant of row-reader: creates a row reader and gives it a
 top-level function name.
@@ -837,9 +837,9 @@ top-level function name.
 </div>
 </div>
 
-<div id="outline-container-org6fda0bd" class="outline-3">
-<h3 id="org6fda0bd">method field-name (field)</h3>
-<div class="outline-text-3" id="text-org6fda0bd">
+<div id="outline-container-org50c6504" class="outline-3">
+<h3 id="org50c6504">method field-name (field)</h3>
+<div class="outline-text-3" id="text-org50c6504">
 <p>
 → string
 </p>
@@ -852,24 +852,24 @@ this column.
 </div>
 </div>
 
-<div id="outline-container-org18d0b73" class="outline-3">
-<h3 id="org18d0b73">method field-type (field)</h3>
-<div class="outline-text-3" id="text-org18d0b73">
+<div id="outline-container-org914a5b2" class="outline-3">
+<h3 id="org914a5b2">method field-type (field)</h3>
+<div class="outline-text-3" id="text-org914a5b2">
 <p>
 → oid
 </p>
 
 <p>
 This extracts the PostgreSQL OID associated with this column. You can, if
-you really want to, query the pg<sub>types</sub> table to find out more about the
+you really want to, query the pg_types table to find out more about the
 types denoted by OIDs.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org3be7c66" class="outline-3">
-<h3 id="org3be7c66">function list-row-reader (socket fields)</h3>
-<div class="outline-text-3" id="text-org3be7c66">
+<div id="outline-container-orgfba7f87" class="outline-3">
+<h3 id="orgfba7f87">function list-row-reader (socket fields)</h3>
+<div class="outline-text-3" id="text-orgfba7f87">
 <p>
 → list
 </p>
@@ -880,9 +880,9 @@ A row reader that builds a list of lists from the query results.
 </div>
 </div>
 
-<div id="outline-container-org1ff4238" class="outline-3">
-<h3 id="org1ff4238">function alist-row-reader (socket fields)</h3>
-<div class="outline-text-3" id="text-org1ff4238">
+<div id="outline-container-org8fd1c4f" class="outline-3">
+<h3 id="org8fd1c4f">function alist-row-reader (socket fields)</h3>
+<div class="outline-text-3" id="text-org8fd1c4f">
 <p>
 → alist
 </p>
@@ -894,9 +894,9 @@ values.
 </div>
 </div>
 
-<div id="outline-container-org67bd1a9" class="outline-3">
-<h3 id="org67bd1a9">function ignore-row-reader (socket fields)</h3>
-<div class="outline-text-3" id="text-org67bd1a9">
+<div id="outline-container-org305d59e" class="outline-3">
+<h3 id="org305d59e">function ignore-row-reader (socket fields)</h3>
+<div class="outline-text-3" id="text-org305d59e">
 <p>
 A row reader that completely ignores the result of a query.
 </p>
@@ -904,9 +904,9 @@ A row reader that completely ignores the result of a query.
 </div>
 </div>
 
-<div id="outline-container-orge175f19" class="outline-2">
-<h2 id="orge175f19">Bulk Copying</h2>
-<div class="outline-text-2" id="text-orge175f19">
+<div id="outline-container-orgcd13f3b" class="outline-2">
+<h2 id="orgcd13f3b">Bulk Copying</h2>
+<div class="outline-text-2" id="text-orgcd13f3b">
 <p>
 When loading large amounts of data into PostgreSQL, it can be done
 significantly faster using the bulk copying feature. The drawback to this
@@ -915,9 +915,9 @@ entire batch is completed but sometimes the speed is worth it
 </p>
 </div>
 
-<div id="outline-container-org7a40458" class="outline-3">
-<h3 id="org7a40458">function open-db-writer (db table &amp;optional columns)</h3>
-<div class="outline-text-3" id="text-org7a40458">
+<div id="outline-container-org1957117" class="outline-3">
+<h3 id="org1957117">function open-db-writer (db table &amp;optional columns)</h3>
+<div class="outline-text-3" id="text-org1957117">
 <p>
 Opens a table stream into which rows can be written one at a time using
 db-write-row. db is either a connection object or a list of arguments that
@@ -928,9 +928,9 @@ columns, use columns to indicate those that you do.
 </div>
 </div>
 
-<div id="outline-container-org801f211" class="outline-3">
-<h3 id="org801f211">function close-db-writer (writer &amp;key abort)</h3>
-<div class="outline-text-3" id="text-org801f211">
+<div id="outline-container-orge36a00c" class="outline-3">
+<h3 id="orge36a00c">function close-db-writer (writer &amp;key abort)</h3>
+<div class="outline-text-3" id="text-orge36a00c">
 <p>
 Closes a bulk writer opened by open-db-writer. Will close the associated
 database connection when it was created for this copier, or abort is true.
@@ -938,9 +938,9 @@ database connection when it was created for this copier, or abort is true.
 </div>
 </div>
 
-<div id="outline-container-org1f82726" class="outline-3">
-<h3 id="org1f82726">function db-write-row (writer row-data)</h3>
-<div class="outline-text-3" id="text-org1f82726">
+<div id="outline-container-org3a94784" class="outline-3">
+<h3 id="org3a94784">function db-write-row (writer row-data)</h3>
+<div class="outline-text-3" id="text-org3a94784">
 <p>
 Writes row-data into the table and columns referenced by the writer.
 row-data is a list of Lisp objects, one for each column included when
@@ -952,9 +952,9 @@ into the DB.
 </div>
 </div>
 
-<div id="outline-container-org770bb2f" class="outline-2">
-<h2 id="org770bb2f">Conditions</h2>
-<div class="outline-text-2" id="text-org770bb2f">
+<div id="outline-container-org9f741e7" class="outline-2">
+<h2 id="org9f741e7">Conditions</h2>
+<div class="outline-text-2" id="text-org9f741e7">
 <p>
 Opening or querying a database may raise errors. CL-postgres will wrap the
 errors that the server returns in a lisp condition, and raise conditions of
@@ -963,9 +963,9 @@ through as they are.
 </p>
 </div>
 
-<div id="outline-container-orgb1d60fb" class="outline-3">
-<h3 id="orgb1d60fb">condition database-error</h3>
-<div class="outline-text-3" id="text-orgb1d60fb">
+<div id="outline-container-org436298c" class="outline-3">
+<h3 id="org436298c">condition database-error</h3>
+<div class="outline-text-3" id="text-org436298c">
 <p>
 The type of database-related conditions. For errors that you may want to
 catch by type, the cl-postgres-error package defines a bucket of subtypes
@@ -974,9 +974,9 @@ used for specific errors. See the cl-postgres/package.lisp file for a list.
 </div>
 </div>
 
-<div id="outline-container-orgd459dcb" class="outline-3">
-<h3 id="orgd459dcb">method database-error-message (database-error)</h3>
-<div class="outline-text-3" id="text-orgd459dcb">
+<div id="outline-container-orgd3f99de" class="outline-3">
+<h3 id="orgd3f99de">method database-error-message (database-error)</h3>
+<div class="outline-text-3" id="text-orgd3f99de">
 <p>
 → string
 </p>
@@ -987,9 +987,9 @@ A short message associated with this error.
 </div>
 </div>
 
-<div id="outline-container-org4152f59" class="outline-3">
-<h3 id="org4152f59">method database-error-detail (database-error)</h3>
-<div class="outline-text-3" id="text-org4152f59">
+<div id="outline-container-orgdc2b421" class="outline-3">
+<h3 id="orgdc2b421">method database-error-detail (database-error)</h3>
+<div class="outline-text-3" id="text-orgdc2b421">
 <p>
 → string
 </p>
@@ -1000,9 +1000,9 @@ A longer description of the problem, or NIL if none is available.
 </div>
 </div>
 
-<div id="outline-container-org18a5245" class="outline-3">
-<h3 id="org18a5245">method database-error-code (database-error)</h3>
-<div class="outline-text-3" id="text-org18a5245">
+<div id="outline-container-org9fcd1a1" class="outline-3">
+<h3 id="org9fcd1a1">method database-error-code (database-error)</h3>
+<div class="outline-text-3" id="text-org9fcd1a1">
 <p>
 → string
 </p>
@@ -1014,9 +1014,9 @@ PostgreSQL manual for their meaning.
 </div>
 </div>
 
-<div id="outline-container-orgdaebdbf" class="outline-3">
-<h3 id="orgdaebdbf">method database-error-query (database-error)</h3>
-<div class="outline-text-3" id="text-orgdaebdbf">
+<div id="outline-container-orge0e3083" class="outline-3">
+<h3 id="orge0e3083">method database-error-query (database-error)</h3>
+<div class="outline-text-3" id="text-orge0e3083">
 <p>
 → string
 </p>
@@ -1027,9 +1027,9 @@ The query that led to this error, or NIL if no query was involved.
 </div>
 </div>
 
-<div id="outline-container-org89436ac" class="outline-3">
-<h3 id="org89436ac">method database-error-cause (database-error)</h3>
-<div class="outline-text-3" id="text-org89436ac">
+<div id="outline-container-orgcaf14a3" class="outline-3">
+<h3 id="orgcaf14a3">method database-error-cause (database-error)</h3>
+<div class="outline-text-3" id="text-orgcaf14a3">
 <p>
 → condition
 </p>
@@ -1041,9 +1041,9 @@ condition.
 </div>
 </div>
 
-<div id="outline-container-org5a12301" class="outline-3">
-<h3 id="org5a12301">function database-error-constraint-name (database-error)</h3>
-<div class="outline-text-3" id="text-org5a12301">
+<div id="outline-container-org721f27f" class="outline-3">
+<h3 id="org721f27f">function database-error-constraint-name (database-error)</h3>
+<div class="outline-text-3" id="text-org721f27f">
 <p>
 → string
 </p>
@@ -1055,9 +1055,9 @@ violated (or nil if no constraint was found.)
 </div>
 </div>
 
-<div id="outline-container-orge7114e2" class="outline-3">
-<h3 id="orge7114e2">condition database-connection-error</h3>
-<div class="outline-text-3" id="text-orge7114e2">
+<div id="outline-container-orgea749ec" class="outline-3">
+<h3 id="orgea749ec">condition database-connection-error</h3>
+<div class="outline-text-3" id="text-orgea749ec">
 <p>
 Subtype of database-error. An error of this type (or one of its subclasses)
 is signaled when a query is attempted with a connection object that is no
@@ -1087,9 +1087,9 @@ successively longer pauses.
 </div>
 </div>
 
-<div id="outline-container-orga41c786" class="outline-3">
-<h3 id="orga41c786">condition postgresql-notification</h3>
-<div class="outline-text-3" id="text-orga41c786">
+<div id="outline-container-org37e5d1b" class="outline-3">
+<h3 id="org37e5d1b">condition postgresql-notification</h3>
+<div class="outline-text-3" id="text-org37e5d1b">
 <p>
 The condition that is signalled when a notification message is received from
 the PostgreSQL server. This is a WARNING condition which is caught by the
@@ -1099,9 +1099,9 @@ notifications.
 </div>
 </div>
 
-<div id="outline-container-org9f97877" class="outline-3">
-<h3 id="org9f97877">method postgresql-notification-channel (postgresql-notification)</h3>
-<div class="outline-text-3" id="text-org9f97877">
+<div id="outline-container-orge62533e" class="outline-3">
+<h3 id="orge62533e">method postgresql-notification-channel (postgresql-notification)</h3>
+<div class="outline-text-3" id="text-orge62533e">
 <p>
 → string
 </p>
@@ -1112,9 +1112,9 @@ The channel string of this notification.
 </div>
 </div>
 
-<div id="outline-container-org5a703b1" class="outline-3">
-<h3 id="org5a703b1">method postgresql-notification-payload (postgresql-notification)</h3>
-<div class="outline-text-3" id="text-org5a703b1">
+<div id="outline-container-org1ad01e5" class="outline-3">
+<h3 id="org1ad01e5">method postgresql-notification-payload (postgresql-notification)</h3>
+<div class="outline-text-3" id="text-org1ad01e5">
 <p>
 → string
 </p>
@@ -1125,9 +1125,9 @@ The payload of this notification.
 </div>
 </div>
 
-<div id="outline-container-org44ea096" class="outline-3">
-<h3 id="org44ea096">method postgresql-notification-pid (postgresql-notification)</h3>
-<div class="outline-text-3" id="text-org44ea096">
+<div id="outline-container-org5d3d780" class="outline-3">
+<h3 id="org5d3d780">method postgresql-notification-pid (postgresql-notification)</h3>
+<div class="outline-text-3" id="text-org5d3d780">
 <p>
 → integer
 </p>
@@ -1140,7 +1140,7 @@ The process ID of the process that sent the notification.
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-08-11 Sat 19:21</p>
+<p class="date">Created: 2018-09-02 Sun 07:42</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

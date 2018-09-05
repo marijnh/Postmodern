@@ -57,7 +57,7 @@ For a simple tutorial on the Postgresql interval data type, there are
 several online articles, see, e.g. the official documentation at
 https://www.postgresql.org/docs/current/static/datatype-datetime.html,
 https://www.postgresql.org/docs/current/static/functions-datetime.html
-http://www.postgresqltutorial.com/postgresql-interval/ or
+http://www.postgresqltutorial.com/postgresql-interval/
 
 Intervals are a way of adding, subtracting, etc a time period with a date.
 

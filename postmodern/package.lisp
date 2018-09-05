@@ -39,6 +39,7 @@
    #:list-index-definitions #:list-foreign-keys #:list-unique-or-primary-constraints
    #:list-all-constraints #:describe-constraint #:describe-foreign-key-constraints
    #:list-triggers #:list-detailed-triggers #:list-database-users
+   #:find-primary-key-info
    #:change-toplevel-database
 
    #:deftable #:*table-name* #:*table-symbol*
@@ -57,14 +58,6 @@
    ;; Condition type from cl-postgres
    #:database-error #:database-error-message #:database-error-code
    #:database-error-detail #:database-error-query #:database-error-cause
-   #:database-connection-error #:database-error-constraint-name
-
-   ;; ported from postgres-json
-   #:*transaction-mode*
-   #:call-with-transaction
-   #:call-with-logical-transaction
-   #:call-with-ensured-transaction
-   #:abort-logical-transaction
-   #:commit-logical-transaction))
+   #:database-connection-error #:database-error-constraint-name))
 
 (in-package :postmodern)

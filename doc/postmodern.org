@@ -465,10 +465,21 @@ key.
 Returns a list of the definitions used to create the current indexes for
 the table
 
+** function find-primary-key-info (table-name &optional (just-key nil))
+→ list
+
+Returns a list of two strings. First the column name of the primary
+key of the table and second the string name for the datatype. Optionally,
+just-key can be set to t and it will return just the column name of the
+primary key as a string.
+
 ** function list-foreign-keys (table-name)
 → list
 
-List the foreign keys in a table.
+Returns a list of sublists of foreign key info in the form of
+   '((constraint-name local-table local-table-column
+     foreign-table-name foreign-column-name))
+
 
 ** function list-unique-or-primary-constraints (table-name)
 → list

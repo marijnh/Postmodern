@@ -215,7 +215,9 @@ Setting order-by-size to t will return the result in order of size instead of by
          (to-sql-name table-name)))
 
 (defun more-table-info (table-name)
-  "Returns more table info than table-description. Table can be either a string or quoted."
+  "Returns more table info than table-description. Table can be either a string or quoted.
+Specifically returns ordinal-position, column-name, data-type, character-maximum-length,
+modifier, whether it is not-null and the default value. "
   (query (:order-by (:select (:as 'a.attnum 'ordinal-position)
                              (:as 'a.attname 'column-name)
                              (:as 'tn.typname 'data-type)
@@ -368,24 +370,80 @@ rather than directly."
 	   table-name)))
 
 ;;;; Keys
-(defun list-foreign-keys (table-name)
-  "List the foreign keys in a table."
-  (setf table-name (to-sql-name table-name))
-  (when (table-exists-p table-name)
-  (query (:select 'tc.constraint_name
-                  'tc.table_name 'kcu.column_name
-                  (:as 'ccu.table_name 'foreign_table_name)
-                  (:as 'ccu.column_name 'foreign_column_name)
-                  :from (:as 'information_schema.table_constraints 'tc)
-                  :inner-join
-                  (:as 'information_schema.key_column_usage 'kcu)
-                  :on (:= 'tc.constraint_name 'kcu.constraint_name)
-                  :inner-join
-                  (:as 'information_schema.constraint_column_usage 'ccu)
-                  :on (:= 'ccu.constraint_name 'tc.constraint_name)
-                  :where (:and (:= 'constraint_type "FOREIGN KEY")
-                               (:= 'tc.table_name '$1)))
-         table-name)))
+(defun find-primary-key-info (table &optional (just-key nil))
+  "Returns a list of sublists where the sublist contains two strings.
+If a table primary key consists of only one column, such as 'id' there
+will be a single sublist where the first string is the name of the column
+and the second string is the string name for the datatype for that column.
+If the primary key for the table consists of more than one column, there
+will be a sublist for each column subpart of the key. The sublists will
+be in the order they are used in the key, not in the order they appear
+in the table. If just-key is set to t, the list being returned will
+contain just the column names in the primary key as string names
+with no sublists."
+  (when (symbolp table) (setf table (s-sql:to-sql-name table)))
+  (let ((info (query (:order-by
+         (:select
+          'a.attname
+          (:format-type 'a.atttypid 'a.atttypmod)
+          :from
+          (:as 'pg-attribute 'a)
+          :inner-join (:as (:select '*
+                                   (:as (:generate-subscripts 'indkey 1) 'indkey-subscript)
+                                   :from 'pg-index)
+                          'i)
+          :on
+          (:and 'i.indisprimary
+                (:= 'i.indrelid  'a.attrelid)
+                (:= 'a.attnum  (:[] 'i.indkey 'i.indkey-subscript)))
+          :where
+          (:= 'a.attrelid  (:type '$1 regclass)))
+         'i.indkey-subscript)
+                     table)))
+    (if just-key (loop for x in info collect (first x)) info)))
+
+(defun list-foreign-keys (table schema)
+  "Returns a list of sublists of foreign key info in the form of
+   '((constraint-name local-table local-table-column
+     foreign-table-name foreign-column-name))"
+  (setf table (s-sql:to-sql-name table))
+  (query
+   (:select
+    (:as 'conname 'constraint-name)
+    table
+    (:as 'att2.attname 'local-column)
+    (:as 'cl.relname 'foreign-table-name)
+    (:as 'att.attname 'foreign-table-column)
+    :from
+    (:as (:select
+          (:as (:unnest 'con1.conkey) 'parent)
+          (:as (:unnest 'con1.confkey) 'child)
+          'con1.confrelid
+          'con1.conrelid
+          'con1.conname
+          :from
+          (:as 'pg-class 'cl)
+          :inner-join (:as 'pg-namespace 'ns)
+          :on (:= 'cl.relnamespace 'ns.oid)
+          :inner-join (:as 'pg-constraint 'con1)
+          :on (:= 'con1.conrelid 'cl.oid)
+          :where
+          (:and (:= 'cl.relname '$1)
+                (:= 'ns.nspname '$2)
+                (:= 'con1.contype "f")))
+         'con)
+    :inner-join (:as 'pg-attribute 'att)
+    :on
+    (:and (:= 'att.attrelid 'con.confrelid)
+          (:= 'att.attnum 'con.child))
+    :inner-join (:as 'pg-class 'cl)
+    :on
+    (:= 'cl.oid 'con.confrelid)
+    :inner-join (:as 'pg-attribute 'att2)
+    :on
+    (:and (:= 'att2.attrelid 'con.conrelid)
+          (:= 'att2.attnum 'con.parent)))
+   table schema))
 
 ;;;; Constraints
 (defun list-unique-or-primary-constraints (table-name)
@@ -550,63 +608,3 @@ Recommended only for development work."
 (defun list-connections ()
   "Returns info from pg_stat_activity on open connections"
   (query (:select '* :from 'pg-stat-activity)))
-
-
-(defun create-db-sequence (sequence &optional (schema *pgj-schema*))
-  "Create a PostgreSQL sequence with name SEQUENCE in SCHEMA (both symbols).
-Requires an active DB connection."
-  (run `(:create-sequence ,(qualified-name sequence schema)))
-  (values))
-
-(defun drop-db-table-cascade (table)
-  "Drop a Postgres TABLE, a string, and all dependent views,
-indexes etc.  Use with care."
-  (run (format nil "drop table ~A cascade" table)))
-
-(defun drop-db-schema-cascade (schema)
-  "Drop a PostgreSQL schema and cascade delete all contained DB
-objects(!) with name SCHEMA, a symbol.  Requires an active DB
-connection."
-  (when (string-equal "public" (symbol-name schema))
-    (error 'database-safety-net
-           :attempted-to "Drop schema PUBLIC"
-           :suggestion "Try pomo:drop-schema"))
-  (pomo:drop-schema schema :cascade t)
-  (values))
-
-(defun %table-exists-p (table)
-  "Does TABLE, a string, exist in the Postgres backend?"
-  (let ((query (sql-compile `(:select (:type ,table regclass)))))
-    (first-value (ignore-errors (query query :single)))))
-
-(defun flush-prepared-queries ()
-  "If you get a 'Database error 26000: prepared statement ... does not
-exist error' while mucking around at the REPL, call this.  A similar
-error in production code should be investigated."
-  (setf *query-functions* (make-hash-table :test #'equal)))
-
-(defvar *debug-sql* nil
-  "Set true to inspect S-SQL forms sent to RUN, instead of compiling
-and executing.")
-
-;;;; Qualified PostgreSQL table names using Postmodern's S-SQL
-
-(defun qualified-name (name &optional (schema *pgj-schema*))
-  "Return the S-SQL :dot form of NAME and SCHEMA, both symbols."
-  `(:dot ',schema ',name))
-
-(defun qualified-name-string (name &optional (schema *pgj-schema*))
-  "Return a string of the Postgres 'qualified name' of NAME and SCHEMA,
-both symbols."
-  (sql-compile (qualified-name name schema)))
-
-;;;; Utility
-
-(defun run (form)
-  "Compile and then run the S-SQL form FORM, unless *DEBUG-SQL* is true
-is which case just PRINT the FORM."
-  (if *debug-sql*
-      (print form)
-      (if (stringp form)
-          (query form)
-          (query (sql-compile form)))))

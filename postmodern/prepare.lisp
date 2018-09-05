@@ -38,8 +38,8 @@ it."
 				  (query &rest query-args)
 				  &optional (format :rows))
   "Like defprepared, but with lambda list for statement arguments."
-  (let ((prepared-name (gensym "STATEMENT")))
-    `(progn
-       (defprepared ,prepared-name ,query ,format)
+  (let ((prepared-name (gensym "PREPARED")))
+    `(let ((,prepared-name (prepare ,query ,format)))
+       (declare (type function ,prepared-name))
        (defun ,name ,args
-	 (,prepared-name ,@query-args)))))
+	       (funcall ,prepared-name ,@query-args)))))
