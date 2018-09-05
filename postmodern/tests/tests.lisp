@@ -224,7 +224,7 @@
             (is (eq (test-b database-dao) nil))
             (delete-dao dao))))
       (is (not (select-dao 'test-data)))
-      (execute (:drop-table 'dao-test)))))
+      (execute (:drop-table 'dao-test :cascade)))))
 
 (test save-dao
   (with-test-connection
@@ -240,7 +240,7 @@
           (with-transaction () (save-dao dao)))
         (with-transaction ()
           (is (not (save-dao/transaction dao)))))
-      (execute (:drop-table 'dao-test)))))
+      (execute (:drop-table 'dao-test :cascade)))))
 
 (test query-drop-table-1
   (with-test-connection
@@ -248,7 +248,7 @@
       (execute (dao-table-definition 'test-data)))
     (protect
       (is (member :dao-test (with-test-connection (pomo:list-tables))))
-      (pomo:query (:drop-table :dao-test))
+      (query (:drop-table :if-exists 'dao-test :cascade))
       (is (not (member :dao-test (with-test-connection (pomo:list-tables))))))))
 
 (defclass test-oid ()

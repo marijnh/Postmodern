@@ -2,7 +2,6 @@
 
 (defparameter *transaction-level* 0)
 (defparameter *current-logical-transaction* nil)
-(defvar *transaction-mode* "")
 
 (defclass transaction-handle ()
   ((open-p :initform t :accessor transaction-open-p)
@@ -17,7 +16,7 @@ arguments) to be executed at commit and abort time, respectively."))
 
 (defun call-with-transaction (body)
   (let ((transaction (make-instance 'transaction-handle)))
-    (execute (format nil "BEGIN ~A" *transaction-mode*)) ; 4) This one line change
+    (execute "BEGIN")
     (unwind-protect
          (multiple-value-prog1
              (let ((*transaction-level* (1+ *transaction-level*))

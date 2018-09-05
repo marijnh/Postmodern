@@ -58,14 +58,6 @@
    ;; Condition type from cl-postgres
    #:database-error #:database-error-message #:database-error-code
    #:database-error-detail #:database-error-query #:database-error-cause
-   #:database-connection-error #:database-error-constraint-name
-
-   ;; ported from postgres-json
-   #:*transaction-mode*
-   #:call-with-transaction
-   #:call-with-logical-transaction
-   #:call-with-ensured-transaction
-   #:abort-logical-transaction
-   #:commit-logical-transaction))
+   #:database-connection-error #:database-error-constraint-name))
 
 (in-package :postmodern)
