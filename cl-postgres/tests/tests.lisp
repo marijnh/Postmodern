@@ -6,20 +6,37 @@
 
 (defvar *test-connection* nil)
 
-(defun prompt-connection (&optional (list '("test" "test" "" "localhost")))
-  (if *test-connection*
-      *test-connection*
-      (flet ((ask (name default)
-               (format *query-io* "~a (enter to keep '~a'): " name default)
-               (finish-output *query-io*)
-               (let ((answer (read-line *query-io*)))
-                 (if (string= answer "") default answer))))
-        (format *query-io* "~%To run this test, you must configure a database connection.~%")
+(defun prompt-connection (&optional (defaults '("test" "test" "" "localhost")))
+  (when *test-connection*
+    (return-from prompt-connection *test-connection*))
+  (let* ((descriptions '("Database name" "User" "Password" "Hostname"))
+         (env-vars '("DB_NAME" "DB_USER" "DB_PASS" "DB_HOST"))
+         (provided (mapcar #'uiop:getenv env-vars))
+         (prospective (mapcar (lambda (a b) (if a a b)) provided defaults)))
+    (setq *test-connection*
+          (handler-case
+              (let ((connection (apply #'open-database prospective)))
+                (close-database connection)
+                prospective)
+            (error (condition)
+              (flet ((ask (name provided default)
+                       (format *query-io*
+                               "~A (enter to keep '~:[~A~;~:*~A~]'): "
+                               name provided default)
+                       (finish-output *query-io*)
+                       (let ((answer (read-line *query-io*)))
+                         (if (string= answer "")
+                             (if provided provided default)
+                             answer))))
+                (format *query-io* "~&~
+Could not connect to test database:~%~%  ~A
 
-        (setq *test-connection*
-              (mapcar #'ask
-                      '("Database name" "User" "Password" "Hostname")
-                      list)))))
+To run tests, you must provide database connection parameters.  To
+avoid interactive input you can set the following environment
+variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
+                        condition
+                        (mapcar #'list env-vars descriptions provided defaults))
+                (mapcar #'ask descriptions provided defaults)))))))
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
 ;; refers to a valid postgresql database, then after loading the file,
