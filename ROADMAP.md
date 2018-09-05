@@ -55,7 +55,7 @@ No guarantee is given with respect to resolution or timing on any item.
 - [ ]   Others?
 
 ## DAO Support
-- [X]   Fix issue 70 - build-dao-methods fails when a slot is named "from".
+- [ ]   Fix issue 70 - build-dao-methods fails when a slot is named "from".
 Will fix solely for daos. Do not expect this to work with building table columns.
 There is a reason for reserved words and it is upstream in postgresql.
 - [ ]   Review errors with *ignore-unknown-columns*. Sometimes hangs without raising an error.
