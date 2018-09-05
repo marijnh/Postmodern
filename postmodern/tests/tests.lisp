@@ -382,6 +382,7 @@
  a list of two strings. First the column name of the primary key of the table
 and second the string name for the datatype."
   (with-test-connection
+    (execute "create temporary table tasks_lists (id integer primary key)")
     (is (equal (postmodern:find-primary-key-info (s-sql:to-sql-name "tasks_lists"))
                '(("id" "integer"))))
     (is (equal (postmodern:find-primary-key-info (s-sql:to-sql-name "tasks_lists") t)
