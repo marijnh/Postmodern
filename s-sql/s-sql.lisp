@@ -1369,6 +1369,16 @@ test. "
 (def-drop-op :drop-type "TYPE")
 (def-drop-op :drop-rule "RULE")
 
+(def-sql-op :truncate (&rest args)
+  "Note that this version of truncate does not implement :cascade. "
+  (split-on-keywords ((vars *) (only - ?) (restart-identity - ?)  (continue-identity - ?)) (cons :vars args)
+    `("TRUNCATE "
+      ,@ (when only '(" ONLY "))
+         ,@(sql-expand-list vars)
+         ,@(cond (restart-identity '(" RESTART IDENTITY "))
+                 (continue-identity `(" CONTINUE IDENTITY "))
+                 (t '(""))))))
+
 (defun dequote (val)
   (if (and (consp val) (eq (car val) 'quote)) (cadr val) val))
 

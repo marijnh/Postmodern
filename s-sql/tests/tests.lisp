@@ -1234,7 +1234,16 @@ To sum the column len of all films and group the results by kind:"
                                                                    :where (:= 'memid 'mems.memid))))))
                  "DELETE FROM cd.members AS mems WHERE (not (EXISTS (SELECT 1 FROM cd.bookings WHERE (memid = mems.memid))))")))
 
-
+(test truncate
+  "Testing Truncate"
+  (is (equal (sql (:truncate 'bigtable 'fattable))
+             "TRUNCATE bigtable, fattable"))
+  (is (equal (sql (:truncate 'bigtable 'fattable :only))
+             "TRUNCATE  ONLY bigtable, fattable"))
+  (is (equal (sql (:truncate 'bigtable 'fattable :only :continue-identity))
+             "TRUNCATE  ONLY bigtable, fattable CONTINUE IDENTITY "))
+  (is (equal (sql (:truncate 'bigtable 'fattable :only :restart-identity))
+             "TRUNCATE  ONLY bigtable, fattable RESTART IDENTITY ")))
 #|
 
 

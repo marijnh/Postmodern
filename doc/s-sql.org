@@ -1140,6 +1140,25 @@ etc which depend on that table.
 (query (:drop-table :if-exists 'table1 :cascade))
 #+END_SRC
 
+** sql-op :truncate (&rest args)
+
+Truncates one or more tables, deleting all the rows. Optional arguments are
+
+- :only (if not specified, the table and its descendants are truncated).
+- :continue-identity (the values of sequences will not be changed. This is the default)
+- :restart-identity (the values of sequences owned by the table(s) will be restarted)
+
+Note this operator does not implement :cascade at this time. Example calls would be:
+#+BEGIN_SRC lisp
+(query (:truncate 'bigtable 'fattable))
+
+(query (:truncate 'bigtable 'fattable :only))
+
+(query (:truncate 'bigtable 'fattable :only :continue-identity))
+
+(sql (:truncate 'bigtable 'fattable :restart-identity))
+#+END_SRC
+
 ** sql-op :create-index (name &rest args)
 
 Create an index on a table. After the name of the index the keyword :on should
