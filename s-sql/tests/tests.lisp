@@ -1243,7 +1243,13 @@ To sum the column len of all films and group the results by kind:"
   (is (equal (sql (:truncate 'bigtable 'fattable :only :continue-identity))
              "TRUNCATE  ONLY bigtable, fattable CONTINUE IDENTITY "))
   (is (equal (sql (:truncate 'bigtable 'fattable :only :restart-identity))
-             "TRUNCATE  ONLY bigtable, fattable RESTART IDENTITY ")))
+             "TRUNCATE  ONLY bigtable, fattable RESTART IDENTITY "))
+  (is (equal (sql (:truncate 'bigtable 'fattable :only :restart-identity :cascade ))
+             "TRUNCATE  ONLY bigtable, fattable RESTART IDENTITY  CASCADE "))
+  (is (equal (sql (:truncate 'bigtable 'fattable :only :continue-identity :cascade ))
+             "TRUNCATE  ONLY bigtable, fattable CONTINUE IDENTITY  CASCADE "))
+  (is (equal (sql (:truncate 'bigtable 'fattable :continue-identity :cascade ))
+             "TRUNCATE bigtable, fattable CONTINUE IDENTITY  CASCADE ")))
 #|
 
 
