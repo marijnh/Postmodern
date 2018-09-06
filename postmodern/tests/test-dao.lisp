@@ -42,7 +42,6 @@
 
 (test dao-class
   (with-test-connection
-    (query (:drop-table :if-exists 'dao-test :cascade))
     (execute (dao-table-definition 'test-data))
     (protect
       (is (member :dao-test (list-tables)))
@@ -63,7 +62,7 @@
             (is (eq (test-b database-dao) nil))
             (delete-dao dao))))
       (is (not (select-dao 'test-data)))
-      (execute (:drop-table 'dao-test)))))
+      (execute (:drop-table 'dao-test :cascade)))))
 
 (test save-dao
   (with-test-connection
