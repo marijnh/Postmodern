@@ -84,6 +84,7 @@
 
 (test table
   (with-test-connection
+    (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
     (execute (:create-table test-data ((a :type integer :primary-key t) (b :type real) (c :type (or text db-null))) (:unique c)))
     (protect
       (is (table-exists-p 'test-data))
@@ -128,12 +129,32 @@
 
 (test transaction
   (with-test-connection
+    (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
     (execute (:create-table test-data ((value :type integer))))
     (protect
+      (with-transaction ()
+          (execute (:insert-into 'test-data :set 'value 77)))
+      (is (equal (query (:select '* :from 'test-data) :single)
+                 77))
+      (with-transaction (george)
+        (execute (:insert-into 'test-data :set 'value 22)))
+      (is (equal (query (:select '* :from 'test-data))
+                 '((77) (22))))
+      (with-transaction (george :read-committed-rw)
+        (execute (:insert-into 'test-data :set 'value 33)))
+      (is (equal (query (:select '* :from 'test-data))
+                 '((77) (22) (33))))
+      (with-transaction (:serializable)
+        (execute (:insert-into 'test-data :set 'value 44)))
+      (is (equal (query (:select '* :from 'test-data))
+                 '((77) (22) (33) (44))))
+      ;; Reset table -  Now try errors
+      (query (:truncate 'test-data))
+      (is (= 0 (length (query (:select '* :from 'test-data)))))
       (ignore-errors
-        (with-transaction ()
-          (execute (:insert-into 'test-data :set 'value 2))
-          (error "no wait")))
+          (with-transaction ()
+            (execute (:insert-into 'test-data :set 'value 2))
+            (error "no wait")))
       (is (= 0 (length (query (:select '* :from 'test-data)))))
       (ignore-errors
         (with-transaction (transaction)
@@ -141,15 +162,32 @@
           (commit-transaction transaction)
           (error "no wait!!")))
       (is (= 1 (length (query (:select '* :from 'test-data)))))
+      (ignore-errors
+        (with-transaction (george :read-committed-rw)
+          (execute (:insert-into 'test-data :set 'value 2))
+          (error "no wait")))
+      (is (= 1 (length (query (:select '* :from 'test-data)))))
+      (ignore-errors
+        (with-transaction (:serializable)
+          (execute (:insert-into 'test-data :set 'value 2))
+          (error "no wait")))
+      (is (= 1 (length (query (:select '* :from 'test-data)))))
+      ;; Now try abort
       (with-transaction (transaction)
         (execute (:insert-into 'test-data :set 'value 44))
         (abort-transaction transaction))
+      (is (= 1 (length (query (:select '* :from 'test-data)))))
+      (ignore-errors
+        (with-transaction (george :read-committed-rw)
+          (execute (:insert-into 'test-data :set 'value 23))
+          (abort-transaction george)))
       (is (= 1 (length (query (:select '* :from 'test-data)))))
       (execute (:drop-table 'test-data)))))
 
 (test logical-transaction
   (with-test-connection
     (protect
+      (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
       (execute (:create-table test-data ((value :type integer))))
       (with-logical-transaction ()
         (execute (:insert-into 'test-data :set 'value 1))
@@ -159,11 +197,27 @@
             (error "fail here"))))
       (is-true (query (:select '* :from 'test-data :where (:= 'value 1))))
       (is-false (query (:select '* :from 'test-data :where (:= 'value 2))))
+      (with-logical-transaction ()
+        (execute (:insert-into 'test-data :set 'value 77)))
+      (is-true (query (:select '* :from 'test-data :where (:= 'value 77))))
+      (with-logical-transaction (george)
+        (execute (:insert-into 'test-data :set 'value 22)))
+      (is-true (query (:select '* :from 'test-data :where (:= 'value 22))))
+      (with-logical-transaction (george :read-committed-rw)
+        (execute (:insert-into 'test-data :set 'value 33)))
+      (is-true (query (:select '* :from 'test-data :where (:= 'value 33))))
+      (with-logical-transaction (:serializable)
+        (execute (:insert-into 'test-data :set 'value 44)))
+      (is-true (query (:select '* :from 'test-data :where (:= 'value 44))))
+      (signals database-error
+      (with-logical-transaction (:read-committed-ro)
+        (execute (:insert-into 'test-data :set 'value 29))))
       (execute (:drop-table 'test-data)))))
 
 (test transaction-commit-hooks
   (with-test-connection
     (protect
+      (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
       (execute (:create-table test-data ((value :type integer))))
       (with-logical-transaction (transaction-1)
         (execute (:insert-into 'test-data :set 'value 1))
@@ -177,6 +231,7 @@
 (test transaction-abort-hooks
   (with-test-connection
     (protect
+      (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
       (execute (:create-table test-data ((value :type integer))))
       (with-logical-transaction (transaction-1)
         (execute (:insert-into 'test-data :set 'value 1))
@@ -197,6 +252,29 @@
     (is (eql postmodern::*transaction-level* 0))
     (ensure-transaction
       (is (eql postmodern::*transaction-level* 1)))))
+
+(test transaction-nested-warning "Transaction test nested warning"
+  (with-test-connection
+    (if (pomo:table-exists-p 'test-data)
+        (query (:truncate 'test-data))
+        (execute (:create-table test-data ((value :type integer)))))
+    (with-transaction (george :read-committed-rw)
+      (signals cl-postgres:postgresql-warning
+        (with-transaction (foo :read-committed-rw)
+          (execute (:insert-into 'test-data :set 'value 27)))))
+    (execute (:drop-table 'test-data))))
+
+(test transaction-logical-nested "Transaction test logical nested"
+  (with-test-connection
+    (if (pomo:table-exists-p 'test-data)
+        (query (:truncate 'test-data))
+        (execute (:create-table test-data ((value :type integer)))))
+    (with-logical-transaction (:read-committed-rw)
+      (with-logical-transaction (:read-committed-rw)
+        (execute (:insert-into 'test-data :set 'value 28))))
+    (is (equal (query (:select '* :from 'test-data) :single)
+               28))
+    (execute (:drop-table 'test-data))))
 
 (test notification
   (with-test-connection
@@ -226,6 +304,7 @@
 
 (test arrays
   (with-test-connection
+    (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
     (execute (:create-table test-data ((a :type integer[]))))
     (protect
       (is (table-exists-p 'test-data))
