@@ -1085,8 +1085,6 @@ to runtime. Used to create stored procedures."
 
 (def-sql-op :insert-into (table &rest rest)
   (split-on-keywords ((method *)
-                      (overriding-system-value ? -)
-                      (overriding-user-value ? -)
                       (on-conflict-do-nothing ? -)
                       (on-conflict-update ? *)
                       (update-set ? *)
@@ -1100,10 +1098,7 @@ to runtime. Used to create stored procedures."
                    ((null (cdr method)) '("DEFAULT VALUES"))
                    (t `("(" ,@(sql-expand-list (loop :for (field nil) :on (cdr method) :by #'cddr
                                                      :collect field))
-                            ") "
-                            ,@(when overriding-system-value '(" OVERRIDING SYSTEM VALUE "))
-                            ,@(when overriding-user-value '(" OVERRIDING USER VALUE "))
-                            "VALUES (" ,@(sql-expand-list (loop :for (nil value) :on (cdr method) :by #'cddr
+                            ") VALUES (" ,@(sql-expand-list (loop :for (nil value) :on (cdr method) :by #'cddr
                                                               :collect value)) ")"))))
             ((and (not (cdr method)) (consp (car method)) (keywordp (caar method)))
              (sql-expand (car method)))
