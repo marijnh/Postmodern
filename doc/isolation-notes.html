@@ -1,0 +1,1226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-09-09 Sun 09:46 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Transaction and Isolation Notes</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Transaction and Isolation Notes</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgce893f6">Postmodern transaction calls with transaction names and isolation levels</a></li>
+<li><a href="#orge7b7307">Introduction to ACID, Transactions and Isolation Levels</a></li>
+<li><a href="#orgad3a14b">Transactions</a>
+<ul>
+<li>
+<ul>
+<li><a href="#org632d2a7">What happens if we nest transactions?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org2718562">The Concurrency Problem</a>
+<ul>
+<li><a href="#org32ae683">Summary</a></li>
+<li><a href="#orgf171a5a">Problem Explanation</a>
+<ul>
+<li><a href="#orgf168768">Dirty Read</a></li>
+<li><a href="#org98f53fd">Nonrepeatable Read</a></li>
+<li><a href="#org59035d8">Phantom Read</a></li>
+<li><a href="#org119c9a4">For More Fun</a></li>
+</ul>
+</li>
+<li><a href="#orgfd76894">Isolation Levels</a>
+<ul>
+<li><a href="#orgebb7a8d">Read Committed Isolation Level</a></li>
+<li><a href="#org39d8607">Repeatable Read Isolation Level</a></li>
+<li><a href="#orga4529c5">Serializable Isolation Level</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orgc25bfba">For Futher Reading</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgce893f6" class="outline-2">
+<h2 id="orgce893f6">Postmodern transaction calls with transaction names and isolation levels</h2>
+<div class="outline-text-2" id="text-orgce893f6">
+<p>
+Transactions are one or more statements wrapped together which either all
+succeed and are "committed" or none of them succeed, in which case any state
+changes are rolled back to the beginning of the transaction. In the case of
+postmodern, there are two main macros available for use:
+</p>
+
+<ul class="org-ul">
+<li>with-transaction (for general use)</li>
+<li>with-logical-transaction (for nested transactions and savepoints)</li>
+</ul>
+
+<p>
+When you get into situations where you expect concurrent transactions, you
+can specify the whether the transaction is allowed only read access or
+both read and write access to the database table rows and you can specify
+either the default isolation level or a specific isolation level for that
+transaction. If you need more information on what isolation levels are, and
+when to use them, see below.
+</p>
+
+<p>
+Postgresql defaults to the read committed isolation level with
+read and write access. This is also postmodern's default, but that can be
+changed by setting postmodern:*isolation-level* to your desired setting.
+</p>
+
+<p>
+The available settings in postmodern follow the sql standard are:
+</p>
+
+<ul class="org-ul">
+<li>:read-committed-rw (read committed with read and write)</li>
+<li>:read-committed-ro (read committed with read only)</li>
+<li>:repeatable-read-rw (repeatable read with read and write)</li>
+<li>:repeatable-read-ro (repeatable read with read only)</li>
+<li>:serializable (serializable with read and write)</li>
+</ul>
+
+<p>
+(Ok. "Loosely" follows the sql standard because we combine read-write and
+read-only constraints with the sql standard isolation levels. There is one
+unsafe isolation level defined by the standard, but neither postgresql nor
+any other major database implements it.)
+</p>
+
+<p>
+Postmodern generally provides the ability to specify the name of a transaction
+and the isolation level per the key words above. Examples of use are below
+and "george" is used as the name of the transaction (not quoted or as a string):
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(with-transaction ()
+  (execute (:insert-into 'test-data :set 'value 77)))
+
+(with-transaction (george)
+  (execute (:insert-into 'test-data :set 'value 22)))
+
+(with-transaction (george :read-committed-rw)
+  (execute (:insert-into 'test-data :set 'value 33)))
+
+(with-transaction (:serializable)
+  (execute (:insert-into 'test-data :set 'value 44)))
+
+(with-logical-transaction ()
+  (execute (:insert-into 'test-data :set 'value 77)))
+
+(with-logical-transaction (george)
+  (execute (:insert-into 'test-data :set 'value 22)))
+
+(with-logical-transaction (george :read-committed-rw)
+  (execute (:insert-into 'test-data :set 'value 33)))
+
+(with-logical-transaction (:serializable)
+  (execute (:insert-into 'test-data :set 'value 44)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge7b7307" class="outline-2">
+<h2 id="orge7b7307">Introduction to ACID, Transactions and Isolation Levels</h2>
+<div class="outline-text-2" id="text-orge7b7307">
+<p>
+Databases like Postgresql are not simply data storage, they are
+transaction management systems. In the context of transactions with multiple
+operations within the transaction, either all of them commit or none of them
+commit (the transaction is rolled back). Transactions include single
+statement transactions as well as multiple statement transactions that are
+wrapped inside BEGIN – COMMIT Commands. (In the case of postmodern macros
+with-transaction and with-logical-transaction, the commit command is handled
+for you automatically.)
+</p>
+
+<p>
+You may have heard of databases being "ACID" compliant or having ACID
+functionality. Transactions are the “A” (Atomicity) in “ACID”.
+“C” is “Consistency”, “I” is “Isolation” and “D” is “Durability”. As you can
+tell, everything in ACID in designed to maintain the integrity of the data.
+Without atomicity, you risk leaving data in a partial or invalid state and
+everything which depends on the data will break. (And your dba will be
+upset – the question is – will they then try to break you?)
+</p>
+
+<p>
+Consistency ensures that every transaction will move the database from one
+valid state to another valid state. Consider two users A and B signing up
+with the same desired username “myname” almost simultaneously. The system
+checks to see whether “myname” is in use for A. It is not, so it starts the
+process of creating a record for “myname”. The system checks for B to see
+whether “myname” is in use. Since it has not yet finished creating the record
+for A, it appears to be available for B, so it starts the process of
+creating a user record for B using “myname”. One or both can end up in an
+invalid state.
+</p>
+
+<p>
+You can prevent the inconsistent state by either putting a uniqueness check
+on the user table for usernames or you use an isolation level like
+serializable on your transactions. In either case, B’s commit will fail,
+you have to restart that transaction, but the data that is now in the system
+is safe and consistent..
+</p>
+
+<p>
+Isolation levels define what is allowed to happen if there are two transactions
+tyring to access the same data simultaneously. More on this below.
+</p>
+
+<p>
+Durability means that committed transactions must stay committed, even in
+the event of a crash, power loss, etc.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgad3a14b" class="outline-2">
+<h2 id="orgad3a14b">Transactions</h2>
+<div class="outline-text-2" id="text-orgad3a14b">
+<p>
+It is easy show the impact of transactions in action. Consider the following:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(execute (:create-table test-data ((value :type integer))))
+
+(with-transaction ()
+  (execute (:insert-into 'test-data :set 'value 77)))
+(query (:select '* :from 'test-data))
+((77))
+</pre>
+</div>
+<p>
+The postmodern macro with-transaction completes with a call to
+commit-transaction. So absent any intervening actions, the transaction
+will commit at the end of the form.
+</p>
+
+<p>
+For purposes of the following examples, assume that we truncated
+the table prior to each example so we have the same base line each time.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(ignore-errors
+  (with-transaction ()
+    (execute (:insert-into 'test-data :set 'value 2))
+    (error "no wait")))
+NIL
+#&lt;SIMPLE-ERROR "no wait" {100D581653}&gt;
+
+(with-test-connection (query (:select '* :from 'test-data)))
+NIL
+</pre>
+</div>
+<p>
+This time we triggered an error before the transaction concluded. Because the
+error was inside the transaction, it invalidated all statements inside the
+transction and the tentative insertion never happened.
+(Actually more complicated than this, but from an application developer
+standpoint, we can think of it this way.)
+</p>
+
+<p>
+Now lets actually give the transaction a name and make a superflous call to
+commit-transaction within the transaction.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(with-transaction (transaction)
+  (execute (:insert-into 'test-data :set 'value 2))
+  (commit-transaction transaction))
+
+(query (:select '* :from 'test-data))
+((2))
+</pre>
+</div>
+<p>
+As you can see, making the unnecessary call to commit-tranaction does not
+trigger the insertion twice.
+</p>
+
+<p>
+We can also decide to abort the transaction without triggering an error:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(with-transaction (transaction)
+  (execute (:insert-into 'test-data :set 'value 44))
+  (abort-transaction transaction))
+
+(query (:select '* :from 'test-data))
+NIL
+</pre>
+</div>
+<p>
+As expected, the insertion was never committed due to the call to
+abort-transaction.
+</p>
+</div>
+
+<div id="outline-container-org632d2a7" class="outline-4">
+<h4 id="org632d2a7">What happens if we nest transactions?</h4>
+<div class="outline-text-4" id="text-org632d2a7">
+<p>
+Postgresql does not fully support nested transactions. Full support of
+nested transactions would mean that a succesful sub-transaction does not get
+rolled back if a parent transaction (direct or indirect) gets rolled back.
+</p>
+
+<p>
+Postgresql allows the use of savepoints, which can get you to a consistent
+state but means that if any transaction in a nested transaction sequence
+is rolled back, then everything in the transaction is rolled back. Postmodern
+provides savepoints automatically in a nested situation if you use the macro
+with-logical-transaction. Postmodern also provides a macro with-savepoint
+if you need to handle them manually.
+</p>
+
+<p>
+If you do not use savepoints, the result of nested transactions may not be
+consistent. Some or all of subtransactions may or may not get committed
+if there is an error anywhere in the nest.
+</p>
+
+<p>
+The <a href="https://www.postgresql.org/docs/10/static/sql-begin.html">official postgresql documentation</a> states that "Issuing a begin when already
+inside a transaction will provoke a warning message. The state of the
+transaction is not affected." While this sounds like the subtransactions just
+get treated as part of the outer transaction, you cannot rely on that
+interpretation.
+</p>
+
+<p>
+Morale of the story. If you are going to nest transactions in postmdern, use
+the with-logical-transaction macro, do not use the with-transaction macro.
+</p>
+
+<p>
+Now lets talk about concurrency issues and the trade-offs between different
+isolation levels.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2718562" class="outline-2">
+<h2 id="org2718562">The Concurrency Problem</h2>
+<div class="outline-text-2" id="text-org2718562">
+</div>
+<div id="outline-container-org32ae683" class="outline-3">
+<h3 id="org32ae683">Summary</h3>
+<div class="outline-text-3" id="text-org32ae683">
+<p>
+Consider when you have multiple concurrent transactions or multiple concurrent
+database events. These create potential race conditions as well as potential
+overwrite issues, creating hard to find bugs. The base problem is easy to
+understand – what happens when two users try to access the same row of data
+concurrently.
+</p>
+
+<p>
+Think about how databases using MVCC (multi-version concurrency control)
+execute statements inside a transaction. The data generated by the transaction
+is kept off to the side, away from other data until the entire transaction
+can be committed. Once it is committed, it becomes visible to all future
+transactions and the old row which it may have edited becomes marked as
+invalid. The invalid row still exists in the system until the next VACUUM.
+Of course, this does not mean that the system prevents user B from overwriting
+user A’s changes from an hour ago. We are solely focused on concurrency issues
+here.
+</p>
+
+<p>
+All committed transactions are written to the write-ahead log (WAL or “xlog”).
+In case of trouble, Postgresql can replay the WAL log to recover changes that
+did not get into the actual data files. Postgresql also has a commit
+log “pg_xact” which summarizes transactions and whether the transaction
+committed or aborted. Any transaction that was a read only transaction is
+never written to the WAL or commit logs. As it was not intended to modify any
+data, there is no need. However, if the transaction is aborted, that fact will
+still be noted in the WAL and commit logs. (You can also configure postgresql
+to log all queries, but that is not the default.)
+</p>
+
+<p>
+Now think about the situation at a little more granular level.
+</p>
+
+<ul class="org-ul">
+<li>If two transactions read the old state and then perform changes concurrently, the last write transaction will be effective and the previous write transaction may be lost unless you have explicit locking.</li>
+
+<li>If two transactions with multiple statements read the old state and then both transactions perform changes concurrently, you may end up in an inconsistent data state.</li>
+
+<li>If one transaction reads the old state and prepares to make a change based on the value of the old state, but another transaction modifies the old state before the first transaction finishes, the first transaction has now made a decision based on bad data.</li>
+
+<li>If you execute the same query twice and get back more or fewer elements in the second execution than the first execution.</li>
+</ul>
+
+<p>
+Depending on your application, these may or may not be something that you need
+to worry about.
+</p>
+
+<p>
+The SQL standard actually has four transaction isolation levels.
+Postgresql only implements three of those - "Read Uncommitted" is not
+implemented and the default transaction level for Postgresql is “read committed”.
+Postgresql allows the user to specify the isolation level of a transaction
+on a transaction by transaction basis. As you might expect, there are trade-offs.
+Stronger isolation levels have more overhead and may trigger more transactions
+that need to be repeated (and therefore you will have to write the code to
+handle the necessary repeats).
+</p>
+
+<p>
+We explain this table just below:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Isolation Level</th>
+<th scope="col" class="org-left">Dirty Read</th>
+<th scope="col" class="org-left">Nonrepeatable Read</th>
+<th scope="col" class="org-left">Phantom Read</th>
+<th scope="col" class="org-left">Serialization Anomaly</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Read Uncommitted</td>
+<td class="org-left">Allowed</td>
+<td class="org-left">Possible</td>
+<td class="org-left">Possible</td>
+<td class="org-left">Possible</td>
+</tr>
+
+<tr>
+<td class="org-left">Read Committed *</td>
+<td class="org-left">Not Possible</td>
+<td class="org-left">Possible</td>
+<td class="org-left">Possible</td>
+<td class="org-left">Possible</td>
+</tr>
+
+<tr>
+<td class="org-left">Repeatable Read</td>
+<td class="org-left">Not Possible</td>
+<td class="org-left">Not Possible</td>
+<td class="org-left">Allowed by SQL Standard, not allowed in Postgresql</td>
+<td class="org-left">Possible</td>
+</tr>
+
+<tr>
+<td class="org-left">Serializable</td>
+<td class="org-left">Not Possible</td>
+<td class="org-left">Not Possible</td>
+<td class="org-left">Not Possible</td>
+<td class="org-left">Not Possible</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-orgf171a5a" class="outline-3">
+<h3 id="orgf171a5a">Problem Explanation</h3>
+<div class="outline-text-3" id="text-orgf171a5a">
+</div>
+<div id="outline-container-orgf168768" class="outline-4">
+<h4 id="orgf168768">Dirty Read</h4>
+<div class="outline-text-4" id="text-orgf168768">
+<p>
+A Dirty Read is a transaction reads data written by a concurrent uncommitted
+transaction. You can specify a transaction as having a “Read Uncommitted”
+level, but Postgresql will internally just give you a “Read Committed”
+isolation level.
+</p>
+
+<p>
+Assume sales are 2100 at the beginning
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">Transaction 1</td>
+<td class="org-left">Transaction 2</td>
+</tr>
+
+<tr>
+<td class="org-left">BEGIN</td>
+<td class="org-left">BEGIN</td>
+</tr>
+
+<tr>
+<td class="org-left">(:select 'sales :from 'table1 :where (:= 'id 21)</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">(:update 'table1 :set 'sales 2200 :where (:= 'id 21)) ;no commit</td>
+</tr>
+
+<tr>
+<td class="org-left">(:select 'sales :from 'table1 :where (:= 'id 21)</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">END</td>
+<td class="org-left">END</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+The second select will read sales as 2200 even though Transaction 2 did not
+fully commit.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org98f53fd" class="outline-4">
+<h4 id="org98f53fd">Nonrepeatable Read</h4>
+<div class="outline-text-4" id="text-org98f53fd">
+<p>
+A Nonrepeatable read is a transaction re-reads data it has previously read and
+finds the data has been modified by another transaction that committed since
+the initial read.
+</p>
+
+<p>
+Assume sales are 2100 at the beginning
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">Transaction 1</td>
+<td class="org-left">Transaction 2</td>
+</tr>
+
+<tr>
+<td class="org-left">BEGIN</td>
+<td class="org-left">BEGIN</td>
+</tr>
+
+<tr>
+<td class="org-left">(:select 'sales :from 'table1 :where (:= 'id 21)</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">(:update 'table1 :set 'sales 2200 :where (:= 'id 21))</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">COMMIT;</td>
+</tr>
+
+<tr>
+<td class="org-left">(:select 'sales :from 'table1 :where (:= 'id 21)</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">END</td>
+<td class="org-left">END</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+The second select will read sales as 2200. At least transaction 2 actually
+committed first.
+</p>
+
+<p>
+If you are just trying to avoid lost updates, you can use row level locks
+with select FOR UPDATE under read committed. That avoids the update being
+lost or aborted. Of course, now you need to worry about how to handle
+situations where one transaction gets stalled and holds a transaction too long.
+</p>
+
+<p>
+For select statements, you can add a row level lock by adding FOR SHARE to the
+end of the SELECT. For updates, use FOR UPDATE. In postmodern, if you are using
+s-sql, you can include :for-share or :for-update in the select statement. E.g.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:for-update (:select :* :from 'foo 'bar 'baz) :of 'bar 'baz :nowait))
+</pre>
+</div>
+<p>
+See <a href="s-sql.html">s-sql.html</a> for further details.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org59035d8" class="outline-4">
+<h4 id="org59035d8">Phantom Read</h4>
+<div class="outline-text-4" id="text-org59035d8">
+<p>
+A Phantom Read is where a transaction re-executes a query returning a set of
+rows and finds that the set of rows has changed (not necessarily row 215,
+but some one or more of the rows in the query set). Phantom Reads are
+prevented by using the “Repeatable Read” isolation level. Row level locks
+will not solve this problem.
+</p>
+
+<p>
+Assume first select returns 50:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">Transaction 1</td>
+<td class="org-left">Transaction 2</td>
+</tr>
+
+<tr>
+<td class="org-left">BEGIN</td>
+<td class="org-left">BEGIN</td>
+</tr>
+
+<tr>
+<td class="org-left">(:select (:count '*) :from 'table1 :where (:= 'region 1))</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">(:insert-into 'table1 :set 'sales 2200))</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">COMMIT;</td>
+</tr>
+
+<tr>
+<td class="org-left">(:select (:count '*) :from 'table1 :where (:= 'region 1))</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">END</td>
+<td class="org-left">END</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+The second select will return 51. Depending on what else might be happening in
+transaction 1, the difference between the number of rows at the beginning and
+the number of rows at the end may cause calculations to be inconsistent
+internally to the transaction.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org119c9a4" class="outline-4">
+<h4 id="org119c9a4">For More Fun</h4>
+<div class="outline-text-4" id="text-org119c9a4">
+<p>
+Now consider you have banking application A which runs in multiple sessions and
+does not use transactions and the user withdraws 100 from each of two sessions
+and the balance started at 300.
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">Session 1</td>
+<td class="org-left">Session 2</td>
+</tr>
+
+<tr>
+<td class="org-left">(:select 'balance :from 'accounts :where (:= 'user-id 1))</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">(:select 'balance :from 'accounts :where (:= 'user-id 1))</td>
+</tr>
+
+<tr>
+<td class="org-left">Application calculates the balance should be 200</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">(:update 'accounts :set 'balance 200)</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">Application calculates the balance should be 200</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">(:update 'accounts :set 'balance 200)</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+At this point the application has subtracted 200 (100 in each session), but
+the account balance still shows 200. Transactions would not have made a
+difference.
+</p>
+
+<p>
+Now implemented slightly differently:
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">Session 1</td>
+<td class="org-left">Session 2</td>
+</tr>
+
+<tr>
+<td class="org-left">(:select 'balance :from 'accounts :where (:= 'user-id 1))</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">(:select 'balance :from 'accounts :where (:= 'user-id 1))</td>
+</tr>
+
+<tr>
+<td class="org-left">(:update 'accounts :set 'balance (:- 'balance 100))</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">(:update 'accounts :set 'balance (:- 'balance 100))</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Do you know what the balance is now? It should be 100 because you put the
+calculation back into the database where it belongs. But life gets more
+complicated than these simple examples. Complex queries and updates provide
+more possibilities for concurrent transactions to generate conflicting,
+leading to solutions such as "row level locking" and "isolation levels".
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfd76894" class="outline-3">
+<h3 id="orgfd76894">Isolation Levels</h3>
+<div class="outline-text-3" id="text-orgfd76894">
+<p>
+The official postgresql documentation can be found <a href="https://www.postgresql.org/docs/current/static/transaction-iso.html">here</a>.
+</p>
+</div>
+
+<div id="outline-container-orgebb7a8d" class="outline-4">
+<h4 id="orgebb7a8d">Read Committed Isolation Level</h4>
+<div class="outline-text-4" id="text-orgebb7a8d">
+<p>
+Read Committed is the default isolation level in Postgresql. In general
+it has the best balance between locking and performance. This isolation level
+means that the existing row is read after the transaction is completed but not
+yet written. If the row has not changed, then the transaction is executed. If
+the row has changed from when it started building the transaction, then it
+starts the transaction over again.
+</p>
+
+<p>
+The “Read Committed” default isolation level is safe when you are concurrently
+reading. If there are multiple select statements in a single transaction, each
+select statement will have its own snapshot of the database (which might not
+be the same if another transaction is concurrently modifying the database).
+The “Read Committed” isolation level is not necessarily safe for concurrent
+updates. In other words, the concurrent updates would be performed serially,
+potentially surprising the user whose commit is overridden. Update and
+Delete statements in a “Read Committed” isolation level will create a
+snapshot of the database, use that snapshot to find the rows matching the
+where clause and then try to lock that row of the snapshot. If any rows are
+already locked by an update or delete statement in another transaction, the
+update or delete statement will wait for the other transaction to commit or
+abort. If it commits, the update or delete will re-evaluate the where clause
+on the new version of the row to determine whether it needs to be modified.
+</p>
+
+<p>
+Assume our banking problem using transactions at the Postgresql default
+isolation level of "read committed".
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">Session 1</td>
+<td class="org-left">Session 2</td>
+</tr>
+
+<tr>
+<td class="org-left">BEGIN</td>
+<td class="org-left">BEGIN</td>
+</tr>
+
+<tr>
+<td class="org-left">(:select 'balance :from 'accounts :where (:= 'user-id 1))</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">; Deferred (:select 'balance :from 'accounts :where (:= 'user-id 1))</td>
+</tr>
+
+<tr>
+<td class="org-left">Application calculates the balance should be 200</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">(:update 'accounts :set 'balance 200)</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">COMMIT</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">Application calculates the balance should be 100</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">(:update 'accounts :set 'balance 100)</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">COMMIT</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+The Session 2 select query notices that the row is already engaged and would be
+deferred until Transaction 1 is committed. At that point it reads the
+balance (now 200), tells the application, and the application subtracts 100
+and tells the database to update the balance to 100.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org39d8607" class="outline-4">
+<h4 id="org39d8607">Repeatable Read Isolation Level</h4>
+<div class="outline-text-4" id="text-org39d8607">
+<p>
+In Postgresql, a “Repeatable Read” isolation level takes a snapshot of the
+current state of the database and all queries in the transaction will use
+that snapshot. So if another transaction modifies a row, a second select
+statement in a repeatable read isolation level would not be affected because
+it is looking solely at the snapshot that was taken at the beginning of the
+transaction.
+</p>
+
+<p>
+Things happen differently if the transaction using a “Repeatable Read”
+isolation level wants to Update or Delete a row.
+</p>
+
+<p>
+If a Phantom read is detected when the transaction wants to commit, a
+Repeatable Read would go back and re-read the table and repeat the
+transaction. Update and Delete statements in a “Repeatable Read” isolation
+level will create a snapshot of the database, use that snapshot to find the
+rows matching the where clause and then check to see if another transaction
+is currently trying to modify the rows  (not just the columns) that the
+Update or Delete statement is trying to modify. If the other transaction
+aborts, the Update or Delete statement will modify the relevant rows and
+continue. If the other transaction commits, then the repeatable read
+transaction will abort with an error message about “could not serialize
+access due to concurrent update”.
+</p>
+
+<p>
+If you are running transaction at isolation level “repeatable read”,
+concurrent updates can be expected to trigger query failures  from time
+to time that need to be handled, typically by re-running the transaction.
+The following error message can be expected:
+</p>
+
+<ul class="org-ul">
+<li>“ERROR: could not serialize due to concurrent update” (Under</li>
+</ul>
+<p>
+either “repeatable read” or “serializable”.)
+</p>
+
+<p>
+Repeatable read addresses a different problem than our banking problem
+above, so the result in this case is the same as "read committed".
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga4529c5" class="outline-4">
+<h4 id="orga4529c5">Serializable Isolation Level</h4>
+<div class="outline-text-4" id="text-orga4529c5">
+<p>
+The Serializable Isolation level tells postgresql to effectively serialize all
+transactions. That ensures validity at the cost of a hit to performance.
+</p>
+
+<p>
+If you are running transaction at isolation level “serializable”, concurrent
+updates can be expected to trigger query failures  from time to time that
+need to be handled, typically by re-running the transaction. The following
+two errors can be expected:
+</p>
+
+<ul class="org-ul">
+<li>“ERROR: could not serialize due to concurrent update” (Under either “repeatable read” or “serializable”.)</li>
+
+<li>“ERROR: could not serialize access due to read/write dependencies among transactions. (Under “serializable”).</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc25bfba" class="outline-2">
+<h2 id="orgc25bfba">For Futher Reading</h2>
+<div class="outline-text-2" id="text-orgc25bfba">
+<ul class="org-ul">
+<li><a href="https://www.postgresql.org/docs/current/static/transaction-iso.html">https://www.postgresql.org/docs/current/static/transaction-iso.html</a></li>
+<li><a href="https://www.postgresql.org/docs/current/static/sql-set-transaction.html">https://www.postgresql.org/docs/current/static/sql-set-transaction.html</a></li>
+<li><a href="http://elliot.land/post/sql-transaction-isolation-levels-explained">http://elliot.land/post/sql-transaction-isolation-levels-explained</a></li>
+<li><a href="https://blog.2ndquadrant.com/postgresql-anti-patterns-read-modify-write-cycles/">https://blog.2ndquadrant.com/postgresql-anti-patterns-read-modify-write-cycles/</a></li>
+<li><a href="https://dba.stackexchange.com/questions/131226/set-serializable-isolation-for-update-query-postgresql-9-4">https://dba.stackexchange.com/questions/131226/set-serializable-isolation-for-update-query-postgresql-9-4</a></li>
+<li><a href="https://www.enterprisedb.com/docs/en/9.0/pg/transaction-iso.html">https://www.enterprisedb.com/docs/en/9.0/pg/transaction-iso.html</a></li>
+<li><a href="https://wiki.postgresql.org/wiki/SSI">https://wiki.postgresql.org/wiki/SSI</a></li>
+<li><a href="https://dba.stackexchange.com/questions/202775/how-to-write-validation-trigger-which-works-with-all-isolation-levels">https://dba.stackexchange.com/questions/202775/how-to-write-validation-trigger-which-works-with-all-isolation-levels</a></li>
+<li><a href="https://stackoverflow.com/questions/45923021/apparent-transaction-isolation-violation-in-postgresql">https://stackoverflow.com/questions/45923021/apparent-transaction-isolation-violation-in-postgresql</a></li>
+<li><a href="https://brandur.org/http-transactions">https://brandur.org/http-transactions</a></li>
+<li><a href="https://brandur.org/idempotency-keys">https://brandur.org/idempotency-keys</a></li>
+<li><a href="https://brandur.org/postgres-reads">https://brandur.org/postgres-reads</a></li>
+<li><a href="http://malisper.me/postgres-transaction-isolation-levels/">http://malisper.me/postgres-transaction-isolation-levels/</a></li>
+<li><a href="https://begriffs.com/posts/2017-08-01-practical-guide-sql-isolation.html">https://begriffs.com/posts/2017-08-01-practical-guide-sql-isolation.html</a> (includes the "zoo" of transaction phenomena)</li>
+<li><a href="http://shiroyasha.io/transaction-isolation-levels-in-postgresql.html">http://shiroyasha.io/transaction-isolation-levels-in-postgresql.html</a></li>
+<li><a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-95-51.pdf">A Critique of ANSI SQL Isolation Levels</a></li>
+<li><a href="http://www.cs.umb.edu/~poneil/ROAnom.pdf">A Read-Only Transaction Anomaly Under Snapshot Isolation</a></li>
+<li><a href="http://vldb.org/pvldb/vol5/p1850_danrkports_vldb2012.pdf">Serializable Snapshot Isolation in PostgreSQL</a></li>
+<li><a href="https://www.postgresql.org/docs/current/static/applevel-consistency.html">https://www.postgresql.org/docs/current/static/applevel-consistency.html</a></li>
+<li><a href="http://jimgray.azurewebsites.net/papers/thetransactionconcept.pdf">The Transaction Concept: Virtues and Limitations</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2018-09-09 Sun 09:46</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

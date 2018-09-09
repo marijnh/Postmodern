@@ -1369,6 +1369,24 @@ test. "
 (def-drop-op :drop-type "TYPE")
 (def-drop-op :drop-rule "RULE")
 
+(def-sql-op :truncate (&rest args)
+  "This query sql-op takes one or more table names and will truncate
+  those tables (deleting all the rows. The following keyword parameters
+  are optionally allowed and must be in this order.
+    :only will truncate only this table and not descendent tables.
+    :restart-identity will restart any sequences owned by the table.
+    :continue-identity will continue sequences owned by the table.
+    :cascade will cascade the truncation through tables using foreign keys."
+  (split-on-keywords ((vars *) (only - ?) (restart-identity - ?) (continue-identity - ?)(cascade - ? ))
+      (cons :vars args)
+    `("TRUNCATE "
+      ,@(when only '(" ONLY "))
+      ,@(sql-expand-list vars)
+      ,@(cond (restart-identity '(" RESTART IDENTITY "))
+              (continue-identity `(" CONTINUE IDENTITY "))
+              (t '("")))
+      ,@(when cascade '(" CASCADE ")))))
+
 (defun dequote (val)
   (if (and (consp val) (eq (car val) 'quote)) (cadr val) val))
 

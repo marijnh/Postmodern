@@ -1,0 +1,470 @@
+#+TITLE: Transaction and Isolation Notes
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+OPTIONS: ^:nil
+
+* Postmodern transaction calls with transaction names and isolation levels
+Transactions are one or more statements wrapped together which either all
+succeed and are "committed" or none of them succeed, in which case any state
+changes are rolled back to the beginning of the transaction. In the case of
+postmodern, there are two main macros available for use:
+
+- with-transaction (for general use)
+- with-logical-transaction (for nested transactions and savepoints)
+
+When you get into situations where you expect concurrent transactions, you
+can specify the whether the transaction is allowed only read access or
+both read and write access to the database table rows and you can specify
+either the default isolation level or a specific isolation level for that
+transaction. If you need more information on what isolation levels are, and
+when to use them, see below.
+
+Postgresql defaults to the read committed isolation level with
+read and write access. This is also postmodern's default, but that can be
+changed by setting postmodern:*isolation-level* to your desired setting.
+
+The available settings in postmodern follow the sql standard are:
+
+- :read-committed-rw (read committed with read and write)
+- :read-committed-ro (read committed with read only)
+- :repeatable-read-rw (repeatable read with read and write)
+- :repeatable-read-ro (repeatable read with read only)
+- :serializable (serializable with read and write)
+
+(Ok. "Loosely" follows the sql standard because we combine read-write and
+read-only constraints with the sql standard isolation levels. There is one
+unsafe isolation level defined by the standard, but neither postgresql nor
+any other major database implements it.)
+
+Postmodern generally provides the ability to specify the name of a transaction
+and the isolation level per the key words above. Examples of use are below
+and "george" is used as the name of the transaction (not quoted or as a string):
+#+BEGIN_SRC lisp
+(with-transaction ()
+  (execute (:insert-into 'test-data :set 'value 77)))
+
+(with-transaction (george)
+  (execute (:insert-into 'test-data :set 'value 22)))
+
+(with-transaction (george :read-committed-rw)
+  (execute (:insert-into 'test-data :set 'value 33)))
+
+(with-transaction (:serializable)
+  (execute (:insert-into 'test-data :set 'value 44)))
+
+(with-logical-transaction ()
+  (execute (:insert-into 'test-data :set 'value 77)))
+
+(with-logical-transaction (george)
+  (execute (:insert-into 'test-data :set 'value 22)))
+
+(with-logical-transaction (george :read-committed-rw)
+  (execute (:insert-into 'test-data :set 'value 33)))
+
+(with-logical-transaction (:serializable)
+  (execute (:insert-into 'test-data :set 'value 44)))
+#+END_SRC
+
+* Introduction to ACID, Transactions and Isolation Levels
+
+Databases like Postgresql are not simply data storage, they are
+transaction management systems. In the context of transactions with multiple
+operations within the transaction, either all of them commit or none of them
+commit (the transaction is rolled back). Transactions include single
+statement transactions as well as multiple statement transactions that are
+wrapped inside BEGIN – COMMIT Commands. (In the case of postmodern macros
+with-transaction and with-logical-transaction, the commit command is handled
+for you automatically.)
+
+You may have heard of databases being "ACID" compliant or having ACID
+functionality. Transactions are the “A” (Atomicity) in “ACID”.
+“C” is “Consistency”, “I” is “Isolation” and “D” is “Durability”. As you can
+tell, everything in ACID in designed to maintain the integrity of the data.
+Without atomicity, you risk leaving data in a partial or invalid state and
+everything which depends on the data will break. (And your dba will be
+upset – the question is – will they then try to break you?)
+
+Consistency ensures that every transaction will move the database from one
+valid state to another valid state. Consider two users A and B signing up
+with the same desired username “myname” almost simultaneously. The system
+checks to see whether “myname” is in use for A. It is not, so it starts the
+process of creating a record for “myname”. The system checks for B to see
+whether “myname” is in use. Since it has not yet finished creating the record
+for A, it appears to be available for B, so it starts the process of
+creating a user record for B using “myname”. One or both can end up in an
+invalid state.
+
+You can prevent the inconsistent state by either putting a uniqueness check
+on the user table for usernames or you use an isolation level like
+serializable on your transactions. In either case, B’s commit will fail,
+you have to restart that transaction, but the data that is now in the system
+is safe and consistent..
+
+Isolation levels define what is allowed to happen if there are two transactions
+tyring to access the same data simultaneously. More on this below.
+
+Durability means that committed transactions must stay committed, even in
+the event of a crash, power loss, etc.
+
+* Transactions
+
+It is easy show the impact of transactions in action. Consider the following:
+
+#+BEGIN_SRC lisp
+(execute (:create-table test-data ((value :type integer))))
+
+(with-transaction ()
+  (execute (:insert-into 'test-data :set 'value 77)))
+(query (:select '* :from 'test-data))
+((77))
+#+END_SRC
+The postmodern macro with-transaction completes with a call to
+commit-transaction. So absent any intervening actions, the transaction
+will commit at the end of the form.
+
+For purposes of the following examples, assume that we truncated
+the table prior to each example so we have the same base line each time.
+#+BEGIN_SRC lisp
+(ignore-errors
+  (with-transaction ()
+    (execute (:insert-into 'test-data :set 'value 2))
+    (error "no wait")))
+NIL
+#<SIMPLE-ERROR "no wait" {100D581653}>
+
+(with-test-connection (query (:select '* :from 'test-data)))
+NIL
+#+END_SRC
+This time we triggered an error before the transaction concluded. Because the
+error was inside the transaction, it invalidated all statements inside the
+transction and the tentative insertion never happened.
+(Actually more complicated than this, but from an application developer
+standpoint, we can think of it this way.)
+
+Now lets actually give the transaction a name and make a superflous call to
+commit-transaction within the transaction.
+#+BEGIN_SRC lisp
+(with-transaction (transaction)
+  (execute (:insert-into 'test-data :set 'value 2))
+  (commit-transaction transaction))
+
+(query (:select '* :from 'test-data))
+((2))
+#+END_SRC
+As you can see, making the unnecessary call to commit-tranaction does not
+trigger the insertion twice.
+
+We can also decide to abort the transaction without triggering an error:
+#+BEGIN_SRC lisp
+(with-transaction (transaction)
+  (execute (:insert-into 'test-data :set 'value 44))
+  (abort-transaction transaction))
+
+(query (:select '* :from 'test-data))
+NIL
+#+END_SRC
+As expected, the insertion was never committed due to the call to
+abort-transaction.
+
+*** What happens if we nest transactions?
+Postgresql does not fully support nested transactions. Full support of
+nested transactions would mean that a succesful sub-transaction does not get
+rolled back if a parent transaction (direct or indirect) gets rolled back.
+
+Postgresql allows the use of savepoints, which can get you to a consistent
+state but means that if any transaction in a nested transaction sequence
+is rolled back, then everything in the transaction is rolled back. Postmodern
+provides savepoints automatically in a nested situation if you use the macro
+with-logical-transaction. Postmodern also provides a macro with-savepoint
+if you need to handle them manually.
+
+If you do not use savepoints, the result of nested transactions may not be
+consistent. Some or all of subtransactions may or may not get committed
+if there is an error anywhere in the nest.
+
+The [[https://www.postgresql.org/docs/10/static/sql-begin.html][official postgresql documentation]] states that "Issuing a begin when already
+inside a transaction will provoke a warning message. The state of the
+transaction is not affected." While this sounds like the subtransactions just
+get treated as part of the outer transaction, you cannot rely on that
+interpretation.
+
+Morale of the story. If you are going to nest transactions in postmdern, use
+the with-logical-transaction macro, do not use the with-transaction macro.
+
+Now lets talk about concurrency issues and the trade-offs between different
+isolation levels.
+
+* The Concurrency Problem
+** Summary
+Consider when you have multiple concurrent transactions or multiple concurrent
+database events. These create potential race conditions as well as potential
+overwrite issues, creating hard to find bugs. The base problem is easy to
+understand – what happens when two users try to access the same row of data
+concurrently.
+
+Think about how databases using MVCC (multi-version concurrency control)
+execute statements inside a transaction. The data generated by the transaction
+is kept off to the side, away from other data until the entire transaction
+can be committed. Once it is committed, it becomes visible to all future
+transactions and the old row which it may have edited becomes marked as
+invalid. The invalid row still exists in the system until the next VACUUM.
+Of course, this does not mean that the system prevents user B from overwriting
+user A’s changes from an hour ago. We are solely focused on concurrency issues
+here.
+
+All committed transactions are written to the write-ahead log (WAL or “xlog”).
+In case of trouble, Postgresql can replay the WAL log to recover changes that
+did not get into the actual data files. Postgresql also has a commit
+log “pg_xact” which summarizes transactions and whether the transaction
+committed or aborted. Any transaction that was a read only transaction is
+never written to the WAL or commit logs. As it was not intended to modify any
+data, there is no need. However, if the transaction is aborted, that fact will
+still be noted in the WAL and commit logs. (You can also configure postgresql
+to log all queries, but that is not the default.)
+
+Now think about the situation at a little more granular level.
+
+- If two transactions read the old state and then perform changes concurrently, the last write transaction will be effective and the previous write transaction may be lost unless you have explicit locking.
+
+- If two transactions with multiple statements read the old state and then both transactions perform changes concurrently, you may end up in an inconsistent data state.
+
+- If one transaction reads the old state and prepares to make a change based on the value of the old state, but another transaction modifies the old state before the first transaction finishes, the first transaction has now made a decision based on bad data.
+
+- If you execute the same query twice and get back more or fewer elements in the second execution than the first execution.
+
+Depending on your application, these may or may not be something that you need
+to worry about.
+
+The SQL standard actually has four transaction isolation levels.
+Postgresql only implements three of those - "Read Uncommitted" is not
+implemented and the default transaction level for Postgresql is “read committed”.
+Postgresql allows the user to specify the isolation level of a transaction
+on a transaction by transaction basis. As you might expect, there are trade-offs.
+Stronger isolation levels have more overhead and may trigger more transactions
+that need to be repeated (and therefore you will have to write the code to
+handle the necessary repeats).
+
+We explain this table just below:
+
+| Isolation Level  | Dirty Read   | Nonrepeatable Read | Phantom Read                                       | Serialization Anomaly |
+|------------------+--------------+--------------------+----------------------------------------------------+-----------------------|
+| Read Uncommitted | Allowed      | Possible           | Possible                                           | Possible              |
+| Read Committed * | Not Possible | Possible           | Possible                                           | Possible              |
+| Repeatable Read  | Not Possible | Not Possible       | Allowed by SQL Standard, not allowed in Postgresql | Possible              |
+| Serializable     | Not Possible | Not Possible       | Not Possible                                       | Not Possible          |
+
+** Problem Explanation
+*** Dirty Read
+A Dirty Read is a transaction reads data written by a concurrent uncommitted
+transaction. You can specify a transaction as having a “Read Uncommitted”
+level, but Postgresql will internally just give you a “Read Committed”
+isolation level.
+
+Assume sales are 2100 at the beginning
+| Transaction 1                                    | Transaction 2                                                    |
+| BEGIN                                            | BEGIN                                                            |
+| (:select 'sales :from 'table1 :where (:= 'id 21) |                                                                  |
+|                                                  | (:update 'table1 :set 'sales 2200 :where (:= 'id 21)) ;no commit |
+| (:select 'sales :from 'table1 :where (:= 'id 21) |                                                                  |
+| END                                              | END                                                              |
+
+The second select will read sales as 2200 even though Transaction 2 did not
+fully commit.
+
+*** Nonrepeatable Read
+A Nonrepeatable read is a transaction re-reads data it has previously read and
+finds the data has been modified by another transaction that committed since
+the initial read.
+
+Assume sales are 2100 at the beginning
+| Transaction 1                                    | Transaction 2                                                    |
+| BEGIN                                            | BEGIN                                                            |
+| (:select 'sales :from 'table1 :where (:= 'id 21) |                                                                  |
+|                                                  | (:update 'table1 :set 'sales 2200 :where (:= 'id 21))            |
+|                                                  | COMMIT;                                                          |
+| (:select 'sales :from 'table1 :where (:= 'id 21) |                                                                  |
+| END                                              | END                                                              |
+
+The second select will read sales as 2200. At least transaction 2 actually
+committed first.
+
+If you are just trying to avoid lost updates, you can use row level locks
+with select FOR UPDATE under read committed. That avoids the update being
+lost or aborted. Of course, now you need to worry about how to handle
+situations where one transaction gets stalled and holds a transaction too long.
+
+For select statements, you can add a row level lock by adding FOR SHARE to the
+end of the SELECT. For updates, use FOR UPDATE. In postmodern, if you are using
+s-sql, you can include :for-share or :for-update in the select statement. E.g.
+
+#+BEGIN_SRC lisp
+(query (:for-update (:select :* :from 'foo 'bar 'baz) :of 'bar 'baz :nowait))
+#+END_SRC
+See [[file:s-sql.html]] for further details.
+
+*** Phantom Read
+A Phantom Read is where a transaction re-executes a query returning a set of
+rows and finds that the set of rows has changed (not necessarily row 215,
+but some one or more of the rows in the query set). Phantom Reads are
+prevented by using the “Repeatable Read” isolation level. Row level locks
+will not solve this problem.
+
+Assume first select returns 50:
+
+| Transaction 1                                             | Transaction 2                            |
+| BEGIN                                                     | BEGIN                                    |
+| (:select (:count '*) :from 'table1 :where (:= 'region 1)) |                                          |
+|                                                           | (:insert-into 'table1 :set 'sales 2200)) |
+|                                                           | COMMIT;                                  |
+| (:select (:count '*) :from 'table1 :where (:= 'region 1)) |                                          |
+| END                                                       | END                                      |
+
+The second select will return 51. Depending on what else might be happening in
+transaction 1, the difference between the number of rows at the beginning and
+the number of rows at the end may cause calculations to be inconsistent
+internally to the transaction.
+
+*** For More Fun
+Now consider you have banking application A which runs in multiple sessions and
+does not use transactions and the user withdraws 100 from each of two sessions
+and the balance started at 300.
+
+| Session 1                                                 | Session 2                                                 |
+| (:select 'balance :from 'accounts :where (:= 'user-id 1)) |                                                           |
+|                                                           | (:select 'balance :from 'accounts :where (:= 'user-id 1)) |
+| Application calculates the balance should be 200          |                                                           |
+| (:update 'accounts :set 'balance 200)                     |                                                           |
+|                                                           | Application calculates the balance should be 200          |
+|                                                           | (:update 'accounts :set 'balance 200)                     |
+
+At this point the application has subtracted 200 (100 in each session), but
+the account balance still shows 200. Transactions would not have made a
+difference.
+
+Now implemented slightly differently:
+| Session 1                                                 | Session 2                                                 |
+| (:select 'balance :from 'accounts :where (:= 'user-id 1)) |                                                           |
+|                                                           | (:select 'balance :from 'accounts :where (:= 'user-id 1)) |
+| (:update 'accounts :set 'balance (:- 'balance 100))       |                                                           |
+|                                                           | (:update 'accounts :set 'balance (:- 'balance 100))       |
+
+Do you know what the balance is now? It should be 100 because you put the
+calculation back into the database where it belongs. But life gets more
+complicated than these simple examples. Complex queries and updates provide
+more possibilities for concurrent transactions to generate conflicting,
+leading to solutions such as "row level locking" and "isolation levels".
+
+** Isolation Levels
+The official postgresql documentation can be found [[https://www.postgresql.org/docs/current/static/transaction-iso.html][here]].
+
+*** Read Committed Isolation Level
+Read Committed is the default isolation level in Postgresql. In general
+it has the best balance between locking and performance. This isolation level
+means that the existing row is read after the transaction is completed but not
+yet written. If the row has not changed, then the transaction is executed. If
+the row has changed from when it started building the transaction, then it
+starts the transaction over again.
+
+The “Read Committed” default isolation level is safe when you are concurrently
+reading. If there are multiple select statements in a single transaction, each
+select statement will have its own snapshot of the database (which might not
+be the same if another transaction is concurrently modifying the database).
+The “Read Committed” isolation level is not necessarily safe for concurrent
+updates. In other words, the concurrent updates would be performed serially,
+potentially surprising the user whose commit is overridden. Update and
+Delete statements in a “Read Committed” isolation level will create a
+snapshot of the database, use that snapshot to find the rows matching the
+where clause and then try to lock that row of the snapshot. If any rows are
+already locked by an update or delete statement in another transaction, the
+update or delete statement will wait for the other transaction to commit or
+abort. If it commits, the update or delete will re-evaluate the where clause
+on the new version of the row to determine whether it needs to be modified.
+
+Assume our banking problem using transactions at the Postgresql default
+isolation level of "read committed".
+
+| Session 1                                                 | Session 2                                                            |
+| BEGIN                                                     | BEGIN                                                                |
+| (:select 'balance :from 'accounts :where (:= 'user-id 1)) |                                                                      |
+|                                                           | ; Deferred (:select 'balance :from 'accounts :where (:= 'user-id 1)) |
+| Application calculates the balance should be 200          |                                                                      |
+| (:update 'accounts :set 'balance 200)                     |                                                                      |
+| COMMIT                                                    |                                                                      |
+|                                                           | Application calculates the balance should be 100                     |
+|                                                           | (:update 'accounts :set 'balance 100)                                |
+|                                                           | COMMIT                                                               |
+
+The Session 2 select query notices that the row is already engaged and would be
+deferred until Transaction 1 is committed. At that point it reads the
+balance (now 200), tells the application, and the application subtracts 100
+and tells the database to update the balance to 100.
+
+*** Repeatable Read Isolation Level
+In Postgresql, a “Repeatable Read” isolation level takes a snapshot of the
+current state of the database and all queries in the transaction will use
+that snapshot. So if another transaction modifies a row, a second select
+statement in a repeatable read isolation level would not be affected because
+it is looking solely at the snapshot that was taken at the beginning of the
+transaction.
+
+Things happen differently if the transaction using a “Repeatable Read”
+isolation level wants to Update or Delete a row.
+
+If a Phantom read is detected when the transaction wants to commit, a
+Repeatable Read would go back and re-read the table and repeat the
+transaction. Update and Delete statements in a “Repeatable Read” isolation
+level will create a snapshot of the database, use that snapshot to find the
+rows matching the where clause and then check to see if another transaction
+is currently trying to modify the rows  (not just the columns) that the
+Update or Delete statement is trying to modify. If the other transaction
+aborts, the Update or Delete statement will modify the relevant rows and
+continue. If the other transaction commits, then the repeatable read
+transaction will abort with an error message about “could not serialize
+access due to concurrent update”.
+
+If you are running transaction at isolation level “repeatable read”,
+concurrent updates can be expected to trigger query failures  from time
+to time that need to be handled, typically by re-running the transaction.
+The following error message can be expected:
+
+- “ERROR: could not serialize due to concurrent update” (Under
+either “repeatable read” or “serializable”.)
+
+Repeatable read addresses a different problem than our banking problem
+above, so the result in this case is the same as "read committed".
+
+*** Serializable Isolation Level
+The Serializable Isolation level tells postgresql to effectively serialize all
+transactions. That ensures validity at the cost of a hit to performance.
+
+If you are running transaction at isolation level “serializable”, concurrent
+updates can be expected to trigger query failures  from time to time that
+need to be handled, typically by re-running the transaction. The following
+two errors can be expected:
+
+- “ERROR: could not serialize due to concurrent update” (Under either “repeatable read” or “serializable”.)
+
+- “ERROR: could not serialize access due to read/write dependencies among transactions. (Under “serializable”).
+
+* For Futher Reading
+
+- https://www.postgresql.org/docs/current/static/transaction-iso.html
+- https://www.postgresql.org/docs/current/static/sql-set-transaction.html
+- http://elliot.land/post/sql-transaction-isolation-levels-explained
+- https://blog.2ndquadrant.com/postgresql-anti-patterns-read-modify-write-cycles/
+- https://dba.stackexchange.com/questions/131226/set-serializable-isolation-for-update-query-postgresql-9-4
+- https://www.enterprisedb.com/docs/en/9.0/pg/transaction-iso.html
+- https://wiki.postgresql.org/wiki/SSI
+- https://dba.stackexchange.com/questions/202775/how-to-write-validation-trigger-which-works-with-all-isolation-levels
+- https://stackoverflow.com/questions/45923021/apparent-transaction-isolation-violation-in-postgresql
+- https://brandur.org/http-transactions
+- https://brandur.org/idempotency-keys
+- https://brandur.org/postgres-reads
+- http://malisper.me/postgres-transaction-isolation-levels/
+- https://begriffs.com/posts/2017-08-01-practical-guide-sql-isolation.html (includes the "zoo" of transaction phenomena)
+- http://shiroyasha.io/transaction-isolation-levels-in-postgresql.html
+- [[https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-95-51.pdf][A Critique of ANSI SQL Isolation Levels]]
+- [[http://www.cs.umb.edu/~poneil/ROAnom.pdf][A Read-Only Transaction Anomaly Under Snapshot Isolation]]
+- [[http://vldb.org/pvldb/vol5/p1850_danrkports_vldb2012.pdf][Serializable Snapshot Isolation in PostgreSQL]]
+- [[https://www.postgresql.org/docs/current/static/applevel-consistency.html]]
+- [[http://jimgray.azurewebsites.net/papers/thetransactionconcept.pdf][The Transaction Concept: Virtues and Limitations]]

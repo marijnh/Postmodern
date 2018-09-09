@@ -1140,6 +1140,32 @@ etc which depend on that table.
 (query (:drop-table :if-exists 'table1 :cascade))
 #+END_SRC
 
+** sql-op :truncate (&rest args)
+   SCHEDULED: <2018-09-06 Thu>
+
+Truncates one or more tables, deleting all the rows. Optional keyword arguments are
+allowed in the following order. Note that :continue-identity and :restart-identity
+make no sense if both are included.
+
+- :only (if not specified, the table and its descendants are truncated).
+- :continue-identity (the values of sequences will not be changed. This is the default)
+- :restart-identity (the values of sequences owned by the table(s) will be restarted)
+- :cascade (will cascade the truncation through tables using foreign keys.)
+
+Example calls would be:
+#+BEGIN_SRC lisp
+(query (:truncate 'bigtable 'fattable))
+
+(query (:truncate 'bigtable 'fattable :only))
+
+(query (:truncate 'bigtable 'fattable :only :continue-identity))
+
+(query (:truncate 'bigtable 'fattable :restart-identity))
+
+(query (:truncate 'bigtable 'fattable :only :restart-identity :cascade ))
+
+#+END_SRC
+
 ** sql-op :create-index (name &rest args)
 
 Create an index on a table. After the name of the index the keyword :on should

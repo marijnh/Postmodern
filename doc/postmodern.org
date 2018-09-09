@@ -178,12 +178,46 @@ well as arguments supplied to the query.
   :plists)
 #+END_SRC
 
-** macro with-transaction ((&optional name) &body body)
+** macro with-transaction ((&optional name isolation-level) &body body)
 
 Execute the given body within a database transaction, committing it when the
-body exits normally, and aborting otherwise. An optional name can be given
-to the transaction, which can be used to force a commit or abort before the
-body unwinds.
+body exits normally, and aborting otherwise. An optional name and/or
+isolation-level can be given to the transaction. The name can be used to
+force a commit or abort before the body unwinds. The isolation-level
+will set the isolation-level used by the transaction.
+
+You can specify the following isolation levels in postmodern transactions:
+
+- :read-committed-rw (read committed with read and write)
+- :read-committed-ro (read committed with read only)
+- :repeatable-read-rw (repeatable read with read and write)
+- :repeatable-read-ro (repeatable read with read only)
+- :serializable (serializable with reand and write)
+
+Sample usage where "george" is just the name given to the transaction (not
+quoted or a string) and ... simply indicates other statements would be
+expected here:
+#+BEGIN_SRC lisp
+(with-transaction ()
+  (execute (:insert-into 'test-data :set 'value 77))
+  ...)
+
+(with-transaction (george)
+  (execute (:insert-into 'test-data :set 'value 22))
+  ...)
+
+(with-transaction (george :read-committed-rw)
+  (execute (:insert-into 'test-data :set 'value 33))
+  (query (:select '* :from 'test-data))
+  ...)
+
+(with-transaction (:serializable)
+  (execute (:insert-into 'test-data :set 'value 44))
+  ...)
+#+END_SRC
+
+Further discussion of transactions and isolation levels can found
+[[file:isolation-notes.html][here]].
 
 ** function commit-transaction (transaction)
 
@@ -222,12 +256,42 @@ be executed when a transaction is aborted or a savepoint rolled back
 (whether via a non-local transfer of control or explicitly by either
 abort-transaction or rollback-savepoint).
 
-** macro with-logical-transaction ((&optional name) &body body)
+** macro with-logical-transaction ((&optional name isolation-level) &body body)
 
 Executes body within a with-transaction form if no transaction is currently
 in progress, otherwise simulates a nested transaction by executing it
 within a with-savepoint form. The transaction or savepoint is bound to name
-if one is supplied.
+if one is supplied. The isolation-level will set the isolation-level used by the transaction.
+
+You can specify the following isolation levels in postmodern transactions:
+
+- :read-committed-rw (read committed with read and write)
+- :read-committed-ro (read committed with read only)
+- :repeatable-read-rw (repeatable read with read and write)
+- :repeatable-read-ro (repeatable read with read only)
+- :serializable (serializable with reand and write)
+
+Sample usage where "george" is just the name given to the transaction (not
+quoted or a string) and ... simply indicates other statements would be
+expected here:
+
+#+BEGIN_SRC lisp
+(with-logical-transaction ()
+  (execute (:insert-into 'test-data :set 'value 77))
+  ...)
+
+(with-logical-transaction (george)
+  (execute (:insert-into 'test-data :set 'value 22))
+  ...)
+
+(with-logical-transaction (george :read-committed-rw)
+  (execute (:insert-into 'test-data :set 'value 33))
+  ...)
+
+(with-logical-transaction (:serializable)
+  (execute (:insert-into 'test-data :set 'value 44))
+  ...)
+#+END_SRC
 
 ** function abort-logical-transaction (transaction-or-savepoint)
 

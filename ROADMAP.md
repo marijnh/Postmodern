@@ -78,7 +78,7 @@ There is a reason for reserved words and it is upstream in postgresql.
 - [ ]   Ensure transactions can deal with reconnections/restarts
 - [X]   Ensure prepared statements and reconnect restart work together
 - [ ]   IPV6 connections
-- [ ]   Expand transaction isolation. Currently with-transaction does not allow specifying the isolation level.
+- [X]   Expand transaction isolation. Currently with-transaction does not allow specifying the isolation level.
         See https://www.postgresql.org/docs/current/static/transaction-iso.html
 
 ## Error Messages
