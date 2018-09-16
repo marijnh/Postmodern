@@ -60,6 +60,8 @@ exactly the same. Let's walk through a simple example:
            (len :type (or interval db-null) :interval :hour-to-minute))))
 
 #+END_SRC
+The parameter specification is :create-table (name (&rest columns) &rest options)
+
 The first parameter is the name of the new table. You could make the name a quoted
 string, e.g. "films-at-eleven", but postmodern will handle either a string or the
 unquoted parameter provided above. Postmodern will also automatically handle the
@@ -143,4 +145,307 @@ table. E.g.
 #+BEGIN_SRC lisp
 (query (:create-table (:unlogged distributors-in-hell)
          ((did :type (or integer db-null)))))
+#+END_SRC
+
+** Using Identity Columns
+Postgresql version 10 added identity columns. These are auto-incrementing
+columns that use the standard SQL syntax instead of the serial and bigserial
+datatypes which are still available, but are not SQL standard syntax. The
+serial and bigserial datatypes also generate sequences that may have different
+usage permissions which can be problematic if you need to make changes to the
+sequence.
+
+There are two keyword alternatives that need to be considered:
+
+- :generated-as-identity-by-default
+- :generated-as-identity-always
+
+The difference between the two alternatives is that if you try to insert or
+update a value in the column and the generated-always option is chosen,
+postgresql will raise an error. If you use the by-default option, postgresql
+will use your value rather than the automatically generated value.
+
+Note: The data type used for identity columns must be one of smallint, int or bigint.
+
+#+BEGIN_SRC lisp
+(query (:create-table color
+         ((color-id :type int :generated-as-identity-always)
+          (color-name :type varchar))))
+
+(query (:create-table color
+         ((color-id :type int :generated-as-identity-by-default)
+          (color-name :type varchar))))
+#+END_SRC
+
+** Array Columns
+The following shows the creation of a table with a two dimensional array
+#+BEGIN_SRC lisp
+(sql (:create-table array-int
+       ((vector :type (or int[][] db-null)))))
+#+END_SRC
+
+** Check Constraints
+You can put a contraint on a table row that specifies values must meet
+certain requirements. In the following examples, the first puts a check
+constraint on a row, the second places at check constraint at the table
+level.
+
+#+BEGIN_SRC lisp
+(query (:create-table distributors
+         ((did :type (or integer db-null) :check (:> 'did 100))
+          (name :type (or (varchar 40) db-null)))))
+
+(query (:create-table distributors
+         ((did :type (or integer db-null))
+          (name :type (or (varchar 40) db-null)))
+         (:constraint con1 :check (:and (:> 'did 100) (:<> 'name "")))))
+#+END_SRC
+
+** Unique Constraints
+You can ensure that a column or a combination of columns is unique
+without making that column or columns the primary key for the table.
+
+The first example sets a unique constraint at the column level of email,
+the second example sets a unique constraint at the table level.
+
+Please note the need to set :unique to t in the column constraint
+version.
+
+#+BEGIN_SRC lisp
+(sql (:create-table person
+       ((id :type serial :primary-key t)
+        (first-name :type (varchar 50))
+        (last-name :type (varchar 50))
+        (email :type (varchar 50) :unique t))))
+
+(query (:create-table films
+         ((code :type (or (string 5) db-null))
+          (title :type (or (varchar 40) db-null))
+          (did :type (or integer db-null))
+          (date-prod :type (or date db-null))
+          (kind :type (or (varchar 10) db-null))
+          (len :type (or interval db-null) :interval :hour-to-minute))
+         (:constraint production :unique 'date-prod)))
+#+END_SRC
+
+This can get more complex if so desired. See the following example
+from the postgresql documentation, translated into s-sql. This level of
+complexity, however, requires the :create-extended-table method.
+
+#+BEGIN_SRC lisp
+(query (:create-extended-table distributors
+         ((did :type (or integer db-null))
+          (name :type (or (varchar 40) db-null)))
+         ((:unique did :with (:= 'fillfactor 70)))))
+#+END_SRC
+In case you are wondering, fillfactor is a storage parameter described in the
+postgresql documentation as:
+
+"The fillfactor for a table is a percentage between 10 and 100. 100 (complete
+packing) is the default. When a smaller fillfactor is specified, INSERT
+operations pack table pages only to the indicated percentage; the remaining
+space on each page is reserved for updating rows on that page. This gives
+UPDATE a chance to place the updated copy of a row on the same page as the
+original, which is more efficient than placing it on a different page. For a
+table whose entries are never updated, complete packing is the best choice,
+but in heavily updated tables smaller fillfactors are appropriate. This
+parameter cannot be set for TOAST tables."
+
+
+** Timestamps with and without timezones
+Ah, the bane of many programmers' existence - dates and times.
+At least the table creation is fairly straightforward.
+
+The following examples are fairly self explanatory.
+#+BEGIN_SRC
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp-without-time-zone db-null)))))
+
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp-with-time-zone db-null)))))
+
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamptz db-null)))))
+
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp db-null)))))
+
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or time db-null)))))
+#+END_SRC
+
+
+** Adding Foreign Keys
+There are a few different ways to add foreign keys in postgresql when defining
+a table.
+
+*** Defining Foreign Keys at the Column Level
+
+First with foreign key on the column. Use the keyword :references and specify
+the table name  and the relevant column within the subform. You will see why
+the subform in a minute.
+#+BEGIN_SRC lisp
+(query (:create-table so-items
+          ((item-id :type integer)
+           (so-id :type (or integer db-null) :references ((so-headers id)))
+           (product-id :type (or integer db-null))
+           (qty :type (or integer db-null))
+           (net-price :type (or numeric db-null)))
+          (:primary-key item-id so-id)))
+#+END_SRC
+
+If the foreign key references a group of columns in the foreign table, those
+fit into that same subform.
+
+#+BEGIN_SRC lisp
+(query (:create-table so-items
+          ((item-id :type integer)
+           (so-id :type (or integer db-null) :references ((so-headers id p1 p2)))
+           (product-id :type (or integer db-null))
+           (qty :type (or integer db-null))
+           (net-price :type (or numeric db-null)))
+          (:primary-key item-id so-id)))
+#+END_SRC
+
+You can specify the actions to be taken if a row in the foreign table is
+deleted or updated. Per the postgresql documentation:
+
+"... when the data in the referenced columns is changed, certain actions are
+performed on the data in this table's columns. The ON DELETE clause specifies
+the action to perform when a referenced row in the referenced table is being
+deleted. Likewise, the ON UPDATE clause specifies the action to perform when
+a referenced column in the referenced table is being updated to a new value.
+If the row is updated, but the referenced column is not actually changed, no
+action is done. Referential actions other than the NO ACTION check cannot be
+deferred, even if the constraint is declared deferrable. There are the
+following possible actions for each clause:
+
+-  NO ACTION
+Produce an error indicating that the deletion or update would create a foreign
+key constraint violation. If the constraint is deferred, this error will be
+produced at constraint check time if there still exist any referencing rows.
+This is the default action in postgresql but the default in postmodern is
+restrict.
+
+- RESTRICT
+Produce an error indicating that the deletion or update would create a foreign
+key constraint violation. This is the same as NO ACTION except that the check
+is not deferrable.
+
+- CASCADE
+Delete any rows referencing the deleted row, or update the values of the
+referencing column(s) to the new values of the referenced columns, respectively.
+
+- SET NULL
+Set the referencing column(s) to null.
+
+-  SET DEFAULT
+Set the referencing column(s) to their default values. (There must be a row in
+the referenced table matching the default values, if they are not null, or
+the operation will fail.)
+
+If the referenced column(s) are changed frequently, it might be wise to add an
+index to the referencing column(s) so that referential actions associated with
+the foreign key constraint can be performed more efficiently."
+
+So now examples with specifying the on-delete and on-update actions.
+#+BEGIN_SRC lisp
+(query (:create-table so-items
+         ((item-id :type integer)
+          (so-id :type (or integer db-null)
+                 :references ((so-headers id) :no-action :no-action))
+          (product-id :type (or integer db-null))
+          (qty :type (or integer db-null))
+          (net-price :type (or numeric db-null)))
+         (:primary-key item-id so-id)))
+#+END_SRC
+
+*** Defining Foreign Keys at the Table Level
+Instead of specifying the foreign keys at the column level, you can specify
+them at the table level, but of course that means you have to additionally
+specify which column in the current table is a foreign key.
+
+The following example creates a named constraint and a foreign key at column
+role-id with a single column in the foreign table. The first example uses the
+default actions for on-delete and on-default. The second example shows
+non-default actions specified.
+
+#+BEGIN_SRC lisp
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp-without-time-zone db-null)))
+         (:primary-key user-id role-id)
+         (:constraint account-role-role-id-fkey
+                      :foreign-key (role-id) (role role-id))))
+
+
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp-without-time-zone db-null)))
+         (:primary-key user-id role-id)
+         (:constraint account-role-role-id-fkey
+                      :foreign-key (role-id) (role role-id) :no-action :no-action)))
+#+END_SRC
+Additional foreign keys can easily be added:
+#+BEGIN_SRC lisp
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp-without-time-zone db-null)))
+         (:primary-key user-id role-id)
+         (:constraint account-role-role-id-fkey
+                      :foreign-key (role-id) (role role-id))
+         (:constraint account-role-user-id-fkey
+                      :foreign-key (user-id) (users user-id))))
+#+END_SRC
+** Using Tablespaces
+Tablespaces require use of the create-extended-table method. Note that the
+create-extended-table method has a slightly different signature. It expects
+a table name and two or three forms. The first form relates to the columns,
+the second form relates to table level constraints. The third form, if present,
+refers to specific postgresql storage options such as tablespaces and
+partitions and storage parameters. This is only partially implemented.
+
+Tablespaces are documented at [[https://www.postgresql.org/docs/10/static/manage-ag-tablespaces.html]]
+#+BEGIN_SRC lisp
+(sql (:create-extended-table cinemas
+       ((id :type serial) (name :type (or text db-null))
+        (location :type (or text db-null)))
+       ()
+       ((:tablespace 'diskvol1))))
+#+END_SRC
+
+** Partitions (not fully implemented)
+The following are two very simple examples of use of partitions. You should
+not consider partition functionality to be fully implemented past these
+examples.
+
+#+BEGIN_SRC lisp
+(query (:create-extended-table measurement
+         ((logdate :type date)
+          (peaktemp :type (or integer db-null))
+          (unitsales :type (or integer db-null)))
+         ()
+         ((:partition-by-range 'logdate))))
+
+;; Create a range partitioned table with multiple columns in the partition key:
+
+(query (:create-extended-table measurement-year-month
+         ((logdate :type date)
+          (peaktemp :type (or integer db-null))
+          (unitsales :type (or integer db-null)))
+         ()
+         ((:partition-by-range (:extract 'year 'logdate)(:extract 'month 'logdate)))))
 #+END_SRC

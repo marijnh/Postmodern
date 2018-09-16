@@ -80,6 +80,14 @@
       (is (equal (sql (:create-table array-int ((vector :type (or int[][] db-null)))))
                  "CREATE TABLE array_int (vector INT[][])"))
 
+      ;; a column level unique setting
+      (is (equal (sql (:create-table person
+                    ((id :type serial :primary-key t)
+                     (first-name :type (varchar 50))
+                     (last-name :type (varchar 50))
+                     (email :type (varchar 50) :unique t))))
+                 "CREATE TABLE person (id SERIAL NOT NULL PRIMARY KEY , first_name VARCHAR(50) NOT NULL, last_name VARCHAR(50) NOT NULL, email VARCHAR(50) NOT NULL UNIQUE )"))
+
       ;;  Define a unique table constraint for the table films. Unique table constraints can be defined on one or more columns of the table:
       (is (equal (sql (:create-table films
                                      ((code :type (or (string 5) db-null))
@@ -205,7 +213,37 @@
 (test create-table-with-constraint-and-foreign-keys
   "Testing creating a table with contraints and foreign keys and actions"
 
-  ;; first with no actions
+  ;; First with foreign key on the column
+  (is (equal (sql (:create-table so-items
+                           ((item-id :type integer)
+                            (so-id :type (or integer db-null) :references ((so-headers id)))
+                            (product-id :type (or integer db-null))
+                            (qty :type (or integer db-null))
+                            (net-price :type (or numeric db-null)))
+                           (:primary-key item-id so-id)))
+             "CREATE TABLE so_items (item_id INTEGER NOT NULL, so_id INTEGER REFERENCES so_headers(id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT, product_id INTEGER, qty INTEGER, net_price NUMERIC, PRIMARY KEY (item_id, so_id))"))
+
+  ;; now with non-default actions for on delete and on update
+  (is (equal (sql (:create-table so-items
+                           ((item-id :type integer)
+                            (so-id :type (or integer db-null) :references ((so-headers id) :no-action :no-action))
+                            (product-id :type (or integer db-null))
+                            (qty :type (or integer db-null))
+                            (net-price :type (or numeric db-null)))
+                           (:primary-key item-id so-id)))
+             "CREATE TABLE so_items (item_id INTEGER NOT NULL, so_id INTEGER REFERENCES so_headers(id) MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION, product_id INTEGER, qty INTEGER, net_price NUMERIC, PRIMARY KEY (item_id, so_id))"))
+
+  ;;Now referencing a group of columns
+  (is (equal (sql (:create-table so-items
+                           ((item-id :type integer)
+                            (so-id :type (or integer db-null) :references ((so-headers id p1 p2) :no-action :no-action))
+                            (product-id :type (or integer db-null))
+                            (qty :type (or integer db-null))
+                            (net-price :type (or numeric db-null)))
+                           (:primary-key item-id so-id)))
+             "CREATE TABLE so_items (item_id INTEGER NOT NULL, so_id INTEGER REFERENCES so_headers(id, p1, p2) MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION, product_id INTEGER, qty INTEGER, net_price NUMERIC, PRIMARY KEY (item_id, so_id))"))
+
+  ;; Now with foreign key named at the table level no actions other than the default actions
   (is (equal (sql (:create-table account-role
                     ((user-id :type integer)
                      (role-id :type integer)
@@ -214,14 +252,26 @@
                     (:constraint account-role-role-id-fkey :foreign-key (role-id) (role role-id))))
              "CREATE TABLE account_role (user_id INTEGER NOT NULL, role_id INTEGER NOT NULL, grant_date TIMESTAMP WITHOUT TIME ZONE, PRIMARY KEY (user_id, role_id), CONSTRAINT account_role_role_id_fkey FOREIGN KEY (role_id) REFERENCES role(role_id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)"))
 
-  ;; now with actions
+  ;; now at the table level with non-default actions
   (is (equal (sql (:create-table account-role
                     ((user-id :type integer)
                      (role-id :type integer)
                      (grant-date :type (or timestamp-without-time-zone db-null)))
                     (:primary-key user-id role-id)
                     (:constraint account-role-role-id-fkey :foreign-key (role-id) (role role-id) :no-action :no-action)))
-             "CREATE TABLE account_role (user_id INTEGER NOT NULL, role_id INTEGER NOT NULL, grant_date TIMESTAMP WITHOUT TIME ZONE, PRIMARY KEY (user_id, role_id), CONSTRAINT account_role_role_id_fkey FOREIGN KEY (role_id) REFERENCES role(role_id) MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION)")))
+             "CREATE TABLE account_role (user_id INTEGER NOT NULL, role_id INTEGER NOT NULL, grant_date TIMESTAMP WITHOUT TIME ZONE, PRIMARY KEY (user_id, role_id), CONSTRAINT account_role_role_id_fkey FOREIGN KEY (role_id) REFERENCES role(role_id) MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION)"))
+
+  ;; now with multiple foreign keys at the table level
+  (is (equal (sql (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp-without-time-zone db-null)))
+         (:primary-key user-id role-id)
+         (:constraint account-role-role-id-fkey
+                      :foreign-key (role-id) (role role-id))
+         (:constraint account-role-user-id-fkey
+                      :foreign-key (user-id) (users user-id))))
+             "CREATE TABLE account_role (user_id INTEGER NOT NULL, role_id INTEGER NOT NULL, grant_date TIMESTAMP WITHOUT TIME ZONE, PRIMARY KEY (user_id, role_id), CONSTRAINT account_role_role_id_fkey FOREIGN KEY (role_id) REFERENCES role(role_id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT, CONSTRAINT account_role_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(user_id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)")))
 
 (test create-table-identity
   "Testing generating identity columns"
@@ -447,6 +497,48 @@
                                       (name :type (varchar 40)))))
                  "CREATE TABLE distributors (did INTEGER NOT NULL CONSTRAINT no_null, name VARCHAR(40) NOT NULL)"))
 
+      ;; Define a unique constraint for the name column:
+      (is (equal (sql (:create-extended-table distributors
+                                     ((did :type (or integer db-null))
+                                      (name :type (or (varchar 40) db-null) :unique t))))
+                 "CREATE TABLE distributors (did INTEGER, name VARCHAR(40) UNIQUE )"))
+
+      ;; The same, specified as a table constraint:
+      (is (equal (sql (:create-extended-table distributors
+                                     ((did :type (or integer db-null))
+                                      (name :type (or (varchar 40) db-null)))
+                                     ((:unique 'name))))
+                 "CREATE TABLE distributors (did INTEGER, name VARCHAR(40), UNIQUE (name))"))
+
+      ;; define a unique constraint for the table using two columns
+      (is (equal (sql (:create-extended-table distributors
+                                     ((did :type (or integer db-null))
+                                      (name :type (or (varchar 40) db-null)))
+                                     ((:unique name did))))
+                 "CREATE TABLE distributors (did INTEGER, name VARCHAR(40), UNIQUE (name, did))"))
+
+      ;; Create the same table, specifying 70% fill factor for both the table and its unique index:
+
+      (is (equal (sql (:create-extended-table distributors
+                                              ((did :type (or integer db-null))
+                                               (name :type (or (varchar 40) db-null)))
+                                              ((:unique name did :with (:= 'fillfactor 70)))))
+                 "CREATE TABLE distributors (did INTEGER, name VARCHAR(40), UNIQUE (name, did) WITH (fillfactor = 70))"))
+      (is (equal (sql (:create-extended-table distributors ((did :type (or integer db-null)) (name :type (or (varchar 40) db-null)))
+                                              ((:unique name did :with (:= 'fillfactor 70)))
+                                              ((:with (:= 'fillfactor 70)))))
+
+                 "CREATE TABLE distributors (did INTEGER, name VARCHAR(40), UNIQUE (name, did) WITH (fillfactor = 70)) WITH (fillfactor = 70)"))
+      ;; Create table circles with an exclusion constraint that prevents any two circles from overlapping:
+      ;; EXCLUDE IS NOT IMPLEMENTED
+
+
+
+      )
+
+(test create-extended-table-with-constraint-and-foreign-keys
+  "Testing creating a table with contraints and foreign keys and actions. Note constraint must come first."
+
  ;; Foreign Key Constraints
 
 ;;; From https://stackoverflow.com/questions/28558920/postgresql-foreign-key-syntax
@@ -471,54 +563,11 @@
                                                                         :references ((students  student-id))))))
                  "CREATE TABLE tests (subject_id SERIAL NOT NULL, subject_name TEXT, higheststudent_id INTEGER REFERENCES students(student_id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)"))
 
-;;; Out of line inside the create table:
+;; Out of line inside the create table:
       (is (equal (sql (:create-extended-table tests ((subject-id :type serial) (subject-name :type (or text db-null))
                                                      (higheststudent-id :type (or integer db-null)))
                                               ((:constraint fk-tests-students :foreign-key (higheststudent-id) (students student-id)))))
                  "CREATE TABLE tests (subject_id SERIAL NOT NULL, subject_name TEXT, higheststudent_id INTEGER, CONSTRAINT fk_tests_students FOREIGN KEY (higheststudent_id) REFERENCES students(student_id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)"))
-
-
-
-      ;; Define a unique constraint for the name column:
-      (is (equal (sql (:create-extended-table distributors
-                                     ((did :type (or integer db-null))
-                                      (name :type (or (varchar 40) db-null) :unique t))))
-                 "CREATE TABLE distributors (did INTEGER, name VARCHAR(40) UNIQUE )"))
-
-      ;; The same, specified as a table constraint:
-      (is (equal (sql (:create-extended-table distributors
-                                     ((did :type (or integer db-null))
-                                      (name :type (or (varchar 40) db-null)))
-                                     ((:unique 'name))))
-                 "CREATE TABLE distributors (did INTEGER, name VARCHAR(40), UNIQUE (name))"))
-
-      ;; define a unique constraint for the table using two columns
-      (is (equal (sql (:create-extended-table distributors
-                                     ((did :type (or integer db-null))
-                                      (name :type (or (varchar 40) db-null)))
-                                     ((:unique name did))))
-                 "CREATE TABLE distributors (did INTEGER, name VARCHAR(40), UNIQUE (name, did))"))
-
-      ;; Create the same table, specifying 70% fill factor for both the table and its unique index:
-
-      (is (equal (sql (:create-extended-table distributors
-                                              ((did :type (or integer db-null)) (name :type (or (varchar 40) db-null)))
-                                              ((:unique name did :with (:= 'fillfactor 70)))))
-                 "CREATE TABLE distributors (did INTEGER, name VARCHAR(40), UNIQUE (name, did) WITH (fillfactor = 70))"))
-      (is (equal (sql (:create-extended-table distributors ((did :type (or integer db-null)) (name :type (or (varchar 40) db-null)))
-                                              ((:unique name did :with (:= 'fillfactor 70)))
-                                              ((:with (:= 'fillfactor 70)))))
-
-                 "CREATE TABLE distributors (did INTEGER, name VARCHAR(40), UNIQUE (name, did) WITH (fillfactor = 70)) WITH (fillfactor = 70)"))
-      ;; Create table circles with an exclusion constraint that prevents any two circles from overlapping:
-      ;; EXCLUDE IS NOT IMPLEMENTED
-
-
-
-      )
-
-(test create-extended-table-with-constraint-and-foreign-keys
-  "Testing creating a table with contraints and foreign keys and actions. Note constraint must come first."
 
   ;; first with no actions
   (is (equal (sql (:create-extended-table account-role
@@ -564,9 +613,7 @@
                                    :foreign-key (role-id) (role role-id) :no-action :no-action :match-simple)
                       (:constraint account-role-user-id-fkey
                                    :foreign-key (user-id) (account user-id) :no-action :no-action :match-simple))))
-           "CREATE TABLE account_role (user_id INTEGER NOT NULL, role_id INTEGER NOT NULL, grant_date TIMESTAMP WITHOUT TIME ZONE, PRIMARY KEY (user_id, role_id) , CONSTRAINT account_role_role_id_fkey FOREIGN KEY (role_id) REFERENCES role(role_id) MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION, CONSTRAINT account_role_user_id_fkey FOREIGN KEY (user_id) REFERENCES account(user_id) MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION)"))
-
-  )
+           "CREATE TABLE account_role (user_id INTEGER NOT NULL, role_id INTEGER NOT NULL, grant_date TIMESTAMP WITHOUT TIME ZONE, PRIMARY KEY (user_id, role_id) , CONSTRAINT account_role_role_id_fkey FOREIGN KEY (role_id) REFERENCES role(role_id) MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION, CONSTRAINT account_role_user_id_fkey FOREIGN KEY (user_id) REFERENCES account(user_id) MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION)")))
 
 (test create-table-with-extended-table-parameters
   "Testing the extensions beyond the end of the parens!"
@@ -595,7 +642,7 @@
 
              "CREATE TABLE measurement_year_month (logdate DATE NOT NULL, peaktemp INTEGER, unitsales INTEGER) PARTITION BY RANGE (EXTRACT(year FROM logdate), EXTRACT(month FROM logdate))")))
 
-(test create-table-identity
+(test create-extended-table-identity
   "Testing generating identity columns"
   (is (equal (sql (:create-extended-table color ((color-id :type int :generated-as-identity-always) (color-name :type varchar))))
              "CREATE TABLE color (color_id INT NOT NULL GENERATED ALWAYS AS IDENTITY , color_name VARCHAR NOT NULL)"))

@@ -1,0 +1,921 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-09-16 Sun 15:33 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Creating Tables</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Creating Tables</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org26b2d61">Introduction to Table Creation in Postmodern</a></li>
+<li><a href="#org888eff0">Basic Postgresql Database Tables</a></li>
+<li><a href="#orgf6a810d">Postmodern Create-Table</a></li>
+<li><a href="#orgc188bd0">S-SQL Create-Table</a>
+<ul>
+<li><a href="#org61a9999">Table Names Parameter</a>
+<ul>
+<li><a href="#org3928edd">Temporary and Unlogged Tables</a></li>
+</ul>
+</li>
+<li><a href="#org9fcae7e">Using Identity Columns</a></li>
+<li><a href="#org58ac3d2">Array Columns</a></li>
+<li><a href="#org8608f74">Check Constraints</a></li>
+<li><a href="#org95950da">Unique Constraints</a></li>
+<li><a href="#org7adc340">Timestamps with and without timezones</a></li>
+<li><a href="#org43e870b">Adding Foreign Keys</a>
+<ul>
+<li><a href="#org5b15aa3">Defining Foreign Keys at the Column Level</a></li>
+<li><a href="#orga384e79">Defining Foreign Keys at the Table Level</a></li>
+</ul>
+</li>
+<li><a href="#org3047dba">Using Tablespaces</a></li>
+<li><a href="#orgfb6efc2">Partitions (not fully implemented)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org26b2d61" class="outline-2">
+<h2 id="org26b2d61">Introduction to Table Creation in Postmodern</h2>
+<div class="outline-text-2" id="text-org26b2d61">
+<p>
+Postmodern offers two ways to create postgresql database tables. Which one
+you choose depends on two things:
+</p>
+
+<ul class="org-ul">
+<li>Do you start by creating dao classes first or are you even using dao classes?</li>
+
+<li>Databases are data and transaction management systems, not just data storage. How much detailed table specification do you need?</li>
+</ul>
+
+<p>
+If you typically start with defining your classes and only need
+relatively straight-forward tables with simple primary and foreign keys,
+then you would define your daos first, then let postmodern's deftable and
+create-table functions to create the database classes.
+</p>
+
+<p>
+If you do not use daos or need more control and you want to use postmodern's
+more lispy syntax as compared to postgresql's never ending natural language
+statements, you can reach for one of two additional tools: the
+sql-operators :create-table and :create-extended-table. The api signature
+differs slightly in order to ensure backwards compatibility and, as you might
+expect, :create-extended-table gives you more options.
+</p>
+
+<p>
+But first, we should talk about basic database table creation
+and why do we care about different options.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org888eff0" class="outline-2">
+<h2 id="org888eff0">Basic Postgresql Database Tables</h2>
+<div class="outline-text-2" id="text-org888eff0">
+<p>
+The full postgresql sql specification can be found <a href="https://www.postgresql.org/docs/current/static/sql-createtable.html">here</a>.
+</p>
+
+<p>
+At a bare minimum, a database table needs a name. If you actually want to store
+data in it, you need to define the columns (some people call them fields).
+Again, at a minimum, a column needs a name, a datatype and whether the column
+can be a null or whether the database will require that the field have a value.
+</p>
+
+<p>
+Once you provide these bare minimum definitions to the database, then you can
+start inserting rows (or tuples) into the table.
+</p>
+
+<p>
+For purposes of all the examples below, we will assume that you have a connection
+to a database. That can be a toplevel connection or wrapping a connection around
+your query, and either of these can be directly to the database or through a
+connection pooling mechanism. This page will just be dealing with the queries
+required to create a postgresql database table.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf6a810d" class="outline-2">
+<h2 id="orgf6a810d">Postmodern Create-Table</h2>
+</div>
+
+<div id="outline-container-orgc188bd0" class="outline-2">
+<h2 id="orgc188bd0">S-SQL Create-Table</h2>
+<div class="outline-text-2" id="text-orgc188bd0">
+<p>
+At this minimum level, the :create-table and :create-extended-table calls are
+exactly the same. Let's walk through a simple example:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table films-at-eleven
+          ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key 't)
+           (title :type (varchar 40))
+           (did :type integer)
+           (date-prod :type (or date db-null))
+           (kind :type (or (varchar 10) db-null))
+           (len :type (or interval db-null) :interval :hour-to-minute))))
+
+</pre>
+</div>
+<p>
+The parameter specification is :create-table (name (&amp;rest columns) &amp;rest options)
+</p>
+
+<p>
+The first parameter is the name of the new table. You could make the name a quoted
+string, e.g. "films-at-eleven", but postmodern will handle either a string or the
+unquoted parameter provided above. Postmodern will also automatically handle the
+conversion of the hyphens so beloved by common lisp programmers to the underscores
+demanded by the sql specification.
+</p>
+
+<p>
+The next form contains subforms for each column in the table.
+</p>
+
+<p>
+The first parameter being the name of the column.
+</p>
+
+<p>
+As you know, postgresql will enforce the data type for the column. So, the
+next keyword specifies that type to follow. You can see several different types
+specified in this table. Look at the type for 'code'. It specifies that the
+data will be either NULL or a string with a maximum length of 5 characters.
+</p>
+
+<p>
+Compare that against the type specifiers for title or did. In both of those
+cases, the column entry is not allowed to be NULL, it must have a value. In
+this example the title must be a string with a length no greater than 40
+characters. (For most purposes, you can treat a string specification the
+same as a varchar specification.
+</p>
+
+<p>
+The did type specification mandates an integer - trying to put a float in that
+column will trigger a database type error.
+</p>
+
+<p>
+The date-prod column obviously has a date data type and the len column has
+a interval data type, intervals being a period of time rather than a specific
+time.
+</p>
+
+<p>
+The code column also has a constraint - It is the primary key for indexing the table
+and that contraint has a name - in this case 'firstkey. If you do not name the
+constraint, the system will name it for you.
+</p>
+
+<p>
+The len column also has additional information. It is an interval of time; That
+could encompass years as well as seconds. The specification given here,
+:hour-to-minute means that the database will only keep the hours to minutes part
+of the potential time interval.
+</p>
+</div>
+
+<div id="outline-container-org61a9999" class="outline-3">
+<h3 id="org61a9999">Table Names Parameter</h3>
+<div class="outline-text-3" id="text-org61a9999">
+<p>
+The following discussion on table names is the same for both :create-table
+or :create-extended table.
+</p>
+
+<p>
+Create-table works with either the simple name for the table parameter or the
+name can be wrapped in a form.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table distributors-in-hell
+         ((did :type (or integer db-null)))))
+
+(query (:create-table (distributors-in-hell)
+         ((did :type (or integer db-null)))))
+</pre>
+</div>
+
+<p>
+Using the name wrapped in a form provides the opportunity to add additional
+qualifiers - if-not-exists, temp, and unlogged.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table (:if-not-exists distributors-in-hell)
+          ((did :type (or integer db-null)))))
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org3928edd" class="outline-4">
+<h4 id="org3928edd">Temporary and Unlogged Tables</h4>
+<div class="outline-text-4" id="text-org3928edd">
+<p>
+Temporary tables exists only for the duration of the session. To create them
+using s-sql in postmodern, the first parameter to :create-table should be a
+form where the first atom in the form is the keyword :temp. You can optionally
+use the :if-not-exists keyword, and then the name of the temporary table. E.g.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table (:temp distributors-in-hell)
+         ((did :type (or integer db-null)))))
+
+(query (:create-table (:temp :if-not-exists distributors-in-hell)
+         ((did :type (or integer db-null)))))
+
+</pre>
+</div>
+
+<p>
+Unlogged tables do not have their data written to the write-ahead log. As a
+result they are faster, but not crash safe. Any indexes created on an unlogged
+table are unlogged as well. The parameter signature is similar to a temporary
+table. E.g.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table (:unlogged distributors-in-hell)
+         ((did :type (or integer db-null)))))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9fcae7e" class="outline-3">
+<h3 id="org9fcae7e">Using Identity Columns</h3>
+<div class="outline-text-3" id="text-org9fcae7e">
+<p>
+Postgresql version 10 added identity columns. These are auto-incrementing
+columns that use the standard SQL syntax instead of the serial and bigserial
+datatypes which are still available, but are not SQL standard syntax. The
+serial and bigserial datatypes also generate sequences that may have different
+usage permissions which can be problematic if you need to make changes to the
+sequence.
+</p>
+
+<p>
+There are two keyword alternatives that need to be considered:
+</p>
+
+<ul class="org-ul">
+<li>:generated-as-identity-by-default</li>
+<li>:generated-as-identity-always</li>
+</ul>
+
+<p>
+The difference between the two alternatives is that if you try to insert or
+update a value in the column and the generated-always option is chosen,
+postgresql will raise an error. If you use the by-default option, postgresql
+will use your value rather than the automatically generated value.
+</p>
+
+<p>
+Note: The data type used for identity columns must be one of smallint, int or bigint.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table color
+         ((color-id :type int :generated-as-identity-always)
+          (color-name :type varchar))))
+
+(query (:create-table color
+         ((color-id :type int :generated-as-identity-by-default)
+          (color-name :type varchar))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org58ac3d2" class="outline-3">
+<h3 id="org58ac3d2">Array Columns</h3>
+<div class="outline-text-3" id="text-org58ac3d2">
+<p>
+The following shows the creation of a table with a two dimensional array
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(sql (:create-table array-int
+       ((vector :type (or int[][] db-null)))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8608f74" class="outline-3">
+<h3 id="org8608f74">Check Constraints</h3>
+<div class="outline-text-3" id="text-org8608f74">
+<p>
+You can put a contraint on a table row that specifies values must meet
+certain requirements. In the following examples, the first puts a check
+constraint on a row, the second places at check constraint at the table
+level.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table distributors
+         ((did :type (or integer db-null) :check (:&gt; 'did 100))
+          (name :type (or (varchar 40) db-null)))))
+
+(query (:create-table distributors
+         ((did :type (or integer db-null))
+          (name :type (or (varchar 40) db-null)))
+         (:constraint con1 :check (:and (:&gt; 'did 100) (:&lt;&gt; 'name "")))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org95950da" class="outline-3">
+<h3 id="org95950da">Unique Constraints</h3>
+<div class="outline-text-3" id="text-org95950da">
+<p>
+You can ensure that a column or a combination of columns is unique
+without making that column or columns the primary key for the table.
+</p>
+
+<p>
+The first example sets a unique constraint at the column level of email,
+the second example sets a unique constraint at the table level.
+</p>
+
+<p>
+Please note the need to set :unique to t in the column constraint
+version.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(sql (:create-table person
+       ((id :type serial :primary-key t)
+        (first-name :type (varchar 50))
+        (last-name :type (varchar 50))
+        (email :type (varchar 50) :unique t))))
+
+(query (:create-table films
+         ((code :type (or (string 5) db-null))
+          (title :type (or (varchar 40) db-null))
+          (did :type (or integer db-null))
+          (date-prod :type (or date db-null))
+          (kind :type (or (varchar 10) db-null))
+          (len :type (or interval db-null) :interval :hour-to-minute))
+         (:constraint production :unique 'date-prod)))
+</pre>
+</div>
+
+<p>
+This can get more complex if so desired. See the following example
+from the postgresql documentation, translated into s-sql. This level of
+complexity, however, requires the :create-extended-table method.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-extended-table distributors
+         ((did :type (or integer db-null))
+          (name :type (or (varchar 40) db-null)))
+         ((:unique did :with (:= 'fillfactor 70)))))
+</pre>
+</div>
+<p>
+In case you are wondering, fillfactor is a storage parameter described in the
+postgresql documentation as:
+</p>
+
+<p>
+"The fillfactor for a table is a percentage between 10 and 100. 100 (complete
+packing) is the default. When a smaller fillfactor is specified, INSERT
+operations pack table pages only to the indicated percentage; the remaining
+space on each page is reserved for updating rows on that page. This gives
+UPDATE a chance to place the updated copy of a row on the same page as the
+original, which is more efficient than placing it on a different page. For a
+table whose entries are never updated, complete packing is the best choice,
+but in heavily updated tables smaller fillfactors are appropriate. This
+parameter cannot be set for TOAST tables."
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org7adc340" class="outline-3">
+<h3 id="org7adc340">Timestamps with and without timezones</h3>
+<div class="outline-text-3" id="text-org7adc340">
+<p>
+Ah, the bane of many programmers' existence - dates and times.
+At least the table creation is fairly straightforward.
+</p>
+
+<p>
+The following examples are fairly self explanatory.
+</p>
+<pre class="example">
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp-without-time-zone db-null)))))
+
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp-with-time-zone db-null)))))
+
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamptz db-null)))))
+
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp db-null)))))
+
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or time db-null)))))
+</pre>
+</div>
+</div>
+
+
+<div id="outline-container-org43e870b" class="outline-3">
+<h3 id="org43e870b">Adding Foreign Keys</h3>
+<div class="outline-text-3" id="text-org43e870b">
+<p>
+There are a few different ways to add foreign keys in postgresql when defining
+a table.
+</p>
+</div>
+
+<div id="outline-container-org5b15aa3" class="outline-4">
+<h4 id="org5b15aa3">Defining Foreign Keys at the Column Level</h4>
+<div class="outline-text-4" id="text-org5b15aa3">
+<p>
+First with foreign key on the column. Use the keyword :references and specify
+the table name  and the relevant column within the subform. You will see why
+the subform in a minute.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table so-items
+          ((item-id :type integer)
+           (so-id :type (or integer db-null) :references ((so-headers id)))
+           (product-id :type (or integer db-null))
+           (qty :type (or integer db-null))
+           (net-price :type (or numeric db-null)))
+          (:primary-key item-id so-id)))
+</pre>
+</div>
+
+<p>
+If the foreign key references a group of columns in the foreign table, those
+fit into that same subform.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table so-items
+          ((item-id :type integer)
+           (so-id :type (or integer db-null) :references ((so-headers id p1 p2)))
+           (product-id :type (or integer db-null))
+           (qty :type (or integer db-null))
+           (net-price :type (or numeric db-null)))
+          (:primary-key item-id so-id)))
+</pre>
+</div>
+
+<p>
+You can specify the actions to be taken if a row in the foreign table is
+deleted or updated. Per the postgresql documentation:
+</p>
+
+<p>
+"&#x2026; when the data in the referenced columns is changed, certain actions are
+performed on the data in this table's columns. The ON DELETE clause specifies
+the action to perform when a referenced row in the referenced table is being
+deleted. Likewise, the ON UPDATE clause specifies the action to perform when
+a referenced column in the referenced table is being updated to a new value.
+If the row is updated, but the referenced column is not actually changed, no
+action is done. Referential actions other than the NO ACTION check cannot be
+deferred, even if the constraint is declared deferrable. There are the
+following possible actions for each clause:
+</p>
+
+<ul class="org-ul">
+<li>NO ACTION</li>
+</ul>
+<p>
+Produce an error indicating that the deletion or update would create a foreign
+key constraint violation. If the constraint is deferred, this error will be
+produced at constraint check time if there still exist any referencing rows.
+This is the default action in postgresql but the default in postmodern is
+restrict.
+</p>
+
+<ul class="org-ul">
+<li>RESTRICT</li>
+</ul>
+<p>
+Produce an error indicating that the deletion or update would create a foreign
+key constraint violation. This is the same as NO ACTION except that the check
+is not deferrable.
+</p>
+
+<ul class="org-ul">
+<li>CASCADE</li>
+</ul>
+<p>
+Delete any rows referencing the deleted row, or update the values of the
+referencing column(s) to the new values of the referenced columns, respectively.
+</p>
+
+<ul class="org-ul">
+<li>SET NULL</li>
+</ul>
+<p>
+Set the referencing column(s) to null.
+</p>
+
+<ul class="org-ul">
+<li>SET DEFAULT</li>
+</ul>
+<p>
+Set the referencing column(s) to their default values. (There must be a row in
+the referenced table matching the default values, if they are not null, or
+the operation will fail.)
+</p>
+
+<p>
+If the referenced column(s) are changed frequently, it might be wise to add an
+index to the referencing column(s) so that referential actions associated with
+the foreign key constraint can be performed more efficiently."
+</p>
+
+<p>
+So now examples with specifying the on-delete and on-update actions.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table so-items
+         ((item-id :type integer)
+          (so-id :type (or integer db-null)
+                 :references ((so-headers id) :no-action :no-action))
+          (product-id :type (or integer db-null))
+          (qty :type (or integer db-null))
+          (net-price :type (or numeric db-null)))
+         (:primary-key item-id so-id)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga384e79" class="outline-4">
+<h4 id="orga384e79">Defining Foreign Keys at the Table Level</h4>
+<div class="outline-text-4" id="text-orga384e79">
+<p>
+Instead of specifying the foreign keys at the column level, you can specify
+them at the table level, but of course that means you have to additionally
+specify which column in the current table is a foreign key.
+</p>
+
+<p>
+The following example creates a named constraint and a foreign key at column
+role-id with a single column in the foreign table. The first example uses the
+default actions for on-delete and on-default. The second example shows
+non-default actions specified.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp-without-time-zone db-null)))
+         (:primary-key user-id role-id)
+         (:constraint account-role-role-id-fkey
+                      :foreign-key (role-id) (role role-id))))
+
+
+(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp-without-time-zone db-null)))
+         (:primary-key user-id role-id)
+         (:constraint account-role-role-id-fkey
+                      :foreign-key (role-id) (role role-id) :no-action :no-action)))
+</pre>
+</div>
+<p>
+Additional foreign keys can easily be added:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table account-role
+         ((user-id :type integer)
+          (role-id :type integer)
+          (grant-date :type (or timestamp-without-time-zone db-null)))
+         (:primary-key user-id role-id)
+         (:constraint account-role-role-id-fkey
+                      :foreign-key (role-id) (role role-id))
+         (:constraint account-role-user-id-fkey
+                      :foreign-key (user-id) (users user-id))))
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org3047dba" class="outline-3">
+<h3 id="org3047dba">Using Tablespaces</h3>
+<div class="outline-text-3" id="text-org3047dba">
+<p>
+Tablespaces require use of the create-extended-table method. Note that the
+create-extended-table method has a slightly different signature. It expects
+a table name and two or three forms. The first form relates to the columns,
+the second form relates to table level constraints. The third form, if present,
+refers to specific postgresql storage options such as tablespaces and
+partitions and storage parameters. This is only partially implemented.
+</p>
+
+<p>
+Tablespaces are documented at <a href="https://www.postgresql.org/docs/10/static/manage-ag-tablespaces.html">https://www.postgresql.org/docs/10/static/manage-ag-tablespaces.html</a>
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(sql (:create-extended-table cinemas
+       ((id :type serial) (name :type (or text db-null))
+        (location :type (or text db-null)))
+       ()
+       ((:tablespace 'diskvol1))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfb6efc2" class="outline-3">
+<h3 id="orgfb6efc2">Partitions (not fully implemented)</h3>
+<div class="outline-text-3" id="text-orgfb6efc2">
+<p>
+The following are two very simple examples of use of partitions. You should
+not consider partition functionality to be fully implemented past these
+examples.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-extended-table measurement
+         ((logdate :type date)
+          (peaktemp :type (or integer db-null))
+          (unitsales :type (or integer db-null)))
+         ()
+         ((:partition-by-range 'logdate))))
+
+;; Create a range partitioned table with multiple columns in the partition key:
+
+(query (:create-extended-table measurement-year-month
+         ((logdate :type date)
+          (peaktemp :type (or integer db-null))
+          (unitsales :type (or integer db-null)))
+         ()
+         ((:partition-by-range (:extract 'year 'logdate)(:extract 'month 'logdate)))))
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2018-09-16 Sun 15:33</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
