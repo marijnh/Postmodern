@@ -9,6 +9,7 @@ no attempt to be database agnostic. You can think of postmodern as having three 
 This draft longterm roadmap is a work in progress on issue resolution and additional
 functionality under consideration. Requests for different priorities are expected and
 welcomed, particularly by anyone willing to work on the item.
+
 No guarantee is given with respect to resolution or timing on any item.
 
 ## Sql support
@@ -27,7 +28,7 @@ No guarantee is given with respect to resolution or timing on any item.
 - [ ]   Generate-Series needs testing and interval work
 - [X]   Extract needs testing
 - [ ]   Lateral Join (postgresql 9.3)
-- [ ]   Identity columns (postgresql 10)
+- [X]   Identity columns (postgresql 10)
 - [ ]   Transition tables for triggers (postgresql 10)
 - [ ]   Hash Indexes (postgresql 10, See https://blog.2ndquadrant.com/postgresql-10-identity-columns/,
         https://www.depesz.com/2017/04/10/waiting-for-postgresql-10-identity-columns/)
@@ -56,11 +57,12 @@ No guarantee is given with respect to resolution or timing on any item.
 
 ## DAO Support
 - [ ]   Fix issue 70 - build-dao-methods fails when a slot is named "from".
-Will fix solely for daos. Do not expect this to work with building table columns.
-There is a reason for reserved words and it is upstream in postgresql.
+This request violates the postgresql reserved words. Do not expect this to work with building table columns.
+There is a reason for reserved words and it is upstream in postgresql. This may eliminated from the roadmap.
 - [ ]   Review errors with *ignore-unknown-columns*. Sometimes hangs without raising an error.
 - [ ]   Type validation - make it easier to use col-type to ensure that a slot value is what the database expects
-- [ ]   Export to dao similar to :alist, alists, plist, plists and add json
+- [X]   Document export to dao similar to :alist, alists, plist, plists
+- [ ]   Add foreign key support to dao, both columns and as a whole, similar to s-sql support
 
 ## Other Support
 - [ ]   Migration Support (compare with https://pypi.org/project/alembic/)
@@ -95,9 +97,10 @@ There is a reason for reserved words and it is upstream in postgresql.
 
 ## Documentation
 - [ ]   Setup
+- [ ]   Creating databases and users
 - [ ]   Usage examples for sql users
 - [ ]   Usage examples for non-sql users
-- [ ]   More examples of create table
+- [X]   More examples of create table
 - [ ]   Creation of new datatypes
 - [X]   Links in README should point to pages updated on github, not marijn's personal page
 - [ ]   Pooling with external pooling applications

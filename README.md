@@ -1,7 +1,7 @@
 # Postmodern
 A Common Lisp PostgreSQL programming interface
 ---
-Postmodern is a Common Lisp library for interacting with [PostgreSQL](http://www.postgresql.org) databases. It is under active development. Features are:
+Postmodern1 is a Common Lisp library for interacting with [PostgreSQL](http://www.postgresql.org) databases. It is under active development. Features are:
 
 - Efficient communication with the database server without need for foreign libraries.
 - Support for UTF-8 on Unicode-aware Lisp implementations

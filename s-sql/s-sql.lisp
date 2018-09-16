@@ -576,6 +576,8 @@ If someone really wants, consider adding the optional precision argument."
                    ,@(when order-by `(" ORDER BY " ,@(sql-expand-list order-by) ")"))
                    ")")))
 
+(def-sql-op :create-type (name ))
+
 (def-sql-op :count (&rest args)
     "Count returns the number of rows. It can be the number of rows collected by the select statement as in
 
@@ -1085,6 +1087,8 @@ to runtime. Used to create stored procedures."
 
 (def-sql-op :insert-into (table &rest rest)
   (split-on-keywords ((method *)
+                      (overriding-system-value ? -)
+                      (overriding-user-value ? -)
                       (on-conflict-do-nothing ? -)
                       (on-conflict-update ? *)
                       (update-set ? *)
@@ -1098,7 +1102,10 @@ to runtime. Used to create stored procedures."
                    ((null (cdr method)) '("DEFAULT VALUES"))
                    (t `("(" ,@(sql-expand-list (loop :for (field nil) :on (cdr method) :by #'cddr
                                                      :collect field))
-                            ") VALUES (" ,@(sql-expand-list (loop :for (nil value) :on (cdr method) :by #'cddr
+                            ") "
+                            ,@(cond (overriding-system-value '(" OVERRIDING SYSTEM VALUE "))
+                                    (overriding-user-value '(" OVERRIDING USER VALUE ")))
+                            " VALUES (" ,@(sql-expand-list (loop :for (nil value) :on (cdr method) :by #'cddr
                                                               :collect value)) ")"))))
             ((and (not (cdr method)) (consp (car method)) (keywordp (caar method)))
              (sql-expand (car method)))
@@ -1204,6 +1211,23 @@ test. "
                      type 'db-null))
       (values type nil)))
 
+(defun expand-interval (option)
+  "Provide interval limit options"
+  (case option
+    (:year '("YEAR"))
+    (:month '("MONTH"))
+    (:day '("DAY"))
+    (:hour '("HOUR"))
+    (:minute '("MINUTE"))
+    (:second '("SECOND"))
+    (:year-to-month '("YEAR TO MONTH"))
+    (:day-to-hour '("DAY TO HOUR"))
+    (:day-to-minute '("DAY TO MINUTE"))
+    (:day-to-second '("DAY TO SECOND"))
+    (:hour-to-minute '("HOUR TO MINUTE"))
+    (:hour-to-second '("HOUR TO SECOND"))
+    (:minute-to-second '("MINUTE TO SECOND"))))
+
 (defun expand-foreign-on* (action)
   (case action
     (:restrict "RESTRICT")
@@ -1213,35 +1237,83 @@ test. "
     (:no-action "NO ACTION")
     (t (sql-error "Unsupported action for foreign key: ~A" action))))
 
-(defun %build-foreign-reference (target on-delete on-update)
+(defun %build-foreign-reference (target on-delete on-update match)
   `(" REFERENCES "
     ,@(if (consp target)
           `(,(to-sql-name (car target)) "(" ,@(sql-expand-names (cdr target)) ")")
           `(,(to-sql-name target)))
+    ,(when match (case match
+                   (:match-simple " MATCH SIMPLE")
+                   (:match-full " MATCH FULL")
+                   (:match-partial " MATCH PARTIAL")))
     " ON DELETE " ,(expand-foreign-on* on-delete)
     " ON UPDATE " ,(expand-foreign-on* on-update)))
 
 (defun expand-table-constraint (option args)
-  "Process table constraints that precede the closing parentheses in the table definition."
+  "Process table constraints that precede the closing parentheses in the table definition for the base level create table.
+ The difference between this and the expand-table-constraint-sok function is the parameter list
+signature. This expects to receive no sublists. The expand-table-constraint-sok function expects to list of sublists.
+This is done to maintain backwards compatibility and most general users do not need the extended version.
+
+Foreign keys have defaults  on-delete restrict, on-update restrict, and match simple. If you want
+to change those defaults, you need to specify them in that order.
+
+Per the postgresql documentation at https://www.postgresql.org/docs/10/static/sql-createtable.html
+
+A value inserted into the referencing column(s) is matched against the values of the referenced table and referenced columns using the given match type. There are three match types: MATCH FULL, MATCH PARTIAL, and MATCH SIMPLE (which is the default). MATCH FULL will not allow one column of a multicolumn foreign key to be null unless all foreign key columns are null; if they are all null, the row is not required to have a match in the referenced table. MATCH SIMPLE allows any of the foreign key columns to be null; if any of them are null, the row is not required to have a match in the referenced table. MATCH PARTIAL is not yet implemented. (Of course, NOT NULL constraints can be applied to the referencing column(s) to prevent these cases from arising.)"
   (case option
     (:constraint `("CONSTRAINT " ,(to-sql-name (car args)) " " ,@(expand-table-constraint (cadr args) (cddr args))))
     (:check `("CHECK " ,@(sql-expand (car args))))
     (:primary-key `("PRIMARY KEY (" ,@(sql-expand-names args) ")"))
     (:unique `("UNIQUE (" ,@(sql-expand-names args) ")"))
+    (:with `(" WITH " ,@(sql-expand (car args))))
     (:deferrable `("DEFERRABLE "))
     (:not-deferrable `("NOT DEFERRABLE "))
     (:initially-deferred `("INITIALLY DEFERRED "))
     (:initially-immediate `("INITIALLY IMMEDIATE "))
     (:foreign-key
-     (destructuring-bind (columns target &optional (on-delete :restrict) (on-update :restrict)) args
+     (destructuring-bind (columns target &optional (on-delete :restrict) (on-update :restrict) (match :match-simple)) args
        `("FOREIGN KEY (" ,@(sql-expand-names columns) ")"
-                         ,@(%build-foreign-reference target on-delete on-update))))))
+                         ,@(%build-foreign-reference target on-delete on-update match))))))
+
+(defun expand-table-constraint-sok (args)
+  "Expand-table-constraint for the create-extended-table sql-op. The difference between the two is the parameter list
+signature. This expects a list of sublists. The regular expand-table-constraint expects to receive no sublists.
+DOES NOT IMPLEMENT POSTGRESQL FUNCTION EXCLUDE."
+  (split-on-keywords ((constraint ? *) (check ? *) (unique ? *) (with ? *)
+                      (deferrable ? -) (primary-key ? *) (not-deferrable ? -)
+                      (initially-deferred ? -)(initially-immediate ? -)
+                      (foreign-key ? *))
+           args
+    `(,@(when args '(", "))
+      ,@(when constraint `("CONSTRAINT " ,(to-sql-name (car constraint)) " "))
+        ,@(when check `("CHECK " ,@(sql-expand (car check))))
+        ,@(when unique `("UNIQUE (" ,@(sql-expand-names unique) ")"))
+        ,@(when with `(" WITH " ,@(sql-expand (car with))))
+        ,@(when deferrable `("DEFERRABLE "))
+        ,@(when primary-key `("PRIMARY KEY (" ,@(sql-expand-names primary-key) ") "))
+        ,@(when not-deferrable `("NOT DEFERRABLE "))
+        ,@(when initially-deferred `("INITIALLY DEFERRED "))
+        ,@(when initially-immediate `("INITIALLY IMMEDIATE "))
+        ,@(when foreign-key
+            (destructuring-bind (columns target &optional (on-delete :restrict) (on-update :restrict) (match :match-simple))
+                foreign-key
+              `("FOREIGN KEY (" ,@(sql-expand-names columns) ")"
+                         ,@(%build-foreign-reference target on-delete on-update match)))))))
 
 (defun expand-extended-table-constraint (option args)
   "Process table constraints that follow the closing parentheses in the table definition."
   (case option
     (:distributed-by `(" DISTRIBUTED BY (" ,@(sql-expand-names (car args))") "))
-    (:distributed-randomly `(" DISTRIBUTED RANDOMLY "))))
+    (:distributed-randomly `(" DISTRIBUTED RANDOMLY "))
+    (:with `(" WITH " ,@(sql-expand (car args))))
+    (:tablespace `(" TABLESPACE " ,@(sql-expand (car args))))
+    (:exclude `(" EXCLUDE USING" ,@(sql-expand (car args)) ,@(sql-expand (cdr args))))
+    (:partition-by-range `(" PARTITION BY RANGE (" ,@(sql-expand (car args)) ,(when (cadr args) ", ")
+                                                   ,@(when (cadr args) (sql-expand (cadr args)))
+                                                   ")"))
+    (:partition-of `(" PARTITION OF " ,(to-sql-name (car args)) " DEFAULT "))  ;postgresql version 11 required
+    (:partition-by-list `(" PARTITION BY RANGE (" ,@(sql-expand (car args)) ")"))))
 
 (defun expand-table-column (column-name args)
   `(,(to-sql-name column-name) " "
@@ -1252,24 +1324,52 @@ test. "
      ,@(loop :for (option value) :on args :by #'cddr
              :append (case option
                        (:default `(" DEFAULT " ,@(sql-expand value)))
+                       (:interval `(" " ,@(expand-interval value)))
                        (:generated-as-identity-by-default '(" GENERATED BY DEFAULT AS IDENTITY "))
                        (:generated-as-identity-always '(" GENERATED ALWAYS AS IDENTITY "))
                        (:primary-key (cond ((and value (stringp value)) `(" PRIMARY KEY " ,value))
                                            (value `(" PRIMARY KEY "))
                                            (t nil)))
                        (:constraint (when value `(" CONSTRAINT " ,@(sql-expand value))))
-                       (:unique (when value `(" UNIQUE")))
+                       (:collate (when value `(" COLLATE " ,@(sql-expand value))))
+                       (:unique (cond ((and value (stringp value))
+                                       `(" UNIQUE " ,@(sql-expand value)))
+                                      (value '(" UNIQUE "))
+                                      (t nil)))
                        (:check `(" CHECK " ,@(sql-expand value)))
                        (:references
-                        (destructuring-bind (target &optional (on-delete :restrict) (on-update :restrict)) value
-                          (%build-foreign-reference target on-delete on-update)))
+                        (destructuring-bind (target &optional (on-delete :restrict)
+                                                    (on-update :restrict) (match :match-simple))
+                            value
+                          (%build-foreign-reference target on-delete on-update match)))
                        (:type ())
+                       (:deferrable '(" DEFERRABLE "))
+                       (:not-deferrable '(" NOT DEFERRABLE "))
+                       (:initially-deferred '(" INITIALLY DEFERRED "))
+                       (:initially-immediate '(" INITIALLY IMMEDIATE "))
                        (t (sql-error "Unknown column option: ~A." option))))))
+
+(defun expand-table-name (name)
+  (cond ((and name (stringp name))
+         `("TABLE " ,(to-sql-name name)))
+        ((and name (symbolp name))
+         `("TABLE " ,(to-sql-name name)))
+        ((and name (listp name))
+         (let ((t1 nil))
+          `(,@(loop :for option :on name
+                 :append
+                   (case (car option)
+                     (:temp `("TEMP "))
+                     (:temporary `("TEMPORARY "))
+                     (:unlogged `("UNLOGGED "))
+                     (:if-not-exists (setf t1 t) `(,"TABLE IF NOT EXISTS "))
+                     (t `(,(unless t1 "TABLE ") ,(to-sql-name (car option)))))))))
+        (t (sql-error "Unknown table option: ~A" name))))
 
 (def-sql-op :create-table (name (&rest columns) &rest options)
   (when (null columns)
     (sql-error "No columns defined for table ~A." name))
-  `("CREATE TABLE " ,(to-sql-name name) " ("
+  `("CREATE " ,@(expand-table-name name) " ("
                     ,@(loop :for ((column-name . args) . rest) :on columns
                             :append (expand-table-column column-name args)
                             :if rest :collect ", ")
@@ -1278,11 +1378,30 @@ test. "
                             :append (expand-table-constraint option args))
                     ")"))
 
+(def-sql-op :create-extended-table (name (&rest columns) &optional
+                                         table-constraints
+                                         extended-table-constraints)
+  "Create a table with more complete syntax where table-constraints and extended-table-constraints are lists.
+Note that with extended tables you can have tables without columns that are inherited or partitioned."
+  `("CREATE " ,@(expand-table-name name) " ("
+                    ,@(loop :for ((column-name . args) . rest) :on columns
+                            :append (expand-table-column column-name args)
+                         :if rest :collect ", ")
+                    ,@(loop for constraint in table-constraints
+                         for i from (length table-constraints) downto 0
+                         append (expand-table-constraint-sok constraint)
+                           ;if (> i 0) collect ", "
+                           )
+                     ")"
+                    ,@(loop :for ((constraint . args)) :on extended-table-constraints
+                         :append (expand-extended-table-constraint constraint args))))
+
+
 (def-sql-op :create-table-full (name (&rest columns) (&rest table-constraints) (&rest extended-table-constraints))
   "Create a table with more complete syntax."
   (when (null columns)
     (sql-error "No columns defined for table ~A." name))
-  `("CREATE TABLE " ,(to-sql-name name) " ("
+  `("CREATE " ,@(expand-table-name name) " ("
                     ,@(loop :for ((column-name . args) . rest) :on columns
                             :append (expand-table-column column-name args)
                             :if rest :collect ", ")
@@ -1291,7 +1410,7 @@ test. "
                             :append (expand-table-constraint constraint args))
                     ")"
                     ,@(loop :for ((constraint . args)) :on extended-table-constraints
-                            :append (expand-extended-table-constraint constraint args))))
+                         :append (expand-extended-table-constraint constraint args))))
 
 (def-sql-op :alter-table (name action &rest args)
   (flet

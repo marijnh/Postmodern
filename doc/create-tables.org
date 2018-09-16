@@ -1,0 +1,146 @@
+#+TITLE: Creating Tables
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+OPTIONS: ^:nil
+
+* Introduction to Table Creation in Postmodern
+Postmodern offers two ways to create postgresql database tables. Which one
+you choose depends on two things:
+
+- Do you start by creating dao classes first or are you even using dao classes?
+
+- Databases are data and transaction management systems, not just data storage. How much detailed table specification do you need?
+
+If you typically start with defining your classes and only need
+relatively straight-forward tables with simple primary and foreign keys,
+then you would define your daos first, then let postmodern's deftable and
+create-table functions to create the database classes.
+
+If you do not use daos or need more control and you want to use postmodern's
+more lispy syntax as compared to postgresql's never ending natural language
+statements, you can reach for one of two additional tools: the
+sql-operators :create-table and :create-extended-table. The api signature
+differs slightly in order to ensure backwards compatibility and, as you might
+expect, :create-extended-table gives you more options.
+
+But first, we should talk about basic database table creation
+and why do we care about different options.
+
+* Basic Postgresql Database Tables
+The full postgresql sql specification can be found [[https://www.postgresql.org/docs/current/static/sql-createtable.html][here]].
+
+At a bare minimum, a database table needs a name. If you actually want to store
+data in it, you need to define the columns (some people call them fields).
+Again, at a minimum, a column needs a name, a datatype and whether the column
+can be a null or whether the database will require that the field have a value.
+
+Once you provide these bare minimum definitions to the database, then you can
+start inserting rows (or tuples) into the table.
+
+For purposes of all the examples below, we will assume that you have a connection
+to a database. That can be a toplevel connection or wrapping a connection around
+your query, and either of these can be directly to the database or through a
+connection pooling mechanism. This page will just be dealing with the queries
+required to create a postgresql database table.
+
+* Postmodern Create-Table
+
+* S-SQL Create-Table
+
+At this minimum level, the :create-table and :create-extended-table calls are
+exactly the same. Let's walk through a simple example:
+
+#+BEGIN_SRC lisp
+(query (:create-table films-at-eleven
+          ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key 't)
+           (title :type (varchar 40))
+           (did :type integer)
+           (date-prod :type (or date db-null))
+           (kind :type (or (varchar 10) db-null))
+           (len :type (or interval db-null) :interval :hour-to-minute))))
+
+#+END_SRC
+The first parameter is the name of the new table. You could make the name a quoted
+string, e.g. "films-at-eleven", but postmodern will handle either a string or the
+unquoted parameter provided above. Postmodern will also automatically handle the
+conversion of the hyphens so beloved by common lisp programmers to the underscores
+demanded by the sql specification.
+
+The next form contains subforms for each column in the table.
+
+The first parameter being the name of the column.
+
+As you know, postgresql will enforce the data type for the column. So, the
+next keyword specifies that type to follow. You can see several different types
+specified in this table. Look at the type for 'code'. It specifies that the
+data will be either NULL or a string with a maximum length of 5 characters.
+
+Compare that against the type specifiers for title or did. In both of those
+cases, the column entry is not allowed to be NULL, it must have a value. In
+this example the title must be a string with a length no greater than 40
+characters. (For most purposes, you can treat a string specification the
+same as a varchar specification.
+
+The did type specification mandates an integer - trying to put a float in that
+column will trigger a database type error.
+
+The date-prod column obviously has a date data type and the len column has
+a interval data type, intervals being a period of time rather than a specific
+time.
+
+The code column also has a constraint - It is the primary key for indexing the table
+and that contraint has a name - in this case 'firstkey. If you do not name the
+constraint, the system will name it for you.
+
+The len column also has additional information. It is an interval of time; That
+could encompass years as well as seconds. The specification given here,
+:hour-to-minute means that the database will only keep the hours to minutes part
+of the potential time interval.
+
+** Table Names Parameter
+The following discussion on table names is the same for both :create-table
+or :create-extended table.
+
+Create-table works with either the simple name for the table parameter or the
+name can be wrapped in a form.
+
+#+BEGIN_SRC lisp
+(query (:create-table distributors-in-hell
+         ((did :type (or integer db-null)))))
+
+(query (:create-table (distributors-in-hell)
+         ((did :type (or integer db-null)))))
+#+END_SRC
+
+Using the name wrapped in a form provides the opportunity to add additional
+qualifiers - if-not-exists, temp, and unlogged.
+
+#+BEGIN_SRC lisp
+(query (:create-table (:if-not-exists distributors-in-hell)
+          ((did :type (or integer db-null)))))
+#+END_SRC
+
+*** Temporary and Unlogged Tables
+Temporary tables exists only for the duration of the session. To create them
+using s-sql in postmodern, the first parameter to :create-table should be a
+form where the first atom in the form is the keyword :temp. You can optionally
+use the :if-not-exists keyword, and then the name of the temporary table. E.g.
+
+#+BEGIN_SRC lisp
+(query (:create-table (:temp distributors-in-hell)
+         ((did :type (or integer db-null)))))
+
+(query (:create-table (:temp :if-not-exists distributors-in-hell)
+         ((did :type (or integer db-null)))))
+
+#+END_SRC
+
+Unlogged tables do not have their data written to the write-ahead log. As a
+result they are faster, but not crash safe. Any indexes created on an unlogged
+table are unlogged as well. The parameter signature is similar to a temporary
+table. E.g.
+
+#+BEGIN_SRC lisp
+(query (:create-table (:unlogged distributors-in-hell)
+         ((did :type (or integer db-null)))))
+#+END_SRC
