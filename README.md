@@ -88,7 +88,7 @@ You do not have to pull in the whole result of a query at once, you can also ite
     (doquery (:select 'x 'y :from 'some-imaginary-table) (x y)
       (format t "On this row, x = ~A and y = ~A.~%" x y))
 
-
+You can work directly with the database or you can use a database-access-class (aka dao).
 This is what a database-access class looks like:
 
 
@@ -117,7 +117,21 @@ The above defines a class that can be used to handle records in a table with thr
 
 This defines our table in the database. execute works like query, but does not expect any results back.
 
-Let us add a few countries:
+You can create tables directly without the need to define a class, and in more complicated cases, you will need to use the create-table operator. One example would be the following:
+
+
+    (query (:create-table so-items
+             ((item-id :type integer)
+              (so-id :type (or integer db-null) :references ((so-headers id)))
+              (product-id :type (or integer db-null))
+              (qty :type (or integer db-null))
+              (net-price :type (or numeric db-null)))
+             (:primary-key item-id so-id)))
+
+
+In the above case, the new table's name will be so-items (actually in the database it will be so_items because sql does not allow hyphens. The column item-id is an integer and cannot be null. The column so-id is also an integer, but is allowed to be null and is a foreign key to the id field in the so-headers table so-headers. The primary key is actually a composite of item-id and so-id. (If we wanted the primary key to be just item-id, we could have specified that in the form defining item-id.)
+
+Let us go back to our approach using a dao class and add a few countries:
 
 
     (insert-dao (make-instance 'country :name "The Netherlands"

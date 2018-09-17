@@ -1,22 +1,422 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="utf-8"> <title>Postmodern</title> <style>html body{margin:0 auto 0 auto;padding:20px;max-width:1024px;font-family:sans-serif;font-size:14pt;overflow-y:scroll;}html body a{text-decoration:none;}html body a[href]{color:#0055AA;}html body a[href]:hover{color:#0088EE;}html body pre{background:#FAFAFA;border:1px solid #DDDDDD;padding:0.75em;overflow-x:auto;}html body pre >code a[href]{color:#223388;}article.system h1,article.system h2,article.system h3,article.system h4,article.system h5,article.system h6{margin:0.2em 0 0.1em 0;text-indent:1em;}article.system >header{text-align:center;}article.system >header img.logo{display:block;margin:auto;max-height:170px;}article.system >header h1{display:inline-block;text-indent:0;font-size:2.5em;}article.system >header .version{vertical-align:bottom;}article.system >header .languages{margin-top:-0.5em;text-transform:capitalize;}article.system >header .description{margin:0;}article.system >header .pages{margin-top:0.5em;font-size:1.2em;text-transform:capitalize;}article.system >header .pages a{display:inline-block;padding:0 0.2em;}article.system >section{margin:1em 0 1em 0;}article.system #index >ul{list-style:none;margin:0;padding:0;}article.system .row label{display:inline-block;min-width:6em;}article.system #system .row{display:flex;}article.system #system #dependencies{display:inline;margin:0;padding:0;}article.system #system #dependencies li{display:inline;padding:0 0.2em;}article.definition{margin:1em 0 0 0;}article.definition >header h1,article.definition >header h2,article.definition >header h3,article.definition >header h4,article.definition >header h5,article.definition >header h6{text-indent:0;display:inline-block;}article.definition >header ul{display:inline-block;list-style:none;margin:0;padding:0;}article.definition >header ul li{display:inline-block;padding:0 0.2em 0 0;}article.definition >header .visibility{display:none;}article.definition >header .visibility,article.definition >header .type{text-transform:lowercase;}article.definition >header .source-link{visibility:hidden;float:right;}article.definition >header .source-link:after{visibility:visible;content:"[SRC]";}article.definition .docstring{margin:0 0 0 1em;}article.definition .docstring pre{font-size:0.8em;white-space:pre-wrap;}.definition.package >header ul.nicknames{display:inline-block;list-style:none;margin:0;padding:0 0 0 1em;}.definition.package >header ul.nicknames li{display:inline;}.definition.package >header ul.nicknames:before{content:"(";}.definition.package >header ul.nicknames:after{content:")";}.definition.package ul.definitions{margin:0;list-style:none;padding:0 0 0 0.5em;}.definition.callable >header .name:before,.definition.type >header .name:before{content:"(";font-weight:normal;}.definition.callable >header .arguments:after,.definition.type >header .arguments:after{content:")";}.definition.callable >header .arguments .arguments:before,.definition.type >header .arguments .arguments:before{content:"(";}.definition.callable >header .arguments .argument,.definition.type >header .arguments .argument{padding:0;}.definition.callable >header .arguments .argument.lambda-list-keyword,.definition.type >header .arguments .argument.lambda-list-keyword{color:#991155;}.definition li>mark{background:none;border-left:0.3em solid #0088EE;padding-left:0.3em;display:block;}</style> </head> <body> <article class="system"> <header>  <h1>postmodern</h1> <span class="version"></span> <nav class="languages">  <a href="index.html">English</a>    </nav> <p class="description">PostgreSQL programming API</p> <nav class="pages">  <a href="index.html">postmodern</a>    <a href="tests/postmodern/index.html">postmodern/tests</a>  </nav> </header> <section id="documentation"><h1>Postmodern</h1> <h2>A Common Lisp PostgreSQL programming interface</h2> <p>Postmodern is a Common Lisp library for interacting with <a href="http://www.postgresql.org">PostgreSQL</a> databases. It is under active development. Features are:</p> <ul> <li>Efficient communication with the database server without need for foreign libraries.</li> <li>Support for UTF-8 on Unicode-aware Lisp implementations</li> <li>A syntax for mixing SQL and Lisp code</li> <li>Convenient support for prepared statements and stored procedures</li> <li>A metaclass for simple database-access objects</li> </ul> <p>The biggest differences between this library and CLSQL/CommonSQL or cl-dbi are that Postmodern has no intention of being portable across different SQL implementations (it embraces non-standard PostgreSQL features), and approaches extensions like lispy SQL and database access objects in a quite different way. This library was written because the CLSQL approach did not really work for me, your mileage may vary.</p> <h2>Contents</h2> <p>---
-* <a href="#dependencies">Dependencies</a> * <a href="#dependencies">License</a> * <a href="#download-and-installation">Download and installation</a> * <a href="#quickstart">Quickstart</a> * <a href="#reference">Reference</a> * <a href="#caveats-and-to-dos">Caveats and to-dos</a> * <a href="#resources">Resources</a></p> <h2>Dependencies</h2> <p>---
-The library depends on usocket (except on SBCL and ACL, where the built-in socket library is used), md5, closer-mop, bordeaux-threads if you want thread-safe connection pools, and CL+SSL when SSL connections are needed.</p> <p>Postmodern itself is split into four different packages, some of which can be used independently. Simple-date is a very basic implementation of date and time objects, used to support storing and retrieving time-related SQL types. CL-postgres is the low-level library used for interfacing with a PostgreSQL server over a socket. S-SQL is used to compile s-expressions to strings of SQL code, escaping any Lisp values inside, and doing as much as possible of the work at compile time. Finally, Postmodern itself is the library that tries to put all these things together into a convenient programming interface.</p> <h2>License</h2> <p>---
-Postmodern is released under a zlib-style license. Which approximately means you can use the code in whatever way you like, except for passing it off as your own or releasing a modified version without indication that it is not the original.</p> <h2>Download and installation</h2> <p>---
-We suggest using <a href="https://www.quicklisp.org/beta/">quicklisp</a> for installation.</p> <p>A git repository with the most recent changes can be viewed or checked out at https://github.com/marijnh/Postmodern</p> <h2>Quickstart</h2> <p>---
-This quickstart is intended to give you a feel of the way coding with Postmodern works. Further details about the workings of the library can be found in the reference manual.</p> <p>Assuming you have already installed it, first load and use the system:</p> <pre><code>(ql:quickload :postmodern)
-(<a href="http://l1sp.org/cl/use-package" class="xref">use-package</a> :postmodern)
-</code></pre> <p>If you have a PostgreSQL server running on localhost, with a database called 'testdb' on it, which is accessible for user 'foucault' with password 'surveiller', you can connect like this:</p> <pre><code>(<a href="#FUNCTION%20POSTMODERN%3ACONNECT-TOPLEVEL" class="xref">connect-toplevel</a> &quot;testdb&quot; &quot;foucault&quot; &quot;surveiller&quot; &quot;localhost&quot;)
-</code></pre> <p>Which will establish a connection to be used by all code, except for that wrapped in a with-connection form, which takes the same arguments but only establishes the connection locally.</p> <p>Now for a basic sanity test:</p> <pre><code>(<a href="#MACRO-FUNCTION%20POSTMODERN%3AQUERY" class="xref">query</a> &quot;select 22, 'Folie et déraison', 4.5&quot;)
-;; =&gt; ((22 &quot;Folie et déraison&quot; 9/2))
-</code></pre> <p>That should work. query is the basic way to send queries to the database. The same query can be expressed like this:</p> <pre><code>(<a href="#MACRO-FUNCTION%20POSTMODERN%3AQUERY" class="xref">query</a> (:select 22 &quot;Folie et déraison&quot; 4.5))
-;; =&gt; ((22 &quot;Folie et déraison&quot; 9/2))
-</code></pre> <p>In many contexts, query strings and lists starting with keywords can be used interchangeably. The lists will be compiled to SQL. The S-SQL manual describes the syntax used by these expressions. Lisp values occurring in them are automatically escaped. In the above query, only constant values are used, but it is possible to transparently use run-time values as well:</p> <pre><code>(<a href="http://l1sp.org/cl/defun" class="xref">defun</a> database-powered-addition (a b)
-  (<a href="#MACRO-FUNCTION%20POSTMODERN%3AQUERY" class="xref">query</a> (:select (:+ a b)) :single))
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-09-17 Mon 07:26 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Postmodern</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Postmodern</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org9243c9e">Dependencies</a></li>
+<li><a href="#org712793a">License</a></li>
+<li><a href="#org9da2b12">Download and installation</a></li>
+<li><a href="#org9c38027">Quickstart</a></li>
+<li><a href="#orge0801c7">Reference</a></li>
+<li><a href="#org5e002d5">Caveats and to-dos</a>
+<ul>
+<li><a href="#org126da9c">Timezones</a></li>
+<li><a href="#orgc1f27e8">Portability</a></li>
+<li><a href="#org65e70b6">Things that should be implemented</a></li>
+</ul>
+</li>
+<li><a href="#org90487a1">Resources</a></li>
+</ul>
+</div>
+</div>
+<p>
+Postmodern is a Common Lisp library for interacting with <a href="https://postgresql.org">PostgreSQL databases</a>.
+Features are:
+</p>
+
+<ul class="org-ul">
+<li>Efficient communication with the database server without need for foreign libraries.</li>
+<li>Support for UTF-8 on Unicode-aware Lisp implementations</li>
+<li>A syntax for mixing SQL and Lisp code</li>
+<li>Convenient support for prepared statements and stored procedures</li>
+<li>A metaclass for simple database-access objects</li>
+</ul>
+
+<p>
+The biggest differences between this library and <a href="http://quickdocs.org/clsql/">clsql</a> or <a href="https://github.com/fukamachi/cl-dbi">cl-dbi</a>
+are that Postmodern has no intention of being portable across different SQL
+implementations (it embraces non-standard PostgreSQL features), and approaches
+extensions like lispy SQL and database access objects in a quite different way.
+This library was written because the CLSQL approach did not really work for
+me, your mileage may vary.
+</p>
+
+
+<div id="outline-container-org9243c9e" class="outline-2">
+<h2 id="org9243c9e">Dependencies</h2>
+<div class="outline-text-2" id="text-org9243c9e">
+<p>
+The library depends on <a href="http://quickdocs.org/usocket/">usocket</a> (except on <a href="http://sbcl.org/">SBCL</a> and <a href="https://franz.com/products/allegrocl/">ACL</a>, where the built-in
+socket library is used), <a href="https://github.com/pmai/md5.git">md5</a>, <a href="https://github.com/pcostanza/closer-mop.git">closer-mop</a>, <a href="https://github.com/sionescu/bordeaux-threads.git">bordeaux-threads</a> if you want
+thread-safe connection pools, and <a href="https://github.com/cl-plus-ssl/cl-plus-ssl.git">CL+SSL</a> when SSL connections are needed.
+</p>
+
+<p>
+Postmodern itself is split into four different packages, some of which
+can be used independently. <a href="simple-date.html">Simple-date</a> is a very basic implementation of
+date and time objects, used to support storing and retrieving time-related
+SQL types. <a href="cl-postgres.html">CL-postgres</a> is the low-level library used for interfacing with a
+PostgreSQL server over a socket. <a href="s-sql.html">S-SQL</a> is used to compile s-expressions to
+strings of SQL code, escaping any Lisp values inside, and doing as much as
+possible of the work at compile time. Finally, <a href="postmodern.html">Postmodern</a> itself is the
+library that tries to put all these things together into a convenient
+programming interface.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org712793a" class="outline-2">
+<h2 id="org712793a">License</h2>
+<div class="outline-text-2" id="text-org712793a">
+<p>
+Postmodern is released under a zlib-style license. Which approximately
+means you can use the code in whatever way you like, except for passing
+it off as your own or releasing a modified version without indication
+that it is not the original.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org9da2b12" class="outline-2">
+<h2 id="org9da2b12">Download and installation</h2>
+<div class="outline-text-2" id="text-org9da2b12">
+<p>
+We suggest using <a href="https://quicklisp.org">quicklisp.org</a> for installation.
+</p>
+
+<p>
+A git repository with the most recent changes can be viewed or checked out at:
+</p>
+
+<p>
+&gt; git clone <a href="https://github.com/marijnh/Postmodern">https://github.com/marijnh/Postmodern</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-org9c38027" class="outline-2">
+<h2 id="org9c38027">Quickstart</h2>
+<div class="outline-text-2" id="text-org9c38027">
+<p>
+This quickstart is intended to give you a feel of the way coding with
+Postmodern works. Further details about the workings of the library
+can be found in the reference manuals linked below.
+</p>
+
+<p>
+Assuming you have already installed quicklisp, load postmodern.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(ql:quickload :postmodern)
+(use-package :postmodern)
+</pre>
+</div>
+
+<p>
+If you have a PostgreSQL server running on localhost, with a database
+called 'testdb' on it, which is accessible for user 'foucault' with
+password 'surveiller', you can connect like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(connect-toplevel "testdb" "foucault" "surveiller" "localhost")
+</pre>
+</div>
+
+<p>
+Which will establish a connection to be used by all code, except for that
+wrapped in a with-connection form, which takes the same arguments but only
+establishes the connection locally.
+</p>
+
+<p>
+Now for a basic sanity test:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query "select 22, 'Folie et déraison', 4.5")
+;; =&gt; ((22 "Folie et déraison" 9/2))
+</pre>
+</div>
+
+<p>
+That should work. query is the basic way to send queries to the database.
+The same query can be expressed like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:select 22 "Folie et déraison" 4.5))
+;; =&gt; ((22 "Folie et déraison" 9/2))
+</pre>
+</div>
+
+<p>
+In many contexts, query strings and lists starting with keywords can be used
+interchangeably. The lists will be compiled to SQL. The S-SQL manual describes
+the syntax used by these expressions. Lisp values occurring in them are
+automatically escaped. In the above query, only constant values are used, but
+it is possible to transparently use run-time values as well:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(defun database-powered-addition (a b)
+  (query (:select (:+ a b)) :single))
+
 (database-powered-addition 1030 204)
 ;; =&gt; 1234
-</code></pre> <p>That last argument, :single, indicates that we want the result not as a list of lists (for the result rows), but as a single value, since we know that we are only selecting one value. Some other options are :rows, :row, :column, :alists, and :none. Their precise effect is documented in the reference manual.</p> <p>You do not have to pull in the whole result of a query at once, you can also iterate over it with the doquery macro:</p> <pre><code>(<a href="#MACRO-FUNCTION%20POSTMODERN%3ADOQUERY" class="xref">doquery</a> (:select 'x 'y :from 'some-imaginary-table) (x y)
-  (format t &quot;On this row, x = ~A and y = ~A.~%&quot; x y))
-</code></pre> <p>This is what a database-access class looks like:</p> <pre><code>(<a href="http://l1sp.org/cl/defclass" class="xref">defclass</a> country ()
+</pre>
+</div>
+
+<p>
+That last argument, :single, indicates that we want the result not as a list
+of lists (for the result rows), but as a single value, since we know that we
+are only selecting one value. Some other options are :rows, :row, :column, :alists,
+and :none. Their precise effect is documented in the reference manual.
+</p>
+
+<p>
+You do not have to pull in the whole result of a query at once, you can
+also iterate over it with the doquery macro:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(doquery (:select 'x 'y :from 'some-imaginary-table) (x y)
+  (format t "On this row, x = ~A and y = ~A.~%" x y))
+</pre>
+</div>
+
+<p>
+You can work directly with the database or you can use a database-access-class (aka dao).
+This is what a database-access class looks like:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(defclass country ()
   ((name :col-type string :initarg :name
          :reader country-name)
    (inhabitants :col-type integer :initarg :inhabitants
@@ -25,44 +425,265 @@ This quickstart is intended to give you a feel of the way coding with Postmodern
               :accessor country-sovereign))
   (:metaclass dao-class)
   (:keys name))
-</code></pre> <p>The above defines a class that can be used to handle records in a table with three columns: name, inhabitants, and sovereign. In simple cases, the information above is enough to define the table as well:</p> <pre><code>(<a href="#FUNCTION%20POSTMODERN%3ADAO-TABLE-DEFINITION" class="xref">dao-table-definition</a> 'country)
-;; =&gt; &quot;CREATE TABLE country (
+</pre>
+</div>
+
+<p>
+The above defines a class that can be used to handle records in a table with
+three columns: name, inhabitants, and sovereign. In simple cases, the
+information above is enough to define the table as well:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(dao-table-definition 'country)
+;; =&gt; "CREATE TABLE country (
 ;;      name TEXT NOT NULL,
 ;;      inhabitants INTEGER NOT NULL,
 ;;      sovereign TEXT,
-;;      PRIMARY KEY (name))&quot;
-(<a href="#MACRO-FUNCTION%20POSTMODERN%3AEXECUTE" class="xref">execute</a> (<a href="#FUNCTION%20POSTMODERN%3ADAO-TABLE-DEFINITION" class="xref">dao-table-definition</a> 'country))
-</code></pre> <p>This defines our table in the database. execute works like query, but does not expect any results back.</p> <p>Let us add a few countries:</p> <pre><code>(<a href="#GENERIC-FUNCTION%20POSTMODERN%3AINSERT-DAO" class="xref">insert-dao</a> (<a href="http://l1sp.org/cl/make-instance" class="xref">make-instance</a> 'country :name &quot;The Netherlands&quot;
+;;      PRIMARY KEY (name))"
+
+(execute (dao-table-definition 'country))
+</pre>
+</div>
+
+<p>
+This defines our table in the database. execute works like query, but does
+not expect any results back.
+</p>
+
+<p>
+You can create tables directly without the need to define a class, and in more
+complicated cases, you will need to use the create-table operator. One example
+would be the following:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table so-items
+         ((item-id :type integer)
+          (so-id :type (or integer db-null) :references ((so-headers id)))
+          (product-id :type (or integer db-null))
+          (qty :type (or integer db-null))
+          (net-price :type (or numeric db-null)))
+         (:primary-key item-id so-id)))
+
+</pre>
+</div>
+
+<p>
+In the above case, the new table's name will be so-items (actually in the
+database it will be so_items because sql does not allow hyphens. The column
+item-id is an integer and cannot be null. The column so-id is also an integer,
+but is allowed to be null and is a foreign key to the id field in the so-headers
+table so-headers. The primary key is actually a composite of item-id and so-id.
+(If we wanted the primary key to be just item-id, we could have specified that
+in the form defining item-id.) For more detail and examples on building tables
+using the s-sql approach, see <a href="create-tables.html">create-tables.html</a>
+</p>
+
+
+<p>
+Let us add a few countries:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(insert-dao (make-instance 'country :name "The Netherlands"
                                     :inhabitants 16800000
-                                    :sovereign &quot;Willem-Alexander&quot;))
-(<a href="#GENERIC-FUNCTION%20POSTMODERN%3AINSERT-DAO" class="xref">insert-dao</a> (<a href="http://l1sp.org/cl/make-instance" class="xref">make-instance</a> 'country :name &quot;Croatia&quot;
+                                    :sovereign "Willem-Alexander"))
+(insert-dao (make-instance 'country :name "Croatia"
                                     :inhabitants 4400000))
-</code></pre> <p>Then, to update Croatia's population, we could do this:</p> <pre><code>(let ((croatia (<a href="#GENERIC-FUNCTION%20POSTMODERN%3AGET-DAO" class="xref">get-dao</a> 'country &quot;Croatia&quot;)))
-  (<a href="http://l1sp.org/cl/setf" class="xref">setf</a> (country-inhabitants croatia) 4500000)
-  (<a href="#GENERIC-FUNCTION%20POSTMODERN%3AUPDATE-DAO" class="xref">update-dao</a> croatia))
-(<a href="#MACRO-FUNCTION%20POSTMODERN%3AQUERY" class="xref">query</a> (:select '* :from 'country))
-;; =&gt; ((&quot;The Netherlands&quot; 16800000 &quot;Willem-Alexander&quot;)
-;;     (&quot;Croatia&quot; 4500000 :NULL))
-</code></pre> <p>Next, to demonstrate a bit more of the S-SQL syntax, here is the query the utility function list-tables uses to get a list of the tables in a database:</p> <pre><code>(sql (:select 'relname :from 'pg-catalog.pg-class
+</pre>
+</div>
+
+<p>
+Then, to update Croatia's population, we could do this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(let ((croatia (get-dao 'country "Croatia")))
+  (setf (country-inhabitants croatia) 4500000)
+  (update-dao croatia))
+(query (:select '* :from 'country))
+;; =&gt; (("The Netherlands" 16800000 "Willem-Alexander")
+;;     ("Croatia" 4500000 :NULL))
+</pre>
+</div>
+
+<p>
+Next, to demonstrate a bit more of the S-SQL syntax, here is the query the
+utility function list-tables uses to get a list of the tables in a database:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(sql (:select 'relname :from 'pg-catalog.pg-class
       :inner-join 'pg-catalog.pg-namespace :on (:= 'relnamespace 'pg-namespace.oid)
-      :where (:and (:= 'relkind &quot;r&quot;)
-                   (:not-in 'nspname (:set &quot;pg_catalog&quot; &quot;pg_toast&quot;))
+      :where (:and (:= 'relkind "r")
+                   (:not-in 'nspname (:set "pg_catalog" "pg_toast"))
                    (:pg-catalog.pg-table-is-visible 'pg-class.oid))))
-;; =&gt; &quot;(SELECT relname FROM pg_catalog.pg_class
+;; =&gt; "(SELECT relname FROM pg_catalog.pg_class
 ;;      INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
 ;;      WHERE ((relkind = 'r') and (nspname NOT IN ('pg_catalog', 'pg_toast'))
-;;             and pg_catalog.pg_table_is_visible(pg_class.oid)))&quot;
-</code></pre> <p>sql is a macro that will simply compile a query, it can be useful for seeing how your queries are expanded or if you want to do something unexpected with them.</p> <p>As you can see, lists starting with keywords are used to express SQL commands and operators (lists starting with something else will be evaluated and then inserted into the query). Quoted symbols name columns or tables (keywords can also be used but might introduce ambiguities). The syntax supports subqueries, multiple joins, stored procedures, etc. See the S-SQL reference manual for a complete treatment.</p> <p>Finally, here is an example of the use of prepared statements:</p> <pre><code>(<a href="#MACRO-FUNCTION%20POSTMODERN%3ADEFPREPARED" class="xref">defprepared</a> sovereign-of
+;;             and pg_catalog.pg_table_is_visible(pg_class.oid)))"
+</pre>
+</div>
+
+<p>
+sql is a macro that will simply compile a query, it can be useful for seeing
+how your queries are expanded or if you want to do something unexpected with
+them.
+</p>
+
+<p>
+As you can see, lists starting with keywords are used to express SQL commands
+and operators (lists starting with something else will be evaluated and then
+inserted into the query). Quoted symbols name columns or tables (keywords can
+also be used but might introduce ambiguities). The syntax supports subqueries,
+multiple joins, stored procedures, etc. See the <a href="s-sql.html">S-SQL reference manual</a> for a
+complete treatment.
+</p>
+
+<p>
+Finally, here is an example of the use of prepared statements:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(defprepared sovereign-of
   (:select 'sovereign :from 'country :where (:= 'name '$1))
   :single!)
-(sovereign-of &quot;The Netherlands&quot;)
-;; =&gt; &quot;Willem-Alexander&quot;
-</code></pre> <p>The defprepared macro creates a function that takes the same amount of arguments as there are $X placeholders in the given query. The query will only be parsed and planned once (per database connection), which can be faster, especially for complex queries.</p> <pre><code>(<a href="#FUNCTION%20POSTMODERN%3ADISCONNECT-TOPLEVEL" class="xref">disconnect-toplevel</a>)
-</code></pre> <h2>Reference</h2> <p>---
-The reference manuals for the different components of Postmodern are kept in separate files. For using the library in the most straightforward way, you only really need to read the Postmodern reference and glance over the S-SQL reference. The simple-date reference explains the time-related data types included in Postmodern, and the CL-postgres reference might be useful if you just want a low-level library for talking to a PostgreSQL server.</p> <ul> <li><a href="/doc/postmodern.html">Postmodern</a></li> <li><a href="/doc/s-sql.html">S-SQL</a></li> <li><a href="/doc/simple-date.html">Simple-date</a></li> <li><a href="/doc/cl-postgres.html">CL-postgres</a></li> </ul> <h2>Caveats and to-dos</h2> <p>---</p> <h3>Timezones</h3> <p>It is important to understand how postgresql (not postmodern) handles timestamps and timestamps with time zones. Postgresql keeps everything in UTC, it does not store a timezone even in a timezone aware column. If you use a timestamp with timezone column, postgresql will calculate the UTC time and will normalize the timestamp data to UTC. When you later select the record, postgresql will look at the timezone for the postgresql session, retrieve the data and then provide the data recalculated from UTC to the timezone for that postgresql session. There is a good writeup of timezones at <a href="http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html">http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html</a> and <a href="http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/">http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/</a>.</p> <p>Keeping that in mind, <a href="http://marijnhaverbeke.nl/postmodern/simple-date.html">Simple-date</a> has no concept of time zones. If you really need your time-keeping to be reliable and/or universal you might consider using <a href="https://github.com/dlowe-net/local-time">local-time</a>, which solves the same problem as simple-date, but does understand time zones. We are considering the best ways to make life easier for users of the two libraries.</p> <h3>Portability</h3> <p>The Lisp code in Postmodern is theoretically portable across implementations, and seems to work on all major ones and even less major ones such as  Genera. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).</p> <p>The library is not likely to work for PostgreSQL versions older than 8.4.
+(sovereign-of "The Netherlands")
+;; =&gt; "Willem-Alexander"
+</pre>
+</div>
+
+<p>
+The defprepared macro creates a function that takes the same amount of
+arguments as there are $X placeholders in the given query. The query will
+only be parsed and planned once (per database connection), which can be
+faster, especially for complex queries.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(disconnect-toplevel)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge0801c7" class="outline-2">
+<h2 id="orge0801c7">Reference</h2>
+<div class="outline-text-2" id="text-orge0801c7">
+<p>
+The reference manuals for the different components of Postmodern are kept
+in separate files. For using the library in the most straightforward way,
+you only really need to read the Postmodern reference and glance over the
+S-SQL reference. The simple-date reference explains the time-related data
+types included in Postmodern, and the CL-postgres reference might be useful
+if you just want a low-level library for talking to a PostgreSQL server.
+</p>
+
+<ul class="org-ul">
+<li><a href="postmodern.html">Postmodern</a></li>
+
+<li><a href="s-sql.html">S-SQL</a></li>
+
+<li><a href="array-notes.html">array-notes.html</a></li>
+
+<li><a href="simple-date.html">Simple-date</a></li>
+
+<li><a href="cl-postgres.html">CL-postgres</a></li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-org5e002d5" class="outline-2">
+<h2 id="org5e002d5">Caveats and to-dos</h2>
+<div class="outline-text-2" id="text-org5e002d5">
+</div>
+<div id="outline-container-org126da9c" class="outline-3">
+<h3 id="org126da9c">Timezones</h3>
+<div class="outline-text-3" id="text-org126da9c">
+<p>
+It is important to understand how postgresql (not postmodern) handles
+timestamps and timestamps with time zones. Postgresql keeps everything
+in UTC, it does not store a timezone even in a timezone aware column.
+If you use a timestamp with timezone column, postgresql will calculate
+the UTC time and will normalize the timestamp data to UTC. When you
+later select the record, postgresql will look at the timezone for the
+postgresql session, retrieve the data and then provide the data
+recalculated from UTC to the timezone for that postgresql session.
+There is a good writeup of timezones at
+<a href="http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html">http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html</a>
+and <a href="http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/">http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/</a>.
+</p>
+
+<p>
+Keeping that in mind, <a href="http://marijnhaverbeke.nl/postmodern/simple-date.html">Simple-date</a> has no concept of time zones. If you really
+need your time-keeping to be reliable and/or universal then you might consider
+using another library, <a href="https://github.com/dlowe-net/local-time">local-time</a>, which solves the same problem as simple-date, but
+does understand time zones. It does have some code for integrating with
+cl-postgres. See
+<a href="https://github.com/dlowe-net/local-time/blob/master/src/integration/cl-postgres.lisp">https://github.com/dlowe-net/local-time/blob/master/src/integration/cl-postgres.lisp</a>
+</p>
+
+<p>
+To use simple-date with cl-postgres or postmodern,
+load simple-date-cl-postgres-glue to register suitable SQL
+readers and writers for the associated database types.
+</p>
+
+<p>
+To get back to the default cl-postgres reader:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+         cl-postgres::*default-sql-readtable*))
+</pre>
+</div>
+
+<p>
+To use the simple-date reader when cl-postgres is using the default:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+         simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
+</pre>
+</div>
+
+<p>
+As a reminder for those who want to use local-time, to enable the local-time
+reader:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(local-time:set-local-time-cl-postgres-readers)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc1f27e8" class="outline-3">
+<h3 id="orgc1f27e8">Portability</h3>
+<div class="outline-text-3" id="text-orgc1f27e8">
+<p>
+The Lisp code in Postmodern is theoretically portable across implementations,
+and seems to work on all major ones as well as some minor ones such as Genera.
+Implementations that do not have meta-object protocol support will not have
+DAOs, but all other parts of the library should work (all widely used
+implementations do support this).
+</p>
+
+<p>
+The library is not likely to work for PostgreSQL versions older than 8.4.
 Other features only work in newer Postgresql versions as the features
-were only introduced in those newer versions.</p> <h3>Things that should be implemented</h3> <p>Postmodern is under active development so Issues and feature requests should
-be flagged on [[https://github.com/marijnh/Postmodern]].</p> <p>It would be a nice feature if Postmodern could help you with defining your
+were only introduced in those newer versions.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org65e70b6" class="outline-3">
+<h3 id="org65e70b6">Things that should be implemented</h3>
+<div class="outline-text-3" id="text-org65e70b6">
+<p>
+Postmodern is under active development so Issues and feature requests should
+be flagged on <a href="https://github.com/marijnh/Postmodern">Postmodern's site on github</a>.
+</p>
+
+<p>
+It would be a nice feature if Postmodern could help you with defining your
 database schemas and, more importantly, updating your databases when your code
 changes. It would theoretically not be hard to build a function that compares
 a schema on the Lisp side with the state of the database, and helps you to
@@ -70,188 +691,35 @@ interactively update your database. PostgreSQL has a quite complete
 introspection system. Unfortunately it would be a lot of work to implement
 this, since databases can contain so many different types of entities
 (tables, views, indices, procedures, constraints, sequences, etc.) which are
-all created, changed, and dropped in different ways.</p> <p>Some areas that are currently under consideration can be found in the ROADMAP.md
-file.</p> <h2>Resources</h2> <p>---
-- <a href="https://mailman.common-lisp.net/listinfo/postmodern-devel">Mailing List</a> - <a href="https://sites.google.com/site/sabraonthehill/postmodern-examples">A collection of Postmodern examples</a> - <a href="http://www.postgresql.org/docs/current/static/index.html">The PostgreSQL manuals</a> - <a href="http://www.postgresql.org/docs/current/static/protocol.html">The wire protocol Postmodern uses</a> - <a href="https://github.com/filonenko-mikhail/cl-ewkb">Common Lisp Postgis library</a> - <a href="http://common-lisp.net/project/local-time/">Local-time</a></p> </section>  <section id="system"> <h2>System Information</h2>   <div class="row"> <label for="dependencies">Dependencies:</label> <ul id="dependencies"><li><a class="external">alexandria</a></li><li><a class="external">cl-postgres</a></li><li><a class="external">s-sql</a></li><li><a class="external">global-vars</a></li><li><a class="external">closer-mop</a></li><li><a class="external">bordeaux-threads</a></li></ul> </div>   <div class="row"> <label for="author">Author:</label> <a id="author" href="mailto:marijnh@gmail.com">Marijn Haverbeke</a> </div>   <div class="row"> <label for="license">License:</label> <a id="license" href="file:///home/wol/quicklisp/local-projects/Postmodern/LICENSE">BSD</a> </div>   </section>  <section id="index"> <h2>Definition Index</h2> <ul> <li> <article class="definition package" id="PACKAGE POSTMODERN"> <header> <h3> <a href="#PACKAGE%20POSTMODERN">POSTMODERN</a> </h3> <ul class="nicknames"> <li>POMO</li> </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> <ul class="definitions"> <li> <article class="definition special-variable" id="VARIABLE POSTMODERN:*CURRENT-LOGICAL-TRANSACTION*"> <header> <span class="visibility">EXTERNAL</span> <span class="type">SPECIAL-VARIABLE</span> <h4 class="name"> <a href="#VARIABLE%20POSTMODERN%3A%2ACURRENT-LOGICAL-TRANSACTION%2A">*CURRENT-LOGICAL-TRANSACTION*</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/transaction.lisp#4:0">Source</a>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition special-variable" id="VARIABLE POSTMODERN:*DATABASE*"> <header> <span class="visibility">EXTERNAL</span> <span class="type">SPECIAL-VARIABLE</span> <h4 class="name"> <a href="#VARIABLE%20POSTMODERN%3A%2ADATABASE%2A">*DATABASE*</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/connect.lisp#9:0">Source</a>  </header> <div class="docstring"><pre>Special holding the current database. Most functions and macros
-operating on a database assume this contains a connected database.</pre></div> </article> </li>  <li> <article class="definition special-variable" id="VARIABLE POSTMODERN:*DEFAULT-USE-SSL*"> <header> <span class="visibility">EXTERNAL</span> <span class="type">SPECIAL-VARIABLE</span> <h4 class="name"> <a href="#VARIABLE%20POSTMODERN%3A%2ADEFAULT-USE-SSL%2A">*DEFAULT-USE-SSL*</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/connect.lisp#13:0">Source</a>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition special-variable" id="VARIABLE POSTMODERN:*ESCAPE-SQL-NAMES-P*"> <header> <span class="visibility">EXTERNAL</span> <span class="type">SPECIAL-VARIABLE</span> <h4 class="name"> <a href="#VARIABLE%20POSTMODERN%3A%2AESCAPE-SQL-NAMES-P%2A">*ESCAPE-SQL-NAMES-P*</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><pre>Setting this to T will make S-SQL add double quotes around
-identifiers in queries. Setting it :auto will turn on this behaviour
-only for reserved words.</pre></div> </article> </li>  <li> <article class="definition special-variable" id="VARIABLE POSTMODERN:*IGNORE-UNKNOWN-COLUMNS*"> <header> <span class="visibility">EXTERNAL</span> <span class="type">SPECIAL-VARIABLE</span> <h4 class="name"> <a href="#VARIABLE%20POSTMODERN%3A%2AIGNORE-UNKNOWN-COLUMNS%2A">*IGNORE-UNKNOWN-COLUMNS*</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#307:0">Source</a>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition special-variable" id="VARIABLE POSTMODERN:*ISOLATION-LEVEL*"> <header> <span class="visibility">EXTERNAL</span> <span class="type">SPECIAL-VARIABLE</span> <h4 class="name"> <a href="#VARIABLE%20POSTMODERN%3A%2AISOLATION-LEVEL%2A">*ISOLATION-LEVEL*</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/transaction.lisp#5:0">Source</a>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition special-variable" id="VARIABLE POSTMODERN:*MAX-POOL-SIZE*"> <header> <span class="visibility">EXTERNAL</span> <span class="type">SPECIAL-VARIABLE</span> <h4 class="name"> <a href="#VARIABLE%20POSTMODERN%3A%2AMAX-POOL-SIZE%2A">*MAX-POOL-SIZE*</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/connect.lisp#76:0">Source</a>  </header> <div class="docstring"><pre>The maximum amount of connection that will be kept in a single
-pool, or NIL for no maximum.</pre></div> </article> </li>  <li> <article class="definition special-variable" id="VARIABLE POSTMODERN:*TABLE-NAME*"> <header> <span class="visibility">EXTERNAL</span> <span class="type">SPECIAL-VARIABLE</span> <h4 class="name"> <a href="#VARIABLE%20POSTMODERN%3A%2ATABLE-NAME%2A">*TABLE-NAME*</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/deftable.lisp#3:0">Source</a>  </header> <div class="docstring"><pre>Used inside deftable to find the name of the table being defined.</pre></div> </article> </li>  <li> <article class="definition special-variable" id="VARIABLE POSTMODERN:*TABLE-SYMBOL*"> <header> <span class="visibility">EXTERNAL</span> <span class="type">SPECIAL-VARIABLE</span> <h4 class="name"> <a href="#VARIABLE%20POSTMODERN%3A%2ATABLE-SYMBOL%2A">*TABLE-SYMBOL*</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/deftable.lisp#6:0">Source</a>  </header> <div class="docstring"><pre>Used inside deftable to find the symbol naming the table being defined.</pre></div> </article> </li>  <li> <article class="definition class" id="CLASS POSTMODERN:DAO-CLASS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">CLASS</span> <h4 class="name"> <a href="#CLASS%20POSTMODERN%3ADAO-CLASS">DAO-CLASS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#3:0">Source</a>  </header> <div class="docstring"><pre>Metaclass for database-access-object classes.</pre></div> </article> </li>  <li> <article class="definition class" id="CLASS POSTMODERN:DATABASE-CONNECTION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">CLASS</span> <h4 class="name"> <a href="#CLASS%20POSTMODERN%3ADATABASE-CONNECTION">DATABASE-CONNECTION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><pre>Representation of a database connection. Contains
-login information in order to be able to automatically re-establish a
-connection when it is somehow closed.</pre></div> </article> </li>  <li> <article class="definition class" id="CLASS POSTMODERN:REAL"> <header> <span class="visibility">EXTERNAL</span> <span class="type">CLASS</span> <h4 class="name"> <a href="#CLASS%20POSTMODERN%3AREAL">REAL</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition condition" id="CONDITION POSTMODERN:DATABASE-CONNECTION-ERROR"> <header> <span class="visibility">EXTERNAL</span> <span class="type">CONDITION</span> <h4 class="name"> <a href="#CONDITION%20POSTMODERN%3ADATABASE-CONNECTION-ERROR">DATABASE-CONNECTION-ERROR</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><pre>Conditions of this type are signalled when an error
-occurs that breaks the connection socket. They offer a :reconnect
-restart.</pre></div> </article> </li>  <li> <article class="definition condition" id="CONDITION POSTMODERN:DATABASE-ERROR"> <header> <span class="visibility">EXTERNAL</span> <span class="type">CONDITION</span> <h4 class="name"> <a href="#CONDITION%20POSTMODERN%3ADATABASE-ERROR">DATABASE-ERROR</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><pre>This is the condition type that will be used to
-signal virtually all database-related errors (though in some cases
-socket errors may be raised when a connection fails on the IP
-level).</pre></div> </article> </li>  <li> <article class="definition condition" id="CONDITION POSTMODERN:SQL-ERROR"> <header> <span class="visibility">EXTERNAL</span> <span class="type">CONDITION</span> <h4 class="name"> <a href="#CONDITION%20POSTMODERN%3ASQL-ERROR">SQL-ERROR</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition type-definition" id="TYPE POSTMODERN:BIGINT"> <header> <span class="visibility">EXTERNAL</span> <span class="type">TYPE-DEFINITION</span> <h4 class="name"> <a href="#TYPE%20POSTMODERN%3ABIGINT">BIGINT</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition type-definition" id="TYPE POSTMODERN:BYTEA"> <header> <span class="visibility">EXTERNAL</span> <span class="type">TYPE-DEFINITION</span> <h4 class="name"> <a href="#TYPE%20POSTMODERN%3ABYTEA">BYTEA</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition type-definition" id="TYPE POSTMODERN:DB-NULL"> <header> <span class="visibility">EXTERNAL</span> <span class="type">TYPE-DEFINITION</span> <h4 class="name"> <a href="#TYPE%20POSTMODERN%3ADB-NULL">DB-NULL</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><pre>Type for representing NULL values. Use like (or integer db-null)
-for declaring a type to be an integer that may be null.</pre></div> </article> </li>  <li> <article class="definition type-definition" id="TYPE POSTMODERN:DOUBLE-PRECISION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">TYPE-DEFINITION</span> <h4 class="name"> <a href="#TYPE%20POSTMODERN%3ADOUBLE-PRECISION">DOUBLE-PRECISION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition type-definition" id="TYPE POSTMODERN:NUMERIC"> <header> <span class="visibility">EXTERNAL</span> <span class="type">TYPE-DEFINITION</span> <h4 class="name"> <a href="#TYPE%20POSTMODERN%3ANUMERIC">NUMERIC</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition type-definition" id="TYPE POSTMODERN:SMALLINT"> <header> <span class="visibility">EXTERNAL</span> <span class="type">TYPE-DEFINITION</span> <h4 class="name"> <a href="#TYPE%20POSTMODERN%3ASMALLINT">SMALLINT</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition type-definition" id="TYPE POSTMODERN:TEXT"> <header> <span class="visibility">EXTERNAL</span> <span class="type">TYPE-DEFINITION</span> <h4 class="name"> <a href="#TYPE%20POSTMODERN%3ATEXT">TEXT</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition type-definition" id="TYPE POSTMODERN:VARCHAR"> <header> <span class="visibility">EXTERNAL</span> <span class="type">TYPE-DEFINITION</span> <h4 class="name"> <a href="#TYPE%20POSTMODERN%3AVARCHAR">VARCHAR</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:!DAO-DEF"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3A%21DAO-DEF">!DAO-DEF</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/deftable.lisp#80:1">Source</a>  </header> <div class="docstring"><pre>Used inside a deftable form. Define this table using the
-corresponding DAO class' slots.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:!FOREIGN"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3A%21FOREIGN">!FOREIGN</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TARGET</li>    <li class="argument">FIELDS</li>    <li class="argument lambda-list-keyword">&amp;REST</li>    <li class="argument">TARGET-FIELDS/ON-DELETE/ON-UPDATE/DEFERRABLE/INITIALLY-DEFERRED</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/deftable.lisp#86:0">Source</a>  </header> <div class="docstring"><pre>Used inside a deftable form. Define a foreign key on this table.
-Pass a table the index refers to, a list of fields or single field in
-*this* table, and, if the fields have different names in the table
-referred to, another field or list of fields for the target table, or
-:primary-key to indicate that the other table's primary key should be
-referenced.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:!INDEX"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3A%21INDEX">!INDEX</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;REST</li>    <li class="argument">FIELDS</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/deftable.lisp#69:0">Source</a>  </header> <div class="docstring"><pre>Used inside a deftable form. Define an index on the defined table.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:!UNIQUE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3A%21UNIQUE">!UNIQUE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TARGET-FIELDS</li>    <li class="argument lambda-list-keyword">&amp;KEY</li>    <li class="argument">DEFERRABLE</li>    <li class="argument">INITIALLY-DEFERRED</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/deftable.lisp#114:0">Source</a>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:!UNIQUE-INDEX"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3A%21UNIQUE-INDEX">!UNIQUE-INDEX</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;REST</li>    <li class="argument">FIELDS</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/deftable.lisp#69:0">Source</a>  </header> <div class="docstring"><pre>Used inside a deftable form. Define a unique index on the defined table.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:ABORT-TRANSACTION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3AABORT-TRANSACTION">ABORT-TRANSACTION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TRANSACTION</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/transaction.lisp#65:0">Source</a>  </header> <div class="docstring"><pre>Immediately abort an open transaction.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:CALL-WITH-CONNECTION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACALL-WITH-CONNECTION">CALL-WITH-CONNECTION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">SPEC</li>    <li class="argument">THUNK</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/connect.lisp#61:0">Source</a>  </header> <div class="docstring"><pre>Binds *database* to a new connection, as specified by the spec
-argument, which should be a list of arguments that can be passed to
-connect, and runs the function given as a second argument with that
-database.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:CHANGE-TOPLEVEL-DATABASE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACHANGE-TOPLEVEL-DATABASE">CHANGE-TOPLEVEL-DATABASE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">NEW-DATABASE</li>    <li class="argument">USER</li>    <li class="argument">PASSWORD</li>    <li class="argument">HOST</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#601:0">Source</a>  </header> <div class="docstring"><pre>Just changes the database assuming you are using a toplevel connection.
-Recommended only for development work.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:CLEAR-CONNECTION-POOL"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACLEAR-CONNECTION-POOL">CLEAR-CONNECTION-POOL</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/connect.lisp#115:0">Source</a>  </header> <div class="docstring"><pre>Disconnect and remove all connections in the connection pool.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:COALESCE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACOALESCE">COALESCE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;REST</li>    <li class="argument">ARGS</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#83:0">Source</a>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:COLUMN-EXISTS-P"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACOLUMN-EXISTS-P">COLUMN-EXISTS-P</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>    <li class="argument">COLUMN-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#271:0">Source</a>  </header> <div class="docstring"><pre>Determine if a particular column exists. Table name and column-name can be either strings or symbols.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:COMMIT-TRANSACTION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACOMMIT-TRANSACTION">COMMIT-TRANSACTION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TRANSACTION</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/transaction.lisp#73:0">Source</a>  </header> <div class="docstring"><pre>Immediately commit an open transaction.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:CONNECT"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACONNECT">CONNECT</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DATABASE</li>    <li class="argument">USER</li>    <li class="argument">PASSWORD</li>    <li class="argument">HOST</li>    <li class="argument lambda-list-keyword">&amp;KEY</li>    <li class="argument">PORT</li>    <li class="argument">POOLED-P</li>    <li class="argument">USE-SSL</li>    <li class="argument">SERVICE</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/connect.lisp#15:0">Source</a>  </header> <div class="docstring"><pre>Create and return a database connection.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:CONNECT-TOPLEVEL"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACONNECT-TOPLEVEL">CONNECT-TOPLEVEL</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DATABASE</li>    <li class="argument">USER</li>    <li class="argument">PASSWORD</li>    <li class="argument">HOST</li>    <li class="argument lambda-list-keyword">&amp;KEY</li>    <li class="argument">PORT</li>    <li class="argument">USE-SSL</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/connect.lisp#32:0">Source</a>  </header> <div class="docstring"><pre>Set *database* to a new connection. Use this if you only need one
-connection, or if you want a connection for debugging from the REPL.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:CONNECTED-P"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACONNECTED-P">CONNECTED-P</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DATABASE</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/connect.lisp#28:0">Source</a>  </header> <div class="docstring"><pre>Test whether a database connection is still connected.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:CREATE-ALL-TABLES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACREATE-ALL-TABLES">CREATE-ALL-TABLES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/deftable.lisp#50:0">Source</a>  </header> <div class="docstring"><pre>Create all defined tables.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:CREATE-PACKAGE-TABLES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACREATE-PACKAGE-TABLES">CREATE-PACKAGE-TABLES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">PACKAGE</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/deftable.lisp#54:0">Source</a>  </header> <div class="docstring"><pre>Create all tables whose identifying symbol is interned in the given
-package.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:CREATE-SCHEMA"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACREATE-SCHEMA">CREATE-SCHEMA</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">SCHEMA</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/namespace.lisp#68:0">Source</a>  </header> <div class="docstring"><pre>Creating a non existing schema.
-   If the schema exists an error is raised.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:CREATE-TABLE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACREATE-TABLE">CREATE-TABLE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/deftable.lisp#43:0">Source</a>  </header> <div class="docstring"><pre>Create a defined table.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:CURRENT-DATABASE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ACURRENT-DATABASE">CURRENT-DATABASE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#97:0">Source</a>  </header> <div class="docstring"><pre>Returns the string name of the current database.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:DAO-TABLE-DEFINITION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ADAO-TABLE-DEFINITION">DAO-TABLE-DEFINITION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#415:0">Source</a>  </header> <div class="docstring"><pre>Generate the appropriate CREATE TABLE query for this class.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:DAO-TABLE-NAME"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ADAO-TABLE-NAME">DAO-TABLE-NAME</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">CLASS</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#39:0">Source</a>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:DATABASE-ERROR-CONSTRAINT-NAME"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ADATABASE-ERROR-CONSTRAINT-NAME">DATABASE-ERROR-CONSTRAINT-NAME</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">ERR</li>  </ul>  </header> <div class="docstring"><pre>Given a database-error for an integrity violation, will attempt to
-extract the constraint name.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:DATABASE-EXISTS-P"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ADATABASE-EXISTS-P">DATABASE-EXISTS-P</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DATABASE-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#101:0">Source</a>  </header> <div class="docstring"><pre>Determine if a particular database exists. </pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:DATABASE-SIZE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ADATABASE-SIZE">DATABASE-SIZE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#106:0">Source</a>  </header> <div class="docstring"><pre>Given the name of a database, will return the name, a pretty-print string of
-the size of the database and the size in bytes. If a database name is not provided,
-it will return the result for the currently connected database.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:DATABASE-VERSION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ADATABASE-VERSION">DATABASE-VERSION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#86:0">Source</a>  </header> <div class="docstring"><pre>Returns the version of the current postgresql database.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:DESCRIBE-CONSTRAINT"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ADESCRIBE-CONSTRAINT">DESCRIBE-CONSTRAINT</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>    <li class="argument">CONSTRAINT-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#476:0">Source</a>  </header> <div class="docstring"><pre>Return a list of alists of the descriptions a particular constraint given
-the table-name and the  constraint name using the information_schema
-table.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:DESCRIBE-FOREIGN-KEY-CONSTRAINTS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ADESCRIBE-FOREIGN-KEY-CONSTRAINTS">DESCRIBE-FOREIGN-KEY-CONSTRAINTS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#517:0">Source</a>  </header> <div class="docstring"><pre>Generates a list of lists of information on the foreign key constraints</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:DESCRIBE-VIEWS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ADESCRIBE-VIEWS">DESCRIBE-VIEWS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">SCHEMA</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#282:0">Source</a>  </header> <div class="docstring"><pre>Describe the current views in the specified schema. Defaults to public schema.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:DISCONNECT-TOPLEVEL"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ADISCONNECT-TOPLEVEL">DISCONNECT-TOPLEVEL</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/connect.lisp#55:0">Source</a>  </header> <div class="docstring"><pre>Disconnect *database*.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:DROP-SCHEMA"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ADROP-SCHEMA">DROP-SCHEMA</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">SCHEMA</li>    <li class="argument lambda-list-keyword">&amp;KEY</li>    <li class="argument">CASCADE</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/namespace.lisp#74:0">Source</a>  </header> <div class="docstring"><pre>Drops an existing database schema 'schema'</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:FIND-PRIMARY-KEY-INFO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3AFIND-PRIMARY-KEY-INFO">FIND-PRIMARY-KEY-INFO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE</li>    <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">JUST-KEY</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#373:0">Source</a>  </header> <div class="docstring"><pre>Returns a list of sublists where the sublist contains two strings.
-If a table primary key consists of only one column, such as 'id' there
-will be a single sublist where the first string is the name of the column
-and the second string is the string name for the datatype for that column.
-If the primary key for the table consists of more than one column, there
-will be a sublist for each column subpart of the key. The sublists will
-be in the order they are used in the key, not in the order they appear
-in the table. If just-key is set to t, the list being returned will
-contain just the column names in the primary key as string names
-with no sublists.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:GET-SEARCH-PATH"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3AGET-SEARCH-PATH">GET-SEARCH-PATH</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/namespace.lisp#37:0">Source</a>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-ALL-CONSTRAINTS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-ALL-CONSTRAINTS">LIST-ALL-CONSTRAINTS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#466:0">Source</a>  </header> <div class="docstring"><pre>Uses information_schema to list all the constraints in a table. Table-name
-can be either a string or quoted.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-AVAILABLE-TYPES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-AVAILABLE-TYPES">LIST-AVAILABLE-TYPES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#166:0">Source</a>  </header> <div class="docstring"><pre>List the available types in this postgresql version.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-COLUMNS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-COLUMNS">LIST-COLUMNS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#240:0">Source</a>  </header> <div class="docstring"><pre>Returns a list of strings of just the column names in a table.
-Pulls info from the postmodern table-description function
-rather than directly.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-COLUMNS-WITH-TYPES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-COLUMNS-WITH-TYPES">LIST-COLUMNS-WITH-TYPES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#248:0">Source</a>  </header> <div class="docstring"><pre>Return a list of (name type) lists for the fields of a table. Goes directly to the pg-catalog tables.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-DATABASE-FUNCTIONS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-DATABASE-FUNCTIONS">LIST-DATABASE-FUNCTIONS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#313:0">Source</a>  </header> <div class="docstring"><pre>Returns a list of the functions in the database from the information_schema.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-DATABASE-USERS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-DATABASE-USERS">LIST-DATABASE-USERS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#592:0">Source</a>  </header> <div class="docstring"><pre>List database users.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-DATABASES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-DATABASES">LIST-DATABASES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;KEY</li>    <li class="argument">ORDER-BY-SIZE</li>    <li class="argument">SIZE</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#121:0">Source</a>  </header> <div class="docstring"><pre>Returns a list of lists where each sub-list contains the name of the
-database, a pretty-print string of the size of that database and the size in bytes.
-The default order is by database name. Pass t as a parameter to :order-by-size for order by size.
-Setting size to nil will return just the database names in a single list
-ordered by name. This function excludes the template databases.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-DETAILED-TRIGGERS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-DETAILED-TRIGGERS">LIST-DETAILED-TRIGGERS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#580:0">Source</a>  </header> <div class="docstring"><pre>List detailed information on the triggers from the information_schema table.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-FOREIGN-KEYS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-FOREIGN-KEYS">LIST-FOREIGN-KEYS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE</li>    <li class="argument">SCHEMA</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#405:0">Source</a>  </header> <div class="docstring"><pre>Returns a list of sublists of foreign key info in the form of
-   '((constraint-name local-table local-table-column
-     foreign-table-name foreign-column-name))</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-INDEX-DEFINITIONS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-INDEX-DEFINITIONS">LIST-INDEX-DEFINITIONS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#363:0">Source</a>  </header> <div class="docstring"><pre>Returns a list of the definitions used to create the current indexes for the table.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-INDEXED-COLUMN-AND-ATTRIBUTES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-INDEXED-COLUMN-AND-ATTRIBUTES">LIST-INDEXED-COLUMN-AND-ATTRIBUTES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#348:0">Source</a>  </header> <div class="docstring"><pre>List the indexed columns and their attributes in a table. Includes primary key.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-INDICES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-INDICES">LIST-INDICES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">STRINGS-P</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#323:0">Source</a>  </header> <div class="docstring"><pre>Return a list of the indexs in a database. Turn them into keywords if strings-p is not true.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-SCHEMAS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-SCHEMAS">LIST-SCHEMAS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#151:0">Source</a>  </header> <div class="docstring"><pre>List schemas in the current database, excluding the pg_* system schemas.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-SCHEMATA"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-SCHEMATA">LIST-SCHEMATA</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/namespace.lisp#43:0">Source</a>  </header> <div class="docstring"><pre>List all existing user defined schemata.
+all created, changed, and dropped in different ways.
+</p>
 
-  Note: The query uses the portable information_schema relations instead of pg_tables relations
-  SELECT schema_name FROM information_schema.schemata where schema_name !~ '(pg_*)|information_schema' ORDER BY schema_name ;</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-SEQUENCES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-SEQUENCES">LIST-SEQUENCES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">STRINGS-P</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#43:0">Source</a>  </header> <div class="docstring"><pre>Return a list of the sequences in a database. Turn them into
-keywords if strings-p is not true.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-TABLE-INDICES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-TABLE-INDICES">LIST-TABLE-INDICES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>    <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">STRINGS-P</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#328:0">Source</a>  </header> <div class="docstring"><pre>List the index names and the related columns in a table. </pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-TABLE-SIZES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-TABLE-SIZES">LIST-TABLE-SIZES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;KEY</li>    <li class="argument">SCHEMA</li>    <li class="argument">ORDER-BY-SIZE</li>    <li class="argument">SIZE</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#174:0">Source</a>  </header> <div class="docstring"><pre>Returns a list of lists (table-name, size in 8k pages) of tables in the current database.
-Providing a name to the schema parameter will return just the information for tables in that schema.
-It defaults to just the tables in the public schema. Setting schema to nil will return all tables, indexes etc
-in the database in descending order of size. This would include system tables, so there
-are a lot more than you would expect. If :size is set to nil, it returns only a flat list of table names.
-Setting order-by-size to t will return the result in order of size instead of by table name.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-TABLES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-TABLES">LIST-TABLES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">STRINGS-P</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#32:0">Source</a>  </header> <div class="docstring"><pre>Return a list of the tables in a database. Turn them into keywords
-if strings-p is not true.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-TABLESPACES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-TABLESPACES">LIST-TABLESPACES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#159:0">Source</a>  </header> <div class="docstring"><pre>Lists the tablespaces in the currently connected database.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-TRIGGERS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-TRIGGERS">LIST-TRIGGERS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">TABLE-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#559:0">Source</a>  </header> <div class="docstring"><pre>List distinct trigger names from the information_schema table. Table-name can be either quoted or string.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-UNIQUE-OR-PRIMARY-CONSTRAINTS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-UNIQUE-OR-PRIMARY-CONSTRAINTS">LIST-UNIQUE-OR-PRIMARY-CONSTRAINTS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#449:0">Source</a>  </header> <div class="docstring"><pre>List constraints on a table.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:LIST-VIEWS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ALIST-VIEWS">LIST-VIEWS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">STRINGS-P</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#54:0">Source</a>  </header> <div class="docstring"><pre>Return a list of the views in a database. Turn them into keywords
-if strings-p is not true.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:MORE-TABLE-INFO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3AMORE-TABLE-INFO">MORE-TABLE-INFO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#217:0">Source</a>  </header> <div class="docstring"><pre>Returns more table info than table-description. Table can be either a string or quoted.
-Specifically returns ordinal-position, column-name, data-type, character-maximum-length,
-modifier, whether it is not-null and the default value. </pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:NUM-RECORDS-IN-DATABASE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ANUM-RECORDS-IN-DATABASE">NUM-RECORDS-IN-DATABASE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments"></ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#90:0">Source</a>  </header> <div class="docstring"><pre>Returns a list of lists with schema, table name and approximate number of records
-in the currently connected database.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:RELEASE-SAVEPOINT"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ARELEASE-SAVEPOINT">RELEASE-SAVEPOINT</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">SAVEPOINT</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/transaction.lisp#117:0">Source</a>  </header> <div class="docstring"><pre>Immediately release a savepoint, commiting its results.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:ROLLBACK-SAVEPOINT"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3AROLLBACK-SAVEPOINT">ROLLBACK-SAVEPOINT</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">SAVEPOINT</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/transaction.lisp#108:0">Source</a>  </header> <div class="docstring"><pre>Immediately roll back a savepoint, aborting it results.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:SAVE-DAO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ASAVE-DAO">SAVE-DAO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DAO</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#330:0">Source</a>  </header> <div class="docstring"><pre>Try to insert the content of a DAO. If this leads to a unique key
-violation, update it instead.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:SAVE-DAO/TRANSACTION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ASAVE-DAO%2FTRANSACTION">SAVE-DAO/TRANSACTION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DAO</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#341:0">Source</a>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:SCHEMA-EXIST-P"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ASCHEMA-EXIST-P">SCHEMA-EXIST-P</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/namespace.lisp#53:0">Source</a>  </header> <div class="docstring"><pre>Predicate for schema existence. Deprecated for schema-exits-p.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:SEQUENCE-EXISTS-P"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ASEQUENCE-EXISTS-P">SEQUENCE-EXISTS-P</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">SEQUENCE</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#49:0">Source</a>  </header> <div class="docstring"><pre>Check whether a sequence exists. Takes either a string or a symbol
-for the sequence name.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:SEQUENCE-NEXT"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ASEQUENCE-NEXT">SEQUENCE-NEXT</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">SEQUENCE</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#10:0">Source</a>  </header> <div class="docstring"><pre>Shortcut for getting the next value from a sequence.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:SET-SEARCH-PATH"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ASET-SEARCH-PATH">SET-SEARCH-PATH</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">PATH</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/namespace.lisp#40:0">Source</a>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:SQL-COMPILE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ASQL-COMPILE">SQL-COMPILE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">FORM</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:SQL-ERROR"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ASQL-ERROR">SQL-ERROR</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">CONTROL</li>    <li class="argument lambda-list-keyword">&amp;REST</li>    <li class="argument">ARGS</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:SQL-ESCAPE-STRING"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ASQL-ESCAPE-STRING">SQL-ESCAPE-STRING</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">STRING</li>    <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">PREFIX</li>  </ul>  </header> <div class="docstring"><pre>Escape string data so it can be used in a query.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:TABLE-DESCRIPTION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ATABLE-DESCRIPTION">TABLE-DESCRIPTION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>    <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">SCHEMA-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#65:0">Source</a>  </header> <div class="docstring"><pre>Return a list of (name type null-allowed) lists for the fields of a
-table.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:TABLE-EXISTS-P"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ATABLE-EXISTS-P">TABLE-EXISTS-P</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#38:0">Source</a>  </header> <div class="docstring"><pre>Check whether a table exists. Takes either a string or a symbol for
-the table name.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:TABLE-SIZE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3ATABLE-SIZE">TABLE-SIZE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TABLE-NAME</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#211:0">Source</a>  </header> <div class="docstring"><pre>Return the size of a postgresql table in k or m. Table-name can be either a string or quoted.</pre></div> </article> </li>  <li> <article class="definition function callable" id="FUNCTION POSTMODERN:VIEW-EXISTS-P"> <header> <span class="visibility">EXTERNAL</span> <span class="type">FUNCTION</span> <h4 class="name"> <a href="#FUNCTION%20POSTMODERN%3AVIEW-EXISTS-P">VIEW-EXISTS-P</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">VIEW</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/util.lisp#60:0">Source</a>  </header> <div class="docstring"><pre>Check whether a view exists. Takes either a string or a symbol for
-the view name.</pre></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:ABORT-HOOKS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3AABORT-HOOKS">ABORT-HOOKS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">OBJECT</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:(SETF ABORT-HOOKS)"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3A%28SETF%20ABORT-HOOKS%29">(SETF ABORT-HOOKS)</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">NEW-VALUE</li>    <li class="argument">OBJECT</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:COMMIT-HOOKS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3ACOMMIT-HOOKS">COMMIT-HOOKS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">OBJECT</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:(SETF COMMIT-HOOKS)"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3A%28SETF%20COMMIT-HOOKS%29">(SETF COMMIT-HOOKS)</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">NEW-VALUE</li>    <li class="argument">OBJECT</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:DAO-EXISTS-P"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3ADAO-EXISTS-P">DAO-EXISTS-P</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DAO</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#126:0">Source</a>  </header> <div class="docstring"><pre>Return a boolean indicating whether the given dao
-  exists in the database.</pre></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:DAO-KEYS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3ADAO-KEYS">DAO-KEYS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">OBJECT</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:DATABASE-ERROR-CAUSE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3ADATABASE-ERROR-CAUSE">DATABASE-ERROR-CAUSE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">CONDITION</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:DATABASE-ERROR-CODE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3ADATABASE-ERROR-CODE">DATABASE-ERROR-CODE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">CONDITION</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:DATABASE-ERROR-DETAIL"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3ADATABASE-ERROR-DETAIL">DATABASE-ERROR-DETAIL</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">CONDITION</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:DATABASE-ERROR-MESSAGE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3ADATABASE-ERROR-MESSAGE">DATABASE-ERROR-MESSAGE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">CONDITION</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:(SETF DATABASE-ERROR-MESSAGE)"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3A%28SETF%20DATABASE-ERROR-MESSAGE%29">(SETF DATABASE-ERROR-MESSAGE)</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">NEW-VALUE</li>    <li class="argument">CONDITION</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:DATABASE-ERROR-QUERY"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3ADATABASE-ERROR-QUERY">DATABASE-ERROR-QUERY</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">CONDITION</li>  </ul>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:DELETE-DAO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3ADELETE-DAO">DELETE-DAO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DAO</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#134:0">Source</a>  </header> <div class="docstring"><pre>Delete the given dao from the database.</pre></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:DISCONNECT"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3ADISCONNECT">DISCONNECT</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DATABASE</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/connect.lisp#42:0">Source</a>  </header> <div class="docstring"><pre>Close a database connection. Returns it to a pool
-if it is a pooled connection.</pre></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:GET-DAO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3AGET-DAO">GET-DAO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TYPE</li>    <li class="argument lambda-list-keyword">&amp;REST</li>    <li class="argument">ARGS</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#140:0">Source</a>  </header> <div class="docstring"><pre>Get the object corresponding to the given primary
-  key, or return nil if it does not exist.</pre></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:INSERT-DAO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3AINSERT-DAO">INSERT-DAO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DAO</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#129:0">Source</a>  </header> <div class="docstring"><pre>Insert the given object into the database.</pre></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:MAKE-DAO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3AMAKE-DAO">MAKE-DAO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TYPE</li>    <li class="argument lambda-list-keyword">&amp;REST</li>    <li class="argument">ARGS</li>    <li class="argument lambda-list-keyword">&amp;KEY</li>    <li class="argument lambda-list-keyword">&amp;ALLOW-OTHER-KEYS</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#155:0">Source</a>  </header> <div class="docstring"><pre>Make the instance of the given class and insert it into the database</pre></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:RECONNECT"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3ARECONNECT">RECONNECT</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DATABASE</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/connect.lisp#48:0">Source</a>  </header> <div class="docstring"><pre>Reconnect a database connection.</pre></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:SQL-ESCAPE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3ASQL-ESCAPE">SQL-ESCAPE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">ARG</li>  </ul>  </header> <div class="docstring"><pre>Get the representation of a Lisp value so that it
-can be used in a query.</pre></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:UPDATE-DAO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3AUPDATE-DAO">UPDATE-DAO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DAO</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#131:0">Source</a>  </header> <div class="docstring"><pre>Update the object's representation in the database
-  with the values in the given instance.</pre></div> </article> </li>  <li> <article class="definition generic-function callable" id="GENERIC-FUNCTION POSTMODERN:UPSERT-DAO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">GENERIC-FUNCTION</span> <h4 class="name"> <a href="#GENERIC-FUNCTION%20POSTMODERN%3AUPSERT-DAO">UPSERT-DAO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">DAO</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#136:0">Source</a>  </header> <div class="docstring"><pre>Update or insert the given dao.  If its primary key
-  is already in the database and all slots are bound, an update will
-  occur.  Otherwise it tries to insert it.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:DEFINE-DAO-FINALIZATION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3ADEFINE-DAO-FINALIZATION">DEFINE-DAO-FINALIZATION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <ul class="arguments"> <li class="argument">(DAO-NAME CLASS)</li>  <li class="argument lambda-list-keyword">&amp;REST</li>  <li class="argument">KEYWORD-ARGS</li> </ul>    <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">BODY</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#172:0">Source</a>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:DEFPREPARED"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3ADEFPREPARED">DEFPREPARED</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">NAME</li>    <li class="argument">QUERY</li>    <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">FORMAT</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/prepare.lisp#32:0">Source</a>  </header> <div class="docstring"><pre>Like perpare, but gives the function a name instead of returning
-it.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:DEFPREPARED-WITH-NAMES"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3ADEFPREPARED-WITH-NAMES">DEFPREPARED-WITH-NAMES</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">NAME</li>    <ul class="arguments"> <li class="argument lambda-list-keyword">&amp;REST</li>  <li class="argument">ARGS</li> </ul>    <ul class="arguments"> <li class="argument">QUERY</li>  <li class="argument lambda-list-keyword">&amp;REST</li>  <li class="argument">QUERY-ARGS</li> </ul>    <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">FORMAT</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/prepare.lisp#37:0">Source</a>  </header> <div class="docstring"><pre>Like defprepared, but with lambda list for statement arguments.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:DEFTABLE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3ADEFTABLE">DEFTABLE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">NAME</li>    <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">DEFINITIONS</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/deftable.lisp#25:0">Source</a>  </header> <div class="docstring"><pre>Define a table. name can be either a symbol or a (symbol string)
-list. In the first case, the table name is derived from the symbol by
-S-SQL's rules, in the second case, the name is given explicitly. The
-body of definitions can contain anything that evaluates to a string,
-as well as S-SQL expressions. In this body, the variables *table-name*
-and *table-symbol* are bound to the relevant values.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:DO-QUERY-DAO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3ADO-QUERY-DAO">DO-QUERY-DAO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <ul class="arguments"> <li class="argument">(TYPE TYPE-VAR)</li>  <li class="argument">QUERY</li> </ul>    <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">BODY</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#381:0">Source</a>  </header> <div class="docstring"><pre>Like query-dao, but rather than returning a list of results,
-executes BODY once for each result, with TYPE-VAR bound to the DAO
-representing that result.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:DO-SELECT-DAO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3ADO-SELECT-DAO">DO-SELECT-DAO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <ul class="arguments"> <li class="argument">(TYPE TYPE-VAR)</li>  <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>  <li class="argument">TEST</li>  <li class="argument lambda-list-keyword">&amp;REST</li>  <li class="argument">ORDERING</li> </ul>    <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">BODY</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#407:0">Source</a>  </header> <div class="docstring"><pre>Like select-dao, but rather than returning a list of results,
-executes BODY once for each result, with TYPE-VAR bound to the DAO
-representing that result.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:DOQUERY"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3ADOQUERY">DOQUERY</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">QUERY</li>    <ul class="arguments"> <li class="argument lambda-list-keyword">&amp;REST</li>  <li class="argument">NAMES</li> </ul>    <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">BODY</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/query.lisp#119:0">Source</a>  </header> <div class="docstring"><pre>Iterate over the rows in the result of a query, binding the given
-names to the results and executing body for every row. Query can be a
-string, an s-sql query, or a list starting with one of those, followed
-by the arguments to parameterize the query with.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:ENSURE-TRANSACTION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3AENSURE-TRANSACTION">ENSURE-TRANSACTION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">BODY</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/transaction.lisp#169:0">Source</a>  </header> <div class="docstring"><pre>Executes body within a with-transaction form if and only if no
-transaction is already in progress.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:ENSURE-TRANSACTION-WITH-ISOLATION-LEVEL"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3AENSURE-TRANSACTION-WITH-ISOLATION-LEVEL">ENSURE-TRANSACTION-WITH-ISOLATION-LEVEL</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">ISOLATION-LEVEL</li>    <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">BODY</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/transaction.lisp#174:0">Source</a>  </header> <div class="docstring"><pre>Executes body within a with-transaction form if and only if no
-transaction is already in progress. This adds the ability to specify an isolatin
-level other than the current default</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:EXECUTE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3AEXECUTE">EXECUTE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">QUERY</li>    <li class="argument lambda-list-keyword">&amp;REST</li>    <li class="argument">ARGS</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/query.lisp#114:0">Source</a>  </header> <div class="docstring"><pre>Execute a query, ignore the results.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:PREPARE"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3APREPARE">PREPARE</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">QUERY</li>    <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">FORMAT</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/prepare.lisp#26:0">Source</a>  </header> <div class="docstring"><pre>Wraps a query into a function that will prepare it once for a
-connection, and then execute it with the given parameters. The query
-should contain a placeholder ($1, $2, etc) for every parameter.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:QUERY"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3AQUERY">QUERY</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">QUERY</li>    <li class="argument lambda-list-keyword">&amp;REST</li>    <li class="argument">ARGS/FORMAT</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/query.lisp#96:0">Source</a>  </header> <div class="docstring"><pre>Execute a query, optionally with arguments to put in the place of
-$X elements. If one of the arguments is a known result style or a class name,
-it specifies the format in which the results should be returned.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:QUERY-DAO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3AQUERY-DAO">QUERY-DAO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TYPE</li>    <li class="argument">QUERY</li>    <li class="argument lambda-list-keyword">&amp;REST</li>    <li class="argument">ARGS</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#366:0">Source</a>  </header> <div class="docstring"><pre>Execute a query and return the result as daos of the given type.
-The fields returned by the query must match the slots of the dao, both
-by type and by name.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:REGISTER-SQL-OPERATORS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3AREGISTER-SQL-OPERATORS">REGISTER-SQL-OPERATORS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">ARITY</li>    <li class="argument lambda-list-keyword">&amp;REST</li>    <li class="argument">NAMES</li>  </ul>  </header> <div class="docstring"><pre>Define simple operators. Arity is one of :unary (like
-'not'), :unary-postfix (the operator comes after the operand),
-:n-ary (like '+': the operator falls away when there is only one
-operand), :2+-ary (like '=', which is meaningless for one operand),
-or :n-or-unary (like '-', where the operator is kept in the unary
-case). After the arity follow any number of operators, either just a
-keyword, in which case the downcased symbol name is used as the
-operator, or a two-element list containing a keyword and a name
-string.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:SELECT-DAO"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3ASELECT-DAO">SELECT-DAO</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">TYPE</li>    <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>    <li class="argument">TEST</li>    <li class="argument lambda-list-keyword">&amp;REST</li>    <li class="argument">ORDERING</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#402:0">Source</a>  </header> <div class="docstring"><pre>Select daos for the rows in its table for which the given test
-holds, order them by the given criteria.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:SQL"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3ASQL">SQL</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">FORM</li>  </ul>  </header> <div class="docstring"><pre>Compile form to a sql expression as far as possible.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:WITH-COLUMN-WRITERS"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3AWITH-COLUMN-WRITERS">WITH-COLUMN-WRITERS</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <ul class="arguments"> <li class="argument lambda-list-keyword">&amp;REST</li>  <li class="argument">DEFS</li> </ul>    <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">BODY</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/table.lisp#301:0">Source</a>  </header> <div class="docstring"><i>No documentation provided.</i></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:WITH-CONNECTION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3AWITH-CONNECTION">WITH-CONNECTION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">SPEC</li>    <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">BODY</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/connect.lisp#70:0">Source</a>  </header> <div class="docstring"><pre>Locally establish a database connection, and bind *database* to it.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:WITH-LOGICAL-TRANSACTION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3AWITH-LOGICAL-TRANSACTION">WITH-LOGICAL-TRANSACTION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <ul class="arguments"> <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>  <li class="argument">NAME</li>  <li class="argument">ISOLATION-LEVEL</li> </ul>    <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">BODY</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/transaction.lisp#131:0">Source</a>  </header> <div class="docstring"><pre>Executes the body within a with-transaction (if no transaction is
-already in progress) or a with-savepoint (if one is), binding the
-transaction or savepoint to NAME (if supplied)</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:WITH-SAVEPOINT"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3AWITH-SAVEPOINT">WITH-SAVEPOINT</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <li class="argument">NAME</li>    <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">BODY</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/transaction.lisp#101:0">Source</a>  </header> <div class="docstring"><pre>Execute the body within a savepoint, releasing savepoint when the
-body exits normally, and rolling back otherwise. NAME is both the
-variable that can be used to release or rolled back before the body
-unwinds, and the SQL name of the savepoint.</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:WITH-SCHEMA"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3AWITH-SCHEMA">WITH-SCHEMA</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <ul class="arguments"> <li class="argument">SCHEMA</li>  <li class="argument lambda-list-keyword">&amp;KEY</li>  <li class="argument">STRICT</li>  <li class="argument">IF-NOT-EXIST</li>  <li class="argument">DROP-AFTER</li> </ul>    <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">FORM</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/namespace.lisp#3:0">Source</a>  </header> <div class="docstring"><pre>A macro to set the schema search path of the postgresql
-   database to include as first entry a specified schema.
+<p>
+Some areas that are currently under consideration can be found in the ROADMAP.md
+file.
+</p>
+</div>
+</div>
+</div>
 
-   calling with strict 't only the specified schema is set as current
-   search path. All other schema are then not searched any more.
-
-   calling with if-not-exist set to :create the schema is created if
-   this schema did not exist.
-
-   calling with drop-after set to 't the schema is removed after the
-   execution of the body form.
-
-   example :
-     (with-schema (:schema-name :strict nil :drop-after nil :if-not-exist :error)
-            (foo 1)
-            (foo 2))</pre></div> </article> </li>  <li> <article class="definition macro callable" id="MACRO-FUNCTION POSTMODERN:WITH-TRANSACTION"> <header> <span class="visibility">EXTERNAL</span> <span class="type">MACRO</span> <h4 class="name"> <a href="#MACRO-FUNCTION%20POSTMODERN%3AWITH-TRANSACTION">WITH-TRANSACTION</a> </h4> <ul class="qualifiers"></ul> <ul class="arguments">  <ul class="arguments"> <li class="argument lambda-list-keyword">&amp;OPTIONAL</li>  <li class="argument">NAME</li>  <li class="argument">ISOLATION-LEVEL</li> </ul>    <li class="argument lambda-list-keyword">&amp;BODY</li>    <li class="argument">BODY</li>  </ul>  <a class="source-link" href="file:///home/wol/quicklisp/local-projects/Postmodern/postmodern/transaction.lisp#50:0">Source</a>  </header> <div class="docstring"><pre>Execute the body within a database transaction, committing when the
-body exits normally, and aborting otherwise. An optional name and/or
-isolation-level can be given to the transaction. The name can be used to
-force a commit or abort before the body unwinds. The isolation-level
-will set the isolation-level used by the transaction.</pre></div> </article> </li> </ul> </article> </li> </ul> </section> </article> <script>window.addEventListener("DOMContentLoaded", function(){
-    var unmarkElement = function(el){
-        if(el.tagName === "mark" || el.tagName === "MARK"){
-            [].forEach.call(el.childNodes, function(child){
-                el.parentNode.insertBefore(child, el);
-            });
-            el.parentNode.removeChild(el);
-        }else if(el.parentNode.tagName === "mark"){
-            return unmarkElement(el.parentNode);
-        }
-        return null;
-    }
-
-    var unmarkAll = function(root){
-        root = root || document;
-        [].forEach.call(root.querySelectorAll("mark"), unmarkElement);
-    }
-    
-    var markElement = function(el){
-        if(el.parentNode.tagName === "mark" || el.parentNode.tagName === "MARK"){
-            return el.parentNode;
-        } else {
-            unmarkAll();
-            var marked = document.createElement("mark");
-            el.parentNode.insertBefore(marked, el);
-            marked.appendChild(el);
-            return marked;
-        }
-    }
-
-    var markFragmented = function(){
-        if(window.location.hash){
-            var el = document.getElementById(decodeURIComponent(window.location.hash.substr(1)));
-            if(el) markElement(el);
-        }
-    }
-
-    var registerXrefLink = function(link){
-        var el = document.getElementById(decodeURIComponent(link.getAttribute("href").substr(1)));
-        if(el){
-            link.addEventListener("click", function(){
-                markElement(el);
-            });
-        }
-    }
-
-    var registerXrefLinks = function(root){
-        root = root || document;
-        [].forEach.call(root.querySelectorAll("a.xref"), registerXrefLink);
-    }
-
-    markFragmented();
-    registerXrefLinks();
-}); </script> </body> </html> 
+<div id="outline-container-org90487a1" class="outline-2">
+<h2 id="org90487a1">Resources</h2>
+<div class="outline-text-2" id="text-org90487a1">
+<ul class="org-ul">
+<li><a href="https://mailman.common-lisp.net/listinfo/postmodern-devel">Mailing List</a></li>
+<li><a href="https://sites.google.com/site/sabraonthehill/postmodern-examples">A collection of Postmodern examples</a></li>
+<li><a href="http://www.postgresql.org/docs/current/static/index.html">The PostgreSQL manuals</a></li>
+<li><a href="http://www.postgresql.org/docs/current/static/protocol.html">The wire protocol Postmodern uses</a></li>
+<li><a href="http://clsql.b9.com/">CLSQL</a></li>
+<li><a href="https://github.com/filonenko-mikhail/cl-ewkb">Common Lisp Postgis library</a></li>
+<li><a href="http://common-lisp.net/project/local-time/">Local-time</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2018-09-17 Mon 07:26</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

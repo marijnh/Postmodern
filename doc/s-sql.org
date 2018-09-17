@@ -1085,6 +1085,8 @@ Here is an example of a :create-table form:
   (:foreign-key (identifying-color) (colors name))
   (:constraint enemy-age-check :check (:> 'age 12)))
 #+END_SRC
+For more detail and examples on building tables
+using the s-sql approach, see [[file:create-tables.html][create-tables.html]]
 
 ** sql-op :alter-table (name action &rest args)
 
