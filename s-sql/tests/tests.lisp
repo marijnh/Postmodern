@@ -68,42 +68,6 @@
 between them."
   (is (equal (s-sql::implode "/" '("aa" "bb" " " "cc")) "aa/bb/ /cc")))
 
-(defun sok-1 (&rest args)
-  "Sample (sok-1 :vars 3 7 'alpha :a 1 'b 14 27 'c :c '(a b cd) :d :e '(d45 e56 ge1) 'george 'paul 'ringo)"
-  (s-sql::split-on-keywords ((vars *) (a ? *) (b ? *) (c ? *) (d ? -) (e ? *) (f ? *))
-      (cons :vars args)
-    `(,@(when vars (format t "1 VARS ~a ~%" vars) `("vars" ,args))
-        ,@(when a (format t "2 A ~a~%" a) `("a" ,a))
-        ,@(when b (format t "3 (car B) ~a~%" (car b)) `("b-car" ,(car b)))
-        ,@(when c (format t "4 (cdr C) ~a~%" (cdr c)) `("c-cdr" ,(cdr c)))
-        ,@(when d (format t "5 D ~a~%" d) `("d" ,d))
-        ,@(when e (format t "6 E ~a~%" e) `("e-car-cdr " ,(car e) "e-cdr " ,(cdr e)))
-        ,@(when f (format t "7 F ~a~%" f) `("f-car-cdr " ,(car f) "f-cdr " ,(cdr f))))))
-
-(defun sok-2 (&rest args)
-  "Sample (sok-2 :vars 3 7 'alpha :a 1 'b 14 27 'c :c '(a b cd) :d :e '(d45 e56 ge1) 'george 'paul 'ringo)"
-  (s-sql::split-on-keywords ((vars *) (a ? *) (b ? *) (c ? *) (d ? -) (e ? *) (f ? *))
-      args
-    `(,@(when vars (format t "1 VARS ~a ~%" vars) `("vars" ,args))
-        ,@(when a (format t "2 A ~a~%" a) `("a" ,a))
-        ,@(when b (format t "3 (car B) ~a~%" (car b)) `("b-car" ,(car b)))
-        ,@(when c (format t "4 (cdr C) ~a~%" (cdr c)) `("c-cdr" ,(cdr c)))
-        ,@(when d (format t "5 D ~a~%" d) `("d" ,d))
-        ,@(when e (format t "6 E ~a~%" e) `("e-car-cdr " ,(car e) "e-cdr " ,(cdr e)))
-        ,@(when f (format t "7 F ~a~%" f) `("f-car-cdr " ,(car f) "f-cdr " ,(cdr f))))))
-
-(defun sok-3 (&rest args)
-  "Sample  (sok-3 :vars 3 7 'alpha :a 1 'b 14 27 'c :c '(a b cd) :d :e '(d45 e56 ge1) 'george 'paul 'ringo)"
-  (s-sql::split-on-keywords ((vars *) (a ? *) (b ? *) (c ? *) (d ? -) (e ? *) (f ? *))
-      (cons :vars args)
-    `(,@(when vars (format t "1 VARS ~a ~%" vars) `("vars" ,args))
-        ,@(when a (format t "2 A ~a~%" a) `("a" ,@(sql-expand a)))
-        ,@(when b (format t "3 (car B) ~a~%" (car b)) `("b-car" ,@(sql-expand (car b))))
-        ,@(when c (format t "4 (cdr C) ~a~%" (cdr c)) `("c-car-expand-names" ,@(sql-expand-names (car c))))
-        ,@(when d (format t "5 D ~a~%" d) `("d" ,d))
-        ,@(when e (format t "6 E ~a~%" e) `("e-car-cdr " ,(car e) "e-car-expand-list " ,@(sql-expand-list (car e))))
-        ,@(when f (format t "7 F ~a~%" f) `("f-car-cdr " ,(car f) "f-cdr " ,(cdr f))))))
-
 (test split-on-keywords%
   "Testing split-on-keywords%. Helper function for split-on-keywords. Extracts the values
 associated with the keywords from an argument list, and checks for errors."
@@ -1198,12 +1162,12 @@ To sum the column len of all films and group the results by kind:"
       "Testing insert into"
       (is (equal (sql (:insert-into 'cd.facilities :set 'facid 9 'name "Spa" 'membercost 20 'guestcost 30
                                     'initialoutlay 100000 'monthlymaintenance 800))
-                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES (9, E'Spa', 20, 30, 100000, 800)"))
+                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance)  VALUES (9, E'Spa', 20, 30, 100000, 800)"))
 
 ;; Testing with a calculation in the value
       (is (equal (sql (:insert-into 'test :set 'id 15 'number-string "12" 'numeric-item 12.45
                                 'ratio-item (/ 1 13) 'created-at "2018-02-01"))
-                 "INSERT INTO test (id, number_string, numeric_item, ratio_item, created_at) VALUES (15, E'12', 12.45, 0.0769230769230769230769230769230769230, E'2018-02-01')"))
+                 "INSERT INTO test (id, number_string, numeric_item, ratio_item, created_at)  VALUES (15, E'12', 12.45, 0.0769230769230769230769230769230769230, E'2018-02-01')"))
 
 ;; Testing overriding-user-value
       (is (equal (sql (:insert-into 'employee :set 'id 1 'name "Paul"  :overriding-user-value :on-conflict-do-nothing))
@@ -1223,7 +1187,7 @@ To sum the column len of all films and group the results by kind:"
       (is (equal (sql (:insert-into 'cd.facilities
                                     :set 'facid (:select (:+ (:select (:max 'facid) :from 'cd.facilities) 1))
                                          'name "Spa" 'membercost 20 'guestcost 30 'initialoutlay 100000 'monthlymaintenance 800))
-                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES ((SELECT ((SELECT MAX(facid) FROM cd.facilities) + 1)), E'Spa', 20, 30, 100000, 800)"))
+                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance)  VALUES ((SELECT ((SELECT MAX(facid) FROM cd.facilities) + 1)), E'Spa', 20, 30, 100000, 800)"))
 
 ;; Testing basic inserting-rows-into
       (is (equal (sql (:insert-rows-into 'my-table :values '((42 "foobar") (23 "foobaz"))))

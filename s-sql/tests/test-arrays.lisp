@@ -18,7 +18,7 @@
                                                    ("Switzerland" #("Aargau" "Appenzell Ausserrhoden" "Basel-Landschaft" "Fribourg")))))
                  "INSERT INTO array_provinces (name, provinces) VALUES (E'Germany', ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']), (E'Switzerland', ARRAY[E'Aargau', E'Appenzell Ausserrhoden', E'Basel-Landschaft', E'Fribourg'])"))
       (is (equal (sql (:insert-into 'array-provinces :set 'name "Canada" 'provinces #("Alberta" "British Columbia" "Manitoba" "Ontario")))
-                 "INSERT INTO array_provinces (name, provinces) VALUES (E'Canada', ARRAY[E'Alberta', E'British Columbia', E'Manitoba', E'Ontario'])"))
+                 "INSERT INTO array_provinces (name, provinces)  VALUES (E'Canada', ARRAY[E'Alberta', E'British Columbia', E'Manitoba', E'Ontario'])"))
       (is (equal (sql (:select (:[] 'provinces 2) :from 'array-provinces))
                  "(SELECT (provinces)[2] FROM array_provinces)"))
       (is (equal (sql (:select (:[] 'provinces 1) :from 'array-provinces :where (:= 'name "Germany")))
@@ -52,7 +52,7 @@
       (is (equal (sql (:create-table sal-emp ((name :type text) (pay-by-quarter :type integer[]) (schedule :type  text[][]))))
                  "CREATE TABLE sal_emp (name TEXT NOT NULL, pay_by_quarter INTEGER[] NOT NULL, schedule TEXT[][] NOT NULL)"))
       (is (equal (sql (:insert-into 'sal-emp :set 'name "Bill" 'pay-by-quarter #(10000 10000 10000 10000) 'schedule #(#( "meeting" "lunch") #("training" "presentation"))))
-                 "INSERT INTO sal_emp (name, pay_by_quarter, schedule) VALUES (E'Bill', ARRAY[10000, 10000, 10000, 10000], ARRAY[ARRAY[E'meeting', E'lunch'], ARRAY[E'training', E'presentation']])"))
+                 "INSERT INTO sal_emp (name, pay_by_quarter, schedule)  VALUES (E'Bill', ARRAY[10000, 10000, 10000, 10000], ARRAY[ARRAY[E'meeting', E'lunch'], ARRAY[E'training', E'presentation']])"))
       (is (equal (sql (:select 'name :from 'sal-emp :where (:<> (:[] 'pay-by-quarter 1) (:[] 'pay-by-quarter 2))))
                  "(SELECT name FROM sal_emp WHERE ((pay_by_quarter)[1] <> (pay_by_quarter)[2]))"))
       (is (equal (sql (:update 'sal-emp :set 'schedule #(#( "breakfast" "consulting") #("meeting" "lunch"))
@@ -64,8 +64,8 @@
 equality tests with arrays requires equalp, not equal."
   (is (equal (sql (:create-table doc-tags-array ((doc-id :type integer :references ((documents doc-id)))
                                                  (tags :type text[] :default "{}"))
-                           (:unique 'index 'doc-id)))
-             "CREATE TABLE doc_tags_array (doc_id INTEGER NOT NULL REFERENCES documents(doc_id) ON DELETE RESTRICT ON UPDATE RESTRICT, tags TEXT[] NOT NULL DEFAULT E'{}', UNIQUE (index, doc_id))"))
+                                 (:unique 'index 'doc-id)))
+             "CREATE TABLE doc_tags_array (doc_id INTEGER NOT NULL REFERENCES documents(doc_id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT, tags TEXT[] NOT NULL DEFAULT E'{}', UNIQUE (index, doc_id))"))
   (is (equal (sql (:create-table array_int ((vector :type (or int[][] db-null)))))
              "CREATE TABLE array_int (vector INT[][])"))
   (with-test-connection
