@@ -25,6 +25,9 @@ No guarantee is given with respect to resolution or timing on any item.
 - [X]   Empty-Set - Add the ability for the set operator to return "()" instead of "(NULL)" or "false".
         This is a current work-around using the def-sql-op :empty-set which is overly verbose. Better ideas would be welcomed.
 - [ ]   UUID (see e.g  https://github.com/michaeljforster/cl-postgres-plus-uuid)
+        Postgresql has a uuid extension. A database owner needs to add the extension manually to the specific database, calling:
+        create extension if not exists "uuid-ossp";
+        A uuid can then be generated in postmodern by calling (query (:select (:uuid-generate-v1)))
 - [ ]   Generate-Series needs testing and interval work
 - [X]   Extract needs testing
 - [ ]   Lateral Join (postgresql 9.3)
