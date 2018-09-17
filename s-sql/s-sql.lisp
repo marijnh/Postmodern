@@ -1499,7 +1499,7 @@ connection-limit, valid-until, role, in-role, admin are keyword options that acc
       ,@(sql-expand table) " "
       ,@(when columns `("(" ,@(sql-expand-list columns) ") "))
       ,@(when from    `("FROM " ,@(sql-expand (car from)) " "))
-      ,@(when to      `("TO " ,@(sql-expand (car from)) " "))
+      ,@(when to      `("TO " ,@(sql-expand (car to)) " "))
       ,@(when on-segment `("ON SEGMENT "))
       ,@(when binary     `("BINARY "))
       ,@(when oids       `("OIDS "))
