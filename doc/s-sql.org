@@ -238,7 +238,11 @@ Is similar to cast but uses the postgresql :: formating. E.g.
 
 "(SELECT (now()::DATE - x) AS some_date FROM generate_series(1, 10) AS x)"
 #+END_SRC
-
+** sql-op :create-composite-type (type-name &rest args)
+Creates a composite type with a type-name and two or more columns. E.g.
+#+BEGIN_SRC lisp
+(query (:create-composite-type fullname (first-name text) (last-name text)))
+#+END_SRC
 ** sql-op :exists (query)
 
 The EXISTS operator. Takes a query as an argument, and returns true or false
@@ -1174,6 +1178,13 @@ Create an index on a table. After the name of the index the keyword :on should
 follow, with the table name after it. Then the keyword :fields, followed by
 one or more column names. Optionally, a :where clause with a condition can
 be added at the end to make a partial index.
+
+#+BEGIN_SRC lisp
+(sql (:create-index 'gin-idx :on "historical-events" :using gin :fields 'data))
+
+"CREATE INDEX gin_idx ON historical_events USING GIN (data)"
+#+END_SRC
+
 
 ** sql-op :create-unique-index (name &rest args)
 
