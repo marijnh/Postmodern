@@ -114,8 +114,3 @@
                (encode-timestamp year month day hour min (1+ sec) millisec)))
     (is (time< (encode-interval :month month :hour hour)
                (encode-interval :month month :hour hour :minute 30)))))
-<<<<<<< HEAD
-
-
-=======
->>>>>>> composite-types
