@@ -52,7 +52,7 @@ exactly the same. Let's walk through a simple example:
 
 #+BEGIN_SRC lisp
 (query (:create-table films-at-eleven
-          ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key 't)
+          ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key t)
            (title :type (varchar 40))
            (did :type integer)
            (date-prod :type (or date db-null))
@@ -180,7 +180,7 @@ Note: The data type used for identity columns must be one of smallint, int or bi
 ** Array Columns
 The following shows the creation of a table with a two dimensional array
 #+BEGIN_SRC lisp
-(sql (:create-table array-int
+(query (:create-table array-int
        ((vector :type (or int[][] db-null)))))
 #+END_SRC
 
@@ -212,7 +212,7 @@ Please note the need to set :unique to t in the column constraint
 version.
 
 #+BEGIN_SRC lisp
-(sql (:create-table person
+(query (:create-table person
        ((id :type serial :primary-key t)
         (first-name :type (varchar 50))
         (last-name :type (varchar 50))
@@ -420,11 +420,11 @@ partitions and storage parameters. This is only partially implemented.
 
 Tablespaces are documented at [[https://www.postgresql.org/docs/10/static/manage-ag-tablespaces.html]]
 #+BEGIN_SRC lisp
-(sql (:create-extended-table cinemas
+(query (:create-extended-table cinemas
        ((id :type serial) (name :type (or text db-null))
         (location :type (or text db-null)))
        ()
-       ((:tablespace 'diskvol1))))
+       ((:tablespace diskvol1))))
 #+END_SRC
 
 ** Partitions (not fully implemented)
