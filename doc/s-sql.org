@@ -64,10 +64,19 @@ this to T.
 ** variable *escape-sql-names-p*
 
 Determines whether double quotes are added around column, table, and ** function names in
-queries. May be T, in which case every name is escaped, NIL, in which case none is, or :auto,
-which causes only [[http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html][reserved words]] to be escaped. The default value is :auto. Be careful when
-binding this with let and such ― since a lot of SQL compilation tends to happen at
-compile-time, the result might not be what you expect.
+queries. Valid values:
+
+- T, in which case every name is escaped,
+- NIL, in which case no name is escape,
+- :auto, which causes only [[http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html][reserved words]] to be escaped, or.
+- :literal which is the same as :auto except it has added consequence in to-sql-name (see below).
+
+The default value is :auto.
+
+Be careful when binding this with let and such ― since a lot of SQL compilation tends to happen at
+compile-time, the result might not be what you expect. Mixed case sensitivity is not currently
+well supported. Postgresql itself will downcase unquoted identifiers. This will be revisited in the
+future if requested.
 
 ** function sql-type-name (type)
 → string
