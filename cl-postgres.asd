@@ -48,7 +48,7 @@
 (defsystem "cl-postgres/simple-date-tests"
   :depends-on ("cl-postgres" "cl-postgres/tests" "fiveam" "simple-date/postgres-glue")
   :components
-  ((:module "cl-postgres"
+  ((:module "cl-postgres/tests"
             :components ((:file "simple-date-tests"))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-simple-date-tests '#:prompt-connection)
