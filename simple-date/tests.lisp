@@ -21,7 +21,6 @@
   (is (= 30 (simple-date::days-in-month 8 2000)))
   (is (= 31 (simple-date::days-in-month 9 2000)))
   (is (= 31 (simple-date::days-in-month 10 2000)))
-  (is (= 29 (simple-date::days-in-month 11 2000)))
   (is (= 28 (simple-date::days-in-month 11 2001))))
 
 (defmacro with-random-dates (amount &body body)
@@ -115,11 +114,3 @@
                (encode-timestamp year month day hour min (1+ sec) millisec)))
     (is (time< (encode-interval :month month :hour hour)
                (encode-interval :month month :hour hour :minute 30)))))
-
-(test sql-interval-addition
-  (is (equal (simple-date::millisecs
-              (pomo:with-connection '("test" "wol" "jFL7pBz" "localhost")
-                (pomo:query
-                 (:select (:+ (:interval ("2h 50min")) (:interval ("10min"))))
-                 :single)))
-             10800000)))
