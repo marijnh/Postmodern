@@ -118,7 +118,9 @@ must appear in the order defined."
 (defparameter *escape-sql-names-p* :auto
   "Setting this to T will make S-SQL add double quotes around
 identifiers in queries. Setting it :auto will turn on this behaviour
-only for reserved words.")
+only for reserved words. Setting it to :literal will cause to-sql-name to
+escape reserved words,but will not make other changes such as changing
+forward slash to underscore.")
 
 (defvar *downcase-symbols* t)
 
@@ -570,13 +572,33 @@ If someone really wants, consider adding the optional precision argument."
   `("EXTRACT(" ,@(sql-expand unit) " FROM " ,@(sql-expand form) ")"))
 
 (def-sql-op :values (&rest args) "values statement"
-               (split-on-keywords ((vars *) (order-by * ?)) (cons :vars args)
-                 `("(VALUES "
-                   ,@(sql-expand-list vars)
-                   ,@(when order-by `(" ORDER BY " ,@(sql-expand-list order-by) ")"))
-                   ")")))
+   (split-on-keywords ((vars *) (order-by * ?)) (cons :vars args)
+     `("(VALUES "
+       ,@(sql-expand-list vars)
+       ,@(when order-by `(" ORDER BY " ,@(sql-expand-list order-by) ")"))
+       ")")))
 
-(def-sql-op :create-type (name ))
+(define-condition malformed-composite-type-error (error)
+  ((text :initarg :text :reader text)))
+
+(defun cons-to-sql-name-strings (item)
+  "Takes a list of two items and returns a single string separated by a space.
+The items will be converted to sql compatible namestrings."
+  (if (= 2 (length item))
+      (implode " " (mapcar #'to-sql-name item))
+      (error 'malformed-composite-type-error :text item)))
+
+(def-sql-op :create-composite-type (type-name &rest args)
+  "Creates a composite type with a type-name and two or more
+columns.
+  Sample call would be:
+   (sql (:create-composite-type fullname (first-name text) (last-name text)))"
+
+   `("(CREATE TYPE " ,(to-sql-name type-name)  " AS ("
+     ,(implode ", "
+       (loop for x in args
+         collect (cons-to-sql-name-strings x)))
+     ")"))
 
 (def-sql-op :count (&rest args)
     "Count returns the number of rows. It can be the number of rows collected by the select statement as in
@@ -1307,7 +1329,7 @@ DOES NOT IMPLEMENT POSTGRESQL FUNCTION EXCLUDE."
     (:distributed-by `(" DISTRIBUTED BY (" ,@(sql-expand-names (car args))") "))
     (:distributed-randomly `(" DISTRIBUTED RANDOMLY "))
     (:with `(" WITH " ,@(sql-expand (car args))))
-    (:tablespace `(" TABLESPACE " ,@(sql-expand (car args))))
+    (:tablespace `(" TABLESPACE " ,(to-sql-name (car args))))
     (:exclude `(" EXCLUDE USING" ,@(sql-expand (car args)) ,@(sql-expand (cdr args))))
     (:partition-by-range `(" PARTITION BY RANGE (" ,@(sql-expand (car args)) ,(when (cadr args) ", ")
                                                    ,@(when (cadr args) (sql-expand (cadr args)))
@@ -1349,47 +1371,51 @@ DOES NOT IMPLEMENT POSTGRESQL FUNCTION EXCLUDE."
                        (:initially-immediate '(" INITIALLY IMMEDIATE "))
                        (t (sql-error "Unknown column option: ~A." option))))))
 
-(defun expand-table-name (name)
+(defun expand-composite-table-name (frm)
+  "Helper function for building a composite table name"
+  (strcat (list (to-sql-name (second frm)) " OF " (to-sql-name (third frm)))))
+
+(defun expand-table-name (name &optional (tableset nil))
   (cond ((and name (stringp name))
-         `("TABLE " ,(to-sql-name name)))
+         (concatenate 'string (unless tableset  "TABLE ") (to-sql-name name)))
         ((and name (symbolp name))
-         `("TABLE " ,(to-sql-name name)))
+         (concatenate 'string (unless tableset  "TABLE ") (to-sql-name name)))
         ((and name (listp name))
-         (let ((t1 nil))
-          `(,@(loop :for option :on name
-                 :append
-                   (case (car option)
-                     (:temp `("TEMP "))
-                     (:temporary `("TEMPORARY "))
-                     (:unlogged `("UNLOGGED "))
-                     (:if-not-exists (setf t1 t) `(,"TABLE IF NOT EXISTS "))
-                     (t `(,(unless t1 "TABLE ") ,(to-sql-name (car option)))))))))
+         (case (car name)
+           (:temp (concatenate 'string "TEMP TABLE " (expand-table-name (cadr name) t)))
+           (:unlogged (concatenate 'string "UNLOGGED TABLE " (expand-table-name (cadr name) t)))
+           (:if-not-exists (concatenate 'string (unless tableset  "TABLE ") "IF NOT EXISTS "
+                                        (expand-table-name (cadr name) t)))
+           (:of (concatenate 'string (unless tableset  "TABLE ") (expand-composite-table-name name)))
+           (t (concatenate 'string (unless tableset  "TABLE ") (to-sql-name (car name))))))
         (t (sql-error "Unknown table option: ~A" name))))
 
 (def-sql-op :create-table (name (&rest columns) &rest options)
-  (when (null columns)
-    (sql-error "No columns defined for table ~A." name))
-  `("CREATE " ,@(expand-table-name name) " ("
+  (let ((typed-table (and (listp name) (eq (car name) :of))))
+    (when (and (null columns) (not typed-table))
+      (sql-error "No columns defined for table ~A." name))
+  `("CREATE " ,@(list (expand-table-name name)) " ("
                     ,@(loop :for ((column-name . args) . rest) :on columns
-                            :append (expand-table-column column-name args)
-                            :if rest :collect ", ")
-                    ,@(loop :for ((option . args)) :on options
-			    :collect ", "
-                            :append (expand-table-constraint option args))
-                    ")"))
+                         :append (expand-table-column column-name args)
+                         :if rest :collect ", ")
+                    ,@(when (and columns options) '(", "))
+                    ,@(loop :for ((option . args) . rest) :on options
+                         :append (expand-table-constraint option args)
+                         :if rest :collect ", ")
+                    ")")))
 
 (def-sql-op :create-extended-table (name (&rest columns) &optional
                                          table-constraints
                                          extended-table-constraints)
   "Create a table with more complete syntax where table-constraints and extended-table-constraints are lists.
 Note that with extended tables you can have tables without columns that are inherited or partitioned."
-  `("CREATE " ,@(expand-table-name name) " ("
+  `("CREATE " ,@ (list (expand-table-name name)) " ("
                     ,@(loop :for ((column-name . args) . rest) :on columns
-                            :append (expand-table-column column-name args)
+                         :append (expand-table-column column-name args)
                          :if rest :collect ", ")
                     ,@(loop for constraint in table-constraints
-                         for i from (length table-constraints) downto 0
-                         append (expand-table-constraint-sok constraint)
+                         :for i from (length table-constraints) downto 0
+                         :append (expand-table-constraint-sok constraint)
                            ;if (> i 0) collect ", "
                            )
                      ")"
@@ -1401,7 +1427,7 @@ Note that with extended tables you can have tables without columns that are inhe
   "Create a table with more complete syntax."
   (when (null columns)
     (sql-error "No columns defined for table ~A." name))
-  `("CREATE " ,@(expand-table-name name) " ("
+  `("CREATE " ,@ (list (expand-table-name name)) " ("
                     ,@(loop :for ((column-name . args) . rest) :on columns
                             :append (expand-table-column column-name args)
                             :if rest :collect ", ")

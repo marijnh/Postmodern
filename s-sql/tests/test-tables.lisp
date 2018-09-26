@@ -44,7 +44,7 @@
                  "CREATE TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
 
       ;; version with temp, if-not-exists and tablename in form
-      (is (equal (sql (:create-table (:temp :if-not-exists distributors-in-hell)
+      (is (equal (sql (:create-table (:temp (:if-not-exists distributors-in-hell))
                                           ((did :type (or integer db-null)))))
                  "CREATE TEMP TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
       ;; version with if-not-exists and table name in form
@@ -63,7 +63,7 @@
   "Testing Create Table. Replicating from https://www.postgresql.org/docs/10/static/sql-createtable.html"
   ;; Create table films and table distributors:
       (is (equal (sql (:create-table films
-                             ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key 't)
+                             ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key t)
                               (title :type (varchar 40))
                               (did :type integer)
                               (date-prod :type (or date db-null))
@@ -205,6 +205,10 @@
                                      (:unique name did)))
                  "CREATE TABLE distributors (did INTEGER, name VARCHAR(40), UNIQUE (name, did))"))
 
+      ;; Create a composite type and a typed table:
+      (is (equal (sql (:create-composite-type employee-type (name text) (salary numeric) ))
+                 "(CREATE TYPE employee_type AS (name text, salary numeric)"))
+
       ;; Create the same table, specifying 70% fill factor for both the table and its unique index:
 
       ;; Create table circles with an exclusion constraint that prevents any two circles from overlapping:
@@ -323,7 +327,7 @@
                  "CREATE TEMP TABLE distributors_in_hell (did INTEGER)"))
 
       ;; version with temp, if-not-exists and tablename in form
-      (is (equal (sql (:create-extended-table (:temp :if-not-exists distributors-in-hell)
+      (is (equal (sql (:create-extended-table (:temp (:if-not-exists distributors-in-hell))
                                           ((did :type (or integer db-null)))))
                  "CREATE TEMP TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
       ;; version with if-not-exists and table name in form
@@ -619,7 +623,7 @@
   "Testing the extensions beyond the end of the parens!"
   (is (equal (sql (:create-extended-table cinemas ((id :type serial) (name :type (or text db-null)) (location :type (or text db-null)))
                                           ()
-                                          ((:tablespace 'diskvol1))))
+                                          ((:tablespace diskvol1))))
              "CREATE TABLE cinemas (id SERIAL NOT NULL, name TEXT, location TEXT) TABLESPACE diskvol1"))
   ;; Create a range partitioned table:
 
@@ -639,7 +643,6 @@
                                            (unitsales :type (or integer db-null)))
                                           ()
                                           ((:partition-by-range (:extract 'year 'logdate)(:extract 'month 'logdate)))))
-
              "CREATE TABLE measurement_year_month (logdate DATE NOT NULL, peaktemp INTEGER, unitsales INTEGER) PARTITION BY RANGE (EXTRACT(year FROM logdate), EXTRACT(month FROM logdate))")))
 
 (test create-extended-table-identity
@@ -691,6 +694,7 @@
 #|
 
 Create a composite type and a typed table: NOTE. WE DO NOT HAVE A CREATE-TYPE
+
 
 CREATE TYPE employee_type AS (name text, salary numeric);
 
@@ -748,3 +752,9 @@ CREATE TABLE cities_ab_10000_to_100000
     PARTITION OF cities_ab FOR VALUES FROM (10000) TO (100000);
 
 |#
+
+
+(test create-index
+  "Testing the sql created for create-index"
+  (is (equal (sql (:create-index 'gin-idx :on "historical-events" :using gin :fields 'data))
+             "CREATE INDEX gin_idx ON historical_events USING GIN (data)")))
