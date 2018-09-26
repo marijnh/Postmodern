@@ -116,10 +116,4 @@
     (is (time< (encode-interval :month month :hour hour)
                (encode-interval :month month :hour hour :minute 30)))))
 
-(test sql-interval-addition
-  (is (equal (simple-date::millisecs
-              (pomo:with-connection '("test" "wol" "jFL7pBz" "localhost")
-                (pomo:query
-                 (:select (:+ (:interval ("2h 50min")) (:interval ("10min"))))
-                 :single)))
-             10800000)))
+
