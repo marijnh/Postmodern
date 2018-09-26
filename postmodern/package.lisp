@@ -43,6 +43,7 @@
    #:list-triggers #:list-detailed-triggers #:list-database-users
    #:find-primary-key-info
    #:change-toplevel-database
+   #:list-available-extensions
 
    #:deftable #:*table-name* #:*table-symbol*
    #:create-table #:create-all-tables #:create-package-tables

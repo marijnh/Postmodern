@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-08-12 Sun 08:21 -->
+<!-- 2018-09-17 Mon 07:26 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Postmodern</title>
@@ -234,19 +234,19 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org665df04">Dependencies</a></li>
-<li><a href="#orgf9fa9d0">License</a></li>
-<li><a href="#org90fa91a">Download and installation</a></li>
-<li><a href="#orga445786">Quickstart</a></li>
-<li><a href="#org7fa7da2">Reference</a></li>
-<li><a href="#orgfd7a82c">Caveats and to-dos</a>
+<li><a href="#org9243c9e">Dependencies</a></li>
+<li><a href="#org712793a">License</a></li>
+<li><a href="#org9da2b12">Download and installation</a></li>
+<li><a href="#org9c38027">Quickstart</a></li>
+<li><a href="#orge0801c7">Reference</a></li>
+<li><a href="#org5e002d5">Caveats and to-dos</a>
 <ul>
-<li><a href="#orgae8aeae">Timezones</a></li>
-<li><a href="#org727ba65">Portability</a></li>
-<li><a href="#org4ea6d3e">Things that should be implemented</a></li>
+<li><a href="#org126da9c">Timezones</a></li>
+<li><a href="#orgc1f27e8">Portability</a></li>
+<li><a href="#org65e70b6">Things that should be implemented</a></li>
 </ul>
 </li>
-<li><a href="#orgdea509d">Resources</a></li>
+<li><a href="#org90487a1">Resources</a></li>
 </ul>
 </div>
 </div>
@@ -273,9 +273,9 @@ me, your mileage may vary.
 </p>
 
 
-<div id="outline-container-org665df04" class="outline-2">
-<h2 id="org665df04">Dependencies</h2>
-<div class="outline-text-2" id="text-org665df04">
+<div id="outline-container-org9243c9e" class="outline-2">
+<h2 id="org9243c9e">Dependencies</h2>
+<div class="outline-text-2" id="text-org9243c9e">
 <p>
 The library depends on <a href="http://quickdocs.org/usocket/">usocket</a> (except on <a href="http://sbcl.org/">SBCL</a> and <a href="https://franz.com/products/allegrocl/">ACL</a>, where the built-in
 socket library is used), <a href="https://github.com/pmai/md5.git">md5</a>, <a href="https://github.com/pcostanza/closer-mop.git">closer-mop</a>, <a href="https://github.com/sionescu/bordeaux-threads.git">bordeaux-threads</a> if you want
@@ -296,9 +296,9 @@ programming interface.
 </div>
 </div>
 
-<div id="outline-container-orgf9fa9d0" class="outline-2">
-<h2 id="orgf9fa9d0">License</h2>
-<div class="outline-text-2" id="text-orgf9fa9d0">
+<div id="outline-container-org712793a" class="outline-2">
+<h2 id="org712793a">License</h2>
+<div class="outline-text-2" id="text-org712793a">
 <p>
 Postmodern is released under a zlib-style license. Which approximately
 means you can use the code in whatever way you like, except for passing
@@ -308,9 +308,9 @@ that it is not the original.
 </div>
 </div>
 
-<div id="outline-container-org90fa91a" class="outline-2">
-<h2 id="org90fa91a">Download and installation</h2>
-<div class="outline-text-2" id="text-org90fa91a">
+<div id="outline-container-org9da2b12" class="outline-2">
+<h2 id="org9da2b12">Download and installation</h2>
+<div class="outline-text-2" id="text-org9da2b12">
 <p>
 We suggest using <a href="https://quicklisp.org">quicklisp.org</a> for installation.
 </p>
@@ -325,9 +325,9 @@ A git repository with the most recent changes can be viewed or checked out at:
 </div>
 </div>
 
-<div id="outline-container-orga445786" class="outline-2">
-<h2 id="orga445786">Quickstart</h2>
-<div class="outline-text-2" id="text-orga445786">
+<div id="outline-container-org9c38027" class="outline-2">
+<h2 id="org9c38027">Quickstart</h2>
+<div class="outline-text-2" id="text-org9c38027">
 <p>
 This quickstart is intended to give you a feel of the way coding with
 Postmodern works. Further details about the workings of the library
@@ -412,6 +412,7 @@ also iterate over it with the doquery macro:
 </div>
 
 <p>
+You can work directly with the database or you can use a database-access-class (aka dao).
 This is what a database-access class looks like:
 </p>
 <div class="org-src-container">
@@ -448,6 +449,35 @@ information above is enough to define the table as well:
 This defines our table in the database. execute works like query, but does
 not expect any results back.
 </p>
+
+<p>
+You can create tables directly without the need to define a class, and in more
+complicated cases, you will need to use the create-table operator. One example
+would be the following:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (:create-table so-items
+         ((item-id :type integer)
+          (so-id :type (or integer db-null) :references ((so-headers id)))
+          (product-id :type (or integer db-null))
+          (qty :type (or integer db-null))
+          (net-price :type (or numeric db-null)))
+         (:primary-key item-id so-id)))
+
+</pre>
+</div>
+
+<p>
+In the above case, the new table's name will be so-items (actually in the
+database it will be so_items because sql does not allow hyphens. The column
+item-id is an integer and cannot be null. The column so-id is also an integer,
+but is allowed to be null and is a foreign key to the id field in the so-headers
+table so-headers. The primary key is actually a composite of item-id and so-id.
+(If we wanted the primary key to be just item-id, we could have specified that
+in the form defining item-id.) For more detail and examples on building tables
+using the s-sql approach, see <a href="create-tables.html">create-tables.html</a>
+</p>
+
 
 <p>
 Let us add a few countries:
@@ -531,9 +561,9 @@ faster, especially for complex queries.
 </div>
 </div>
 
-<div id="outline-container-org7fa7da2" class="outline-2">
-<h2 id="org7fa7da2">Reference</h2>
-<div class="outline-text-2" id="text-org7fa7da2">
+<div id="outline-container-orge0801c7" class="outline-2">
+<h2 id="orge0801c7">Reference</h2>
+<div class="outline-text-2" id="text-orge0801c7">
 <p>
 The reference manuals for the different components of Postmodern are kept
 in separate files. For using the library in the most straightforward way,
@@ -558,13 +588,13 @@ if you just want a low-level library for talking to a PostgreSQL server.
 </div>
 
 
-<div id="outline-container-orgfd7a82c" class="outline-2">
-<h2 id="orgfd7a82c">Caveats and to-dos</h2>
-<div class="outline-text-2" id="text-orgfd7a82c">
+<div id="outline-container-org5e002d5" class="outline-2">
+<h2 id="org5e002d5">Caveats and to-dos</h2>
+<div class="outline-text-2" id="text-org5e002d5">
 </div>
-<div id="outline-container-orgae8aeae" class="outline-3">
-<h3 id="orgae8aeae">Timezones</h3>
-<div class="outline-text-3" id="text-orgae8aeae">
+<div id="outline-container-org126da9c" class="outline-3">
+<h3 id="org126da9c">Timezones</h3>
+<div class="outline-text-3" id="text-org126da9c">
 <p>
 It is important to understand how postgresql (not postmodern) handles
 timestamps and timestamps with time zones. Postgresql keeps everything
@@ -625,9 +655,9 @@ reader:
 </div>
 </div>
 
-<div id="outline-container-org727ba65" class="outline-3">
-<h3 id="org727ba65">Portability</h3>
-<div class="outline-text-3" id="text-org727ba65">
+<div id="outline-container-orgc1f27e8" class="outline-3">
+<h3 id="orgc1f27e8">Portability</h3>
+<div class="outline-text-3" id="text-orgc1f27e8">
 <p>
 The Lisp code in Postmodern is theoretically portable across implementations,
 and seems to work on all major ones as well as some minor ones such as Genera.
@@ -644,9 +674,9 @@ were only introduced in those newer versions.
 </div>
 </div>
 
-<div id="outline-container-org4ea6d3e" class="outline-3">
-<h3 id="org4ea6d3e">Things that should be implemented</h3>
-<div class="outline-text-3" id="text-org4ea6d3e">
+<div id="outline-container-org65e70b6" class="outline-3">
+<h3 id="org65e70b6">Things that should be implemented</h3>
+<div class="outline-text-3" id="text-org65e70b6">
 <p>
 Postmodern is under active development so Issues and feature requests should
 be flagged on <a href="https://github.com/marijnh/Postmodern">Postmodern's site on github</a>.
@@ -672,9 +702,9 @@ file.
 </div>
 </div>
 
-<div id="outline-container-orgdea509d" class="outline-2">
-<h2 id="orgdea509d">Resources</h2>
-<div class="outline-text-2" id="text-orgdea509d">
+<div id="outline-container-org90487a1" class="outline-2">
+<h2 id="org90487a1">Resources</h2>
+<div class="outline-text-2" id="text-org90487a1">
 <ul class="org-ul">
 <li><a href="https://mailman.common-lisp.net/listinfo/postmodern-devel">Mailing List</a></li>
 <li><a href="https://sites.google.com/site/sabraonthehill/postmodern-examples">A collection of Postmodern examples</a></li>
@@ -688,7 +718,7 @@ file.
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-08-12 Sun 08:21</p>
+<p class="date">Created: 2018-09-17 Mon 07:26</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

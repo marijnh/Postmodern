@@ -4,6 +4,10 @@
 
 
 (defsystem "s-sql"
+  :description "Lispy dsl for sql"
+  :author "Marijn Haverbeke <marijnh@gmail.com>"
+  :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
+  :license "zlib"
   :depends-on ("cl-postgres")
   :components
   ((:module "s-sql"

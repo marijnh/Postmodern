@@ -659,6 +659,16 @@ and specify a slot like this:
 → list
 
 Returns list of slot names that are the primary key of DAO class.
+This is likely interesting if you have primary keys which are composed
+of more than one slot. Pay careful attention to situations where the primary
+key not only has more than one column, but they are actually in a different
+order than they are in the database table itself. You can check this with the
+find-primary-key-info function.
+#+BEGIN_SRC lisp
+(pomo:find-primary-key-info "country1")
+
+(("name" "text") ("id" "integer"))
+#+END_SRC
 
 ** method dao-keys (dao)
 → list
@@ -825,7 +835,7 @@ symbol naming such a class).
 Given a DAO class, or the name of one, this will produce an SQL query string
 with a definition of the table. This is just the bare simple definition, so
 if you need any extra indices or or constraints, you'll have to write your
-own queries to add them.
+own queries to add them, in which case look to s-sql's create-table function.
 
 ** macro with-column-writers ((&rest writers) &body body)
 

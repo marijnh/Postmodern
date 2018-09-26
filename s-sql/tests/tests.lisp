@@ -1162,26 +1162,44 @@ To sum the column len of all films and group the results by kind:"
       "Testing insert into"
       (is (equal (sql (:insert-into 'cd.facilities :set 'facid 9 'name "Spa" 'membercost 20 'guestcost 30
                                     'initialoutlay 100000 'monthlymaintenance 800))
-                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES (9, E'Spa', 20, 30, 100000, 800)"))
+                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance)  VALUES (9, E'Spa', 20, 30, 100000, 800)"))
 
+;; Testing with a calculation in the value
       (is (equal (sql (:insert-into 'test :set 'id 15 'number-string "12" 'numeric-item 12.45
                                 'ratio-item (/ 1 13) 'created-at "2018-02-01"))
-  "INSERT INTO test (id, number_string, numeric_item, ratio_item, created_at) VALUES (15, E'12', 12.45, 0.0769230769230769230769230769230769230, E'2018-02-01')"))
+                 "INSERT INTO test (id, number_string, numeric_item, ratio_item, created_at)  VALUES (15, E'12', 12.45, 0.0769230769230769230769230769230769230, E'2018-02-01')"))
 
+;; Testing overriding-user-value
+      (is (equal (sql (:insert-into 'employee :set 'id 1 'name "Paul"  :overriding-user-value :on-conflict-do-nothing))
+                 "INSERT INTO employee (id, name)  OVERRIDING USER VALUE  VALUES (1, E'Paul') ON CONFLICT DO NOTHING"))
+;; Testing overriding system-value
+      (is (equal (sql (:insert-into 'employee :set 'id 1 'name "Paul"  :overriding-system-value :on-conflict-do-nothing))
+                 "INSERT INTO employee (id, name)  OVERRIDING SYSTEM VALUE  VALUES (1, E'Paul') ON CONFLICT DO NOTHING"))
+      ;;    Testing On Conflict
+      (is (equal (sql (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
+                     :on-conflict-update 'column-A
+                     :update-set 'column-B '$2
+                     :where (:= 'test-table.column-A '$1)))
+                 "INSERT INTO test_table (column_a, column_b)  VALUES ($1, $2) ON CONFLICT (column_a) DO UPDATE SET column_b = $2 WHERE (test_table.column_a = $1)"))
+
+;; Testing select in insert statement
+;; From https://www.pgexercises.com/questions/updates/insert3.html
+      (is (equal (sql (:insert-into 'cd.facilities
+                                    :set 'facid (:select (:+ (:select (:max 'facid) :from 'cd.facilities) 1))
+                                         'name "Spa" 'membercost 20 'guestcost 30 'initialoutlay 100000 'monthlymaintenance 800))
+                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance)  VALUES ((SELECT ((SELECT MAX(facid) FROM cd.facilities) + 1)), E'Spa', 20, 30, 100000, 800)"))
+
+;; Testing basic inserting-rows-into
       (is (equal (sql (:insert-rows-into 'my-table :values '((42 "foobar") (23 "foobaz"))))
                  "INSERT INTO my_table VALUES (42, E'foobar'), (23, E'foobaz')"))
-
+;; Testing columns
 ;; From https://www.pgexercises.com/questions/updates/insert2.html
       (is (equal (sql (:insert-rows-into 'cd.facilities
                                          :columns 'facid 'name 'membercost 'guestcost 'initialoutlay 'monthlymaintenance
                                          :values '((9 "Spa" 20 30 100000 800) (10 "Squash Court 2" 3.5 17.5 5000 80))))
                  "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES (9, E'Spa', 20, 30, 100000, 800), (10, E'Squash Court 2', 3.5, 17.5, 5000, 80)"))
 
-;; From https://www.pgexercises.com/questions/updates/insert3.html
-      (is (equal (sql (:insert-into 'cd.facilities
-                                    :set 'facid (:select (:+ (:select (:max 'facid) :from 'cd.facilities) 1))
-                                         'name "Spa" 'membercost 20 'guestcost 30 'initialoutlay 100000 'monthlymaintenance 800))
-                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES ((SELECT ((SELECT MAX(facid) FROM cd.facilities) + 1)), E'Spa', 20, 30, 100000, 800)"))
+;; Testing select in values in insert-rows-into
 ;; Now using rows https://www.pgexercises.com/questions/updates/insert3.html
       (is (equal (sql (:insert-rows-into 'cd.facilities
                          :columns 'facid  'name  'membercost  'guestcost 'initialoutlay 'monthlymaintenance
@@ -1251,22 +1269,6 @@ To sum the column len of all films and group the results by kind:"
   (is (equal (sql (:truncate 'bigtable 'fattable :continue-identity :cascade ))
              "TRUNCATE bigtable, fattable CONTINUE IDENTITY  CASCADE ")))
 #|
-
-
-https://www.postgresql.org/docs/current/static/sql-select.html
-This example shows how to use a function in the FROM clause, both with and without a column definition list:
-
-CREATE FUNCTION distributors(int) RETURNS SETOF distributors AS $$
-    SELECT * FROM distributors WHERE did = $1;
-$$ LANGUAGE SQL;
-
-SELECT * FROM distributors(111);
-
-CREATE FUNCTION distributors_2(int) RETURNS SETOF record AS $$
-    SELECT * FROM distributors WHERE did = $1;
-$$ LANGUAGE SQL;
-
-SELECT * FROM distributors_2(111) AS (f1 int, f2 text);
 
 Here is an example of a function with an ordinality column added:
 

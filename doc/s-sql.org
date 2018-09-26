@@ -64,10 +64,19 @@ this to T.
 ** variable *escape-sql-names-p*
 
 Determines whether double quotes are added around column, table, and ** function names in
-queries. May be T, in which case every name is escaped, NIL, in which case none is, or :auto,
-which causes only [[http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html][reserved words]] to be escaped. The default value is :auto. Be careful when
-binding this with let and such ― since a lot of SQL compilation tends to happen at
-compile-time, the result might not be what you expect.
+queries. Valid values:
+
+- T, in which case every name is escaped,
+- NIL, in which case no name is escape,
+- :auto, which causes only [[http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html][reserved words]] to be escaped, or.
+- :literal which is the same as :auto except it has added consequence in to-sql-name (see below).
+
+The default value is :auto.
+
+Be careful when binding this with let and such ― since a lot of SQL compilation tends to happen at
+compile-time, the result might not be what you expect. Mixed case sensitivity is not currently
+well supported. Postgresql itself will downcase unquoted identifiers. This will be revisited in the
+future if requested.
 
 ** function sql-type-name (type)
 → string
@@ -238,7 +247,11 @@ Is similar to cast but uses the postgresql :: formating. E.g.
 
 "(SELECT (now()::DATE - x) AS some_date FROM generate_series(1, 10) AS x)"
 #+END_SRC
-
+** sql-op :create-composite-type (type-name &rest args)
+Creates a composite type with a type-name and two or more columns. E.g.
+#+BEGIN_SRC lisp
+(query (:create-composite-type fullname (first-name text) (last-name text)))
+#+END_SRC
 ** sql-op :exists (query)
 
 The EXISTS operator. Takes a query as an argument, and returns true or false
@@ -1085,6 +1098,8 @@ Here is an example of a :create-table form:
   (:foreign-key (identifying-color) (colors name))
   (:constraint enemy-age-check :check (:> 'age 12)))
 #+END_SRC
+For more detail and examples on building tables
+using the s-sql approach, see [[file:create-tables.html][create-tables.html]]
 
 ** sql-op :alter-table (name action &rest args)
 
@@ -1172,6 +1187,13 @@ Create an index on a table. After the name of the index the keyword :on should
 follow, with the table name after it. Then the keyword :fields, followed by
 one or more column names. Optionally, a :where clause with a condition can
 be added at the end to make a partial index.
+
+#+BEGIN_SRC lisp
+(sql (:create-index 'gin-idx :on "historical-events" :using gin :fields 'data))
+
+"CREATE INDEX gin_idx ON historical_events USING GIN (data)"
+#+END_SRC
+
 
 ** sql-op :create-unique-index (name &rest args)
 

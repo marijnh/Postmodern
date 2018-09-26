@@ -608,3 +608,9 @@ Recommended only for development work."
 (defun list-connections ()
   "Returns info from pg_stat_activity on open connections"
   (query (:select '* :from 'pg-stat-activity)))
+
+(defun list-available-extensions ()
+  "Returns available postgresql extensions per pg_available_extensions"
+  (loop for x in (query (:order-by (:select 'name :from 'pg-available-extensions)
+                                   'name))
+       collect (first x)))

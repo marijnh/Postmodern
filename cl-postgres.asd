@@ -11,6 +11,9 @@
 
 (defsystem "cl-postgres"
   :description "Low-level client library for PostgreSQL"
+  :author "Marijn Haverbeke <marijnh@gmail.com>"
+  :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
+  :license "zlib"
   :depends-on ("md5"
                (:feature (:or :sbcl :allegro :ccl :genera :armedbear) "usocket")
                (:feature :sbcl (:require :sb-bsd-sockets)))
