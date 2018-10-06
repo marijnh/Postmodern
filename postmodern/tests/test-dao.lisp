@@ -186,7 +186,7 @@
                                    (b :col-type boolean :col-default nil :initarg :b :accessor test-b)
                                    (c :col-type integer :col-default 0 :initarg :c :accessor test-c))
                                   (:metaclass dao-class)
-                                  (:table-name dao-test)
+                                  (:table-name dao-test-2)
                                   (:keys id))))
 
 (test make-class
@@ -196,17 +196,18 @@
 
 (test dao-class-threads
   (with-test-connection
-    (unless (pomo:table-exists-p 'dao-test)
+    (unless (pomo:table-exists-p 'dao-test-2)
       (execute (dao-table-definition 'test-data)))
-  (let ((item (make-instance 'test-data :a "Sabra" :b t :c 0)))
-    (save-dao item)
-    (loop for x from 1 to 5 do
-         (bt:make-thread
-          (lambda ()
-            (with-test-connection
-            (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (incf (test-c item) 1)) (save-dao item))
-            (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (decf (test-c item) 1)) (save-dao item))))))
-    (is (eq 0 (test-c item))))))
+  (when (pomo:table-exists-p 'dao-test-2)
+    (let ((item (make-instance 'test-data :a "test-name" :b t :c 0)))
+      (save-dao item)
+      (loop for x from 1 to 5 do
+           (bt:make-thread
+            (lambda ()
+              (with-test-connection
+                (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (incf (test-c item) 1)) (save-dao item))
+                (loop repeat 10 do (bt:with-lock-held (*dao-update-lock*) (decf (test-c item) 1)) (save-dao item))))))
+      (is (eq 0 (test-c item)))))))
 
 ;;; Note that if you drop the table at the end of a thread test, it is almost certain that threads are still running.
-;;; As a result, the subsequent attempts to save-dao will fail. So do not
+;;; As a result, the subsequent attempts to save-dao will fail. So do not do that.
