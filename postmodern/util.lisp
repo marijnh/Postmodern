@@ -14,11 +14,12 @@ symbols to string with the S-SQL rules."
 (defmacro make-list-query (relkind)
   "Helper macro for the functions that list tables, sequences, and
 views."
-  `(sql (:select 'relname :from 'pg-catalog.pg-class
-         :inner-join 'pg-catalog.pg-namespace :on (:= 'relnamespace 'pg-namespace.oid)
-         :where (:and (:= 'relkind ,relkind)
-                 (:not-in 'nspname (:set "pg_catalog" "pg_toast"))
-                 (:pg-catalog.pg-table-is-visible 'pg-class.oid)))))
+  `(sql (:order-by (:select 'relname :from 'pg-catalog.pg-class
+                            :inner-join 'pg-catalog.pg-namespace :on (:= 'relnamespace 'pg-namespace.oid)
+                            :where (:and (:= 'relkind ,relkind)
+                                         (:not-in 'nspname (:set "pg_catalog" "pg_toast"))
+                                         (:pg-catalog.pg-table-is-visible 'pg-class.oid)))
+                   'relname)))
 
 (defmacro make-exists-query (relkind name)
   "Helper macro for the functions that check whether an object
@@ -29,16 +30,81 @@ exists."
                                                 (:= 'pg_namespace.nspname (:any* (:current_schemas "true")))
                                                 (:= 'pg_class.relname (to-identifier ,name))))))))
 
+(defun split-fully-qualified-tablename (name)
+  "Take a tablename of the form database.schema.table or schema.table
+and return the tablename and the schema name. The name can be a symbol
+or a string. Returns a list of form '(table schema database"
+  (destructuring-bind (table &optional schema database)
+      (nreverse (split-sequence:split-sequence #\. (to-sql-name name)
+                                               :test 'equal))
+    (list table schema database)))
+
+(defun list-tables-in-schema (&optional (schema-name "public") lisp-strings-p)
+  "Returns a list of tables in a particular schema, defaulting to public."
+  (let ((result (alexandria:flatten
+                 (query (:order-by
+                         (:select 'table-name
+                                  :from 'information-schema.tables
+                                  :where (:= 'table-schema '$1))
+                         'table-name)
+                        (to-sql-name schema-name)))))
+    (if lisp-strings-p (mapcar 'from-sql-name result) result )))
+
 (defun list-tables (&optional strings-p)
   "Return a list of the tables in a database. Turn them into keywords
 if strings-p is not true."
   (let ((result (query (make-list-query "r") :column)))
     (if strings-p result (mapcar 'from-sql-name result))))
 
-(defun table-exists-p (table-name)
-  "Check whether a table exists. Takes either a string or a symbol for
-the table name."
-  (query (make-exists-query "r" (to-sql-name table-name)) :single))
+(defun table-exists-p (table-name &optional (schema-name nil))
+  "Check whether a table exists in a particular schema. Defaults to the search path.
+Takes either a string or a symbol for the table name. The table-name can be fully
+qualified in the form of schema.table-name or database.schema.table-name. If
+the schema is specified either in a qualified table-name or in the optional
+schema-name parameter, we look directly to the information schema tables. Otherwise
+we use the search path which can be controlled by being within a with-schema form."
+  (let* ((destructured-table-name (split-fully-qualified-tablename table-name))
+         (schema (or (second destructured-table-name) schema-name))
+         (table (or (first destructured-table-name) table-name))
+         (result (if schema
+                     (member (to-sql-name table)
+                             (alexandria:flatten
+                              (query (:order-by
+                                      (:select 'table-name
+                                               :from 'information-schema.tables
+                                               :where (:= 'table-schema '$1))
+                                      'table-name)
+                                     (s-sql::to-sql-name schema)))
+                             :test 'equal)
+                     (query (make-exists-query "r" table) :single))))
+    (if result t nil)))
+
+(defun create-sequence (name &key temp if-not-exists increment min-value max-value start cache)
+  "Create a sequence."
+  (let ((query-string
+         (concatenate 'string
+                      "CREATE "
+                      (if temp "TEMP " "")
+                      "SEQUENCE "
+                      (if if-not-exists "IF NOT EXISTS " "")
+                      (to-sql-name name)
+                      (if increment (concatenate 'string " INCREMENT BY " (format nil "~a" increment)) "")
+                      (if min-value (concatenate 'string " MINVALUE " (format nil "~a" min-value)) "")
+                      (if max-value (concatenate 'string " MAXVALUE " (format nil "~a" max-value)) "")
+                      (if start (concatenate 'string " START " (format nil "~a" start)) "")
+                      (if cache (concatenate 'string " CACHE " (format nil "~a" cache)) ""))))
+    (query query-string)))
+
+(defun drop-sequence (name &key if-exists cascade)
+  "Drop a sequence. Name should be quoted."
+  (let ((query-string
+         (concatenate 'string
+                      "DROP "
+                      "SEQUENCE "
+                      (if if-exists "IF EXISTS " "")
+                      (to-sql-name name)
+                      (if cascade " CASCADE" ""))))
+    (query query-string)))
 
 (defun list-sequences (&optional strings-p)
   "Return a list of the sequences in a database. Turn them into
@@ -148,12 +214,7 @@ ordered by name. This function excludes the template databases."
 
 
 ;;;; Schemas
-(defun list-schemas ()
-  "List schemas in the current database, excluding the pg_* system schemas."
-  (loop for x in (query (:select 'nspname
-                                 :from 'pg_namespace
-                                 :where (:!~* 'nspname "^pg_.*")))
-       collect (first x)))
+;;;; See namespace.lisp
 
 ;;;; Tablespaces
 (defun list-tablespaces ()
@@ -170,7 +231,20 @@ ordered by name. This function excludes the template databases."
                   :where (:= 'typtype "b"))))
 
 
-;;; Table info
+;;; Tables
+;;; create table can only be done either using a deftable approach or s-sql
+
+(defun drop-table (name &key if-exists cascade)
+  "Drop a table."
+  (let ((query-string
+         (concatenate 'string
+                      "DROP "
+                      "TABLE "
+                      (if if-exists "IF EXISTS " "")
+                      (to-sql-name name)
+                      (if cascade " CASCADE" ""))))
+    (query query-string)))
+
 (defun list-table-sizes (&key (schema "public") (order-by-size nil) (size t))
   "Returns a list of lists (table-name, size in 8k pages) of tables in the current database.
 Providing a name to the schema parameter will return just the information for tables in that schema.
@@ -320,29 +394,69 @@ rather than directly."
                    (:!= 'type-udt-name "trigger")))))
 
 ;;;; Indices
+(defun index-exists-p (index-name)
+  "Check whether a index exists. Takes either a string or a symbol for
+the index name."
+  (query (make-exists-query "i" (to-sql-name index-name)) :single))
+
+(defun create-index (name  &key unique if-not-exists concurrently on using fields)
+  "Create an index. Slightly less sophisticated than the query version because
+it does not have a where clause capability."
+  (let ((query-string
+         (concatenate 'string
+                      "CREATE "
+                      (if unique "UNIQUE " "")
+                      "INDEX "
+                      (if concurrently "CONCURRENTLY " "")
+                      (if if-not-exists "IF NOT EXISTS " "")
+                      (to-sql-name name)
+                      " ON "
+                      (to-sql-name on)
+                      " "
+                      (if using (to-sql-name using) "")
+                      " ("
+                      (format nil "~{ ~a~^, ~}" (mapcar #'to-sql-name fields))
+                      ") "
+                      )))
+    (query query-string)))
+
+(defun drop-index (name &key concurrently if-exists cascade)
+  "Drop an index. "
+  (let ((query-string
+         (concatenate 'string
+                      "DROP "
+                      "INDEX "
+                      (if concurrently "CONCURRENTLY " "")
+                      (if if-exists "IF EXISTS " "")
+                      (to-sql-name name)
+                      (if cascade " CASCADE" ""))))
+    (query query-string)))
+
+
 (defun list-indices (&optional strings-p)
   "Return a list of the indexs in a database. Turn them into keywords if strings-p is not true."
   (let ((result (query (make-list-query "i") :column)))
     (if strings-p result (mapcar 'from-sql-name result))))
 
 (defun list-table-indices (table-name &optional strings-p)
-  "List the index names and the related columns in a table. "
+  "List the index names and the related columns in a single table. "
   (when (table-exists-p (to-sql-name table-name))
-    (let ((result (query
-                   (:order-by
-                    (:select
-                     (:as 'i.relname 'index-name) (:as 'a.attname 'column-name)
-                     :from (:as 'pg-class 't1) (:as 'pg-class 'i) (:as 'pg-index 'ix)
-                     (:as 'pg-attribute 'a)
-                     :where
-                     (:and (:= 't1.oid 'ix.indrelid)
-                           (:= 'i.oid 'ix.indexrelid)
-                           (:= 'a.attrelid 't1.oid)
-                           (:= 'a.attnum (:any* 'ix.indkey))
-                           (:= 't1.relkind "r")
-                           (:= 't1.relname '$1)))
-                    'i.relname)
-                   (to-sql-name table-name))))
+    (let ((result (alexandria:flatten
+                   (query
+                    (:order-by
+                     (:select
+                      (:as 'i.relname 'index-name) (:as 'a.attname 'column-name)
+                      :from (:as 'pg-class 't1) (:as 'pg-class 'i) (:as 'pg-index 'ix)
+                      (:as 'pg-attribute 'a)
+                      :where
+                      (:and (:= 't1.oid 'ix.indrelid)
+                            (:= 'i.oid 'ix.indexrelid)
+                            (:= 'a.attrelid 't1.oid)
+                            (:= 'a.attnum (:any* 'ix.indkey))
+                            (:= 't1.relkind "r")
+                            (:= 't1.relname '$1)))
+                     'i.relname)
+                    (to-sql-name table-name)))))
       (if strings-p result (mapcar 'from-sql-name result)))))
 
 (defun list-indexed-column-and-attributes (table-name)
@@ -613,4 +727,16 @@ Recommended only for development work."
   "Returns available postgresql extensions per pg_available_extensions"
   (loop for x in (query (:order-by (:select 'name :from 'pg-available-extensions)
                                    'name))
+     collect (first x)))
+
+(defun list-available-extensions ()
+  "Returns available postgresql extensions per pg_available_extensions"
+  (loop for x in (query (:order-by (:select 'name :from 'pg-available-extensions)
+                                   'name))
+     collect (first x)))
+
+(defun list-installed-extensions ()
+  "Returns postgresql extensions actually installed in the database per pg_available_extensions"
+  (loop for x in (query (:order-by (:select 'extname :from 'pg-extension)
+                                   'extname))
        collect (first x)))
