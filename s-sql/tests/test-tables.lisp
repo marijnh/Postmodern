@@ -21,10 +21,16 @@
   ;;;; Testing global-temporary etc
 ;;;; Temporary tables are automatically dropped at the end of a session
 ;;;;
-      ;; Note the syntax is temporary or unlogged qualifiers first, then if-not-exists, then table name
-      ;; You can use temp or temporary
-      ;;version with just table name
+  ;; Note the syntax is temporary or unlogged qualifiers first, then if-not-exists, then table name
+  ;; You can use temp or temporary.
+  ;; The difference with the first three tests are whether the tablename is quoted, unquoted or a string
+      (is (equal (sql (:create-table 'distributors-in-hell
+                          ((did :type (or integer db-null)))))
+                 "CREATE TABLE distributors_in_hell (did INTEGER)"))
       (is (equal (sql (:create-table distributors-in-hell
+                          ((did :type (or integer db-null)))))
+                 "CREATE TABLE distributors_in_hell (did INTEGER)"))
+      (is (equal (sql (:create-table "distributors-in-hell"
                           ((did :type (or integer db-null)))))
                  "CREATE TABLE distributors_in_hell (did INTEGER)"))
 
@@ -34,54 +40,76 @@
                  "CREATE TABLE distributors_in_hell (did INTEGER)"))
 
       ;; version with :temp and table name in form
-      (is (equal (sql (:create-table (:temp distributors-in-hell)
+      (is (equal (sql (:create-table (:temp 'distributors-in-hell)
                                           ((did :type (or integer db-null)))))
                  "CREATE TEMP TABLE distributors_in_hell (did INTEGER)"))
 
       ;; version with if-not-exists
-      (is (equal (sql (:create-table (:if-not-exists distributors-in-hell)
+      (is (equal (sql (:create-table (:if-not-exists 'distributors-in-hell)
                                           ((did :type (or integer db-null)))))
                  "CREATE TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
 
       ;; version with temp, if-not-exists and tablename in form
-      (is (equal (sql (:create-table (:temp (:if-not-exists distributors-in-hell))
+      (is (equal (sql (:create-table (:temp (:if-not-exists 'distributors-in-hell))
                                           ((did :type (or integer db-null)))))
                  "CREATE TEMP TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
       ;; version with if-not-exists and table name in form
-      (is (equal (sql (:create-table (:if-not-exists distributors-in-hell)
+      (is (equal (sql (:create-table (:if-not-exists 'distributors-in-hell)
                                           ((did :type (or integer db-null)))))
                 "CREATE TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
 
       ;;;; unlogged tables do not have their data written to the write-ahead log. As a result they are faster,
       ;;; but not crash safe. Any indexes created on an unlogged table are unlogged as well.
 
-      (is (equal (sql (:create-table (:unlogged distributors-in-hell)
+      (is (equal (sql (:create-table (:unlogged 'distributors-in-hell)
                                           ((did :type (or integer db-null)))))
                  "CREATE UNLOGGED TABLE distributors_in_hell (did INTEGER)")))
 
 (test create-table-basic
   "Testing Create Table. Replicating from https://www.postgresql.org/docs/10/static/sql-createtable.html"
   ;; Create table films and table distributors:
-      (is (equal (sql (:create-table films
-                             ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key t)
-                              (title :type (varchar 40))
-                              (did :type integer)
-                              (date-prod :type (or date db-null))
-                              (kind :type (or (varchar 10) db-null))
-                              (len :type (or interval db-null) :interval :hour-to-minute))))
-                 "CREATE TABLE films (code CHAR(5) CONSTRAINT firstkey PRIMARY KEY , title VARCHAR(40) NOT NULL, did INTEGER NOT NULL, date_prod DATE, kind VARCHAR(10), len INTERVAL HOUR TO MINUTE)"))
-      (is (equal (sql (:create-table distributors
+  ;; The difference with the first four tests are whether the tablename is a keyword, quoted, unquoted or a string
+  ;; preference should be quoted, but your mileage may vary.
+  (is (equal (sql (:create-table :films
+                                 ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key t)
+                                  (len :type (or interval db-null) :interval :hour-to-minute))))
+             "CREATE TABLE films (code CHAR(5) CONSTRAINT firstkey PRIMARY KEY , len INTERVAL HOUR TO MINUTE)"))
+  (is (equal (sql (:create-table 'films
+                                 ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key t)
+                                  (title :type (varchar 40))
+                                  (did :type integer)
+                                  (date-prod :type (or date db-null))
+                                  (kind :type (or (varchar 10) db-null))
+                                  (len :type (or interval db-null) :interval :hour-to-minute))))
+             "CREATE TABLE films (code CHAR(5) CONSTRAINT firstkey PRIMARY KEY , title VARCHAR(40) NOT NULL, did INTEGER NOT NULL, date_prod DATE, kind VARCHAR(10), len INTERVAL HOUR TO MINUTE)"))
+  (is (equal (sql (:create-table films
+                                 ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key t)
+                                  (title :type (varchar 40))
+                                  (did :type integer)
+                                  (date-prod :type (or date db-null))
+                                  (kind :type (or (varchar 10) db-null))
+                                  (len :type (or interval db-null) :interval :hour-to-minute))))
+             "CREATE TABLE films (code CHAR(5) CONSTRAINT firstkey PRIMARY KEY , title VARCHAR(40) NOT NULL, did INTEGER NOT NULL, date_prod DATE, kind VARCHAR(10), len INTERVAL HOUR TO MINUTE)"))
+  (is (equal (sql (:create-table  "films"
+                                  ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key t)
+                                   (title :type (varchar 40))
+                                   (did :type integer)
+                                   (date-prod :type (or date db-null))
+                                   (kind :type (or (varchar 10) db-null))
+                                   (len :type (or interval db-null) :interval :hour-to-minute))))
+             "CREATE TABLE films (code CHAR(5) CONSTRAINT firstkey PRIMARY KEY , title VARCHAR(40) NOT NULL, did INTEGER NOT NULL, date_prod DATE, kind VARCHAR(10), len INTERVAL HOUR TO MINUTE)"))
+  (is (equal (sql (:create-table 'distributors
                                            ((did :type (or integer db-null)
                                                  :primary-key "generated by default as identity")
                                             (name :type (varchar 40) :check (:<> 'name "")))))
                  "CREATE TABLE distributors (did INTEGER PRIMARY KEY generated by default as identity, name VARCHAR(40) NOT NULL CHECK (name <> E''))"))
 
       ;; Create a table with a 2-dimensional array:
-      (is (equal (sql (:create-table array-int ((vector :type (or int[][] db-null)))))
+      (is (equal (sql (:create-table 'array-int ((vector :type (or int[][] db-null)))))
                  "CREATE TABLE array_int (vector INT[][])"))
 
       ;; a column level unique setting
-      (is (equal (sql (:create-table person
+      (is (equal (sql (:create-table 'person
                     ((id :type serial :primary-key t)
                      (first-name :type (varchar 50))
                      (last-name :type (varchar 50))
@@ -89,7 +117,7 @@
                  "CREATE TABLE person (id SERIAL NOT NULL PRIMARY KEY , first_name VARCHAR(50) NOT NULL, last_name VARCHAR(50) NOT NULL, email VARCHAR(50) NOT NULL UNIQUE )"))
 
       ;;  Define a unique table constraint for the table films. Unique table constraints can be defined on one or more columns of the table:
-      (is (equal (sql (:create-table films
+      (is (equal (sql (:create-table 'films
                                      ((code :type (or (string 5) db-null))
                                       (title :type (or (varchar 40) db-null))
                                       (did :type (or integer db-null))
@@ -100,20 +128,20 @@
                  "CREATE TABLE films (code CHAR(5), title VARCHAR(40), did INTEGER, date_prod DATE, kind VARCHAR(10), len INTERVAL HOUR TO MINUTE, CONSTRAINT production UNIQUE (date_prod))"))
 
       ;; Define a check column constraint:
-      (is (equal (sql (:create-table distributors
+      (is (equal (sql (:create-table 'distributors
                                      ((did :type (or integer db-null) :check (:> 'did 100))
                                       (name :type (or (varchar 40) db-null)))))
                  "CREATE TABLE distributors (did INTEGER CHECK (did > 100), name VARCHAR(40))"))
 
       ;; Define a check table constraint:
-      (is (equal (sql (:create-table distributors
+      (is (equal (sql (:create-table 'distributors
                                      ((did :type (or integer db-null))
                                       (name :type (or (varchar 40) db-null)))
                                      (:constraint con1 :check (:and (:> 'did 100) (:<> 'name "")))))
                  "CREATE TABLE distributors (did INTEGER, name VARCHAR(40), CONSTRAINT con1 CHECK ((did > 100) and (name <> E'')))"))
       ;; Define a primary key table constraint for the table films:
 
-      (is (equal (sql (:create-table films
+      (is (equal (sql (:create-table 'films
                              ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key 't)
                               (title :type (varchar 40))
                               (did :type integer)
@@ -125,7 +153,7 @@
 
       ;; Define a primary key constraint for table distributors using table constraint syntax
 
-      (is (equal (sql (:create-table distributors
+      (is (equal (sql (:create-table 'distributors
                                      ((did :type (or integer db-null) :check (:> 'did 100))
                                       (name :type (or (varchar 40) db-null)))
                                      (:primary-key did)))
@@ -133,46 +161,46 @@
 
       ;; Define a primary key constraint for table distributors using column constraint syntax
 
-      (is (equal (sql (:create-table distributors
+      (is (equal (sql (:create-table 'distributors
                                      ((did :type (or integer db-null) :primary-key t)
                                       (name :type (or (varchar 40) db-null)))))
                  "CREATE TABLE distributors (did INTEGER PRIMARY KEY , name VARCHAR(40))"))
 
       ;; Assign a literal constant default value for the column name, arrange for the default value of column did to be generated by selecting the next value of a sequence object, and make the default value of modtime be the time at which the row is inserted:
-      (is (equal (sql (:create-table distributors
+      (is (equal (sql (:create-table 'distributors
                                      ((name :type (or (varchar 40) db-null) :default "Luso Films")
                                       (did :type (or integer db-null) :default (:nextval "distributors-serial"))
                                       (modtime :type (or timestamp db-null) :default (:current-timestamp)))))
                  "CREATE TABLE distributors (name VARCHAR(40) DEFAULT E'Luso Films', did INTEGER DEFAULT nextval(E'distributors_serial'), modtime TIMESTAMP DEFAULT current_timestamp)"))
 
       ;; Define a table with a timestamp with and without a time zones
-      (is (equal (sql (:create-table account-role
+      (is (equal (sql (:create-table 'account-role
                           ((user-id :type integer)
                            (role-id :type integer)
                            (grant-date :type (or timestamp-without-time-zone db-null)))))
                  "CREATE TABLE account_role (user_id INTEGER NOT NULL, role_id INTEGER NOT NULL, grant_date TIMESTAMP WITHOUT TIME ZONE)"))
 
-      (is (equal (sql (:create-table account-role
+      (is (equal (sql (:create-table 'account-role
                                      ((user-id :type integer)
                                       (role-id :type integer)
                                       (grant-date :type (or timestamp-with-time-zone db-null)))))
                  "CREATE TABLE account_role (user_id INTEGER NOT NULL, role_id INTEGER NOT NULL, grant_date TIMESTAMP WITH TIME ZONE)"))
 
-      (is (equal (sql (:create-table account-role
+      (is (equal (sql (:create-table 'account-role
                                      ((user-id :type integer)
                                       (role-id :type integer)
                                       (grant-date :type (or timestamptz db-null)))))
                  "CREATE TABLE account_role (user_id INTEGER NOT NULL, role_id INTEGER NOT NULL, grant_date TIMESTAMPTZ)"))
 
 
-      (is (equal (sql (:create-table account-role
+      (is (equal (sql (:create-table 'account-role
                                      ((user-id :type integer)
                                       (role-id :type integer)
                                       (grant-date :type (or timestamp db-null)))))
                  "CREATE TABLE account_role (user_id INTEGER NOT NULL, role_id INTEGER NOT NULL, grant_date TIMESTAMP)"))
 
 
-      (is (equal (sql (:create-table account-role
+      (is (equal (sql (:create-table 'account-role
                                      ((user-id :type integer)
                                       (role-id :type integer)
                                       (grant-date :type (or time db-null)))))
@@ -180,33 +208,33 @@
 
       ;; Define two NOT NULL column constraints on the table distributors, one of which is explicitly given a name:
 
-      (is (equal (sql (:create-table distributors
+      (is (equal (sql (:create-table 'distributors
                                      ((did :type integer :constraint 'no-null)
                                       (name :type (varchar 40)))))
                  "CREATE TABLE distributors (did INTEGER NOT NULL CONSTRAINT no_null, name VARCHAR(40) NOT NULL)"))
 
       ;; Define a unique constraint for the name column:
-      (is (equal (sql (:create-table distributors
+      (is (equal (sql (:create-table 'distributors
                                      ((did :type (or integer db-null))
                                       (name :type (or (varchar 40) db-null) :unique t))))
                  "CREATE TABLE distributors (did INTEGER, name VARCHAR(40) UNIQUE )"))
 
       ;; The same, specified as a table constraint:
-      (is (equal (sql (:create-table distributors
+      (is (equal (sql (:create-table 'distributors
                                      ((did :type (or integer db-null))
                                       (name :type (or (varchar 40) db-null)))
                                      (:unique 'name)))
                  "CREATE TABLE distributors (did INTEGER, name VARCHAR(40), UNIQUE (name))"))
 
       ;; define a unique constraint for the table using two columns
-      (is (equal (sql (:create-table distributors
+      (is (equal (sql (:create-table 'distributors
                                      ((did :type (or integer db-null))
                                       (name :type (or (varchar 40) db-null)))
                                      (:unique name did)))
                  "CREATE TABLE distributors (did INTEGER, name VARCHAR(40), UNIQUE (name, did))"))
 
       ;; Create a composite type and a typed table:
-      (is (equal (sql (:create-composite-type employee-type (name text) (salary numeric) ))
+      (is (equal (sql (:create-composite-type 'employee-type (name text) (salary numeric) ))
                  "(CREATE TYPE employee_type AS (name text, salary numeric)"))
 
       ;; Create the same table, specifying 70% fill factor for both the table and its unique index:
@@ -218,7 +246,7 @@
   "Testing creating a table with contraints and foreign keys and actions"
 
   ;; First with foreign key on the column
-  (is (equal (sql (:create-table so-items
+  (is (equal (sql (:create-table 'so-items
                            ((item-id :type integer)
                             (so-id :type (or integer db-null) :references ((so-headers id)))
                             (product-id :type (or integer db-null))
@@ -228,7 +256,7 @@
              "CREATE TABLE so_items (item_id INTEGER NOT NULL, so_id INTEGER REFERENCES so_headers(id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT, product_id INTEGER, qty INTEGER, net_price NUMERIC, PRIMARY KEY (item_id, so_id))"))
 
   ;; now with non-default actions for on delete and on update
-  (is (equal (sql (:create-table so-items
+  (is (equal (sql (:create-table 'so-items
                            ((item-id :type integer)
                             (so-id :type (or integer db-null) :references ((so-headers id) :no-action :no-action))
                             (product-id :type (or integer db-null))
@@ -238,7 +266,7 @@
              "CREATE TABLE so_items (item_id INTEGER NOT NULL, so_id INTEGER REFERENCES so_headers(id) MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION, product_id INTEGER, qty INTEGER, net_price NUMERIC, PRIMARY KEY (item_id, so_id))"))
 
   ;;Now referencing a group of columns
-  (is (equal (sql (:create-table so-items
+  (is (equal (sql (:create-table 'so-items
                            ((item-id :type integer)
                             (so-id :type (or integer db-null) :references ((so-headers id p1 p2) :no-action :no-action))
                             (product-id :type (or integer db-null))
@@ -248,7 +276,7 @@
              "CREATE TABLE so_items (item_id INTEGER NOT NULL, so_id INTEGER REFERENCES so_headers(id, p1, p2) MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION, product_id INTEGER, qty INTEGER, net_price NUMERIC, PRIMARY KEY (item_id, so_id))"))
 
   ;; Now with foreign key named at the table level no actions other than the default actions
-  (is (equal (sql (:create-table account-role
+  (is (equal (sql (:create-table 'account-role
                     ((user-id :type integer)
                      (role-id :type integer)
                      (grant-date :type (or timestamp-without-time-zone db-null)))
@@ -257,7 +285,7 @@
              "CREATE TABLE account_role (user_id INTEGER NOT NULL, role_id INTEGER NOT NULL, grant_date TIMESTAMP WITHOUT TIME ZONE, PRIMARY KEY (user_id, role_id), CONSTRAINT account_role_role_id_fkey FOREIGN KEY (role_id) REFERENCES role(role_id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)"))
 
   ;; now at the table level with non-default actions
-  (is (equal (sql (:create-table account-role
+  (is (equal (sql (:create-table 'account-role
                     ((user-id :type integer)
                      (role-id :type integer)
                      (grant-date :type (or timestamp-without-time-zone db-null)))
@@ -266,7 +294,7 @@
              "CREATE TABLE account_role (user_id INTEGER NOT NULL, role_id INTEGER NOT NULL, grant_date TIMESTAMP WITHOUT TIME ZONE, PRIMARY KEY (user_id, role_id), CONSTRAINT account_role_role_id_fkey FOREIGN KEY (role_id) REFERENCES role(role_id) MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION)"))
 
   ;; now with multiple foreign keys at the table level
-  (is (equal (sql (:create-table account-role
+  (is (equal (sql (:create-table 'account-role
          ((user-id :type integer)
           (role-id :type integer)
           (grant-date :type (or timestamp-without-time-zone db-null)))
@@ -279,20 +307,28 @@
 
 (test create-table-identity
   "Testing generating identity columns"
+  (is (equal (sql (:create-table 'color ((color-id :type int :generated-as-identity-always) (color-name :type varchar))))
+             "CREATE TABLE color (color_id INT NOT NULL GENERATED ALWAYS AS IDENTITY , color_name VARCHAR NOT NULL)"))
+  (is (equal (sql (:create-table 'color ((color-id :type int :generated-as-identity-by-default) (color-name :type varchar))))
+             "CREATE TABLE color (color_id INT NOT NULL GENERATED BY DEFAULT AS IDENTITY , color_name VARCHAR NOT NULL)"))
   (is (equal (sql (:create-table color ((color-id :type int :generated-as-identity-always) (color-name :type varchar))))
              "CREATE TABLE color (color_id INT NOT NULL GENERATED ALWAYS AS IDENTITY , color_name VARCHAR NOT NULL)"))
-  (is (equal (sql (:create-table color ((color-id :type int :generated-as-identity-by-default) (color-name :type varchar))))
+  (is (equal (sql (:create-table "color" ((color-id :type int :generated-as-identity-by-default) (color-name :type varchar))))
+             "CREATE TABLE color (color_id INT NOT NULL GENERATED BY DEFAULT AS IDENTITY , color_name VARCHAR NOT NULL)"))
+  (is (equal (sql (:create-table 'color ((color-id :type int :identity-always) (color-name :type varchar))))
+             "CREATE TABLE color (color_id INT NOT NULL GENERATED ALWAYS AS IDENTITY , color_name VARCHAR NOT NULL)"))
+  (is (equal (sql (:create-table 'color ((color-id :type int :identity-by-default) (color-name :type varchar))))
              "CREATE TABLE color (color_id INT NOT NULL GENERATED BY DEFAULT AS IDENTITY , color_name VARCHAR NOT NULL)"))
   (with-test-connection
     (when (table-exists-p 'color) (execute (:drop-table 'color)))
-    (query (:create-table color ((color-id :type int :generated-as-identity-always) (color-name :type varchar))))
+    (query (:create-table 'color ((color-id :type int :generated-as-identity-always) (color-name :type varchar))))
     (is (equal (table-exists-p 'color) t))
     (query (:insert-into 'color :set 'color-name "Red"))
     (is (equal (length (query (:select '* :from 'color)))
                1))
     (signals database-error (query (:insert-into 'color :set 'color-id 2 'color-name "Green")))
     (execute (:drop-table 'color))
-    (query (:create-table color ((color-id :type int :generated-as-identity-by-default) (color-name :type varchar))))
+    (query (:create-table 'color ((color-id :type int :generated-as-identity-by-default) (color-name :type varchar))))
     (query (:insert-into 'color :set 'color-name "White"))
     (is (equal (length (query (:select '* :from 'color)))
                1))
@@ -655,6 +691,7 @@
     (when (table-exists-p 'color) (execute (:drop-table 'color)))
     (query (:create-extended-table color ((color-id :type int :generated-as-identity-always) (color-name :type varchar))))
     (is (equal (table-exists-p 'color) t))
+    (is (table-exists-p :color))
     (query (:insert-into 'color :set 'color-name "Red"))
     (is (equal (length (query (:select '* :from 'color)))
                1))
@@ -668,8 +705,6 @@
     (is (equal (length (query (:select '* :from 'color)))
                2))
     (execute (:drop-table 'color))))
-
-
 
 (test create-table-full-1
       "Test :create-table with extended table constraints."
@@ -691,70 +726,31 @@
 	  "CREATE TABLE faa.d_airports (airportid INTEGER NOT NULL, name TEXT NOT NULL, city TEXT NOT NULL, country TEXT NOT NULL, airport_code TEXT NOT NULL, icoa_code TEXT NOT NULL, latitude FLOAT8 NOT NULL, longitude FLOAT8 NOT NULL, altitude FLOAT8 NOT NULL, timezoneoffset REAL NOT NULL, dst_flag TEXT NOT NULL, tz TEXT NOT NULL) DISTRIBUTED BY (airport_code) ")))
 
 
-#|
+(test drop-table
+  "Testing drop-table method."
+  (is (equal (sql (:drop-table 'george))
+             "DROP TABLE george"))
+  (is (equal (sql (:drop-table :if-exists 'george))
+             "DROP TABLE IF EXISTS george"))
+  (is (equal (sql (:drop-table :if-exists 'george :cascade))
+             "DROP TABLE IF EXISTS george CASCADE"))
+  (is (equal (sql (:drop-table  (:if-exists 'george) :cascade))
+             "DROP TABLE IF EXISTS george CASCADE")))
 
-Create a composite type and a typed table: NOTE. WE DO NOT HAVE A CREATE-TYPE
-
-
-CREATE TYPE employee_type AS (name text, salary numeric);
-
-CREATE TABLE employees OF employee_type (
-    PRIMARY KEY (name),
-    salary WITH OPTIONS DEFAULT 1000
-);
-
-Create a list partitioned table:
-
-CREATE TABLE cities (
-    city_id      bigserial not null,
-    name         text not null,
-    population   bigint
-) PARTITION BY LIST (left(lower(name), 1));
-Create partition of a range partitioned table:
-
-CREATE TABLE measurement_y2016m07
-    PARTITION OF measurement (
-    unitsales DEFAULT 0
-) FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');
-Create a few partitions of a range partitioned table with multiple columns in the partition key:
-
-;; NOTE THAT SEVERAL OF THE FOLLOWING VIOLATE THE POSTMODERN REQUIREMENT FOR COLUMSN TO BE DEFINED
-
-CREATE TABLE measurement_ym_older
-    PARTITION OF measurement_year_month
-    FOR VALUES FROM (MINVALUE, MINVALUE) TO (2016, 11);
-
-CREATE TABLE measurement_ym_y2016m11
-    PARTITION OF measurement_year_month
-    FOR VALUES FROM (2016, 11) TO (2016, 12);
-
-CREATE TABLE measurement_ym_y2016m12
-    PARTITION OF measurement_year_month
-    FOR VALUES FROM (2016, 12) TO (2017, 01);
-
-CREATE TABLE measurement_ym_y2017m01
-    PARTITION OF measurement_year_month
-    FOR VALUES FROM (2017, 01) TO (2017, 02);
-Create partition of a list partitioned table:
-
-CREATE TABLE cities_ab
-    PARTITION OF cities (
-    CONSTRAINT city_id_nonzero CHECK (city_id != 0)
-) FOR VALUES IN ('a', 'b');
-Create partition of a list partitioned table that is itself further partitioned and then add a partition to it:
-
-CREATE TABLE cities_ab
-    PARTITION OF cities (
-    CONSTRAINT city_id_nonzero CHECK (city_id != 0)
-) FOR VALUES IN ('a', 'b') PARTITION BY RANGE (population);
-
-CREATE TABLE cities_ab_10000_to_100000
-    PARTITION OF cities_ab FOR VALUES FROM (10000) TO (100000);
-
-|#
-
-
-(test create-index
-  "Testing the sql created for create-index"
-  (is (equal (sql (:create-index 'gin-idx :on "historical-events" :using gin :fields 'data))
-             "CREATE INDEX gin_idx ON historical_events USING GIN (data)")))
+(test alter-table
+  "Testing the alter-table sql-op"
+  (is (equal (sql (:alter-table 'test-uniq :drop-constraint 'test-uniq-pkey))
+             "ALTER TABLE test_uniq DROP CONSTRAINT test_uniq_pkey"))
+  (is (equal (sql (:alter-table "test-uniq" :drop-constraint "test-uniq-pkey"))
+             "ALTER TABLE test_uniq DROP CONSTRAINT test_uniq_pkey"))
+  (is (equal (sql (:alter-table "test-uniq" :add-column 'address :type (or (varchar 40) db-null)))
+             "ALTER TABLE test_uniq ADD COLUMN address VARCHAR(40)"))
+  (is (equal (sql (:alter-table "test-uniq" :drop-column 'address))
+             "ALTER TABLE test_uniq DROP COLUMN address"))
+  (is (equal (sql (:alter-table "test-uniq" :rename-column 'address 'city))
+             "ALTER TABLE test_uniq RENAME COLUMN address TO city"))
+  (is (equal (sql (:alter-table "test-uniq" :rename 'test-unique))
+             "ALTER TABLE test_uniq RENAME TO test_unique"))
+  (is (equal (sql (:alter-table "test-uniq" :add-constraint silly-key :primary-key 'code 'title))
+             "ALTER TABLE test_uniq ADD CONSTRAINT silly_key PRIMARY KEY (code, title)"))
+  )
