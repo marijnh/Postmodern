@@ -124,17 +124,6 @@ forward slash to underscore.")
 
 (defvar *downcase-symbols* t)
 
-(defun quoted-name-p (name)
-  "Takes what might be a string, a symbol or a quoted-name in the form
- '(quote name) and returns the string version of the name"
-  (cond ((and (consp name) (eq (car name) 'quote) (equal (length name) 2))
-         (string (cadr name)))
-        ((symbolp name)
-         (string name))
-        ((stringp name)
-         name)
-        (t nil)))
-
 (defun to-sql-name (name &optional (escape-p *escape-sql-names-p*))
   "Convert a symbol or string into a name that can be a sql table,
 column, or operation name. Add quotes when escape-p is true, or
@@ -1396,9 +1385,8 @@ DOES NOT IMPLEMENT POSTGRESQL FUNCTION EXCLUDE."
 
 (def-sql-op :create-composite-type (type-name &rest args)
   "Creates a composite type with a type-name and two or more
-columns.
-  Sample call would be:
-   (sql (:create-composite-type fullname (first-name text) (last-name text)))"
+columns. Sample call would be:
+   (sql (:create-composite-type 'fullname (first-name text) (last-name text)))"
   `("(CREATE TYPE " ,(cond ((and type-name (stringp type-name))
                             (to-sql-name type-name))
                            ((and type-name (symbolp type-name) (boundp type-name))
@@ -1510,16 +1498,6 @@ Note that with extended tables you can have tables without columns that are inhe
         (:owned-by `(" OWNED BY " ,(to-sql-name  argument)))
         (t (sql-error "Unknown ALTER SEQUENCE action ~A" action)))))
 
-(defun unquote-name (name)
-  "Helper function dealing with names in macros"
-  (cond ((stringp name) name)
-        ((and (consp name)
-              (equal (length name) 2)
-              (eq 'quote (car name)))
-         (cadr name))
-        ((symbolp name) (symbol-name name))
-        (t nil)))
-
 (defun expand-create-index (name args)
   "Available parameters - in order after name - are :concurrently, :on, :using, :fields
 and :where.The advantage to using the keyword :concurrently is that writes to the table
@@ -1603,7 +1581,21 @@ that the table will need to be scanned twice. Everything is a trade-off."
               (t '("")))
       ,@(when cascade '(" CASCADE ")))))
 
+(defun quoted-name-p (name)
+  "Helper function which may be useful for certain macros.
+Takes what might be a string, a symbol or a quoted-name in the form
+ '(quote name) and returns the string version of the name."
+  (cond ((and (consp name) (eq (car name) 'quote) (equal (length name) 2))
+         (string (cadr name)))
+        ((symbolp name)
+         (string name))
+        ((stringp name)
+         name)
+        (t nil)))
+
 (defun dequote (val)
+  "Helper function for macros which look for 'something but that
+has been converted to (quote something)."
   (if (and (consp val) (eq (car val) 'quote)) (cadr val) val))
 
 (def-sql-op :nextval (name)
