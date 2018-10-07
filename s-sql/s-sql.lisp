@@ -1374,7 +1374,7 @@ DOES NOT IMPLEMENT POSTGRESQL FUNCTION EXCLUDE."
          (concatenate 'string (unless tableset  "TABLE ") (to-sql-name name)))
         ((and name (listp name))
          (case (car name)
-           ('quote (concatenate 'string (unless tableset  "TABLE ") (to-sql-name (cadr name))))
+           (quote (concatenate 'string (unless tableset  "TABLE ") (to-sql-name (cadr name))))
            (:temp (concatenate 'string "TEMP TABLE " (expand-table-name (cadr name) t)))
            (:unlogged (concatenate 'string "UNLOGGED TABLE " (expand-table-name (cadr name) t)))
            (:if-not-exists (concatenate 'string (unless tableset  "TABLE ") "IF NOT EXISTS "

@@ -80,7 +80,9 @@ we use the search path which can be controlled by being within a with-schema for
     (if result t nil)))
 
 (defun create-sequence (name &key temp if-not-exists increment min-value max-value start cache)
-  "Create a sequence."
+  "Create a sequence. Available additional key parameters are
+:temp :if-not-exists :increment :min-value :max-value :start and :cache. See
+https://www.postgresql.org/docs/current/static/sql-createsequence.html for details on usage."
   (let ((query-string
          (concatenate 'string
                       "CREATE "
@@ -96,7 +98,7 @@ we use the search path which can be controlled by being within a with-schema for
     (query query-string)))
 
 (defun drop-sequence (name &key if-exists cascade)
-  "Drop a sequence. Name should be quoted."
+  "Drop a sequence. Name should be quoted. Available key parameters are :if-exists and :cascade"
   (let ((query-string
          (concatenate 'string
                       "DROP "
@@ -147,6 +149,7 @@ table."
                               'attnum)))))
 
 (defun coalesce (&rest args)
+  "Returns t if any argument is not nil or :null."
   (some (lambda (x) (if (eq x :null) nil x)) args))
 
 (defun database-version ()
@@ -235,7 +238,7 @@ ordered by name. This function excludes the template databases."
 ;;; create table can only be done either using a deftable approach or s-sql
 
 (defun drop-table (name &key if-exists cascade)
-  "Drop a table."
+  "Drop a table. Available additional key parameters are :if-exists and :cascade."
   (let ((query-string
          (concatenate 'string
                       "DROP "
@@ -354,7 +357,8 @@ rather than directly."
 
 ;;; Views
 (defun describe-views (&optional (schema "public"))
-  "Describe the current views in the specified schema. Defaults to public schema."
+  "Describe the current views in the specified schema. Takes an optional schema
+name but defaults to public schema."
   (setf schema (to-sql-name schema))
   (query
    (:order-by
@@ -421,7 +425,7 @@ it does not have a where clause capability."
     (query query-string)))
 
 (defun drop-index (name &key concurrently if-exists cascade)
-  "Drop an index. "
+  "Drop an index. Available keys are :concurrently, :if-exists, and :cascade."
   (let ((query-string
          (concatenate 'string
                       "DROP "

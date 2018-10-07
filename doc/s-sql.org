@@ -250,7 +250,7 @@ Is similar to cast but uses the postgresql :: formating. E.g.
 ** sql-op :create-composite-type (type-name &rest args)
 Creates a composite type with a type-name and two or more columns. E.g.
 #+BEGIN_SRC lisp
-(query (:create-composite-type fullname (first-name text) (last-name text)))
+(query (:create-composite-type 'fullname (first-name text) (last-name text)))
 #+END_SRC
 ** sql-op :exists (query)
 

@@ -462,6 +462,8 @@ and second the string name for the datatype."
 (test sequence
   "Sequence testing"
   (with-test-connection
+    (when (sequence-exists-p 'my-seq)
+      (execute (:drop-sequence 'my-seq)))
     (execute (:create-sequence 'my-seq :increment 4 :start 10))
     (protect
       (is (sequence-exists-p 'my-seq))
