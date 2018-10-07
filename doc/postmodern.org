@@ -92,6 +92,10 @@ Set the maximum amount of connections kept in a single connection pool, where
 a pool consists of all the stored connections with the exact same connect
 arguments. Defaults to NIL, which means there is no maximum.
 
+** function list-connections ()
+→ list
+
+List the current postgresql connections to the currently connected database.
 * Querying
 ** macro query (query &rest args/format)
 → result
@@ -342,14 +346,20 @@ when given only one argument, for transforming :nulls to NIL.
 ** function list-tables (&optional strings-p)
 → list
 
-Returns a list of the tables in the current database. When strings-p is T,
+Returns a list of the tables in the current database and schema. When strings-p is T,
 the names will be given as strings, otherwise as keywords.
 
+** function list-tables-in-schema (&optional strings-p)
+→ list
+
+Returns a list of the tables in the current database and the specified schema.
+When strings-p is T,the names will be given as strings, otherwise as keywords.
 ** function table-exists-p (name)
 → boolean
 
 Tests whether a table with the given name exists. The name can be either a
-string or a symbol.
+string or a symbol. It can also be qualified in the form of 'schema.table
+or 'database.schema.table
 
 ** function table-description (name &optional schema-name)
 → list
@@ -517,6 +527,12 @@ strings-p is not true.
 
 List the index names and the related columns in a table.
 
+** function index-exists-p (name)
+→ boolean
+
+Tests whether an index with the given name exists. The name can be either a
+string or a symbol.
+
 ** function list-indexed-column-and-attributes (table-name)
 → list
 
@@ -543,7 +559,6 @@ primary key as a string.
 Returns a list of sublists of foreign key info in the form of
    '((constraint-name local-table local-table-column
      foreign-table-name foreign-column-name))
-
 
 ** function list-unique-or-primary-constraints (table-name)
 → list
@@ -582,13 +597,23 @@ List detailed information on the triggers from the information_schema table.
 → list
 
 List database users.
+** function list-available-extensions ()
+→ list
 
+List the postgresql extensions which are available in the system to the
+currently connected database. The extensions may or may not be installed.
+** function list-installed-extensions ()
+→ list
+
+List the postgresql extensions which are installed in the currently
+connected database.
 ** function change-toplevel-database (new-database user password host)
 → string
 
 Just changes the database assuming you are using a toplevel connection.
 Recommended only for development work. Returns the name of the newly
 connected database as a string.
+
 
 * Database access objects
 Postmodern contains a simple system for defining CLOS classes that
@@ -945,3 +970,7 @@ Retrieve the current search path.
 ** function set-search-path (path)
 
 Sets the search path to the path. This function is used by with-schema.
+** function split-fully-qualified-table-name (name)
+→ list
+Takes a name of the form database.schema.table or schema.table or just table
+and returns a list in the form '(table schema database)

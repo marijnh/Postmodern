@@ -153,7 +153,9 @@ escape-p is :auto and the name contains reserved words."
   (is (equal (s-sql::to-sql-name "George\\Harrison" :literal)
              "\"George\\Harrison\""))
   (is (equal (s-sql::to-sql-name "George-Harrison" :literal)
-             "\"George-Harrison\"")))
+             "\"George-Harrison\""))
+  (is (equal (s-sql:to-sql-name "george-gracie!@~#$%^&*()_+=-0987654321`QWERTGFDSAZXCVBNM<>?:LKJHYIUOP{}|/.,mnhjkl;']\[poiuy")
+             "george_gracie________*______0987654321_qwertgfdsazxcvbnm____lkjhyiuop____._mnhjkl____poiuy")))
 
 (test from-sql-name
   "Testing from-sql-name. Convert a string to something that might have been its original
@@ -345,12 +347,13 @@ to strings \(which will form an SQL query when concatenated)."
              "(SELECT (now()::DATE - x) AS some_date FROM generate_series(1, 10) AS x)")))
 
 (test values
-  "Testing values"
+  "Testing values. Escaped string results have been validated."
   (is (equal (sql (:select 'a 'b 'c (:cast (:as (:* 50 (:random)) 'int))
                    :from (:as (:values (:set "a") (:set "b")) (:d1 'a))
                          (:as (:values (:set "c") (:set "d")) (:d2 'b))
                          (:as (:values (:set "e") (:set "f")) (:d3 'c))))
              "(SELECT a, b, c, CAST((50 * random()) AS int) FROM (VALUES (E'a'), (E'b')) AS d1(a), (VALUES (E'c'), (E'd')) AS d2(b), (VALUES (E'e'), (E'f')) AS d3(c))"))
+
 
   (is (equal (sql (:select '* :from (:as (:values (:set 1 "one") (:set 2 "two") (:set 3 "three")) (:t1 'num 'letter))))
              "(SELECT * FROM (VALUES (1, E'one'), (2, E'two'), (3, E'three')) AS t1(num, letter))")))
@@ -1309,100 +1312,61 @@ FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
         (is (equal type "char(5)"))
         (is (eq null? t))))
 
-(test sequence-tests
-      "sequence testing"
-      (with-test-connection
-        (when (pomo:sequence-exists-p :knobo-seq)
-          (pomo:query (:drop-sequence :knobo-seq)))
-
-        ;; Setup new sequence
-        (is (eq
-             (pomo:query (:create-sequence :knobo-seq) :single)
-             nil))
-
-        ;; Test that we can set increment
-        (is (equal (sql (:alter-sequence :knobo-seq :increment 1))
-                   "ALTER SEQUENCE knobo_seq INCREMENT BY 1"))
-        (is (eq (pomo:query (:alter-sequence :knobo-seq :increment 1))
-                nil))
-
-        ;; Test that currval is not yet set
-        (signals error (pomo:query (:select (:currval :knobo-seq)) :single))
-
-        ;; Test next value
-        (is (equal (pomo:query (:select (:nextval :knobo-seq)) :single)
-                   1))
-
-        ;; Test currval
-        (is (eq (pomo:query (:select (:currval :knobo-seq)) :single) 1))
-
-        ;; Test that we can set restart at 2
-        ;; TODO Test that when we restart, we get 2.
-        (is (equal (sql (:alter-sequence :knobo-seq :start 2))
-                   "ALTER SEQUENCE knobo_seq START 2"))
-
-        (is (eq (pomo:query (:alter-sequence :knobo-seq :start 2))
-                nil))
-
-         ;; Testing that we can set max value
-        (is (equal (sql (:alter-sequence :knobo-seq :max-value 5))
-                   "ALTER SEQUENCE knobo_seq MAXVALUE 5"))
-        (is (eq (pomo:query (:alter-sequence :knobo-seq :max-value 5))
-                nil))
-
-  ;; TODO: chech here that we don't can do next past max-value
-        (is (equal (pomo:query (:select (:nextval :knobo-seq)) :single) 2))
-
-        (is (equal (sql (:alter-sequence :knobo-seq :start 3))
-                   "ALTER SEQUENCE knobo_seq START 3"))
-
-        (is (eq (pomo:query (:alter-sequence :knobo-seq :start 3))
-                nil))
-
-
-        ;; Test set min value
-        (is (equal (sql (:alter-sequence :knobo-seq :min-value 2))
-                   "ALTER SEQUENCE knobo_seq MINVALUE 2"))
-        (signals error (pomo:query (:alter-sequence :knobo-seq :min-value 3)))
-        (is (equal (pomo:query (:alter-sequence :knobo-seq :min-value 2)) nil))
-
-        ;; test remove max value
-        (is (equal (sql (:alter-sequence :knobo-seq :no-max))
-                   "ALTER SEQUENCE knobo_seq NO MAXVALUE"))
-        (is (eq (pomo:query (:alter-sequence :knobo-seq :no-max))
-                nil))
-
-        ;; test remove min value
-        (is (equal (sql (:alter-sequence :knobo-seq :no-min))
-                   "ALTER SEQUENCE knobo_seq NO MINVALUE"))
-        (is (eq (pomo:query (:alter-sequence :knobo-seq :no-min))
-                nil))
-
-        (is (eq (pomo:query (:alter-sequence :knobo-seq :cycle))
-                nil))
-
-        (is (eq (pomo:query (:alter-sequence :knobo-seq :no-cycle))
-                nil))
-
-        (is (eq (pomo:query (:alter-sequence :knobo-seq :cache 1))
-                nil))
-
-        (unless (pomo:table-exists-p "seq-test")
-          (pomo:query (:create-table "seq-test" ((:id :type :int)))))
-
-        (is (eq (pomo:query (:alter-sequence :knobo-seq :owned-by :seq-test.id))
-                nil))
-
-        ;; cleanup
-        (pomo:query (:drop-sequence :knobo-seq))))
-
 (test create-index
-  "Testing create-index"
-  (is (equal (sql (:create-index 'films_idx :on "films" :fields 'title))
+  "Testing create-index. Available parameters - in order after name - are :concurrently, :on, :using, :fields
+and :where.The advantage to using the keyword :concurrently is that writes to the table
+from other sessions are not locked out while the index is is built. The disadvantage is
+that the table will need to be scanned twice. Everything is a trade-off."
+  (is (equal (sql (:create-index 'films_idx :on 'films :fields 'title))
              "CREATE INDEX films_idx ON films (title)"))
+  (is (equal (sql (:create-index 'films-idx :on "films" :fields 'title))
+             "CREATE INDEX films_idx ON films (title)"))
+  (is (equal (sql (:create-index 'films-idx :on "films" :fields 'title 'id))
+             "CREATE INDEX films_idx ON films (title, id)"))
   (is (equal (sql (:create-index 'films_idx :on "films" :using gin :fields 'title))
-      "CREATE INDEX films_idx ON films USING GIN (title)"))
+             "CREATE INDEX films_idx ON films USING gin (title)"))
   (is (equal (sql (:create-index 'doc-tags-id-tags :on "doc-tags-array" :using gin :fields 'tags))
-             "CREATE INDEX doc_tags_id_tags ON doc_tags_array USING GIN (tags)"))
+             "CREATE INDEX doc_tags_id_tags ON doc_tags_array USING gin (tags)"))
   (is (equal (sql (:create-unique-index 'doc-tags-id-doc-id :on "doc-tags-array"  :fields 'doc-id))
-             "CREATE UNIQUE INDEX doc_tags_id_doc_id ON doc_tags_array (doc_id)")))
+             "CREATE UNIQUE INDEX doc_tags_id_doc_id ON doc_tags_array (doc_id)"))
+    (is (equal (sql (:create-index 'films-idx :concurrently :on "films" :using 'btree :fields 'created-at))
+             "CREATE INDEX CONCURRENTLY films_idx ON films USING btree (created_at)"))
+  (is (equal (sql (:create-index 'films-idx :unique :concurrently :on "films" :using 'btree :fields 'created-at))
+             "CREATE UNIQUE INDEX CONCURRENTLY films_idx ON films USING btree (created_at)"))
+  (is (equal (sql (:create-index (:if-not-exists 'test-uniq-1-idx) :on test-uniq :fields 'name))
+             "CREATE INDEX IF NOT EXISTS test_uniq_1_idx ON test_uniq (name)"))
+    (with-test-connection
+    (query (:drop-table :if-exists 'george :cascade))
+    (is (eq (table-exists-p 'george) nil))
+    (query (:create-table 'george ((id :type integer))))
+    (is (eq (table-exists-p 'george) t))
+    (query (:create-index 'george-idx :on 'george :fields 'id))
+    (is (pomo:index-exists-p 'george-idx))
+    (is (pomo:index-exists-p "george-idx"))))
+
+
+(test create-view
+  "Testing create-view syntax"
+  (is (equal (sql (:create-view 'quagmire (:select 'id 'name :from 'employee)))
+             "CREATE VIEW quagmire AS (SELECT id, name FROM employee)"))
+  (is (equal (sql (:create-view :quagmire (:select 'id 'name :from 'employee)))
+             "CREATE VIEW quagmire AS (SELECT id, name FROM employee)"))
+  (is (equal (sql (:create-view "quagmire" (:select 'id 'name :from 'employee)))
+             "CREATE VIEW quagmire AS (SELECT id, name FROM employee)"))
+  (with-test-connection
+    (when (view-exists-p 'quagmire)
+      (query (:drop-view 'quagmire)))
+    (query (:create-view 'quagmire (:select 'id 'name :from 'employee)))
+    (is (equal (list-views)
+        '(:QUAGMIRE)))
+    (is (equal (list-views t)
+        '("quagmire")))
+    (is (view-exists-p 'quagmire))
+    (is (view-exists-p :quagmire))
+    (is (view-exists-p "quagmire"))
+
+    ;; cleanup
+    (query (:drop-view 'quagmire))
+    (is (equal (sql (:drop-view :quagmire))
+               "DROP VIEW quagmire"))
+    ))

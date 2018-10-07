@@ -19,9 +19,11 @@
    #:*database* #:connected-p #:database-connection
    #:connect-toplevel #:disconnect-toplevel
    #:clear-connection-pool #:*max-pool-size* #:*default-use-ssl*
+   #:list-connections
    #:query #:execute #:doquery
    #:prepare #:defprepared #:defprepared-with-names
    #:sequence-next #:list-sequences #:sequence-exists-p
+   #:create-sequence #:drop-sequence
    #:list-tables #:table-exists-p #:table-description
    #:list-views #:view-exists-p
    #:*current-logical-transaction* #:*isolation-level* #:with-transaction
@@ -37,6 +39,7 @@
    #:list-table-sizes #:table-size #:more-table-info
    #:list-columns #:list-columns-with-types #:column-exists-p
    #:describe-views #:list-database-functions #:list-indices
+   #:index-exists-p #:create-index #:drop-index
    #:list-table-indices #:list-indexed-column-and-attributes
    #:list-index-definitions #:list-foreign-keys #:list-unique-or-primary-constraints
    #:list-all-constraints #:describe-constraint #:describe-foreign-key-constraints
@@ -49,7 +52,9 @@
    #:create-table #:create-all-tables #:create-package-tables
    #:\!index #:\!unique-index #:\!foreign #:\!unique
    #:create-schema #:drop-schema #:list-schemata
-   #:with-schema #:schema-exist-p #:set-search-path #:get-search-path
+   #:with-schema #:schema-exists-p #:set-search-path #:get-search-path
+   #:list-tables-in-schema
+   #:split-fully-qualified-tablename
 
    ;; Reduced S-SQL interface
    #:sql #:sql-compile

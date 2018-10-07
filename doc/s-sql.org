@@ -250,7 +250,7 @@ Is similar to cast but uses the postgresql :: formating. E.g.
 ** sql-op :create-composite-type (type-name &rest args)
 Creates a composite type with a type-name and two or more columns. E.g.
 #+BEGIN_SRC lisp
-(query (:create-composite-type fullname (first-name text) (last-name text)))
+(query (:create-composite-type 'fullname (first-name text) (last-name text)))
 #+END_SRC
 ** sql-op :exists (query)
 
@@ -1011,7 +1011,18 @@ expressions that should be returned for every deleted row.
 
 ** sql-op :create-table (name (&rest columns) &rest options)
 
-Create a new table.
+Create a new table. The simplest example would pass two parameters,
+the table name and a list of lists providing information for each column.
+For example:
+#+BEGIN_SRC lisp
+(query (:create-table 'george ((id :type integer))))
+#+END_SRC
+where 'george is the name of the table, it has 1 column named id
+which is limited to integers. There are no indexes or keys in this
+example.
+
+See [[file:create-tables.html]] for more detailed examples.
+
 *** Column Definition parameters
 After the table name a list of column definitions
 follows, which are lists that start with a name, followed by one or
@@ -1152,6 +1163,8 @@ to suppress the error message. You can also optionally pass :cascade after
 the name to indicate that it should also drop any other tables, indices,
 etc which depend on that table.
 #+BEGIN_SRC lisp
+(query (:drop-table 'table1))
+(query (:drop-table :if-exists 'table1))
 (query (:drop-table :if-exists 'table1 :cascade))
 #+END_SRC
 
@@ -1201,7 +1214,12 @@ Works like :create-index, except that the index created is unique.
 
 ** sql-op :drop-index (name)
 
-Drop an index. Takes an :if-exists argument like :drop-table.
+Drop an index. Takes :if-exists and/or :cascade arguments like :drop-table.
+#+BEGIN_SRC lisp
+(query (:drop-index 'index1))
+(query (:drop-index :if-exists 'index1))
+(query (:drop-index :if-exists 'index1 :cascade))
+#+END_SRC
 
 ** sql-op :create-sequence (name &key increment min-value max-value start cache cycle)
 
@@ -1240,7 +1258,12 @@ Sets the amount by which each subsequent increment will be increased.
 
 ** sql-op :drop-sequence (name)
 
-Drop a sequence. You may pass :if-exists as an extra first argument.
+Drop a sequence. Takes :if-exists and/or :cascade arguments like :drop-table.
+#+BEGIN_SRC lisp
+(query (:drop-sequence 'sequence1))
+(query (:drop-sequence :if-exists 'sequence1))
+(query (:drop-sequence :if-exists 'sequence1 :cascade))
+#+END_SRC
 
 ** sql-op :create-view (name query)
 
@@ -1327,6 +1350,10 @@ Create a new database with the given name.
 
 Drops the named database. You may optionally pass :if-exists before the
 name to suppress the error message.
+#+BEGIN_SRC lisp
+(query (:drop-database 'database-name))
+(query (:drop-database :if-exists 'database-name))
+#+END_SRC
 
 ** sql-op :copy (table &rest args)
 

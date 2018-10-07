@@ -125,7 +125,8 @@ it will throw an error noting the loss of precision and offering to continue or 
 (defgeneric to-sql-string (arg)
   (:documentation "Turn a lisp value into a string containing its SQL
 representation. Returns an optional second value that indicates
-whether the string should be escaped before being put into a query.")
+whether the string should be escaped before being put into a query.
+Generally any string is going to be designated to be escaped")
   (:method ((arg string))
     (values arg t))
   (:method ((arg vector))
