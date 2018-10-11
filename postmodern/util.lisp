@@ -733,12 +733,6 @@ Recommended only for development work."
                                    'name))
      collect (first x)))
 
-(defun list-available-extensions ()
-  "Returns available postgresql extensions per pg_available_extensions"
-  (loop for x in (query (:order-by (:select 'name :from 'pg-available-extensions)
-                                   'name))
-     collect (first x)))
-
 (defun list-installed-extensions ()
   "Returns postgresql extensions actually installed in the database per pg_available_extensions"
   (loop for x in (query (:order-by (:select 'extname :from 'pg-extension)
