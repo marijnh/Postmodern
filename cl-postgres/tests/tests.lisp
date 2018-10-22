@@ -217,7 +217,7 @@
            do
            (db-write-row stream row))
       (close-db-writer stream))
-    (print (exec-query connection "select * from test"))
+    (exec-query connection "select * from test")
     (exec-query connection "drop table test")))
 
 (test row-boolean-array
