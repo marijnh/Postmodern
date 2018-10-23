@@ -1,10 +1,12 @@
 (defpackage :cl-postgres-tests
   (:use :common-lisp :fiveam :cl-postgres :cl-postgres-error)
-  (:export #:prompt-connection #:with-test-connection))
+  (:export #:prompt-connection #:with-test-connection #:*test-connection*))
 
 (in-package :cl-postgres-tests)
 
-(defvar *test-connection* nil)
+(defvar *test-connection* nil
+  "A list of connection parameters to use when running the tests.  The
+  order is: database name, user, password and hostname.")
 
 (defun prompt-connection (&optional (defaults '("test" "test" "" "localhost")))
   (when *test-connection*
