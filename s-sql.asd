@@ -11,7 +11,8 @@
   :depends-on ("cl-postgres")
   :components
   ((:module "s-sql"
-    :components ((:file "s-sql")))))
+    :components ((:file "s-sql"))))
+  :in-order-to ((test-op (test-op "s-sql/tests"))))
 
 (defsystem "s-sql/tests"
   :depends-on ("postmodern" "s-sql" "cl-postgres/tests" "fiveam" )

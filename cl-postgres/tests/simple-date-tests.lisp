@@ -1,33 +1,19 @@
-
 (defpackage :cl-postgres-simple-date-tests
   (:use :common-lisp :fiveam :cl-postgres :cl-postgres-error :simple-date)
-  (:export #:prompt-connection #:*test-connection*))
+  (:import-from #:cl-postgres-tests
+                #:prompt-connection))
 
 (in-package :cl-postgres-simple-date-tests)
-
-(defparameter *test-connection* '("test" "test" "" "localhost"))
-
-(defun prompt-connection (&optional (list *test-connection*))
-  (flet ((ask (name pos)
-           (format *query-io* "~a (enter to keep '~a'): " name (nth pos list))
-           (finish-output *query-io*)
-           (let ((answer (read-line *query-io*)))
-             (unless (string= answer "") (setf (nth pos list) answer)))))
-    (format *query-io* "~%To run this test, you must configure a database connection.~%")
-    (ask "Database name" 0)
-    (ask "User" 1)
-    (ask "Password" 2)
-    (ask "Hostname" 3)))
 
 (defmacro with-simple-date-readtable (&body body)
   `(let ((*sql-readtable* (simple-date-cl-postgres-glue:simple-date-sql-readtable)))
     ,@body))
 
 (defmacro with-test-connection (&body body)
-  `(let ((connection (apply 'open-database *test-connection*)))
-    (with-simple-date-readtable
-      (unwind-protect (progn ,@body)
-        (close-database connection)))))
+  `(let ((connection (apply 'open-database (prompt-connection))))
+     (with-simple-date-readtable
+       (unwind-protect (progn ,@body)
+         (close-database connection)))))
 
 (def-suite :cl-postgres-simple-date)
 (in-suite :cl-postgres-simple-date)

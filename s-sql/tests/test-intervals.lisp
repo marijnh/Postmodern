@@ -130,9 +130,9 @@
                               :from 'employee
                               :group-by 'city
                               :having (:> (:sum (:- (:timestamp "2018-04-10") 'start-date)) (:interval "1 year"))))
-         '(("Vancouver" ((:MONTHS 0) (:DAYS 21746) (:SECONDS 0) (:USECONDS 0)))
-           ("New York" ((:MONTHS 0) (:DAYS 22751) (:SECONDS 0) (:USECONDS 0)))
-           ("Toronto" ((:MONTHS 0) (:DAYS 20374) (:SECONDS 0) (:USECONDS 0))))))))
+         '(("Vancouver" ((:MONTHS 0) (:DAYS 21834) (:SECONDS 0) (:USECONDS 0)))
+           ("New York" ((:MONTHS 0) (:DAYS 23018) (:SECONDS 0) (:USECONDS 0)))
+           ("Toronto" ((:MONTHS 0) (:DAYS 20670) (:SECONDS 0) (:USECONDS 0))))))))
 
 (test timestamp-functions
   "Testing timestamp functions"

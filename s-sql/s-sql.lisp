@@ -1535,7 +1535,6 @@ that the table will need to be scanned twice. Everything is a trade-off."
 
 (defmacro def-drop-op (op-name word)
   `(def-sql-op ,op-name (&rest args)
-     (format t "Def-drop-op-1 Args ~a~%" args)
      (let ((concurrently (if (eq (car args) :concurrently)
                           (pop args)
                           nil))
@@ -1547,7 +1546,6 @@ that the table will need to be scanned twice. Everything is a trade-off."
                             (eq (cadr args) :cascade))
                         t
                         nil)))
-       (format t "~%def-drop-op cascade ~a name ~a~%" cascade name)
        `("DROP " ,,word " "
                  ,@(when concurrently '("CONCURRENTLY "))
                  ,@(when if-exists '("IF EXISTS "))

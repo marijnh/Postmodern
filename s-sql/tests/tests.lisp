@@ -1,5 +1,6 @@
 (defpackage :s-sql-tests
-  (:use :common-lisp :fiveam :s-sql :cl-postgres :cl-postgres-error :cl-postgres-tests :postmodern))
+  (:use :common-lisp :fiveam :s-sql :cl-postgres :cl-postgres-error :cl-postgres-tests :postmodern)
+  (:shadow #:with-test-connection))
 
 (in-package :s-sql-tests)
 
@@ -13,7 +14,7 @@
 (fiveam:in-suite :s-sql)
 
 (defmacro with-test-connection (&body body)
-  `(postmodern:with-connection *test-connection* ,@body))
+  `(with-connection (prompt-connection) ,@body))
 
 (defmacro protect (&body body)
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))

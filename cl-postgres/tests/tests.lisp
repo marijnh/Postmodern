@@ -1,22 +1,44 @@
 (defpackage :cl-postgres-tests
   (:use :common-lisp :fiveam :cl-postgres :cl-postgres-error)
-  (:export #:prompt-connection #:*test-connection* #:with-test-connection))
+  (:export #:prompt-connection #:with-test-connection #:*test-connection*))
 
 (in-package :cl-postgres-tests)
 
-(defparameter *test-connection* '("test" "test" "" "localhost"))
+(defvar *test-connection* nil
+  "A list of connection parameters to use when running the tests.  The
+  order is: database name, user, password and hostname.")
 
-(defun prompt-connection (&optional (list *test-connection*))
-  (flet ((ask (name pos)
-           (format *query-io* "~a (enter to keep '~a'): " name (nth pos list))
-           (finish-output *query-io*)
-           (let ((answer (read-line *query-io*)))
-             (unless (string= answer "") (setf (nth pos list) answer)))))
-    (format *query-io* "~%To run this test, you must configure a database connection.~%")
-    (ask "Database name" 0)
-    (ask "User" 1)
-    (ask "Password" 2)
-    (ask "Hostname" 3)))
+(defun prompt-connection (&optional (defaults '("test" "test" "" "localhost")))
+  (when *test-connection*
+    (return-from prompt-connection *test-connection*))
+  (let* ((descriptions '("Database name" "User" "Password" "Hostname"))
+         (env-vars '("DB_NAME" "DB_USER" "DB_PASS" "DB_HOST"))
+         (provided (mapcar #'uiop:getenv env-vars))
+         (prospective (mapcar (lambda (a b) (if a a b)) provided defaults)))
+    (setq *test-connection*
+          (handler-case
+              (let ((connection (apply #'open-database prospective)))
+                (close-database connection)
+                prospective)
+            (error (condition)
+              (flet ((ask (name provided default)
+                       (format *query-io*
+                               "~A (enter to keep '~:[~A~;~:*~A~]'): "
+                               name provided default)
+                       (finish-output *query-io*)
+                       (let ((answer (read-line *query-io*)))
+                         (if (string= answer "")
+                             (if provided provided default)
+                             answer))))
+                (format *query-io* "~&~
+Could not connect to test database:~%~%  ~A
+
+To run tests, you must provide database connection parameters.  To
+avoid interactive input you can set the following environment
+variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
+                        condition
+                        (mapcar #'list env-vars descriptions provided defaults))
+                (mapcar #'ask descriptions provided defaults)))))))
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
 ;; refers to a valid postgresql database, then after loading the file,
@@ -27,9 +49,9 @@
 (in-suite :cl-postgres)
 
 (defmacro with-test-connection (&body body)
-  `(let ((connection (apply 'open-database *test-connection*)))
-    (unwind-protect (progn ,@body)
-      (close-database connection))))
+  `(let ((connection (apply 'open-database (prompt-connection))))
+     (unwind-protect (progn ,@body)
+       (close-database connection))))
 
 (defmacro with-default-readtable (&body body)
   `(let ((*sql-readtable* (default-sql-readtable)))
@@ -166,11 +188,10 @@
 
 (test unique-violation-error
   (with-test-connection
-    (exec-query connection "create table test (id int not null primary key, name text)")
+    (exec-query connection "create temporary table test (id int not null primary key, name text)")
     (exec-query connection "insert into test values (1, 'bert')")
     (signals unique-violation
-      (exec-query connection "insert into test values (1, 'harry')"))
-    (exec-query connection "drop table test")))
+      (exec-query connection "insert into test values (1, 'harry')"))))
 
 (test sql-reader
   (with-test-connection
@@ -203,7 +224,7 @@
 
 (test bulk-writer
   (with-test-connection
-    (exec-query connection "create table test (a int, b text, c date, d timestamp, e int[])")
+    (exec-query connection "create temporary table test (a int, b text, c date, d timestamp, e int[])")
     (let ((stream (open-db-writer *test-connection* 'test '(a b c d e))))
       ;; test a variety of types (int, text, date, timstamp, int array)
       (loop for row in '((1 "one" "2012-01-01" "2012-01-01 00:00" #(1 2 3 42))
@@ -217,8 +238,7 @@
            do
            (db-write-row stream row))
       (close-db-writer stream))
-    (print (exec-query connection "select * from test"))
-    (exec-query connection "drop table test")))
+    (exec-query connection "select * from test")))
 
 (test row-boolean-array
   (with-test-connection
@@ -473,7 +493,7 @@
 
 (test write-bytea
   (with-test-connection
-    (exec-query connection "create table test (a bytea)")
+    (exec-query connection "create temporary table test (a bytea)")
     (unwind-protect
          (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
            (loop for i below *random-byte-count*
@@ -482,8 +502,7 @@
            (prepare-query connection "bytea-insert" "insert into test values ($1)")
            (exec-prepared connection "bytea-insert" (list random-bytes))
            (is (equalp (exec-query connection "select a from test;" 'list-row-reader)
-                       `((,random-bytes)))))
-      (exec-query connection "drop table test"))))
+                       `((,random-bytes))))))))
 
 (defun vector-to-hex-string (vec)
     (with-output-to-string (s)
@@ -494,7 +513,7 @@
 
 (test write-row-bytea
   (with-test-connection
-    (exec-query connection "create table test (a bytea)")
+    (exec-query connection "create temporary table test (a bytea)")
     (let ((*random-byte-count* 16))
       (unwind-protect
            (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
@@ -507,12 +526,11 @@
                          `((,(concatenate 'string
                                           "(\"\\\\x"
                                           (vector-to-hex-string random-bytes)
-                                          "\")"))))))
-        (exec-query connection "drop table test")))))
+                                          "\")"))))))))))
 
 (test write-row-array-bytea
   (with-test-connection
-    (exec-query connection "create table test (a bytea)")
+    (exec-query connection "create temporary table test (a bytea)")
     (let ((*random-byte-count* 16))
       (unwind-protect
            (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
@@ -522,13 +540,12 @@
              (prepare-query connection "bytea-insert" "insert into test values ($1)")
              (exec-prepared connection "bytea-insert" (list random-bytes))
              (is (equalp (exec-query connection "select row(ARRAY[a]) from test;" 'list-row-reader)
-                         `(((#(,random-bytes)))))))
-        (exec-query connection "drop table test")))))
+                         `(((#(,random-bytes)))))))))))
 
 (test write-row-array-bytea
   (with-test-connection
     (with-binary-row-values
-      (exec-query connection "create table test (a bytea)")
+      (exec-query connection "create temporary table test (a bytea)")
       (unwind-protect
            (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
              (loop for i below *random-byte-count*
@@ -537,13 +554,12 @@
              (prepare-query connection "bytea-insert" "insert into test values ($1)")
              (exec-prepared connection "bytea-insert" (list random-bytes))
              (is (equalp (exec-query connection "select row(ARRAY[a]) from test;" 'list-row-reader)
-                         `(((#(,random-bytes)))))))
-        (exec-query connection "drop table test")))))
+                         `(((#(,random-bytes)))))))))))
 
 (test write-row-array-bytea-binary
   (with-test-connection
     (with-binary-row-values
-      (exec-query connection "create table test (a bytea)")
+      (exec-query connection "create temporary table test (a bytea)")
       (unwind-protect
            (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
              (loop for i below *random-byte-count*
@@ -552,8 +568,7 @@
              (prepare-query connection "bytea-insert" "insert into test values ($1)")
              (exec-prepared connection "bytea-insert" (list random-bytes))
              (is (equalp (exec-query connection "select row(ARRAY[a]) from test;" 'list-row-reader)
-                         `(((#(,random-bytes)))))))
-        (exec-query connection "drop table test")))))
+                         `(((#(,random-bytes)))))))))))
 
 (test row-name-array
   (with-test-connection
@@ -667,7 +682,7 @@
 (test row-array-table-nulls-binary
   (with-binary-row-values
     (with-test-connection
-      (exec-query connection "create table test (a integer[])")
+      (exec-query connection "create temporary table test (a integer[])")
       (unwind-protect
            (progn
              (prepare-query connection "integer-array-insert" "insert into test values ($1)")
@@ -681,8 +696,7 @@
                    connection
                    "select row(a[2:45]) from test"
                    'list-row-reader)
-                  '(((#2A((0 0)))) ((NIL)) ((#2A((2 2)))) ((NIL)) ((NIL))))))
-        (exec-query connection "drop table test")))))
+                  '(((#2A((0 0)))) ((NIL)) ((#2A((2 2)))) ((NIL)) ((NIL))))))))))
 
 (test array-row-text
   (with-test-connection

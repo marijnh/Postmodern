@@ -17,6 +17,7 @@ The biggest differences between this library and CLSQL/CommonSQL or cl-dbi are t
 * [License](#dependencies)
 * [Download and installation](#download-and-installation)
 * [Quickstart](#quickstart)
+* [Running tests](#running-tests)
 * [Reference](#reference)
 * [Caveats and to-dos](#caveats-and-to-dos)
 * [Resources](#resources)
@@ -185,6 +186,68 @@ The defprepared macro creates a function that takes the same amount of arguments
 
     (disconnect-toplevel)
 
+## Running tests
+---
+
+Postmodern uses [FiveAM](https://github.com/sionescu/fiveam) for
+testing.  The different component systems of Postmodern have tests
+defined in corresponding test systems, each defining a test suite.
+The test systems and corresponding top-level test suites are:
+
+- `:postmodern` in `postmodern/tests`,
+- `:cl-postgres` in `cl-postgres/tests`,
+- `:s-sql` in `s-sql/tests`, and
+- `:simple-date` in `simple-date/tests`.
+
+Before running the tests make sure PostgreSQL is running and a test
+database is created.  By default tests use the following connection
+parameters to run the tests:
+
+- Database name: test
+- User: test
+- Password: <empty>
+- Hostname: localhost
+
+If connection with these parameters fails then you will be asked to
+provide the connection parameters interactively.  The parameters will
+be stored in `cl-postgres-tests:*test-connection*` variable and
+automatically used on successive test runs.  This variable can also be
+set manually before running the tests.
+
+To test a particular component one would first load the corresponding
+test system, and then run the test suite.  For example, to test the
+`postmodern` system in the REPL one would do the following:
+
+    (ql:quickload "postmodern/tests")
+    (5am:run! :postmodern)
+    ;; ... test output ...
+
+It is also possible to test multiple components at once by first
+loading test systems and then running all tests:
+
+    (ql:quickload '("cl-postgres/tests" "s-sql/tests"))
+    (5am:run-all-tests)
+    ;; ... test output ...
+
+To run the tests from command-line specify the same forms using your
+implementation's command-line syntax.  For instance, to test all
+Postmodern components on SBCL, use the following command:
+
+    env DB_USER=$USER sbcl --noinform \
+        --eval '(ql:quickload "postmodern/tests")' \
+        --eval '(ql:quickload "cl-postgres/tests")' \
+        --eval '(ql:quickload "s-sql/tests")' \
+        --eval '(ql:quickload "simple-date/tests")' \
+        --eval '(progn (setq 5am:*print-names* nil) (5am:run-all-tests))' \
+        --eval '(sb-ext:exit)'
+
+As you can see from above, database connection parameters can be
+provided using environment variables:
+
+- `DB_NAME`: database name,
+- `DB_USER`: user,
+- `DB_PASS`: password,
+- `DB_HOST`: hostname.
 
 ## Reference
 ---
