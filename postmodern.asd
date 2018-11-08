@@ -21,6 +21,7 @@
                "cl-postgres"
                "s-sql"
                "global-vars"
+               "split-sequence"
                (:feature :postmodern-use-mop "closer-mop")
                (:feature :postmodern-thread-safe "bordeaux-threads"))
   :components

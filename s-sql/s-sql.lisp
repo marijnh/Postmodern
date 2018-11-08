@@ -399,9 +399,14 @@ should be the keyword identifying the operator, arglist a lambda list
 to apply to the arguments, and body something that produces a list of
 strings and forms that evaluate to strings."
   (let ((args-name (gensym)))
-    `(defmethod expand-sql-op ((op (eql ,name)) ,args-name)
-       (destructuring-bind ,arglist ,args-name
-         ,@body))))
+    (if (stringp (car body))
+        `(defmethod expand-sql-op ((op (eql ,name)) ,args-name)
+           ,(car body)
+           (destructuring-bind ,arglist ,args-name
+             ,@(cdr body)))
+        `(defmethod expand-sql-op ((op (eql ,name)) ,args-name)
+           (destructuring-bind ,arglist ,args-name
+             ,@body)))))
 
 (defun make-expander (arity name)
   "Generates an appropriate expander function for a given operator
