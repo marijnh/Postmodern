@@ -398,15 +398,15 @@ nothing behind it.")
 should be the keyword identifying the operator, arglist a lambda list
 to apply to the arguments, and body something that produces a list of
 strings and forms that evaluate to strings."
-  (let ((args-name (gensym)))
-    (if (stringp (car body))
-        `(defmethod expand-sql-op ((op (eql ,name)) ,args-name)
-           ,(car body)
-           (destructuring-bind ,arglist ,args-name
-             ,@(cdr body)))
-        `(defmethod expand-sql-op ((op (eql ,name)) ,args-name)
-           (destructuring-bind ,arglist ,args-name
-             ,@body)))))
+  (alexandria:with-unique-names (args-name op)
+    (multiple-value-bind (body decls docstring)
+        (alexandria:parse-body body :documentation t)
+      `(defmethod expand-sql-op ((,op (eql ,name)) ,args-name)
+         ,@(when docstring
+             (list docstring))
+         ,@decls
+         (destructuring-bind ,arglist ,args-name
+           ,@body)))))
 
 (defun make-expander (arity name)
   "Generates an appropriate expander function for a given operator
