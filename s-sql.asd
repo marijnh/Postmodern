@@ -8,7 +8,8 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
-  :depends-on ("cl-postgres")
+  :depends-on ("cl-postgres"
+               "alexandria")
   :components
   ((:module "s-sql"
     :components ((:file "s-sql"))))
