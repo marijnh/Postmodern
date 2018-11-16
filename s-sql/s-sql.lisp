@@ -1,3 +1,4 @@
+;;; -*- Mode: Lisp; Base: 10; Package: CL-USER -*-
 (defpackage :s-sql
   (:use :common-lisp)
   (:export #:smallint
@@ -461,7 +462,7 @@ string."
 (register-sql-operators :unary :not)
 (register-sql-operators :n-ary :+ :* :% :& :|\|| :|\|\|| :and :or :union (:union-all "union all"))
 (register-sql-operators :n-or-unary :- :~)
-(register-sql-operators :2+-ary  := :/ :!= :<> :< :> :<= :>= :^ :~* :!~ :!~* :like :ilike :->> :#> :#>>
+(register-sql-operators :2+-ary  := :/ :!= :<> :< :> :<= :>= :^ :~* :!~ :!~* :like :ilike :->> :|#>| :|#>>|
                         :intersect (:intersect-all "intersect all")
                         :except (:except-all "except all"))
 ;; PostGIS operators
