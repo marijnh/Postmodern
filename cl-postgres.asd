@@ -15,7 +15,7 @@
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
   :depends-on ("md5"
-               (:feature (:or :sbcl :allegro :ccl :genera :armedbear) "usocket")
+               (:feature (:or :sbcl :allegro :ccl :genera :armedbear :cmucl) "usocket")
                (:feature :sbcl (:require :sb-bsd-sockets)))
   :components
   ((:module "cl-postgres"
