@@ -273,7 +273,8 @@ result."
       (values))))
 
 (defun unprepare-query (connection name)
-  "Close the prepared query given by name."
+  "Close the prepared query given by name by closing the session connection.
+Does not remove the query from the meta slot in connection"
   (check-type name string)
   (with-reconnect-restart connection
     (using-connection connection
