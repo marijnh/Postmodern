@@ -166,7 +166,7 @@ historical :: syntax, or with S-SQL's :type construct) to help it out.
 
 ** macro defprepared (name query &optional (format :rows))
 
-This is the defun-style variant of prepare. It will define a top-level
+This is the macro-style variant of prepare. It will define a top-level
 function for the prepared statement.
 
 ** macro defprepared-with-names (name (&rest args) (query &rest query-args) &optional (format :rows))
