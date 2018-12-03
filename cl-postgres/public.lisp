@@ -26,6 +26,12 @@ exists for it."
         (setf (slot-value connection 'meta) meta-data)
         meta-data)))
 
+(defun connection-pid (connection)
+  "Retrieves a list consisting of the pid and the secret-key from the connection, not from the database itself.
+These are needed for cancelling connections and error processing with respect to prepared statements."
+  (list (gethash "pid" (slot-value connection 'parameters))
+        (gethash "secret-key" (slot-value connection 'parameters))))
+
 (defun database-open-p (connection)
   "Returns a boolean indicating whether the given connection is
 currently connected."
@@ -264,14 +270,36 @@ result."
       (send-query (connection-socket connection) query row-reader))))
 
 (defun prepare-query (connection name query)
+  "Prepare a query string and store it under the given name. If there
+is an existing prepared query of the same name but the query is not equal
+then deallocate the existing prepared query and prepare the new query. If
+there is an equal query of the same name, return nil."
+  (check-type query string)
+  (check-type name string)
+  (let ((existing-query
+         (caar (exec-query connection
+                           (format nil "select name from pg_prepared_statements where name = '~a'"
+                                   (string-upcase "select6"))
+                           'cl-postgres:list-row-reader))))
+    (when existing-query
+        (if (not (equal existing-query query))
+            (exec-query connection (format nil "deallocate ~:@(~S~)" name))
+          (return-from prepare-query nil)))
+    (with-reconnect-restart connection
+       (using-connection connection
+         (send-parse (connection-socket connection) name query)
+         (values)))))
+#|
+(defun prepare-query (connection name query)
   "Prepare a query string and store it under the given name."
   (check-type query string)
   (check-type name string)
-  (with-reconnect-restart connection
-    (using-connection connection
-      (send-parse (connection-socket connection) name query)
-      (values))))
-
+  (unless (pomo:prepared-statement-exists-p name)
+    (with-reconnect-restart connection
+     (using-connection connection
+       (send-parse (connection-socket connection) name query)
+       (values)))))
+|#
 (defun unprepare-query (connection name)
   "Close the prepared query given by name by closing the session connection.
 Does not remove the query from the meta slot in connection"

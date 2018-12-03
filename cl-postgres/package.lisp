@@ -8,6 +8,8 @@
            #:database-error-query
            #:database-error-cause
            #:database-error-constraint-name
+           #:database-error-invalid-sql-statement-name
+           #:database-error-syntax-error-or-access-violation
            #:database-connection
            #:database-connection-error
            #:database-socket-error

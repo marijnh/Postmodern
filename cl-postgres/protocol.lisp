@@ -49,6 +49,9 @@ from the socket."
                        (#.(char-code #\S) ;; ParameterStatus: read and continue
                           (update-parameter ,socket-name)
                           (,iter-name))
+                       (#.(char-code #\K) ;; Backendkey : read and continue
+                          (update-backend-key-data ,socket-name)
+                          (,iter-name))
                        (#.(char-code #\N) ;; A warning
                           (get-warning ,socket-name)
                           (,iter-name))
@@ -76,6 +79,12 @@ a query.")
   (let ((name (read-str socket))
         (value (read-str socket)))
     (setf (gethash name *connection-params*) value)))
+
+(defun update-backend-key-data (socket)
+  (let ((pid (read-uint4 socket))
+        (secret-key (read-uint4 socket)))
+        (setf (gethash "pid" *connection-params*) pid)
+        (setf (gethash "secret-key" *connection-params*) secret-key)))
 
 (defun read-byte-delimited (socket)
   "Read the fields of a null-terminated list of byte + string values
@@ -223,8 +232,6 @@ this raises a condition."
                        (init-gss-msg (read-bytes socket (- size 4)))))))))))
   (loop
    (message-case socket
-     ;; BackendKeyData - ignore
-     (#\K :skip)
      ;; ReadyForQuery
      (#\Z (read-uint1 socket)
           (return))))

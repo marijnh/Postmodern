@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-10-07 Sun 09:22 -->
+<!-- 2018-12-02 Sun 21:42 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Postmodern Reference Manual</title>
@@ -234,144 +234,160 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org7dfb78b">Connecting</a>
+<li><a href="#orgf66e105">Connecting</a>
 <ul>
-<li><a href="#orga63657c">class database-connection</a></li>
-<li><a href="#org821a95f">function connect (database user password host &amp;key (port 5432) pooled-p use-ssl)</a></li>
-<li><a href="#org941ff95">variable <b>default-use-ssl</b></a></li>
-<li><a href="#orgf98dcfd">method disconnect (database-connection)</a></li>
-<li><a href="#orga071e5f">function connected-p (database-connection)</a></li>
-<li><a href="#orgd2c58d7">method reconnect (database-connection)</a></li>
-<li><a href="#org158c9c7">variable <b>database</b></a></li>
-<li><a href="#org8174608">macro with-connection (spec &amp;body body)</a></li>
-<li><a href="#org69b3ae4">macro call-with-connection (spec thunk)</a></li>
-<li><a href="#org67493b2">function connect-toplevel (database user password host &amp;key (port 5432))</a></li>
-<li><a href="#org59db24f">function disconnect-toplevel ()</a></li>
-<li><a href="#org4530e0f">function clear-connection-pool ()</a></li>
-<li><a href="#org2687ef0">variable <b>max-pool-size</b></a></li>
-<li><a href="#org612e14c">function list-connections ()</a></li>
+<li><a href="#org34e37cb">class database-connection</a></li>
+<li><a href="#org2599f48">function connect (database user password host &amp;key (port 5432) pooled-p use-ssl)</a></li>
+<li><a href="#org1873a98">variable <b>default-use-ssl</b></a></li>
+<li><a href="#org411ab4f">method disconnect (database-connection)</a></li>
+<li><a href="#orga7c92e9">function connected-p (database-connection)</a></li>
+<li><a href="#org431b6b2">method reconnect (database-connection)</a></li>
+<li><a href="#org8b8ed8c">variable <b>database</b></a></li>
+<li><a href="#orga735780">macro with-connection (spec &amp;body body)</a></li>
+<li><a href="#org067ca14">macro call-with-connection (spec thunk)</a></li>
+<li><a href="#orgc862d91">function connect-toplevel (database user password host &amp;key (port 5432))</a></li>
+<li><a href="#orge5c0fe9">function disconnect-toplevel ()</a></li>
+<li><a href="#org3b24d01">function clear-connection-pool ()</a></li>
+<li><a href="#org2c9b24f">variable <b>max-pool-size</b></a></li>
+<li><a href="#org62d76d7">function list-connections ()</a></li>
 </ul>
 </li>
-<li><a href="#org80773b7">Querying</a>
+<li><a href="#org22b6458">Querying</a>
 <ul>
-<li><a href="#orge14b0be">macro query (query &amp;rest args/format)</a></li>
-<li><a href="#org142947e">macro execute (query &amp;rest args)</a></li>
-<li><a href="#org52903ad">macro doquery (query (&amp;rest names) &amp;body body)</a></li>
-<li><a href="#org5b799fd">macro prepare (query &amp;optional (format :rows))</a></li>
-<li><a href="#org0d5aefd">macro defprepared (name query &amp;optional (format :rows))</a></li>
-<li><a href="#orgde9a7b1">macro defprepared-with-names (name (&amp;rest args) (query &amp;rest query-args) &amp;optional (format :rows))</a></li>
-<li><a href="#org93a26a3">macro with-transaction ((&amp;optional name isolation-level) &amp;body body)</a></li>
-<li><a href="#org7231d7b">function commit-transaction (transaction)</a></li>
-<li><a href="#orge81fb52">function abort-transaction (transaction)</a></li>
-<li><a href="#org75fb86e">macro with-savepoint (name &amp;body body)</a></li>
-<li><a href="#orgb5e832a">function release-savepoint (savepoint)</a></li>
-<li><a href="#org4e16a77">function rollback-savepoint (savepoint)</a></li>
-<li><a href="#orged76165">function commit-hooks (transaction-or-savepoint), setf (commit-hooks transaction-or-savepoint)</a></li>
-<li><a href="#org8daf98c">function abort-hooks (transaction-or-savepoint), setf (abort-hooks transaction-or-savepoint)</a></li>
-<li><a href="#org6f623d3">macro with-logical-transaction ((&amp;optional name isolation-level) &amp;body body)</a></li>
-<li><a href="#org33a9c80">function abort-logical-transaction (transaction-or-savepoint)</a></li>
-<li><a href="#org6c6e7c7">function commit-logical-transaction (transaction-or-savepoint)</a></li>
-<li><a href="#org291bf07">variable <b>current-logical-transaction</b></a></li>
-<li><a href="#orgfd6b1c7">macro ensure-transaction (&amp;body body)</a></li>
-<li><a href="#org2b3281a">macro with-schema ((namespace &amp;key :strict t :if-not-exist :create :drop-after) &amp;body body)</a></li>
-<li><a href="#org791a215">function sequence-next (sequence)</a></li>
-<li><a href="#orgf57413a">function coalesce (&amp;rest arguments)</a></li>
+<li><a href="#org237f749">macro query (query &amp;rest args/format)</a></li>
+<li><a href="#org29b2aca">macro execute (query &amp;rest args)</a></li>
+<li><a href="#orgae66984">macro doquery (query (&amp;rest names) &amp;body body)</a></li>
+<li><a href="#org82051a3">macro prepare (query &amp;optional (format :rows))</a></li>
+<li><a href="#orgdefdde9">macro defprepared (name query &amp;optional (format :rows))</a></li>
+<li><a href="#org9bafcb6">macro defprepared-with-names (name (&amp;rest args) (query &amp;rest query-args) &amp;optional (format :rows))</a></li>
+<li><a href="#orgc9a5ce2">macro with-transaction ((&amp;optional name isolation-level) &amp;body body)</a></li>
+<li><a href="#org7694a92">function commit-transaction (transaction)</a></li>
+<li><a href="#org19a0ecc">function abort-transaction (transaction)</a></li>
+<li><a href="#orgc3f5567">macro with-savepoint (name &amp;body body)</a></li>
+<li><a href="#org3d07197">function release-savepoint (savepoint)</a></li>
+<li><a href="#org2100928">function rollback-savepoint (savepoint)</a></li>
+<li><a href="#org1a014bb">function commit-hooks (transaction-or-savepoint), setf (commit-hooks transaction-or-savepoint)</a></li>
+<li><a href="#org674dd51">function abort-hooks (transaction-or-savepoint), setf (abort-hooks transaction-or-savepoint)</a></li>
+<li><a href="#org3457278">macro with-logical-transaction ((&amp;optional name isolation-level) &amp;body body)</a></li>
+<li><a href="#org35b31e1">function abort-logical-transaction (transaction-or-savepoint)</a></li>
+<li><a href="#orgd16e9ff">function commit-logical-transaction (transaction-or-savepoint)</a></li>
+<li><a href="#org54ff3d0">variable <b>current-logical-transaction</b></a></li>
+<li><a href="#org12026bb">macro ensure-transaction (&amp;body body)</a></li>
+<li><a href="#orgccb4e38">macro with-schema ((namespace &amp;key :strict t :if-not-exist :create :drop-after) &amp;body body)</a></li>
+<li><a href="#org97963e6">function sequence-next (sequence)</a></li>
+<li><a href="#org11d4bb2">function coalesce (&amp;rest arguments)</a></li>
 </ul>
 </li>
-<li><a href="#org26769df">Inspecting the database</a>
+<li><a href="#orgdbfe01c">Helper functions for Prepared Statements</a>
 <ul>
-<li><a href="#orgd322176">function list-tables (&amp;optional strings-p)</a></li>
-<li><a href="#orga08ec84">function list-tables-in-schema (&amp;optional strings-p)</a></li>
-<li><a href="#org13296a5">function table-exists-p (name)</a></li>
-<li><a href="#org8e04ed0">function table-description (name &amp;optional schema-name)</a></li>
-<li><a href="#org06c5d40">function list-sequences (&amp;optional strings-p)</a></li>
-<li><a href="#orgf676cb8">function sequence-exists-p (name)</a></li>
-<li><a href="#org1b8655d">function list-views (&amp;optional strings-p)</a></li>
-<li><a href="#org3e46672">function view-exists-p (name)</a></li>
-<li><a href="#orgcf3d5d7">function list-schemata ()</a></li>
-<li><a href="#org2dfd8dd">function schema-exist-p (schema) NOW DEPRECATED IN FAVOR OF schema-exists-p which is more consistent with naming of other functions.</a></li>
-<li><a href="#org03ba99f">function schema-exists-p (schema)</a></li>
-<li><a href="#org76675e8">function database-version ()</a></li>
-<li><a href="#orgc06d5ac">function num-records-in-database ()</a></li>
-<li><a href="#org7a44810">function current-database ()</a></li>
-<li><a href="#org7ed9671">function database-exists-p (database-name)</a></li>
-<li><a href="#org08b4b57">function database-size (&amp;optional database-name)</a></li>
-<li><a href="#org73f5fc2">function list-databases (&amp;key (order-by-size nil) (size t))</a></li>
-<li><a href="#orgacb0cf3">function list-schemas ()</a></li>
-<li><a href="#org4eda1b1">function list-tablespaces ()</a></li>
-<li><a href="#org55bbdf0">function list-available-types ()</a></li>
-<li><a href="#orgdd097b2">function list-table-sizes (&amp;key (schema "public") (order-by-size nil) (size t))</a></li>
-<li><a href="#orgb5a656c">function table-size (table-name)</a></li>
-<li><a href="#org0bae73e">function more-table-info (table-name)</a></li>
-<li><a href="#org599bc78">function list-columns (table-name)</a></li>
-<li><a href="#org3c51a57">function list-columns-with-types (table-name)</a></li>
-<li><a href="#org859a984">function column-exists-p (table-name column-name)</a></li>
-<li><a href="#org3708a2d">function describe-views (&amp;optional (schema "public")</a></li>
-<li><a href="#org081137b">function list-database-functions ()</a></li>
-<li><a href="#org6ee5c4b">function list-indices (&amp;optional strings-p)</a></li>
-<li><a href="#orgc37a008">function list-table-indices (table-name &amp;optional strings-p)</a></li>
-<li><a href="#org642b2ed">function index-exists-p (name)</a></li>
-<li><a href="#org49151df">function list-indexed-column-and-attributes (table-name)</a></li>
-<li><a href="#org3512b6e">function list-index-definitions (table-name)</a></li>
-<li><a href="#org90e958c">function find-primary-key-info (table-name &amp;optional (just-key nil))</a></li>
-<li><a href="#org84abae1">function list-foreign-keys (table-name)</a></li>
-<li><a href="#orgae78241">function list-unique-or-primary-constraints (table-name)</a></li>
-<li><a href="#orgadeff0c">function list-all-constraints (table-name)</a></li>
-<li><a href="#org08e7036">function describe-constraint (table-name constraint-name)</a></li>
-<li><a href="#org5b723fb">function describe-foreign-key-constraints ()</a></li>
-<li><a href="#org45c066b">function list-triggers (&amp;optional table-name)</a></li>
-<li><a href="#orge052147">function list-detailed-triggers ()</a></li>
-<li><a href="#org255eb0c">function list-database-users ()</a></li>
-<li><a href="#org2a52736">function list-available-extensions ()</a></li>
-<li><a href="#org8795eb4">function list-installed-extensions ()</a></li>
-<li><a href="#org7ae9179">function change-toplevel-database (new-database user password host)</a></li>
+<li><a href="#orga8b063f">function prepared-statement-exists-p (name)</a></li>
+<li><a href="#org4481499">function list-prepared-statements()</a></li>
+<li><a href="#orgbb3d460">function drop-prepared-statement (statement-name &amp;key (location :both) (database <b>database</b>))</a></li>
+<li><a href="#orgd0cfaff">function list-postmodern-prepared-statements (&amp;optional (names-only nil))</a></li>
+<li><a href="#org5774eb3">function find-postgresql-prepared-statement (name)</a></li>
+<li><a href="#org33f703f">function find-postmodern-prepared-statement (name)</a></li>
+<li><a href="#org2a05d5f">function reset-prepared-statement (condition)</a></li>
+<li><a href="#org5ede7d6">function overwrite-prepared-statement (condition)</a></li>
+<li><a href="#orgab31aeb">function get-pid ()</a></li>
+<li><a href="#org6a503be">function get-pid-from-postmodern ()</a></li>
+<li><a href="#orgf1bbc04">function cancel-backend (pid)</a></li>
+<li><a href="#org80deb98">function terminate-backend (pid)</a></li>
 </ul>
 </li>
-<li><a href="#org05d41fe">Database access objects</a>
+<li><a href="#org10d1208">Inspecting the database</a>
 <ul>
-<li><a href="#org2167fd0">metaclass dao-class</a></li>
-<li><a href="#org7062ca8">method dao-keys (class)</a></li>
-<li><a href="#orgb4cb6ea">method dao-keys (dao)</a></li>
-<li><a href="#org155944b">method dao-exists-p (dao)</a></li>
-<li><a href="#orga5eaaa8">method make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)</a></li>
-<li><a href="#orgb413e74">macro define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)</a></li>
-<li><a href="#orgf1c832d">method get-dao (type &amp;rest keys)</a></li>
-<li><a href="#orgda16e4e">macro select-dao (type &amp;optional (test t) &amp;rest sort)</a></li>
-<li><a href="#org3a1c3d4">macro do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)</a></li>
-<li><a href="#orge8a667c">macro query-dao (type query &amp;rest args)</a></li>
-<li><a href="#orgfdae6ee">function do-query-dao (((type type-var) query &amp;rest args) &amp;body body)</a></li>
-<li><a href="#orgf8ae586">variable <b>ignore-unknown-columns</b></a></li>
-<li><a href="#org2f657bb">method insert-dao (dao)</a></li>
-<li><a href="#orged00616">method update-dao (dao)</a></li>
-<li><a href="#org4157b73">function save-dao (dao)</a></li>
-<li><a href="#org0e6d5d2">function save-dao/transaction (dao)</a></li>
-<li><a href="#orgb3bae9a">method upsert-dao (dao)</a></li>
-<li><a href="#org3ea645d">method delete-dao (dao)</a></li>
-<li><a href="#org2a00107">function dao-table-name (class)</a></li>
-<li><a href="#orgd40cdef">function dao-table-definition (class)</a></li>
-<li><a href="#orgc476df2">macro with-column-writers ((&amp;rest writers) &amp;body body)</a></li>
+<li><a href="#org8fddc62">function list-tables (&amp;optional strings-p)</a></li>
+<li><a href="#orgdca6607">function list-tables-in-schema (&amp;optional strings-p)</a></li>
+<li><a href="#org74138e3">function table-exists-p (name)</a></li>
+<li><a href="#orgbad33e6">function table-description (name &amp;optional schema-name)</a></li>
+<li><a href="#orgc2eef12">function list-sequences (&amp;optional strings-p)</a></li>
+<li><a href="#org660e7ae">function sequence-exists-p (name)</a></li>
+<li><a href="#org2a4608e">function list-views (&amp;optional strings-p)</a></li>
+<li><a href="#orgb34e5aa">function view-exists-p (name)</a></li>
+<li><a href="#orga2172c1">function list-schemata ()</a></li>
+<li><a href="#orgb5e1283">function schema-exist-p (schema) NOW DEPRECATED IN FAVOR OF schema-exists-p which is more consistent with naming of other functions.</a></li>
+<li><a href="#org6639ae3">function schema-exists-p (schema)</a></li>
+<li><a href="#org6bca315">function database-version ()</a></li>
+<li><a href="#org0911489">function num-records-in-database ()</a></li>
+<li><a href="#org25b904d">function current-database ()</a></li>
+<li><a href="#org40e3952">function database-exists-p (database-name)</a></li>
+<li><a href="#org9e1497f">function database-size (&amp;optional database-name)</a></li>
+<li><a href="#orge79193a">function list-databases (&amp;key (order-by-size nil) (size t))</a></li>
+<li><a href="#org7e815cc">function list-schemas ()</a></li>
+<li><a href="#orgcbe1dc2">function list-tablespaces ()</a></li>
+<li><a href="#org8e5bc67">function list-available-types ()</a></li>
+<li><a href="#org237b868">function list-table-sizes (&amp;key (schema "public") (order-by-size nil) (size t))</a></li>
+<li><a href="#org0a067c7">function table-size (table-name)</a></li>
+<li><a href="#orgbcb7bff">function more-table-info (table-name)</a></li>
+<li><a href="#org280fbb0">function list-columns (table-name)</a></li>
+<li><a href="#orgcbba043">function list-columns-with-types (table-name)</a></li>
+<li><a href="#org635750e">function column-exists-p (table-name column-name)</a></li>
+<li><a href="#orgbf64476">function describe-views (&amp;optional (schema "public")</a></li>
+<li><a href="#org740d461">function list-database-functions ()</a></li>
+<li><a href="#org652957e">function list-indices (&amp;optional strings-p)</a></li>
+<li><a href="#org2858574">function list-table-indices (table-name &amp;optional strings-p)</a></li>
+<li><a href="#org5a5d422">function index-exists-p (name)</a></li>
+<li><a href="#orge8a15b6">function list-indexed-column-and-attributes (table-name)</a></li>
+<li><a href="#org89f148b">function list-index-definitions (table-name)</a></li>
+<li><a href="#orgeada611">function find-primary-key-info (table-name &amp;optional (just-key nil))</a></li>
+<li><a href="#org24325c9">function list-foreign-keys (table-name)</a></li>
+<li><a href="#orgdcea10c">function list-unique-or-primary-constraints (table-name)</a></li>
+<li><a href="#org61cc6ea">function list-all-constraints (table-name)</a></li>
+<li><a href="#org19eb477">function describe-constraint (table-name constraint-name)</a></li>
+<li><a href="#org7e2c10b">function describe-foreign-key-constraints ()</a></li>
+<li><a href="#org8d54386">function list-triggers (&amp;optional table-name)</a></li>
+<li><a href="#org67eac16">function list-detailed-triggers ()</a></li>
+<li><a href="#org0168937">function list-database-users ()</a></li>
+<li><a href="#org0f8fdad">function list-available-extensions ()</a></li>
+<li><a href="#org61a1133">function list-installed-extensions ()</a></li>
+<li><a href="#orgccaa0d4">function change-toplevel-database (new-database user password host)</a></li>
 </ul>
 </li>
-<li><a href="#org7b386e0">Table definition and creation</a>
+<li><a href="#orgd97efd3">Database access objects</a>
 <ul>
-<li><a href="#org35f071b">macro deftable (name &amp;body definition)</a></li>
-<li><a href="#orgbf03822">function !dao-def ()</a></li>
-<li><a href="#org19622a3">function !index (&amp;rest columns), !unique-index (&amp;rest columns)</a></li>
-<li><a href="#org2d93b97">function !foreign (target-table columns &amp;optional target-columns &amp;key on-delete on-update deferrable initially-deferred)</a></li>
-<li><a href="#orgb288681">function !unique (target-fields &amp;key deferrable initially-deferred)</a></li>
-<li><a href="#orga0bef91">function create-table (symbol)</a></li>
-<li><a href="#orga7a15fc">function create-all-tables ()</a></li>
-<li><a href="#orgaaeca8f">function create-package-tables (package)</a></li>
-<li><a href="#org6aeb940">variables <b>table-name</b>, <b>table-symbol</b></a></li>
+<li><a href="#org3e7d292">metaclass dao-class</a></li>
+<li><a href="#orgc7123a9">method dao-keys (class)</a></li>
+<li><a href="#org3c6db0c">method dao-keys (dao)</a></li>
+<li><a href="#org27e1e0f">method dao-exists-p (dao)</a></li>
+<li><a href="#orga61b131">method make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)</a></li>
+<li><a href="#orgb3ef560">macro define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)</a></li>
+<li><a href="#orgce7d413">method get-dao (type &amp;rest keys)</a></li>
+<li><a href="#org5acd26e">macro select-dao (type &amp;optional (test t) &amp;rest sort)</a></li>
+<li><a href="#orgae8d7f2">macro do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)</a></li>
+<li><a href="#org057bc79">macro query-dao (type query &amp;rest args)</a></li>
+<li><a href="#orgb46a620">function do-query-dao (((type type-var) query &amp;rest args) &amp;body body)</a></li>
+<li><a href="#orgc548f24">variable <b>ignore-unknown-columns</b></a></li>
+<li><a href="#orgd50b062">method insert-dao (dao)</a></li>
+<li><a href="#org12447ba">method update-dao (dao)</a></li>
+<li><a href="#org7e41df1">function save-dao (dao)</a></li>
+<li><a href="#org87f82a4">function save-dao/transaction (dao)</a></li>
+<li><a href="#org1c078c7">method upsert-dao (dao)</a></li>
+<li><a href="#orgec5b546">method delete-dao (dao)</a></li>
+<li><a href="#orge1dec5a">function dao-table-name (class)</a></li>
+<li><a href="#orgb0a7d53">function dao-table-definition (class)</a></li>
+<li><a href="#org0a62e5e">macro with-column-writers ((&amp;rest writers) &amp;body body)</a></li>
 </ul>
 </li>
-<li><a href="#org046928e">Schemata</a>
+<li><a href="#orgeed3abc">Table definition and creation</a>
 <ul>
-<li><a href="#orga59a991">function create-schema (schema)</a></li>
-<li><a href="#org17d1a35">function drop-schema (schema)</a></li>
-<li><a href="#orge4e3a1e">function get-search-path ()</a></li>
-<li><a href="#orgbf702ed">function set-search-path (path)</a></li>
-<li><a href="#org10e8075">function split-fully-qualified-table-name (name)</a></li>
+<li><a href="#orgbda5696">macro deftable (name &amp;body definition)</a></li>
+<li><a href="#orge7e4389">function !dao-def ()</a></li>
+<li><a href="#orga2c4bf6">function !index (&amp;rest columns), !unique-index (&amp;rest columns)</a></li>
+<li><a href="#org6097983">function !foreign (target-table columns &amp;optional target-columns &amp;key on-delete on-update deferrable initially-deferred)</a></li>
+<li><a href="#org62be441">function !unique (target-fields &amp;key deferrable initially-deferred)</a></li>
+<li><a href="#orga931660">function create-table (symbol)</a></li>
+<li><a href="#orge480d8a">function create-all-tables ()</a></li>
+<li><a href="#orgdd79715">function create-package-tables (package)</a></li>
+<li><a href="#orgfd826c0">variables <b>table-name</b>, <b>table-symbol</b></a></li>
+</ul>
+</li>
+<li><a href="#org26dbf4a">Schemata</a>
+<ul>
+<li><a href="#org90fd2a6">function create-schema (schema)</a></li>
+<li><a href="#orgf2a0940">function drop-schema (schema)</a></li>
+<li><a href="#org8bc0bc9">function get-search-path ()</a></li>
+<li><a href="#org515af3e">function set-search-path (path)</a></li>
+<li><a href="#org42dfec3">function split-fully-qualified-table-name (name)</a></li>
 </ul>
 </li>
 </ul>
@@ -396,23 +412,22 @@ raised as subtypes of database-connection-error, providing a :reconnect
 restart to re-try the operation that encountered to the error.
 </p>
 
-
-<div id="outline-container-org7dfb78b" class="outline-2">
-<h2 id="org7dfb78b">Connecting</h2>
-<div class="outline-text-2" id="text-org7dfb78b">
+<div id="outline-container-orgf66e105" class="outline-2">
+<h2 id="orgf66e105">Connecting</h2>
+<div class="outline-text-2" id="text-orgf66e105">
 </div>
-<div id="outline-container-orga63657c" class="outline-3">
-<h3 id="orga63657c">class database-connection</h3>
-<div class="outline-text-3" id="text-orga63657c">
+<div id="outline-container-org34e37cb" class="outline-3">
+<h3 id="org34e37cb">class database-connection</h3>
+<div class="outline-text-3" id="text-org34e37cb">
 <p>
 Objects of this type represent database connections.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org821a95f" class="outline-3">
-<h3 id="org821a95f">function connect (database user password host &amp;key (port 5432) pooled-p use-ssl)</h3>
-<div class="outline-text-3" id="text-org821a95f">
+<div id="outline-container-org2599f48" class="outline-3">
+<h3 id="org2599f48">function connect (database user password host &amp;key (port 5432) pooled-p use-ssl)</h3>
+<div class="outline-text-3" id="text-org2599f48">
 <p>
 → database-connection
 </p>
@@ -429,9 +444,9 @@ of <b>default-use-ssl</b>.
 </div>
 </div>
 
-<div id="outline-container-org941ff95" class="outline-3">
-<h3 id="org941ff95">variable <b>default-use-ssl</b></h3>
-<div class="outline-text-3" id="text-org941ff95">
+<div id="outline-container-org1873a98" class="outline-3">
+<h3 id="org1873a98">variable <b>default-use-ssl</b></h3>
+<div class="outline-text-3" id="text-org1873a98">
 <p>
 The default for connect's use-ssl argument. This starts at :no. If you
 set it to anything else, be sure to also load the CL+SSL library.
@@ -439,9 +454,9 @@ set it to anything else, be sure to also load the CL+SSL library.
 </div>
 </div>
 
-<div id="outline-container-orgf98dcfd" class="outline-3">
-<h3 id="orgf98dcfd">method disconnect (database-connection)</h3>
-<div class="outline-text-3" id="text-orgf98dcfd">
+<div id="outline-container-org411ab4f" class="outline-3">
+<h3 id="org411ab4f">method disconnect (database-connection)</h3>
+<div class="outline-text-3" id="text-org411ab4f">
 <p>
 Disconnects a normal database connection, or moves a pooled connection
 into the pool.
@@ -449,9 +464,9 @@ into the pool.
 </div>
 </div>
 
-<div id="outline-container-orga071e5f" class="outline-3">
-<h3 id="orga071e5f">function connected-p (database-connection)</h3>
-<div class="outline-text-3" id="text-orga071e5f">
+<div id="outline-container-orga7c92e9" class="outline-3">
+<h3 id="orga7c92e9">function connected-p (database-connection)</h3>
+<div class="outline-text-3" id="text-orga7c92e9">
 <p>
 → boolean
 </p>
@@ -463,9 +478,9 @@ to the server.
 </div>
 </div>
 
-<div id="outline-container-orgd2c58d7" class="outline-3">
-<h3 id="orgd2c58d7">method reconnect (database-connection)</h3>
-<div class="outline-text-3" id="text-orgd2c58d7">
+<div id="outline-container-org431b6b2" class="outline-3">
+<h3 id="org431b6b2">method reconnect (database-connection)</h3>
+<div class="outline-text-3" id="text-org431b6b2">
 <p>
 Reconnect a disconnected database connection. This is not allowed for pooled
 connections ― after they are disconnected they might be in use by some other
@@ -474,9 +489,9 @@ process, and should no longer be used.
 </div>
 </div>
 
-<div id="outline-container-org158c9c7" class="outline-3">
-<h3 id="org158c9c7">variable <b>database</b></h3>
-<div class="outline-text-3" id="text-org158c9c7">
+<div id="outline-container-org8b8ed8c" class="outline-3">
+<h3 id="org8b8ed8c">variable <b>database</b></h3>
+<div class="outline-text-3" id="text-org8b8ed8c">
 <p>
 Special variable holding the current database. Most functions and macros
 operating on a database assume this binds to a connected database.
@@ -484,9 +499,9 @@ operating on a database assume this binds to a connected database.
 </div>
 </div>
 
-<div id="outline-container-org8174608" class="outline-3">
-<h3 id="org8174608">macro with-connection (spec &amp;body body)</h3>
-<div class="outline-text-3" id="text-org8174608">
+<div id="outline-container-orga735780" class="outline-3">
+<h3 id="orga735780">macro with-connection (spec &amp;body body)</h3>
+<div class="outline-text-3" id="text-orga735780">
 <p>
 Evaluates the body with <b>database</b> bound to a connection as specified by
 spec, which should be list that connect can be applied to.
@@ -494,9 +509,9 @@ spec, which should be list that connect can be applied to.
 </div>
 </div>
 
-<div id="outline-container-org69b3ae4" class="outline-3">
-<h3 id="org69b3ae4">macro call-with-connection (spec thunk)</h3>
-<div class="outline-text-3" id="text-org69b3ae4">
+<div id="outline-container-org067ca14" class="outline-3">
+<h3 id="org067ca14">macro call-with-connection (spec thunk)</h3>
+<div class="outline-text-3" id="text-org067ca14">
 <p>
 The functional backend to with-connection. Binds <b>database</b> to a new
 connection as specified by spec, which should be a list that connect can
@@ -507,9 +522,9 @@ connection is disconnected.
 </div>
 </div>
 
-<div id="outline-container-org67493b2" class="outline-3">
-<h3 id="org67493b2">function connect-toplevel (database user password host &amp;key (port 5432))</h3>
-<div class="outline-text-3" id="text-org67493b2">
+<div id="outline-container-orgc862d91" class="outline-3">
+<h3 id="orgc862d91">function connect-toplevel (database user password host &amp;key (port 5432))</h3>
+<div class="outline-text-3" id="text-orgc862d91">
 <p>
 Bind the <b>database</b> to a new connection. Use this if you only need one
 connection, or if you want a connection for debugging from the REPL.
@@ -517,27 +532,27 @@ connection, or if you want a connection for debugging from the REPL.
 </div>
 </div>
 
-<div id="outline-container-org59db24f" class="outline-3">
-<h3 id="org59db24f">function disconnect-toplevel ()</h3>
-<div class="outline-text-3" id="text-org59db24f">
+<div id="outline-container-orge5c0fe9" class="outline-3">
+<h3 id="orge5c0fe9">function disconnect-toplevel ()</h3>
+<div class="outline-text-3" id="text-orge5c0fe9">
 <p>
 Disconnect the <b>database</b>.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org4530e0f" class="outline-3">
-<h3 id="org4530e0f">function clear-connection-pool ()</h3>
-<div class="outline-text-3" id="text-org4530e0f">
+<div id="outline-container-org3b24d01" class="outline-3">
+<h3 id="org3b24d01">function clear-connection-pool ()</h3>
+<div class="outline-text-3" id="text-org3b24d01">
 <p>
 Disconnect and remove all connections from the connection pools.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org2687ef0" class="outline-3">
-<h3 id="org2687ef0">variable <b>max-pool-size</b></h3>
-<div class="outline-text-3" id="text-org2687ef0">
+<div id="outline-container-org2c9b24f" class="outline-3">
+<h3 id="org2c9b24f">variable <b>max-pool-size</b></h3>
+<div class="outline-text-3" id="text-org2c9b24f">
 <p>
 Set the maximum amount of connections kept in a single connection pool, where
 a pool consists of all the stored connections with the exact same connect
@@ -546,9 +561,9 @@ arguments. Defaults to NIL, which means there is no maximum.
 </div>
 </div>
 
-<div id="outline-container-org612e14c" class="outline-3">
-<h3 id="org612e14c">function list-connections ()</h3>
-<div class="outline-text-3" id="text-org612e14c">
+<div id="outline-container-org62d76d7" class="outline-3">
+<h3 id="org62d76d7">function list-connections ()</h3>
+<div class="outline-text-3" id="text-org62d76d7">
 <p>
 → list
 </p>
@@ -559,13 +574,13 @@ List the current postgresql connections to the currently connected database.
 </div>
 </div>
 </div>
-<div id="outline-container-org80773b7" class="outline-2">
-<h2 id="org80773b7">Querying</h2>
-<div class="outline-text-2" id="text-org80773b7">
+<div id="outline-container-org22b6458" class="outline-2">
+<h2 id="org22b6458">Querying</h2>
+<div class="outline-text-2" id="text-org22b6458">
 </div>
-<div id="outline-container-orge14b0be" class="outline-3">
-<h3 id="orge14b0be">macro query (query &amp;rest args/format)</h3>
-<div class="outline-text-3" id="text-orge14b0be">
+<div id="outline-container-org237f749" class="outline-3">
+<h3 id="org237f749">macro query (query &amp;rest args/format)</h3>
+<div class="outline-text-3" id="text-org237f749">
 <p>
 → result
 </p>
@@ -667,9 +682,9 @@ such as with updating or deleting queries, this is returned as a second value.
 </div>
 </div>
 
-<div id="outline-container-org142947e" class="outline-3">
-<h3 id="org142947e">macro execute (query &amp;rest args)</h3>
-<div class="outline-text-3" id="text-org142947e">
+<div id="outline-container-org29b2aca" class="outline-3">
+<h3 id="org29b2aca">macro execute (query &amp;rest args)</h3>
+<div class="outline-text-3" id="text-org29b2aca">
 <p>
 Like query called with format :none. Returns the amount of affected rows as
 its first returned value. (Also returns this amount as the second returned
@@ -678,9 +693,9 @@ value, but use of this is deprecated.)
 </div>
 </div>
 
-<div id="outline-container-org52903ad" class="outline-3">
-<h3 id="org52903ad">macro doquery (query (&amp;rest names) &amp;body body)</h3>
-<div class="outline-text-3" id="text-org52903ad">
+<div id="outline-container-orgae66984" class="outline-3">
+<h3 id="orgae66984">macro doquery (query (&amp;rest names) &amp;body body)</h3>
+<div class="outline-text-3" id="text-orgae66984">
 <p>
 Execute the given query (a string or a list starting with a keyword),
 iterating over the rows in the result. The body will be executed with the
@@ -699,9 +714,9 @@ whose cdr contains the arguments. For example:
 </div>
 </div>
 
-<div id="outline-container-org5b799fd" class="outline-3">
-<h3 id="org5b799fd">macro prepare (query &amp;optional (format :rows))</h3>
-<div class="outline-text-3" id="text-org5b799fd">
+<div id="outline-container-org82051a3" class="outline-3">
+<h3 id="org82051a3">macro prepare (query &amp;optional (format :rows))</h3>
+<div class="outline-text-3" id="text-org82051a3">
 <p>
 → function
 </p>
@@ -729,19 +744,24 @@ historical :: syntax, or with S-SQL's :type construct) to help it out.
 </div>
 </div>
 
-<div id="outline-container-org0d5aefd" class="outline-3">
-<h3 id="org0d5aefd">macro defprepared (name query &amp;optional (format :rows))</h3>
-<div class="outline-text-3" id="text-org0d5aefd">
+<div id="outline-container-orgdefdde9" class="outline-3">
+<h3 id="orgdefdde9">macro defprepared (name query &amp;optional (format :rows))</h3>
+<div class="outline-text-3" id="text-orgdefdde9">
 <p>
-This is the defun-style variant of prepare. It will define a top-level
-function for the prepared statement.
+→ function
+</p>
+
+<p>
+This is the macro-style variant of prepare. It is like prepare, but gives
+the function a name which now becomes a top-level function for the
+prepared statement. The name should not be quoted or a string.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgde9a7b1" class="outline-3">
-<h3 id="orgde9a7b1">macro defprepared-with-names (name (&amp;rest args) (query &amp;rest query-args) &amp;optional (format :rows))</h3>
-<div class="outline-text-3" id="text-orgde9a7b1">
+<div id="outline-container-org9bafcb6" class="outline-3">
+<h3 id="org9bafcb6">macro defprepared-with-names (name (&amp;rest args) (query &amp;rest query-args) &amp;optional (format :rows))</h3>
+<div class="outline-text-3" id="text-org9bafcb6">
 <p>
 Like defprepared, but allows to specify names of the function arguments as
 well as arguments supplied to the query.
@@ -758,9 +778,9 @@ well as arguments supplied to the query.
 </div>
 </div>
 
-<div id="outline-container-org93a26a3" class="outline-3">
-<h3 id="org93a26a3">macro with-transaction ((&amp;optional name isolation-level) &amp;body body)</h3>
-<div class="outline-text-3" id="text-org93a26a3">
+<div id="outline-container-orgc9a5ce2" class="outline-3">
+<h3 id="orgc9a5ce2">macro with-transaction ((&amp;optional name isolation-level) &amp;body body)</h3>
+<div class="outline-text-3" id="text-orgc9a5ce2">
 <p>
 Execute the given body within a database transaction, committing it when the
 body exits normally, and aborting otherwise. An optional name and/or
@@ -813,27 +833,27 @@ Further discussion of transactions and isolation levels can found
 </div>
 </div>
 
-<div id="outline-container-org7231d7b" class="outline-3">
-<h3 id="org7231d7b">function commit-transaction (transaction)</h3>
-<div class="outline-text-3" id="text-org7231d7b">
+<div id="outline-container-org7694a92" class="outline-3">
+<h3 id="org7694a92">function commit-transaction (transaction)</h3>
+<div class="outline-text-3" id="text-org7694a92">
 <p>
 Commit the given transaction.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orge81fb52" class="outline-3">
-<h3 id="orge81fb52">function abort-transaction (transaction)</h3>
-<div class="outline-text-3" id="text-orge81fb52">
+<div id="outline-container-org19a0ecc" class="outline-3">
+<h3 id="org19a0ecc">function abort-transaction (transaction)</h3>
+<div class="outline-text-3" id="text-org19a0ecc">
 <p>
 Roll back the given transaction.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org75fb86e" class="outline-3">
-<h3 id="org75fb86e">macro with-savepoint (name &amp;body body)</h3>
-<div class="outline-text-3" id="text-org75fb86e">
+<div id="outline-container-orgc3f5567" class="outline-3">
+<h3 id="orgc3f5567">macro with-savepoint (name &amp;body body)</h3>
+<div class="outline-text-3" id="text-orgc3f5567">
 <p>
 Can only be used within a transaction. Establishes a savepoint with the given
 name at the start of body, and binds the same name to a handle for that
@@ -843,27 +863,27 @@ condition is thrown, in which case it is rolled back.
 </div>
 </div>
 
-<div id="outline-container-orgb5e832a" class="outline-3">
-<h3 id="orgb5e832a">function release-savepoint (savepoint)</h3>
-<div class="outline-text-3" id="text-orgb5e832a">
+<div id="outline-container-org3d07197" class="outline-3">
+<h3 id="org3d07197">function release-savepoint (savepoint)</h3>
+<div class="outline-text-3" id="text-org3d07197">
 <p>
 Release the given savepoint.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org4e16a77" class="outline-3">
-<h3 id="org4e16a77">function rollback-savepoint (savepoint)</h3>
-<div class="outline-text-3" id="text-org4e16a77">
+<div id="outline-container-org2100928" class="outline-3">
+<h3 id="org2100928">function rollback-savepoint (savepoint)</h3>
+<div class="outline-text-3" id="text-org2100928">
 <p>
 Roll back the given savepoint.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orged76165" class="outline-3">
-<h3 id="orged76165">function commit-hooks (transaction-or-savepoint), setf (commit-hooks transaction-or-savepoint)</h3>
-<div class="outline-text-3" id="text-orged76165">
+<div id="outline-container-org1a014bb" class="outline-3">
+<h3 id="org1a014bb">function commit-hooks (transaction-or-savepoint), setf (commit-hooks transaction-or-savepoint)</h3>
+<div class="outline-text-3" id="text-org1a014bb">
 <p>
 An accessor for the transaction or savepoint's list of commit hooks, each of
 which should be a function with no required arguments. These functions will
@@ -872,9 +892,9 @@ be executed when a transaction is committed or a savepoint released.
 </div>
 </div>
 
-<div id="outline-container-org8daf98c" class="outline-3">
-<h3 id="org8daf98c">function abort-hooks (transaction-or-savepoint), setf (abort-hooks transaction-or-savepoint)</h3>
-<div class="outline-text-3" id="text-org8daf98c">
+<div id="outline-container-org674dd51" class="outline-3">
+<h3 id="org674dd51">function abort-hooks (transaction-or-savepoint), setf (abort-hooks transaction-or-savepoint)</h3>
+<div class="outline-text-3" id="text-org674dd51">
 <p>
 An accessor for the transaction or savepoint's list of abort hooks, each of
 which should be a function with no required arguments. These functions will
@@ -885,9 +905,9 @@ abort-transaction or rollback-savepoint).
 </div>
 </div>
 
-<div id="outline-container-org6f623d3" class="outline-3">
-<h3 id="org6f623d3">macro with-logical-transaction ((&amp;optional name isolation-level) &amp;body body)</h3>
-<div class="outline-text-3" id="text-org6f623d3">
+<div id="outline-container-org3457278" class="outline-3">
+<h3 id="org3457278">macro with-logical-transaction ((&amp;optional name isolation-level) &amp;body body)</h3>
+<div class="outline-text-3" id="text-org3457278">
 <p>
 Executes body within a with-transaction form if no transaction is currently
 in progress, otherwise simulates a nested transaction by executing it
@@ -934,9 +954,9 @@ expected here:
 </div>
 </div>
 
-<div id="outline-container-org33a9c80" class="outline-3">
-<h3 id="org33a9c80">function abort-logical-transaction (transaction-or-savepoint)</h3>
-<div class="outline-text-3" id="text-org33a9c80">
+<div id="outline-container-org35b31e1" class="outline-3">
+<h3 id="org35b31e1">function abort-logical-transaction (transaction-or-savepoint)</h3>
+<div class="outline-text-3" id="text-org35b31e1">
 <p>
 Roll back the given logical transaction, regardless of whether it is an
 actual transaction or a savepoint.
@@ -944,9 +964,9 @@ actual transaction or a savepoint.
 </div>
 </div>
 
-<div id="outline-container-org6c6e7c7" class="outline-3">
-<h3 id="org6c6e7c7">function commit-logical-transaction (transaction-or-savepoint)</h3>
-<div class="outline-text-3" id="text-org6c6e7c7">
+<div id="outline-container-orgd16e9ff" class="outline-3">
+<h3 id="orgd16e9ff">function commit-logical-transaction (transaction-or-savepoint)</h3>
+<div class="outline-text-3" id="text-orgd16e9ff">
 <p>
 Commit the given logical transaction, regardless of whether it is an
 actual transaction or a savepoint.
@@ -954,9 +974,9 @@ actual transaction or a savepoint.
 </div>
 </div>
 
-<div id="outline-container-org291bf07" class="outline-3">
-<h3 id="org291bf07">variable <b>current-logical-transaction</b></h3>
-<div class="outline-text-3" id="text-org291bf07">
+<div id="outline-container-org54ff3d0" class="outline-3">
+<h3 id="org54ff3d0">variable <b>current-logical-transaction</b></h3>
+<div class="outline-text-3" id="text-org54ff3d0">
 <p>
 This is bound to the current transaction-handle or savepoint-handle instance
 representing the innermost open logical transaction.
@@ -964,9 +984,9 @@ representing the innermost open logical transaction.
 </div>
 </div>
 
-<div id="outline-container-orgfd6b1c7" class="outline-3">
-<h3 id="orgfd6b1c7">macro ensure-transaction (&amp;body body)</h3>
-<div class="outline-text-3" id="text-orgfd6b1c7">
+<div id="outline-container-org12026bb" class="outline-3">
+<h3 id="org12026bb">macro ensure-transaction (&amp;body body)</h3>
+<div class="outline-text-3" id="text-org12026bb">
 <p>
 Ensures that body is executed within a transaction, but does not begin a
 new transaction if one is already in progress.
@@ -974,9 +994,9 @@ new transaction if one is already in progress.
 </div>
 </div>
 
-<div id="outline-container-org2b3281a" class="outline-3">
-<h3 id="org2b3281a">macro with-schema ((namespace &amp;key :strict t :if-not-exist :create :drop-after) &amp;body body)</h3>
-<div class="outline-text-3" id="text-org2b3281a">
+<div id="outline-container-orgccb4e38" class="outline-3">
+<h3 id="orgccb4e38">macro with-schema ((namespace &amp;key :strict t :if-not-exist :create :drop-after) &amp;body body)</h3>
+<div class="outline-text-3" id="text-orgccb4e38">
 <p>
 Sets the current schema to namespace and executes the body. Before executing
 body the PostgreSQL's session variable search_path is set to the given
@@ -990,9 +1010,9 @@ namespace is dropped from the database after the body execution.
 </div>
 </div>
 
-<div id="outline-container-org791a215" class="outline-3">
-<h3 id="org791a215">function sequence-next (sequence)</h3>
-<div class="outline-text-3" id="text-org791a215">
+<div id="outline-container-org97963e6" class="outline-3">
+<h3 id="org97963e6">function sequence-next (sequence)</h3>
+<div class="outline-text-3" id="text-org97963e6">
 <p>
 → integer
 </p>
@@ -1005,9 +1025,9 @@ according to S-SQL rules.
 </div>
 </div>
 
-<div id="outline-container-orgf57413a" class="outline-3">
-<h3 id="orgf57413a">function coalesce (&amp;rest arguments)</h3>
-<div class="outline-text-3" id="text-orgf57413a">
+<div id="outline-container-org11d4bb2" class="outline-3">
+<h3 id="org11d4bb2">function coalesce (&amp;rest arguments)</h3>
+<div class="outline-text-3" id="text-org11d4bb2">
 <p>
 → value
 </p>
@@ -1021,13 +1041,190 @@ when given only one argument, for transforming :nulls to NIL.
 </div>
 </div>
 
-<div id="outline-container-org26769df" class="outline-2">
-<h2 id="org26769df">Inspecting the database</h2>
-<div class="outline-text-2" id="text-org26769df">
+
+<div id="outline-container-orgdbfe01c" class="outline-2">
+<h2 id="orgdbfe01c">Helper functions for Prepared Statements</h2>
+<div class="outline-text-2" id="text-orgdbfe01c">
 </div>
-<div id="outline-container-orgd322176" class="outline-3">
-<h3 id="orgd322176">function list-tables (&amp;optional strings-p)</h3>
-<div class="outline-text-3" id="text-orgd322176">
+<div id="outline-container-orga8b063f" class="outline-3">
+<h3 id="orga8b063f">function prepared-statement-exists-p (name)</h3>
+<div class="outline-text-3" id="text-orga8b063f">
+<p>
+→ boolean
+This returns t if the prepared statement exists in the current
+postgresql session, otherwise nil.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org4481499" class="outline-3">
+<h3 id="org4481499">function list-prepared-statements()</h3>
+<div class="outline-text-3" id="text-org4481499">
+<p>
+→ list
+</p>
+
+<p>
+This is syntactic sugar. It runs a query that lists the prepared statements in
+the session in which the function is run.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgbb3d460" class="outline-3">
+<h3 id="orgbb3d460">function drop-prepared-statement (statement-name &amp;key (location :both) (database <b>database</b>))</h3>
+<div class="outline-text-3" id="text-orgbb3d460">
+<p>
+Prepared statements are stored both in the meta slot in the postmodern
+connection and in postgresql session information. If you know the prepared
+statement name, you can delete the prepared statement from both locations (the
+default behavior), just from postmodern (passing :postmodern to the location
+key parameter) or just from postgresql (passing :postgresql to the location
+key parameter). If you pass the name 'All' as the statement name, it will
+delete all prepared statements.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd0cfaff" class="outline-3">
+<h3 id="orgd0cfaff">function list-postmodern-prepared-statements (&amp;optional (names-only nil))</h3>
+<div class="outline-text-3" id="text-orgd0cfaff">
+<p>
+→ list
+</p>
+
+<p>
+List the prepared statements that postmodern has put in the meta slot in
+the connection. It will return a list of alists of form:
+  ((:NAME . \"SNY24\")
+  (:STATEMENT . \"(SELECT name, salary FROM employee WHERE (city = $1))\")
+  (:PREPARE-TIME . #&lt;TIMESTAMP 25-11-2018T15:36:43,385&gt;)
+  (:PARAMETER-TYPES . \"{text}\") (:FROM-SQL)
+</p>
+
+<p>
+If the names-only parameter is set to t, it will only return a list of
+the names of the prepared statements.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org5774eb3" class="outline-3">
+<h3 id="org5774eb3">function find-postgresql-prepared-statement (name)</h3>
+<div class="outline-text-3" id="text-org5774eb3">
+<p>
+→ string
+</p>
+
+<p>
+Returns the specified named prepared statement (if any) that postgresql has for this
+session.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org33f703f" class="outline-3">
+<h3 id="org33f703f">function find-postmodern-prepared-statement (name)</h3>
+<div class="outline-text-3" id="text-org33f703f">
+<p>
+→ string
+</p>
+
+<p>
+Returns the specified named prepared statement (if any) that postmodern has
+put in the meta slot in the connection. Note that this is the statement itself,
+not the name.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2a05d5f" class="outline-3">
+<h3 id="org2a05d5f">function reset-prepared-statement (condition)</h3>
+<div class="outline-text-3" id="text-org2a05d5f">
+<p>
+→ restart
+</p>
+
+<p>
+If you have received an invalid-prepared-statement error but the prepared
+statement is still in the meta slot in the postmodern connection, this will
+try to regenerate the prepared statement at the database connection level
+and restart the connection.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org5ede7d6" class="outline-3">
+<h3 id="org5ede7d6">function overwrite-prepared-statement (condition)</h3>
+<div class="outline-text-3" id="text-org5ede7d6">
+<p>
+→ restart
+</p>
+
+<p>
+If you have received an invalid-prepared-statement error but the prepared
+statement is still in the meta slot in the postmodern connection,
+this will try to regenerate the prepared statement at the database
+connection level and restart the connection.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgab31aeb" class="outline-3">
+<h3 id="orgab31aeb">function get-pid ()</h3>
+<div class="outline-text-3" id="text-orgab31aeb">
+<p>
+→ integer
+</p>
+
+<p>
+Get the process id used by postgresql for this connection.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org6a503be" class="outline-3">
+<h3 id="org6a503be">function get-pid-from-postmodern ()</h3>
+<div class="outline-text-3" id="text-org6a503be">
+<p>
+→ integer
+</p>
+
+<p>
+Get the process id used by postgresql for this connection,
+but get it from the postmodern connection parameters.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf1bbc04" class="outline-3">
+<h3 id="orgf1bbc04">function cancel-backend (pid)</h3>
+<div class="outline-text-3" id="text-orgf1bbc04">
+<p>
+Polite way of terminating a query at the database (as opposed to calling close-database).
+Slower than (terminate-backend pid) and does not always work.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org80deb98" class="outline-3">
+<h3 id="org80deb98">function terminate-backend (pid)</h3>
+<div class="outline-text-3" id="text-org80deb98">
+<p>
+Less polite way of terminating at the database (as opposed to calling close-database).
+Faster than (cancel-backend pid) and more reliable.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org10d1208" class="outline-2">
+<h2 id="org10d1208">Inspecting the database</h2>
+<div class="outline-text-2" id="text-org10d1208">
+</div>
+<div id="outline-container-org8fddc62" class="outline-3">
+<h3 id="org8fddc62">function list-tables (&amp;optional strings-p)</h3>
+<div class="outline-text-3" id="text-org8fddc62">
 <p>
 → list
 </p>
@@ -1039,9 +1236,9 @@ the names will be given as strings, otherwise as keywords.
 </div>
 </div>
 
-<div id="outline-container-orga08ec84" class="outline-3">
-<h3 id="orga08ec84">function list-tables-in-schema (&amp;optional strings-p)</h3>
-<div class="outline-text-3" id="text-orga08ec84">
+<div id="outline-container-orgdca6607" class="outline-3">
+<h3 id="orgdca6607">function list-tables-in-schema (&amp;optional strings-p)</h3>
+<div class="outline-text-3" id="text-orgdca6607">
 <p>
 → list
 </p>
@@ -1052,9 +1249,9 @@ When strings-p is T,the names will be given as strings, otherwise as keywords.
 </p>
 </div>
 </div>
-<div id="outline-container-org13296a5" class="outline-3">
-<h3 id="org13296a5">function table-exists-p (name)</h3>
-<div class="outline-text-3" id="text-org13296a5">
+<div id="outline-container-org74138e3" class="outline-3">
+<h3 id="org74138e3">function table-exists-p (name)</h3>
+<div class="outline-text-3" id="text-org74138e3">
 <p>
 → boolean
 </p>
@@ -1067,9 +1264,9 @@ or 'database.schema.table
 </div>
 </div>
 
-<div id="outline-container-org8e04ed0" class="outline-3">
-<h3 id="org8e04ed0">function table-description (name &amp;optional schema-name)</h3>
-<div class="outline-text-3" id="text-org8e04ed0">
+<div id="outline-container-orgbad33e6" class="outline-3">
+<h3 id="orgbad33e6">function table-description (name &amp;optional schema-name)</h3>
+<div class="outline-text-3" id="text-orgbad33e6">
 <p>
 → list
 </p>
@@ -1084,9 +1281,9 @@ the table are returned, regardless of their schema.
 </div>
 </div>
 
-<div id="outline-container-org06c5d40" class="outline-3">
-<h3 id="org06c5d40">function list-sequences (&amp;optional strings-p)</h3>
-<div class="outline-text-3" id="text-org06c5d40">
+<div id="outline-container-orgc2eef12" class="outline-3">
+<h3 id="orgc2eef12">function list-sequences (&amp;optional strings-p)</h3>
+<div class="outline-text-3" id="text-orgc2eef12">
 <p>
 → list
 </p>
@@ -1098,9 +1295,9 @@ the names will be given as strings, otherwise as keywords.
 </div>
 </div>
 
-<div id="outline-container-orgf676cb8" class="outline-3">
-<h3 id="orgf676cb8">function sequence-exists-p (name)</h3>
-<div class="outline-text-3" id="text-orgf676cb8">
+<div id="outline-container-org660e7ae" class="outline-3">
+<h3 id="org660e7ae">function sequence-exists-p (name)</h3>
+<div class="outline-text-3" id="text-org660e7ae">
 <p>
 → boolean
 </p>
@@ -1112,9 +1309,9 @@ string or a symbol.
 </div>
 </div>
 
-<div id="outline-container-org1b8655d" class="outline-3">
-<h3 id="org1b8655d">function list-views (&amp;optional strings-p)</h3>
-<div class="outline-text-3" id="text-org1b8655d">
+<div id="outline-container-org2a4608e" class="outline-3">
+<h3 id="org2a4608e">function list-views (&amp;optional strings-p)</h3>
+<div class="outline-text-3" id="text-org2a4608e">
 <p>
 → list
 </p>
@@ -1126,9 +1323,9 @@ is T, the names will be returned as strings, otherwise as keywords.
 </div>
 </div>
 
-<div id="outline-container-org3e46672" class="outline-3">
-<h3 id="org3e46672">function view-exists-p (name)</h3>
-<div class="outline-text-3" id="text-org3e46672">
+<div id="outline-container-orgb34e5aa" class="outline-3">
+<h3 id="orgb34e5aa">function view-exists-p (name)</h3>
+<div class="outline-text-3" id="text-orgb34e5aa">
 <p>
 → boolean
 </p>
@@ -1140,9 +1337,9 @@ string or a symbol.
 </div>
 </div>
 
-<div id="outline-container-orgcf3d5d7" class="outline-3">
-<h3 id="orgcf3d5d7">function list-schemata ()</h3>
-<div class="outline-text-3" id="text-orgcf3d5d7">
+<div id="outline-container-orga2172c1" class="outline-3">
+<h3 id="orga2172c1">function list-schemata ()</h3>
+<div class="outline-text-3" id="text-orga2172c1">
 <p>
 → list
 </p>
@@ -1154,9 +1351,9 @@ existing schemata.
 </div>
 </div>
 
-<div id="outline-container-org2dfd8dd" class="outline-3">
-<h3 id="org2dfd8dd">function schema-exist-p (schema) NOW DEPRECATED IN FAVOR OF schema-exists-p which is more consistent with naming of other functions.</h3>
-<div class="outline-text-3" id="text-org2dfd8dd">
+<div id="outline-container-orgb5e1283" class="outline-3">
+<h3 id="orgb5e1283">function schema-exist-p (schema) NOW DEPRECATED IN FAVOR OF schema-exists-p which is more consistent with naming of other functions.</h3>
+<div class="outline-text-3" id="text-orgb5e1283">
 <p>
 → boolean
 </p>
@@ -1168,9 +1365,9 @@ otherwise.
 </div>
 </div>
 
-<div id="outline-container-org03ba99f" class="outline-3">
-<h3 id="org03ba99f">function schema-exists-p (schema)</h3>
-<div class="outline-text-3" id="text-org03ba99f">
+<div id="outline-container-org6639ae3" class="outline-3">
+<h3 id="org6639ae3">function schema-exists-p (schema)</h3>
+<div class="outline-text-3" id="text-org6639ae3">
 <p>
 → boolean
 </p>
@@ -1182,9 +1379,9 @@ otherwise.
 </div>
 </div>
 
-<div id="outline-container-org76675e8" class="outline-3">
-<h3 id="org76675e8">function database-version ()</h3>
-<div class="outline-text-3" id="text-org76675e8">
+<div id="outline-container-org6bca315" class="outline-3">
+<h3 id="org6bca315">function database-version ()</h3>
+<div class="outline-text-3" id="text-org6bca315">
 <p>
 → string
 </p>
@@ -1195,9 +1392,9 @@ Returns the version of the current postgresql database.
 </div>
 </div>
 
-<div id="outline-container-orgc06d5ac" class="outline-3">
-<h3 id="orgc06d5ac">function num-records-in-database ()</h3>
-<div class="outline-text-3" id="text-orgc06d5ac">
+<div id="outline-container-org0911489" class="outline-3">
+<h3 id="org0911489">function num-records-in-database ()</h3>
+<div class="outline-text-3" id="text-org0911489">
 <p>
 → list
 </p>
@@ -1209,9 +1406,9 @@ records in the currently connected database.
 </div>
 </div>
 
-<div id="outline-container-org7a44810" class="outline-3">
-<h3 id="org7a44810">function current-database ()</h3>
-<div class="outline-text-3" id="text-org7a44810">
+<div id="outline-container-org25b904d" class="outline-3">
+<h3 id="org25b904d">function current-database ()</h3>
+<div class="outline-text-3" id="text-org25b904d">
 <p>
 → string
 </p>
@@ -1222,9 +1419,9 @@ Returns the string name of the current database.
 </div>
 </div>
 
-<div id="outline-container-org7ed9671" class="outline-3">
-<h3 id="org7ed9671">function database-exists-p (database-name)</h3>
-<div class="outline-text-3" id="text-org7ed9671">
+<div id="outline-container-org40e3952" class="outline-3">
+<h3 id="org40e3952">function database-exists-p (database-name)</h3>
+<div class="outline-text-3" id="text-org40e3952">
 <p>
 → boolean
 </p>
@@ -1235,9 +1432,9 @@ Checks to see if a particular database exists.
 </div>
 </div>
 
-<div id="outline-container-org08b4b57" class="outline-3">
-<h3 id="org08b4b57">function database-size (&amp;optional database-name)</h3>
-<div class="outline-text-3" id="text-org08b4b57">
+<div id="outline-container-org9e1497f" class="outline-3">
+<h3 id="org9e1497f">function database-size (&amp;optional database-name)</h3>
+<div class="outline-text-3" id="text-org9e1497f">
 <p>
 → list
 </p>
@@ -1250,9 +1447,9 @@ provided, it will return the result for the currently connected database.
 </div>
 </div>
 
-<div id="outline-container-org73f5fc2" class="outline-3">
-<h3 id="org73f5fc2">function list-databases (&amp;key (order-by-size nil) (size t))</h3>
-<div class="outline-text-3" id="text-org73f5fc2">
+<div id="outline-container-orge79193a" class="outline-3">
+<h3 id="orge79193a">function list-databases (&amp;key (order-by-size nil) (size t))</h3>
+<div class="outline-text-3" id="text-orge79193a">
 <p>
 → list
 </p>
@@ -1267,9 +1464,9 @@ in a single list ordered by name. This function excludes the template databases
 </div>
 </div>
 
-<div id="outline-container-orgacb0cf3" class="outline-3">
-<h3 id="orgacb0cf3">function list-schemas ()</h3>
-<div class="outline-text-3" id="text-orgacb0cf3">
+<div id="outline-container-org7e815cc" class="outline-3">
+<h3 id="org7e815cc">function list-schemas ()</h3>
+<div class="outline-text-3" id="text-org7e815cc">
 <p>
 → list
 </p>
@@ -1280,9 +1477,9 @@ List schemas in the current database, excluding the pg_* system schemas.
 </div>
 </div>
 
-<div id="outline-container-org4eda1b1" class="outline-3">
-<h3 id="org4eda1b1">function list-tablespaces ()</h3>
-<div class="outline-text-3" id="text-org4eda1b1">
+<div id="outline-container-orgcbe1dc2" class="outline-3">
+<h3 id="orgcbe1dc2">function list-tablespaces ()</h3>
+<div class="outline-text-3" id="text-orgcbe1dc2">
 <p>
 → list
 </p>
@@ -1293,9 +1490,9 @@ Lists the tablespaces in the currently connected database.
 </div>
 </div>
 
-<div id="outline-container-org55bbdf0" class="outline-3">
-<h3 id="org55bbdf0">function list-available-types ()</h3>
-<div class="outline-text-3" id="text-org55bbdf0">
+<div id="outline-container-org8e5bc67" class="outline-3">
+<h3 id="org8e5bc67">function list-available-types ()</h3>
+<div class="outline-text-3" id="text-org8e5bc67">
 <p>
 → list
 </p>
@@ -1306,9 +1503,9 @@ List the available types in this postgresql version.
 </div>
 </div>
 
-<div id="outline-container-orgdd097b2" class="outline-3">
-<h3 id="orgdd097b2">function list-table-sizes (&amp;key (schema "public") (order-by-size nil) (size t))</h3>
-<div class="outline-text-3" id="text-orgdd097b2">
+<div id="outline-container-org237b868" class="outline-3">
+<h3 id="org237b868">function list-table-sizes (&amp;key (schema "public") (order-by-size nil) (size t))</h3>
+<div class="outline-text-3" id="text-org237b868">
 <p>
 → list
 </p>
@@ -1326,9 +1523,9 @@ result in order of size instead of by table name.
 </div>
 </div>
 
-<div id="outline-container-orgb5a656c" class="outline-3">
-<h3 id="orgb5a656c">function table-size (table-name)</h3>
-<div class="outline-text-3" id="text-orgb5a656c">
+<div id="outline-container-org0a067c7" class="outline-3">
+<h3 id="org0a067c7">function table-size (table-name)</h3>
+<div class="outline-text-3" id="text-org0a067c7">
 <p>
 → list
 </p>
@@ -1340,9 +1537,9 @@ string or quoted.
 </div>
 </div>
 
-<div id="outline-container-org0bae73e" class="outline-3">
-<h3 id="org0bae73e">function more-table-info (table-name)</h3>
-<div class="outline-text-3" id="text-org0bae73e">
+<div id="outline-container-orgbcb7bff" class="outline-3">
+<h3 id="orgbcb7bff">function more-table-info (table-name)</h3>
+<div class="outline-text-3" id="text-orgbcb7bff">
 <p>
 → list
 </p>
@@ -1354,9 +1551,9 @@ or quoted.
 </div>
 </div>
 
-<div id="outline-container-org599bc78" class="outline-3">
-<h3 id="org599bc78">function list-columns (table-name)</h3>
-<div class="outline-text-3" id="text-org599bc78">
+<div id="outline-container-org280fbb0" class="outline-3">
+<h3 id="org280fbb0">function list-columns (table-name)</h3>
+<div class="outline-text-3" id="text-org280fbb0">
 <p>
 → list
 </p>
@@ -1368,9 +1565,9 @@ from the postmodern table-description function rather than directly.
 </div>
 </div>
 
-<div id="outline-container-org3c51a57" class="outline-3">
-<h3 id="org3c51a57">function list-columns-with-types (table-name)</h3>
-<div class="outline-text-3" id="text-org3c51a57">
+<div id="outline-container-orgcbba043" class="outline-3">
+<h3 id="orgcbba043">function list-columns-with-types (table-name)</h3>
+<div class="outline-text-3" id="text-orgcbba043">
 <p>
 → list
 </p>
@@ -1382,9 +1579,9 @@ to the pg-catalog tables.
 </div>
 </div>
 
-<div id="outline-container-org859a984" class="outline-3">
-<h3 id="org859a984">function column-exists-p (table-name column-name)</h3>
-<div class="outline-text-3" id="text-org859a984">
+<div id="outline-container-org635750e" class="outline-3">
+<h3 id="org635750e">function column-exists-p (table-name column-name)</h3>
+<div class="outline-text-3" id="text-org635750e">
 <p>
 → boolean
 </p>
@@ -1396,9 +1593,9 @@ either strings or symbols.
 </div>
 </div>
 
-<div id="outline-container-org3708a2d" class="outline-3">
-<h3 id="org3708a2d">function describe-views (&amp;optional (schema "public")</h3>
-<div class="outline-text-3" id="text-org3708a2d">
+<div id="outline-container-orgbf64476" class="outline-3">
+<h3 id="orgbf64476">function describe-views (&amp;optional (schema "public")</h3>
+<div class="outline-text-3" id="text-orgbf64476">
 <p>
 → list
 </p>
@@ -1409,9 +1606,9 @@ Describe the current views in the specified schema. Defaults to public schema.
 </div>
 </div>
 
-<div id="outline-container-org081137b" class="outline-3">
-<h3 id="org081137b">function list-database-functions ()</h3>
-<div class="outline-text-3" id="text-org081137b">
+<div id="outline-container-org740d461" class="outline-3">
+<h3 id="org740d461">function list-database-functions ()</h3>
+<div class="outline-text-3" id="text-org740d461">
 <p>
 → list
 </p>
@@ -1422,9 +1619,9 @@ Returns a list of the functions in the database from the information_schema.
 </div>
 </div>
 
-<div id="outline-container-org6ee5c4b" class="outline-3">
-<h3 id="org6ee5c4b">function list-indices (&amp;optional strings-p)</h3>
-<div class="outline-text-3" id="text-org6ee5c4b">
+<div id="outline-container-org652957e" class="outline-3">
+<h3 id="org652957e">function list-indices (&amp;optional strings-p)</h3>
+<div class="outline-text-3" id="text-org652957e">
 <p>
 → list
 </p>
@@ -1436,9 +1633,9 @@ strings-p is not true.
 </div>
 </div>
 
-<div id="outline-container-orgc37a008" class="outline-3">
-<h3 id="orgc37a008">function list-table-indices (table-name &amp;optional strings-p)</h3>
-<div class="outline-text-3" id="text-orgc37a008">
+<div id="outline-container-org2858574" class="outline-3">
+<h3 id="org2858574">function list-table-indices (table-name &amp;optional strings-p)</h3>
+<div class="outline-text-3" id="text-org2858574">
 <p>
 → list
 </p>
@@ -1449,9 +1646,9 @@ List the index names and the related columns in a table.
 </div>
 </div>
 
-<div id="outline-container-org642b2ed" class="outline-3">
-<h3 id="org642b2ed">function index-exists-p (name)</h3>
-<div class="outline-text-3" id="text-org642b2ed">
+<div id="outline-container-org5a5d422" class="outline-3">
+<h3 id="org5a5d422">function index-exists-p (name)</h3>
+<div class="outline-text-3" id="text-org5a5d422">
 <p>
 → boolean
 </p>
@@ -1463,9 +1660,9 @@ string or a symbol.
 </div>
 </div>
 
-<div id="outline-container-org49151df" class="outline-3">
-<h3 id="org49151df">function list-indexed-column-and-attributes (table-name)</h3>
-<div class="outline-text-3" id="text-org49151df">
+<div id="outline-container-orge8a15b6" class="outline-3">
+<h3 id="orge8a15b6">function list-indexed-column-and-attributes (table-name)</h3>
+<div class="outline-text-3" id="text-orge8a15b6">
 <p>
 → list
 </p>
@@ -1477,9 +1674,9 @@ key.
 </div>
 </div>
 
-<div id="outline-container-org3512b6e" class="outline-3">
-<h3 id="org3512b6e">function list-index-definitions (table-name)</h3>
-<div class="outline-text-3" id="text-org3512b6e">
+<div id="outline-container-org89f148b" class="outline-3">
+<h3 id="org89f148b">function list-index-definitions (table-name)</h3>
+<div class="outline-text-3" id="text-org89f148b">
 <p>
 → list
 </p>
@@ -1491,9 +1688,9 @@ the table
 </div>
 </div>
 
-<div id="outline-container-org90e958c" class="outline-3">
-<h3 id="org90e958c">function find-primary-key-info (table-name &amp;optional (just-key nil))</h3>
-<div class="outline-text-3" id="text-org90e958c">
+<div id="outline-container-orgeada611" class="outline-3">
+<h3 id="orgeada611">function find-primary-key-info (table-name &amp;optional (just-key nil))</h3>
+<div class="outline-text-3" id="text-orgeada611">
 <p>
 → list
 </p>
@@ -1507,9 +1704,9 @@ primary key as a string.
 </div>
 </div>
 
-<div id="outline-container-org84abae1" class="outline-3">
-<h3 id="org84abae1">function list-foreign-keys (table-name)</h3>
-<div class="outline-text-3" id="text-org84abae1">
+<div id="outline-container-org24325c9" class="outline-3">
+<h3 id="org24325c9">function list-foreign-keys (table-name)</h3>
+<div class="outline-text-3" id="text-org24325c9">
 <p>
 → list
 </p>
@@ -1522,9 +1719,9 @@ Returns a list of sublists of foreign key info in the form of
 </div>
 </div>
 
-<div id="outline-container-orgae78241" class="outline-3">
-<h3 id="orgae78241">function list-unique-or-primary-constraints (table-name)</h3>
-<div class="outline-text-3" id="text-orgae78241">
+<div id="outline-container-orgdcea10c" class="outline-3">
+<h3 id="orgdcea10c">function list-unique-or-primary-constraints (table-name)</h3>
+<div class="outline-text-3" id="text-orgdcea10c">
 <p>
 → list
 </p>
@@ -1535,9 +1732,9 @@ List constraints on a table.
 </div>
 </div>
 
-<div id="outline-container-orgadeff0c" class="outline-3">
-<h3 id="orgadeff0c">function list-all-constraints (table-name)</h3>
-<div class="outline-text-3" id="text-orgadeff0c">
+<div id="outline-container-org61cc6ea" class="outline-3">
+<h3 id="org61cc6ea">function list-all-constraints (table-name)</h3>
+<div class="outline-text-3" id="text-org61cc6ea">
 <p>
 → list
 </p>
@@ -1549,9 +1746,9 @@ can be either a string or quoted.
 </div>
 </div>
 
-<div id="outline-container-org08e7036" class="outline-3">
-<h3 id="org08e7036">function describe-constraint (table-name constraint-name)</h3>
-<div class="outline-text-3" id="text-org08e7036">
+<div id="outline-container-org19eb477" class="outline-3">
+<h3 id="org19eb477">function describe-constraint (table-name constraint-name)</h3>
+<div class="outline-text-3" id="text-org19eb477">
 <p>
 → list
 </p>
@@ -1563,9 +1760,9 @@ the table-name and the constraint name using the information_schema table.
 </div>
 </div>
 
-<div id="outline-container-org5b723fb" class="outline-3">
-<h3 id="org5b723fb">function describe-foreign-key-constraints ()</h3>
-<div class="outline-text-3" id="text-org5b723fb">
+<div id="outline-container-org7e2c10b" class="outline-3">
+<h3 id="org7e2c10b">function describe-foreign-key-constraints ()</h3>
+<div class="outline-text-3" id="text-org7e2c10b">
 <p>
 → list
 </p>
@@ -1576,9 +1773,9 @@ Generates a list of lists of information on the foreign key constraints
 </div>
 </div>
 
-<div id="outline-container-org45c066b" class="outline-3">
-<h3 id="org45c066b">function list-triggers (&amp;optional table-name)</h3>
-<div class="outline-text-3" id="text-org45c066b">
+<div id="outline-container-org8d54386" class="outline-3">
+<h3 id="org8d54386">function list-triggers (&amp;optional table-name)</h3>
+<div class="outline-text-3" id="text-org8d54386">
 <p>
 → list
 </p>
@@ -1590,9 +1787,9 @@ can be either quoted or string.
 </div>
 </div>
 
-<div id="outline-container-orge052147" class="outline-3">
-<h3 id="orge052147">function list-detailed-triggers ()</h3>
-<div class="outline-text-3" id="text-orge052147">
+<div id="outline-container-org67eac16" class="outline-3">
+<h3 id="org67eac16">function list-detailed-triggers ()</h3>
+<div class="outline-text-3" id="text-org67eac16">
 <p>
 → list
 </p>
@@ -1603,9 +1800,9 @@ List detailed information on the triggers from the information_schema table.
 </div>
 </div>
 
-<div id="outline-container-org255eb0c" class="outline-3">
-<h3 id="org255eb0c">function list-database-users ()</h3>
-<div class="outline-text-3" id="text-org255eb0c">
+<div id="outline-container-org0168937" class="outline-3">
+<h3 id="org0168937">function list-database-users ()</h3>
+<div class="outline-text-3" id="text-org0168937">
 <p>
 → list
 </p>
@@ -1615,9 +1812,9 @@ List database users.
 </p>
 </div>
 </div>
-<div id="outline-container-org2a52736" class="outline-3">
-<h3 id="org2a52736">function list-available-extensions ()</h3>
-<div class="outline-text-3" id="text-org2a52736">
+<div id="outline-container-org0f8fdad" class="outline-3">
+<h3 id="org0f8fdad">function list-available-extensions ()</h3>
+<div class="outline-text-3" id="text-org0f8fdad">
 <p>
 → list
 </p>
@@ -1628,9 +1825,9 @@ currently connected database. The extensions may or may not be installed.
 </p>
 </div>
 </div>
-<div id="outline-container-org8795eb4" class="outline-3">
-<h3 id="org8795eb4">function list-installed-extensions ()</h3>
-<div class="outline-text-3" id="text-org8795eb4">
+<div id="outline-container-org61a1133" class="outline-3">
+<h3 id="org61a1133">function list-installed-extensions ()</h3>
+<div class="outline-text-3" id="text-org61a1133">
 <p>
 → list
 </p>
@@ -1641,9 +1838,9 @@ connected database.
 </p>
 </div>
 </div>
-<div id="outline-container-org7ae9179" class="outline-3">
-<h3 id="org7ae9179">function change-toplevel-database (new-database user password host)</h3>
-<div class="outline-text-3" id="text-org7ae9179">
+<div id="outline-container-orgccaa0d4" class="outline-3">
+<h3 id="orgccaa0d4">function change-toplevel-database (new-database user password host)</h3>
+<div class="outline-text-3" id="text-orgccaa0d4">
 <p>
 → string
 </p>
@@ -1658,9 +1855,9 @@ connected database as a string.
 </div>
 
 
-<div id="outline-container-org05d41fe" class="outline-2">
-<h2 id="org05d41fe">Database access objects</h2>
-<div class="outline-text-2" id="text-org05d41fe">
+<div id="outline-container-orgd97efd3" class="outline-2">
+<h2 id="orgd97efd3">Database access objects</h2>
+<div class="outline-text-2" id="text-orgd97efd3">
 <p>
 Postmodern contains a simple system for defining CLOS classes that
 represent rows in the database. This is not intended as a full-fledged
@@ -1670,9 +1867,9 @@ a humble SQL library like this.
 </p>
 </div>
 
-<div id="outline-container-org2167fd0" class="outline-3">
-<h3 id="org2167fd0">metaclass dao-class</h3>
-<div class="outline-text-3" id="text-org2167fd0">
+<div id="outline-container-org3e7d292" class="outline-3">
+<h3 id="org3e7d292">metaclass dao-class</h3>
+<div class="outline-text-3" id="text-org3e7d292">
 <p>
 At the heart of Postmodern's DAO system is the dao-class metaclass. It
 allows you to define classes for your database-access objects as regular
@@ -1749,9 +1946,9 @@ and specify a slot like this:
 </div>
 </div>
 
-<div id="outline-container-org7062ca8" class="outline-3">
-<h3 id="org7062ca8">method dao-keys (class)</h3>
-<div class="outline-text-3" id="text-org7062ca8">
+<div id="outline-container-orgc7123a9" class="outline-3">
+<h3 id="orgc7123a9">method dao-keys (class)</h3>
+<div class="outline-text-3" id="text-orgc7123a9">
 <p>
 → list
 </p>
@@ -1773,9 +1970,9 @@ find-primary-key-info function.
 </div>
 </div>
 
-<div id="outline-container-orgb4cb6ea" class="outline-3">
-<h3 id="orgb4cb6ea">method dao-keys (dao)</h3>
-<div class="outline-text-3" id="text-orgb4cb6ea">
+<div id="outline-container-org3c6db0c" class="outline-3">
+<h3 id="org3c6db0c">method dao-keys (dao)</h3>
+<div class="outline-text-3" id="text-org3c6db0c">
 <p>
 → list
 </p>
@@ -1786,9 +1983,9 @@ Returns list of values that are the primary key of dao.
 </div>
 </div>
 
-<div id="outline-container-org155944b" class="outline-3">
-<h3 id="org155944b">method dao-exists-p (dao)</h3>
-<div class="outline-text-3" id="text-org155944b">
+<div id="outline-container-org27e1e0f" class="outline-3">
+<h3 id="org27e1e0f">method dao-exists-p (dao)</h3>
+<div class="outline-text-3" id="text-org27e1e0f">
 <p>
 → boolean
 </p>
@@ -1801,9 +1998,9 @@ unbound.
 </div>
 </div>
 
-<div id="outline-container-orga5eaaa8" class="outline-3">
-<h3 id="orga5eaaa8">method make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)</h3>
-<div class="outline-text-3" id="text-orga5eaaa8">
+<div id="outline-container-orga61b131" class="outline-3">
+<h3 id="orga61b131">method make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)</h3>
+<div class="outline-text-3" id="text-orga61b131">
 <p>
 → dao
 </p>
@@ -1814,9 +2011,9 @@ Combines make-instance with insert-dao. Return the created dao.
 </div>
 </div>
 
-<div id="outline-container-orgb413e74" class="outline-3">
-<h3 id="orgb413e74">macro define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)</h3>
-<div class="outline-text-3" id="text-orgb413e74">
+<div id="outline-container-orgb3ef560" class="outline-3">
+<h3 id="orgb3ef560">macro define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)</h3>
+<div class="outline-text-3" id="text-orgb3ef560">
 <p>
 Create an :around-method for make-dao. The body is executed in a lexical
 environment where dao-name is bound to a freshly created and inserted DAO.
@@ -1827,9 +2024,9 @@ slots with the type serial, which are unknown before insert-dao.
 </div>
 </div>
 
-<div id="outline-container-orgf1c832d" class="outline-3">
-<h3 id="orgf1c832d">method get-dao (type &amp;rest keys)</h3>
-<div class="outline-text-3" id="text-orgf1c832d">
+<div id="outline-container-orgce7d413" class="outline-3">
+<h3 id="orgce7d413">method get-dao (type &amp;rest keys)</h3>
+<div class="outline-text-3" id="text-orgce7d413">
 <p>
 → dao
 </p>
@@ -1844,9 +2041,9 @@ The same goes for select-dao and query-dao.
 </div>
 </div>
 
-<div id="outline-container-orgda16e4e" class="outline-3">
-<h3 id="orgda16e4e">macro select-dao (type &amp;optional (test t) &amp;rest sort)</h3>
-<div class="outline-text-3" id="text-orgda16e4e">
+<div id="outline-container-org5acd26e" class="outline-3">
+<h3 id="org5acd26e">macro select-dao (type &amp;optional (test t) &amp;rest sort)</h3>
+<div class="outline-text-3" id="text-org5acd26e">
 <p>
 → list
 </p>
@@ -1868,9 +2065,9 @@ the result.
 </div>
 </div>
 
-<div id="outline-container-org3a1c3d4" class="outline-3">
-<h3 id="org3a1c3d4">macro do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)</h3>
-<div class="outline-text-3" id="text-org3a1c3d4">
+<div id="outline-container-orgae8d7f2" class="outline-3">
+<h3 id="orgae8d7f2">macro do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)</h3>
+<div class="outline-text-3" id="text-orgae8d7f2">
 <p>
 Like select-dao, but iterates over the results rather than returning them.
 For each matching DAO, body is evaluated with type-var bound to the DAO
@@ -1884,9 +2081,9 @@ instance.
 </div>
 </div>
 
-<div id="outline-container-orge8a667c" class="outline-3">
-<h3 id="orge8a667c">macro query-dao (type query &amp;rest args)</h3>
-<div class="outline-text-3" id="text-orge8a667c">
+<div id="outline-container-org057bc79" class="outline-3">
+<h3 id="org057bc79">macro query-dao (type query &amp;rest args)</h3>
+<div class="outline-text-3" id="text-org057bc79">
 <p>
 → list
 </p>
@@ -1901,9 +2098,9 @@ the DAO class, or be bound through with-column-writers.
 </div>
 </div>
 
-<div id="outline-container-orgfdae6ee" class="outline-3">
-<h3 id="orgfdae6ee">function do-query-dao (((type type-var) query &amp;rest args) &amp;body body)</h3>
-<div class="outline-text-3" id="text-orgfdae6ee">
+<div id="outline-container-orgb46a620" class="outline-3">
+<h3 id="orgb46a620">function do-query-dao (((type type-var) query &amp;rest args) &amp;body body)</h3>
+<div class="outline-text-3" id="text-orgb46a620">
 <p>
 → list
 </p>
@@ -1920,9 +2117,9 @@ For each matching DAO, body is evaluated with type-var bound to the instance.
 </div>
 </div>
 
-<div id="outline-container-orgf8ae586" class="outline-3">
-<h3 id="orgf8ae586">variable <b>ignore-unknown-columns</b></h3>
-<div class="outline-text-3" id="text-orgf8ae586">
+<div id="outline-container-orgc548f24" class="outline-3">
+<h3 id="orgc548f24">variable <b>ignore-unknown-columns</b></h3>
+<div class="outline-text-3" id="text-orgc548f24">
 <p>
 Normally, when get-dao, select-dao, or query-dao finds a column in the database
 that's not in the DAO class, it will raise an error. Setting this variable to
@@ -1931,9 +2128,9 @@ a non-NIL will cause it to simply ignore the unknown column.
 </div>
 </div>
 
-<div id="outline-container-org2f657bb" class="outline-3">
-<h3 id="org2f657bb">method insert-dao (dao)</h3>
-<div class="outline-text-3" id="text-org2f657bb">
+<div id="outline-container-orgd50b062" class="outline-3">
+<h3 id="orgd50b062">method insert-dao (dao)</h3>
+<div class="outline-text-3" id="text-orgd50b062">
 <p>
 → dao
 </p>
@@ -1947,9 +2144,9 @@ be failed. (This feature only works on PostgreSQL 8.2 and up.)
 </div>
 </div>
 
-<div id="outline-container-orged00616" class="outline-3">
-<h3 id="orged00616">method update-dao (dao)</h3>
-<div class="outline-text-3" id="text-orged00616">
+<div id="outline-container-org12447ba" class="outline-3">
+<h3 id="org12447ba">method update-dao (dao)</h3>
+<div class="outline-text-3" id="text-org12447ba">
 <p>
 → dao
 </p>
@@ -1962,9 +2159,9 @@ non-primary-key columns. Raises an error when no row matching the dao exists.
 </div>
 </div>
 
-<div id="outline-container-org4157b73" class="outline-3">
-<h3 id="org4157b73">function save-dao (dao)</h3>
-<div class="outline-text-3" id="text-org4157b73">
+<div id="outline-container-org7e41df1" class="outline-3">
+<h3 id="org7e41df1">function save-dao (dao)</h3>
+<div class="outline-text-3" id="text-org7e41df1">
 <p>
 → boolean
 </p>
@@ -1989,9 +2186,9 @@ See also: upsert-dao.
 </div>
 </div>
 
-<div id="outline-container-org0e6d5d2" class="outline-3">
-<h3 id="org0e6d5d2">function save-dao/transaction (dao)</h3>
-<div class="outline-text-3" id="text-org0e6d5d2">
+<div id="outline-container-org87f82a4" class="outline-3">
+<h3 id="org87f82a4">function save-dao/transaction (dao)</h3>
+<div class="outline-text-3" id="text-org87f82a4">
 <p>
 → boolean
 </p>
@@ -2007,9 +2204,9 @@ See also: upsert-dao.
 </div>
 </div>
 
-<div id="outline-container-orgb3bae9a" class="outline-3">
-<h3 id="orgb3bae9a">method upsert-dao (dao)</h3>
-<div class="outline-text-3" id="text-orgb3bae9a">
+<div id="outline-container-org1c078c7" class="outline-3">
+<h3 id="org1c078c7">method upsert-dao (dao)</h3>
+<div class="outline-text-3" id="text-org1c078c7">
 <p>
 → dao
 </p>
@@ -2056,18 +2253,18 @@ was inserted, NIL if it was updated).
 </div>
 </div>
 
-<div id="outline-container-org3ea645d" class="outline-3">
-<h3 id="org3ea645d">method delete-dao (dao)</h3>
-<div class="outline-text-3" id="text-org3ea645d">
+<div id="outline-container-orgec5b546" class="outline-3">
+<h3 id="orgec5b546">method delete-dao (dao)</h3>
+<div class="outline-text-3" id="text-orgec5b546">
 <p>
 Delete the given dao from the database.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org2a00107" class="outline-3">
-<h3 id="org2a00107">function dao-table-name (class)</h3>
-<div class="outline-text-3" id="text-org2a00107">
+<div id="outline-container-orge1dec5a" class="outline-3">
+<h3 id="orge1dec5a">function dao-table-name (class)</h3>
+<div class="outline-text-3" id="text-orge1dec5a">
 <p>
 → string
 </p>
@@ -2079,9 +2276,9 @@ symbol naming such a class).
 </div>
 </div>
 
-<div id="outline-container-orgd40cdef" class="outline-3">
-<h3 id="orgd40cdef">function dao-table-definition (class)</h3>
-<div class="outline-text-3" id="text-orgd40cdef">
+<div id="outline-container-orgb0a7d53" class="outline-3">
+<h3 id="orgb0a7d53">function dao-table-definition (class)</h3>
+<div class="outline-text-3" id="text-orgb0a7d53">
 <p>
 → string
 </p>
@@ -2095,9 +2292,9 @@ own queries to add them, in which case look to s-sql's create-table function.
 </div>
 </div>
 
-<div id="outline-container-orgc476df2" class="outline-3">
-<h3 id="orgc476df2">macro with-column-writers ((&amp;rest writers) &amp;body body)</h3>
-<div class="outline-text-3" id="text-orgc476df2">
+<div id="outline-container-org0a62e5e" class="outline-3">
+<h3 id="org0a62e5e">macro with-column-writers ((&amp;rest writers) &amp;body body)</h3>
+<div class="outline-text-3" id="text-org0a62e5e">
 <p>
 Provides control over the way get-dao, select-dao, and query-dao read values
 from the database. This is not commonly needed, but can be used to reduce the
@@ -2120,9 +2317,9 @@ about the objects, and immediately store it in the new instances.
 </div>
 </div>
 
-<div id="outline-container-org7b386e0" class="outline-2">
-<h2 id="org7b386e0">Table definition and creation</h2>
-<div class="outline-text-2" id="text-org7b386e0">
+<div id="outline-container-orgeed3abc" class="outline-2">
+<h2 id="orgeed3abc">Table definition and creation</h2>
+<div class="outline-text-2" id="text-orgeed3abc">
 <p>
 It can be useful to have the SQL statements needed to build an application's
 tables available from the source code, to do things like automatically
@@ -2132,9 +2329,9 @@ in table definitions.
 </p>
 </div>
 
-<div id="outline-container-org35f071b" class="outline-3">
-<h3 id="org35f071b">macro deftable (name &amp;body definition)</h3>
-<div class="outline-text-3" id="text-org35f071b">
+<div id="outline-container-orgbda5696" class="outline-3">
+<h3 id="orgbda5696">macro deftable (name &amp;body definition)</h3>
+<div class="outline-text-3" id="text-orgbda5696">
 <p>
 Define a table. name can be either a symbol or a (symbol string) list.
 In the first case, the table name is derived from the symbol's name by
@@ -2148,9 +2345,9 @@ and then define indices on it.
 </div>
 </div>
 
-<div id="outline-container-orgbf03822" class="outline-3">
-<h3 id="orgbf03822">function !dao-def ()</h3>
-<div class="outline-text-3" id="text-orgbf03822">
+<div id="outline-container-orge7e4389" class="outline-3">
+<h3 id="orge7e4389">function !dao-def ()</h3>
+<div class="outline-text-3" id="text-orge7e4389">
 <p>
 Should only be used inside deftable's body. Adds the result of calling
 dao-table-definition on <b>table-symbol</b> to the definition.
@@ -2158,9 +2355,9 @@ dao-table-definition on <b>table-symbol</b> to the definition.
 </div>
 </div>
 
-<div id="outline-container-org19622a3" class="outline-3">
-<h3 id="org19622a3">function !index (&amp;rest columns), !unique-index (&amp;rest columns)</h3>
-<div class="outline-text-3" id="text-org19622a3">
+<div id="outline-container-orga2c4bf6" class="outline-3">
+<h3 id="orga2c4bf6">function !index (&amp;rest columns), !unique-index (&amp;rest columns)</h3>
+<div class="outline-text-3" id="text-orga2c4bf6">
 <p>
 Define an index on the table being defined. The columns can be given as
 symbols or strings.
@@ -2168,9 +2365,9 @@ symbols or strings.
 </div>
 </div>
 
-<div id="outline-container-org2d93b97" class="outline-3">
-<h3 id="org2d93b97">function !foreign (target-table columns &amp;optional target-columns &amp;key on-delete on-update deferrable initially-deferred)</h3>
-<div class="outline-text-3" id="text-org2d93b97">
+<div id="outline-container-org6097983" class="outline-3">
+<h3 id="org6097983">function !foreign (target-table columns &amp;optional target-columns &amp;key on-delete on-update deferrable initially-deferred)</h3>
+<div class="outline-text-3" id="text-org6097983">
 <p>
 Add a foreign key to the table being defined. target-table is the referenced
 table. columns is a list of column names or single name in this table, and,
@@ -2192,9 +2389,9 @@ so that they can be specified even when target-columns is not given.
 </div>
 </div>
 
-<div id="outline-container-orgb288681" class="outline-3">
-<h3 id="orgb288681">function !unique (target-fields &amp;key deferrable initially-deferred)</h3>
-<div class="outline-text-3" id="text-orgb288681">
+<div id="outline-container-org62be441" class="outline-3">
+<h3 id="org62be441">function !unique (target-fields &amp;key deferrable initially-deferred)</h3>
+<div class="outline-text-3" id="text-org62be441">
 <p>
 Constrains one or more columns to only contain unique (combinations of) values,
 with deferrable and initially-deferred defined as in !foreign
@@ -2202,36 +2399,36 @@ with deferrable and initially-deferred defined as in !foreign
 </div>
 </div>
 
-<div id="outline-container-orga0bef91" class="outline-3">
-<h3 id="orga0bef91">function create-table (symbol)</h3>
-<div class="outline-text-3" id="text-orga0bef91">
+<div id="outline-container-orga931660" class="outline-3">
+<h3 id="orga931660">function create-table (symbol)</h3>
+<div class="outline-text-3" id="text-orga931660">
 <p>
 Creates the table identified by symbol by executing all forms in its definition.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orga7a15fc" class="outline-3">
-<h3 id="orga7a15fc">function create-all-tables ()</h3>
-<div class="outline-text-3" id="text-orga7a15fc">
+<div id="outline-container-orge480d8a" class="outline-3">
+<h3 id="orge480d8a">function create-all-tables ()</h3>
+<div class="outline-text-3" id="text-orge480d8a">
 <p>
 Creates all defined tables.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgaaeca8f" class="outline-3">
-<h3 id="orgaaeca8f">function create-package-tables (package)</h3>
-<div class="outline-text-3" id="text-orgaaeca8f">
+<div id="outline-container-orgdd79715" class="outline-3">
+<h3 id="orgdd79715">function create-package-tables (package)</h3>
+<div class="outline-text-3" id="text-orgdd79715">
 <p>
 Creates all tables identified by symbols interned in the given package.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org6aeb940" class="outline-3">
-<h3 id="org6aeb940">variables <b>table-name</b>, <b>table-symbol</b></h3>
-<div class="outline-text-3" id="text-org6aeb940">
+<div id="outline-container-orgfd826c0" class="outline-3">
+<h3 id="orgfd826c0">variables <b>table-name</b>, <b>table-symbol</b></h3>
+<div class="outline-text-3" id="text-orgfd826c0">
 <p>
 These variables are bound to the relevant name and symbol while the forms of a
 table definition are evaluated. Can be used to define shorthands like the ones
@@ -2241,9 +2438,9 @@ below.
 </div>
 </div>
 
-<div id="outline-container-org046928e" class="outline-2">
-<h2 id="org046928e">Schemata</h2>
-<div class="outline-text-2" id="text-org046928e">
+<div id="outline-container-org26dbf4a" class="outline-2">
+<h2 id="org26dbf4a">Schemata</h2>
+<div class="outline-text-2" id="text-org26dbf4a">
 <p>
 Schema allow you to separate tables into differnet name spaces. In different
 schemata two tables with the same name are allowed to exists. The tables can
@@ -2254,44 +2451,44 @@ functions allow you to create, drop schemata and to set the search path.
 </p>
 </div>
 
-<div id="outline-container-orga59a991" class="outline-3">
-<h3 id="orga59a991">function create-schema (schema)</h3>
-<div class="outline-text-3" id="text-orga59a991">
+<div id="outline-container-org90fd2a6" class="outline-3">
+<h3 id="org90fd2a6">function create-schema (schema)</h3>
+<div class="outline-text-3" id="text-org90fd2a6">
 <p>
 Creates a new schema. Raises an error if the schema is already exists.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org17d1a35" class="outline-3">
-<h3 id="org17d1a35">function drop-schema (schema)</h3>
-<div class="outline-text-3" id="text-org17d1a35">
+<div id="outline-container-orgf2a0940" class="outline-3">
+<h3 id="orgf2a0940">function drop-schema (schema)</h3>
+<div class="outline-text-3" id="text-orgf2a0940">
 <p>
 Removes a schema. Raises an error if the schema is not empty.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orge4e3a1e" class="outline-3">
-<h3 id="orge4e3a1e">function get-search-path ()</h3>
-<div class="outline-text-3" id="text-orge4e3a1e">
+<div id="outline-container-org8bc0bc9" class="outline-3">
+<h3 id="org8bc0bc9">function get-search-path ()</h3>
+<div class="outline-text-3" id="text-org8bc0bc9">
 <p>
 Retrieve the current search path.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgbf702ed" class="outline-3">
-<h3 id="orgbf702ed">function set-search-path (path)</h3>
-<div class="outline-text-3" id="text-orgbf702ed">
+<div id="outline-container-org515af3e" class="outline-3">
+<h3 id="org515af3e">function set-search-path (path)</h3>
+<div class="outline-text-3" id="text-org515af3e">
 <p>
 Sets the search path to the path. This function is used by with-schema.
 </p>
 </div>
 </div>
-<div id="outline-container-org10e8075" class="outline-3">
-<h3 id="org10e8075">function split-fully-qualified-table-name (name)</h3>
-<div class="outline-text-3" id="text-org10e8075">
+<div id="outline-container-org42dfec3" class="outline-3">
+<h3 id="org42dfec3">function split-fully-qualified-table-name (name)</h3>
+<div class="outline-text-3" id="text-org42dfec3">
 <p>
 → list
 Takes a name of the form database.schema.table or schema.table or just table
@@ -2302,7 +2499,7 @@ and returns a list in the form '(table schema database)
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-10-07 Sun 09:22</p>
+<p class="date">Created: 2018-12-02 Sun 21:42</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
