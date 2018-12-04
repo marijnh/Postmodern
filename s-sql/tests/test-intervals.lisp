@@ -111,32 +111,45 @@
 
 (test justify-on-intervals
   "testing justify-days, hours and interval"
-    (with-test-connection
-      (is (equal
-           (query (:select (:justify-days (:interval "30 days"))) :single)
-           '((:MONTHS 1) (:DAYS 0) (:SECONDS 0) (:USECONDS 0))))
-      (is (equal
-           (query (:select (:justify-hours (:interval "24 hours"))) :single)
-           '((:MONTHS 0) (:DAYS 1) (:SECONDS 0) (:USECONDS 0))))
-      (is (equal
-           (query (:select (:justify-interval (:interval "1 year - 1 hour"))) :single)
-           '((:MONTHS 11) (:DAYS 29) (:SECONDS 82800) (:USECONDS 0))))))
+  (with-test-connection
+    (setf cl-postgres:*sql-readtable*
+          (cl-postgres:copy-sql-readtable
+           cl-postgres::*default-sql-readtable*))
+    (is (equal
+         (sql (:select (:justify-days (:interval "30 days"))))
+         "(SELECT justify_days(INTERVAL  E'30 days'))"))
+    (is (equal
+         (query (:select (:justify-days (:interval "30 days"))) :single)
+         '((:MONTHS 1) (:DAYS 0) (:SECONDS 0) (:USECONDS 0))))
+    (is (equal
+         (sql (:select (:justify-hours (:interval "24 hours"))))
+         "(SELECT justify_hours(INTERVAL  E'24 hours'))"))
+    (is (equal
+         (query (:select (:justify-hours (:interval "24 hours"))) :single)
+         '((:MONTHS 0) (:DAYS 1) (:SECONDS 0) (:USECONDS 0))))
+    (is (equal
+         (sql (:select (:justify-interval (:interval "1 year - 1 hour"))))
+         "(SELECT justify_interval(INTERVAL  E'1 year - 1 hour'))"))
+    (is (equal
+         (query (:select (:justify-interval (:interval "1 year - 1 hour"))) :single)
+         '((:MONTHS 11) (:DAYS 29) (:SECONDS 82800) (:USECONDS 0))))))
 
 (test select-sum-group-interval
   "test select-sum-group-interval"
   (with-test-connection
     (is (equal
-         (query (:select 'city (:as (:sum (:- (:timestamp "2018-04-10") 'start-date)) 'total-days)
+         (sql (:select 'city (:as (:sum (:- (:timestamp "2018-04-10") 'start-date)) 'total-days)
                               :from 'employee
                               :group-by 'city
                               :having (:> (:sum (:- (:timestamp "2018-04-10") 'start-date)) (:interval "1 year"))))
-         '(("Vancouver" ((:MONTHS 0) (:DAYS 21834) (:SECONDS 0) (:USECONDS 0)))
-           ("New York" ((:MONTHS 0) (:DAYS 23018) (:SECONDS 0) (:USECONDS 0)))
-           ("Toronto" ((:MONTHS 0) (:DAYS 20670) (:SECONDS 0) (:USECONDS 0))))))))
+         "(SELECT city, SUM((timestamp E'2018-04-10' - start_date)) AS total_days FROM employee GROUP BY city HAVING (SUM((timestamp E'2018-04-10' - start_date)) > INTERVAL  E'1 year'))"))))
 
 (test timestamp-functions
   "Testing timestamp functions"
   (with-test-connection
+    (setf cl-postgres:*sql-readtable*
+          (cl-postgres:copy-sql-readtable
+           cl-postgres::*default-sql-readtable*))
     (is (integerp
          (query (:select (:current-date))
                 :single)))

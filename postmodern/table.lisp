@@ -7,6 +7,14 @@
    (column-map :reader dao-column-map))
   (:documentation "Metaclass for database-access-object classes."))
 
+(defgeneric dao-keys (class)
+  (:documentation "Returns list of slot names that are the primary key of DAO
+class. This is likely interesting if you have primary keys which are composed
+of more than one slot. Pay careful attention to situations where the primary
+key not only has more than one column, but they are actually in a different
+order than they are in the database table itself. You can check this with the
+find-primary-key-info function."))
+
 (defmethod dao-keys :before ((class dao-class))
   (unless (class-finalized-p class)
                #+postmodern-thread-safe

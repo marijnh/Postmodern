@@ -241,10 +241,11 @@ to strings \(which will form an SQL query when concatenated)."
                '("george" ", " "paul" ", " "john" ", " "ringo" ", " "mary_ann")))
     (is (equal (s-sql::sql-expand-names '((george. "paul") "john" "ringo" "mary-ann"))
                '("george." "(" "E'paul'" ")" ", " "john" ", " "ringo" ", " "mary_ann")))
-    (is (equal (s-sql::sql-expand-names '((george . paul) "john" "ringo" "mary-ann"))
-               '("george" "(" ")" ", " "john" ", " "ringo" ", " "mary_ann")))
     (is (equal (s-sql::sql-expand-names '((george  "paul") "john" "ringo" "mary-ann"))
-               '("george" "(" "E'paul'" ")" ", " "john" ", " "ringo" ", " "mary_ann"))))
+               '("george" "(" "E'paul'" ")" ", " "john" ", " "ringo" ", " "mary_ann")))
+;; The following fails using ecl lisp compiler
+    (is (equal (s-sql::sql-expand-names '((george . paul) "john" "ringo" "mary-ann"))
+               '("george" "(" ")" ", " "john" ", " "ringo" ", " "mary_ann"))))
 
 (test reduce-strings
   "Testing reduce-strings. Join adjacent strings in a list, leave other values intact."
@@ -726,19 +727,20 @@ To sum the column len of all films and group the results by kind:"
              "(SELECT mode() within group (order by items) FROM item_table)")))
 
 (test every-aggregation-test
-  "Testing the aggregation sql-op every"
+  "Testing the aggregation sql-op every. True if all input values are true, otherwise false."
   (is (equal (with-test-connection
-               (query (:select 'id 'name 'city 'salary (:every (:like 'name "J%"))
-                               :from 'employee
-                               :group-by 'name 'id 'salary 'city)))
-             '((5 "David" "Vancouver" 80026 NIL) (7 "Alison" "New York" 90620 NIL)
-               (4 "Linda" "New York" 40620 NIL) (8 "Chris" "Vancouver" 26020 NIL)
+               (query (:order-by (:select 'id 'name 'city 'salary (:every (:like 'name "J%"))
+                                :from 'employee
+                                :group-by 'name 'id 'salary 'city)
+                                 'name)))
+             '((7 "Alison" "New York" 90620 NIL) (3 "Celia" "Toronto" 24020 NIL)
+               (8 "Chris" "Vancouver" 26020 NIL) (5 "David" "Vancouver" 80026 NIL)
                (6 "James" "Toronto" 70060 T) (1 "Jason" "New York" 40420 T)
-               (9 "Mary" "Toronto" 60020 NIL) (3 "Celia" "Toronto" 24020 NIL)
+               (4 "Linda" "New York" 40620 NIL) (9 "Mary" "Toronto" 60020 NIL)
                (2 "Robert" "Vancouver" 14420 NIL))))
   (is (equal (with-test-connection
-               (query (:select 'id 'name 'city 'salary
-                               (:over (:every (:like 'name "J%")) (:partition-by 'id))
+               (query (:select 'id 'name 'city 'salary (:over (:every (:like 'name "J%"))
+                                                              (:partition-by 'id))
                                :from 'employee )))
              '((1 "Jason" "New York" 40420 T) (2 "Robert" "Vancouver" 14420 NIL)
               (3 "Celia" "Toronto" 24020 NIL) (4 "Linda" "New York" 40620 NIL)
@@ -746,7 +748,8 @@ To sum the column len of all films and group the results by kind:"
               (7 "Alison" "New York" 90620 NIL) (8 "Chris" "Vancouver" 26020 NIL)
                (9 "Mary" "Toronto" 60020 NIL))))
   (is (equal (with-test-connection
-               (query (:select 'id 'name 'city 'salary (:over (:every (:ilike 'name "j%")) (:partition-by 'id))
+               (query (:select 'id 'name 'city 'salary (:over (:every (:ilike 'name "j%"))
+                                                              (:partition-by 'id))
                                :from 'employee )))
              '((1 "Jason" "New York" 40420 T) (2 "Robert" "Vancouver" 14420 NIL)
                (3 "Celia" "Toronto" 24020 NIL) (4 "Linda" "New York" 40620 NIL)
