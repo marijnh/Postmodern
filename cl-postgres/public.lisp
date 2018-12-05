@@ -289,17 +289,7 @@ there is an equal query of the same name, return nil."
        (using-connection connection
          (send-parse (connection-socket connection) name query)
          (values)))))
-#|
-(defun prepare-query (connection name query)
-  "Prepare a query string and store it under the given name."
-  (check-type query string)
-  (check-type name string)
-  (unless (pomo:prepared-statement-exists-p name)
-    (with-reconnect-restart connection
-     (using-connection connection
-       (send-parse (connection-socket connection) name query)
-       (values)))))
-|#
+
 (defun unprepare-query (connection name)
   "Close the prepared query given by name by closing the session connection.
 Does not remove the query from the meta slot in connection"
@@ -310,8 +300,8 @@ Does not remove the query from the meta slot in connection"
       (values))))
 
 (defun exec-prepared (connection name parameters &optional (row-reader 'ignore-row-reader))
-  "Execute a previously prepared query with the given parameters,
-apply a row-reader to the result."
+  "Execute a previously prepared query with the given parameters, apply a
+row-reader to the result."
   (check-type name string)
   (check-type parameters list)
   (with-reconnect-restart connection

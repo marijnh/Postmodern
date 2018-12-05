@@ -366,6 +366,12 @@ condition.
 For integrity-violation errors, returns the name of the constraint that was
 violated (or nil if no constraint was found.)
 
+** function database-error-extract-name (database-error)
+→ string
+
+For various errors, returns the name provided by the error message
+ (or nil if no such name was found.)
+
 ** condition database-connection-error
 
 Subtype of database-error. An error of this type (or one of its subclasses)

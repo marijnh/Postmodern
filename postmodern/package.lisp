@@ -77,7 +77,6 @@
    #:database-error #:database-error-message #:database-error-code
    #:database-error-detail #:database-error-query #:database-error-cause
    #:database-connection-error #:database-error-constraint-name
-   #:database-error-invalid-sql-statement-name
-   #:database-error-syntax-error-or-access-violation))
+   #:database-error-extract-name))
 
 (in-package :postmodern)

@@ -8,8 +8,7 @@
            #:database-error-query
            #:database-error-cause
            #:database-error-constraint-name
-           #:database-error-invalid-sql-statement-name
-           #:database-error-syntax-error-or-access-violation
+           #:database-error-extract-name
            #:database-connection
            #:database-connection-error
            #:database-socket-error
@@ -219,8 +218,7 @@
            #:+fdw-handler+
            #:+index-am-handler+
            #:+tsm-handler+
-           #:+anyrange+
-           ))
+           #:+anyrange+))
 
 (in-package :cl-postgres)
 

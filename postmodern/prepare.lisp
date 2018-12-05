@@ -136,7 +136,7 @@ the meta slot in the connection."
 statement is still in the meta slot in the postmodern connection,
 try to regenerate the prepared statement at the database connection level
 and restart the connection."
-  (let* ((name (cl-postgres::database-error-invalid-sql-statement-name condition))
+  (let* ((name (pomo:database-error-extract-name condition))
          (statement (find-postmodern-prepared-statement name))
          (pid (write-to-string (first (cl-postgres::connection-pid *database*)))))
     (setf (cl-postgres::connection-available *database*) t)
@@ -150,7 +150,7 @@ and restart the connection."
 statement is still in the meta slot in the postmodern connection,
 try to regenerate the prepared statement at the database connection level
 and restart the connection."
-  (let* ((name (cl-postgres::database-error-syntax-error-or-access-violation condition))
+  (let* ((name (pomo:database-error-extract-name condition))
          (statement (find-postmodern-prepared-statement name))
          (pid (write-to-string (first (cl-postgres::connection-pid *database*)))))
     (setf (cl-postgres::connection-available *database*) t)
