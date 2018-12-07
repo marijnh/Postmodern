@@ -175,6 +175,7 @@ if it isn't."
       #+ccl (ccl:socket-error (e) (add-restart e))
       #+allegro(excl:socket-error (e) (add-restart e))
       #+cl-postgres.features:sbcl-available(sb-bsd-sockets:socket-error (e) (add-restart e))
+      #+cl-postgres.features:sbcl-available(sb-bsd-sockets:name-service-error (e) (add-restart e))
       (stream-error (e) (add-restart e))))
     (values))
 
