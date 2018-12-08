@@ -401,7 +401,7 @@
   (with-test-connection
     (protect
       (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
-      (execute (:create-table test-data ((value :type integer))))
+      (execute (:create-table 'test-data ((value :type integer))))
       (with-logical-transaction ()
         (execute (:insert-into 'test-data :set 'value 1))
         (ignore-errors
@@ -424,8 +424,8 @@
         (execute (:insert-into 'test-data :set 'value 44)))
       (is-true (query (:select '* :from 'test-data :where (:= 'value 44))))
       (signals database-error
-      (with-logical-transaction (:read-committed-ro)
-        (execute (:insert-into 'test-data :set 'value 29))))
+        (with-logical-transaction (:read-committed-ro)
+          (execute (:insert-into 'test-data :set 'value 29))))
       (execute (:drop-table 'test-data)))))
 
 (test transaction-commit-hooks

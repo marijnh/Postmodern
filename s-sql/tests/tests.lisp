@@ -342,7 +342,17 @@ to strings \(which will form an SQL query when concatenated)."
              "(SELECT ta FROM a WHERE (ta IS NOT NULL))")))
 
 (test cast
-  "Testing cast using cast and type"
+   "Testing cast using cast or type"
+  (is (equal (sql (:select (:type 1.0 int)))
+             "(SELECT 1.0::INT)"))
+  (is (equal (sql (:select (:type "true" boolean)))
+             "(SELECT E'true'::BOOLEAN)"))
+  (is (equal (sql (:select (:type "1" int)))
+             "(SELECT E'1'::INT)"))
+  (is (equal (sql (:select (:type "2018-01-01" date)))
+             "(SELECT E'2018-01-01'::DATE)"))
+  (is (equal (sql (:select (:type "1 minute" interval)))
+             "(SELECT E'1 minute'::INTERVAL)"))
   (is (equal (sql (:select (:as (:cast (:as (:* 50 (:random)) 'int)) 'x) :from (:generate-series 1 3)))
              "(SELECT CAST((50 * random()) AS int) AS x FROM generate_series(1, 3))"))
   (is (equal (sql (:select (:as (:- (:type (:now) date) 'x) 'some-date) :from (:as (:generate-series 1 10) 'x)))

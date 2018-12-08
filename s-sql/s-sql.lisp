@@ -531,23 +531,109 @@ passing an array as #(1.0 2.4) does not and you are not selecting into an array,
       `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) ":" ,@(sql-expand end) "]")
       `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) "]")))
 
-(def-sql-op :interval (arg)
+(def-sql-op :interval (arg  &optional precision)
   "Interval takes a string.
 See https://www.postgresql.org/docs/current/static/datatype-datetime.html#DATATYPE-INTERVAL-INPUT-EXAMPLES.
-If someone really wants, consider adding the optional precision argument."
-  `("INTERVAL  " ,@(sql-expand arg)))
+It optionally take a precision parameter, which causes the result to be rounded
+to that many fractional digits in the seconds field. Without a precision
++parameter, the result is given to the full available precision. Precision
+only applies to seconds."
+  (if precision
+      `("INTERVAL  " ,@(sql-expand arg) "(" ,@(sql-expand precision) ")")
+      `("INTERVAL  " ,@(sql-expand arg))))
 
 (def-sql-op :current-date ()
+  "Provides the current time. The default is universal time. If you want
+a more human readable approach, you can use :to-char. As an example:
+  (query (:select (:current-date) (:to-char (:current-date) \"YYYY-MM-DD\")))
+  ((3751488000 \"2018-11-18\"))"
+
   `("current_date"))
 
-(def-sql-op :current-timestamp ()
-  `("current_timestamp"))
+(def-sql-op :current-timestamp (&optional precision)
+    "Current-time and Current-timestamp deliver values with time zones. They
+optionally take a precision parameter, which causes the result to be rounded
+to that many fractional digits in the seconds field. Without a precision
+parameter, the result is given to the full available precision. Precision
+only applies to seconds."
+  (if precision
+      `("current_timestamp (" ,@(sql-expand precision) ")")
+      '("current_timestamp")))
 
-(def-sql-op :current-time ()
-  `("current_time"))
+(def-sql-op :current-time (&optional precision)
+  "Current-time and Current-timestamp deliver values with time zones. They
+optionally take a precision parameter, which causes the result to be rounded
+to that many fractional digits in the seconds field. Without a precision
+parameter, the result is given to the full available precision. Precision
+only applies to seconds."
+  (if precision
+      `("current_time (" ,@(sql-expand precision) ")")
+      '("current_time")))
+
+(def-sql-op :local-timestamp (&optional precision)
+  "LOCALTIME and LOCALTIMESTAMP deliver values without time zone. They optionally
+take a precision parameter, which causes the result to be rounded to that many
+fractional digits in the seconds field. Without a precision parameter, the
+result is given to the full available precision. Precision
+only applies to seconds."
+  (if precision
+      `("localtimestamp (" ,@(sql-expand precision) ")")
+      '("localtimestamp")))
+
+(def-sql-op :local-time (&optional precision)
+  "LOCALTIME and LOCALTIMESTAMP deliver values without time zone. They optionally
+take a precision parameter, which causes the result to be rounded to that many
+fractional digits in the seconds field. Without a precision parameter, the
+result is given to the full available precision."
+  (if precision
+      `("localtime (" ,@(sql-expand precision) ")")
+      '("localtime")))
 
 (def-sql-op :timestamp (arg)
   `("timestamp " ,@(sql-expand arg)))
+
+(def-sql-op :make-interval (&rest args)
+  "Takes lists of (time-unit value) and returns an interval type.
+e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
+  `("make_interval("
+    ,@(loop for ((x . y) . rest) on args
+         :append `(,x " := " ,(cond ((numberp y) (write-to-string y))
+                                  ((listp y)
+                                   (cond ((numberp (car y)) (write-to-string (car y)))
+                                         ((stringp (car y))
+                                          (strcat `("'" ,(car y) "'")))
+                                         (t (car y))))))
+         :if rest :collect ", ")
+    ")"))
+
+(def-sql-op :make-timestamp (&rest args)
+  "Takes lists of (time-unit value) and returns a timestamp type.
+e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
+  `("make_timestamp("
+    ,@(loop for ((x . y) . rest) on args
+         :append `(,x " := " ,(cond ((numberp y) (write-to-string y))
+                                  ((listp y)
+                                   (cond ((numberp (car y)) (write-to-string (car y)))
+                                         ((stringp (car y))
+                                          (strcat `("'" ,(car y) "'")))
+                                         (t (car y))))))
+         :if rest :collect ", ")
+    ")"))
+
+(def-sql-op :make-timestamptz (&rest args)
+  "Takes lists of (time-unit value) and returns a timestamptz type.
+e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
+  `("make_timestamptz("
+    ,@(loop for ((x . y) . rest) on args
+         :append `(,x " := " ,(cond ((numberp y) (write-to-string y))
+                                  ((listp y)
+                                   (cond ((numberp (car y)) (write-to-string (car y)))
+                                         ((stringp (car y))
+                                          (strcat `("'" ,(car y) "'")))
+                                         (t (car y))))))
+         :if rest :collect ", ")
+    ")"))
+
 
 (def-sql-op :age (&rest args)
   `("AGE (" ,@(sql-expand-list args) ")"))
@@ -559,7 +645,15 @@ If someone really wants, consider adding the optional precision argument."
   `("integer " ,@(sql-expand arg)))
 
 (def-sql-op :cast (query)
-  `("CAST(" ,@(sql-expand query) ")" ))
+ "Cast is one of two functions that help convert one type of data to another.
+ The other function is type. An example use of cast is:
+
+ (query (:select (:as (:cast (:as (:* 50 (:random)) 'int)) 'x)
+                 :from (:generate-series 1 3)))
+
+ One syntactic difference between cast and type is that the cast function
+ requires that the datatype be quoted. "
+   `("CAST(" ,@(sql-expand query) ")" ))
 
 (def-sql-op :exists (query)
   `("(EXISTS " ,@(sql-expand query) ")"))
@@ -796,7 +890,13 @@ Example:
   (sql-expand-list args "."))
 
 (def-sql-op :type (value type)
-  `(,@(sql-expand value) "::" ,(to-type-name type)))
+  "Type will specify the datatype for a value. It uses the normal sql :: syntax.
+The type can be quoted but does not need to be quoted. As an example:
+
+  (query (:select (:type \"2018-01-01\" 'date)) :single)
+  (query (:select (:type \"2018-01-01\" date)) :single)"
+
+  `(,@(sql-expand value) "::" ,(to-type-name (dequote type))))
 
 (def-sql-op :raw (sql)
   (list sql))
@@ -1333,6 +1433,27 @@ DOES NOT IMPLEMENT POSTGRESQL FUNCTION EXCLUDE."
     (:partition-of `(" PARTITION OF " ,(to-sql-name (car args)) " DEFAULT "))  ;postgresql version 11 required
     (:partition-by-list `(" PARTITION BY RANGE (" ,@(sql-expand (car args)) ")"))))
 
+(defun expand-identity (keywd)
+  (cond ((eq keywd :identity-by-default)
+         '(" GENERATED BY DEFAULT AS IDENTITY "))
+        ((eq keywd :generated-as-identity-by-default)
+         '(" GENERATED BY DEFAULT AS IDENTITY "))
+        ((eq keywd :identity-always)
+         '(" GENERATED ALWAYS AS IDENTITY "))
+        ((eq keywd :generated-as-identity-always)
+         '(" GENERATED ALWAYS AS IDENTITY "))
+        ((eq keywd :set-identity-always)
+         '(" GENERATED ALWAYS AS IDENTITY "))
+        ((eq keywd :add-identity-by-default)
+         '(" ADD GENERATED BY DEFAULT AS IDENTITY "))
+        ((eq keywd :add-identity-always)
+         '(" ADD GENERATED ALWAYS AS IDENTITY "))
+        ((eq keywd :set-identity-by-default)
+         '(" SET GENERATED BY DEFAULT "))
+        ((eq keywd :set-identity-always)
+         '(" SET GENERATED ALWAYS "))
+        (t "")))
+
 (defun expand-table-column (column-name args)
   `(,(to-sql-name column-name) " "
      ,@(let ((type (or (getf args :type)
@@ -1343,15 +1464,15 @@ DOES NOT IMPLEMENT POSTGRESQL FUNCTION EXCLUDE."
              :append (case option
                        (:default `(" DEFAULT " ,@(sql-expand value)))
                        (:interval `(" " ,@(expand-interval value)))
-                       (:identity-by-default '(" GENERATED BY DEFAULT AS IDENTITY "))
-                       (:identity-always '(" GENERATED ALWAYS AS IDENTITY "))
-                       (:generated-as-identity-by-default '(" GENERATED BY DEFAULT AS IDENTITY "))
-                       (:generated-as-identity-always '(" GENERATED ALWAYS AS IDENTITY "))
+                       (:identity-by-default (when (eq value t) '(" GENERATED BY DEFAULT AS IDENTITY ")))
+                       (:identity-always (when (eq value t) '(" GENERATED ALWAYS AS IDENTITY ")))
+                       (:generated-as-identity-by-default (when (eq value t) '(" GENERATED BY DEFAULT AS IDENTITY ")))
+                       (:generated-as-identity-always (when (eq value t) '(" GENERATED ALWAYS AS IDENTITY ")))
                        (:primary-key (cond ((and value (stringp value)) `(" PRIMARY KEY " ,value))
-                                           (value `(" PRIMARY KEY "))
-                                           (t nil)))
+                                           ((and value (keywordp value)) `(" PRIMARY KEY " ,@(expand-identity value)))
+                                           (t '(" PRIMARY KEY "))))
                        (:constraint (when value `(" CONSTRAINT " ,@(sql-expand value))))
-                       (:collate (when value `(" COLLATE " ,@(sql-expand value))))
+                       (:collate (when value `(" COLLATE \"" ,value "\"")))
                        (:unique (cond ((and value (stringp value))
                                        `(" UNIQUE " ,@(sql-expand value)))
                                       (value '(" UNIQUE "))
@@ -1363,10 +1484,10 @@ DOES NOT IMPLEMENT POSTGRESQL FUNCTION EXCLUDE."
                             value
                           (%build-foreign-reference target on-delete on-update match)))
                        (:type ())
-                       (:deferrable '(" DEFERRABLE "))
-                       (:not-deferrable '(" NOT DEFERRABLE "))
-                       (:initially-deferred '(" INITIALLY DEFERRED "))
-                       (:initially-immediate '(" INITIALLY IMMEDIATE "))
+                       (:deferrable (when (eq value t) '(" DEFERRABLE ")))
+                       (:not-deferrable (when (eq value t) '(" NOT DEFERRABLE ")))
+                       (:initially-deferred (when (eq value t) '(" INITIALLY DEFERRED ")))
+                       (:initially-immediate (when (eq value t) '(" INITIALLY IMMEDIATE ")))
                        (t (sql-error "Unknown column option: ~A." option))))))
 
 (defun expand-composite-table-name (frm)
@@ -1429,7 +1550,7 @@ columns. Sample call would be:
                                          extended-table-constraints)
   "Create a table with more complete syntax where table-constraints and extended-table-constraints are lists.
 Note that with extended tables you can have tables without columns that are inherited or partitioned."
-  `("CREATE " ,@ (list (expand-table-name name)) " ("
+  `("CREATE " ,@(list (expand-table-name name)) " ("
                     ,@(loop :for ((column-name . args) . rest) :on columns
                          :append (expand-table-column column-name args)
                          :if rest :collect ", ")
@@ -1442,6 +1563,44 @@ Note that with extended tables you can have tables without columns that are inhe
                     ,@(loop :for ((constraint . args)) :on extended-table-constraints
                          :append (expand-extended-table-constraint constraint args))))
 
+(defun alter-table-column (column-name args)
+  "Generates the sql string for the portion of altering a column."
+  `(,(to-sql-name column-name) " "
+     ,@(loop :for (option value) :on args :by #'cddr
+          :append (case option
+                    (:default `(" DEFAULT " ,@(sql-expand value)))
+                    (:add-identity-by-default (cond  ((stringp value) `(" ADD GENERATED BY DEFAULT AS IDENTITY (" ,value ")"))
+                                                     (t '(" ADD GENERATED BY DEFAULT AS IDENTITY "))))
+                    (:add-identity-always (cond  ((stringp value) `(" ADD GENERATED ALWAYS AS IDENTITY (" ,value ")"))
+                                                 (t '(" ADD GENERATED ALWAYS AS IDENTITY "))))
+                    (:set-identity-by-default (cond  ((stringp value)  `(" SET GENERATED BY DEFAULT (" ,value ")"))
+                                                     (t '(" SET GENERATED BY DEFAULT "))))
+                    (:set-identity-always (cond  ((stringp value) `(" SET GENERATED ALWAYS (" ,value ")"))
+                                                 (t '(" SET GENERATED ALWAYS "))))
+                    (:set-statistics (when (integerp value) `("SET STATISTICS " ,(write-to-string value) " ")))
+                    (:collate (when (and value (stringp value))
+                                `(" COLLATE \"" ,value "\"")))
+                    (:type (multiple-value-bind (type null) (dissect-type value)
+                             `(" TYPE " ,(to-type-name type) ,@(when (not null) '(" NOT NULL")))))
+                    (:primary-key (cond ((and value (stringp value)) `(" PRIMARY KEY " ,value))
+                                        ((and value (keywordp value)) `(" PRIMARY KEY " ,@(expand-identity value)))
+                                        (t '(" PRIMARY KEY "))))
+                    (:unique (cond ((and value (stringp value))
+                                    `(" UNIQUE " ,@(sql-expand value)))
+                                   (value '(" UNIQUE "))
+                                   (t nil)))
+                    (:references
+                     (destructuring-bind (target &optional (on-delete :restrict)
+                                                 (on-update :restrict) (match :match-simple))
+                         value
+                       (%build-foreign-reference target on-delete on-update match)))
+                    (:drop-default `(" DROP DEFAULT "))
+                    (:drop-not-null '(" DROP NOT NULL "))
+                    (:set-default `(" SET DEFAULT " ,@ (sql-expand value)))
+                    (:set-not-null '(" SET NOT NULL "))
+                    (:drop-identity (when value `(" DROP IDENTITY " ,@(sql-expand value))))
+                    (:check `(" CHECK " ,@(sql-expand value)))
+                    (t (sql-error "Unknown alter column option: ~A." option))))))
 
 (def-sql-op :create-table-full (name (&rest columns) (&rest table-constraints) (&rest extended-table-constraints))
   "Create a table with more complete syntax."
@@ -1459,21 +1618,24 @@ Note that with extended tables you can have tables without columns that are inhe
                          :append (expand-extended-table-constraint constraint args))))
 
 (def-sql-op :alter-table (name action &rest args)
-  (flet
+  (labels
       ((drop-action (action)
          (case action
-           (:restrict "RESTRICT")
-           (:cascade "CASCADE")
-           (t (sql-error "Unknown DROP action ~A." action)))))
-    `("ALTER TABLE "
-      ,(to-sql-name name) " "
-      ,@ (case action
+           (:restrict " RESTRICT")
+           (:cascade " CASCADE")
+           (t (sql-error "Unknown DROP action ~A." action))))
+       (base-action (action args)
+         (case action
            (:add (cons "ADD " (expand-table-constraint (first args) (rest args))))
            (:add-column (cons "ADD COLUMN "
                               (expand-table-column (first args) (rest args))))
            (:alter-column (cons "ALTER COLUMN "
-                              (expand-table-column (first args) (rest args))))
-           (:drop-column (list "DROP COLUMN " (to-sql-name (first args))))
+                              (alter-table-column (first args) (rest args))))
+           (:drop-column (list "DROP COLUMN "
+                               (to-sql-name (first args))
+                               (if (rest args)
+                                       (drop-action (second args))
+                                       "")))
            (:add-constraint (append (list "ADD CONSTRAINT ")
                                     (list (to-sql-name (first args)) " ")
                                     (expand-table-constraint (second args)
@@ -1485,7 +1647,16 @@ Note that with extended tables you can have tables without columns that are inhe
                                        "")))
            (:rename (list "RENAME TO " (to-sql-name (first args))))
            (:rename-column (list "RENAME COLUMN " (to-sql-name (first args)) " TO " (to-sql-name (second args))))
-           (t (sql-error "Unknown ALTER TABLE action ~A" action))))))
+           (:rename-constraint (list "RENAME CONSTRAINT " (to-sql-name (first args)) " TO " (to-sql-name (second args))))
+           (t (sql-error "Unknown ALTER TABLE action ~A" action)))))
+    `("ALTER TABLE "
+      ,(to-sql-name name) " "
+      ,@(if (listp action)
+            (loop :for (item . rest) on action
+               :append (base-action (car item) (cdr item))
+               :if rest :collect ", ")
+          (base-action action args)))))
+
 
 (def-sql-op :alter-sequence (name action &optional argument)
   `("ALTER SEQUENCE "
