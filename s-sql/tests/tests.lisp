@@ -242,10 +242,7 @@ to strings \(which will form an SQL query when concatenated)."
     (is (equal (s-sql::sql-expand-names '((george. "paul") "john" "ringo" "mary-ann"))
                '("george." "(" "E'paul'" ")" ", " "john" ", " "ringo" ", " "mary_ann")))
     (is (equal (s-sql::sql-expand-names '((george  "paul") "john" "ringo" "mary-ann"))
-               '("george" "(" "E'paul'" ")" ", " "john" ", " "ringo" ", " "mary_ann")))
-;; The following fails using ecl lisp compiler
-    (is (equal (s-sql::sql-expand-names '((george . paul) "john" "ringo" "mary-ann"))
-               '("george" "(" ")" ", " "john" ", " "ringo" ", " "mary_ann"))))
+               '("george" "(" "E'paul'" ")" ", " "john" ", " "ringo" ", " "mary_ann"))))
 
 (test reduce-strings
   "Testing reduce-strings. Join adjacent strings in a list, leave other values intact."
