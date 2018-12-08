@@ -106,11 +106,12 @@ is a keyword occurring in the table below, it will not be used as a query
 argument, but will determine the format in which the results are returned
 instead. Any of the following formats can be used, with the default being :rows:
 
-| :none	             | Ignore the result values.                                                                                                                                 |
+| :none	             | Ignore the result values.                                                                                                                                |
 | :lists, :rows       | 	Return a list of lists, each list containing the values for a row.                                                                                     |
 | :list, :row         | 	Return a single row as a list.                                                                                                                         |
 | :alists	           | Return a list of alists which map column names to values, with the names represented as keywords.                                                        |
 | :alist	            | Return a single row as an alist.                                                                                                                         |
+| :array-hash         | Return an array of hashtables which map column names to hash table keys                                                                                  |
 | :str-alists         | 	Like :alists, but use the original column names.                                                                                                       |
 | :str-alist	        | Return a single row as an alist, with strings for names.                                                                                                 |
 | :plists	           | Return a list of plists which map column names to values,with the names represented as keywords.                                                         |
