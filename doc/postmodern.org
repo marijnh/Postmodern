@@ -148,11 +148,12 @@ whose cdr contains the arguments. For example:
 ** macro prepare (query &optional (format :rows))
 → function
 
-Creates a function that can be used as the interface to a prepared statement.
-The given query (either a string or an S-SQL form) may contain placeholders,
-which look like $1, $2, etc. The resulting function takes one argument for
-every placeholder in the query, executes the prepared query, and returns the
-result in the format specified. (Allowed formats are the same as for query.)
+Wraps a query into a function that can be used as the interface to a prepared
+statement. The given query (either a string or an S-SQL form) may contain
+placeholders, which look like $1, $2, etc. The resulting function takes one
+argument for every placeholder in the query, executes the prepared query,
+and returns the result in the format specified. (Allowed formats are the
+same as for query.)
 
 For queries that have to be run very often, especially when they are complex,
 it may help performance since the server only has to plan them once. See
@@ -162,6 +163,12 @@ In some cases, the server will complain about not being able to deduce the
 type of the arguments in a statement. In that case you should add type
 declarations (either with the PostgreSQL's CAST SQL-conforming syntax or
 historical :: syntax, or with S-SQL's :type construct) to help it out.
+
+Note that it will attempt to automatically reconnect if
+database-connection-error, or admin-shutdown. It will reset prepared
+statements triggering an invalid-sql-statement-name error. It will
+overwrite old prepared statements triggering a duplicate-prepared-statement
+error.
 
 ** macro defprepared (name query &optional (format :rows))
 → function
@@ -351,11 +358,12 @@ when given only one argument, for transforming :nulls to NIL.
 This returns t if the prepared statement exists in the current
 postgresql session, otherwise nil.
 
-** function list-prepared-statements()
+** function list-prepared-statements(&optional (names-only nil))
 → list
 
 This is syntactic sugar. It runs a query that lists the prepared statements in
-the session in which the function is run.
+the session in which the function is run. If the names-only parameter is set
+to t, it will only return a list of the names of the prepared statements.
 
 ** function drop-prepared-statement (statement-name &key (location :both) (database *database*))
 

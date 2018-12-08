@@ -17,15 +17,25 @@ in the connection meta slot will be replaced by the new query."
     (with-standard-io-syntax (format nil "STATEMENT_~A" next-id))))
 
 (defun generate-prepared (function-form name query format)
-  "Helper function for the following two macros."
+  "Helper function for the following two macros. Note that it
+will attempt to automatically reconnect if database-connection-error,
+or admin-shutdown. It will reset prepared statements triggering an
+invalid-sql-statement-name error. It will overwrite old prepared
+statements triggering a duplicate-prepared-statement error."
   (destructuring-bind (reader result-form) (reader-for-format format)
     (let ((base `(exec-prepared *database* statement-id params ,reader)))
       `(let ((statement-id ,(string name))
              (query ,(real-query query)))
          (,@function-form (&rest params)
-            (handler-bind ((cl-postgres-error:admin-shutdown
-                            (lambda (msg)
-                              (declare (ignore msg))
+             (handler-bind
+                 ((postmodern:database-connection-error
+                   (lambda (msg1)
+                     (format t "~%Database-connection-error ~a~%" msg1)
+                     ;;                     (declare (ignore msg1))
+                     (invoke-restart :reconnect))))
+               (handler-bind ((cl-postgres-error:admin-shutdown
+                            (lambda (msg2)
+                              (declare (ignore msg2))
                   (invoke-restart :reconnect))))
                (cl-postgres::with-reconnect-restart *database*
                   (handler-bind
@@ -34,18 +44,8 @@ in the connection meta slot will be replaced by the new query."
                   (handler-bind
                      ((cl-postgres-error:duplicate-prepared-statement #'pomo:overwrite-prepared-statement))
                      (ensure-prepared *database* statement-id query)
-                     (,result-form ,base)))))))))))
-#|
-(defun generate-prepared (function-form name query format)
-  "Helper function for the following two macros."
-  (destructuring-bind (reader result-form) (reader-for-format format)
-    (let ((base `(exec-prepared *database* statement-id params ,reader)))
-      `(let ((statement-id ,(string name))
-             (query ,(real-query query)))
-         (,@function-form (&rest params)
-                          (ensure-prepared *database* statement-id query)
-                          (,result-form ,base))))))
-|#
+                     (,result-form ,base))))))))))))
+
 (defmacro prepare (query &optional (format :rows))
   "Wraps a query into a function that will prepare it once for a
 connection, and then execute it with the given parameters. The query
@@ -57,6 +57,16 @@ should contain a placeholder \($1, $2, etc) for every parameter."
 it. The name should not be quoted or a string."
   (generate-prepared `(defun ,name) name query format))
 
+(defmacro defprepared-with-names (name (&rest args)
+				  (query &rest query-args)
+				  &optional (format :rows))
+  "Like defprepared, but with lambda list for statement arguments."
+  (let ((prepared-name (gensym "PREPARED")))
+    `(let ((,prepared-name (prepare ,query ,format)))
+       (declare (type function ,prepared-name))
+       (defun ,name ,args
+	       (funcall ,prepared-name ,@query-args)))))
+
 (defun prepared-statement-exists-p (statement-name)
   "Returns t if the prepared statement exists in the current postgresql
 session, otherwise nil."
@@ -67,10 +77,14 @@ session, otherwise nil."
       t
       nil))
 
-(defun list-prepared-statements ()
+(defun list-prepared-statements (&optional (names-only nil))
   "Syntactic sugar. A query that lists the prepared statements
-in the session in which the function is run."
-  (query "select * from pg_prepared_statements" :alists))
+in the session in which the function is run. If the optional
+names-only parameter is set to t, it will only return a list
+of the names of the prepared statements."
+  (if names-only
+      (alexandria:flatten (query "select name from pg_prepared_statements"))
+      (query "select * from pg_prepared_statements" :alists)))
 
 (defun drop-prepared-statement (statement-name &key (location :both) (database *database*))
   "Prepared statements are stored both in the meta slot in the postmodern
