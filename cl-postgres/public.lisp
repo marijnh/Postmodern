@@ -280,7 +280,7 @@ there is an equal query of the same name, return nil."
   (let ((existing-query
          (caar (exec-query connection
                            (format nil "select name from pg_prepared_statements where name = '~a'"
-                                   (string-upcase "select6"))
+                                   (string-upcase name))
                            'cl-postgres:list-row-reader))))
     (when existing-query
         (if (not (equal existing-query query))
