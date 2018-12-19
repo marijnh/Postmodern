@@ -106,7 +106,9 @@ delete all prepared statements."
                  (query "deallocate ALL"))
                (progn
                  (remhash statement-name (connection-meta database))
-                 (query (format nil "deallocate ~:@(~S~)" statement-name))))))
+                 (query (format nil "deallocate ~:@(~S~)" statement-name))
+		 (when (find-symbol (string-upcase statement-name))
+                   (fmakunbound (find-symbol (string-upcase statement-name))))))))
         ((eq location :postmodern)
          (if (equal statement-name "ALL")
              (clrhash (connection-meta database))
