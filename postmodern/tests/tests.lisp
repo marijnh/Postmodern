@@ -17,6 +17,9 @@
 (defmacro with-test-connection (&body body)
   `(with-connection (prompt-connection) ,@body))
 
+(defmacro with-pooled-test-connection (&body body)
+  `(with-connection (append (prompt-connection) '(:pooled-p t)) ,@body))
+
 (defmacro protect (&body body)
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
 
@@ -99,13 +102,232 @@
 
 (test prepare
   (with-test-connection
+    (drop-prepared-statement "all")
+    (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
+    (execute (:create-table test-data ((a :type integer :primary-key t)
+                                       (b :type real)
+                                       (c :type (or text db-null)))))
+    (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
+    (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null))
     (let ((select-int (prepare (:select (:type '$1 integer)) :single))
           (byte-arr (make-array 10 :element-type '(unsigned-byte 8) :initial-element 10))
-          (select-bytes (prepare (:select (:type '$1 bytea)) :single)))
+          (select-bytes (prepare (:select (:type '$1 bytea)) :single))
+          (select-int-internal-name nil))
+      (defprepared select1 "select a from test_data where c = $1" :single)
+      ;; Defprepared does not change the prepared statements logged in the postmodern connection or
+      ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
+      (is (equal 0 (length (list-postmodern-prepared-statements t))))
+      (is (equal 0 (length (list-prepared-statements t))))
       (is (= (funcall select-int 10) 10))
       (is (= (funcall select-int -40) -40))
       (is (eq (funcall select-int :null) :null))
-      (is (equalp (funcall select-bytes byte-arr) byte-arr)))))
+      (setf select-int-internal-name (car (list-prepared-statements t)))
+      ;; the funcall creates the prepared statements logged in the postmodern connection
+      ;; and the postgresql connection
+      (is (equal 1 (length (list-postmodern-prepared-statements t))))
+      (is (equal 1 (length (list-prepared-statements t))))
+      (is (equalp (funcall select-bytes byte-arr) byte-arr))
+      (is (equal 2 (length (list-prepared-statements t))))
+      (is (not (prepared-statement-exists-p "select1")))
+      (is (equal 1 (funcall 'select1 "foobar")))
+      (is (prepared-statement-exists-p "select1"))
+      (is (equal 3 (length (list-postmodern-prepared-statements t))))
+      (is (equal 3 (length (list-prepared-statements t))))
+      ;; drop the defprepared statement from postgresql, but not from postmodern`
+      (drop-prepared-statement "select1" :location :postgresql)
+      (is (equal 3 (length (list-postmodern-prepared-statements t))))
+      (is (equal 2 (length (list-prepared-statements t))))
+      ;; drop one of the prepared statements from both postgresql and postmodern
+      (drop-prepared-statement select-int-internal-name)
+      (is (not (prepared-statement-exists-p "select1")))
+      (is (equal 1 (length (list-prepared-statements t))))
+      (is (equal 2 (length (list-postmodern-prepared-statements t))))
+      ;; recreate the defprepared statement into postgresql
+      (is (equal 1 (funcall 'select1 "foobar")))
+      (is (equal 2 (length (list-prepared-statements t))))
+      ;; recreate the first prepared statement back into both postgresql and postmodern
+      (is (= (funcall select-int 10) 10))
+      (is (equal 3 (length (list-postmodern-prepared-statements t))))
+      (is (equal 3 (length (list-prepared-statements t))))
+      (is (member '("SELECT1" . "select a from test_data where c = $1")
+                  (list-postmodern-prepared-statements) :test 'equal))
+      (is (member "SELECT1" (list-postmodern-prepared-statements t) :test 'equal))
+      (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
+      ;; Now change the defprepared statement
+      (defprepared select1 "select c from test_data where a = $1" :single)
+      ;; Defprepared does not change the prepared statements logged in the postmodern connection or
+      ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
+      (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
+      (funcall 'select1 2)
+      ;; Now the defprepared statement is actually changed in both postmodern and postgresql
+      (is (equal "select c from test_data where a = $1" (find-postmodern-prepared-statement "select1")))
+      (is (equal "select c from test_data where a = $1" (find-postgresql-prepared-statement "select1")))
+      (is (eq :null (funcall 'select1 2)))
+      (drop-prepared-statement "all")
+      (is (equal 0 (length (list-prepared-statements t))))
+      (is (equal 0 (length (list-postmodern-prepared-statements t)))))
+    (execute (:drop-table 'test-data))))
+
+(test prepare-pooled
+  (with-pooled-test-connection
+    (drop-prepared-statement "all")
+    (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
+    (execute (:create-table test-data ((a :type integer :primary-key t)
+                                       (b :type real)
+                                       (c :type (or text db-null)))))
+    (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
+    (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null))
+    (let ((select-int (prepare (:select (:type '$1 integer)) :single))
+          (byte-arr (make-array 10 :element-type '(unsigned-byte 8) :initial-element 10))
+          (select-bytes (prepare (:select (:type '$1 bytea)) :single))
+          (select-int-internal-name nil))
+      (defprepared select1 "select a from test_data where c = $1" :single)
+      ;; Defprepared does not change the prepared statements logged in the postmodern connection or
+      ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
+      (is (equal 0 (length (list-postmodern-prepared-statements t))))
+      (is (equal 0 (length (list-prepared-statements t))))
+      (is (= (funcall select-int 10) 10))
+      (is (= (funcall select-int -40) -40))
+      (is (eq (funcall select-int :null) :null))
+      (setf select-int-internal-name (car (list-prepared-statements t)))
+      ;; the funcall creates the prepared statements logged in the postmodern connection
+      ;; and the postgresql connection
+      (is (equal 1 (length (list-postmodern-prepared-statements t))))
+      (is (equal 1 (length (list-prepared-statements t))))
+      (is (equalp (funcall select-bytes byte-arr) byte-arr))
+      (is (equal 2 (length (list-prepared-statements t))))
+      (is (not (prepared-statement-exists-p "select1")))
+      (is (equal 1 (funcall 'select1 "foobar")))
+      (is (prepared-statement-exists-p "select1"))
+      (is (equal 3 (length (list-postmodern-prepared-statements t))))
+      (is (equal 3 (length (list-prepared-statements t))))
+      ;; drop the defprepared statement from postgresql, but not from postmodern`
+      (drop-prepared-statement "select1" :location :postgresql)
+      (is (equal 3 (length (list-postmodern-prepared-statements t))))
+      (is (equal 2 (length (list-prepared-statements t))))
+      ;; drop one of the prepared statements from both postgresql and postmodern
+      (drop-prepared-statement select-int-internal-name)
+      (is (not (prepared-statement-exists-p "select1")))
+      (is (equal 1 (length (list-prepared-statements t))))
+      (is (equal 2 (length (list-postmodern-prepared-statements t))))
+      ;; recreate the defprepared statement into postgresql
+      (is (equal 1 (funcall 'select1 "foobar")))
+      (is (equal 2 (length (list-prepared-statements t))))
+      ;; recreate the first prepared statement back into both postgresql and postmodern
+      (is (= (funcall select-int 10) 10))
+      (is (equal 3 (length (list-postmodern-prepared-statements t))))
+      (is (equal 3 (length (list-prepared-statements t))))
+      (is (member '("SELECT1" . "select a from test_data where c = $1")
+                  (list-postmodern-prepared-statements) :test 'equal))
+      (is (member "SELECT1" (list-postmodern-prepared-statements t) :test 'equal))
+      (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
+      ;; Now change the defprepared statement
+      (defprepared select1 "select c from test_data where a = $1" :single)
+      ;; Defprepared does not change the prepared statements logged in the postmodern connection or
+      ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
+      (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
+      (funcall 'select1 2)
+      ;; Now the defprepared statement is actually changed in both postmodern and postgresql
+      (is (equal "select c from test_data where a = $1" (find-postmodern-prepared-statement "select1")))
+      (is (equal "select c from test_data where a = $1" (find-postgresql-prepared-statement "select1")))
+      (is (eq :null (funcall 'select1 2)))
+      (drop-prepared-statement "all")
+      (is (equal 0 (length (list-prepared-statements t))))
+      (is (equal 0 (length (list-postmodern-prepared-statements t)))))
+    (execute (:drop-table 'test-data))))
+
+(test prepared-statement-over-reconnect
+  (let ((terminate-backend
+          (prepare
+              "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
+              :rows))
+         (getpid (prepare "SELECT pg_backend_pid()" :single)))
+    (with-test-connection
+      (is (equal (query "select pg_backend_pid()" :single)
+                 (funcall getpid)))
+      (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
+      (let ((pid (pomo:get-pid)))
+        (pomo:terminate-backend pid)
+        (signals database-connection-error
+          (query "select pg_backend_pid()" :single)))
+      (is (integerp (funcall getpid))))
+
+    ;; Demonstrate that a prepared statement will reconnect
+    ;; even if it is a termination
+    (with-test-connection
+      (is (equal (query "select pg_backend_pid()" :single)
+                 (funcall getpid)))
+      (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
+        (funcall getpid)
+        (is-true (query "select pg_backend_pid()" :single)))
+
+    (with-pooled-test-connection
+      (is (equal (query "select pg_backend_pid()" :single)
+                 (funcall getpid)))
+      (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
+      (let ((pid (pomo:get-pid)))
+        (pomo:terminate-backend pid)
+        (signals database-connection-error
+          (query "select pg_backend_pid()" :single))))
+
+    ;; Demonstrate that a prepared statement will reconnect
+    ;; even if it is a termination
+    (with-pooled-test-connection
+      (is (equal (query "select pg_backend_pid()" :single)
+                 (funcall getpid)))
+      (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
+        (funcall getpid)
+        (is-true (query "select pg_backend_pid()" :single)))
+
+    ;; A regular query does not have the built-in exception handling
+    ;; available to prepared statements, so this will trigger the
+    ;; exception handling below, setting reconnected to true.
+    (with-test-connection
+      (let ((original-pid (funcall getpid))
+            (reconnectedp nil))
+        (block done
+          (handler-bind
+              ((database-connection-error
+                 (lambda (condition)
+                   (let ((restart (find-restart :reconnect condition)))
+                     (is (not (null restart)))
+                     (setq reconnectedp t)
+                     (invoke-restart restart)))))
+            (pomo:terminate-backend original-pid)
+            (is-true (query "select pg_backend_pid()" :single))
+            (is-true reconnectedp)
+            (is (/= original-pid (funcall getpid)))))
+
+        ;; Re-using the prepared statement on the new connection.
+        (multiple-value-bind (rows count)
+            (funcall terminate-backend 0)
+          (is (null rows))
+          (is (zerop count)))))
+
+    ;; A funcall to a prepared statement reconnects on its own
+    ;; without acdessing the database-connection-error handler
+    ;; above, so reconnectedp will still be nil
+    (with-test-connection
+      (let ((original-pid (funcall getpid))
+            (reconnectedp nil))
+        (block done
+          (handler-bind
+              ((database-connection-error
+                 (lambda (condition)
+                   (let ((restart (find-restart :reconnect condition)))
+                     (is (not (null restart)))
+                     (setq reconnectedp t)
+                     (invoke-restart restart)))))
+            (pomo:terminate-backend original-pid)
+            (is-true (funcall getpid))
+            (is-false reconnectedp)
+            (is (/= original-pid (funcall getpid)))))
+
+        ;; Re-using the prepared statement on the new connection.
+        (multiple-value-bind (rows count)
+            (funcall terminate-backend 0)
+          (is (null rows))
+          (is (zerop count)))))))
 
 (test doquery
   (with-test-connection
@@ -191,10 +413,11 @@
       (with-logical-transaction ()
         (execute (:insert-into 'test-data :set 'value 77)))
       (is-true (query (:select '* :from 'test-data :where (:= 'value 77))))
-      (with-logical-transaction (george)
+      (with-logical-transaction ()
         (execute (:insert-into 'test-data :set 'value 22)))
       (is-true (query (:select '* :from 'test-data :where (:= 'value 22))))
       (with-logical-transaction (george :read-committed-rw)
+        (declare (ignore george))
         (execute (:insert-into 'test-data :set 'value 33)))
       (is-true (query (:select '* :from 'test-data :where (:= 'value 33))))
       (with-logical-transaction (:serializable)
@@ -345,38 +568,6 @@
       (execute (:insert-into 'test-data :set 'a #()))
       (execute (:drop-table 'test-data)))
     (is (not (table-exists-p 'test-data)))))
-
-(test prepared-statement-over-reconnect
-  (let ((terminate-backend
-          (prepare
-              "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
-              :rows))
-         (getpid (prepare "SELECT pg_backend_pid()" :single)))
-    ;; Ensure our prepared statement terminates connection.
-    (with-test-connection
-      (signals database-connection-error
-        (funcall terminate-backend (funcall getpid))))
-
-    (with-test-connection
-      (let ((original-pid (funcall getpid))
-            (reconnectedp nil))
-        (block done
-          (handler-bind
-              ((database-connection-error
-                 (lambda (condition)
-                   (let ((restart (find-restart :reconnect condition)))
-                     (is (not (null restart)))
-                     (setq reconnectedp t)
-                     (invoke-restart restart)))))
-            (funcall terminate-backend original-pid)))
-        (is-true reconnectedp)
-        (is (/= original-pid (funcall getpid)))
-
-        ;; Re-using the prepared statement on the new connection.
-        (multiple-value-bind (rows count)
-            (funcall terminate-backend 0)
-          (is (null rows))
-          (is (zerop count)))))))
 
 (test find-primary-key-info
   "Testing find-primary-key-info function. Given a table name, it returns

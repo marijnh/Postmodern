@@ -294,6 +294,7 @@ for the JavaScript code in this tag.
 <li><a href="#orge0e3083">method database-error-query (database-error)</a></li>
 <li><a href="#orgcaf14a3">method database-error-cause (database-error)</a></li>
 <li><a href="#org721f27f">function database-error-constraint-name (database-error)</a></li>
+<li><a href="#org721f27f">function database-error-extract-name (database-error)</a></li>
 <li><a href="#orgea749ec">condition database-connection-error</a></li>
 <li><a href="#org37e5d1b">condition postgresql-notification</a></li>
 <li><a href="#orge62533e">method postgresql-notification-channel (postgresql-notification)</a></li>
@@ -1051,6 +1052,17 @@ condition.
 <p>
 For integrity-violation errors, returns the name of the constraint that was
 violated (or nil if no constraint was found.)
+</p>
+</div>
+<h3 id="">function database-error-extract-name (database-error)</h3>
+<div class="outline-text-3" id="">
+<p>
+→ string
+</p>
+
+<p>
+For various errors, returns the name provided by the error message
+ (or nil if no such name was found.)
 </p>
 </div>
 </div>

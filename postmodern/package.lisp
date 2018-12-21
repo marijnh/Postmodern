@@ -56,6 +56,16 @@
    #:list-tables-in-schema
    #:split-fully-qualified-tablename
 
+   ;; Prepared Statement Functions
+   #:prepared-statement-exists-p #:list-prepared-statements
+   #:drop-prepared-statement #:list-postmodern-prepared-statements
+   #:find-postmodern-prepared-statement
+   #:find-postgresql-prepared-statement
+   #:reset-prepared-statement
+   #:overwrite-prepared-statement
+   #:get-pid #:cancel-backend #:terminate-backend
+   #:get-pid-from-postmodern
+
    ;; Reduced S-SQL interface
    #:sql #:sql-compile
    #:smallint #:bigint #:numeric #:real #:double-precision
@@ -66,6 +76,7 @@
    ;; Condition type from cl-postgres
    #:database-error #:database-error-message #:database-error-code
    #:database-error-detail #:database-error-query #:database-error-cause
-   #:database-connection-error #:database-error-constraint-name))
+   #:database-connection-error #:database-error-constraint-name
+   #:database-error-extract-name))
 
 (in-package :postmodern)
