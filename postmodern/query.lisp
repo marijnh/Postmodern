@@ -17,6 +17,17 @@
                          :for symbol :in symbols
                          :collect symbol :collect (next-field field)))))
 
+;; Converts field names to hash table keys and returns an array of rows
+(def-row-reader array-hash-row-reader (fields)
+  (loop :while (next-row)
+     :collect (loop :for field :across fields
+                 with hash = (make-hash-table :test 'equal)
+                 do  (setf (gethash  (field-name field) hash)
+                           (next-field field))
+                 finally (return hash)) into result
+     :finally (return (make-array (length result)
+                                  :initial-contents result))))
+
 ;; A row-reader for reading only a single column, and returning a list
 ;; of single values.
 (def-row-reader column-row-reader (fields)
@@ -38,6 +49,7 @@
     (:str-alist alist-row-reader single-row)
     (:plists symbol-plist-row-reader all-rows)
     (:plist symbol-plist-row-reader single-row)
+    (:array-hash array-hash-row-reader all-rows)
     (:column column-row-reader all-rows)
     (:single column-row-reader single-row)
     (:single! column-row-reader single-row!))

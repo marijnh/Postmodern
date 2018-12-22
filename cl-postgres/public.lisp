@@ -271,25 +271,13 @@ result."
       (send-query (connection-socket connection) query row-reader))))
 
 (defun prepare-query (connection name query)
-  "Prepare a query string and store it under the given name. If there
-is an existing prepared query of the same name but the query is not equal
-then deallocate the existing prepared query and prepare the new query. If
-there is an equal query of the same name, return nil."
+  "Prepare a query string and store it under the given name."
   (check-type query string)
   (check-type name string)
-  (let ((existing-query
-         (caar (exec-query connection
-                           (format nil "select name from pg_prepared_statements where name = '~a'"
-                                   (string-upcase name))
-                           'cl-postgres:list-row-reader))))
-    (when existing-query
-        (if (not (equal existing-query query))
-            (exec-query connection (format nil "deallocate ~:@(~S~)" name))
-          (return-from prepare-query nil)))
-    (with-reconnect-restart connection
-       (using-connection connection
-         (send-parse (connection-socket connection) name query)
-         (values)))))
+  (with-reconnect-restart connection
+    (using-connection connection
+      (send-parse (connection-socket connection) name query)
+      (values))))
 
 (defun unprepare-query (connection name)
   "Close the prepared query given by name by closing the session connection.

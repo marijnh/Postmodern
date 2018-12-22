@@ -140,9 +140,11 @@
       ;; drop one of the prepared statements from both postgresql and postmodern
       (drop-prepared-statement select-int-internal-name)
       (is (not (prepared-statement-exists-p "select1")))
+
       (is (equal 1 (length (list-prepared-statements t))))
       (is (equal 2 (length (list-postmodern-prepared-statements t))))
       ;; recreate the defprepared statement into postgresql
+
       (is (equal 1 (funcall 'select1 "foobar")))
       (is (equal 2 (length (list-prepared-statements t))))
       ;; recreate the first prepared statement back into both postgresql and postmodern
@@ -154,19 +156,20 @@
       (is (member "SELECT1" (list-postmodern-prepared-statements t) :test 'equal))
       (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
       ;; Now change the defprepared statement
+
       (defprepared select1 "select c from test_data where a = $1" :single)
       ;; Defprepared does not change the prepared statements logged in the postmodern connection or
-      ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
+      ;; in the postgresql connection.
       (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
-      (funcall 'select1 2)
-      ;; Now the defprepared statement is actually changed in both postmodern and postgresql
-      (is (equal "select c from test_data where a = $1" (find-postmodern-prepared-statement "select1")))
-      (is (equal "select c from test_data where a = $1" (find-postgresql-prepared-statement "select1")))
+      (is (not (eq :null (funcall 'select1 2))))
+      (drop-prepared-statement "select1")
+      (signals error (funcall 'select1 2))
+      (defprepared select1 "select c from test_data where a = $1" :single)
       (is (eq :null (funcall 'select1 2)))
       (drop-prepared-statement "all")
       (is (equal 0 (length (list-prepared-statements t))))
-      (is (equal 0 (length (list-postmodern-prepared-statements t)))))
-    (execute (:drop-table 'test-data))))
+      (is (equal 0 (length (list-postmodern-prepared-statements t))))
+      (execute (:drop-table 'test-data)))))
 
 (test prepare-pooled
   (with-pooled-test-connection
@@ -208,9 +211,11 @@
       ;; drop one of the prepared statements from both postgresql and postmodern
       (drop-prepared-statement select-int-internal-name)
       (is (not (prepared-statement-exists-p "select1")))
+
       (is (equal 1 (length (list-prepared-statements t))))
       (is (equal 2 (length (list-postmodern-prepared-statements t))))
       ;; recreate the defprepared statement into postgresql
+
       (is (equal 1 (funcall 'select1 "foobar")))
       (is (equal 2 (length (list-prepared-statements t))))
       ;; recreate the first prepared statement back into both postgresql and postmodern
@@ -222,19 +227,20 @@
       (is (member "SELECT1" (list-postmodern-prepared-statements t) :test 'equal))
       (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
       ;; Now change the defprepared statement
+
       (defprepared select1 "select c from test_data where a = $1" :single)
       ;; Defprepared does not change the prepared statements logged in the postmodern connection or
-      ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
+      ;; in the postgresql connection.
       (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
-      (funcall 'select1 2)
-      ;; Now the defprepared statement is actually changed in both postmodern and postgresql
-      (is (equal "select c from test_data where a = $1" (find-postmodern-prepared-statement "select1")))
-      (is (equal "select c from test_data where a = $1" (find-postgresql-prepared-statement "select1")))
+      (is (not (eq :null (funcall 'select1 2))))
+      (drop-prepared-statement "select1")
+      (signals error (funcall 'select1 2))
+      (defprepared select1 "select c from test_data where a = $1" :single)
       (is (eq :null (funcall 'select1 2)))
       (drop-prepared-statement "all")
       (is (equal 0 (length (list-prepared-statements t))))
-      (is (equal 0 (length (list-postmodern-prepared-statements t)))))
-    (execute (:drop-table 'test-data))))
+      (is (equal 0 (length (list-postmodern-prepared-statements t))))
+      (execute (:drop-table 'test-data)))))
 
 (test prepared-statement-over-reconnect
   (let ((terminate-backend
@@ -401,7 +407,7 @@
   (with-test-connection
     (protect
       (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
-      (execute (:create-table test-data ((value :type integer))))
+      (execute (:create-table 'test-data ((value :type integer))))
       (with-logical-transaction ()
         (execute (:insert-into 'test-data :set 'value 1))
         (ignore-errors
@@ -424,8 +430,8 @@
         (execute (:insert-into 'test-data :set 'value 44)))
       (is-true (query (:select '* :from 'test-data :where (:= 'value 44))))
       (signals database-error
-      (with-logical-transaction (:read-committed-ro)
-        (execute (:insert-into 'test-data :set 'value 29))))
+        (with-logical-transaction (:read-committed-ro)
+          (execute (:insert-into 'test-data :set 'value 29))))
       (execute (:drop-table 'test-data)))))
 
 (test transaction-commit-hooks
@@ -490,6 +496,31 @@
                28))
     (execute (:drop-table 'test-data))))
 
+(test cursor
+  (is (equal (with-test-connection
+                    (query (:create-table (:temp 'test-data1) ((value :type integer))))
+                    (loop for x from 1 to 100 do (execute (:insert-into 'test-data1 :set 'value x)))
+                    (with-transaction ()
+                      (execute "declare test_data1_values cursor with hold for select * from test_data1")
+                      (query "fetch forward 2 from test_data1_values")))
+             '((1) (2))))
+  (is (equal (with-test-connection
+                    (query (:create-table (:temp 'test-data1) ((value :type integer))))
+                    (loop for x from 1 to 100 do (execute (:insert-into 'test-data1 :set 'value x)))
+                    (with-transaction ()
+                      (execute "declare test_data1_values cursor with hold for select * from test_data1")
+                      (query "fetch forward 2 from test_data1_values"))
+                    (query "fetch next from test_data1_values"))
+             '((3))))
+  (is (equal (with-test-connection
+                    (query (:create-table (:temp 'test-data1) ((value :type integer))))
+                    (loop for x from 1 to 100 do (execute (:insert-into 'test-data1 :set 'value x)))
+                    (with-transaction ()
+                      (execute "declare test_data1_values cursor with hold for select * from test_data1")
+                      (query "fetch forward 2 from test_data1_values"))
+                    (query "fetch forward 5 from test_data1_values"))
+             '((3) (4) (5) (6) (7)))))
+
 (test notification
   (with-test-connection
     (execute (:listen 'foo))
@@ -546,13 +577,15 @@
     (drop-schema 'uniq :cascade 't)
     (is (not (schema-exists-p 'uniq)))
     (create-schema 'uniq)
-    (is (equal (list-schemas)
-               '("public" "information_schema" "uniq")))
+    (is (not (set-difference (list-schemas)
+                             '("public" "information_schema" "uniq")
+                             :test #'equal)))
     (drop-schema "uniq" :cascade 't)
     (is (not (schema-exists-p "uniq")))
     (create-schema "uniq")
-    (is (equal (list-schemas)
-               '("public" "information_schema" "uniq")))
+    (is (not (set-difference (list-schemas)
+                             '("public" "information_schema" "uniq")
+                             :test #'equal)))
     (drop-schema 'uniq :cascade 't)
     (is (equal (get-search-path)
                "\"$user\", public"))

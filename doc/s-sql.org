@@ -462,11 +462,38 @@ This operator requires postgresql 9.5 or later. For example:
 ** sql-op :interval (arg)
 Creates an interval data type, generally represented in postmodern as an alist
 ** sql-op :current-date ()
+#+BEGIN_SRC lisp
+(query (:select (:current-date)) :single)
+#+END_SRC
 ** sql-op :current-time ()
 ** sql-op :current-timestamp ()
 ** sql-op :timestamp (arg)
 ** sql-op :age (&rest args)
 ** sql-op :date (arg)
+** sql-op :make-interval (&rest args)
+Takes lists of (time-unit value) and returns a timestamp type. Example:
+
+#+BEGIN_SRC lisp
+(query (:select (:make-interval ("days" 4) ("hours" 10) ("secs" 1.2)))
+       :single)
+#+END_SRC
+** sql-op :make-timestamp (&rest args)
+Takes lists of (time-unit value) and returns a timestamptz type. Example:
+#+BEGIN_SRC lisp
+(query (:select
+          (:make-timestamptz ("year" 2014) ("month" 1) ("mday" 13)
+                             ("hour" 21) ("min" 50) ("sec" 0)))
+       :single)
+#+END_SRC
+** sql-op :make-timestamptz (&rest args)
+Takes lists of (time-unit value) and returns a timestamptz type. Example:
+#+BEGIN_SRC lisp
+(query (:select
+          (:make-timestamptz ("year" 2014) ("month" 1) ("mday" 13)
+                             ("hour" 21) ("min" 50) ("sec" 0) ("timezone" "Asia/Tokyo")))
+       :single)
+#+END_SRC
+
 * Aggregation Operators
 ** sql-op :count (&rest args)
 

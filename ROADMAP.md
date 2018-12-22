@@ -77,7 +77,7 @@ There is a reason for reserved words and it is upstream in postgresql. This may 
         have a chunk API so the network is handling the content as a whole.
 - [ ]   SCRAM authentication (postgresql 10)
 - [ ]   Alter system (postgresql 9.4)
-- [ ]   Create temp tables
+- [X]   Create temp tables
 
 ## Connections/Reconnections and Transactions
 - [ ]   Ensure transactions can deal with reconnections/restarts
