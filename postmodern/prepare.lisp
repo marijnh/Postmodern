@@ -3,7 +3,7 @@
 (defun ensure-prepared (connection id query)
   "Make sure a statement has been prepared for this connection."
   (let ((meta (connection-meta connection)))
-    (unless (gethash id meta)
+    (unless (and (gethash id meta) (equal (gethash id meta) query))
       (setf (gethash id meta) query)
       (prepare-query connection id query))))
 
@@ -36,12 +36,10 @@ statements triggering a duplicate-prepared-statement error."
                                               (invoke-restart :reconnect))))
                               (cl-postgres::with-reconnect-restart *database*
                                 (handler-bind
-                                    ((cl-postgres-error:invalid-sql-statement-name #'pomo:reset-prepared-statement))
-                                  (cl-postgres::with-reconnect-restart *database*
-                                    (handler-bind
-                                        ((cl-postgres-error:duplicate-prepared-statement #'pomo:reset-prepared-statement))
-                                      (ensure-prepared *database* statement-id query)
-                                      (,result-form ,base))))))))))))
+                                    ((cl-postgres-error:invalid-sql-statement-name #'pomo:reset-prepared-statement)
+                                     (cl-postgres-error:duplicate-prepared-statement #'pomo:reset-prepared-statement))
+                                  (ensure-prepared *database* statement-id query)
+                                  (,result-form ,base))))))))))
 
 (defmacro prepare (query &optional (format :rows))
   "Wraps a query into a function that will prepare it once for a
@@ -145,18 +143,19 @@ the meta slot in the connection."
   (gethash (string-upcase name) (postmodern::connection-meta *database*)))
 
 (defun reset-prepared-statement (condition)
-  "If you have received an invalid-prepared-statement error but the prepared
-statement is still in the meta slot in the postmodern connection,
-try to regenerate the prepared statement at the database connection level
-and restart the connection."
+  "If you have received an invalid-prepared-statement error or a prepared-statement
+already exists error but the prepared statement is still in the meta slot in
+the postmodern connection, try to regenerate the prepared statement at the
+database connection level and restart the connection."
   (let* ((name (pomo:database-error-extract-name condition))
          (statement (find-postmodern-prepared-statement name))
          (pid (write-to-string (first (cl-postgres::connection-pid *database*)))))
     (setf (cl-postgres::connection-available *database*) t)
-    (cl-postgres::with-reconnect-restart *database*
-      (terminate-backend pid))
-    (cl-postgres:prepare-query *database* name statement)
-    (invoke-restart 'reset-prepared-statement)))
+    (when statement
+      (cl-postgres::with-reconnect-restart *database*
+        (terminate-backend pid))
+      (cl-postgres:prepare-query *database* name statement)
+      (invoke-restart 'reset-prepared-statement))))
 
 (defun get-pid ()
   "Get the process id used by postgresql for this connection."
