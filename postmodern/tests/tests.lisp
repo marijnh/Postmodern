@@ -140,9 +140,11 @@
       ;; drop one of the prepared statements from both postgresql and postmodern
       (drop-prepared-statement select-int-internal-name)
       (is (not (prepared-statement-exists-p "select1")))
+
       (is (equal 1 (length (list-prepared-statements t))))
       (is (equal 2 (length (list-postmodern-prepared-statements t))))
       ;; recreate the defprepared statement into postgresql
+
       (is (equal 1 (funcall 'select1 "foobar")))
       (is (equal 2 (length (list-prepared-statements t))))
       ;; recreate the first prepared statement back into both postgresql and postmodern
@@ -154,21 +156,20 @@
       (is (member "SELECT1" (list-postmodern-prepared-statements t) :test 'equal))
       (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
       ;; Now change the defprepared statement
+
       (defprepared select1 "select c from test_data where a = $1" :single)
       ;; Defprepared does not change the prepared statements logged in the postmodern connection or
-      ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
+      ;; in the postgresql connection.
       (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
-      (funcall 'select1 2)
-      ;; Now the defprepared statement is actually changed in both postmodern and postgresql
-      (is (equal "select c from test_data where a = $1" (find-postmodern-prepared-statement "select1")))
-      (is (equal "select c from test_data where a = $1" (find-postgresql-prepared-statement "select1")))
-      (is (eq :null (funcall 'select1 2)))
+      (is (not (eq :null (funcall 'select1 2))))
       (drop-prepared-statement "select1")
       (signals error (funcall 'select1 2))
+      (defprepared select1 "select c from test_data where a = $1" :single)
+      (is (eq :null (funcall 'select1 2)))
       (drop-prepared-statement "all")
       (is (equal 0 (length (list-prepared-statements t))))
-      (is (equal 0 (length (list-postmodern-prepared-statements t)))))
-    (execute (:drop-table 'test-data))))
+      (is (equal 0 (length (list-postmodern-prepared-statements t))))
+      (execute (:drop-table 'test-data)))))
 
 (test prepare-pooled
   (with-pooled-test-connection
@@ -210,9 +211,11 @@
       ;; drop one of the prepared statements from both postgresql and postmodern
       (drop-prepared-statement select-int-internal-name)
       (is (not (prepared-statement-exists-p "select1")))
+
       (is (equal 1 (length (list-prepared-statements t))))
       (is (equal 2 (length (list-postmodern-prepared-statements t))))
       ;; recreate the defprepared statement into postgresql
+
       (is (equal 1 (funcall 'select1 "foobar")))
       (is (equal 2 (length (list-prepared-statements t))))
       ;; recreate the first prepared statement back into both postgresql and postmodern
@@ -224,21 +227,20 @@
       (is (member "SELECT1" (list-postmodern-prepared-statements t) :test 'equal))
       (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
       ;; Now change the defprepared statement
+
       (defprepared select1 "select c from test_data where a = $1" :single)
       ;; Defprepared does not change the prepared statements logged in the postmodern connection or
-      ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
+      ;; in the postgresql connection.
       (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
-      (funcall 'select1 2)
-      ;; Now the defprepared statement is actually changed in both postmodern and postgresql
-      (is (equal "select c from test_data where a = $1" (find-postmodern-prepared-statement "select1")))
-      (is (equal "select c from test_data where a = $1" (find-postgresql-prepared-statement "select1")))
-      (is (eq :null (funcall 'select1 2)))
+      (is (not (eq :null (funcall 'select1 2))))
       (drop-prepared-statement "select1")
       (signals error (funcall 'select1 2))
+      (defprepared select1 "select c from test_data where a = $1" :single)
+      (is (eq :null (funcall 'select1 2)))
       (drop-prepared-statement "all")
       (is (equal 0 (length (list-prepared-statements t))))
-      (is (equal 0 (length (list-postmodern-prepared-statements t)))))
-    (execute (:drop-table 'test-data))))
+      (is (equal 0 (length (list-postmodern-prepared-statements t))))
+      (execute (:drop-table 'test-data)))))
 
 (test prepared-statement-over-reconnect
   (let ((terminate-backend

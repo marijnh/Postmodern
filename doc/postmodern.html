@@ -287,7 +287,6 @@ for the JavaScript code in this tag.
 <li><a href="#org57d40d9">function find-postgresql-prepared-statement (name)</a></li>
 <li><a href="#org8d04ae3">function find-postmodern-prepared-statement (name)</a></li>
 <li><a href="#orgcf1544b">function reset-prepared-statement (condition)</a></li>
-<li><a href="#org6e236d5">function overwrite-prepared-statement (condition)</a></li>
 <li><a href="#org4532d28">function get-pid ()</a></li>
 <li><a href="#orgd6d26b9">function get-pid-from-postmodern ()</a></li>
 <li><a href="#orgb01e3f4">function cancel-backend (pid)</a></li>
@@ -1160,22 +1159,6 @@ If you have received an invalid-prepared-statement error but the prepared
 statement is still in the meta slot in the postmodern connection, this will
 try to regenerate the prepared statement at the database connection level
 and restart the connection.
-</p>
-</div>
-</div>
-
-<div id="outline-container-org6e236d5" class="outline-3">
-<h3 id="org6e236d5">function overwrite-prepared-statement (condition)</h3>
-<div class="outline-text-3" id="text-org6e236d5">
-<p>
-→ restart
-</p>
-
-<p>
-If you have received an invalid-prepared-statement error but the prepared
-statement is still in the meta slot in the postmodern connection,
-this will try to regenerate the prepared statement at the database
-connection level and restart the connection.
 </p>
 </div>
 </div>

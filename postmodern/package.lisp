@@ -62,7 +62,6 @@
    #:find-postmodern-prepared-statement
    #:find-postgresql-prepared-statement
    #:reset-prepared-statement
-   #:overwrite-prepared-statement
    #:get-pid #:cancel-backend #:terminate-backend
    #:get-pid-from-postmodern
 

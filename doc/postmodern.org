@@ -410,14 +410,6 @@ statement is still in the meta slot in the postmodern connection, this will
 try to regenerate the prepared statement at the database connection level
 and restart the connection.
 
-** function overwrite-prepared-statement (condition)
-→ restart
-
-If you have received an invalid-prepared-statement error but the prepared
-statement is still in the meta slot in the postmodern connection,
-this will try to regenerate the prepared statement at the database
-connection level and restart the connection.
-
 ** function get-pid ()
 → integer
 
