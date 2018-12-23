@@ -89,6 +89,7 @@ default behavior), just from postmodern (passing :postmodern to the location
 key parameter) or just from postgresql (passing :postgresql to the location
 key parameter). If you pass the name 'All' as the statement name, it will
 delete all prepared statements."
+  (when (symbolp statement-name) (setf statement-name (string statement-name)))
   (check-type statement-name string)
   (check-type location keyword)
   (setf statement-name (string-upcase statement-name))
