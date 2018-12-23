@@ -1,9 +1,17 @@
 (in-package :postmodern)
 
+(defparameter *allow-overwriting-prepared-statements* t
+  "When set to t, ensured-prepared will overwrite prepared statements having
+the same name if the query statement itself in the postmodern meta connection
+is different than the query statement provided to ensure-prepared.")
+
 (defun ensure-prepared (connection id query)
   "Make sure a statement has been prepared for this connection."
   (let ((meta (connection-meta connection)))
-    (unless (gethash id meta)
+    (unless (and (gethash id meta)
+                 (if *allow-overwriting-prepared-statements*
+                     (equal (gethash id meta) query)
+                     t))
       (setf (gethash id meta) query)
       (prepare-query connection id query))))
 
@@ -36,12 +44,10 @@ statements triggering a duplicate-prepared-statement error."
                                               (invoke-restart :reconnect))))
                               (cl-postgres::with-reconnect-restart *database*
                                 (handler-bind
-                                    ((cl-postgres-error:invalid-sql-statement-name #'pomo:reset-prepared-statement))
-                                  (cl-postgres::with-reconnect-restart *database*
-                                    (handler-bind
-                                        ((cl-postgres-error:duplicate-prepared-statement #'pomo:reset-prepared-statement))
-                                      (ensure-prepared *database* statement-id query)
-                                      (,result-form ,base))))))))))))
+                                    ((cl-postgres-error:invalid-sql-statement-name #'pomo:reset-prepared-statement)
+                                     (cl-postgres-error:duplicate-prepared-statement #'pomo:reset-prepared-statement))
+                                  (ensure-prepared *database* statement-id query)
+                                  (,result-form ,base))))))))))
 
 (defmacro prepare (query &optional (format :rows))
   "Wraps a query into a function that will prepare it once for a
@@ -91,6 +97,7 @@ default behavior), just from postmodern (passing :postmodern to the location
 key parameter) or just from postgresql (passing :postgresql to the location
 key parameter). If you pass the name 'All' as the statement name, it will
 delete all prepared statements."
+  (when (symbolp statement-name) (setf statement-name (string statement-name)))
   (check-type statement-name string)
   (check-type location keyword)
   (setf statement-name (string-upcase statement-name))
@@ -145,18 +152,19 @@ the meta slot in the connection."
   (gethash (string-upcase name) (postmodern::connection-meta *database*)))
 
 (defun reset-prepared-statement (condition)
-  "If you have received an invalid-prepared-statement error but the prepared
-statement is still in the meta slot in the postmodern connection,
-try to regenerate the prepared statement at the database connection level
-and restart the connection."
+  "If you have received an invalid-prepared-statement error or a prepared-statement
+already exists error but the prepared statement is still in the meta slot in
+the postmodern connection, try to regenerate the prepared statement at the
+database connection level and restart the connection."
   (let* ((name (pomo:database-error-extract-name condition))
          (statement (find-postmodern-prepared-statement name))
          (pid (write-to-string (first (cl-postgres::connection-pid *database*)))))
     (setf (cl-postgres::connection-available *database*) t)
-    (cl-postgres::with-reconnect-restart *database*
-      (terminate-backend pid))
-    (cl-postgres:prepare-query *database* name statement)
-    (invoke-restart 'reset-prepared-statement)))
+    (when statement
+      (cl-postgres::with-reconnect-restart *database*
+        (terminate-backend pid))
+      (cl-postgres:prepare-query *database* name statement)
+      (invoke-restart 'reset-prepared-statement))))
 
 (defun get-pid ()
   "Get the process id used by postgresql for this connection."
