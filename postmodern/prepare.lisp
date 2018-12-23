@@ -101,28 +101,30 @@ delete all prepared statements."
   (check-type statement-name string)
   (check-type location keyword)
   (setf statement-name (string-upcase statement-name))
-  (cond ((eq location :both)
-         (when (or (equal statement-name "ALL")
-                   (prepared-statement-exists-p statement-name))
-           (if (equal statement-name "ALL")
-               (progn
+  (when database
+    (cond ((eq location :both)
+          (cond ((equal statement-name "ALL")
                  (clrhash (connection-meta database))
                  (query "deallocate ALL"))
-               (progn
+                (t
                  (remhash statement-name (connection-meta database))
-                 (query (format nil "deallocate ~:@(~S~)" statement-name))
+                 (handler-case
+                     (query (format nil "deallocate ~:@(~S~)" statement-name))
+                   (cl-postgres-error:invalid-sql-statement-name ()
+                     (format t "Statement does not exist ~a~%" statement-name)))
                  (when (find-symbol (string-upcase statement-name))
-                   (fmakunbound (find-symbol (string-upcase statement-name))))))))
-        ((eq location :postmodern)
-         (if (equal statement-name "ALL")
-             (clrhash (connection-meta database))
-             (remhash (string-upcase statement-name) (connection-meta database))))
-        ((eq location :postgresql)
-         (cond ((equal statement-name "ALL")
-                (query "deallocate ALL"))
-               ((prepared-statement-exists-p statement-name)
-                (query (format nil "deallocate ~:@(~S~)" statement-name)))
-               (t nil)))))
+                   (fmakunbound (find-symbol (string-upcase statement-name)))))))
+         ((eq location :postmodern)
+          (if (equal statement-name "ALL")
+              (clrhash (connection-meta database))
+              (remhash (string-upcase statement-name) (connection-meta database))))
+         ((eq location :postgresql)
+          (cond ((equal statement-name "ALL")
+                 (query "deallocate ALL"))
+                (t (handler-case
+                       (query (format nil "deallocate ~:@(~S~)" statement-name))
+                     (cl-postgres-error:invalid-sql-statement-name ()
+                       (format t "Statement does not exist ~a~%" statement-name)))))))))
 
 (defun list-postmodern-prepared-statements (&optional (names-only nil))
   "List the prepared statements that postmodern has put in the meta slot in
