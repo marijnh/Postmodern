@@ -1,9 +1,17 @@
 (in-package :postmodern)
 
+(defparameter *allow-overwriting-prepared-statements* t
+  "When set to t, ensured-prepared will overwrite prepared statements having
+the same name if the query statement itself in the postmodern meta connection
+is different than the query statement provided to ensure-prepared.")
+
 (defun ensure-prepared (connection id query)
   "Make sure a statement has been prepared for this connection."
   (let ((meta (connection-meta connection)))
-    (unless (and (gethash id meta) (equal (gethash id meta) query))
+    (unless (and (gethash id meta)
+                 (if *allow-overwriting-prepared-statements*
+                     (equal (gethash id meta) query)
+                     t))
       (setf (gethash id meta) query)
       (prepare-query connection id query))))
 

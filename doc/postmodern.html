@@ -279,7 +279,8 @@ for the JavaScript code in this tag.
 </ul>
 </li>
 <li><a href="#org2580dda">Helper functions for Prepared Statements</a>
-<ul>
+  <ul>
+<li><a href="#org730cd12a4">parameter *allow-overwriting-prepared-statements*</a></li>
 <li><a href="#org730cd12">function prepared-statement-exists-p (name)</a></li>
 <li><a href="#org7df9842">function list-prepared-statements(&amp;optional (names-only nil))</a></li>
 <li><a href="#orgfbdd58c">function drop-prepared-statement (statement-name &amp;key (location :both) (database <b>database</b>))</a></li>
@@ -1054,6 +1055,20 @@ when given only one argument, for transforming :nulls to NIL.
 <h2 id="org2580dda">Helper functions for Prepared Statements</h2>
 <div class="outline-text-2" id="text-org2580dda">
 </div>
+
+<div id="outline-container-org730cd12a4" class="outline-3">
+<h3 id="org730cd12a4">parameter *allow-overwriting-prepared-statements*</h3>
+<div class="outline-text-3" id="text-org730cd12a4">
+<p>
+→ parameter
+
+When set to t, ensured-prepared will overwrite prepared statements having
+the same name if the query statement itself in the postmodern meta connection
+is different than the query statement provided to ensure-prepared.
+</p>
+</div>
+</div>
+
 <div id="outline-container-org730cd12" class="outline-3">
 <h3 id="org730cd12">function prepared-statement-exists-p (name)</h3>
 <div class="outline-text-3" id="text-org730cd12">

@@ -354,6 +354,12 @@ when given only one argument, for transforming :nulls to NIL.
 
 * Helper functions for Prepared Statements
 
+** defparameter *allow-overwriting-prepared-statements*
+
+When set to t, ensured-prepared will overwrite prepared statements having
+the same name if the query statement itself in the postmodern meta connection
+is different than the query statement provided to ensure-prepared.
+
 ** function prepared-statement-exists-p (name)
 → boolean
 This returns t if the prepared statement exists in the current

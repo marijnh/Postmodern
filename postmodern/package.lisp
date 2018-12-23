@@ -57,6 +57,7 @@
    #:split-fully-qualified-tablename
 
    ;; Prepared Statement Functions
+   #:*allow-overwriting-prepared-statements*
    #:prepared-statement-exists-p #:list-prepared-statements
    #:drop-prepared-statement #:list-postmodern-prepared-statements
    #:find-postmodern-prepared-statement
