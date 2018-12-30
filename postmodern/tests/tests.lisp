@@ -88,14 +88,10 @@
 
 (test table-skeleton
   (with-test-connection
-    (log:info "Table-skeleton 0")
     (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
-    (log:info "Table-skeleton 1")
     (execute (:create-table test-data ((a :type integer :primary-key t) (b :type real) (c :type (or text db-null))) (:unique c)))
-    (log:info "Table-skeleton 2")
     (protect
       (is (table-exists-p 'test-data))
-      (log:info "Table-skeleton 3")
       (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
       (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null))
       (is (equal (query (:order-by (:select '* :from 'test-data) 'a))

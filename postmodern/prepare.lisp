@@ -52,8 +52,8 @@ overwrite unless postgresql throws a duplicate-prepared-statement error."
                                      (cl-postgres-error:duplicate-prepared-statement #'pomo:reset-prepared-statement))
                                   (if overwrite
                                       (progn
-                                        (ensure-prepared *database* statement-id query t)
-                                        (setf overwrite nil))
+                                        (setf overwrite nil)
+                                        (ensure-prepared *database* statement-id query t))
                                     (ensure-prepared *database* statement-id query overwrite))
                                   (,result-form ,base))))))))))
 
@@ -79,10 +79,6 @@ it. The name should not be quoted or a string."
        (declare (type function ,prepared-name))
        (defun ,name ,args
 	       (funcall ,prepared-name ,@query-args)))))
-
-(defun defprepared-with-overwrite (name query &optional (format :rows))
-  (drop-prepared-statement name)
-  (defprepared ,name ,query ,format))
 
 (defun prepared-statement-exists-p (name)
   "Returns t if the prepared statement exists in the current postgresql
@@ -110,9 +106,10 @@ statements generated with defprepared, there is also a lisp function with
 the same name.
 
 If you know the prepared statement name, you can delete the prepared statement
-from both locations (the default behavior), just from postmodern
-(passing :postmodern to the location key parameter) or just from postgresql
-(passing :postgresql to the location key parameter).
+from both locations (the default behavior), just from postmodern by passing
+:postmodern to the location key parameter or just from postgresql by passing
+:postgresql to the location key parameter.
+
 If you pass the name 'All' as the statement name, it will
 delete all prepared statements.
 
@@ -125,7 +122,8 @@ This behavior is controlled by the remove-function key parameter."
   (when database
     (cond ((eq location :both)
            (cond ((equal name "ALL")
-                  (maphash #'(lambda (x)
+                  (maphash #'(lambda (x y)
+                               (declare (ignore y))
                                (remhash x (connection-meta database))
                                (when (and remove-function (find-symbol (string-upcase x))
                                  (fmakunbound (find-symbol (string-upcase x))))))
@@ -136,14 +134,15 @@ This behavior is controlled by the remove-function key parameter."
                  (remhash name (connection-meta database))
                  (handler-case
                      (query (format nil "deallocate ~:@(~S~)" name))
-                   (cl-postgres-error:invalid-sql-name ()
+                   (cl-postgres-error:invalid-sql-statement-name ()
                      (format t "Statement does not exist ~a~%" name)))
                  (when (and remove-function (find-symbol (string-upcase name)))
                    (fmakunbound (find-symbol (string-upcase name)))))))
          ((eq location :postmodern)
           (if (equal name "ALL")
-              (maphash #'(lambda (x)
-                               (remhash name (connection-meta database))
+              (maphash #'(lambda (x y)
+                           (declare (ignore y))
+                               (remhash x (connection-meta database))
                                (when (and remove-function (find-symbol (string-upcase x)))
                                  (fmakunbound (find-symbol (string-upcase x)))))
                            (connection-meta database))
@@ -157,7 +156,7 @@ This behavior is controlled by the remove-function key parameter."
                  (query "deallocate ALL"))
                 (t (handler-case
                        (query (format nil "deallocate ~:@(~S~)" name))
-                     (cl-postgres-error:invalid-sql-name ()
+                     (cl-postgres-error:invalid-sql-statement-name ()
                        (format t "Statement does not exist ~a~%" name)))))))))
 
 (defun list-postmodern-prepared-statements (&optional (names-only nil))
