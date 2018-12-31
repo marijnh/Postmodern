@@ -66,7 +66,8 @@
 
 (test save-dao
   (with-test-connection
-    (query (:drop-table :if-exists 'test-data :cascade))
+    (when (table-exists-p 'test-data)
+      (query (:drop-table :if-exists 'test-data :cascade)))
     (execute (dao-table-definition 'test-data))
     (protect
       (let ((dao (make-instance 'test-data :a "quux")))

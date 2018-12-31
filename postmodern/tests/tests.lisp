@@ -191,7 +191,7 @@
 
 (test prepare-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
+        (drop-prepared-statement "all")
     (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
     (execute (:create-table test-data ((a :type integer :primary-key t)
                                        (b :type real)
@@ -229,10 +229,8 @@
       ;; drop one of the prepared statements from both postgresql and postmodern
       (drop-prepared-statement select-int-internal-name)
       (is (not (prepared-statement-exists-p "select1")))
-
       (is (equal 1 (length (list-prepared-statements t))))
       (is (equal 2 (length (list-postmodern-prepared-statements t))))
-
       ;; recreate the defprepared statement into postgresql
       (is (equal 1 (funcall 'select1 "foobar")))
       (is (prepared-statement-exists-p "select1"))
@@ -245,22 +243,27 @@
                   (list-postmodern-prepared-statements) :test 'equal))
       (is (member "SELECT1" (list-postmodern-prepared-statements t) :test 'equal))
       (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
-
       ;; drop the prepared select1 statement from both postgresql and postmodern
       (drop-prepared-statement 'select1)
       (signals error (funcall 'select1))
-      ;; Now change the defprepared statement
+      (is (not (prepared-statement-exists-p "select1")))
+      ;; Testing overwrites. Now change the defprepared statement
       (defprepared select1 "select a from test_data where c = $1" :single)
       (is (equal 1 (funcall 'select1 "foobar")))
-
       (defprepared select1 "select c from test_data where a = $1" :single)
       ;; Defprepared does not change the prepared statements logged in the postmodern connection or
       ;; in the postgresql connection. That happens at funcall.
-
-      ;; Still the original
+      ;; Test still the original in both postgresql and postmodern
+      (is (equal "select a from test_data where c = $1" (find-postgresql-prepared-statement "select1")))
       (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
       ;; funcall now creates the new version
       (is (eq :null (funcall 'select1 2)))
+      ;; Test to ensure that we do not recreate the statement each time it is funcalled
+      (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single)))
+        (format t "Sleep 1 to allow prepare_time comparison~%")
+        (sleep 1)
+        (funcall 'select1 2)
+        (is (equal time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single))))
       (drop-prepared-statement "select1")
       (signals error (funcall 'select1 2))
       (defprepared select1 "select c from test_data where a = $1" :single)
@@ -268,13 +271,9 @@
       (drop-prepared-statement "all")
       (is (equal 0 (length (list-prepared-statements t))))
       (is (equal 0 (length (list-postmodern-prepared-statements t))))
-
       ;; recreate select1, then drop the connection and call select1
       (defprepared select1 "select c from test_data where a = $1" :single)
       (disconnect *database*)
-      ;; Note that with a pooled connection, disconnecting the database does not occur
-      (is (eq :null (query "select c from test_data where a = 2" :single)))
-
       (is (eq :null (funcall 'select1 2)))
       (execute (:drop-table 'test-data)))))
 
