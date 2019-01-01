@@ -96,7 +96,8 @@ find-primary-key-info function."))
   (setf (slot-value slot 'sql-name) (to-sql-name
                                      (if col-name-p
                                          col-name
-                                         (slot-definition-name slot))))
+                                         (slot-definition-name slot))
+                                     s-sql:*escape-sql-names-p* t))
   ;; The default for nullable columns defaults to :null.
   (when (and (null col-default) (consp col-type) (eq (car col-type) 'or)
              (member 'db-null col-type) (= (length col-type) 3))
@@ -198,7 +199,11 @@ find-primary-key-info function."))
   "Synthesise a number of methods for a newly defined DAO class.
 \(Done this way because some of them are not defined in every
 situation, and each of them needs to close over some pre-computed
-values.)"
+values. Notes for future maintenance: Fields are the slot names
+in a dao class. Field-sql-name returns the col-name for the
+postgresql table, which may or may not be the same as the slot
+names in the class and also may have no relation to the initarg
+or accessor or reader.)"
 
   (setf (slot-value class 'column-map)
         (mapcar (lambda (s) (cons (slot-sql-name s) (slot-definition-name s))) (dao-column-slots class)))
@@ -258,7 +263,6 @@ values.)"
                 :do (if (slot-boundp object field)
                         (push field bound)
                         (push field unbound)))
-
              (let* ((values (mapcan (lambda (x) (list (field-sql-name x) (slot-value object x)))
                                     (remove-if (lambda (x) (member x ghost-fields)) bound) ))
                     (returned (query (sql-compile `(:insert-into ,table-name

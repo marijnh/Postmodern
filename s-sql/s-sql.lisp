@@ -125,7 +125,7 @@ forward slash to underscore.")
 
 (defvar *downcase-symbols* t)
 
-(defun to-sql-name (name &optional (escape-p *escape-sql-names-p*))
+(defun to-sql-name (name &optional (escape-p *escape-sql-names-p*) (ignore-reserved-words nil))
   "Convert a symbol or string into a name that can be a sql table,
 column, or operation name. Add quotes when escape-p is true, or
 escape-p is :auto and the name contains reserved words.
@@ -133,7 +133,10 @@ Quoted or delimited identifiers can be used by passing :literal as
 the value of escape-p. If escape-p is :literal, and the name is a string then
 the string is still escaped but the symbol or string is not downcased,
 regardless of the setting for *downcase-symbols* and the hyphen
-and forward slash characters are not replaced with underscores. "
+and forward slash characters are not replaced with underscores.
+
+Ignore-reserved-words is only used internally for column names which are allowed
+to be reserved words, but it is not recommended."
   (declare (optimize (speed 3) (debug 0)))
   (let ((*print-pretty* nil)
         (name (if (and (consp name) (eq (car name) 'quote) (equal (length name) 2))
@@ -151,9 +154,10 @@ and forward slash characters are not replaced with underscores. "
                  result))
              (write-element (str)
                (declare (type string str))
-               (let ((escape-p (if (eq escape-p :auto)
-                                   (gethash str *postgres-reserved-words*)
-                                   escape-p)))
+               (let ((escape-p (cond ((and (eq escape-p :auto) (not ignore-reserved-words))
+                                      (gethash str *postgres-reserved-words*))
+                                     (ignore-reserved-words nil)
+                                     (t escape-p))))
                  (when escape-p
                    (write-char #\"))
                  (if (and (> (length str) 1) ;; Placeholders like $2
@@ -1565,7 +1569,7 @@ Note that with extended tables you can have tables without columns that are inhe
 
 (defun alter-table-column (column-name args)
   "Generates the sql string for the portion of altering a column."
-  `(,(to-sql-name column-name) " "
+  `(,(to-sql-name column-name *escape-sql-names-p* t) " "
      ,@(loop :for (option value) :on args :by #'cddr
           :append (case option
                     (:default `(" DEFAULT " ,@(sql-expand value)))
@@ -1632,12 +1636,12 @@ Note that with extended tables you can have tables without columns that are inhe
            (:alter-column (cons "ALTER COLUMN "
                               (alter-table-column (first args) (rest args))))
            (:drop-column (list "DROP COLUMN "
-                               (to-sql-name (first args))
+                               (to-sql-name (first args) *escape-sql-names-p* t)
                                (if (rest args)
                                        (drop-action (second args))
                                        "")))
            (:add-constraint (append (list "ADD CONSTRAINT ")
-                                    (list (to-sql-name (first args)) " ")
+                                    (list (to-sql-name (first args) *escape-sql-names-p* t) " ")
                                     (expand-table-constraint (second args)
                                                              (cddr args))))
            (:drop-constraint (list "DROP CONSTRAINT "
@@ -1692,7 +1696,8 @@ that the table will need to be scanned twice. Everything is a trade-off."
                              (car on))
                             ((consp (car on))
                              (cadar on))
-                            (t (car on))))
+                            (t (car on)))
+                      *escape-sql-names-p* t)
       ,@(when using `(" USING " ,(cond ((stringp (car using))
                                         (to-sql-name (car using)))
                                        ((consp (car using))

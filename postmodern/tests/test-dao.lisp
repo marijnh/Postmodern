@@ -42,7 +42,11 @@
 
 (test dao-class
   (with-test-connection
+    (when (table-exists-p 'dao-test)
+      (query (:drop-table :if-exists 'dao-test :cascade)))
+    (is (not (table-exists-p 'dao-test)))
     (execute (dao-table-definition 'test-data))
+    (is (table-exists-p 'dao-test))
     (protect
       (is (member :dao-test (list-tables)))
       (is (null (select-dao 'test-data)))
@@ -66,9 +70,11 @@
 
 (test save-dao
   (with-test-connection
-    (when (table-exists-p 'test-data)
-      (query (:drop-table :if-exists 'test-data :cascade)))
+    (when (table-exists-p 'dao-test)
+      (query (:drop-table :if-exists 'dao-test :cascade)))
+    (is (not (table-exists-p 'dao-test)))
     (execute (dao-table-definition 'test-data))
+    (is (table-exists-p 'dao-test))
     (protect
       (let ((dao (make-instance 'test-data :a "quux")))
         (is (save-dao dao))
@@ -156,25 +162,32 @@
 (defclass test-col-name ()
   ((a :col-type string :col-name aa :initarg :a :accessor test-a)
    (b :col-type string :col-name bb :initarg :b :accessor test-b)
-   (c :col-type string              :initarg :c :accessor test-c))
+   (c :col-type string              :initarg :c :accessor test-c)
+   (from :col-type string :col-name from :initarg :d :accessor test-d)
+   (to-destination :col-type string :col-name to :initarg :e :accessor test-e))
   (:metaclass dao-class)
   (:keys a))
 
 (test dao-class-col-name
   (with-test-connection
-    (execute "CREATE TEMPORARY TABLE test_col_name (aa text primary key,  bb text not null, c text not null)")
-    (let ((o (make-instance 'test-col-name :a "1" :b "2" :c "3")))
+    (execute "CREATE TEMPORARY TABLE test_col_name (aa text primary key, bb text not null, c text not null,
+              \"from\" text not null, \"to\" text not null)")
+    (let ((o (make-instance 'test-col-name :a "1" :b "2" :c "3" :d "Reykjavík" :e "Garðabær")))
       (save-dao o)
       (let ((oo (get-dao 'test-col-name "1")))
         (is (string= "1" (test-a oo)))
         (is (string= "2" (test-b oo)))
-        (is (string= "3" (test-c oo)))))
+        (is (string= "3" (test-c oo)))
+        (is (string= "Reykjavík" (test-d oo)))
+        (is (string= "Garðabær" (test-e oo)))))
     (let ((o (get-dao 'test-col-name "1")))
       (setf (test-b o) "b")
+      (setf (test-d o) "Vestmannaeyjar")
       (update-dao o))
     (is (string= "1" (test-a (get-dao 'test-col-name "1"))))
     (is (string= "b" (test-b (get-dao 'test-col-name "1"))))
-    (is (string= "3" (test-c (get-dao 'test-col-name "1"))))))
+    (is (string= "3" (test-c (get-dao 'test-col-name "1"))))
+    (is (string= "Vestmannaeyjar" (test-d (get-dao 'test-col-name "1"))))))
 
 ;;; For threading tests
 (defvar *dao-update-lock* (bt:make-lock))
@@ -217,3 +230,86 @@
       (mapc #'bt:join-thread threads)
       (is (eq 0 (test-c item))))
     (execute (:drop-table 'dao-test :cascade))))
+
+(test reserved-column-names
+  (with-test-connection
+    (defclass from-test-data ()
+      ((id :col-type serial :initarg :id :accessor id)
+       (flight :col-type (or integer db-null) :initarg :flight :accessor flight)
+       (from :col-type (or (varchar 100) db-null) :initarg :from :accessor from)
+       (to-destination :col-type (or (varchar 100) db-null) :initarg :to-destination :accessor to-destination))
+      (:metaclass dao-class)
+      (:table-name from-test)
+      (:keys id))
+
+    (loop for x in '(from-test from-test-data0 from-test-data1 from-test-data2 iceland-cities) do
+         (when (pomo:table-exists-p x)
+       (execute (:drop-table x :cascade))))
+    (execute (dao-table-definition 'from-test-data))
+    (is (equal (pomo:list-columns 'from-test)
+               '("id" "flight" "from" "to_destination")))
+    (let*  ((item1 (make-instance 'from-test-data :flight 1 :from "Reykjavík" :to-destination "Seyðisfjörður"))
+            (item2 (make-instance 'from-test-data :flight 2 :from "Stykkishólmur" :to-destination "Reykjavík")))
+      (insert-dao item1)
+      (is (equal (query (:select 'from :from 'from-test :where (:= 'flight 1)) :single)
+                 "Reykjavík"))
+      (setf (to-destination item1) "Bolungarvík")
+      (update-dao item1)
+      (is (equal (query (:select 'to-destination :from 'from-test :where (:= 'flight 1)) :single)
+                 "Bolungarvík"))
+      (save-dao item2)
+      (is (equal (query (:select 'to-destination :from 'from-test :where (:= 'flight 2)) :single)
+                 "Reykjavík")))
+    ;; Test create-table
+    (query (:create-table 'iceland-cities
+                      ((id :type serial)
+                       (name :type (or (varchar 100) db-null) :unique t))))
+
+    (query (:create-table 'from-test-data1
+                      ((id :type serial)
+                       (flight :type (or integer db-null))
+                       (from :type (or (varchar 100) db-null) :references ((iceland-cities name)))
+                       (to-destination :type (or (varchar 100) db-null)))
+                      (:primary-key id)
+                      (:constraint iceland-city-name-fkey :foreign-key (to-destination) (iceland-cities name))))
+    (query (:insert-into 'iceland-cities :set 'name "Reykjavík"))
+    (query (:insert-rows-into 'iceland-cities :columns 'name :values '(("Seyðisfjörður") ("Stykkishólmur") ("Bolungarvík")
+                                                                       ("Kópavogur"))))
+    ;; test insert-into
+    (query (:insert-into 'from-test-data1 :set 'flight 1 'from "Reykjavík" 'to-destination "Seyðisfjörður"))
+    ;; test query select
+    (is (equal (query (:select 'from 'to-destination :from 'from-test-data1 :where (:= 'flight 1)) :row)
+               '("Reykjavík" "Seyðisfjörður")))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Reykjavík")
+                                                                          (:= 'to-destination "Seyðisfjörður"))) :single)
+               1))
+    ;; test insert-rows-into
+    (query (:insert-rows-into 'from-test-data1 :columns 'flight 'from 'to-destination :values '((2 "Stykkishólmur" "Reykjavík"))))
+    (is (equal (query (:select 'from 'to-destination :from 'from-test-data1 :where (:= 'flight 2)) :row)
+               '("Stykkishólmur" "Reykjavík")))
+
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Stykkishólmur")
+                                                                           (:= 'to-destination "Reykjavík"))) :single)
+               2))
+    (query (:alter-table 'from-test-data1 :rename-column 'from 'origin))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:= 'origin "Stykkishólmur")) :single)
+               2))
+    ;; test alter-table
+    (query (:alter-table 'from-test-data1 :rename-column 'origin 'from ))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Stykkishólmur")
+                                                                           (:= 'to-destination "Reykjavík"))) :single)
+               2))
+    ;; test constraint
+    (signals error (query (:insert-into 'from-test-data1 :set 'flight 1 'from "Reykjavík" 'to-destination "Akureyri")))
+    (signals error (query (:insert-into 'from-test-data1 :set 'flight 1 'from "Akureyri" 'to-destination "Reykjavík")))
+    ;; test update
+    (query (:update 'from-test-data1 :set 'from "Kópavogur" :where (:= 'to-destination "Seyðisfjörður")))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Kópavogur")
+                                                                           (:= 'to-destination "Seyðisfjörður")))
+                      :single)
+               1))
+    (query (:update 'from-test-data1 :set 'to-destination "Kópavogur" :where (:= 'from "Stykkishólmur")))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'to-destination "Kópavogur")
+                                                                           (:= 'from "Stykkishólmur")))
+                      :single)
+               2))))
