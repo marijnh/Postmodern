@@ -103,6 +103,7 @@
 (test prepare
   (with-test-connection
     (drop-prepared-statement "all")
+    (setf pomo:*allow-overwriting-prepared-statements* t)
     (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
     (execute (:create-table test-data ((a :type integer :primary-key t)
                                        (b :type real)
@@ -156,29 +157,8 @@
       (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
       ;; drop the prepared select1 statement from both postgresql and postmodern
       (drop-prepared-statement 'select1)
-      (signals error (funcall 'select1))
+      (signals error (funcall 'select1 "foobar"))
       (is (not (prepared-statement-exists-p "select1")))
-      ;; Testing overwrites. Now change the defprepared statement
-      (defprepared select1 "select a from test_data where c = $1" :single)
-      (is (equal 1 (funcall 'select1 "foobar")))
-      (defprepared select1 "select c from test_data where a = $1" :single)
-      ;; Defprepared does not change the prepared statements logged in the postmodern connection or
-      ;; in the postgresql connection. That happens at funcall.
-      ;; Test still the original in both postgresql and postmodern
-      (is (equal "select a from test_data where c = $1" (find-postgresql-prepared-statement "select1")))
-      (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
-      ;; funcall now creates the new version
-      (is (eq :null (funcall 'select1 2)))
-      ;; Test to ensure that we do not recreate the statement each time it is funcalled
-      (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single)))
-        (format t "Sleep 1 to allow prepare_time comparison~%")
-        (sleep 1)
-        (funcall 'select1 2)
-        (is (equal time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single))))
-      (drop-prepared-statement "select1")
-      (signals error (funcall 'select1 2))
-      (defprepared select1 "select c from test_data where a = $1" :single)
-      (is (eq :null (funcall 'select1 2)))
       (drop-prepared-statement "all")
       (is (equal 0 (length (list-prepared-statements t))))
       (is (equal 0 (length (list-postmodern-prepared-statements t))))
@@ -187,7 +167,75 @@
       (disconnect *database*)
       (signals error (query "select c from test_data where a = 2" :single))
       (is (eq :null (funcall 'select1 2)))
-      (execute (:drop-table 'test-data)))))
+      (execute (:drop-table 'test-data))
+      (setf pomo:*allow-overwriting-prepared-statements* t))))
+
+(test prepare-overwrite
+  (with-test-connection
+   (drop-prepared-statement "all")
+   (setf pomo:*allow-overwriting-prepared-statements* t)
+   (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
+   (execute (:create-table test-data ((a :type integer :primary-key t)
+                                      (b :type real)
+                                      (c :type (or text db-null)))))
+   (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
+   (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null))
+
+   (defprepared select1 "select a from test_data where c = $1" :single)
+   ;; Testing overwrites. Now change the defprepared statement
+   (defprepared select1 "select a from test_data where c = $1" :single)
+   (is (equal 1 (funcall 'select1 "foobar")))
+   (defprepared select1 "select c from test_data where a = $1" :single)
+   ;; Defprepared does not change the prepared statements logged in the postmodern connection or
+   ;; in the postgresql connection. That happens at funcall.
+   ;; Test still the original in both postgresql and postmodern
+   (is (equal "select a from test_data where c = $1" (find-postgresql-prepared-statement "select1")))
+   (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
+   ;; funcall now creates the new version
+      (is (eq :null (funcall 'select1 2)))
+
+   ;; Test to ensure that we do not recreate the statement each time it is funcalled
+   (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single)))
+     (format t "Sleep 1 to allow prepare_time comparison~%")
+     (sleep 1)
+     (funcall 'select1 2)
+     (is (equal time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single))))
+   (drop-prepared-statement "select1")
+   (signals error (funcall 'select1 2))
+    (defprepared select1 "select c from test_data where a = $1" :single)
+   (is (equal :null (funcall 'select1 2)))
+
+   (drop-prepared-statement "all")
+   (execute (:drop-table 'test-data))
+   (setf pomo:*allow-overwriting-prepared-statements* t)))
+
+(test prepare-overwrite-blocked
+  (with-test-connection
+   (drop-prepared-statement "all")
+   (setf pomo:*allow-overwriting-prepared-statements* nil)
+   (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
+   (execute (:create-table test-data ((a :type integer :primary-key t)
+                                      (b :type real)
+                                      (c :type (or text db-null)))))
+   (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
+   (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null))
+
+   ;; Test to ensure that setting *allow-overwriting-prepared-statements* to nil will block overwriting
+   (defprepared select1 "select a from test_data where c = $1" :single)
+   (is (equal 1 (funcall 'select1 "foobar")))
+
+   (defprepared select1 "select c from test_data where a = $1" :single)
+   (is (equal 1 (funcall 'select1 "foobar")))
+
+   (setf pomo:*allow-overwriting-prepared-statements* t)
+
+   (is (equal 1 (funcall 'select1 "foobar")))
+   (defprepared select1 "select c from test_data where a = $1" :single)
+   (is (equal "foobar" (funcall 'select1 1)))
+
+     ;; cleanup
+   (execute (:drop-table 'test-data))
+   (setf pomo:*allow-overwriting-prepared-statements* t)))
 
 (test prepare-pooled
   (with-pooled-test-connection

@@ -61,13 +61,13 @@ overwrite unless postgresql throws a duplicate-prepared-statement error."
   "Wraps a query into a function that will prepare it once for a
 connection, and then execute it with the given parameters. The query
 should contain a placeholder \($1, $2, etc) for every parameter."
-  `(let ((overwrite t))
+  `(let ((overwrite pomo:*allow-overwriting-prepared-statements*))
      ,(generate-prepared '(lambda) (next-statement-id) query format)))
 
 (defmacro defprepared (name query &optional (format :rows))
   "Like prepare, but gives the function a name instead of returning
 it. The name should not be quoted or a string."
-  `(let ((overwrite t))
+  `(let ((overwrite pomo:*allow-overwriting-prepared-statements*))
      ,(generate-prepared `(defun ,name) name query format)))
 
 (defmacro defprepared-with-names (name (&rest args)
@@ -136,7 +136,8 @@ This behavior is controlled by the remove-function key parameter."
                      (query (format nil "deallocate ~:@(~S~)" name))
                    (cl-postgres-error:invalid-sql-statement-name ()
                      (format t "Statement does not exist ~a~%" name)))
-                 (when (and remove-function (find-symbol (string-upcase name)))
+                 (when (and remove-function (find-symbol (string-upcase name))
+                            (fboundp (find-symbol (string-upcase name))))
                    (fmakunbound (find-symbol (string-upcase name)))))))
          ((eq location :postmodern)
           (if (equal name "ALL")
@@ -149,7 +150,8 @@ This behavior is controlled by the remove-function key parameter."
             (progn
               (remhash (string-upcase name)
                        (connection-meta database))
-              (when (and remove-function (find-symbol (string-upcase name)))
+              (when (and remove-function (find-symbol (string-upcase name))
+                         (fboundp (find-symbol (string-upcase name))))
                    (fmakunbound (find-symbol (string-upcase name)))))))
          ((eq location :postgresql)
           (cond ((equal name "ALL")
