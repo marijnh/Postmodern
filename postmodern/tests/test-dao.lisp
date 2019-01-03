@@ -231,7 +231,7 @@
       (is (eq 0 (test-c item))))
     (execute (:drop-table 'dao-test :cascade))))
 
-(test reserved-column-names
+(test reserved-column-names-defclass
   (with-test-connection
     (defclass from-test-data ()
       ((id :col-type serial :initarg :id :accessor id)
@@ -242,7 +242,7 @@
       (:table-name from-test)
       (:keys id))
 
-    (loop for x in '(from-test from-test-data0 from-test-data1 from-test-data2 iceland-cities) do
+    (loop for x in '(from-test from-test-data1 iceland-cities) do
          (when (pomo:table-exists-p x)
        (execute (:drop-table x :cascade))))
     (execute (dao-table-definition 'from-test-data))
@@ -259,8 +259,15 @@
                  "Bolungarvík"))
       (save-dao item2)
       (is (equal (query (:select 'to-destination :from 'from-test :where (:= 'flight 2)) :single)
-                 "Reykjavík")))
-    ;; Test create-table
+                 "Reykjavík"))
+      (execute (:drop-table 'from-test :cascade)))))
+
+;; Test create-table
+(test reserved-column-names-s-sql
+  (with-test-connection
+    (loop for x in '(from-test-data1 iceland-cities) do
+         (when (pomo:table-exists-p x)
+       (execute (:drop-table x :cascade))))
     (query (:create-table 'iceland-cities
                       ((id :type serial)
                        (name :type (or (varchar 100) db-null) :unique t))))
@@ -312,4 +319,6 @@
     (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'to-destination "Kópavogur")
                                                                            (:= 'from "Stykkishólmur")))
                       :single)
-               2))))
+               2))
+    (loop for x in '(from-test-data1 iceland-cities) do
+         (execute (:drop-table x :cascade)))))
