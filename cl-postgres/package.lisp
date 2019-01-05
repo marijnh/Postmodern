@@ -58,6 +58,8 @@
            #:close-db-writer
            #:*ssl-certificate-file*
            #:*ssl-key-file*
+           #:*retry-connect-times*
+           #:*retry-connect-delay*
            #+(and sbcl unix) #:*unix-socket-dir*))
 
 (defpackage :cl-postgres-error

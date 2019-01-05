@@ -5,11 +5,13 @@
 the same name if the query statement itself in the postmodern meta connection
 is different than the query statement provided to ensure-prepared.")
 
-(defun ensure-prepared (connection id query)
-  "Make sure a statement has been prepared for this connection."
+(defun ensure-prepared (connection id query &optional (overwrite nil))
+  "Make sure a statement has been prepared for this connection. If overwrite is
+set to t (not the default), it will overwrite the existing query of the same
+name."
   (let ((meta (connection-meta connection)))
     (unless (and (gethash id meta)
-                 (if *allow-overwriting-prepared-statements*
+                 (if overwrite
                      (equal (gethash id meta) query)
                      t))
       (setf (gethash id meta) query)
@@ -22,11 +24,14 @@ is different than the query statement provided to ensure-prepared.")
     (with-standard-io-syntax (format nil "STATEMENT_~A" next-id))))
 
 (defun generate-prepared (function-form name query format)
-  "Helper function for the following two macros. Note that it
-will attempt to automatically reconnect if database-connection-error,
-or admin-shutdown. It will reset prepared statements triggering an
-invalid-sql-statement-name error. It will overwrite old prepared
-statements triggering a duplicate-prepared-statement error."
+  "Helper function for the following two macros. Note that it will attempt to
+automatically reconnect if database-connection-error, or admin-shutdown. It
+will reset any prepared statements triggering an invalid-sql-statement-name
+error. The generated function will overwrite old prepared statements triggering
+a duplicate-prepared-statement error and will pre-emptively overwrite an existing
+prepared statement of the same name the first time generate-prepared is called
+for this function name. Subsequent calls to the generated function will not
+overwrite unless postgresql throws a duplicate-prepared-statement error."
   (destructuring-bind (reader result-form) (reader-for-format format)
     (let ((base `(exec-prepared *database* statement-id params ,reader)))
       `(let ((statement-id ,(string name))
@@ -35,8 +40,7 @@ statements triggering a duplicate-prepared-statement error."
                           (handler-bind
                               ((postmodern:database-connection-error
                                 (lambda (msg1)
-                                  (format t "~%Database-connection-error ~a~%" msg1)
-                                  ;;                     (declare (ignore msg1))
+                                  (format *error-output* "~%Database-connection-error ~a~%" msg1)
                                   (invoke-restart :reconnect))))
                             (handler-bind ((cl-postgres-error:admin-shutdown
                                             (lambda (msg2)
@@ -46,19 +50,26 @@ statements triggering a duplicate-prepared-statement error."
                                 (handler-bind
                                     ((cl-postgres-error:invalid-sql-statement-name #'pomo:reset-prepared-statement)
                                      (cl-postgres-error:duplicate-prepared-statement #'pomo:reset-prepared-statement))
-                                  (ensure-prepared *database* statement-id query)
+                                  (if overwrite
+                                      (progn
+                                        (setf overwrite nil)
+                                        (ensure-prepared *database* statement-id query t))
+                                    (ensure-prepared *database* statement-id query overwrite))
                                   (,result-form ,base))))))))))
 
 (defmacro prepare (query &optional (format :rows))
   "Wraps a query into a function that will prepare it once for a
 connection, and then execute it with the given parameters. The query
 should contain a placeholder \($1, $2, etc) for every parameter."
-  (generate-prepared '(lambda) (next-statement-id) query format))
+  `(let ((overwrite t))
+     ,(generate-prepared '(lambda) (next-statement-id) query format)))
 
 (defmacro defprepared (name query &optional (format :rows))
   "Like prepare, but gives the function a name instead of returning
-it. The name should not be quoted or a string."
-  (generate-prepared `(defun ,name) name query format))
+it. The name should not be a string but may be quoted."
+  (when (consp name) (setf name (s-sql::dequote name)))
+  `(let ((overwrite t))
+     ,(generate-prepared `(defun ,name) name query format)))
 
 (defmacro defprepared-with-names (name (&rest args)
 				  (query &rest query-args)
@@ -70,12 +81,12 @@ it. The name should not be quoted or a string."
        (defun ,name ,args
 	       (funcall ,prepared-name ,@query-args)))))
 
-(defun prepared-statement-exists-p (statement-name)
+(defun prepared-statement-exists-p (name)
   "Returns t if the prepared statement exists in the current postgresql
 session, otherwise nil."
   (if (query (:select 'name
                    :from 'pg-prepared-statements
-                   :where (:= 'name (string-upcase statement-name)))
+                   :where (:= 'name (string-upcase name)))
              :single)
       t
       nil))
@@ -89,40 +100,65 @@ of the names of the prepared statements."
       (alexandria:flatten (query "select name from pg_prepared_statements"))
       (query "select * from pg_prepared_statements" :alists)))
 
-(defun drop-prepared-statement (statement-name &key (location :both) (database *database*))
+(defun drop-prepared-statement (name &key (location :both) (database *database*) (remove-function t))
   "Prepared statements are stored both in the meta slot in the postmodern
-connection and in postgresql session information. If you know the prepared
-statement name, you can delete the prepared statement from both locations (the
-default behavior), just from postmodern (passing :postmodern to the location
-key parameter) or just from postgresql (passing :postgresql to the location
-key parameter). If you pass the name 'All' as the statement name, it will
-delete all prepared statements."
-  (when (symbolp statement-name) (setf statement-name (string statement-name)))
-  (check-type statement-name string)
+connection and in postgresql session information. In the case of prepared
+statements generated with defprepared, there is also a lisp function with
+the same name.
+
+If you know the prepared statement name, you can delete the prepared statement
+from both locations (the default behavior), just from postmodern by passing
+:postmodern to the location key parameter or just from postgresql by passing
+:postgresql to the location key parameter.
+
+If you pass the name 'All' as the statement name, it will
+delete all prepared statements.
+
+The default behavior is to also remove any lisp function of the same name.
+This behavior is controlled by the remove-function key parameter."
+  (when (symbolp name) (setf name (string name)))
+  (check-type name string)
   (check-type location keyword)
-  (setf statement-name (string-upcase statement-name))
-  (cond ((eq location :both)
-         (when (or (equal statement-name "ALL")
-                   (prepared-statement-exists-p statement-name))
-           (if (equal statement-name "ALL")
-               (progn
+  (setf name (string-upcase name))
+  (when database
+    (cond ((eq location :both)
+           (cond ((equal name "ALL")
+                  (maphash #'(lambda (x y)
+                               (declare (ignore y))
+                               (remhash x (connection-meta database))
+                               (when (and remove-function (find-symbol (string-upcase x))
+                                 (fmakunbound (find-symbol (string-upcase x))))))
+                           (connection-meta database))
                  (clrhash (connection-meta database))
                  (query "deallocate ALL"))
-               (progn
-                 (remhash statement-name (connection-meta database))
-                 (query (format nil "deallocate ~:@(~S~)" statement-name))
-                 (when (find-symbol (string-upcase statement-name))
-                   (fmakunbound (find-symbol (string-upcase statement-name))))))))
-        ((eq location :postmodern)
-         (if (equal statement-name "ALL")
-             (clrhash (connection-meta database))
-             (remhash (string-upcase statement-name) (connection-meta database))))
-        ((eq location :postgresql)
-         (cond ((equal statement-name "ALL")
-                (query "deallocate ALL"))
-               ((prepared-statement-exists-p statement-name)
-                (query (format nil "deallocate ~:@(~S~)" statement-name)))
-               (t nil)))))
+                (t
+                 (remhash name (connection-meta database))
+                 (handler-case
+                     (query (format nil "deallocate ~:@(~S~)" name))
+                   (cl-postgres-error:invalid-sql-statement-name ()
+                     (format t "Statement does not exist ~a~%" name)))
+                 (when (and remove-function (find-symbol (string-upcase name)))
+                   (fmakunbound (find-symbol (string-upcase name)))))))
+         ((eq location :postmodern)
+          (if (equal name "ALL")
+              (maphash #'(lambda (x y)
+                           (declare (ignore y))
+                               (remhash x (connection-meta database))
+                               (when (and remove-function (find-symbol (string-upcase x)))
+                                 (fmakunbound (find-symbol (string-upcase x)))))
+                           (connection-meta database))
+            (progn
+              (remhash (string-upcase name)
+                       (connection-meta database))
+              (when (and remove-function (find-symbol (string-upcase name)))
+                   (fmakunbound (find-symbol (string-upcase name)))))))
+         ((eq location :postgresql)
+          (cond ((equal name "ALL")
+                 (query "deallocate ALL"))
+                (t (handler-case
+                       (query (format nil "deallocate ~:@(~S~)" name))
+                     (cl-postgres-error:invalid-sql-statement-name ()
+                       (format t "Statement does not exist ~a~%" name)))))))))
 
 (defun list-postmodern-prepared-statements (&optional (names-only nil))
   "List the prepared statements that postmodern has put in the meta slot in

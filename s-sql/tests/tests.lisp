@@ -1379,5 +1379,65 @@ that the table will need to be scanned twice. Everything is a trade-off."
     ;; cleanup
     (query (:drop-view 'quagmire))
     (is (equal (sql (:drop-view :quagmire))
-               "DROP VIEW quagmire"))
-    ))
+               "DROP VIEW quagmire"))))
+
+;; Test create-table
+(test reserved-column-names-s-sql
+  (with-test-connection
+    (loop for x in '(from-test-data1 iceland-cities) do
+         (when (pomo:table-exists-p x)
+       (execute (:drop-table x :cascade))))
+    (query (:create-table 'iceland-cities
+                      ((id :type serial)
+                       (name :type (or (varchar 100) db-null) :unique t))))
+
+    (query (:create-table 'from-test-data1
+                      ((id :type serial)
+                       (flight :type (or integer db-null))
+                       (from :type (or (varchar 100) db-null) :references ((iceland-cities name)))
+                       (to-destination :type (or (varchar 100) db-null)))
+                      (:primary-key id)
+                      (:constraint iceland-city-name-fkey :foreign-key (to-destination) (iceland-cities name))))
+    (query (:insert-into 'iceland-cities :set 'name "Reykjavík"))
+    (query (:insert-rows-into 'iceland-cities :columns 'name :values '(("Seyðisfjörður") ("Stykkishólmur") ("Bolungarvík")
+                                                                       ("Kópavogur"))))
+    ;; test insert-into
+    (query (:insert-into 'from-test-data1 :set 'flight 1 'from "Reykjavík" 'to-destination "Seyðisfjörður"))
+    ;; test query select
+    (is (equal (query (:select 'from 'to-destination :from 'from-test-data1 :where (:= 'flight 1)) :row)
+               '("Reykjavík" "Seyðisfjörður")))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Reykjavík")
+                                                                          (:= 'to-destination "Seyðisfjörður"))) :single)
+               1))
+    ;; test insert-rows-into
+    (query (:insert-rows-into 'from-test-data1 :columns 'flight 'from 'to-destination :values '((2 "Stykkishólmur" "Reykjavík"))))
+    (is (equal (query (:select 'from 'to-destination :from 'from-test-data1 :where (:= 'flight 2)) :row)
+               '("Stykkishólmur" "Reykjavík")))
+
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Stykkishólmur")
+                                                                           (:= 'to-destination "Reykjavík"))) :single)
+               2))
+    (query (:alter-table 'from-test-data1 :rename-column 'from 'origin))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:= 'origin "Stykkishólmur")) :single)
+               2))
+    ;; test alter-table
+    (query (:alter-table 'from-test-data1 :rename-column 'origin 'from ))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Stykkishólmur")
+                                                                           (:= 'to-destination "Reykjavík"))) :single)
+               2))
+    ;; test constraint
+    (signals error (query (:insert-into 'from-test-data1 :set 'flight 1 'from "Reykjavík" 'to-destination "Akureyri")))
+    (signals error (query (:insert-into 'from-test-data1 :set 'flight 1 'from "Akureyri" 'to-destination "Reykjavík")))
+    ;; test update
+    (query (:update 'from-test-data1 :set 'from "Kópavogur" :where (:= 'to-destination "Seyðisfjörður")))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Kópavogur")
+                                                                           (:= 'to-destination "Seyðisfjörður")))
+                      :single)
+               1))
+    (query (:update 'from-test-data1 :set 'to-destination "Kópavogur" :where (:= 'from "Stykkishólmur")))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'to-destination "Kópavogur")
+                                                                           (:= 'from "Stykkishólmur")))
+                      :single)
+               2))
+    (loop for x in '(from-test-data1 iceland-cities) do
+         (execute (:drop-table x :cascade)))))

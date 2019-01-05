@@ -185,10 +185,18 @@ if it isn't."
       (stream-error (e) (add-restart e))))
     (values))
 
+(defvar *retry-connect-times* 5
+  "How many times to we try to connect again. Borrowed from pgloader")
+
+(defvar *retry-connect-delay* 0.5
+  "How many seconds to wait before trying to connect again. Borrowed from pgloader")
+
 (defun reopen-database (conn)
   "Reconnect a disconnected database connection."
-  (unless (database-open-p conn)
-    (initiate-connection conn)))
+  (loop :while (not (database-open-p conn))
+     :repeat *retry-connect-times*
+     :do
+       (initiate-connection conn)))
 
 (defun ensure-connection (conn)
   "Used to make sure a connection object is connected before doing
@@ -197,7 +205,11 @@ anything with it."
     (error "No database connection selected."))
   (unless (database-open-p conn)
     (restart-case (error 'database-connection-lost :message "Connection to database server lost.")
-      (:reconnect () :report "Try to reconnect." (initiate-connection conn)))))
+      (:reconnect () :report "Try to reconnect."
+                  (loop :while (not (database-open-p conn))
+                     :repeat *retry-connect-times*
+                     :do
+                       (initiate-connection conn))))))
 
 (defun close-database (connection)
   "Gracefully disconnect a database connection."
