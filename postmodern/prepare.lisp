@@ -32,7 +32,6 @@ a duplicate-prepared-statement error and will pre-emptively overwrite an existin
 prepared statement of the same name the first time generate-prepared is called
 for this function name. Subsequent calls to the generated function will not
 overwrite unless postgresql throws a duplicate-prepared-statement error."
-  (log:info "name ~a symbolp ~a" name (consp name))
   (destructuring-bind (reader result-form) (reader-for-format format)
     (let ((base `(exec-prepared *database* statement-id params ,reader)))
       `(let ((statement-id ,(string name))
