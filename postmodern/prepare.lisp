@@ -32,6 +32,7 @@ a duplicate-prepared-statement error and will pre-emptively overwrite an existin
 prepared statement of the same name the first time generate-prepared is called
 for this function name. Subsequent calls to the generated function will not
 overwrite unless postgresql throws a duplicate-prepared-statement error."
+  (log:info "name ~a symbolp ~a" name (consp name))
   (destructuring-bind (reader result-form) (reader-for-format format)
     (let ((base `(exec-prepared *database* statement-id params ,reader)))
       `(let ((statement-id ,(string name))
@@ -66,7 +67,8 @@ should contain a placeholder \($1, $2, etc) for every parameter."
 
 (defmacro defprepared (name query &optional (format :rows))
   "Like prepare, but gives the function a name instead of returning
-it. The name should not be quoted or a string."
+it. The name should not be a string but may be quoted."
+  (when (consp name) (setf name (s-sql::dequote name)))
   `(let ((overwrite t))
      ,(generate-prepared `(defun ,name) name query format)))
 

@@ -113,7 +113,7 @@
           (byte-arr (make-array 10 :element-type '(unsigned-byte 8) :initial-element 10))
           (select-bytes (prepare (:select (:type '$1 bytea)) :single))
           (select-int-internal-name nil))
-      (defprepared select1 "select a from test_data where c = $1" :single)
+      (defprepared 'select1 "select a from test_data where c = $1" :single)
       ;; Defprepared does not change the prepared statements logged in the postmodern connection or
       ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
       (is (equal 0 (length (list-postmodern-prepared-statements t))))
