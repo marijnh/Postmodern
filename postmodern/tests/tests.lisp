@@ -189,6 +189,19 @@
       (is (eq :null (funcall 'select1 2)))
       (execute (:drop-table 'test-data)))))
 
+(test prepare-reserved-words
+  (with-test-connection
+    (drop-prepared-statement "all")
+    (when (table-exists-p 'from-test) (execute (:drop-table 'from-test)))
+    (execute "CREATE TABLE from_test (id SERIAL NOT NULL, flight INTEGER DEFAULT NULL, \"from\" VARCHAR(100) DEFAULT NULL, to_destination VARCHAR(100) DEFAULT NULL, PRIMARY KEY (id, \"from\"))")
+    (execute (:insert-into 'from-test :set 'flight 1 'from "Stykkishólmur" :to-destination "Reykjavík"))
+    (execute (:insert-into 'from-test :set 'flight 2 'from "Reykjavík" :to-destination "Seyðisfjörður"))
+    (defprepared select1 "select \"from\" from from_test where to_destination = $1" :single)
+      ;; the funcall creates the prepared statements logged in the postmodern connection
+      ;; and the postgresql connection
+      (is (equal "Reykjavík" (funcall 'select1 "Seyðisfjörður")))
+      (execute (:drop-table 'from-test))))
+
 (test prepare-pooled
   (with-pooled-test-connection
         (drop-prepared-statement "all")
