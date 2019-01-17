@@ -17,9 +17,11 @@ Objects of this type represent database connections.
 → database-connection
 
 Create and open a connection for the specified server, database, and user.
-use-ssl may be :no, :yes, or :try, where :try means 'if the server supports
-it'. When it is anything but :no, you must have the CL+SSL package loaded to
-initiate the connection.
+use-ssl may be :no, :try, :yes, or :full; where :try means 'if the server
+supports it', :yes means 'expect a CA-signed cert from the server, for any host
+name', and :full 'means expect a CA-signed cert for the supplied host name'.
+When it is anything but :no, you must have the CL+SSL package loaded to initiate
+the connection.
 
 On SBCL and Clozure CL, the value :unix may be passed for host, in order to
 connect using a Unix domain socket instead of a TCP socket.
