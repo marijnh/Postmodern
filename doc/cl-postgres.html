@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-09-02 Sun 07:42 -->
+<!-- 2019-01-17 Thu 13:21 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Cl-Postgres Reference Manual</title>
@@ -334,9 +334,11 @@ Objects of this type represent database connections.
 
 <p>
 Create and open a connection for the specified server, database, and user.
-use-ssl may be :no, :yes, or :try, where :try means 'if the server supports
-it'. When it is anything but :no, you must have the CL+SSL package loaded to
-initiate the connection.
+use-ssl may be :no, :try, :yes, or :full; where :try means 'if the server
+supports it', :yes means 'expect a CA-signed cert from the server, for any host
+name', and :full 'means expect a CA-signed cert for the supplied host name'.
+When it is anything but :no, you must have the CL+SSL package loaded to initiate
+the connection.
 </p>
 
 <p>

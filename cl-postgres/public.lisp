@@ -39,13 +39,15 @@ currently connected."
        (open-stream-p (connection-socket connection))))
 
 (defun open-database (database user password host &optional (port 5432) (use-ssl :no) (service "postgres"))
-  "Create and connect a database object. use-ssl may be :no, :yes, or :try."
+  "Create and connect a database object. use-ssl may be :no, :try, :yes, or
+:full (NOTE: :yes only verifies that the server cert is issued by a trusted CA,
+but does not verify the server hostname; use :full to also verify the hostname)."
   (check-type database string)
   (check-type user string)
   (check-type password (or null string))
   (check-type host (or string (eql :unix)) "a string or :unix")
   (check-type port (integer 1 65535) "an integer from 1 to 65535")
-  (check-type use-ssl (member :no :yes :try) ":no, :yes, or :try")
+  (check-type use-ssl (member :no :try :yes :full) ":no, :try, :yes or :full")
   (let ((conn (make-instance 'database-connection :host host :port port :user user
                              :password password :socket nil :db database :ssl use-ssl
                              :service service)))
