@@ -132,7 +132,7 @@ interpreted as an array of the given type."
 (define-interpreter oid:+varchar+ "varchar" string)
 
 (define-interpreter oid:+json+ "json" string)
-(define-interpreter oid:+jsonb+ "jsnob" ((version int 1)
+(define-interpreter oid:+jsonb+ "jsonb" ((version int 1)
                                          (content string))
   (unless (= 1 version)
     (warn "Unexpected JSONB version: ~S." version))
