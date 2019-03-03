@@ -267,7 +267,8 @@ or accessor or reader.)"
                                     (remove-if (lambda (x) (member x ghost-fields)) bound) ))
                     (returned (query (sql-compile `(:insert-into ,table-name
                                                                  :set ,@values
-                                                                 ,@(when unbound (cons :returning unbound))))
+                                                                 ,@(when unbound (cons :returning (mapcar #'field-sql-name
+                                                                                                          unbound)))))
                                      :row)))
                (when unbound
                  (loop :for value :in returned

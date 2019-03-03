@@ -193,7 +193,13 @@
     (is (string= "1" (test-a (get-dao 'test-col-name "1"))))
     (is (string= "b" (test-b (get-dao 'test-col-name "1"))))
     (is (string= "3" (test-c (get-dao 'test-col-name "1"))))
-    (is (string= "Vestmannaeyjar" (test-d (get-dao 'test-col-name "1"))))))
+    (is (string= "Vestmannaeyjar" (test-d (get-dao 'test-col-name "1")))))
+  (with-test-connection
+    (execute "CREATE TEMPORARY TABLE test_col_name (aa text primary key default md5(random()::text), bb text not null, c text not null,
+              \"from\" text not null, \"to\" text not null)")
+    (let ((o (make-instance 'test-col-name :b "2" :c "3" :d "Reykjavík" :e "Garðabær")))
+      (fiveam:finishes
+        (insert-dao o)))))
 
 ;;; For threading tests
 (defvar *dao-update-lock* (bt:make-lock))
