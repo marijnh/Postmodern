@@ -221,6 +221,6 @@ Another test case for the classic quotes:
 
 (defun execute-file (pathname)
   "Executes all queries in the provided SQL file."
-  (let ((queries (pgloader.sql:read-queries pathname)))
+  (let ((queries (read-queries pathname)))
     (dolist (query queries)
       (postmodern:execute query))))
