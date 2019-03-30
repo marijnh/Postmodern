@@ -21,8 +21,10 @@ redistribute it freely, subject to the following restrictions:
 
 -----------------------------------
 
-This software contains code from the pgloader project, available under the below
-license.
+This software contains code from the pgloader project in the following files:
+/execute-file.lisp
+
+It is available under the below license.
 
 -----------------------------------
 
