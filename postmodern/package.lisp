@@ -20,7 +20,7 @@
    #:connect-toplevel #:disconnect-toplevel
    #:clear-connection-pool #:*max-pool-size* #:*default-use-ssl*
    #:list-connections
-   #:query #:execute #:doquery
+   #:query #:execute #:doquery #:execute-file
    #:prepare #:defprepared #:defprepared-with-names
    #:sequence-next #:list-sequences #:sequence-exists-p
    #:create-sequence #:drop-sequence
