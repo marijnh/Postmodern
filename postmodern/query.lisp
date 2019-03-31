@@ -35,6 +35,7 @@
   (loop :while (next-row)
         :collect (next-field (elt fields 0))))
 
+#+postmodern-thread-safe
 (defvar *class-finalize-lock* (bt:make-lock))
 
 (defparameter *result-styles*
