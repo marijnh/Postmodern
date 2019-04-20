@@ -390,6 +390,10 @@ for the JavaScript code in this tag.
 <li><a href="#orgb8e5556">function split-fully-qualified-table-name (name)</a></li>
 </ul>
 </li>
+<li><a href="#org94988a4muf">Miscellaneous Utility Functions</a>
+  <ul>
+    <li><a href="#orgb8e5557">function execute-file (filename &optional (print nil))</a></li>
+  </ul>
 </ul>
 </div>
 </div>
@@ -2505,10 +2509,44 @@ and returns a list in the form '(table schema database)
 </div>
 </div>
 </div>
+<div id="outline-container-org94988a7-muf" class="outline-2">
+<h2 id="org94988a4muf">Miscellaneous Utility Functions</h2>
+<div class="outline-text-2" id="text-org94988a4mufmuf">
+<p>
+Miscellaneous utility functions which do not fit above.
+</p>
+</div>
+
+<div id="outline-container-orgb8e5557e" class="outline-3">
+<h3 id="orgb8e5557">function execute-file (filename &optional (print nil))</h3>
+<div class="outline-text-3" id="text-orgb8e5557e">
+  <p>
+    This function will execute sql queries stored in a file.
+Each sql statement in the file will be run independently, but
+if one statement fails, subsequent query statements will not
+be run, but any statement prior to the failing statement will
+have been commited.</p>
+
+<p>If you want the standard transction treatment such that all
+statements succeed or no statement succeeds, then ensure that
+the file starts with a "begin transaction" statement and finishes
+with an "end transaction" statement. See the test file
+test-execute-file-broken-transaction.sql as an example. </p>
+
+<p>For debugging purposes, if the optional print
+parameter is set to t, format will print the count of the query
+and the query to the REPL.</p>
+<p><strong>IMPORTANT NOTE:</strong> This utility
+function assumes that the file containing the sql queries can be trusted
+and bypasses the normal postmodern parameterization of queries.
+</p>
+</div>
+</div>
+
+</div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-12-06 Thu 22:10</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="date">Created: 2019-04-14 Sun 12:10</p>
 </div>
 </body>
 </html>

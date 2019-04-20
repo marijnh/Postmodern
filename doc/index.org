@@ -41,6 +41,9 @@ means you can use the code in whatever way you like, except for passing
 it off as your own or releasing a modified version without indication
 that it is not the original.
 
+The functions execute-file.lisp were ported from [[https://github.com/dimitri/pgloader][pgloader]] with grateful thanks to
+Dimitri Fontaine and are released under a BSD-3 license.
+
 * Download and installation
 We suggest using [[https://quicklisp.org][quicklisp.org]] for installation.
 
@@ -236,7 +239,9 @@ if you just want a low-level library for talking to a PostgreSQL server.
 
 - [[file:s-sql.html][S-SQL]]
 
-+ [[file:array-notes.html]]
+- [[file:array-notes.html][Array-Notes]]
+
+- [[file:execute-file.html][Executing Against an sql file]]
 
 - [[file:simple-date.html][Simple-date]]
 
@@ -244,7 +249,7 @@ if you just want a low-level library for talking to a PostgreSQL server.
 
 
 * Caveats and to-dos
-** Timezones
+** Timezones and Simple-Date
 It is important to understand how postgresql (not postmodern) handles
 timestamps and timestamps with time zones. Postgresql keeps everything
 in UTC, it does not store a timezone even in a timezone aware column.
@@ -257,8 +262,13 @@ There is a good writeup of timezones at
 [[http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html]]
 and [[http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/][http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/]].
 
-Keeping that in mind, [[http://marijnhaverbeke.nl/postmodern/simple-date.html][Simple-date]] has no concept of time zones. If you really
-need your time-keeping to be reliable and/or universal then you might consider
+
+The Simple-date add-on library (not enabled by default)
+provides types (CLOS classes) for dates, timestamps, and intervals
+similar to the ones SQL databases use, in order to be able to store and read
+these to and from a database in a straighforward way. A few obvious operations
+are defined on these types. However, [[http://marijnhaverbeke.nl/postmodern/simple-date.html][Simple-date]] has no concept of time zones.
+If you need your time-keeping to be reliable and/or universal then you might consider
 using another library, [[https://github.com/dlowe-net/local-time][local-time]], which solves the same problem as simple-date, but
 does understand time zones. It does have some code for integrating with
 cl-postgres. See
@@ -267,6 +277,14 @@ cl-postgres. See
 To use simple-date with cl-postgres or postmodern,
 load simple-date-cl-postgres-glue to register suitable SQL
 readers and writers for the associated database types.
+
+#+BEGIN_SRC lisp
+(ql:quickload :simple-date/postgres-glue)
+
+(setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+         simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
+#+END_SRC
 
 To get back to the default cl-postgres reader:
 #+BEGIN_SRC lisp
@@ -291,6 +309,7 @@ reader:
 ** Portability
 The Lisp code in Postmodern is theoretically portable across implementations,
 and seems to work on all major ones as well as some minor ones such as Genera.
+It is regularly tested on ccl, sbcl, ecl and cmucl.
 Implementations that do not have meta-object protocol support will not have
 DAOs, but all other parts of the library should work (all widely used
 implementations do support this).

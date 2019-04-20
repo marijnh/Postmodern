@@ -157,7 +157,7 @@ values. This table shows the mapping:
 | numeric	        | ratio                      |
 | real	           | float                      |
 | double precision | 	double-float             |
-| boolean	boolean |                            |
+| boolean	        | boolean                    |
 | varchar          | 	string                   |
 | text	           | string                     |
 | bytea	          | (vector (unsigned-byte 8)) |
