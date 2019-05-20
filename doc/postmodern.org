@@ -1069,3 +1069,25 @@ Sets the search path to the path. This function is used by with-schema.
 → list
 Takes a name of the form database.schema.table or schema.table or just table
 and returns a list in the form '(table schema database)
+
+* Miscellaneous Utility Functions
+** function execute-file (filename &optional (print nil))
+This function will execute sql queries stored in a file.
+Each sql statement in the file will be run independently, but
+if one statement fails, subsequent query statements will not
+be run, but any statement prior to the failing statement will
+have been commited.
+
+If you want the standard transction treatment such that all
+statements succeed or no statement succeeds, then ensure that
+the file starts with a "begin transaction" statement and finishes
+with an "end transaction" statement. See the test file
+test-execute-file-broken-transaction.sql as an example.
+
+For debugging purposes, if the optional print
+parameter is set to t, format will print the count of the query
+and the query to the REPL.
+
+IMPORTANT NOTE: This utility function assumes that the file
+containing the sql queries can be trusted and bypasses the
+normal postmodern parameterization of queries.

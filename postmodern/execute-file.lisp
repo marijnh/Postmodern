@@ -52,7 +52,7 @@
   (setf (parser-state p) (if (null (parser-tags p)) :eat :eqt)))
 
 #|
-Here's a test case straigth from the PostgreSQL docs:
+Here's a test case straight from the PostgreSQL docs:
 
 (with-input-from-string (s "
 create function f(text)
@@ -219,8 +219,13 @@ Another test case for the classic quotes:
          :while query
          :collect query))))
 
-(defun execute-file (pathname)
-  "Executes all queries in the provided SQL file."
-  (let ((queries (read-queries pathname)))
+(defun execute-file (pathname &optional (print nil))
+  "Executes all queries in the provided SQL file. If print is set to t,
+ format will print the count of query and the query."
+  (let ((queries (read-queries pathname))
+        (cnt 0))
     (dolist (query queries)
+      (when print
+        (incf cnt)
+        (format t "~a ~a~%" cnt query))
       (postmodern:execute query))))
