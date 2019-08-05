@@ -211,13 +211,17 @@ Another test case for the classic quotes:
 	      (format q "~a~%" line))
        finally (return q))))
 
-(defun read-queries (filename)
-  "read SQL queries in given file and split them, returns a list"
-  (let ((file-content (get-output-stream-string (read-lines filename))))
+(defun parse-queries (file-content)
+  "read SQL queries in given string and split them, returns a list"
     (with-input-from-string (s file-content)
       (loop :for query := (parse-query s)
          :while query
-         :collect query))))
+         :collect query)))
+
+(defun read-queries (filename)
+  "read SQL queries in given file and split them, returns a list"
+  (let ((file-content (get-output-stream-string (read-lines filename))))
+    (parse-queries (file-content))))
 
 (defun execute-file (pathname &optional (print nil))
   "Executes all queries in the provided SQL file. If print is set to t,
