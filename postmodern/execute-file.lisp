@@ -190,7 +190,8 @@ Another test case for the classic quotes:
          :finally (return
                     (get-output-stream-string (parser-stream state))))
     (end-of-file (e)
-      (unless (eq :eat (parser-state state))
+      (if (eq :eat (parser-state state))
+        (let ((stream-string (get-output-stream-string (parser-stream state)))) (if (> (length stream-string) 0) stream-string))
         (error e)))))
 
 (defun read-lines (filename &optional (q (make-string-output-stream)))
@@ -204,11 +205,11 @@ Another test case for the classic quotes:
                        (string= "\\i " (subseq line 0 3)))
                   (and (> (length line) 4)
                        (string= "\\ir " (subseq line 0 4))))
-	      (let ((include-filename
-		     (merge-pathnames (subseq line 3)
-				      (directory-namestring filename))))
-	       (read-lines include-filename q))
-	      (format q "~a~%" line))
+        (let ((include-filename
+         (merge-pathnames (subseq line 3)
+              (directory-namestring filename))))
+         (read-lines include-filename q))
+        (format q "~a~%" line))
        finally (return q))))
 
 (defun parse-queries (file-content)
