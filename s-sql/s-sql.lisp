@@ -1,4 +1,4 @@
-;;; -*- Mode: Lisp; Base: 10; Package: CL-USER -*-
+;;; -*- Mode: Lisp; Base: 10; Syntax: ANSI-COMMON-LISP -*-
 (defpackage :s-sql
   (:use :common-lisp)
   (:export #:smallint
