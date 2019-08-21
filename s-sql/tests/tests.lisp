@@ -241,8 +241,6 @@ to strings \(which will form an SQL query when concatenated)."
                '("george" ", " "paul" ", " "john" ", " "ringo" ", " "mary_ann")))
     (is (equal (s-sql::sql-expand-names '((george. "paul") "john" "ringo" "mary-ann"))
                '("george." "(" "E'paul'" ")" ", " "john" ", " "ringo" ", " "mary_ann")))
-    (is (equal (s-sql::sql-expand-names '((george . paul) "john" "ringo" "mary-ann"))
-               '("george" "(" ")" ", " "john" ", " "ringo" ", " "mary_ann")))
     (is (equal (s-sql::sql-expand-names '((george  "paul") "john" "ringo" "mary-ann"))
                '("george" "(" "E'paul'" ")" ", " "john" ", " "ringo" ", " "mary_ann"))))
 
@@ -341,7 +339,17 @@ to strings \(which will form an SQL query when concatenated)."
              "(SELECT ta FROM a WHERE (ta IS NOT NULL))")))
 
 (test cast
-  "Testing cast using cast and type"
+   "Testing cast using cast or type"
+  (is (equal (sql (:select (:type 1.0 int)))
+             "(SELECT 1.0::INT)"))
+  (is (equal (sql (:select (:type "true" boolean)))
+             "(SELECT E'true'::BOOLEAN)"))
+  (is (equal (sql (:select (:type "1" int)))
+             "(SELECT E'1'::INT)"))
+  (is (equal (sql (:select (:type "2018-01-01" date)))
+             "(SELECT E'2018-01-01'::DATE)"))
+  (is (equal (sql (:select (:type "1 minute" interval)))
+             "(SELECT E'1 minute'::INTERVAL)"))
   (is (equal (sql (:select (:as (:cast (:as (:* 50 (:random)) 'int)) 'x) :from (:generate-series 1 3)))
              "(SELECT CAST((50 * random()) AS int) AS x FROM generate_series(1, 3))"))
   (is (equal (sql (:select (:as (:- (:type (:now) date) 'x) 'some-date) :from (:as (:generate-series 1 10) 'x)))
@@ -726,19 +734,20 @@ To sum the column len of all films and group the results by kind:"
              "(SELECT mode() within group (order by items) FROM item_table)")))
 
 (test every-aggregation-test
-  "Testing the aggregation sql-op every"
+  "Testing the aggregation sql-op every. True if all input values are true, otherwise false."
   (is (equal (with-test-connection
-               (query (:select 'id 'name 'city 'salary (:every (:like 'name "J%"))
-                               :from 'employee
-                               :group-by 'name 'id 'salary 'city)))
-             '((5 "David" "Vancouver" 80026 NIL) (7 "Alison" "New York" 90620 NIL)
-               (4 "Linda" "New York" 40620 NIL) (8 "Chris" "Vancouver" 26020 NIL)
+               (query (:order-by (:select 'id 'name 'city 'salary (:every (:like 'name "J%"))
+                                :from 'employee
+                                :group-by 'name 'id 'salary 'city)
+                                 'name)))
+             '((7 "Alison" "New York" 90620 NIL) (3 "Celia" "Toronto" 24020 NIL)
+               (8 "Chris" "Vancouver" 26020 NIL) (5 "David" "Vancouver" 80026 NIL)
                (6 "James" "Toronto" 70060 T) (1 "Jason" "New York" 40420 T)
-               (9 "Mary" "Toronto" 60020 NIL) (3 "Celia" "Toronto" 24020 NIL)
+               (4 "Linda" "New York" 40620 NIL) (9 "Mary" "Toronto" 60020 NIL)
                (2 "Robert" "Vancouver" 14420 NIL))))
   (is (equal (with-test-connection
-               (query (:select 'id 'name 'city 'salary
-                               (:over (:every (:like 'name "J%")) (:partition-by 'id))
+               (query (:select 'id 'name 'city 'salary (:over (:every (:like 'name "J%"))
+                                                              (:partition-by 'id))
                                :from 'employee )))
              '((1 "Jason" "New York" 40420 T) (2 "Robert" "Vancouver" 14420 NIL)
               (3 "Celia" "Toronto" 24020 NIL) (4 "Linda" "New York" 40620 NIL)
@@ -746,7 +755,8 @@ To sum the column len of all films and group the results by kind:"
               (7 "Alison" "New York" 90620 NIL) (8 "Chris" "Vancouver" 26020 NIL)
                (9 "Mary" "Toronto" 60020 NIL))))
   (is (equal (with-test-connection
-               (query (:select 'id 'name 'city 'salary (:over (:every (:ilike 'name "j%")) (:partition-by 'id))
+               (query (:select 'id 'name 'city 'salary (:over (:every (:ilike 'name "j%"))
+                                                              (:partition-by 'id))
                                :from 'employee )))
              '((1 "Jason" "New York" 40420 T) (2 "Robert" "Vancouver" 14420 NIL)
                (3 "Celia" "Toronto" 24020 NIL) (4 "Linda" "New York" 40620 NIL)
@@ -1369,5 +1379,65 @@ that the table will need to be scanned twice. Everything is a trade-off."
     ;; cleanup
     (query (:drop-view 'quagmire))
     (is (equal (sql (:drop-view :quagmire))
-               "DROP VIEW quagmire"))
-    ))
+               "DROP VIEW quagmire"))))
+
+;; Test create-table
+(test reserved-column-names-s-sql
+  (with-test-connection
+    (loop for x in '(from-test-data1 iceland-cities) do
+         (when (pomo:table-exists-p x)
+       (execute (:drop-table x :cascade))))
+    (query (:create-table 'iceland-cities
+                      ((id :type serial)
+                       (name :type (or (varchar 100) db-null) :unique t))))
+
+    (query (:create-table 'from-test-data1
+                      ((id :type serial)
+                       (flight :type (or integer db-null))
+                       (from :type (or (varchar 100) db-null) :references ((iceland-cities name)))
+                       (to-destination :type (or (varchar 100) db-null)))
+                      (:primary-key id)
+                      (:constraint iceland-city-name-fkey :foreign-key (to-destination) (iceland-cities name))))
+    (query (:insert-into 'iceland-cities :set 'name "Reykjavík"))
+    (query (:insert-rows-into 'iceland-cities :columns 'name :values '(("Seyðisfjörður") ("Stykkishólmur") ("Bolungarvík")
+                                                                       ("Kópavogur"))))
+    ;; test insert-into
+    (query (:insert-into 'from-test-data1 :set 'flight 1 'from "Reykjavík" 'to-destination "Seyðisfjörður"))
+    ;; test query select
+    (is (equal (query (:select 'from 'to-destination :from 'from-test-data1 :where (:= 'flight 1)) :row)
+               '("Reykjavík" "Seyðisfjörður")))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Reykjavík")
+                                                                          (:= 'to-destination "Seyðisfjörður"))) :single)
+               1))
+    ;; test insert-rows-into
+    (query (:insert-rows-into 'from-test-data1 :columns 'flight 'from 'to-destination :values '((2 "Stykkishólmur" "Reykjavík"))))
+    (is (equal (query (:select 'from 'to-destination :from 'from-test-data1 :where (:= 'flight 2)) :row)
+               '("Stykkishólmur" "Reykjavík")))
+
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Stykkishólmur")
+                                                                           (:= 'to-destination "Reykjavík"))) :single)
+               2))
+    (query (:alter-table 'from-test-data1 :rename-column 'from 'origin))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:= 'origin "Stykkishólmur")) :single)
+               2))
+    ;; test alter-table
+    (query (:alter-table 'from-test-data1 :rename-column 'origin 'from ))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Stykkishólmur")
+                                                                           (:= 'to-destination "Reykjavík"))) :single)
+               2))
+    ;; test constraint
+    (signals error (query (:insert-into 'from-test-data1 :set 'flight 1 'from "Reykjavík" 'to-destination "Akureyri")))
+    (signals error (query (:insert-into 'from-test-data1 :set 'flight 1 'from "Akureyri" 'to-destination "Reykjavík")))
+    ;; test update
+    (query (:update 'from-test-data1 :set 'from "Kópavogur" :where (:= 'to-destination "Seyðisfjörður")))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Kópavogur")
+                                                                           (:= 'to-destination "Seyðisfjörður")))
+                      :single)
+               1))
+    (query (:update 'from-test-data1 :set 'to-destination "Kópavogur" :where (:= 'from "Stykkishólmur")))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'to-destination "Kópavogur")
+                                                                           (:= 'from "Stykkishólmur")))
+                      :single)
+               2))
+    (loop for x in '(from-test-data1 iceland-cities) do
+         (execute (:drop-table x :cascade)))))

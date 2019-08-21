@@ -49,6 +49,9 @@ from the socket."
                        (#.(char-code #\S) ;; ParameterStatus: read and continue
                           (update-parameter ,socket-name)
                           (,iter-name))
+                       (#.(char-code #\K) ;; Backendkey : read and continue
+                          (update-backend-key-data ,socket-name)
+                          (,iter-name))
                        (#.(char-code #\N) ;; A warning
                           (get-warning ,socket-name)
                           (,iter-name))
@@ -77,12 +80,18 @@ a query.")
         (value (read-str socket)))
     (setf (gethash name *connection-params*) value)))
 
+(defun update-backend-key-data (socket)
+  (let ((pid (read-uint4 socket))
+        (secret-key (read-uint4 socket)))
+        (setf (gethash "pid" *connection-params*) pid)
+        (setf (gethash "secret-key" *connection-params*) secret-key)))
+
 (defun read-byte-delimited (socket)
   "Read the fields of a null-terminated list of byte + string values
 and put them in an alist."
   (loop :for type = (read-uint1 socket)
         :until (zerop type)
-        :collect (cons (code-char type) (read-simple-str socket))))
+        :collect (cons (code-char type) (read-str socket))))
 
 (define-condition postgresql-notification (simple-warning)
   ((pid :initarg :pid :accessor postgresql-notification-pid)
@@ -146,10 +155,11 @@ database-error condition."
 ;; The let is used to remember that we have found the
 ;; cl+ssl:make-ssl-client-stream function before.
 (let ((make-ssl-stream nil))
-  (defun initiate-ssl (socket required)
-    "Initiate SSL handshake with the PostgreSQL server, and wrap the
-socket in an SSL stream. When require is true, an error will be raised
-when the server does not support SSL."
+  (defun initiate-ssl (socket required hostname)
+    "Initiate SSL handshake with the PostgreSQL server, and wrap the socket in
+an SSL stream. When require is true, an error will be raised when the server
+does not support SSL. When hostname is supplied, the server's certificate will
+be matched against it."
     (unless make-ssl-stream
       (unless (find-package :cl+ssl)
         (error 'database-error :message "CL+SSL is not loaded. Load it to enable SSL."))
@@ -159,7 +169,8 @@ when the server does not support SSL."
     (ecase (read-byte socket)
       (#.(char-code #\S)
        (setf socket (funcall make-ssl-stream socket :key *ssl-key-file*
-                                                    :certificate *ssl-certificate-file*)))
+                                                    :certificate *ssl-certificate-file*
+                                                    :hostname hostname)))
       (#.(char-code #\N)
        (when required
          (error 'database-error :message "Server does not support SSL encryption."))))))
@@ -173,10 +184,12 @@ this raises a condition."
         (user (connection-user conn))
         (password (connection-password conn))
         (database (connection-db conn))
+        (hostname (connection-host conn))
         (use-ssl (connection-use-ssl conn)))
 
     (unless (eq use-ssl :no)
-      (setf socket (initiate-ssl socket (eq use-ssl :yes))))
+      (setf socket (initiate-ssl socket (member use-ssl '(:yes :full))
+                                 (if (eq use-ssl :full) hostname))))
     (startup-message socket user database)
     (force-output socket)
 
@@ -223,8 +236,6 @@ this raises a condition."
                        (init-gss-msg (read-bytes socket (- size 4)))))))))))
   (loop
    (message-case socket
-     ;; BackendKeyData - ignore
-     (#\K :skip)
      ;; ReadyForQuery
      (#\Z (read-uint1 socket)
           (return))))

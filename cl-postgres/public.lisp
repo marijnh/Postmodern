@@ -26,6 +26,12 @@ exists for it."
         (setf (slot-value connection 'meta) meta-data)
         meta-data)))
 
+(defun connection-pid (connection)
+  "Retrieves a list consisting of the pid and the secret-key from the connection, not from the database itself.
+These are needed for cancelling connections and error processing with respect to prepared statements."
+  (list (gethash "pid" (slot-value connection 'parameters))
+        (gethash "secret-key" (slot-value connection 'parameters))))
+
 (defun database-open-p (connection)
   "Returns a boolean indicating whether the given connection is
 currently connected."
@@ -33,13 +39,15 @@ currently connected."
        (open-stream-p (connection-socket connection))))
 
 (defun open-database (database user password host &optional (port 5432) (use-ssl :no) (service "postgres"))
-  "Create and connect a database object. use-ssl may be :no, :yes, or :try."
+  "Create and connect a database object. use-ssl may be :no, :try, :yes, or
+:full (NOTE: :yes only verifies that the server cert is issued by a trusted CA,
+but does not verify the server hostname; use :full to also verify the hostname)."
   (check-type database string)
   (check-type user string)
   (check-type password (or null string))
   (check-type host (or string (eql :unix)) "a string or :unix")
   (check-type port (integer 1 65535) "an integer from 1 to 65535")
-  (check-type use-ssl (member :no :yes :try) ":no, :yes, or :try")
+  (check-type use-ssl (member :no :try :yes :full) ":no, :try, :yes or :full")
   (let ((conn (make-instance 'database-connection :host host :port port :user user
                              :password password :socket nil :db database :ssl use-ssl
                              :service service)))
@@ -175,13 +183,22 @@ if it isn't."
       #+ccl (ccl:socket-error (e) (add-restart e))
       #+allegro(excl:socket-error (e) (add-restart e))
       #+cl-postgres.features:sbcl-available(sb-bsd-sockets:socket-error (e) (add-restart e))
+      #+cl-postgres.features:sbcl-available(sb-bsd-sockets:name-service-error (e) (add-restart e))
       (stream-error (e) (add-restart e))))
     (values))
 
+(defvar *retry-connect-times* 5
+  "How many times to we try to connect again. Borrowed from pgloader")
+
+(defvar *retry-connect-delay* 0.5
+  "How many seconds to wait before trying to connect again. Borrowed from pgloader")
+
 (defun reopen-database (conn)
   "Reconnect a disconnected database connection."
-  (unless (database-open-p conn)
-    (initiate-connection conn)))
+  (loop :while (not (database-open-p conn))
+     :repeat *retry-connect-times*
+     :do
+       (initiate-connection conn)))
 
 (defun ensure-connection (conn)
   "Used to make sure a connection object is connected before doing
@@ -190,7 +207,11 @@ anything with it."
     (error "No database connection selected."))
   (unless (database-open-p conn)
     (restart-case (error 'database-connection-lost :message "Connection to database server lost.")
-      (:reconnect () :report "Try to reconnect." (initiate-connection conn)))))
+      (:reconnect () :report "Try to reconnect."
+                  (loop :while (not (database-open-p conn))
+                     :repeat *retry-connect-times*
+                     :do
+                       (initiate-connection conn))))))
 
 (defun close-database (connection)
   "Gracefully disconnect a database connection."
@@ -273,7 +294,8 @@ result."
       (values))))
 
 (defun unprepare-query (connection name)
-  "Close the prepared query given by name."
+  "Close the prepared query given by name by closing the session connection.
+Does not remove the query from the meta slot in connection"
   (check-type name string)
   (with-reconnect-restart connection
     (using-connection connection
@@ -281,8 +303,8 @@ result."
       (values))))
 
 (defun exec-prepared (connection name parameters &optional (row-reader 'ignore-row-reader))
-  "Execute a previously prepared query with the given parameters,
-apply a row-reader to the result."
+  "Execute a previously prepared query with the given parameters, apply a
+row-reader to the result."
   (check-type name string)
   (check-type parameters list)
   (with-reconnect-restart connection

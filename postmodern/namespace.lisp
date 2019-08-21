@@ -35,9 +35,13 @@
       (when drop-after (drop-schema schema :cascade 't)))))
 
 (defun get-search-path ()
+  "Returns the default schema search path for the current session."
   (query "SHOW search_path" :single))
 
 (defun set-search-path (path)
+  "This changes the postgresql runtime parameter controlling what order
+schemas are searched. You can always use fully qualified names [schema.table].
+By default, this function only changes the search path for the current session."
   (execute (format nil "SET search_path TO ~a" path)))
 
 (defun list-schemata ()

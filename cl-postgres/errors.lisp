@@ -77,6 +77,26 @@ extract the constraint name."
         (cl-postgres-error:foreign-key-violation (extract-quoted-part message 1))
         (cl-postgres-error:check-violation (extract-quoted-part message 1))))))
 
+(defun database-error-extract-name (err)
+  "Given a database-error, will extract the critical name from the error message."
+  (labels ((extract-quoted-part (string n)
+             "Extracts the Nth quoted substring from STRING."
+             (let* ((start-quote-inst (* 2 n))
+                    (start-quote-pos (position-nth #\" string start-quote-inst))
+                    (end-quote-pos (position #\" string :start (1+ start-quote-pos))))
+               (subseq string (1+ start-quote-pos) end-quote-pos)))
+           (position-nth (item seq n)
+             "Finds the position of the zero-indexed Nth ITEM in SEQ."
+             (loop :with pos = -1 :repeat (1+ n)
+                   :do (setf pos (position item seq :start (1+ pos)))
+                :finally (return pos))))
+    (let* ((message (database-error-message err)))
+           (typecase err
+             (cl-postgres-error:invalid-sql-statement-name
+              (extract-quoted-part message 0))
+             (cl-postgres-error:duplicate-prepared-statement
+              (extract-quoted-part message 0))))))
+
 (define-condition database-connection-error (database-error) ()
   (:documentation "Conditions of this type are signalled when an error
 occurs that breaks the connection socket. They offer a :reconnect

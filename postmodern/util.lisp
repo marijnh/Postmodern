@@ -498,7 +498,8 @@ will be a sublist for each column subpart of the key. The sublists will
 be in the order they are used in the key, not in the order they appear
 in the table. If just-key is set to t, the list being returned will
 contain just the column names in the primary key as string names
-with no sublists."
+with no sublists. If the table is not in the public schema, provide
+the fully qualified table name e.g. schema-name.table-name."
   (when (symbolp table) (setf table (s-sql:to-sql-name table)))
   (let ((info (query (:order-by
          (:select

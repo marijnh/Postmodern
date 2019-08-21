@@ -5,11 +5,11 @@
 
 ;; Change this to manually turn threading support on or off.
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  #+(or allegro armedbear cmu corman (and digitool ccl-5.1)
+  #+(or allegro armedbear clasp cmu corman (and digitool ccl-5.1)
         ecl lispworks openmcl sbcl genera)
   (pushnew :postmodern-thread-safe *features*)
 
-  #+(or allegro clisp ecl lispworks mcl openmcl cmu sbcl)
+  #+(or allegro clasp clisp ecl lispworks mcl openmcl cmu sbcl)
   (pushnew :postmodern-use-mop *features*))
 
 (defsystem "postmodern"
@@ -33,6 +33,7 @@
                          (:file "util" :depends-on ("query"))
                          (:file "transaction" :depends-on ("query"))
                          (:file "namespace" :depends-on ("query"))
+                         (:file "execute-file" :depends-on ("query"))
                          (:file "table" :depends-on ("util" "transaction" "query")
                                 :if-feature :postmodern-use-mop)
                          (:file "deftable" :depends-on
@@ -45,7 +46,8 @@
   :components
   ((:module "postmodern/tests"
             :components ((:file "tests")
-                         (:file "test-dao"))))
+                         (:file "test-dao")
+                         (:file "test-execute-file"))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
              (uiop:symbol-call :fiveam '#:run! :postmodern)))

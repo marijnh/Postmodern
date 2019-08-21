@@ -8,6 +8,7 @@
            #:database-error-query
            #:database-error-cause
            #:database-error-constraint-name
+           #:database-error-extract-name
            #:database-connection
            #:database-connection-error
            #:database-socket-error
@@ -57,6 +58,8 @@
            #:close-db-writer
            #:*ssl-certificate-file*
            #:*ssl-key-file*
+           #:*retry-connect-times*
+           #:*retry-connect-delay*
            #+(and sbcl unix) #:*unix-socket-dir*))
 
 (defpackage :cl-postgres-error
@@ -217,8 +220,7 @@
            #:+fdw-handler+
            #:+index-am-handler+
            #:+tsm-handler+
-           #:+anyrange+
-           ))
+           #:+anyrange+))
 
 (in-package :cl-postgres)
 

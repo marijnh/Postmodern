@@ -17,9 +17,11 @@ Objects of this type represent database connections.
 → database-connection
 
 Create and open a connection for the specified server, database, and user.
-use-ssl may be :no, :yes, or :try, where :try means 'if the server supports
-it'. When it is anything but :no, you must have the CL+SSL package loaded to
-initiate the connection.
+use-ssl may be :no, :try, :yes, or :full; where :try means 'if the server
+supports it', :yes means 'expect a CA-signed cert from the server, for any host
+name', and :full 'means expect a CA-signed cert for the supplied host name'.
+When it is anything but :no, you must have the CL+SSL package loaded to initiate
+the connection.
 
 On SBCL and Clozure CL, the value :unix may be passed for host, in order to
 connect using a Unix domain socket instead of a TCP socket.
@@ -155,7 +157,7 @@ values. This table shows the mapping:
 | numeric	        | ratio                      |
 | real	           | float                      |
 | double precision | 	double-float             |
-| boolean	boolean |                            |
+| boolean	        | boolean                    |
 | varchar          | 	string                   |
 | text	           | string                     |
 | bytea	          | (vector (unsigned-byte 8)) |
@@ -365,6 +367,12 @@ condition.
 
 For integrity-violation errors, returns the name of the constraint that was
 violated (or nil if no constraint was found.)
+
+** function database-error-extract-name (database-error)
+→ string
+
+For various errors, returns the name provided by the error message
+ (or nil if no such name was found.)
 
 ** condition database-connection-error
 

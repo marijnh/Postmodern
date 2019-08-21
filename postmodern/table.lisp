@@ -7,6 +7,14 @@
    (column-map :reader dao-column-map))
   (:documentation "Metaclass for database-access-object classes."))
 
+(defgeneric dao-keys (class)
+  (:documentation "Returns list of slot names that are the primary key of DAO
+class. This is likely interesting if you have primary keys which are composed
+of more than one slot. Pay careful attention to situations where the primary
+key not only has more than one column, but they are actually in a different
+order than they are in the database table itself. You can check this with the
+find-primary-key-info function."))
+
 (defmethod dao-keys :before ((class dao-class))
   (unless (class-finalized-p class)
                #+postmodern-thread-safe
@@ -88,7 +96,8 @@
   (setf (slot-value slot 'sql-name) (to-sql-name
                                      (if col-name-p
                                          col-name
-                                         (slot-definition-name slot))))
+                                         (slot-definition-name slot))
+                                     s-sql:*escape-sql-names-p* t))
   ;; The default for nullable columns defaults to :null.
   (when (and (null col-default) (consp col-type) (eq (car col-type) 'or)
              (member 'db-null col-type) (= (length col-type) 3))
@@ -190,7 +199,11 @@
   "Synthesise a number of methods for a newly defined DAO class.
 \(Done this way because some of them are not defined in every
 situation, and each of them needs to close over some pre-computed
-values.)"
+values. Notes for future maintenance: Fields are the slot names
+in a dao class. Field-sql-name returns the col-name for the
+postgresql table, which may or may not be the same as the slot
+names in the class and also may have no relation to the initarg
+or accessor or reader.)"
 
   (setf (slot-value class 'column-map)
         (mapcar (lambda (s) (cons (slot-sql-name s) (slot-definition-name s))) (dao-column-slots class)))
@@ -250,12 +263,12 @@ values.)"
                 :do (if (slot-boundp object field)
                         (push field bound)
                         (push field unbound)))
-
              (let* ((values (mapcan (lambda (x) (list (field-sql-name x) (slot-value object x)))
                                     (remove-if (lambda (x) (member x ghost-fields)) bound) ))
                     (returned (query (sql-compile `(:insert-into ,table-name
                                                                  :set ,@values
-                                                                 ,@(when unbound (cons :returning unbound))))
+                                                                 ,@(when unbound (cons :returning (mapcar #'field-sql-name
+                                                                                                          unbound)))))
                                      :row)))
                (when unbound
                  (loop :for value :in returned

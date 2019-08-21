@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-09-02 Sun 07:42 -->
+<!-- 2019-01-17 Thu 13:21 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Cl-Postgres Reference Manual</title>
@@ -294,6 +294,7 @@ for the JavaScript code in this tag.
 <li><a href="#orge0e3083">method database-error-query (database-error)</a></li>
 <li><a href="#orgcaf14a3">method database-error-cause (database-error)</a></li>
 <li><a href="#org721f27f">function database-error-constraint-name (database-error)</a></li>
+<li><a href="#org721f27f">function database-error-extract-name (database-error)</a></li>
 <li><a href="#orgea749ec">condition database-connection-error</a></li>
 <li><a href="#org37e5d1b">condition postgresql-notification</a></li>
 <li><a href="#orge62533e">method postgresql-notification-channel (postgresql-notification)</a></li>
@@ -333,9 +334,11 @@ Objects of this type represent database connections.
 
 <p>
 Create and open a connection for the specified server, database, and user.
-use-ssl may be :no, :yes, or :try, where :try means 'if the server supports
-it'. When it is anything but :no, you must have the CL+SSL package loaded to
-initiate the connection.
+use-ssl may be :no, :try, :yes, or :full; where :try means 'if the server
+supports it', :yes means 'expect a CA-signed cert from the server, for any host
+name', and :full 'means expect a CA-signed cert for the supplied host name'.
+When it is anything but :no, you must have the CL+SSL package loaded to initiate
+the connection.
 </p>
 
 <p>
@@ -628,8 +631,8 @@ values. This table shows the mapping:
 </tr>
 
 <tr>
-<td class="org-left">boolean	boolean</td>
-<td class="org-left">&#xa0;</td>
+<td class="org-left">boolean</td>
+<td class="org-left">boolean</td>
 </tr>
 
 <tr>
@@ -1051,6 +1054,17 @@ condition.
 <p>
 For integrity-violation errors, returns the name of the constraint that was
 violated (or nil if no constraint was found.)
+</p>
+</div>
+<h3 id="">function database-error-extract-name (database-error)</h3>
+<div class="outline-text-3" id="">
+<p>
+→ string
+</p>
+
+<p>
+For various errors, returns the name provided by the error message
+ (or nil if no such name was found.)
 </p>
 </div>
 </div>

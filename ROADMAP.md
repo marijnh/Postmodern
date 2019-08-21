@@ -59,9 +59,7 @@ No guarantee is given with respect to resolution or timing on any item.
 - [ ]   Others?
 
 ## DAO Support
-- [ ]   Fix issue 70 - build-dao-methods fails when a slot is named "from".
-This request violates the postgresql reserved words. Do not expect this to work with building table columns.
-There is a reason for reserved words and it is upstream in postgresql. This may eliminated from the roadmap.
+- [X]   Fix issue 70 - build-dao-methods fails when a slot is named "from".
 - [ ]   Review errors with *ignore-unknown-columns*. Sometimes hangs without raising an error.
 - [ ]   Type validation - make it easier to use col-type to ensure that a slot value is what the database expects
 - [X]   Document export to dao similar to :alist, alists, plist, plists
@@ -77,7 +75,7 @@ There is a reason for reserved words and it is upstream in postgresql. This may 
         have a chunk API so the network is handling the content as a whole.
 - [ ]   SCRAM authentication (postgresql 10)
 - [ ]   Alter system (postgresql 9.4)
-- [ ]   Create temp tables
+- [X]   Create temp tables
 
 ## Connections/Reconnections and Transactions
 - [ ]   Ensure transactions can deal with reconnections/restarts
@@ -105,7 +103,6 @@ There is a reason for reserved words and it is upstream in postgresql. This may 
 - [ ]   Usage examples for non-sql users
 - [X]   More examples of create table
 - [ ]   Creation of new datatypes
-- [X]   Links in README should point to pages updated on github, not marijn's personal page
 - [ ]   Pooling with external pooling applications
 
 ## Security Audit
