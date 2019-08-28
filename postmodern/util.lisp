@@ -1,3 +1,4 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
 (defun to-identifier (name)

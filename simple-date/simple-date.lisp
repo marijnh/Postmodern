@@ -1,14 +1,4 @@
-(defpackage :simple-date
-  (:use :common-lisp)
-  (:export #:date #:encode-date #:decode-date #:day-of-week
-           #:timestamp #:encode-timestamp #:decode-timestamp
-           #:timestamp-to-universal-time #:universal-time-to-timestamp
-           #:interval #:encode-interval #:decode-interval
-           #:time-of-day #:hours #:minutes #:seconds #:microseconds
-           #:encode-time-of-day #:decode-time-of-day
-           #:time-add #:time-subtract
-           #:time= #:time> #:time< #:time<= #:time>=))
-
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: SIMPLE-DATE; -*-
 (in-package :simple-date)
 
 (defun to-external-date (year month day)

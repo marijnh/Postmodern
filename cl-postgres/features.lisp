@@ -1,9 +1,5 @@
-(defpackage :cl-postgres.features
-  (:use :common-lisp)
-  (:export #:sbcl-available
-           #:sbcl-ipv6-available))
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: CL-POSTGRES.FEATURES; -*-
 (in-package :cl-postgres.features)
-
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (when (find-package 'sb-bsd-sockets)

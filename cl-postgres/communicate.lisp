@@ -1,3 +1,4 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: CL-POSTGRES; -*-
 (in-package :cl-postgres)
 
 ;; These are used to synthesize reader and writer names for integer

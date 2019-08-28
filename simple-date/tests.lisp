@@ -1,6 +1,4 @@
-(defpackage :simple-date-tests
-  (:use :common-lisp :fiveam :simple-date))
-
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: SIMPLE-DATE-TESTS; -*-
 (in-package :simple-date-tests)
 
 ;; After loading the file, run the tests with (fiveam:run! :simple-date)

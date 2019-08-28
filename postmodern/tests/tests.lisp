@@ -1,7 +1,4 @@
-(defpackage :postmodern-tests
-  (:use :common-lisp :fiveam :postmodern :simple-date :cl-postgres-tests)
-  (:shadow #:with-test-connection))
-
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN-TESTS; -*-
 (in-package :postmodern-tests)
 
 ;; Adjust the above to some db/user/pass/host combination that refers
