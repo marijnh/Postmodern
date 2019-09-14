@@ -1,3 +1,5 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: CL-USER; -*-
+
 (defpackage :cl-postgres
   (:use :common-lisp)
   (:export #:database-error
@@ -221,6 +223,29 @@
            #:+index-am-handler+
            #:+tsm-handler+
            #:+anyrange+))
+
+(defpackage :cl-postgres.features
+  (:use :common-lisp)
+  (:export #:sbcl-available
+           #:sbcl-ipv6-available))
+
+(defpackage :cl-postgres-trivial-utf-8
+  (:use :common-lisp)
+  (:export #:utf-8-byte-length
+           #:string-to-utf-8-bytes
+           #:write-utf-8-bytes
+           #:utf-8-group-size
+           #:utf-8-bytes-to-string
+           #:read-utf-8-string
+           #:utf-8-decoding-error))
+
+(defpackage :cl-postgres-ieee-floats
+  (:use :common-lisp)
+  (:export :make-float-converters
+	   :encode-float32
+	   :decode-float32
+	   :encode-float64
+	   :decode-float64))
 
 (in-package :cl-postgres)
 

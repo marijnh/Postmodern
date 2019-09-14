@@ -1,3 +1,5 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; -*-
+
 (defpackage :postmodern-system
   (:use :common-lisp :asdf)
   (:export :*threads*))
@@ -45,8 +47,9 @@
                             "cl-postgres/tests" "s-sql/tests")
   :components
   ((:module "postmodern/tests"
-            :components ((:file "tests")
-                         (:file "test-dao")
+            :components ((:file "test-package")
+			 (:file "tests")
+                         (:file "test-dao" :depends-on ("test-package"))
                          (:file "test-execute-file"))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)

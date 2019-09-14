@@ -1,7 +1,4 @@
-(defpackage :s-sql-tests
-  (:use :common-lisp :fiveam :s-sql :cl-postgres :cl-postgres-error :cl-postgres-tests :postmodern)
-  (:shadow #:with-test-connection))
-
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: S-SQL-TESTS; -*-
 (in-package :s-sql-tests)
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that

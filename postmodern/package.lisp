@@ -1,3 +1,4 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: CL-USER; -*-
 (defpackage :postmodern
   (:use #-postmodern-use-mop :common-lisp
         #+postmodern-use-mop :closer-common-lisp
