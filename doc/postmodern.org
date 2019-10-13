@@ -1056,7 +1056,7 @@ Creates a new schema. Raises an error if the schema is already exists.
 
 ** function drop-schema (schema)
 
-Removes a schema. Raises an error if the schema is not empty.
+Removes a schema. Accepts :if-exists and/or :cascade arguments like :drop-table.
 
 ** function get-search-path ()
 
