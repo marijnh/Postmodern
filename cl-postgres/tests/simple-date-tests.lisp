@@ -1,4 +1,9 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: CL-POSTGRES-SIMPLE-DATE-TESTS; -*-
+(defpackage :cl-postgres-simple-date-tests
+  (:use :common-lisp :fiveam :cl-postgres :cl-postgres-error :simple-date)
+  (:import-from #:cl-postgres-tests
+                #:prompt-connection))
+
 (in-package :cl-postgres-simple-date-tests)
 
 (defmacro with-simple-date-readtable (&body body)
@@ -56,4 +61,3 @@
       (is (time= (caaar (exec-query connection "select row('2010-04-05 14:42:21.500'::timestamp)"
                                     'list-row-reader))
                  (encode-timestamp 2010 4 5 14 42 21 500))))))
-
