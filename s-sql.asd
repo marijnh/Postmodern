@@ -18,7 +18,7 @@
   :in-order-to ((test-op (test-op "s-sql/tests"))))
 
 (defsystem "s-sql/tests"
-  :depends-on ("postmodern" "s-sql" "cl-postgres/tests" "fiveam" )
+  :depends-on ("postmodern" "s-sql" "cl-postgres/tests" "fiveam")
   :components
   ((:module "s-sql/tests"
             :components ((:file "test-package")

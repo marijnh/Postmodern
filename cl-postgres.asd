@@ -22,15 +22,15 @@
   :components
   ((:module "cl-postgres"
             :components ((:file "package")
-			 (:file "features")
+                         (:file "features")
                          (:file "errors" :depends-on ("package"))
                          (:file "sql-string" :depends-on ("package"))
-			 (:file "trivial-utf-8" :depends-on ("package"))
+                         (:file "trivial-utf-8" :depends-on ("package"))
                          (:file #.*string-file* :depends-on ("package" "trivial-utf-8"))
                          (:file "communicate" :depends-on (#.*string-file* "sql-string"))
                          (:file "messages" :depends-on ("communicate"))
                          (:file "oid" :depends-on ("package"))
-			 (:file "ieee-floats")
+                         (:file "ieee-floats")
                          (:file "interpret" :depends-on ("oid" "communicate" "ieee-floats"))
                          (:file "protocol" :depends-on ("interpret" "messages" "errors"))
                          (:file "public" :depends-on ("protocol" "features"))
@@ -50,11 +50,11 @@
 
 
 (defsystem "cl-postgres/simple-date-tests"
-  :depends-on ("cl-postgres" "cl-postgres/tests" "fiveam" "simple-date/postgres-glue")
+  :depends-on ("cl-postgres" "cl-postgres/tests" "fiveam" "simple-date" "simple-date/postgres-glue")
   :components
   ((:module "cl-postgres/tests"
             :components ((:file "test-package")
-			 (:file "simple-date-tests"))))
+                         (:file "simple-date-tests"))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-simple-date-tests '#:prompt-connection)
              (uiop:symbol-call :fiveam '#:run! :cl-postgres-simple-date)))
