@@ -103,7 +103,7 @@
                     '(((:ID . 1) (:A . "bar") (:B) (:C . 0) (:D . 0))
                       ((:ID . 2) (:A . "first short") (:B) (:C . 0) (:D . 0))
                       ((:ID . 3) (:A . "12.75") (:B) (:C . 0) (:D . 0))))))
-      (let ((dao-d-string (make-instance 'test-data-d-string :a "D string" :b nil :c 14
+      (let ((dao-d-string (make-instance 'test-data-d-string :a "D string" :b nil :c 14.37
                             :d 18.78)))
         (save-dao dao-d-string)
         (is (equalp (query (:select '* :from 'dao-test) :alists)

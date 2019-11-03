@@ -222,7 +222,7 @@ Another test case for the classic quotes:
 (defun read-queries (filename)
   "read SQL queries in given file and split them, returns a list"
   (let ((file-content (get-output-stream-string (read-lines filename))))
-    (parse-queries file-content)))
+    (parse-queries (file-content))))
 
 (defun execute-file (pathname &optional (print nil))
   "Executes all queries in the provided SQL file. If print is set to t,
