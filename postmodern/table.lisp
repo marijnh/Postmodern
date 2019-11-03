@@ -264,13 +264,22 @@ or accessor or reader.)"
                 :do (if (slot-boundp object field)
                         (push field bound)
                         (push field unbound)))
-             (let* ((values (mapcan (lambda (x) (list (field-sql-name x) (slot-value object x)))
-                                    (remove-if (lambda (x) (member x ghost-fields)) bound) ))
-                    (returned (query (sql-compile `(:insert-into ,table-name
-                                                                 :set ,@values
-                                                                 ,@(when unbound (cons :returning (mapcar #'field-sql-name
+             (let* ((counter 0)
+                    (fields (remove-if (lambda (x) (member x ghost-fields)) bound))
+                    (places (mapcan (lambda (x)
+                                      (incf counter)
+                                      (list (field-sql-name x) (intern (format nil "$~a" counter))))
+                                    fields))
+                    (values (map 'list (lambda (x)
+                                         (slot-value object x))
+                                 fields))
+                    (returned (apply (prepare (sql-compile
+                                               `(:insert-into ,table-name
+                                                              :set ,@places
+                                                                ,@(when unbound (cons :returning (mapcar #'field-sql-name
                                                                                                           unbound)))))
-                                     :row)))
+                                              :row)
+                                     values)))
                (when unbound
                  (loop :for value :in returned
                     :for field :in unbound
