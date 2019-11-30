@@ -485,10 +485,11 @@ equality tests with arrays requires equalp, not equal."
     (is (equalp (query (:select '* (:over (:array-agg 'id) (:order-by 'id))
                                :from 'agg-data))
                '((1 #(1)) (2 #(1 2)) (3 #(1 2 3)) (4 #(1 2 3 4)) (5 #(1 2 3 4 5)))))
-    (is (equalp (query (:select '*
-                               (:over (:array-agg 'id) (:order-by 'id))
-                               (:over (:array-agg 'id) (:order-by (:desc 'id)))
-                               :from 'agg-data))
+    (is (equalp (query (:order-by (:select '*
+                                           (:over (:array-agg 'id) (:order-by 'id))
+                                           (:over (:array-agg 'id) (:order-by (:desc 'id)))
+                                           :from 'agg-data)
+                                  (:desc 'id)))
                '((5 #(1 2 3 4 5) #(5)) (4 #(1 2 3 4) #(5 4)) (3 #(1 2 3) #(5 4 3))
                  (2 #(1 2) #(5 4 3 2)) (1 #(1) #(5 4 3 2 1)))))
     (is (equalp (query (:order-by (:select '*
