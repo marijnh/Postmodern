@@ -283,7 +283,7 @@ for the JavaScript code in this tag.
 <li><a href="#org730cd12a4">parameter *allow-overwriting-prepared-statements*</a></li>
 <li><a href="#org730cd12">function prepared-statement-exists-p (name)</a></li>
 <li><a href="#org7df9842">function list-prepared-statements(&amp;optional (names-only nil))</a></li>
-<li><a href="#orgfbdd58c">function drop-prepared-statement (statement-name &amp;key (location :both) (database <b>database</b>))</a></li>
+<li><a href="#orgfbdd58c">function drop-prepared-statement (statement-name &amp;key (location :both) (database database))</a></li>
 <li><a href="#org2156a7a">function list-postmodern-prepared-statements (&amp;optional (names-only nil))</a></li>
 <li><a href="#org57d40d9">function find-postgresql-prepared-statement (name)</a></li>
 <li><a href="#org8d04ae3">function find-postmodern-prepared-statement (name)</a></li>
@@ -338,6 +338,7 @@ for the JavaScript code in this tag.
 <li><a href="#org2442647">function list-triggers (&amp;optional table-name)</a></li>
 <li><a href="#orgd915c81">function list-detailed-triggers ()</a></li>
 <li><a href="#orgdb505fa">function list-database-users ()</a></li>
+<li><a href="#orgdb505fa1">function list-roles ()</a></li>
 <li><a href="#orgbde46da">function list-available-extensions ()</a></li>
 <li><a href="#orgd75fa2f">function list-installed-extensions ()</a></li>
 <li><a href="#orgb849d68">function change-toplevel-database (new-database user password host)</a></li>
@@ -384,10 +385,19 @@ for the JavaScript code in this tag.
 <li><a href="#org94988a4">Schemata</a>
 <ul>
 <li><a href="#orgfb8a41d">function create-schema (schema)</a></li>
-<li><a href="#orga69ac80">function drop-schema (schema)</a></li>
+<li><a href="#orga69ac80">function drop-schema (schema &key (if-exists nil) (cascade nil))</a></li>
 <li><a href="#org2dbd10b">function get-search-path ()</a></li>
 <li><a href="#org917c9f7">function set-search-path (path)</a></li>
 <li><a href="#orgb8e5556">function split-fully-qualified-table-name (name)</a></li>
+</ul>
+</li>
+<li><a href="#org94988a4muf1">Database Health Measurements</a>
+  <ul>
+    <li><a href="#orgb8e55571">function cache-hit-ratio ()</a></li>
+    <li><a href="#orgb8e55572">function bloat-measurement ()</a></li>
+    <li><a href="#orgb8e55573">function unused-indexes ()</a></li>
+    <li><a href="#orgb8e55574">function check-query-performance (&optional (ob nil) (num-calls 100) (limit 20))</a></li>
+  </ul>
 </ul>
 </li>
 <li><a href="#org94988a4muf">Miscellaneous Utility Functions</a>
@@ -395,6 +405,7 @@ for the JavaScript code in this tag.
     <li><a href="#orgb8e5557">function execute-file (filename &optional (print nil))</a></li>
   </ul>
 </ul>
+</li>
 </div>
 </div>
 <p>
@@ -1811,6 +1822,21 @@ List detailed information on the triggers from the information_schema table.
 </p>
 </div>
 </div>
+<div id="outline-container-orgdb505fa1" class="outline-3">
+<h3 id="orgdb505fa1">function list-roles (&optional (lt nil))</h3>
+<div class="outline-text-3" id="text-orgdb505fa1">
+<p>
+→ list
+</p>
+
+<p>
+Returns a list of alists of rolenames, role attributes and membership in roles.
+See https://www.postgresql.org/docs/current/role-membership.html for an explanation.
+Optionally passing :alists or :plists can be used to set the return list types to :alists or :plists.
+This is the same as the psql function \du.
+</p>
+</div>
+</div>
 
 <div id="outline-container-orgdb505fa" class="outline-3">
 <h3 id="orgdb505fa">function list-database-users ()</h3>
@@ -2473,10 +2499,10 @@ Creates a new schema. Raises an error if the schema is already exists.
 </div>
 
 <div id="outline-container-orga69ac80" class="outline-3">
-<h3 id="orga69ac80">function drop-schema (schema)</h3>
+<h3 id="orga69ac80">function drop-schema (schema &key (if-exists nil) (cascade nil))</h3>
 <div class="outline-text-3" id="text-orga69ac80">
 <p>
-Removes a schema. Raises an error if the schema is not empty.
+Removes a schema. Raises an error if the schema is not empty. A notice instead of an error is raised with the is-exists parameter.
 </p>
 </div>
 </div>
@@ -2509,6 +2535,74 @@ and returns a list in the form '(table schema database)
 </div>
 </div>
 </div>
+
+<div id="outline-container-orgorg94988a4muf1" class="outline-2">
+<h2 id="org94988a4muf1">Database Health Measurements</h2>
+<div class="outline-text-2" id="text-orgorg94988a4muf1">
+<p>
+Miscellaneous utility functions checking the health of the database
+</p>
+</div>
+
+<div id="outline-container-orgb8e55571" class="outline-3">
+<h3 id="orgb8e55571">function cache-hit-ratio ()</h3>
+<div class="outline-text-3" id="text-orgb8e55571">
+<p>
+→ list
+</p><p>
+The cache hit ratio shows data on serving the data from memory compared to how often you have to go to disk.
+This function returns a list of heapblocks read from disk, heapblocks hit from memory and the ratio of
+heapblocks hit from memory / total heapblocks hit.
+Borrowed from: <a href="https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/">https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/</a>
+
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgb8e55572" class="outline-3">
+<h3 id="orgb8e55572">function bloat-measurement ()</h3>
+<div class="outline-text-3" id="text-orgb8e55572">
+<p>
+→ list
+</p><p>
+Bloat measurement of unvacuumed dead tuples.
+Borrowed from: <a href="https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/">https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/</a> who borrowed it from: <a href="https://github.com/heroku/heroku-pg-extras/tree/master/commands">https://github.com/heroku/heroku-pg-extras/tree/master/commands</a>
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgb8e55573" class="outline-3">
+<h3 id="orgb8e55573">function unused-indexes ()</h3>
+<div class="outline-text-3" id="text-orgb8e55573">
+<p>
+→ list
+</p><p>
+Returns a list of lists showing schema.table, indexname, index_size and number of scans.
+Borrowed from: <a href="https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/">https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/</a>
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgb8e55574" class="outline-3">
+<h3 id="orgb8e55574">function check-query-performance (&optional (ob nil) (num-calls 100) (limit 20))</h3>
+<div class="outline-text-3" id="text-orgb8e55574">
+<p>
+→ list
+<p>
+This function requires that postgresql extension pg_stat_statements must be loaded via shared_preload_libraries.
+Borrowed from: <a href="https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/">https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/</a>
+</p><p>
+Optional parameters: (1)  ob allow order-by to be 'calls', 'total-time', 'rows-per' or 'time-per', defaulting to time-per.
+(2) num-calls to require that the number of calls exceeds a certain threshold, and (3) limit to limit the number of rows returned.
+It returns a list of lists, each row containing the query, number of calls, total_time, total_time/calls, stddev_time, rows,
+rows/calls and the cache hit percentage.
+</p>
+</div>
+</div>
+</div>
+
 <div id="outline-container-org94988a7-muf" class="outline-2">
 <h2 id="org94988a4muf">Miscellaneous Utility Functions</h2>
 <div class="outline-text-2" id="text-org94988a4mufmuf">
@@ -2546,7 +2640,7 @@ and bypasses the normal postmodern parameterization of queries.
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2019-04-14 Sun 12:10</p>
+<p class="date">Created: 2019-11-30</p>
 </div>
 </body>
 </html>
