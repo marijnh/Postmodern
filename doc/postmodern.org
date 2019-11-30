@@ -687,11 +687,18 @@ can be either quoted or string.
 → list
 
 List detailed information on the triggers from the information_schema table.
-
 ** function list-database-users ()
 → list
 
 List database users.
+** function list-roles (&optional (lt nil))
+→ list
+
+Returns a list of alists of rolenames, role attributes and membership in roles.
+See https://www.postgresql.org/docs/current/role-membership.html for an explanation.
+Optionally passing :alists or :plists can be used to set the return list types to :alists or :plists.
+This is the same as the psql function \du.
+
 ** function list-available-extensions ()
 → list
 
@@ -1069,6 +1076,38 @@ Sets the search path to the path. This function is used by with-schema.
 → list
 Takes a name of the form database.schema.table or schema.table or just table
 and returns a list in the form '(table schema database)
+
+* Database Health Measurements
+** function cache-hit-ratio ()
+→ list
+
+The cache hit ratio shows data on serving the data from memory compared to how often you have to go to disk.
+This function returns a list of heapblocks read from disk, heapblocks hit from memory and the ratio of
+heapblocks hit from memory / total heapblocks hit.
+Borrowed from: https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/
+
+** function bloat-measurement ()
+→ list
+
+Bloat measurement of unvacuumed dead tuples.
+Borrowed from: https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/ who
+borrowed it from https://github.com/heroku/heroku-pg-extras/tree/master/commands.
+
+** function unused-indexes ()
+→ list
+
+Returns a list of lists showing schema.table, indexname, index_size and number of scans.
+The code was borrowed from: https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/
+
+** function check-query-performance (&optional (ob nil) (num-calls 100) (limit 20))
+→ list
+
+This function requires that postgresql extension pg_stat_statements must be loaded via shared_preload_libraries.
+It is borrowed from https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/.
+Optional parameters OB allow order-by to be 'calls', 'total-time', 'rows-per' or 'time-per', defaulting to time-per.
+num-calls to require that the number of calls exceeds a certain threshold, and limit to limit the number of rows returned.
+It returns a list of lists, each row containing the query, number of calls, total_time, total_time/calls, stddev_time, rows,
+rows/calls and the cache hit percentage.
 
 * Miscellaneous Utility Functions
 ** function execute-file (filename &optional (print nil))
