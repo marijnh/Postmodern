@@ -385,7 +385,7 @@ for the JavaScript code in this tag.
 <li><a href="#org94988a4">Schemata</a>
 <ul>
 <li><a href="#orgfb8a41d">function create-schema (schema)</a></li>
-<li><a href="#orga69ac80">function drop-schema (schema)</a></li>
+<li><a href="#orga69ac80">function drop-schema (schema &key (if-exists nil) (cascade nil))</a></li>
 <li><a href="#org2dbd10b">function get-search-path ()</a></li>
 <li><a href="#org917c9f7">function set-search-path (path)</a></li>
 <li><a href="#orgb8e5556">function split-fully-qualified-table-name (name)</a></li>
@@ -2499,10 +2499,10 @@ Creates a new schema. Raises an error if the schema is already exists.
 </div>
 
 <div id="outline-container-orga69ac80" class="outline-3">
-<h3 id="orga69ac80">function drop-schema (schema)</h3>
+<h3 id="orga69ac80">function drop-schema (schema &key (if-exists nil) (cascade nil))</h3>
 <div class="outline-text-3" id="text-orga69ac80">
 <p>
-Removes a schema. Raises an error if the schema is not empty.
+Removes a schema. Raises an error if the schema is not empty. A notice instead of an error is raised with the is-exists parameter.
 </p>
 </div>
 </div>

@@ -1061,7 +1061,7 @@ functions allow you to create, drop schemata and to set the search path.
 
 Creates a new schema. Raises an error if the schema is already exists.
 
-** function drop-schema (schema)
+** function drop-schema (schema &key (if-exists nil) (cascade nil))
 
 Removes a schema. Accepts :if-exists and/or :cascade arguments like :drop-table.
 
