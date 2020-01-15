@@ -1,3 +1,4 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
 (defstruct parser
@@ -190,8 +191,7 @@ Another test case for the classic quotes:
          :finally (return
                     (get-output-stream-string (parser-stream state))))
     (end-of-file (e)
-      (if (eq :eat (parser-state state))
-        (let ((stream-string (get-output-stream-string (parser-stream state)))) (if (> (length stream-string) 0) stream-string))
+      (unless (eq :eat (parser-state state))
         (error e)))))
 
 (defun read-lines (filename &optional (q (make-string-output-stream)))
@@ -206,23 +206,22 @@ Another test case for the classic quotes:
                   (and (> (length line) 4)
                        (string= "\\ir " (subseq line 0 4))))
         (let ((include-filename
-         (merge-pathnames (subseq line 3)
-              (directory-namestring filename))))
-         (read-lines include-filename q))
+              (merge-pathnames (subseq line 3)
+                (directory-namestring filename))))
+          (read-lines include-filename q))
         (format q "~a~%" line))
        finally (return q))))
 
 (defun parse-queries (file-content)
   "read SQL queries in given string and split them, returns a list"
-    (with-input-from-string (s file-content)
+    (with-input-from-string (s (concatenate 'string file-content ";"))
       (loop :for query := (parse-query s)
          :while query
          :collect query)))
 
 (defun read-queries (filename)
   "read SQL queries in given file and split them, returns a list"
-  (let ((file-content (get-output-stream-string (read-lines filename))))
-    (parse-queries (file-content))))
+  (parse-queries (get-output-stream-string (read-lines filename))))
 
 (defun execute-file (pathname &optional (print nil))
   "Executes all queries in the provided SQL file. If print is set to t,
