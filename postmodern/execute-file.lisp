@@ -205,11 +205,11 @@ Another test case for the classic quotes:
                        (string= "\\i " (subseq line 0 3)))
                   (and (> (length line) 4)
                        (string= "\\ir " (subseq line 0 4))))
-        (let ((include-filename
-              (merge-pathnames (subseq line 3)
-                (directory-namestring filename))))
-          (read-lines include-filename q))
-        (format q "~a~%" line))
+            (let ((include-filename
+                  (merge-pathnames (subseq line 3)
+                    (directory-namestring filename))))
+                (read-lines include-filename q))
+            (format q "~a~%" line))
        finally (return q))))
 
 (defun parse-queries (file-content)
