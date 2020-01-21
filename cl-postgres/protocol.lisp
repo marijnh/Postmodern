@@ -177,23 +177,21 @@ be matched against it."
          (error 'database-error :message "Server does not support SSL encryption."))))))
 
 (defun authenticate (socket conn)
-  "Try to initiate a connection. Caller should close the socket if
-this raises a condition."
-
+  "Try to initiate a connection. Caller should close the socket if this raises a condition."
   (let ((gss-context nil)
         (gss-init-function nil)
         (user (connection-user conn))
         (password (connection-password conn))
         (database (connection-db conn))
         (hostname (connection-host conn))
-        (use-ssl (connection-use-ssl conn)))
-
+        (use-ssl (connection-use-ssl conn))
+        (client-nonce nil)
+        (client-initial-response nil))
     (unless (eq use-ssl :no)
       (setf socket (initiate-ssl socket (member use-ssl '(:yes :full))
                                  (if (eq use-ssl :full) hostname))))
     (startup-message socket user database)
     (force-output socket)
-
     (labels ((init-gss-msg (in-buffer)
                (when (null gss-init-function)
                  (when (null (find-package "CL-GSS"))
@@ -212,7 +210,24 @@ this raises a condition."
                  (when buffer
                    (gss-auth-buffer-message socket buffer))
                  (force-output socket)
-                 continue-needed)))
+                 continue-needed))
+             (scram-msg-init (in-buffer)
+               (setf client-nonce (gen-client-nonce))
+               (setf client-initial-response (gen-client-initial-response user client-nonce))
+               (v:info :test "scram-msg-init buffer ~a ~a length :password ~a client-initial-message ~a client-nonce ~a" in-buffer (trivial-utf-8:utf-8-bytes-to-string in-buffer) password client-initial-response client-nonce )
+               (scram-type-message socket client-initial-response)
+               (force-output socket))
+             (scram-msg-cont (in-buffer)
+               (let ((cont-message (aggregated-gen-final-client-message user client-nonce (trivial-utf-8:utf-8-bytes-to-string in-buffer) password
+                                                                        :salt-type :base64-string
+                                                                        :response-type :utf8-string)))
+               (v:info :test "scram-msg-cont buffer ~a ~%as string ~a~% as base64-string ~a~% cont-message ~a"
+                       in-buffer (trivial-utf-8:utf-8-bytes-to-string in-buffer) (cl-base64:usb8-array-to-base64-string in-buffer)
+                       cont-message)
+               (scram-cont-message socket cont-message)
+               (force-output socket)))
+             (scram-msg-fin (in-buffer)
+               (v:info :test "scram-msg-fin buffer ~a" (split-server-response in-buffer))))
 
       (loop
          (message-case socket :length-sym size
@@ -234,13 +249,20 @@ this raises a condition."
                        (init-gss-msg nil))
                     (8 (unless gss-context
                          (error 'database-error :message "Got GSS continuation message without a context"))
-                       (init-gss-msg (read-bytes socket (- size 4)))))))))))
+                       (init-gss-msg (read-bytes socket (- size 4))))
+                    (9 ) ; auth_required_sspi or auth_req_sspi sspi negotiate without wrap() see postgresql source code src/libpq/pqcomm.h
+                    (10 (scram-msg-init (read-bytes socket (- size 4));(read-simple-str socket)
+                                        ))  ;auth_required_sasl or auth_req_sasl see postgresql source code src/libpq/pqcomm.h scram section
+                    (11 (scram-msg-cont (read-bytes socket (- size 4)))) ;auth_sasl_continue or auth_req_sasl_cont see postgresql source code
+                                                                         ;src/libpq/pqcomm.h
+                    (12 (scram-msg-fin (read-bytes socket (- size 4)))) ;auth_sasl_final or auth_req_sasl_fin see postgresql source code src/libpq/pqcomm.h
+                    ))))))
   (loop
    (message-case socket
      ;; ReadyForQuery
      (#\Z (read-uint1 socket)
           (return))))
-  socket)
+  socket))
 
 (defclass field-description ()
   ((name :initarg :name :accessor field-name)

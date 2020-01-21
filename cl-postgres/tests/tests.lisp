@@ -5,11 +5,11 @@
   "A list of connection parameters to use when running the tests.  The
   order is: database name, user, password and hostname.")
 
-(defun prompt-connection (&optional (defaults '("test" "test" "" "localhost")))
+(defun prompt-connection (&optional (defaults '("test" "test" "" "localhost" 5432)))
   (when *test-connection*
     (return-from prompt-connection *test-connection*))
-  (let* ((descriptions '("Database name" "User" "Password" "Hostname"))
-         (env-vars '("DB_NAME" "DB_USER" "DB_PASS" "DB_HOST"))
+  (let* ((descriptions '("Database name" "User" "Password" "Hostname" "Port"))
+         (env-vars '("DB_NAME" "DB_USER" "DB_PASS" "DB_HOST" "DB_PORT"))
          (provided (mapcar #'uiop:getenv env-vars))
          (prospective (mapcar (lambda (a b) (if a a b)) provided defaults)))
     (setq *test-connection*

@@ -18,6 +18,16 @@
 login information in order to be able to automatically re-establish a
 connection when it is somehow closed."))
 
+(defun get-postgresql-version (connection)
+  "Retrieves the version number of the connected postgresql database as a float."
+  (let* ((version-str (gethash "server_version" (connection-parameters connection)))
+         (major-minor-split (split-sequence:split-sequence #\. version-str))
+         (major-version (parse-integer (first major-minor-split)))
+         (minor-version (if (> (length major-minor-split) 1)
+                            (/ (parse-integer (second major-minor-split)) (expt 10 (length (second major-minor-split))))
+                            0)))
+    (+ major-version minor-version)))
+
 (defun connection-meta (connection)
   "Retrieves the meta field of a connection, the primary purpose of
 which is to store information about the prepared statements that

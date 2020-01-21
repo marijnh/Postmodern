@@ -48,9 +48,9 @@
   :components
   ((:module "postmodern/tests"
             :components ((:file "test-package")
-			 (:file "tests")
+                         (:file "tests")
                          (:file "test-dao" :depends-on ("test-package"))
-                         (:file "test-execute-file"))))
+                         (:file "test-execute-file" :depends-on ("test-package")))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
              (uiop:symbol-call :fiveam '#:run! :postmodern)))

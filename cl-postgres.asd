@@ -16,7 +16,7 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
-  :depends-on ("md5"
+  :depends-on ("md5" "ironclad" "secure-random" "trivial-utf-8" "cl-base64"
                (:feature (:or :sbcl :allegro :ccl :clisp :genera :armedbear :cmucl) "usocket")
                (:feature :sbcl (:require :sb-bsd-sockets)))
   :components
@@ -32,7 +32,8 @@
                          (:file "oid" :depends-on ("package"))
                          (:file "ieee-floats")
                          (:file "interpret" :depends-on ("oid" "communicate" "ieee-floats"))
-                         (:file "protocol" :depends-on ("interpret" "messages" "errors"))
+                         (:file "scram" :depends-on ("messages" "errors"))
+                         (:file "protocol" :depends-on ("interpret" "messages" "errors" "scram"))
                          (:file "public" :depends-on ("protocol" "features"))
                          (:file "bulk-copy" :depends-on ("public")))))
   :in-order-to ((test-op (test-op "cl-postgres/tests")
@@ -43,7 +44,8 @@
   :components
   ((:module "cl-postgres/tests"
             :components ((:file "test-package")
-			 (:file "tests"))))
+                         (:file "tests")
+                         (:file "tests-scram" :depends-on ("test-package")))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
              (uiop:symbol-call :fiveam '#:run! :cl-postgres)))
