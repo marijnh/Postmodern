@@ -186,7 +186,8 @@ be matched against it."
         (hostname (connection-host conn))
         (use-ssl (connection-use-ssl conn))
         (client-nonce nil)
-        (client-initial-response nil))
+        (client-initial-response nil)
+        (expected-server-signature nil))
     (unless (eq use-ssl :no)
       (setf socket (initiate-ssl socket (member use-ssl '(:yes :full))
                                  (if (eq use-ssl :full) hostname))))
@@ -212,22 +213,25 @@ be matched against it."
                  (force-output socket)
                  continue-needed))
              (scram-msg-init (in-buffer)
-               (setf client-nonce (gen-client-nonce))
-               (setf client-initial-response (gen-client-initial-response user client-nonce))
-               (v:info :test "scram-msg-init buffer ~a ~a length :password ~a client-initial-message ~a client-nonce ~a" in-buffer (trivial-utf-8:utf-8-bytes-to-string in-buffer) password client-initial-response client-nonce )
-               (scram-type-message socket client-initial-response)
-               (force-output socket))
+               (let ((server-message (trivial-utf-8:utf-8-bytes-to-string in-buffer)))
+                 (when (not (equal "SCRAM-SHA-256" (subseq server-message 0 13)))
+                   (cerror "Mixed messages on authentication methods" server-message))
+                 (setf client-nonce (gen-client-nonce))
+                 (setf client-initial-response (gen-client-initial-response user client-nonce))
+                 (scram-type-message socket client-initial-response)
+                 (force-output socket)))
              (scram-msg-cont (in-buffer)
-               (let ((cont-message (aggregated-gen-final-client-message user client-nonce (trivial-utf-8:utf-8-bytes-to-string in-buffer) password
+               (multiple-value-bind (cont-message calculated-server-signature)
+                   (aggregated-gen-final-client-message user client-nonce (trivial-utf-8:utf-8-bytes-to-string in-buffer) password
                                                                         :salt-type :base64-string
-                                                                        :response-type :utf8-string)))
-               (v:info :test "scram-msg-cont buffer ~a ~%as string ~a~% as base64-string ~a~% cont-message ~a"
-                       in-buffer (trivial-utf-8:utf-8-bytes-to-string in-buffer) (cl-base64:usb8-array-to-base64-string in-buffer)
-                       cont-message)
+                                                                        :response-type :utf8-string)
+               (setf expected-server-signature calculated-server-signature)
                (scram-cont-message socket cont-message)
                (force-output socket)))
              (scram-msg-fin (in-buffer)
-               (v:info :test "scram-msg-fin buffer ~a" (split-server-response in-buffer))))
+               (when (not (equal (cdar (split-server-response in-buffer)) expected-server-signature))
+                   (cerror "Server signature not validated. Something is wrong"
+                           (cdar (split-server-response in-buffer))))))
 
       (loop
          (message-case socket :length-sym size
