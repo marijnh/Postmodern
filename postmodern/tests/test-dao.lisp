@@ -257,10 +257,12 @@ The ability to create tables with oids=true has been dropped by postgresql in ve
       (:metaclass dao-class)
       (:table-name from-test)
       (:keys id from))
-
-    (loop for x in '(from-test from-test-data1 iceland-cities) do
-         (when (pomo:table-exists-p x)
-           (execute (:drop-table x :cascade))))
+    (when (pomo:table-exists-p "from-test")
+      (execute (:drop-table "from-test" :cascade)))
+    (when (pomo:table-exists-p 'from-test-data1)
+      (execute (:drop-table 'from-test-data1 :cascade)))
+    (when (pomo:table-exists-p 'iceland-cities)
+      (execute (:drop-table 'iceland-cities :cascade)))
     (is (equal (dao-table-definition 'from-test-data)
                "CREATE TABLE from_test (id SERIAL NOT NULL, flight INTEGER DEFAULT NULL, \"from\" VARCHAR(100) DEFAULT NULL, to_destination VARCHAR(100) DEFAULT NULL, PRIMARY KEY (id, \"from\"))"))
     (execute (dao-table-definition 'from-test-data))

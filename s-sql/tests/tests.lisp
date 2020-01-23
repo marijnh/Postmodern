@@ -1361,14 +1361,16 @@ that the table will need to be scanned twice. Everything is a trade-off."
              "CREATE VIEW quagmire AS (SELECT id, name FROM employee)"))
   (is (equal (sql (:create-view "quagmire" (:select 'id 'name :from 'employee)))
              "CREATE VIEW quagmire AS (SELECT id, name FROM employee)"))
+  (is (equal (sql (:create-view 'quagmire-hollow (:select 'id 'name :from 'employee)))
+             "CREATE VIEW quagmire_hollow AS (SELECT id, name FROM employee)"))
+  (is (equal (sql (:create-view "quagmire-hollow" (:select 'id 'name :from 'employee)))
+             "CREATE VIEW quagmire_hollow AS (SELECT id, name FROM employee)"))
   (with-test-connection
     (when (view-exists-p 'quagmire)
       (query (:drop-view 'quagmire)))
     (query (:create-view 'quagmire (:select 'id 'name :from 'employee)))
-    (is (equal (list-views)
-        '(:QUAGMIRE)))
-    (is (equal (list-views t)
-        '("quagmire")))
+    (is (member :QUAGMIRE (list-views) :test 'eq))
+    (is (member "quagmire" (list-views t) :test 'equal))
     (is (view-exists-p 'quagmire))
     (is (view-exists-p :quagmire))
     (is (view-exists-p "quagmire"))
@@ -1381,9 +1383,10 @@ that the table will need to be scanned twice. Everything is a trade-off."
 ;; Test create-table
 (test reserved-column-names-s-sql
   (with-test-connection
-    (loop for x in '(from-test-data1 iceland-cities) do
-         (when (pomo:table-exists-p x)
-       (execute (:drop-table x :cascade))))
+    (when (pomo:table-exists-p 'from-test-data1)
+      (execute (:drop-table 'from-test-data1 :cascade)))
+    (when (pomo:table-exists-p 'iceland-cities)
+      (execute (:drop-table 'iceland-cities :cascade)))
     (query (:create-table 'iceland-cities
                       ((id :type serial)
                        (name :type (or (varchar 100) db-null) :unique t))))
@@ -1436,5 +1439,5 @@ that the table will need to be scanned twice. Everything is a trade-off."
                                                                            (:= 'from "Stykkishólmur")))
                       :single)
                2))
-    (loop for x in '(from-test-data1 iceland-cities) do
-         (execute (:drop-table x :cascade)))))
+    (execute (:drop-table 'from-test-data1 :cascade))
+    (execute (:drop-table 'iceland-cities :cascade))))

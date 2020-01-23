@@ -745,16 +745,27 @@
 			                                ((:distributed-by (airport_code)))))
 	               "CREATE TABLE faa.d_airports (airportid INTEGER NOT NULL, name TEXT NOT NULL, city TEXT NOT NULL, country TEXT NOT NULL, airport_code TEXT NOT NULL, icoa_code TEXT NOT NULL, latitude FLOAT8 NOT NULL, longitude FLOAT8 NOT NULL, altitude FLOAT8 NOT NULL, timezoneoffset REAL NOT NULL, dst_flag TEXT NOT NULL, tz TEXT NOT NULL) DISTRIBUTED BY (airport_code) ")))
 
-
 (test drop-table
   "Testing drop-table method."
   (is (equal (sql (:drop-table 'george))
              "DROP TABLE george"))
+  (is (equal (sql (:drop-table 'george-and-john))
+             "DROP TABLE george_and_john"))
   (is (equal (sql (:drop-table :if-exists 'george))
              "DROP TABLE IF EXISTS george"))
   (is (equal (sql (:drop-table :if-exists 'george :cascade))
              "DROP TABLE IF EXISTS george CASCADE"))
   (is (equal (sql (:drop-table  (:if-exists 'george) :cascade))
+             "DROP TABLE IF EXISTS george CASCADE"))
+  (is (equal (sql (:drop-table "george"))
+             "DROP TABLE george"))
+  (is (equal (sql (:drop-table "george-and-john"))
+             "DROP TABLE george_and_john"))
+  (is (equal (sql (:drop-table :if-exists "george"))
+             "DROP TABLE IF EXISTS george"))
+  (is (equal (sql (:drop-table :if-exists "george" :cascade))
+             "DROP TABLE IF EXISTS george CASCADE"))
+  (is (equal (sql (:drop-table  (:if-exists "george") :cascade))
              "DROP TABLE IF EXISTS george CASCADE")))
 
 (test alter-table

@@ -1193,6 +1193,7 @@ etc which depend on that table.
 (query (:drop-table 'table1))
 (query (:drop-table :if-exists 'table1))
 (query (:drop-table :if-exists 'table1 :cascade))
+(query (:drop-table (:if-exists 'table1-with-longer-name) :cascade))
 #+END_SRC
 
 ** sql-op :truncate (&rest args)
