@@ -1,16 +1,8 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: CL-POSTGRES-TRIVIAL-UTF-8; -*-
+
 ;;; Minimal utf-8 decoding and encoding library.
 ;;;
 ;;; See http://common-lisp.net/project/trivial-utf-8/
-
-(defpackage :cl-postgres-trivial-utf-8
-  (:use :common-lisp)
-  (:export #:utf-8-byte-length
-           #:string-to-utf-8-bytes
-           #:write-utf-8-bytes
-           #:utf-8-group-size
-           #:utf-8-bytes-to-string
-           #:read-utf-8-string
-           #:utf-8-decoding-error))
 
 (in-package :cl-postgres-trivial-utf-8)
 

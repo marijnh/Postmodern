@@ -1,3 +1,4 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN-TESTS; -*-
 (in-package :postmodern-tests)
 
 (fiveam:def-suite :postmodern-daos
@@ -102,7 +103,7 @@
                     '(((:ID . 1) (:A . "bar") (:B) (:C . 0) (:D . 0))
                       ((:ID . 2) (:A . "first short") (:B) (:C . 0) (:D . 0))
                       ((:ID . 3) (:A . "12.75") (:B) (:C . 0) (:D . 0))))))
-      (let ((dao-d-string (make-instance 'test-data-d-string :a "D string" :b nil :c 14.37
+      (let ((dao-d-string (make-instance 'test-data-d-string :a "D string" :b nil :c 14
                             :d 18.78)))
         (save-dao dao-d-string)
         (is (equalp (query (:select '* :from 'dao-test) :alists)
@@ -151,6 +152,9 @@
   (:metaclass dao-class)
   (:keys a))
 
+#|
+The ability to create tables with oids=true has been dropped by postgresql in version 12
+
 (test dao-class-oid
   (with-test-connection
     (execute (concatenate 'string (dao-table-definition 'test-oid) "with (oids=true)"))
@@ -164,7 +168,7 @@
           (update-dao back))
         (is (test-b (get-dao 'test-oid "a")) "c"))
       (execute (:drop-table 'test-oid)))))
-
+|#
 (defclass test-col-name ()
   ((a :col-type string :col-name aa :initarg :a :accessor test-a)
    (b :col-type string :col-name bb :initarg :b :accessor test-b)

@@ -1,3 +1,4 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
 (defmacro with-schema ((schema &key (strict t) (if-not-exist :create) (drop-after nil))
@@ -76,6 +77,7 @@ By default, this function only changes the search path for the current session."
   ;;(format t "creating schema: ~a" schema)
   (execute (format nil "CREATE SCHEMA ~a" (s-sql:to-sql-name schema t))))
 
-(defun drop-schema (schema &key (cascade nil))
-  "Drops an existing database schema 'schema'"
-  (execute (format nil "DROP SCHEMA ~a ~:[~;CASCADE~]" (s-sql:to-sql-name schema t) cascade)))
+(defun drop-schema (schema &key (if-exists nil) (cascade nil))
+  "Drops an existing database schema 'schema'
+A notice instead of an error is raised with the is-exists parameter."
+  (execute (format nil "DROP SCHEMA ~:[~;IF EXISTS~] ~a ~:[~;CASCADE~]" if-exists (s-sql:to-sql-name schema t) cascade)))

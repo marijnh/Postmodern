@@ -1,10 +1,11 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; -*-
+
 (defpackage :s-sql-system
   (:use :common-lisp :asdf))
 (in-package :s-sql-system)
 
-
 (defsystem "s-sql"
-  :description "Lispy dsl for sql"
+  :description "Lispy DSL for SQL"
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
@@ -12,14 +13,16 @@
                "alexandria")
   :components
   ((:module "s-sql"
-    :components ((:file "s-sql"))))
+	    :components ((:file "package")
+			 (:file "s-sql"))))
   :in-order-to ((test-op (test-op "s-sql/tests"))))
 
 (defsystem "s-sql/tests"
-  :depends-on ("postmodern" "s-sql" "cl-postgres/tests" "fiveam" )
+  :depends-on ("postmodern" "s-sql" "cl-postgres/tests" "fiveam")
   :components
   ((:module "s-sql/tests"
-            :components ((:file "tests")
+            :components ((:file "test-package")
+			 (:file "tests")
                          (:file "test-arrays" :depends-on ("tests"))
                          (:file "test-intervals" :depends-on ("tests"))
                          (:file "test-tables" :depends-on ("tests")))))

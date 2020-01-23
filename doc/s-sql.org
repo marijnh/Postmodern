@@ -1376,7 +1376,7 @@ Create a new database with the given name.
 ** sql-op :drop-database (name)
 
 Drops the named database. You may optionally pass :if-exists before the
-name to suppress the error message.
+name to suppress the error message. Examples:
 #+BEGIN_SRC lisp
 (query (:drop-database 'database-name))
 (query (:drop-database :if-exists 'database-name))

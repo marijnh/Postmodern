@@ -1,7 +1,4 @@
-(defpackage :s-sql-tests
-  (:use :common-lisp :fiveam :s-sql :cl-postgres :cl-postgres-error :cl-postgres-tests :postmodern)
-  (:shadow #:with-test-connection))
-
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: S-SQL-TESTS; -*-
 (in-package :s-sql-tests)
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
@@ -885,30 +882,30 @@ To sum the column len of all films and group the results by kind:"
                9))
     (is (equal (query (:select (:regr-count 'age 'salary) :from 'employee) :single)
                9))
-    (is (equal (query (:select (:regr-intercept 'salary 'age) :from 'employee) :single)
-               -62911.0363153233d0))
+    (is (equal (round (query (:select (:regr-intercept 'salary 'age) :from 'employee) :single))
+               (round -62911.0363153233d0)))  ;; using round because postgresql 12 generates a slightly different number than postgresql 11
     (is (equal (query (:select (:regr-intercept 'age 'salary) :from 'employee) :single)
                19.451778623108986d0))
     (is (equal (query (:select (:regr-r2 'salary 'age) :from 'employee) :single)
                0.6988991834467292d0))
     (is (equal (query (:select (:regr-r2 'age 'salary) :from 'employee) :single)
                0.6988991834467292d0))
-    (is (equal (query (:select (:regr-slope 'salary 'age) :from 'employee) :single)
-               4001.6811337466784d0))
-    (is (equal (query (:select (:regr-slope 'age 'salary) :from 'employee) :single)
-               1.7465139277410806d-4))
-    (is (equal (query (:select (:regr-sxx 'salary 'age) :from 'employee) :single)
-               250.88888888888889d0))
+    (is (equal (round (query (:select (:regr-slope 'salary 'age) :from 'employee) :single))
+               (round 4001.6811337466784d0)))  ;;  using round because postgresql 12 generates a slightly different number than postgresql 11
+    (is (equal (round (query (:select (:regr-slope 'age 'salary) :from 'employee) :single))
+               (round 1.7465139277410806d-4))) ;;  using round because postgresql 12 generates a slightly different number than postgresql 11
+    (is (equal (round (query (:select (:regr-sxx 'salary 'age) :from 'employee) :single))
+               (round 250.88888888888889d0)))  ;;  using round because postgresql 12 generates a slightly different number than postgresql 11
     (is (equal (query (:select (:regr-sxx 'age 'salary) :from 'employee) :single)
                5.748464512d9))
-    (is (equal (query (:select (:regr-sxy 'salary 'age) :from 'employee) :single)
-               1003977.3333333334d0))
-    (is (equal (query (:select (:regr-sxy 'age 'salary) :from 'employee) :single)
-               1003977.3333333334d0))
+    (is (equal (round (query (:select (:regr-sxy 'salary 'age) :from 'employee) :single))
+               (round 1003977.3333333334d0))) ;;  using round because postgresql 12 generates a slightly different number than postgresql 11
+    (is (equal (round (query (:select (:regr-sxy 'age 'salary) :from 'employee) :single))
+               (round 1003977.3333333334d0)))  ;;  using round because postgresql 12 generates a slightly different number than postgresql 11
     (is (equal (query (:select (:regr-syy 'salary 'age) :from 'employee) :single)
                5.748464512d9))
-    (is (equal (query (:select (:regr-syy 'age 'salary) :from 'employee) :single)
-               250.88888888888889d0))))
+    (is (equal (round (query (:select (:regr-syy 'age 'salary) :from 'employee) :single))
+               (round 250.88888888888889d0))))) ;;  using round because postgresql 12 generates a slightly different number than postgresql 11
 
 (test select-union
       "testing basic union."

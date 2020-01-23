@@ -1,3 +1,5 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; -*-
+
 (defpackage :cl-postgres-system
   (:use :common-lisp :asdf))
 (in-package :cl-postgres-system)
@@ -19,19 +21,19 @@
                (:feature :sbcl (:require :sb-bsd-sockets)))
   :components
   ((:module "cl-postgres"
-            :components ((:file "trivial-utf-8")
-                         (:file "ieee-floats")
+            :components ((:file "package")
                          (:file "features")
-                         (:file "package" :depends-on ("features"))
                          (:file "errors" :depends-on ("package"))
                          (:file "sql-string" :depends-on ("package"))
+                         (:file "trivial-utf-8" :depends-on ("package"))
                          (:file #.*string-file* :depends-on ("package" "trivial-utf-8"))
                          (:file "communicate" :depends-on (#.*string-file* "sql-string"))
                          (:file "messages" :depends-on ("communicate"))
                          (:file "oid" :depends-on ("package"))
+                         (:file "ieee-floats")
                          (:file "interpret" :depends-on ("oid" "communicate" "ieee-floats"))
                          (:file "protocol" :depends-on ("interpret" "messages" "errors"))
-                         (:file "public" :depends-on ("protocol"))
+                         (:file "public" :depends-on ("protocol" "features"))
                          (:file "bulk-copy" :depends-on ("public")))))
   :in-order-to ((test-op (test-op "cl-postgres/tests")
                          (test-op "cl-postgres/simple-date-tests"))))
@@ -40,16 +42,19 @@
   :depends-on ("cl-postgres" "fiveam")
   :components
   ((:module "cl-postgres/tests"
-            :components ((:file "tests"))))
+            :components ((:file "test-package")
+			 (:file "tests"))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
              (uiop:symbol-call :fiveam '#:run! :cl-postgres)))
 
+
 (defsystem "cl-postgres/simple-date-tests"
-  :depends-on ("cl-postgres" "cl-postgres/tests" "fiveam" "simple-date/postgres-glue")
+  :depends-on ("cl-postgres" "cl-postgres/tests" "fiveam" "simple-date" "simple-date/postgres-glue")
   :components
   ((:module "cl-postgres/tests"
-            :components ((:file "simple-date-tests"))))
+            :components ((:file "test-package")
+                         (:file "simple-date-tests"))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-simple-date-tests '#:prompt-connection)
              (uiop:symbol-call :fiveam '#:run! :cl-postgres-simple-date)))

@@ -1,3 +1,4 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: CL-USER; -*-
 (defpackage :postmodern
   (:use #-postmodern-use-mop :common-lisp
         #+postmodern-use-mop :closer-common-lisp
@@ -20,7 +21,7 @@
    #:connect-toplevel #:disconnect-toplevel
    #:clear-connection-pool #:*max-pool-size* #:*default-use-ssl*
    #:list-connections
-   #:query #:execute #:doquery 
+   #:query #:execute #:doquery
    #:parse-queries #:read-queries #:execute-file
    #:prepare #:defprepared #:defprepared-with-names
    #:sequence-next #:list-sequences #:sequence-exists-p
@@ -45,9 +46,15 @@
    #:list-index-definitions #:list-foreign-keys #:list-unique-or-primary-constraints
    #:list-all-constraints #:describe-constraint #:describe-foreign-key-constraints
    #:list-triggers #:list-detailed-triggers #:list-database-users
+   #:list-roles
    #:find-primary-key-info
    #:change-toplevel-database
    #:list-available-extensions
+   #:list-installed-extensions
+   #:cache-hit-ratio
+   #:bloat-measurement
+   #:unused-indexes
+   #:check-query-performance
 
    #:deftable #:*table-name* #:*table-symbol*
    #:create-table #:create-all-tables #:create-package-tables

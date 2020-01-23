@@ -1,17 +1,10 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: CL-POSTGRES-IEEE-FLOATS; -*-
+(in-package :cl-postgres-ieee-floats)
+
 ;;; Functions for converting floating point numbers represented in
 ;;; IEEE 754 style to lisp numbers.
 ;;;
 ;;; See http://common-lisp.net/project/ieee-floats/
-
-(defpackage :cl-postgres-ieee-floats
-  (:use :common-lisp)
-  (:export :make-float-converters
-	   :encode-float32
-	   :decode-float32
-	   :encode-float64
-	   :decode-float64))
-
-(in-package :cl-postgres-ieee-floats)
 
 ;; The following macro may look a bit overcomplicated to the casual
 ;; reader. The main culprit is the fact that NaN and infinity can be

@@ -1,9 +1,4 @@
-
-(defpackage :simple-date-cl-postgres-glue
-  (:use :common-lisp :simple-date)
-  (:export *simple-date-sql-readtable*
-           :simple-date-sql-readtable))
-
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: SIMPLE-DATE-CL-POSTGRES-GLUE; -*-
 (in-package :simple-date-cl-postgres-glue)
 
 (defparameter *simple-date-sql-readtable*

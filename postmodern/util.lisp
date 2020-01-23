@@ -1,3 +1,4 @@
+;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
 (defun to-identifier (name)
@@ -715,6 +716,29 @@ table."
                          'usename))
      collect (first x)))
 
+(defun list-roles (&optional (lt nil))
+  "Returns a list of alists of rolenames, role attributes and membership in roles.
+See https://www.postgresql.org/docs/current/role-membership.html for an explanation.
+The optional parameter can be used to set the return list types to :alists or :plists."
+  (let ((sql-query "SELECT r.rolname, r.rolsuper, r.rolinherit,
+  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,
+  r.rolconnlimit, r.rolvaliduntil,
+  ARRAY(SELECT b.rolname
+        FROM pg_catalog.pg_auth_members m
+        JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)
+        WHERE m.member = r.oid) as memberof
+  , r.rolreplication
+  , r.rolbypassrls
+  FROM pg_catalog.pg_roles r
+  WHERE r.rolname !~ '^pg_'
+  ORDER BY 1;"))
+    (cond ((equal lt :alists)
+           (query  sql-query :alists))
+          ((equal lt :plists)
+           (query  sql-query :plists))
+          (t (query sql-query)))))
+
+
 ;;;; Misc that need to be reorganized
 
 (defun change-toplevel-database (new-database user password host)
@@ -739,3 +763,137 @@ Recommended only for development work."
   (loop for x in (query (:order-by (:select 'extname :from 'pg-extension)
                                    'extname))
        collect (first x)))
+
+
+(defun replace-non-alphanumeric-chars (str &optional (replacement #\_))
+  "Takes a string and a replacement char and replaces any character which is not alphanumeric or an asterisk
+with a specified character - by default an underscore and returns the modified string."
+  (let ((str1 str))
+        (with-output-to-string (*standard-output*)
+                               (loop :for ch :of-type character :across str1
+                                     :do (if (or (eq ch #\*)
+                                                 (alphanumericp ch))
+                                             (write-char ch)
+                                             (write-char replacement))))))
+
+(defun cache-hit-ratio ()
+  "The cache hit ratio shows data on serving the data from memory compared to how often you have to go to disk.
+This function returns a list of heapblocks read from disk, heapblocks hit from memory and the ratio of
+heapblocks hit from memory / total heapblocks hit.
+Borrowed from: https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/"
+ (query "SELECT
+           sum(heap_blks_read) as heap_read,
+           sum(heap_blks_hit)  as heap_hit,
+           sum(heap_blks_hit) / (sum(heap_blks_hit) + sum(heap_blks_read)) as ratio
+         FROM
+           pg_statio_user_tables;"))
+
+(defun bloat-measurement ()
+  "Bloat measurement of unvacuumed dead tuples. Borrowed from: https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/"
+  (query "WITH constants AS (
+  SELECT current_setting('block_size')::numeric AS bs, 23 AS hdr, 4 AS ma
+), bloat_info AS (
+  SELECT
+    ma,bs,schemaname,tablename,
+    (datawidth+(hdr+ma-(case when hdr%ma=0 THEN ma ELSE hdr%ma END)))::numeric AS datahdr,
+    (maxfracsum*(nullhdr+ma-(case when nullhdr%ma=0 THEN ma ELSE nullhdr%ma END))) AS nullhdr2
+  FROM (
+    SELECT
+      schemaname, tablename, hdr, ma, bs,
+      SUM((1-null_frac)*avg_width) AS datawidth,
+      MAX(null_frac) AS maxfracsum,
+      hdr+(
+        SELECT 1+count(*)/8
+        FROM pg_stats s2
+        WHERE null_frac<>0 AND s2.schemaname = s.schemaname AND s2.tablename = s.tablename
+      ) AS nullhdr
+    FROM pg_stats s, constants
+    GROUP BY 1,2,3,4,5
+  ) AS foo
+), table_bloat AS (
+  SELECT
+    schemaname, tablename, cc.relpages, bs,
+    CEIL((cc.reltuples*((datahdr+ma-
+      (CASE WHEN datahdr%ma=0 THEN ma ELSE datahdr%ma END))+nullhdr2+4))/(bs-20::float)) AS otta
+  FROM bloat_info
+  JOIN pg_class cc ON cc.relname = bloat_info.tablename
+  JOIN pg_namespace nn ON cc.relnamespace = nn.oid AND nn.nspname = bloat_info.schemaname AND nn.nspname <> 'information_schema'
+), index_bloat AS (
+  SELECT
+    schemaname, tablename, bs,
+    COALESCE(c2.relname,'?') AS iname, COALESCE(c2.reltuples,0) AS ituples, COALESCE(c2.relpages,0) AS ipages,
+    COALESCE(CEIL((c2.reltuples*(datahdr-12))/(bs-20::float)),0) AS iotta -- very rough approximation, assumes all cols
+  FROM bloat_info
+  JOIN pg_class cc ON cc.relname = bloat_info.tablename
+  JOIN pg_namespace nn ON cc.relnamespace = nn.oid AND nn.nspname = bloat_info.schemaname AND nn.nspname <> 'information_schema'
+  JOIN pg_index i ON indrelid = cc.oid
+  JOIN pg_class c2 ON c2.oid = i.indexrelid
+)
+SELECT
+  type, schemaname, object_name, bloat, pg_size_pretty(raw_waste) as waste
+FROM
+(SELECT
+  'table' as type,
+  schemaname,
+  tablename as object_name,
+  ROUND(CASE WHEN otta=0 THEN 0.0 ELSE table_bloat.relpages/otta::numeric END,1) AS bloat,
+  CASE WHEN relpages < otta THEN '0' ELSE (bs*(table_bloat.relpages-otta)::bigint)::bigint END AS raw_waste
+FROM
+  table_bloat
+    UNION
+SELECT
+  'index' as type,
+  schemaname,
+  tablename || '::' || iname as object_name,
+  ROUND(CASE WHEN iotta=0 OR ipages=0 THEN 0.0 ELSE ipages/iotta::numeric END,1) AS bloat,
+  CASE WHEN ipages < iotta THEN '0' ELSE (bs*(ipages-iotta))::bigint END AS raw_waste
+FROM
+  index_bloat) bloat_summary
+ORDER BY raw_waste DESC, bloat DESC"))
+
+(defun unused-indexes ()
+  "Returns a list of lists showing schema.table, indexname, index_size and number of scans. The code was borrowed from: https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/"
+  (query "SELECT
+            schemaname || '.' || relname AS table,
+            indexrelname AS index,
+            pg_size_pretty(pg_relation_size(i.indexrelid)) AS index_size,
+            idx_scan as index_scans
+         FROM pg_stat_user_indexes ui
+         JOIN pg_index i ON ui.indexrelid = i.indexrelid
+         WHERE NOT indisunique AND idx_scan < 50 AND pg_relation_size(relid) > 5 * 8192
+         ORDER BY pg_relation_size(i.indexrelid) / nullif(idx_scan, 0) DESC NULLS FIRST,
+          pg_relation_size(i.indexrelid) DESC;"))
+
+(defun check-query-performance (&optional (ob nil) (num-calls 100) (limit 20))
+  "This function requires that postgresql extension pg_stat_statements must be loaded via shared_preload_libraries.
+It is borrowed from https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/.
+Optional parameters OB allow order-by to be 'calls', 'total-time', 'rows-per' or 'time-per', defaulting to time-per.
+num-calls to require that the number of calls exceeds a certain threshold, and limit to limit the number of rows returned.
+It returns a list of lists, each row containing the query, number of calls, total_time, total_time/calls, stddev_time, rows,
+rows/calls and the cache hit percentage."
+  (unless (or (eql ob "calls")
+              (eql ob "total-time")
+              (eql ob "rows-per")
+              (eql ob "time-per"))
+    (setf ob "time-per"))
+  (setf ob (with-output-to-string (*standard-output*)
+             (loop :for ch :of-type character :across ob
+                :do (if (or (eq ch #\*)
+                            (alphanumericp ch))
+                        (write-char ch)
+                        (write-char #\_)))))
+  (let ((sql-statement (format nil
+                               "SELECT query,
+       calls,
+       total_time,
+       total_time / calls as time_per,
+       stddev_time,
+       rows,
+       rows / calls as rows_per,
+       100.0 * shared_blks_hit / nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
+FROM pg_stat_statements
+WHERE query not similar to '%pg_%'
+and calls > ~a
+ORDER BY ~a
+DESC LIMIT ~a;" num-calls ob limit)))
+    (query sql-statement)))
