@@ -16,7 +16,7 @@
            #:database-socket-error
            #:connection-meta
            #:connection-parameters
-           #:get-postgresql-version
+           #:get-postgresql-version-as-float
            #:open-database
            #:reopen-database
            #:database-open-p

@@ -18,7 +18,7 @@
 login information in order to be able to automatically re-establish a
 connection when it is somehow closed."))
 
-(defun get-postgresql-version (connection)
+(defun get-postgresql-version-as-float (connection)
   "Retrieves the version number of the connected postgresql database as a float."
   (let* ((version-str (gethash "server_version" (connection-parameters connection)))
          (major-minor-split (split-sequence:split-sequence #\. version-str))
