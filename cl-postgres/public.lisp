@@ -35,13 +35,7 @@ These are needed for cancelling connections and error processing with respect to
 
 (defun get-postgresql-version (connection)
   "Returns the version of the connected postgresql instance."
-  (let* ((version-str (gethash "server_version" (connection-parameters connection)))
-         (split-version (split-sequence:split-sequence #\. version-str))
-         (major-version (parse-integer (first split-version)))
-         (minor-version (if (> (length split-version) 1)
-                            (/ (parse-integer (second split-version)) (expt 10 (length (second split-version))))
-                            0)))
-    (+ major-version minor-version)))
+  (gethash "server_version" (connection-parameters connection)))
 
 (defun database-open-p (connection)
   "Returns a boolean indicating whether the given connection is
