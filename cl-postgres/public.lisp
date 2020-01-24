@@ -43,6 +43,10 @@ These are needed for cancelling connections and error processing with respect to
   (list (gethash "pid" (slot-value connection 'parameters))
         (gethash "secret-key" (slot-value connection 'parameters))))
 
+(defun get-postgresql-version (connection)
+  "Returns the version of the connected postgresql instance."
+  (gethash "server_version" (connection-parameters connection)))
+
 (defun database-open-p (connection)
   "Returns a boolean indicating whether the given connection is
 currently connected."

@@ -74,6 +74,8 @@ This function blocks until a notification is received on the connection.
 The PostgreSQL LISTEN command must be used to enable listening for
 notifications.
 
+** function get-postgresql-version (database-connection)
+This function returns the version of the connected postgresql instance as a number (generally a float assuming a major-version.minor-version).
 * Querying
 ** function exec-query (database-connection query &optional (row-reader 'ignore-row-reader))
 → result

@@ -1579,21 +1579,6 @@ Note that with extended tables you can have tables without columns that are inhe
                     (:check `(" CHECK " ,@(sql-expand value)))
                     (t (sql-error "Unknown alter column option: ~A." option))))))
 
-(def-sql-op :create-table-full (name (&rest columns) (&rest table-constraints) (&rest extended-table-constraints))
-  "Create a table with more complete syntax."
-  (when (null columns)
-    (sql-error "No columns defined for table ~A." name))
-  `("CREATE " ,@ (list (expand-table-name name)) " ("
-                    ,@(loop :for ((column-name . args) . rest) :on columns
-                            :append (expand-table-column column-name args)
-                            :if rest :collect ", ")
-                    ,@(loop :for ((constraint . args)) :on table-constraints
-			    :collect ", "
-                            :append (expand-table-constraint constraint args))
-                    ")"
-                    ,@(loop :for ((constraint . args)) :on extended-table-constraints
-                         :append (expand-extended-table-constraint constraint args))))
-
 (def-sql-op :alter-table (name action &rest args)
   (labels
       ((drop-action (action)
@@ -1690,24 +1675,24 @@ that the table will need to be scanned twice. Everything is a trade-off."
 
 (defmacro def-drop-op (op-name word)
   `(def-sql-op ,op-name (&rest args)
-     (let ((concurrently (if (eq (car args) :concurrently)
-                          (pop args)
-                          nil))
-           (if-exists (if (eq (car args) :if-exists)
-                          (pop args)
-                          nil))
-           (name (pop args))
-           (cascade (if (or (eq (car args) :cascade)
-                            (eq (cadr args) :cascade))
-                        t
-                        nil)))
+     (let* ((concurrently (if (eq (car args) :concurrently)
+                              (pop args)
+                              nil))
+            (if-exists (if (eq (car args) :if-exists)
+                           (pop args)
+                           nil))
+            (name (pop args))
+            (cascade (if (or (eq (car args) :cascade)
+                             (eq (cadr args) :cascade))
+                         t
+                         nil)))
        `("DROP " ,,word " "
                  ,@(when concurrently '("CONCURRENTLY "))
                  ,@(when if-exists '("IF EXISTS "))
                  ,@(if (and (consp name) (eq :if-exists (car name)))
-                       `("IF EXISTS " ,(car (sql-expand (cadr name))))
-                         (sql-expand name))
-         ,@(when cascade '(" CASCADE"))))))
+                       `("IF EXISTS " ,(to-sql-name (cadr name) :escape-p t))
+                       (list (to-sql-name name :escape-p t)))
+                 ,@(when cascade '(" CASCADE"))))))
 
 (def-drop-op :drop-table "TABLE")
 (def-drop-op :drop-index "INDEX")

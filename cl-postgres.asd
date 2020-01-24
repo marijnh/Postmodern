@@ -16,7 +16,7 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
-  :depends-on ("md5" "ironclad" "secure-random" "trivial-utf-8" "cl-base64"
+  :depends-on ("md5" "split-sequence" "ironclad" "secure-random" "trivial-utf-8" "cl-base64"
                (:feature (:or :sbcl :allegro :ccl :clisp :genera :armedbear :cmucl) "usocket")
                (:feature :sbcl (:require :sb-bsd-sockets)))
   :components
