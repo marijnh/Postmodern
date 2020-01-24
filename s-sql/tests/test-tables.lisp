@@ -725,26 +725,6 @@
                2))
     (execute (:drop-table 'color))))
 
-(test create-table-full-1
-      "Test :create-table with extended table constraints."
-      (is (equal (s-sql:sql
-                  (:create-table-full faa.d_airports
-			                                ((AirportID :type integer)
-			                                 (Name      :type text)
-			                                 (City      :type text)
-			                                 (Country   :type text)
-			                                 (airport_code :type text)
-			                                 (ICOA_code :type text)
-			                                 (Latitude  :type float8)
-			                                 (Longitude :type float8)
-			                                 (Altitude  :type float8)
-			                                 (TimeZoneOffset :type float)
-			                                 (DST_Flag  :type text)
-			                                 (TZ        :type text))
-			                                ()
-			                                ((:distributed-by (airport_code)))))
-	               "CREATE TABLE faa.d_airports (airportid INTEGER NOT NULL, name TEXT NOT NULL, city TEXT NOT NULL, country TEXT NOT NULL, airport_code TEXT NOT NULL, icoa_code TEXT NOT NULL, latitude FLOAT8 NOT NULL, longitude FLOAT8 NOT NULL, altitude FLOAT8 NOT NULL, timezoneoffset REAL NOT NULL, dst_flag TEXT NOT NULL, tz TEXT NOT NULL) DISTRIBUTED BY (airport_code) ")))
-
 (test drop-table
   "Testing drop-table method."
   (is (equal (sql (:drop-table 'george))

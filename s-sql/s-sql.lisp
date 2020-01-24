@@ -1579,21 +1579,6 @@ Note that with extended tables you can have tables without columns that are inhe
                     (:check `(" CHECK " ,@(sql-expand value)))
                     (t (sql-error "Unknown alter column option: ~A." option))))))
 
-(def-sql-op :create-table-full (name (&rest columns) (&rest table-constraints) (&rest extended-table-constraints))
-  "Create a table with more complete syntax."
-  (when (null columns)
-    (sql-error "No columns defined for table ~A." name))
-  `("CREATE " ,@ (list (expand-table-name name)) " ("
-                    ,@(loop :for ((column-name . args) . rest) :on columns
-                            :append (expand-table-column column-name args)
-                            :if rest :collect ", ")
-                    ,@(loop :for ((constraint . args)) :on table-constraints
-			    :collect ", "
-                            :append (expand-table-constraint constraint args))
-                    ")"
-                    ,@(loop :for ((constraint . args)) :on extended-table-constraints
-                         :append (expand-extended-table-constraint constraint args))))
-
 (def-sql-op :alter-table (name action &rest args)
   (labels
       ((drop-action (action)
