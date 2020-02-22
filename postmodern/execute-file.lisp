@@ -214,10 +214,12 @@ Another test case for the classic quotes:
 
 (defun parse-queries (file-content)
   "read SQL queries in given string and split them, returns a list"
-    (with-input-from-string (s (concatenate 'string file-content ";"))
-      (loop :for query := (parse-query s)
-         :while query
-         :collect query)))
+  (with-input-from-string (s (concatenate 'string file-content ";"))
+    (let ((whitespace '(#\Space #\Tab #\Newline #\Linefeed #\Page #\Return)))
+      (flet ((emptyp (query) (every (alexandria:rcurry #'member whitespace) query)))
+        (loop :for query := (parse-query s)
+              :while (and query (not (emptyp query)))
+              :collect query)))))
 
 (defun read-queries (filename)
   "read SQL queries in given file and split them, returns a list"
