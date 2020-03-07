@@ -206,7 +206,6 @@ It returns the server-response as a normal string, the server-provided-salt as a
   "Returns a byte array"
   (when (stringp salted-password)
     (setf salted-password (ironclad:ascii-string-to-byte-array salted-password)))
-
   (ironclad:hmac-digest
    (ironclad:update-hmac
     (ironclad:make-hmac salted-password sha-method)

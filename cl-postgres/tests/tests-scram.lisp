@@ -71,7 +71,7 @@
 ;; Server final message: v=rmF9pqV8S7suAoZWja4dJRkFsKQ=
 ;; Server's server signature (hex): ae617da6a57c4bbb2e0286568dae1d251905b0a4
 
-*/
+#|
 Comparing with Go library tests https://github.com/lib/pq/pull/608/files
 
 Note: hex.DecodeString() in go returns the bytes represented by the hexadecimal string
@@ -168,3 +168,4 @@ func TestComputeServerSignature(t *testing.T) {
     ClientFinal = <<"c=biws,r=9IZ2O01zb9IgiIZ1WJ/zgpJBjx/oIRLs02gGSHcw1KEty3eY,p=AmNKosjJzS31NTlQ"
                     "YNs5BTeQjdHdk7lOflDo5re2an8=">>,
     ServerFinal = <<"v=U+ppxD5XUKtradnv8e2MkeupiA8FU87Sg8CXzXHDAzw=">>
+|#

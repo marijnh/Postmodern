@@ -74,7 +74,7 @@
 (defun copier-write-value (s val)
   (typecase val
     (string (let ((pg-string (with-output-to-string (str)
-                               (loop for byte across (cl-postgres-trivial-utf-8:string-to-utf-8-bytes val) do
+                               (loop for byte across (trivial-utf-8:string-to-utf-8-bytes val) do
                                     (case (code-char byte)
                                       (#\Space (princ " " str))
                                       ((#\Newline #\Tab) (format str "\\~a" (code-char byte)))
@@ -131,4 +131,3 @@
               (#\Z (read-uint1 socket)
                    (return-from find-ready))
               (t :skip))))))
-

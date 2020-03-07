@@ -230,16 +230,6 @@
   (:export #:sbcl-available
            #:sbcl-ipv6-available))
 
-(defpackage :cl-postgres-trivial-utf-8
-  (:use :common-lisp)
-  (:export #:utf-8-byte-length
-           #:string-to-utf-8-bytes
-           #:write-utf-8-bytes
-           #:utf-8-group-size
-           #:utf-8-bytes-to-string
-           #:read-utf-8-string
-           #:utf-8-decoding-error))
-
 (defpackage :cl-postgres-ieee-floats
   (:use :common-lisp)
   (:export :make-float-converters
