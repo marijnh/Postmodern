@@ -138,15 +138,15 @@
 (defun gen-client-nonce (&optional (nonce-length 32))
   "Generate a random alphanumeric nonce with a default length of 32."
   (let* ((chars "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
-        (chars-length 62)
-         (password (make-string nonce-length)))
+         (chars-length 62)
+         (client-nonce (make-string nonce-length)))
     (dotimes (i nonce-length)
-      (setf (aref password i) (aref chars (secure-random:number chars-length))))
-        password))
+      (setf (aref client-nonce i) (aref chars (secure-random:number chars-length))))
+        client-nonce))
 
 (defun gen-client-initial-response (user-name client-nonce)
   (when (not user-name) (setf user-name ""))
-  (format nil "n,,n=~a,r=~a" user-name client-nonce))
+  (format nil "n,,n=~a,r=~a" (saslprep-normalize user-name) client-nonce))
 
 (defun gen-salted-password (password server-salt iterations &key (digest :sha256) (salt-type :byte-array))
   "Takes an password (must be an ascii string) and server salt (by default presumed byte-array but can be set for :string or :hex) and an integer iterations. Digest is presumed to be :sha256 but can be set to other valid ironclad digests. returns a byte-array"
@@ -157,7 +157,7 @@
         ((eq salt-type :hex) (setf server-salt (ironclad:hex-string-to-byte-array server-salt)))
         (t (cerror "Please enter valid salt-type" "unknown salt-type in gen-salted-password")))
   (ironclad:pbkdf2-hash-password
-   (ironclad:ascii-string-to-byte-array password)
+   (ironclad:ascii-string-to-byte-array (saslprep-normalize password))
    :salt server-salt
    :digest digest
    :iterations iterations))
