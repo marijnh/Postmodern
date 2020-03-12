@@ -216,9 +216,10 @@ but get it from the postmodern connection parameters."
   "Polite way of terminating a query at the database (as opposed to calling close-database).
 Slower than (terminate-backend pid) and does not always work."
     (let ((database-name (cl-postgres::connection-db database))
-        (user (cl-postgres::connection-user database))
-        (password (cl-postgres::connection-password database))
-        (host (cl-postgres::connection-host database)))
+          (user (cl-postgres::connection-user database))
+          (password (cl-postgres::connection-password database))
+          (host (cl-postgres::connection-host database))
+          (port (cl-postgres::connection-port database)))
     (with-connection `(,database-name ,user ,password ,host)
       (query "select pg_cancel_backend($1);" pid))))
 
@@ -228,6 +229,7 @@ Faster than (cancel-backend pid) and more reliable."
   (let ((database-name (cl-postgres::connection-db database))
         (user (cl-postgres::connection-user database))
         (password (cl-postgres::connection-password database))
-        (host (cl-postgres::connection-host database)))
+        (host (cl-postgres::connection-host database))
+        (port (cl-postgres::connection-port database)))
     (with-connection `(,database-name ,user ,password ,host)
       (query "select pg_terminate_backend($1);" pid))))
