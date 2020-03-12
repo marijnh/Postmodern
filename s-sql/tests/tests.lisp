@@ -10,8 +10,37 @@
 
 (fiveam:in-suite :s-sql)
 
+(defun prompt-for-postmodern (tc)
+  "If *test-connection* has more than four parameters, figure out the parameters from potential keys being passed and add those as key parameters in the connection list. This ugly hack is caused because (with-connection) in postmodern takes keyword parameters and (with-connection) in cl-postgres just has optional parameters."
+  (let ((tc-with-keys nil))
+    (loop for x in tc for y from 1 to 4 do
+         (push x tc-with-keys)
+         (pop tc))
+    (if (integerp (first tc))
+        (progn
+          (push :port tc-with-keys)
+          (push (first tc) tc-with-keys)
+          (pop tc))
+        (loop for x in tc until (integerp x) do
+             (pop tc)
+             (when (integerp (first tc))
+               (push :port tc-with-keys)
+               (push (first tc) tc-with-keys))))
+    (if (member (first tc) '(:no :try :yes :full))
+        (progn
+          (push :use-ssl tc-with-keys)
+          (push (first tc) tc-with-keys)
+          (pop tc))
+        (loop for x in tc until (member x '(:no :try :yes :full)) do
+                (pop tc)
+             (when (member (first tc) '(:no :try :yes :full))
+               (push :use-ssl tc-with-keys)
+               (push (first tc) tc-with-keys))))
+    (nreverse tc-with-keys)))
+
+
 (defmacro with-test-connection (&body body)
-  `(with-connection (prompt-connection) ,@body))
+  `(with-connection (prompt-for-postmodern (prompt-connection)) ,@body))
 
 (defmacro protect (&body body)
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
