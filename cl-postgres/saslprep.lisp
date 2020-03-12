@@ -8,6 +8,50 @@
 ;; RFC 5802 https://tools.ietf.org/html/rfc5802
 ;; RFC 7677 https://tools.ietf.org/html/rfc7677
 
+(define-condition bad-char-error (error)
+  ((message
+    :initarg :message
+    :accessor bad-char-error-message
+    :initform nil
+    :documentation "Text message indicating what went wrong with the validation.")
+   (value
+    :initarg :value
+    :accessor bad-char-error-value
+    :initform nil
+    :documentation "The value of the field for which the error is signalled.")
+   (normalization-form
+    :initarg :normalization-form
+    :accessor bad-char-error-normalization-form
+    :initform nil
+    :documentation "The normalization form for the error was signalled.")))
+
+(defmethod print-object ((object bad-char-error) stream)
+  (print-unreadable-object (object stream :type t :identity t)
+    (format stream "~@[L~A ~]~S~@[: ~S~]"
+            (bad-char-error-normalization-form object)
+            (bad-char-error-message object)
+            (bad-char-error-value object))))
+
+(defun bad-char-error (message &key value normalization-form)
+  (error 'bad-char-error
+         :message message
+         :value value
+         :normalization-form normalization-form))
+
+(defun char-printable-ascii-p (ch)
+  "Returns t if the char is printable ascii."
+  (if (member ch '(#\  #\! #\" #\# #\$ #\% #\& #\' #\( #\) #\* #\+ #\, #\- #\. #\/ #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\: #\; #\< #\= #\> #\? #\@ #\A #\B #\C #\D #\E #\F #\G #\H #\I #\J #\K #\L #\M #\N #\O #\P #\Q #\R #\S #\T #\U #\V #\W #\X #\Y #\Z #\[ #\\ #\] #\^ #\_ #\` #\a #\b #\c #\d #\e #\f #\g #\h #\i #\j #\k #\l #\m #\n #\o #\p #\q #\r #\s #\t #\u #\v #\w #\x #\y #\z #\{ #\| #\} #\~))
+      t
+      nil))
+
+(defun string-printable-ascii-p (str)
+  "Returns t if every character in the string is printable ascii."
+  (every #'char-printable-ascii-p str))
+
+(defun code-point-printable-ascii-p (int)
+  "Returns t if the int is a printable ascii code-point."
+  (and (>= int 32)
+       (<= 126)))
 
 (defun char-mapped-to-nothing-p (chr)
   "Returns t if the character should be mapped to nothing per RFC 3454 Table B.1 and RFC 4013"
