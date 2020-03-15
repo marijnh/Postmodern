@@ -35,7 +35,9 @@ avoid interactive input you can set the following environment
 variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
                         condition
                         (mapcar #'list env-vars descriptions provided defaults))
-                (mapcar #'ask descriptions provided defaults)))))))
+                (mapcar #'ask descriptions provided defaults)))))
+    (setf (elt *test-connection* 4) (parse-integer (elt *test-connection* 4)))
+    *test-connection*))
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
 ;; refers to a valid postgresql database, then after loading the file,
@@ -221,8 +223,8 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
 
 (test bulk-writer
   (with-test-connection
-    (exec-query connection "create temporary table test (a int, b text, c date, d timestamp, e int[])")
-    (let ((stream (open-db-writer *test-connection* 'test '(a b c d e))))
+    (ignore-errors (exec-query connection "create table test_bulk_writer (a int, b text, c date, d timestamp, e int[])"))
+    (let ((stream (open-db-writer *test-connection* 'test_bulk_writer '(a b c d e))))
       ;; test a variety of types (int, text, date, timstamp, int array)
       (loop for row in '((1 "one" "2012-01-01" "2012-01-01 00:00" #(1 2 3 42))
                          (2 "two" "2012-01-01" "2012-01-01 00:00" #(3 2 1 42))
@@ -235,7 +237,11 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
            do
            (db-write-row stream row))
       (close-db-writer stream))
-    (exec-query connection "select * from test")))
+    (is (equalp (second (first (exec-query connection "select * from test_bulk_writer" 'list-row-reader)))
+                "one"))
+    (is (equal (first (fourth (exec-query connection "select * from test_bulk_writer" 'list-row-reader)))
+               4))
+    (exec-query connection "drop table test_bulk_writer")))
 
 (test row-boolean-array
   (with-test-connection
