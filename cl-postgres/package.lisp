@@ -13,6 +13,7 @@
            #:database-error-extract-name
            #:database-connection
            #:database-connection-error
+           #:auth-error
            #:database-socket-error
            #:connection-meta
            #:connection-parameters
@@ -110,7 +111,14 @@
            #:server-shutdown
            #:syntax-error-or-access-violation
            #:system-error
-           #:unique-violation))
+           #:unique-violation
+           #:protocol-violation
+           #:connection-exception
+           #:connection-does-not-exist
+           #:connection-failure
+           #:sqlclient-unable-to-establish-sqlconnection
+           #:sqlserver-rejected-establishment-of-sqlconnection
+           #:transaction-resolution-unknown))
 
 (defpackage :cl-postgres-oid
   (:use :common-lisp)

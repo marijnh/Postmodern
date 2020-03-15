@@ -18,6 +18,12 @@
 login information in order to be able to automatically re-establish a
 connection when it is somehow closed."))
 
+(defvar *retry-connect-times* 5
+  "How many times to we try to connect again. Borrowed from pgloader")
+
+(defvar *retry-connect-delay* 0.5
+  "How many seconds to wait before trying to connect again. Borrowed from pgloader")
+
 (defun get-postgresql-version (connection &optional (return-type 'string) )
   "Retrieves the version number of the connected postgresql database. The default is returning it as a string,
 but it can be returned as a list of integers or as a float."
@@ -52,10 +58,6 @@ These are needed for cancelling connections and error processing with respect to
   (list (gethash "pid" (slot-value connection 'parameters))
         (gethash "secret-key" (slot-value connection 'parameters))))
 
-(defun get-postgresql-version (connection)
-  "Returns the version of the connected postgresql instance."
-  (gethash "server_version" (connection-parameters connection)))
-
 (defun database-open-p (connection)
   "Returns a boolean indicating whether the given connection is
 currently connected."
@@ -74,8 +76,9 @@ but does not verify the server hostname; use :full to also verify the hostname).
   (check-type use-ssl (member :no :try :yes :full) ":no, :try, :yes or :full")
   (let ((conn (make-instance 'database-connection :host host :port port :user user
                              :password password :socket nil :db database :ssl use-ssl
-                             :service service)))
-    (initiate-connection conn)
+                             :service service))
+        (connection-attempts 0))
+    (initiate-connection conn connection-attempts)
     conn))
 
 #+(and (or cl-postgres.features:sbcl-available ccl allegro) unix)
@@ -156,12 +159,12 @@ but does not verify the server hostname; use :full to also verify the hostname).
                       :format :binary
                       :type :stream))
 
-(defun initiate-connection (conn)
+(defun initiate-connection (conn connection-attempts)
   "Check whether a connection object is connected, try to connect it
 if it isn't."
   (flet ((add-restart (err)
            (restart-case (error (wrap-socket-error err))
-             (:reconnect () :report "Try again." (initiate-connection conn))))
+             (:reconnect () :report "Try again." (initiate-connection conn connection-attempts))))
          (assert-unix ()
            #+unix t
            #-unix (error "Unix sockets only available on Unix (really)")))
@@ -192,7 +195,15 @@ if it isn't."
               (*connection-params* (make-hash-table :test 'equal)))
           (setf (connection-parameters conn) *connection-params*)
           (unwind-protect
-               (setf socket (authenticate socket conn)
+               (setf socket (handler-case (authenticate socket conn)
+                              (cl-postgres-error:protocol-violation (err)
+                                (setf finished t)
+                                (ensure-socket-is-closed socket)
+                                ;; If we settled on a single logging library, I would suggest logging this kind of situation with at least
+                                ;; the following data (database-error-message err) (database-error-detail err)
+                                (incf connection-attempts)
+                                (when (< connection-attempts *retry-connect-times*)
+                                  (initiate-connection conn connection-attempts))))
                      (connection-timestamp-format conn)
                      (if (string= (gethash "integer_datetimes" (connection-parameters conn)) "on")
                          :integer :float)
@@ -211,20 +222,14 @@ if it isn't."
       (stream-error (e) (add-restart e))))
     (values))
 
-(defvar *retry-connect-times* 5
-  "How many times to we try to connect again. Borrowed from pgloader")
-
-(defvar *retry-connect-delay* 0.5
-  "How many seconds to wait before trying to connect again. Borrowed from pgloader")
-
-(defun reopen-database (conn)
+(defun reopen-database (conn &optional (connection-attempts 0))
   "Reconnect a disconnected database connection."
   (loop :while (not (database-open-p conn))
      :repeat *retry-connect-times*
      :do
-       (initiate-connection conn)))
+       (initiate-connection conn connection-attempts)))
 
-(defun ensure-connection (conn)
+(defun ensure-connection (conn &optional (connection-attempts 0))
   "Used to make sure a connection object is connected before doing
 anything with it."
   (unless conn
@@ -235,7 +240,7 @@ anything with it."
                   (loop :while (not (database-open-p conn))
                      :repeat *retry-connect-times*
                      :do
-                       (initiate-connection conn))))))
+                       (initiate-connection conn connection-attempts))))))
 
 (defun close-database (connection)
   "Gracefully disconnect a database connection."
