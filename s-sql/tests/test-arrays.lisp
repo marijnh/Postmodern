@@ -70,39 +70,7 @@ equality tests with arrays requires equalp, not equal."
   (is (equal (sql (:create-table array_int ((vector :type (or int[][] db-null)))))
              "CREATE TABLE array_int (vector INT[][])"))
   (with-test-connection
-    (query (:drop-table :if-exists 'receipes :cascade))
-    (query (:drop-table :if-exists 'receipe-tags-array :cascade))
-    (query (:create-table receipes
-                          ((receipe-id :type serial :constraint 'receipekey-id :primary-key 't :unique)
-                           (name :type text)
-                           (text :type text))))
-
-    (query (:create-table receipe-tags-array ((receipe-id :type integer :references ((receipes receipe-id)))
-                                              (tags :type text[] :default "{}"))))
-
-    (query (:create-unique-index 'receipe-tags-id-receipe-id :on "receipe-tags-array"  :fields 'receipe-id))
-    (query (:create-index 'receipe-tags-id-tags :on "receipe-tags-array" :using gin :fields 'tags))
-
-
-    (loop for x in '(("Fattoush" #("greens" "pita bread" "olive oil" "garlic" "lemon" "salt" "spices"))
-                     ("Shawarma" #("meat" "tahini sauce" "pita bread"))
-                     ("Baba Ghanoush" #("pita bread" "olive oil" "eggplant" "tahini sauce"))
-                     ("Shish Taouk" #("chicken" "lemon juice" "garlic" "paprika" "yogurt" "tomato paste" "pita bread"))
-                     ("Kibbe nayeh" #("raw meat" "bulgur" "onion" "spices" "pita bread"))
-                     ("Manakeesh" #("meat" "cheese" "zaatar" "kishik" "tomatoes" "cucumbers" "mint leaves" "olives"))
-                     ("Fakafek" #("chickpeas" "pita bread" "tahini sauce"))
-                     ("Tabbouleh" #("bulgur" "tomatoes" "onions" "parsley"))
-                     ("Kofta" #("minced meat" "parsley" "spices" "onions"))
-                     ("Kunafeh" #("cheese" "sugar syrup" "pistachios"))
-                     ("Baklava" #("filo dough" "honey" "nuts"))) do
-         (query (:insert-into 'receipes :set 'name (first x) 'text (format nil "~a" (rest x))))
-         (query
-          (:insert-into 'receipe-tags-array
-                        :set 'receipe-id
-                        (:select 'receipe-id
-                                 :from 'receipes
-                                 :where (:= 'receipes.name (first x)))
-                        'tags (second x))))
+    (build-receipe-tables)
 
 ;;; 1. checking for records that have a specific tag
     (is (equal (query (:limit
@@ -476,6 +444,7 @@ equality tests with arrays requires equalp, not equal."
   "Array-agg returns the result in an array (both sql and, in postmodern, a lisp array).
    Note the first example filters out null values as well as separating the y and n users."
   (with-test-connection
+    (build-receipe-tables)
     (query (:drop-table :if-exists 'agg-data))
     (query (:create-table agg-data ((id :type integer))))
     (query (:insert-into 'agg-data (:select '* :from (:generate-series 1 5))))

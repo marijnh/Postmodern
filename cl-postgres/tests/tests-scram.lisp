@@ -40,7 +40,7 @@
 
 
 (test utf-8-bytes-to-string
-  (is (equalp (trivial-utf-8:utf-8-bytes-to-string (ironclad:ascii-string-to-byte-array "QSXCR+Q6sek8bf92"))
+  (is (equalp (cl-postgres-trivial-utf-8:utf-8-bytes-to-string (ironclad:ascii-string-to-byte-array "QSXCR+Q6sek8bf92"))
              "QSXCR+Q6sek8bf92")))
 
 

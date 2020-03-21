@@ -11,39 +11,23 @@
 
 (fiveam:in-suite :postmodern)
 
-(defun prompt-for-postmodern (tc)
-  "If *test-connection* has more than four parameters, figure out the parameters from potential keys being passed and add those as key parameters in the connection list. This ugly hack is caused because (with-connection) in postmodern takes keyword parameters and (with-connection) in cl-postgres just has optional parameters."
-  (let ((tc-with-keys nil))
-    (loop for x in tc for y from 1 to 4 do
-         (push x tc-with-keys)
-         (pop tc))
-    (if (integerp (first tc))
-        (progn
-          (push :port tc-with-keys)
-          (push (first tc) tc-with-keys)
-          (pop tc))
-        (loop for x in tc until (integerp x) do
-             (pop tc)
-             (when (integerp (first tc))
-               (push :port tc-with-keys)
-               (push (first tc) tc-with-keys))))
-    (if (member (first tc) '(:no :try :yes :full))
-        (progn
-          (push :use-ssl tc-with-keys)
-          (push (first tc) tc-with-keys)
-          (pop tc))
-        (loop for x in tc until (member x '(:no :try :yes :full)) do
-                (pop tc)
-             (when (member (first tc) '(:no :try :yes :full))
-               (push :use-ssl tc-with-keys)
-               (push (first tc) tc-with-keys))))
-    (nreverse tc-with-keys)))
+(defun prompt-connection-to-postmodern-db-spec (param-lst)
+  "Takes the 6 item parameter list from prompt-connection and restates it for pomo:with-connection. Note that cl-postgres does not provide the pooled connection - that is only in postmodern - so that parameter is not passed."
+  (when (and (listp param-lst)
+             (= 6 (length param-lst)))
+    (let ((db (pop param-lst))
+          (user (pop param-lst))
+          (password (pop param-lst))
+          (host (pop param-lst))
+          (port (pop param-lst))
+          (use-ssl (pop param-lst)))
+      (list db user password host :port port :use-ssl use-ssl))))
 
 (defmacro with-test-connection (&body body)
-  `(with-connection (prompt-for-postmodern (prompt-connection)) ,@body))
+  `(with-connection (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection)) ,@body))
 
 (defmacro with-pooled-test-connection (&body body)
-  `(with-connection (append (prompt-for-postmodern (prompt-connection)) '(:pooled-p t)) ,@body))
+  `(with-connection (append (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection)) '(:pooled-p t)) ,@body))
 
 (defmacro protect (&body body)
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
@@ -59,7 +43,7 @@
     (is (not (null *database*)))))
 
 (test connection-pool
-  (let* ((db-params (append (prompt-for-postmodern (prompt-connection)) '(:pooled-p t)))
+  (let* ((db-params (append (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection)) '(:pooled-p t)))
          (pooled (apply 'connect db-params)))
     (disconnect pooled)
     (let ((pooled* (apply 'connect db-params)))
@@ -100,11 +84,11 @@
         (cl-postgres:copy-sql-readtable
          simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
   (with-test-connection
-    (is (time= (query (:select (:type (encode-date 1980 2 1) date)) :single)
+    (is (time= (query (:select (:type (simple-date:encode-date 1980 2 1) date)) :single)
                (encode-date 1980 2 1)))
-    (is (time= (query (:select (:type (encode-timestamp 2040 3 19 12 15 0 2) timestamp)) :single)
+    (is (time= (query (:select (:type (simple-date:encode-timestamp 2040 3 19 12 15 0 2) timestamp)) :single)
                (encode-timestamp 2040 3 19 12 15 0 2)))
-    (is (time= (query (:select (:type (encode-interval :month -1 :hour 24) interval)) :single)
+    (is (time= (query (:select (:type (simple-date:encode-interval :month -1 :hour 24) interval)) :single)
                (encode-interval :month -1 :hour 24))))
   ;;; Reset readtable to default
   (setf cl-postgres:*sql-readtable*

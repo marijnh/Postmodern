@@ -1,6 +1,18 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: CL-POSTGRES; -*-
 (in-package :cl-postgres)
 
+(defgeneric connection-port (cl)
+  (:method ((cl t)) nil))
+
+(defgeneric connection-db (cl)
+  (:method ((cl t)) nil))
+
+(defgeneric connection-pid (cl)
+  (:method ((cl t)) nil))
+
+(defgeneric connection-db (cl)
+  (:method ((cl t)) nil))
+
 (defclass database-connection ()
   ((host :initarg :host :reader connection-host)
    (port :initarg :port :reader connection-port)
@@ -159,12 +171,13 @@ but does not verify the server hostname; use :full to also verify the hostname).
                       :format :binary
                       :type :stream))
 
-(defun initiate-connection (conn connection-attempts)
+(defun initiate-connection (conn &optional (connection-attempts 0))
   "Check whether a connection object is connected, try to connect it
 if it isn't."
   (flet ((add-restart (err)
            (restart-case (error (wrap-socket-error err))
-             (:reconnect () :report "Try again." (initiate-connection conn connection-attempts))))
+             (:reconnect () :report "Try again." (progn (incf connection-attempts)
+                                                        (initiate-connection conn connection-attempts)))))
          (assert-unix ()
            #+unix t
            #-unix (error "Unix sockets only available on Unix (really)")))

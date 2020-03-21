@@ -94,10 +94,10 @@ message definitions themselves stay readable."
 (define-message scram-type-message #\p (client-initial-message)
   (string "SCRAM-SHA-256") ; we are skipping the possibility for scram-sha-256-plus at the moment
   (uint 4 (enc-byte-length client-initial-message))
-  (bytes (trivial-utf-8:string-to-utf-8-bytes client-initial-message)))
+  (bytes (cl-postgres-trivial-utf-8:string-to-utf-8-bytes client-initial-message)))
 
 (define-message scram-cont-message #\p (final-message)
-  (bytes (trivial-utf-8:string-to-utf-8-bytes final-message)))
+  (bytes (cl-postgres-trivial-utf-8:string-to-utf-8-bytes final-message)))
 
 ;; Send a query, the simple way.
 (define-message query-message #\Q (query)

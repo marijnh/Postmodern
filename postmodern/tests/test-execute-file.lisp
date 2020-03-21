@@ -16,7 +16,6 @@
     (when (table-exists-p 'company-employees)
       (query (:drop-table :if-exists 'company-employees :cascade)))
     (pomo:execute-file good-file)
-    (format t "Table exists ~a~%" (table-exists-p 'company-employees))
     (is (table-exists-p 'company-employees))
     (is (equal "paul" (query (:select 'name :from 'company-employees :where (:= 'id 1)) :single)))
     (is (equal 6 (query (:select (:count 'id) :from 'company-employees) :single)))

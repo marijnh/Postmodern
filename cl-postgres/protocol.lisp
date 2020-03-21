@@ -218,7 +218,7 @@ be matched against it."
                        (force-output socket)
                        continue-needed))
                    (scram-msg-init (in-buffer)
-                     (let ((server-message (trivial-utf-8:utf-8-bytes-to-string in-buffer)))
+                     (let ((server-message (cl-postgres-trivial-utf-8:utf-8-bytes-to-string in-buffer)))
                        (when (not (equal "SCRAM-SHA-256" (subseq server-message 0 13)))
                          (cerror "Mixed messages on authentication methods" server-message))
                        (setf client-nonce (gen-client-nonce))
@@ -227,7 +227,7 @@ be matched against it."
                        (force-output socket)))
                    (scram-msg-cont (in-buffer)
                      (multiple-value-bind (cont-message calculated-server-signature)
-                         (aggregated-gen-final-client-message user client-nonce (trivial-utf-8:utf-8-bytes-to-string in-buffer) password
+                         (aggregated-gen-final-client-message user client-nonce (cl-postgres-trivial-utf-8:utf-8-bytes-to-string in-buffer) password
                                                               :salt-type :base64-string
                                                               :response-type :utf8-string)
                        (setf expected-server-signature calculated-server-signature)

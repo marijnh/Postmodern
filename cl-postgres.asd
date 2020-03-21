@@ -17,7 +17,7 @@
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
   :version "1.3.0"
-  :depends-on ("md5" "split-sequence" "ironclad" "secure-random" "trivial-utf-8" "cl-base64" "uax-15"
+  :depends-on ("md5" "split-sequence" "ironclad" "cl-base64" "uax-15"
                (:feature (:or :sbcl :allegro :ccl :clisp :genera :armedbear :cmucl) "usocket")
                (:feature :sbcl (:require :sb-bsd-sockets)))
   :components
@@ -26,17 +26,18 @@
                          (:file "features")
                          (:file "errors" :depends-on ("package"))
                          (:file "sql-string" :depends-on ("package"))
-                         (:file #.*string-file* :depends-on ("package"))
+                         (:file "trivial-utf-8" :depends-on ("package"))
+                         (:file #.*string-file* :depends-on ("package" "trivial-utf-8"))
                          (:file "communicate" :depends-on (#.*string-file* "sql-string"))
                          (:file "messages" :depends-on ("communicate"))
                          (:file "oid" :depends-on ("package"))
                          (:file "ieee-floats")
                          (:file "interpret" :depends-on ("oid" "communicate" "ieee-floats"))
                          (:file "saslprep")
-                         (:file "scram" :depends-on ("messages" "errors" "saslprep"))
-                         (:file "protocol" :depends-on ("interpret" "messages" "errors" "scram" "saslprep"))
+                         (:file "scram" :depends-on ("messages" "errors" "saslprep" "trivial-utf-8"))
+                         (:file "protocol" :depends-on ("interpret" "messages" "errors" "scram" "saslprep" "trivial-utf-8"))
                          (:file "public" :depends-on ("protocol" "features"))
-                         (:file "bulk-copy" :depends-on ("public")))))
+                         (:file "bulk-copy" :depends-on ("public" "trivial-utf-8")))))
   :in-order-to ((test-op (test-op "cl-postgres/tests")
                          (test-op "cl-postgres/simple-date-tests"))))
 
