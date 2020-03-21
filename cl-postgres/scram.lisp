@@ -32,7 +32,7 @@
 ;; Reminder if the string has an '=' sign at the end, it is probably encoded in base64 and the equal signs are there for padding.
 ;; Reminder (cl-base64:string-to-base64-string "abcde") "YWJjZGU="
 ;; (cl-base64:base64-string-to-usb8-array (cl-base64:string-to-base64-string "abcde")) #(97 98 99 100 101)
-;; (trivial-utf-8:utf-8-bytes-to-string (cl-base64:base64-string-to-usb8-array (cl-base64:string-to-base64-string "abcde"))) "abcde"
+;; (cl-postgres-trivial-utf-8:utf-8-bytes-to-string (cl-base64:base64-string-to-usb8-array (cl-base64:string-to-base64-string "abcde"))) "abcde"
 
 ;;  ":=": The variable on the left-hand side represents the octet
 ;;        string resulting from the expression on the right-hand side.
@@ -141,8 +141,15 @@
          (chars-length 62)
          (client-nonce (make-string nonce-length)))
     (dotimes (i nonce-length)
-      (setf (aref client-nonce i) (aref chars (secure-random:number chars-length))))
-        client-nonce))
+      (setf (aref client-nonce i)
+            (aref chars
+                  #+postmodern-thread-safe
+                  (ironclad:strong-random chars-length
+                                          (bt:make-thread (lambda ()
+                                                            (let ((crypto:*prng* (ironclad:make-prng :os :seed :random)))))))
+                  #-postmodern-thread-safe
+                  (random chars-length))))
+    client-nonce))
 
 (defun gen-client-initial-response (user-name client-nonce)
   (when (not user-name) (setf user-name ""))
@@ -170,7 +177,7 @@
  \"s\" is a base64 encoded salt and \"i\" is the number of iterations for the hash digest.
 
  We do not use split-sequence building the cons cell because the equal sign can appear in the nonce or salt itself."
-  (loop :for x :in (split-sequence:split-sequence #\, (trivial-utf-8:utf-8-bytes-to-string response))
+  (loop :for x :in (split-sequence:split-sequence #\, (cl-postgres-trivial-utf-8:utf-8-bytes-to-string response))
                               :collect (let ((split-on (position #\= x)))
                                          (cons (subseq x 0 split-on)
                                                (subseq x (1+ split-on))))))
@@ -206,14 +213,15 @@ It returns the server-response as a normal string, the server-provided-salt as a
   "Returns a byte array"
   (when (stringp salted-password)
     (setf salted-password (ironclad:ascii-string-to-byte-array salted-password)))
-  (ironclad:hmac-digest
-   (ironclad:update-hmac
-    (ironclad:make-hmac salted-password sha-method)
-    (ironclad:ascii-string-to-byte-array message))))
+  (bt:make-thread (lambda ()
+                    (ironclad:hmac-digest
+                     (ironclad:update-hmac
+                      (ironclad:make-hmac salted-password sha-method)
+                      (ironclad:ascii-string-to-byte-array message))))))
 
 (defun gen-stored-key (client-key)
-
-  (ironclad:digest-sequence :sha256 client-key))
+  (bt:make-thread (lambda ()
+                    (ironclad:digest-sequence :sha256 client-key))))
 
 (defun gen-auth-message (client-initial-response server-response final-message-part1)
   "Currently assumes all parameters are normal strings"
@@ -226,10 +234,11 @@ It returns the server-response as a normal string, the server-provided-salt as a
           final-message-part1))
 
 (defun gen-client-signature (stored-key auth-message &optional (sha-method :sha256))
-  (ironclad:hmac-digest
-   (ironclad:update-hmac
-    (ironclad:make-hmac stored-key sha-method)
-    (ironclad:ascii-string-to-byte-array auth-message))))
+  (bt:make-thread (lambda ()
+                    (ironclad:hmac-digest
+                     (ironclad:update-hmac
+                      (ironclad:make-hmac stored-key sha-method)
+                      (ironclad:ascii-string-to-byte-array auth-message))))))
 
 (defun gen-client-proof (client-key client-signature)
   "The eventual client-proof needs to be base64 encoded"
