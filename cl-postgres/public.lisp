@@ -7,12 +7,6 @@
 (defgeneric connection-db (cl)
   (:method ((cl t)) nil))
 
-(defgeneric connection-pid (cl)
-  (:method ((cl t)) nil))
-
-(defgeneric connection-db (cl)
-  (:method ((cl t)) nil))
-
 (defclass database-connection ()
   ((host :initarg :host :reader connection-host)
    (port :initarg :port :reader connection-port)
@@ -112,6 +106,7 @@ but does not verify the server hostname; use :full to also verify the hostname).
       (sb-bsd-sockets:socket-make-stream
        sock :input t :output t :element-type '(unsigned-byte 8))))
 
+  #+ccl (setf ccl:*default-socket-character-encoding* :utf-8)
   #+ccl
   (defun unix-socket-connect (path)
     (ccl:make-socket :type :stream
@@ -160,6 +155,9 @@ but does not verify the server hostname; use :full to also verify the hostname).
 
 #+ccl
 (defun inet-socket-connect (host port)
+  (when (and (stringp host)
+             (string= host "localhost"))
+    (setf host "127.0.0.1")) ;this corrects a strange ccl error we are seeing in certain scram authentication situations
   (ccl:make-socket :format :binary
                    :remote-host host
                    :remote-port port))
@@ -208,7 +206,8 @@ if it isn't."
               (*connection-params* (make-hash-table :test 'equal)))
           (setf (connection-parameters conn) *connection-params*)
           (unwind-protect
-               (setf socket (handler-case (authenticate socket conn)
+               (setf socket (handler-case
+                                (authenticate socket conn)
                               (cl-postgres-error:protocol-violation (err)
                                 (setf finished t)
                                 (ensure-socket-is-closed socket)
@@ -233,7 +232,7 @@ if it isn't."
       #+cl-postgres.features:sbcl-available(sb-bsd-sockets:socket-error (e) (add-restart e))
       #+cl-postgres.features:sbcl-available(sb-bsd-sockets:name-service-error (e) (add-restart e))
       (stream-error (e) (add-restart e))))
-    (values))
+  (values))
 
 (defun reopen-database (conn &optional (connection-attempts 0))
   "Reconnect a disconnected database connection."
