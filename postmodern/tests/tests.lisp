@@ -15,12 +15,7 @@
   "Takes the 6 item parameter list from prompt-connection and restates it for pomo:with-connection. Note that cl-postgres does not provide the pooled connection - that is only in postmodern - so that parameter is not passed."
   (when (and (listp param-lst)
              (= 6 (length param-lst)))
-    (let ((db (pop param-lst))
-          (user (pop param-lst))
-          (password (pop param-lst))
-          (host (pop param-lst))
-          (port (pop param-lst))
-          (use-ssl (pop param-lst)))
+    (destructuring-bind (db user password host port use-ssl) param-lst
       (list db user password host :port port :use-ssl use-ssl))))
 
 (defmacro with-test-connection (&body body)
