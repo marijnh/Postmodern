@@ -115,11 +115,6 @@ giving them a database-connection-error superclass."))
                  :message (princ-to-string err)
                  :cause err))
 
-(define-condition auth-error (database-error)
-  ((auth-error-code :initarg :auth-error-code :reader auth-error-code
-                     :documentation "Code returned by postgresql if there is a scram error of some type")
-   (client-final-message :initarg :client-final-message :reader client-final-message)))
-
 (in-package :cl-postgres-error)
 
 (defparameter *error-table* (make-hash-table :test 'equal))

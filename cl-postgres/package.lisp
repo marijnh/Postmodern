@@ -13,7 +13,6 @@
            #:database-error-extract-name
            #:database-connection
            #:database-connection-error
-           #:auth-error
            #:database-socket-error
            #:connection-meta
            #:connection-parameters
