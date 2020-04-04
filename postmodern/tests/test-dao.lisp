@@ -182,23 +182,6 @@
   (:metaclass dao-class)
   (:keys a))
 
-#|
-The ability to create tables with oids=true has been dropped by postgresql in version 12
-
-(test dao-class-oid
-  (with-test-connection
-    (execute (concatenate 'string (dao-table-definition 'test-oid) "with (oids=true)"))
-    (protect
-      (let ((dao (make-instance 'test-oid :a "a" :b "b")))
-        (insert-dao dao)
-        (is-true (integerp (test-oid dao)))
-        (let ((back (get-dao 'test-oid "a")))
-          (is (test-oid dao) (test-oid back))
-          (setf (test-b back) "c")
-          (update-dao back))
-        (is (test-b (get-dao 'test-oid "a")) "c"))
-      (execute (:drop-table 'test-oid)))))
-|#
 (defclass test-col-name ()
   ((a :col-type string :col-name aa :initarg :a :accessor test-a)
    (b :col-type string :col-name bb :initarg :b :accessor test-b)
