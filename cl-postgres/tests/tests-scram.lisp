@@ -21,27 +21,27 @@
 ;;    S: v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=
 
 (test string-to-usb-array
-  (is (equalp (cl-base64:base64-string-to-usb8-array
-              (cl-base64:string-to-base64-string "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096"))
-             #(114 61 102 121 107 111 43 100 50 108 98 98 70 103 79 78 82 118 57 113 107 120
-               100 97 119 76 51 114 102 99 78 72 89 74 89 49 90 86 118 87 86 115 55 106 44
-               115 61 81 83 88 67 82 43 81 54 115 101 107 56 98 102 57 50 44 105 61 52 48 57
-               54))))
+      (is (equalp (cl-base64:base64-string-to-usb8-array
+                   (cl-base64:string-to-base64-string "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096"))
+                  #(114 61 102 121 107 111 43 100 50 108 98 98 70 103 79 78 82 118 57 113 107 120
+                    100 97 119 76 51 114 102 99 78 72 89 74 89 49 90 86 118 87 86 115 55 106 44
+                    115 61 81 83 88 67 82 43 81 54 115 101 107 56 98 102 57 50 44 105 61 52 48 57
+                    54))))
 
 
 (test c-nonce-string-to-byte-array
-  (is (equalp (cl-base64:base64-string-to-usb8-array (cl-base64:string-to-base64-string "fyko+d2lbbFgONRv9qkxdawL"))
-             #(102 121 107 111 43 100 50 108 98 98 70 103 79 78 82 118 57 113 107 120 100 97
-               119 76))))
+      (is (equalp (cl-base64:base64-string-to-usb8-array (cl-base64:string-to-base64-string "fyko+d2lbbFgONRv9qkxdawL"))
+                  #(102 121 107 111 43 100 50 108 98 98 70 103 79 78 82 118 57 113 107 120 100 97
+                    119 76))))
 
 (test ironclad-ascii-string-to-byte-array
-  (is (equalp (ironclad:ascii-string-to-byte-array "QSXCR+Q6sek8bf92")
-             #(81 83 88 67 82 43 81 54 115 101 107 56 98 102 57 50))))
+      (is (equalp (ironclad:ascii-string-to-byte-array "QSXCR+Q6sek8bf92")
+                  #(81 83 88 67 82 43 81 54 115 101 107 56 98 102 57 50))))
 
 
 (test utf-8-bytes-to-string
-  (is (equalp (cl-postgres-trivial-utf-8:utf-8-bytes-to-string (ironclad:ascii-string-to-byte-array "QSXCR+Q6sek8bf92"))
-             "QSXCR+Q6sek8bf92")))
+      (is (equalp (cl-postgres-trivial-utf-8:utf-8-bytes-to-string (ironclad:ascii-string-to-byte-array "QSXCR+Q6sek8bf92"))
+                  "QSXCR+Q6sek8bf92")))
 
 
 ;; potential testing help at https://md5calc.com/hash/sha256/, https://coding.tools/base64-encode, https://www.online-toolz.com/tools/text-hex-convertor.php
