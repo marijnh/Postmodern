@@ -135,20 +135,36 @@
 ;;     For every user, the server only has to store the username, H(ckey), skey, salt, and it, but not the clear text password itself.
 
 
+(deftype octet () '(unsigned-byte 8))
+(deftype octet-vector () '(simple-array octet (*)))
+(deftype index () `(integer 0 ,array-total-size-limit))
+
+(declaim (ftype (function (index) octet-vector) make-octet-vector)
+         (inline make-octet-vector))
+(defun make-octet-vector (len)
+  (make-array (the index len) :element-type 'octet))
+
+(defun pad-octet-array (arry &optional (len 32))
+  "Takes an octet-array and, if it is shorter than the len parameter, pads it to the len parameter by adds 0 entries at the beginning."
+  (let ((len-arry (length arry)))
+    (if (= len-arry len)
+        arry
+        (let ((initial-index (- len len-arry 1)) ;Need to pad the octet-array with 0 so that it is always length of len
+              (oct-array (make-octet-vector len)))
+          (loop for x across arry counting x into y do
+               (setf (aref oct-array (+ y initial-index)) x))
+          oct-array))))
+
 (defun gen-client-nonce (&optional (nonce-length 32))
   "Generate a random alphanumeric nonce with a default length of 32."
   (let* ((chars "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
          (chars-length 62)
-         (client-nonce (make-string nonce-length)))
+         (client-nonce (make-string nonce-length))
+         (crypto:*prng* (crypto:make-prng :os :seed :random)))
     (dotimes (i nonce-length)
       (setf (aref client-nonce i)
             (aref chars
-                  #+postmodern-thread-safe
-                  (ironclad:strong-random chars-length
-                                          (bt:make-thread (lambda ()
-                                                            (let ((crypto:*prng* (ironclad:make-prng :os :seed :random)))))))
-                  #-postmodern-thread-safe
-                  (random chars-length))))
+                  (crypto:strong-random chars-length))))
     client-nonce))
 
 (defun gen-client-initial-response (user-name client-nonce)
@@ -157,8 +173,7 @@
 
 (defun gen-salted-password (password server-salt iterations &key (digest :sha256) (salt-type :byte-array))
   "Takes an password (must be an ascii string) and server salt (by default presumed byte-array but can be set for :string or :hex) and an integer iterations. Digest is presumed to be :sha256 but can be set to other valid ironclad digests. returns a byte-array"
-  (cond ((eq salt-type :string) (setf server-salt (ironclad:ascii-string-to-byte-array
-                                                   server-salt)) )
+  (cond ((eq salt-type :string) (setf server-salt (ironclad:ascii-string-to-byte-array server-salt)) )
         ((eq salt-type :byte-array) t)
         ((eq salt-type :base64-string) (setf server-salt (cl-base64:base64-string-to-usb8-array server-salt)))
         ((eq salt-type :hex) (setf server-salt (ironclad:hex-string-to-byte-array server-salt)))
@@ -169,7 +184,6 @@
    :digest digest
    :iterations iterations))
 
-
 (defun split-server-response (response)
   "Takes an array of bytes which are encoded in base64,  It should return a list of three alists of the form:
  ((\"r\" . \"odaUyoz0GpB5GxXLfe2Y8SVjZEosREsxzxhtXY1jiNebxJlohG8IRD1v\")
@@ -178,15 +192,15 @@
 
  We do not use split-sequence building the cons cell because the equal sign can appear in the nonce or salt itself."
   (loop :for x :in (split-sequence:split-sequence #\, (cl-postgres-trivial-utf-8:utf-8-bytes-to-string response))
-                              :collect (let ((split-on (position #\= x)))
-                                         (cons (subseq x 0 split-on)
-                                               (subseq x (1+ split-on))))))
+     :collect (let ((split-on (position #\= x)))
+                (cons (subseq x 0 split-on)
+                      (subseq x (1+ split-on))))))
 
 (defun validate-server-nonce (server-nonce client-nonce)
   "checks whether the server-nonce begins with the client-nonce. Both need to be normal strings."
   (if (= 0 (search client-nonce server-nonce))
       t
-      (error 'protocol-error
+      (error 'protocol-violation
              :message "Client-nonce not found at beginning of server-nonce")))
 
 (defun parse-scram-server-first-response (response client-nonce &key (response-type :base64-usb8-array))
@@ -204,24 +218,23 @@ It returns the server-response as a normal string, the server-provided-salt as a
          (server-salt (cdr (assoc "s" split-response :test 'equal)))
          (server-iterations (parse-integer (cdr (assoc "i" split-response :test 'equal))))
          (num-of-split (length split-response)))
-    (when (not server-nonce-validated) (error 'protocol-error :message "Server did not validate client nonce"))
+    (when (not server-nonce-validated) (error 'cl-postgres-error:protocol-violation :message "Server did not validate client nonce"))
     (when (not (= 3 num-of-split)) (error 'protocol-error
-             :message (format nil "There was an error in parsing the server response. Parsing had ~a results instead of 3" num-of-split)))
+                                          :message (format nil "There was an error in parsing the server response. Parsing had ~a results instead of 3" num-of-split)))
     (values server-nonce server-salt server-iterations)))
 
 (defun gen-client-key (salted-password &optional (message "Client Key") (sha-method :sha256))
   "Returns a byte array"
   (when (stringp salted-password)
     (setf salted-password (ironclad:ascii-string-to-byte-array salted-password)))
-  (bt:make-thread (lambda ()
-                    (ironclad:hmac-digest
-                     (ironclad:update-hmac
-                      (ironclad:make-hmac salted-password sha-method)
-                      (ironclad:ascii-string-to-byte-array message))))))
+  (ironclad:hmac-digest
+   (ironclad:update-hmac
+    (ironclad:make-hmac salted-password sha-method)
+    (ironclad:ascii-string-to-byte-array message))))
 
 (defun gen-stored-key (client-key)
-  (bt:make-thread (lambda ()
-                    (ironclad:digest-sequence :sha256 client-key))))
+
+  (ironclad:digest-sequence :sha256 client-key))
 
 (defun gen-auth-message (client-initial-response server-response final-message-part1)
   "Currently assumes all parameters are normal strings"
@@ -234,17 +247,17 @@ It returns the server-response as a normal string, the server-provided-salt as a
           final-message-part1))
 
 (defun gen-client-signature (stored-key auth-message &optional (sha-method :sha256))
-  (bt:make-thread (lambda ()
-                    (ironclad:hmac-digest
-                     (ironclad:update-hmac
-                      (ironclad:make-hmac stored-key sha-method)
-                      (ironclad:ascii-string-to-byte-array auth-message))))))
+  (ironclad:hmac-digest
+   (ironclad:update-hmac
+    (ironclad:make-hmac stored-key sha-method)
+    (ironclad:ascii-string-to-byte-array auth-message))))
 
 (defun gen-client-proof (client-key client-signature)
   "The eventual client-proof needs to be base64 encoded"
-  (ironclad:integer-to-octets
-   (logxor (ironclad:octets-to-integer client-key)
-           (ironclad:octets-to-integer client-signature))))
+  (let* ((int (logxor (ironclad:octets-to-integer client-key)
+                      (ironclad:octets-to-integer client-signature)))
+         (octet-arry (ironclad:integer-to-octets int)))
+    (pad-octet-array octet-arry 32)))
 
 (defun get-server-key (salted-password &optional (message "Server Key"))
   (gen-client-signature salted-password message))
@@ -254,7 +267,7 @@ It returns the server-response as a normal string, the server-provided-salt as a
 
 (defun gen-final-message-part-1 (server-nonce)
   "Assumes the server-nonce is a utf8 string"
-    (format nil "c=biws,r=~a" server-nonce))
+  (format nil "c=biws,r=~a" server-nonce))
 
 (defun gen-final-message (final-message-part1 client-proof)
   "Assuming client-proof is in a usb8 array, returns client-proof as part of the final message as a base64 string"
