@@ -11,7 +11,7 @@
         ecl lispworks openmcl sbcl genera)
   (pushnew :postmodern-thread-safe *features*)
 
-  #+(or allegro clasp clisp ecl lispworks mcl openmcl cmu sbcl)
+  #+(or allegro clasp clisp ecl lispworks mcl openmcl cmu sbcl armedbear)
   (pushnew :postmodern-use-mop *features*))
 
 (defsystem "postmodern"
@@ -50,7 +50,7 @@
   ((:module "postmodern/tests"
             :components ((:file "test-package")
                          (:file "tests")
-                         (:file "test-dao" :depends-on ("test-package"))
+                         #+postmodern-use-mop (:file "test-dao" :depends-on ("test-package"))
                          (:file "test-execute-file" :depends-on ("test-package")))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
