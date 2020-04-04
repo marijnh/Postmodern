@@ -232,7 +232,7 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
 
 (test bulk-writer
       (with-test-connection
-          (ignore-errors (exec-query connection "create table test_bulk_writer (a int, b text, c date, d timestamp, e int[])"))
+          (exec-query connection "create table if not exists test_bulk_writer (a int, b text, c date, d timestamp, e int[])")
         (let ((stream (open-db-writer *cl-postgres-test-connection* 'test_bulk_writer '(a b c d e))))
           ;; test a variety of types (int, text, date, timstamp, int array)
           (loop for row in '((1 "one" "2012-01-01" "2012-01-01 00:00" #(1 2 3 42))
