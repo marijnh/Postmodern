@@ -208,7 +208,7 @@
     (defprepared select1 "select \"from\" from from_test where to_destination = $1" :single)
       ;; the funcall creates the prepared statements logged in the postmodern connection
       ;; and the postgresql connection
-      (is (equal "Reykjavík" (funcall 'select1 "Seyðisfjörður")))
+    (is (equal "Reykjavík" (funcall 'select1 "Seyðisfjörður")))
       (execute (:drop-table 'from-test))))
 
 (test prepare-pooled

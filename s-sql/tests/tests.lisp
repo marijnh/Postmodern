@@ -42,6 +42,26 @@
   (with-test-connection
     (is (not (null *database*)))))
 
+(defun build-null-test-table ()
+  "Building a simple table just to test the implementation can return :null. ABCL I am looking at you."
+  (with-test-connection
+    (query (:drop-table :if-exists 'null-test :cascade))
+    (query (:create-table 'null-test ((id :type serial :primary-key t :unique)
+                                      (nullable :type (or integer db-null)))))
+    (query (:insert-into 'null-test :set 'id 1 'nullable 10))
+    (query (:insert-into 'null-test :set 'id 2))
+    (query (:insert-into 'null-test :set 'id 3))))
+
+(test abcl-null
+  (build-null-test-table)
+  (with-test-connection
+    (is (equal (query (:select 'nullable :from 'null-test :where (:= 'id 1)) :single)
+               10))
+    (is (equal (query (:select 'nullable :from 'null-test :where (:= 'id 2)) :single)
+               :null))
+    (is (equal (query (:select '* :from 'null-test :where (:= 'id 2)))
+        '((2 :null))))))
+
 (defun build-receipe-tables ()
   "Build receipe tables uses in array tests"
   (with-test-connection
@@ -1441,7 +1461,8 @@ that the table will need to be scanned twice. Everything is a trade-off."
                "DROP VIEW quagmire"))))
 
 ;; Test create-table
-(test reserved-column-names-s-sql
+;; Right now having difficulty with abcl and utf8, so separate test for it
+#-abcl (test reserved-column-names-s-sql
   (with-test-connection
     (when (pomo:table-exists-p 'from-test-data1)
       (execute (:drop-table 'from-test-data1 :cascade)))
@@ -1497,6 +1518,67 @@ that the table will need to be scanned twice. Everything is a trade-off."
     (query (:update 'from-test-data1 :set 'to-destination "Kópavogur" :where (:= 'from "Stykkishólmur")))
     (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'to-destination "Kópavogur")
                                                                            (:= 'from "Stykkishólmur")))
+                      :single)
+               2))
+    (execute (:drop-table 'from-test-data1 :cascade))
+    (execute (:drop-table 'iceland-cities :cascade))))
+
+#+abcl (test reserved-column-names-s-sql
+  (with-test-connection
+    (when (pomo:table-exists-p 'from-test-data1)
+      (execute (:drop-table 'from-test-data1 :cascade)))
+    (when (pomo:table-exists-p 'iceland-cities)
+      (execute (:drop-table 'iceland-cities :cascade)))
+    (query (:create-table 'iceland-cities
+                          ((id :type serial)
+                           (name :type (or (varchar 100) db-null) :unique t))))
+
+    (query (:create-table 'from-test-data1
+                          ((id :type serial)
+                           (flight :type (or integer db-null))
+                           (from :type (or (varchar 100) db-null) :references ((iceland-cities name)))
+                           (to-destination :type (or (varchar 100) db-null)))
+                          (:primary-key id)
+                          (:constraint iceland-city-name-fkey :foreign-key (to-destination) (iceland-cities name))))
+    (query (:insert-into 'iceland-cities :set 'name "Reykjavik"))
+    (query (:insert-rows-into 'iceland-cities :columns 'name :values '(("Seltjarnarnes") ("Stykkisholmur") ("Bolungarvik")
+                                                                       ("Kopavogur"))))
+    ;; test insert-into
+    (query (:insert-into 'from-test-data1 :set 'flight 1 'from "Reykjavik" 'to-destination "Seltjarnarnes"))
+    ;; test query select
+    (is (equal (query (:select 'from 'to-destination :from 'from-test-data1 :where (:= 'flight 1)) :row)
+               '("Reykjavik" "Seltjarnarnes")))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Reykjavik")
+                                                                           (:= 'to-destination "Seltjarnarnes"))) :single)
+               1))
+    ;; test insert-rows-into
+    (query (:insert-rows-into 'from-test-data1 :columns 'flight 'from 'to-destination :values '((2 "Stykkisholmur" "Reykjavik"))))
+    (is (equal (query (:select 'from 'to-destination :from 'from-test-data1 :where (:= 'flight 2)) :row)
+               '("Stykkisholmur" "Reykjavik")))
+
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Stykkisholmur")
+                                                                           (:= 'to-destination "Reykjavik"))) :single)
+               2))
+    (query (:alter-table 'from-test-data1 :rename-column 'from 'origin))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:= 'origin "Stykkisholmur")) :single)
+               2))
+    ;; test alter-table
+    (query (:alter-table 'from-test-data1 :rename-column 'origin 'from ))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Stykkisholmur")
+                                                                           (:= 'to-destination "Reykjavik"))) :single)
+               2))
+    ;; test constraint
+    (signals error (query (:insert-into 'from-test-data1 :set 'flight 1 'from "Reykjavik" 'to-destination "Akureyri")))
+    (signals error (query (:insert-into 'from-test-data1 :set 'flight 1 'from "Akureyri" 'to-destination "Reykjavik")))
+    ;; test update
+    (query (:update 'from-test-data1 :set 'from "Kopavogur" :where (:= 'to-destination "Seltjarnarnes")))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'from "Kopavogur")
+                                                                           (:= 'to-destination "Seltjarnarnes")))
+                      :single)
+               1))
+    (query (:update 'from-test-data1 :set 'to-destination "Kopavogur" :where (:= 'from "Stykkisholmur")))
+    (is (equal (query (:select 'flight :from 'from-test-data1 :where (:and (:= 'to-destination "Kopavogur")
+                                                                           (:= 'from "Stykkisholmur")))
                       :single)
                2))
     (execute (:drop-table 'from-test-data1 :cascade))
