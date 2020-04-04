@@ -213,6 +213,11 @@ The defprepared macro creates a function that takes the same amount of arguments
 
     (disconnect-toplevel)
 
+## Authentication
+Postmodern can use either md5 or scram-sha-256 authentication. Scram-sha-256 authentication is obviously more secure, but slower than md5, so take that into account if you are planning on opening and closing many connections without using a connection pooling setup..
+
+Other authentication methods have not been tested. Please let us know if there is a authentication method that you believe should be considered.
+
 ## Running tests
 ---
 
@@ -295,15 +300,12 @@ It is important to understand how postgresql (not postmodern) handles timestamps
 Keeping that in mind, [Simple-date](http://marijnhaverbeke.nl/postmodern/simple-date.html) has no concept of time zones. If you really need your time-keeping to be reliable and/or universal you might consider using [local-time](https://github.com/dlowe-net/local-time), which solves the same problem as simple-date, but does understand time zones. We are considering the best ways to make life easier for users of the two libraries.
 
 ### Portability
-The Lisp code in Postmodern is theoretically portable across implementations, and seems to work on all major ones and even less major ones such as  Genera. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).
+The Lisp code in Postmodern is theoretically portable across implementations, and testing is normally done on sbcl, ccl and ecl. ABCL currently has issues with utf-8 and :null. Clisp has its normal issues with an outdated asdf. Please let us know if it does not work on the implementation that you normally use. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).
 
-The library is not likely to work for PostgreSQL versions older than 8.4.
-Other features only work in newer Postgresql versions as the features
-were only introduced in those newer versions.
-
+The library is not likely to work for PostgreSQL versions older than 8.4. Other features only work in newer Postgresql versions as the features were only introduced in those newer versions.
 
 ### Things that should be implemented
-Postmodern is under active development so Issues and feature requests should
+Postmodern is under active development so issues and feature requests should
 be flagged on [[https://github.com/marijnh/Postmodern][Postmodern's site on github]].
 
 It would be a nice feature if Postmodern could help you with defining your

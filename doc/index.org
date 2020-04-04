@@ -166,6 +166,19 @@ using s-sql rather than plain vanilla sql would be the following:
 
 #+END_SRC
 
+Restated using vanilla sql:
+#+BEGIN_SRC sql
+(query "CREATE TABLE so_items (
+ item_id INTEGER NOT NULL,
+ so_id INTEGER REFERENCES so_headers(id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT,
+ product_id INTEGER,
+ qty INTEGER,
+ net_price NUMERIC,
+ PRIMARY KEY (item_id, so_id)
+ );"
+)
+#+END_SRC
+
 In the above case, the new table's name will be so-items (actually in the
 database it will be so_items because sql does not allow hyphens. The column
 item-id is an integer and cannot be null. The column so-id is also an integer,
