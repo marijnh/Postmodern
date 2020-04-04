@@ -23,7 +23,8 @@
                     (- (get-internal-real-time) ,time-name)))))))
 
 ;;
-;; See http://www.postgresql.org/docs/9.3/static/protocol-error-fields.html
+;; See http://www.postgresql.org/docs/current/protocol-error-fields.html
+;; and https://www.postgresql.org/docs/current/errcodes-appendix.html
 ;; for details, including documentation strings.
 ;;
 (define-condition database-error (error)
@@ -120,6 +121,16 @@ giving them a database-connection-error superclass."))
 (defmacro deferror (code typename &optional (superclass 'database-error))
   `(progn (define-condition ,typename (,superclass) ())
           (setf (gethash ,code *error-table*) ',typename)))
+
+;; Connection Exceptions
+;; https://www.postgresql.org/docs/current/errcodes-appendix.html
+(deferror "08000"	connection-exception)
+(deferror "08003"	connection-does-not-exist)
+(deferror "08006"	connection-failure)
+(deferror "08001"	sqlclient-unable-to-establish-sqlconnection)
+(deferror "08004"	sqlserver-rejected-establishment-of-sqlconnection)
+(deferror "08007"	transaction-resolution-unknown)
+(deferror "08P01" protocol-violation)
 
 (deferror "0A" feature-not-supported)
 (deferror "22" data-exception)

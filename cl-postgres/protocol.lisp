@@ -35,7 +35,7 @@ from the socket."
                    ((consp chars) (mapcar #'char-code chars))
                    (t (char-code chars)))))
       `(let* ((,socket-name ,socket))
-        (declare (type stream ,socket-name))
+         (declare (type stream ,socket-name))
         (labels ((,iter-name ()
                    (let ((,char-name (read-uint1 ,socket-name))
                          (,size-name (read-uint4 ,socket-name)))
@@ -177,8 +177,7 @@ be matched against it."
          (error 'database-error :message "Server does not support SSL encryption."))))))
 
 (defun authenticate (socket conn)
-  "Try to initiate a connection. Caller should close the socket if
-this raises a condition."
+  "Try to initiate a connection. Caller should close the socket if this raises a condition."
 
   (let ((gss-context nil)
         (gss-init-function nil)
@@ -186,14 +185,15 @@ this raises a condition."
         (password (connection-password conn))
         (database (connection-db conn))
         (hostname (connection-host conn))
-        (use-ssl (connection-use-ssl conn)))
-
+        (use-ssl (connection-use-ssl conn))
+        (client-nonce nil)
+        (client-initial-response nil)
+        (expected-server-signature nil))
     (unless (eq use-ssl :no)
       (setf socket (initiate-ssl socket (member use-ssl '(:yes :full))
                                  (if (eq use-ssl :full) hostname))))
     (startup-message socket user database)
     (force-output socket)
-
     (labels ((init-gss-msg (in-buffer)
                (when (null gss-init-function)
                  (when (null (find-package "CL-GSS"))
@@ -212,35 +212,63 @@ this raises a condition."
                  (when buffer
                    (gss-auth-buffer-message socket buffer))
                  (force-output socket)
-                 continue-needed)))
+                 continue-needed))
+             (scram-msg-init (in-buffer)
+               (let ((server-message (cl-postgres-trivial-utf-8:utf-8-bytes-to-string in-buffer)))
+                 (when (not (equal "SCRAM-SHA-256" (subseq server-message 0 13)))
+                   (cerror "Mixed messages on authentication methods" server-message))
+                 (setf client-nonce (gen-client-nonce))
+                 (setf client-initial-response (gen-client-initial-response user client-nonce))
+                 (scram-type-message socket client-initial-response)
+                 (force-output socket)))
+             (scram-msg-cont (in-buffer)
+               (multiple-value-bind (cont-message calculated-server-signature)
+                   (aggregated-gen-final-client-message user client-nonce (cl-postgres-trivial-utf-8:utf-8-bytes-to-string in-buffer) password
+                                                        :salt-type :base64-string
+                                                        :response-type :utf8-string)
+                 (setf expected-server-signature calculated-server-signature)
+                 (scram-cont-message socket cont-message)
+                 (force-output socket)))
+             (scram-msg-fin (in-buffer)
+               (when (not (equal (cdar (split-server-response in-buffer)) expected-server-signature))
+                 (cerror "Server signature not validated. Something is wrong"
+                         (cdar (split-server-response in-buffer))))))
 
       (loop
          (message-case socket :length-sym size
-           ;; Authentication message
-           (#\R (let ((type (read-uint4 socket)))
-                  (ecase type
-                    (0 (return))
-                    (2 (error 'database-error :message "Unsupported Kerberos authentication requested."))
-                    (3 (unless password (error "Server requested plain-password authentication, but no password was given."))
-                       (plain-password-message socket password)
-                       (force-output socket))
-                    (4 (error 'database-error :message "Unsupported crypt authentication requested."))
-                    (5 (unless password (error "Server requested md5-password authentication, but no password was given."))
-                       (md5-password-message socket password user (read-bytes socket 4))
-                       (force-output socket))
-                    (6 (error 'database-error :message "Unsupported SCM authentication requested."))
-                    (7 (when gss-context
-                         (error 'database-error :message "Got GSS init message when a context was already established"))
-                       (init-gss-msg nil))
-                    (8 (unless gss-context
-                         (error 'database-error :message "Got GSS continuation message without a context"))
-                       (init-gss-msg (read-bytes socket (- size 4)))))))))))
-  (loop
-   (message-case socket
-     ;; ReadyForQuery
-     (#\Z (read-uint1 socket)
-          (return))))
-  socket)
+                       ;; Authentication message
+                       (#\R (let ((type (read-uint4 socket)))
+                              (ecase type
+                                (0 (return))
+                                (2 (error 'database-error :message "Unsupported Kerberos authentication requested."))
+                                (3 (unless password (error "Server requested plain-password authentication, but no password was given."))
+                                   (plain-password-message socket password)
+                                   (force-output socket))
+                                (4 (error 'database-error :message "Unsupported crypt authentication requested."))
+                                (5 (unless password (error "Server requested md5-password authentication, but no password was given."))
+                                   (md5-password-message socket password user (read-bytes socket 4))
+                                   (force-output socket))
+                                (6 (error 'database-error :message "Unsupported SCM authentication requested."))
+                                (7 (when gss-context
+                                     (error 'database-error :message "Got GSS init message when a context was already established"))
+                                   (init-gss-msg nil))
+                                (8 (unless gss-context
+                                     (error 'database-error :message "Got GSS continuation message without a context"))
+                                   (init-gss-msg (read-bytes socket (- size 4))))
+                                (9 ) ; auth_required_sspi or auth_req_sspi sspi negotiate without wrap() see postgresql source code src/libpq/pqcomm.h
+                                (10 (scram-msg-init (read-bytes socket (- size 4)) ;(read-simple-str socket)
+                                                    )) ;auth_required_sasl or auth_req_sasl see postgresql source code src/libpq/pqcomm.h scram section
+                                (11 (scram-msg-cont (read-bytes socket (- size 4)))) ;auth_sasl_continue or auth_req_sasl_cont see postgresql source code
+                                        ;src/libpq/pqcomm.h
+                                (12 (scram-msg-fin (read-bytes socket (- size 4)))) ;auth_sasl_final or auth_req_sasl_fin see postgresql source code src/libpq/pqcomm.h
+                                ))))))
+    (loop
+       (message-case socket
+         ;; ReadyForQuery
+         (#\Z (read-uint1 socket)
+              (return)))))
+        socket)
+
 
 (defclass field-description ()
   ((name :initarg :name :accessor field-name)

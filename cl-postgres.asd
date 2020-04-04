@@ -16,7 +16,8 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
-  :depends-on ("md5" "split-sequence"
+  :version "1.3.0"
+  :depends-on ("md5" "split-sequence" "ironclad" "cl-base64" "uax-15"
                (:feature (:or :sbcl :allegro :ccl :clisp :genera :armedbear :cmucl) "usocket")
                (:feature :sbcl (:require :sb-bsd-sockets)))
   :components
@@ -32,9 +33,11 @@
                          (:file "oid" :depends-on ("package"))
                          (:file "ieee-floats")
                          (:file "interpret" :depends-on ("oid" "communicate" "ieee-floats"))
-                         (:file "protocol" :depends-on ("interpret" "messages" "errors"))
+                         (:file "saslprep")
+                         (:file "scram" :depends-on ("messages" "errors" "saslprep" "trivial-utf-8"))
+                         (:file "protocol" :depends-on ("interpret" "messages" "errors" "scram" "saslprep" "trivial-utf-8"))
                          (:file "public" :depends-on ("protocol" "features"))
-                         (:file "bulk-copy" :depends-on ("public")))))
+                         (:file "bulk-copy" :depends-on ("public" "trivial-utf-8")))))
   :in-order-to ((test-op (test-op "cl-postgres/tests")
                          (test-op "cl-postgres/simple-date-tests"))))
 
@@ -43,7 +46,8 @@
   :components
   ((:module "cl-postgres/tests"
             :components ((:file "test-package")
-			 (:file "tests"))))
+                         (:file "tests")
+                         (:file "tests-scram" :depends-on ("test-package")))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
              (uiop:symbol-call :fiveam '#:run! :cl-postgres)))

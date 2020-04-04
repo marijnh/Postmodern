@@ -1,18 +1,24 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: CL-POSTGRES-TESTS; -*-
 (in-package :cl-postgres-tests)
 
-(defvar *test-connection* nil
-  "A list of connection parameters to use when running the tests.  The
-  order is: database name, user, password and hostname.")
+(defvar *cl-postgres-test-connection* nil
+  "A list of 6 connection parameters to use when running the tests.  The
+  order is: database name, user, password, hostname, port (an integer) and a keyword for use-ssl.")
 
-(defun prompt-connection (&optional (defaults '("test" "test" "" "localhost")))
-  (when *test-connection*
-    (return-from prompt-connection *test-connection*))
-  (let* ((descriptions '("Database name" "User" "Password" "Hostname"))
-         (env-vars '("DB_NAME" "DB_USER" "DB_PASS" "DB_HOST"))
+(defun make-keyword (str)
+        "Upcases and interns a string in the keyword package. If the string has a leading colon, drop it."
+        (when (eq #\: (aref str 0))
+          (setf str (subseq str 1)))
+        (intern (string-upcase str) :keyword))
+
+(defun prompt-connection (&optional (defaults '("test" "test" "" "localhost" 5432 :no)))
+  (when *cl-postgres-test-connection*
+    (return-from prompt-connection *cl-postgres-test-connection*))
+  (let* ((descriptions '("Database name" "User" "Password" "Hostname" "Port" "Use SSL"))
+         (env-vars '("DB_NAME" "DB_USER" "DB_PASS" "DB_HOST" "DB_PORT" "USE_SSL"))
          (provided (mapcar #'uiop:getenv env-vars))
          (prospective (mapcar (lambda (a b) (if a a b)) provided defaults)))
-    (setq *test-connection*
+    (setq *cl-postgres-test-connection*
           (handler-case
               (let ((connection (apply #'open-database prospective)))
                 (close-database connection)
@@ -35,7 +41,12 @@ avoid interactive input you can set the following environment
 variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
                         condition
                         (mapcar #'list env-vars descriptions provided defaults))
-                (mapcar #'ask descriptions provided defaults)))))))
+                (mapcar #'ask descriptions provided defaults)))))
+    (when (stringp (elt *cl-postgres-test-connection* 4))
+      (setf (elt *cl-postgres-test-connection* 4) (parse-integer (elt *cl-postgres-test-connection* 4))))
+    (when (stringp (elt *cl-postgres-test-connection* 5))
+      (setf (elt *cl-postgres-test-connection* 5) (make-keyword (elt *cl-postgres-test-connection* 5))))
+    *cl-postgres-test-connection*))
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
 ;; refers to a valid postgresql database, then after loading the file,
@@ -221,8 +232,8 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
 
 (test bulk-writer
   (with-test-connection
-    (exec-query connection "create temporary table test (a int, b text, c date, d timestamp, e int[])")
-    (let ((stream (open-db-writer *test-connection* 'test '(a b c d e))))
+    (ignore-errors (exec-query connection "create table test_bulk_writer (a int, b text, c date, d timestamp, e int[])"))
+    (let ((stream (open-db-writer *cl-postgres-test-connection* 'test_bulk_writer '(a b c d e))))
       ;; test a variety of types (int, text, date, timstamp, int array)
       (loop for row in '((1 "one" "2012-01-01" "2012-01-01 00:00" #(1 2 3 42))
                          (2 "two" "2012-01-01" "2012-01-01 00:00" #(3 2 1 42))
@@ -235,7 +246,11 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
            do
            (db-write-row stream row))
       (close-db-writer stream))
-    (exec-query connection "select * from test")))
+    (is (equalp (second (first (exec-query connection "select * from test_bulk_writer" 'list-row-reader)))
+                "one"))
+    (is (equal (first (fourth (exec-query connection "select * from test_bulk_writer" 'list-row-reader)))
+               4))
+    (exec-query connection "drop table test_bulk_writer")))
 
 (test row-boolean-array
   (with-test-connection

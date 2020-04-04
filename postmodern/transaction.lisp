@@ -90,7 +90,9 @@ associated database connection of a savepoint."))
 
 (defun call-with-savepoint (name body)
   (let ((savepoint (make-instance 'savepoint-handle :name (to-sql-name name))))
+    (format t "CALL-WITH-SAVEPOINT 1")
     (execute (format nil "SAVEPOINT ~A" (savepoint-name savepoint)))
+    (format t "CALL-WITH-SAVEPOINT 2")
     (unwind-protect
          (multiple-value-prog1
              (let ((*transaction-level* (1+ *transaction-level*))

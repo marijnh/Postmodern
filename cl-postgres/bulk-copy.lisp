@@ -131,4 +131,3 @@
               (#\Z (read-uint1 socket)
                    (return-from find-ready))
               (t :skip))))))
-

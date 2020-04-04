@@ -13,31 +13,31 @@ operating on a database assume this contains a connected database.")
 
 (defparameter *default-use-ssl* :no)
 
-(defun connect (database user password host &key (port 5432) pooled-p (use-ssl *default-use-ssl*) (service "postgres"))
+(defun connect (database-name user password host &key (port 5432) pooled-p (use-ssl *default-use-ssl*) (service "postgres"))
   "Create and return a database connection."
   (cond (pooled-p
-         (let ((type (list database user password host port use-ssl)))
+         (let ((type (list database-name user password host port use-ssl)))
            (or (get-from-pool type)
-               (let ((connection (open-database database user password host port use-ssl)))
+               (let ((connection (cl-postgres:open-database database-name user password host port use-ssl)))
 		 #-genera (change-class connection 'pooled-database-connection :pool-type type)
 		 #+genera (progn
 			      (change-class connection 'pooled-database-connection)
 			      (setf (slot-value connection 'pool-type) type))
                  connection))))
-        (t (open-database database user password host port use-ssl service))))
+        (t (cl-postgres:open-database database-name user password host port use-ssl service))))
 
 (defun connected-p (database)
   "Test whether a database connection is still connected."
-  (database-open-p database))
+  (cl-postgres:database-open-p database))
 
-(defun connect-toplevel (database user password host &key (port 5432) (use-ssl *default-use-ssl*))
+(defun connect-toplevel (database-name user password host &key (port 5432) (use-ssl *default-use-ssl*))
   "Set *database* to a new connection. Use this if you only need one
 connection, or if you want a connection for debugging from the REPL."
   (when (and *database* (connected-p *database*))
     (restart-case (error "Top-level database already connected.")
       (replace () :report "Replace it with a new connection." (disconnect-toplevel))
       (leave () :report "Leave it." (return-from connect-toplevel nil))))
-  (setf *database* (connect database user password host :port port :use-ssl use-ssl))
+  (setf *database* (connect database-name user password host :port port :use-ssl use-ssl))
   (values))
 
 (defgeneric disconnect (database)

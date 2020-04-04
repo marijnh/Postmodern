@@ -11,11 +11,23 @@
 
 (fiveam:in-suite :postmodern)
 
+(defun prompt-connection-to-postmodern-db-spec (param-lst)
+  "Takes the 6 item parameter list from prompt-connection and restates it for pomo:with-connection. Note that cl-postgres does not provide the pooled connection - that is only in postmodern - so that parameter is not passed."
+  (when (and (listp param-lst)
+             (= 6 (length param-lst)))
+    (let ((db (pop param-lst))
+          (user (pop param-lst))
+          (password (pop param-lst))
+          (host (pop param-lst))
+          (port (pop param-lst))
+          (use-ssl (pop param-lst)))
+      (list db user password host :port port :use-ssl use-ssl))))
+
 (defmacro with-test-connection (&body body)
-  `(with-connection (prompt-connection) ,@body))
+  `(with-connection (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection)) ,@body))
 
 (defmacro with-pooled-test-connection (&body body)
-  `(with-connection (append (prompt-connection) '(:pooled-p t)) ,@body))
+  `(with-connection (append (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection)) '(:pooled-p t)) ,@body))
 
 (defmacro protect (&body body)
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
@@ -31,7 +43,7 @@
     (is (not (null *database*)))))
 
 (test connection-pool
-  (let* ((db-params (append (prompt-connection) '(:pooled-p t)))
+  (let* ((db-params (append (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection)) '(:pooled-p t)))
          (pooled (apply 'connect db-params)))
     (disconnect pooled)
     (let ((pooled* (apply 'connect db-params)))
@@ -72,11 +84,11 @@
         (cl-postgres:copy-sql-readtable
          simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
   (with-test-connection
-    (is (time= (query (:select (:type (encode-date 1980 2 1) date)) :single)
+    (is (time= (query (:select (:type (simple-date:encode-date 1980 2 1) date)) :single)
                (encode-date 1980 2 1)))
-    (is (time= (query (:select (:type (encode-timestamp 2040 3 19 12 15 0 2) timestamp)) :single)
+    (is (time= (query (:select (:type (simple-date:encode-timestamp 2040 3 19 12 15 0 2) timestamp)) :single)
                (encode-timestamp 2040 3 19 12 15 0 2)))
-    (is (time= (query (:select (:type (encode-interval :month -1 :hour 24) interval)) :single)
+    (is (time= (query (:select (:type (simple-date:encode-interval :month -1 :hour 24) interval)) :single)
                (encode-interval :month -1 :hour 24))))
   ;;; Reset readtable to default
   (setf cl-postgres:*sql-readtable*
@@ -196,7 +208,7 @@
     (defprepared select1 "select \"from\" from from_test where to_destination = $1" :single)
       ;; the funcall creates the prepared statements logged in the postmodern connection
       ;; and the postgresql connection
-      (is (equal "Reykjavík" (funcall 'select1 "Seyðisfjörður")))
+    (is (equal "Reykjavík" (funcall 'select1 "Seyðisfjörður")))
       (execute (:drop-table 'from-test))))
 
 (test prepare-pooled

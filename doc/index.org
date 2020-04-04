@@ -21,19 +21,22 @@ me, your mileage may vary.
 
 
 * Dependencies
-The library depends on [[http://quickdocs.org/usocket/][usocket]] (except on [[http://sbcl.org/][SBCL]] and [[https://franz.com/products/allegrocl/][ACL]], where the built-in
-socket library is used), [[https://github.com/pmai/md5.git][md5]], [[https://github.com/pcostanza/closer-mop.git][closer-mop]], [[https://github.com/sionescu/bordeaux-threads.git][bordeaux-threads]] if you want
+The library depends on [[http://quickdocs.org/usocket/][usocket]] (except on [[http://sbcl.org/][SBCL]] and [[https://franz.com/products/allegrocl/][ACL]], where the built-in socket library is used), [[https://github.com/pmai/md5.git][md5]], [[https://github.com/pcostanza/closer-mop.git][closer-mop]], [[https://github.com/sionescu/bordeaux-threads.git][bordeaux-threads]] if you want
 thread-safe connection pools, and [[https://github.com/cl-plus-ssl/cl-plus-ssl.git][CL+SSL]] when SSL connections are needed.
 
-Postmodern itself is split into four different packages, some of which
-can be used independently. [[file:simple-date.html][Simple-date]] is a very basic implementation of
-date and time objects, used to support storing and retrieving time-related
-SQL types. [[file:cl-postgres.html][CL-postgres]] is the low-level library used for interfacing with a
-PostgreSQL server over a socket. [[file:s-sql.html][S-SQL]] is used to compile s-expressions to
-strings of SQL code, escaping any Lisp values inside, and doing as much as
-possible of the work at compile time. Finally, [[file:postmodern.html][Postmodern]] itself is the
-library that tries to put all these things together into a convenient
-programming interface.
+As of version 1.3 it also depends on [[https://github.com/sharplispers/ironclad][ironclad]], [[https://github.com/massung/base64][base64]] and [[https://github.com/sabracrolleton/uax-15][uax-15]] because of the need to support scram-sha-256 authentication.
+
+Postmodern itself is split into four different packages, some of which can be used independently:
+
+- [[file:simple-date.html][Simple-date]] is a very basic implementation of date and time objects, used to support storing and retrieving time-related
+SQL types. It is not loaded by default and you can use [[https://github.com/dlowe-net/local-time][local-time]] instead.
+
+- [[file:cl-postgres.html][CL-postgres]] is the low-level library used for interfacing with a PostgreSQL server over a socket.
+
+- [[file:s-sql.html][S-SQL]] is used to compile s-expressions to strings of SQL code, escaping any Lisp values inside, and doing as much as
+possible of the work at compile time. Finally,
+
+- [[file:postmodern.html][Postmodern]] itself is the library that tries to put all these things together into a convenient programming interface.
 
 * License
 Postmodern is released under a zlib-style license. Which approximately
@@ -71,7 +74,14 @@ password 'surveiller', you can connect like this:
 
 Which will establish a connection to be used by all code, except for that
 wrapped in a with-connection form, which takes the same arguments but only
-establishes the connection locally.
+establishes the connection locally. If the Postgresql server is running on a port other than 5432,
+you would also pass the appropriate keyword port parameter. E.g.:
+
+#+BEGIN_SRC lisp
+(connect-toplevel "testdb" "foucault" "surveiller" "localhost" :port 5434)
+#+END_SRC
+
+Ssl connections would similarly use the keyword parameter :use-ssl and pass :yes, :no or :try
 
 Now for a basic sanity test:
 #+BEGIN_SRC lisp
@@ -111,7 +121,7 @@ also iterate over it with the doquery macro:
   (format t "On this row, x = ~A and y = ~A.~%" x y))
 #+END_SRC
 
-You can work directly with the database or you can use a database-access-class (aka dao).
+You can work directly with the database or you can use a simple database-access-class (aka dao) which would cover all the fields in a row.
 This is what a database-access class looks like:
 #+BEGIN_SRC lisp
 (defclass country ()
@@ -144,7 +154,7 @@ not expect any results back.
 
 You can create tables directly without the need to define a class, and in more
 complicated cases, you will need to use the create-table operator. One example
-would be the following:
+using s-sql rather than plain vanilla sql would be the following:
 #+BEGIN_SRC lisp
 (query (:create-table so-items
          ((item-id :type integer)
@@ -154,6 +164,19 @@ would be the following:
           (net-price :type (or numeric db-null)))
          (:primary-key item-id so-id)))
 
+#+END_SRC
+
+Restated using vanilla sql:
+#+BEGIN_SRC sql
+(query "CREATE TABLE so_items (
+ item_id INTEGER NOT NULL,
+ so_id INTEGER REFERENCES so_headers(id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT,
+ product_id INTEGER,
+ qty INTEGER,
+ net_price NUMERIC,
+ PRIMARY KEY (item_id, so_id)
+ );"
+)
 #+END_SRC
 
 In the above case, the new table's name will be so-items (actually in the

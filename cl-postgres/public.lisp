@@ -1,6 +1,12 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: CL-POSTGRES; -*-
 (in-package :cl-postgres)
 
+(defgeneric connection-port (cl)
+  (:method ((cl t)) nil))
+
+(defgeneric connection-db (cl)
+  (:method ((cl t)) nil))
+
 (defclass database-connection ()
   ((host :initarg :host :reader connection-host)
    (port :initarg :port :reader connection-port)
@@ -18,6 +24,31 @@
 login information in order to be able to automatically re-establish a
 connection when it is somehow closed."))
 
+(defvar *retry-connect-times* 5
+  "How many times to we try to connect again. Borrowed from pgloader")
+
+(defvar *retry-connect-delay* 0.5
+  "How many seconds to wait before trying to connect again. Borrowed from pgloader")
+
+(defun get-postgresql-version (connection &optional (return-type 'string) )
+  "Retrieves the version number of the connected postgresql database. The default is returning it as a string,
+but it can be returned as a list of integers or as a float."
+  (cond ((eq return-type 'string)
+         (gethash "server_version" (connection-parameters connection)))
+        ((eq return-type 'list)
+         (let ((major-minor-split (split-sequence:split-sequence #\.
+                                                                 (gethash "server_version" (connection-parameters connection)))))
+           (loop for x in major-minor-split collect (parse-integer x))))
+        ((eq return-type 'float)
+         (let* ((version-str (gethash "server_version" (connection-parameters connection)))
+         (major-minor-split (split-sequence:split-sequence #\. version-str))
+         (major-version (parse-integer (first major-minor-split)))
+         (minor-version (if (> (length major-minor-split) 1)
+                            (/ (parse-integer (second major-minor-split)) (expt 10 (length (second major-minor-split))))
+                            0)))
+           (+ major-version minor-version)))
+        (t (gethash "server_version" (connection-parameters connection)))))
+
 (defun connection-meta (connection)
   "Retrieves the meta field of a connection, the primary purpose of
 which is to store information about the prepared statements that
@@ -32,10 +63,6 @@ exists for it."
 These are needed for cancelling connections and error processing with respect to prepared statements."
   (list (gethash "pid" (slot-value connection 'parameters))
         (gethash "secret-key" (slot-value connection 'parameters))))
-
-(defun get-postgresql-version (connection)
-  "Returns the version of the connected postgresql instance."
-  (gethash "server_version" (connection-parameters connection)))
 
 (defun database-open-p (connection)
   "Returns a boolean indicating whether the given connection is
@@ -55,8 +82,9 @@ but does not verify the server hostname; use :full to also verify the hostname).
   (check-type use-ssl (member :no :try :yes :full) ":no, :try, :yes or :full")
   (let ((conn (make-instance 'database-connection :host host :port port :user user
                              :password password :socket nil :db database :ssl use-ssl
-                             :service service)))
-    (initiate-connection conn)
+                             :service service))
+        (connection-attempts 0))
+    (initiate-connection conn connection-attempts)
     conn))
 
 #+(and (or cl-postgres.features:sbcl-available ccl allegro) unix)
@@ -78,6 +106,7 @@ but does not verify the server hostname; use :full to also verify the hostname).
       (sb-bsd-sockets:socket-make-stream
        sock :input t :output t :element-type '(unsigned-byte 8))))
 
+  #+ccl (setf ccl:*default-socket-character-encoding* :utf-8)
   #+ccl
   (defun unix-socket-connect (path)
     (ccl:make-socket :type :stream
@@ -126,6 +155,9 @@ but does not verify the server hostname; use :full to also verify the hostname).
 
 #+ccl
 (defun inet-socket-connect (host port)
+  (when (and (stringp host)
+             (string= host "localhost"))
+    (setf host "127.0.0.1")) ;this corrects a strange ccl error we are seeing in certain scram authentication situations
   (ccl:make-socket :format :binary
                    :remote-host host
                    :remote-port port))
@@ -137,12 +169,13 @@ but does not verify the server hostname; use :full to also verify the hostname).
                       :format :binary
                       :type :stream))
 
-(defun initiate-connection (conn)
+(defun initiate-connection (conn &optional (connection-attempts 0))
   "Check whether a connection object is connected, try to connect it
 if it isn't."
   (flet ((add-restart (err)
            (restart-case (error (wrap-socket-error err))
-             (:reconnect () :report "Try again." (initiate-connection conn))))
+             (:reconnect () :report "Try again." (progn (incf connection-attempts)
+                                                        (initiate-connection conn connection-attempts)))))
          (assert-unix ()
            #+unix t
            #-unix (error "Unix sockets only available on Unix (really)")))
@@ -173,7 +206,16 @@ if it isn't."
               (*connection-params* (make-hash-table :test 'equal)))
           (setf (connection-parameters conn) *connection-params*)
           (unwind-protect
-               (setf socket (authenticate socket conn)
+               (setf socket (handler-case
+                                (authenticate socket conn)
+                              (cl-postgres-error:protocol-violation (err)
+                                (setf finished t)
+                                (ensure-socket-is-closed socket)
+                                ;; If we settled on a single logging library, I would suggest logging this kind of situation with at least
+                                ;; the following data (database-error-message err) (database-error-detail err)
+                                (incf connection-attempts)
+                                (when (< connection-attempts *retry-connect-times*)
+                                  (initiate-connection conn connection-attempts))))
                      (connection-timestamp-format conn)
                      (if (string= (gethash "integer_datetimes" (connection-parameters conn)) "on")
                          :integer :float)
@@ -190,22 +232,16 @@ if it isn't."
       #+cl-postgres.features:sbcl-available(sb-bsd-sockets:socket-error (e) (add-restart e))
       #+cl-postgres.features:sbcl-available(sb-bsd-sockets:name-service-error (e) (add-restart e))
       (stream-error (e) (add-restart e))))
-    (values))
+  (values))
 
-(defvar *retry-connect-times* 5
-  "How many times to we try to connect again. Borrowed from pgloader")
-
-(defvar *retry-connect-delay* 0.5
-  "How many seconds to wait before trying to connect again. Borrowed from pgloader")
-
-(defun reopen-database (conn)
+(defun reopen-database (conn &optional (connection-attempts 0))
   "Reconnect a disconnected database connection."
   (loop :while (not (database-open-p conn))
      :repeat *retry-connect-times*
      :do
-       (initiate-connection conn)))
+       (initiate-connection conn connection-attempts)))
 
-(defun ensure-connection (conn)
+(defun ensure-connection (conn &optional (connection-attempts 0))
   "Used to make sure a connection object is connected before doing
 anything with it."
   (unless conn
@@ -216,7 +252,7 @@ anything with it."
                   (loop :while (not (database-open-p conn))
                      :repeat *retry-connect-times*
                      :do
-                       (initiate-connection conn))))))
+                       (initiate-connection conn connection-attempts))))))
 
 (defun close-database (connection)
   "Gracefully disconnect a database connection."

@@ -15,11 +15,17 @@
    #:\!dao-def #:*ignore-unknown-columns*)
 
   (:export
-   #:connect #:disconnect #:reconnect
-   #:call-with-connection #:with-connection
-   #:*database* #:connected-p #:database-connection
+   #:connect
+   #:disconnect
+   #:reconnect
+   #:call-with-connection
+   #:with-connection
+   #:*database*
+   #:connected-p
+   #:database-connection
    #:connect-toplevel #:disconnect-toplevel
-   #:clear-connection-pool #:*max-pool-size* #:*default-use-ssl*
+   #:clear-connection-pool #:*max-pool-size*
+   #:*default-use-ssl*
    #:list-connections
    #:query #:execute #:doquery
    #:parse-queries #:read-queries #:execute-file

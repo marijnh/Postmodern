@@ -24,9 +24,17 @@ The biggest differences between this library and CLSQL/CommonSQL or cl-dbi are t
 
 ## Dependencies
 ---
-The library depends on usocket (except on SBCL and ACL, where the built-in socket library is used), md5, closer-mop, bordeaux-threads if you want thread-safe connection pools, and CL+SSL when SSL connections are needed.
+The library depends on usocket (except on SBCL and ACL, where the built-in socket library is used), md5, closer-mop, bordeaux-threads if you want thread-safe connection pools, and CL+SSL when SSL connections are needed. As of version 1.3 it also depends on ironclad, base64 and uax-15 because of the requirement to support scram-sha-256 authentication.
 
-Postmodern itself is split into four different packages, some of which can be used independently. Simple-date is a very basic implementation of date and time objects, used to support storing and retrieving time-related SQL types. CL-postgres is the low-level library used for interfacing with a PostgreSQL server over a socket. S-SQL is used to compile s-expressions to strings of SQL code, escaping any Lisp values inside, and doing as much as possible of the work at compile time. Finally, Postmodern itself is the library that tries to put all these things together into a convenient programming interface.
+Postmodern itself is split into four different packages, some of which can be used independently.
+
+Simple-date is a very basic implementation of date and time objects, used to support storing and retrieving time-related SQL types. It is not loaded by default and you can use local-time instead.
+
+CL-postgres is the low-level library used for interfacing with a PostgreSQL server over a socket.
+
+S-SQL is used to compile s-expressions to strings of SQL code, escaping any Lisp values inside, and doing as much as possible of the work at compile time.
+
+Finally, Postmodern itself is the library that tries to put all these things together into a convenient programming interface.
 
 ## License
 ---
@@ -56,7 +64,12 @@ If you have a PostgreSQL server running on localhost, with a database called 'te
     (connect-toplevel "testdb" "foucault" "surveiller" "localhost")
 
 
-Which will establish a connection to be used by all code, except for that wrapped in a with-connection form, which takes the same arguments but only establishes the connection locally.
+Which will establish a connection to be used by all code, except for that wrapped in a with-connection form, which takes the same arguments but only establishes the connection locally. If the Postgresql server is running on a port other than 5432, you would also pass the appropriate keyword port parameter. E.g.:
+
+
+    (connect-toplevel "testdb" "foucault" "surveiller" "localhost" :port 5434)
+
+Ssl connections would similarly use the keyword parameter :use-ssl and pass :yes, :no or :try
 
 Now for a basic sanity test:
 
@@ -89,7 +102,7 @@ You do not have to pull in the whole result of a query at once, you can also ite
     (doquery (:select 'x 'y :from 'some-imaginary-table) (x y)
       (format t "On this row, x = ~A and y = ~A.~%" x y))
 
-You can work directly with the database or you can use a database-access-class (aka dao).
+You can work directly with the database or you can use a simple database-access-class (aka dao) which would cover all the fields in a row.
 This is what a database-access class looks like:
 
 
@@ -118,7 +131,7 @@ The above defines a class that can be used to handle records in a table with thr
 
 This defines our table in the database. execute works like query, but does not expect any results back.
 
-You can create tables directly without the need to define a class, and in more complicated cases, you will need to use the create-table operator. One example would be the following:
+You can create tables directly without the need to define a class, and in more complicated cases, you will need to use the create-table operator. One example using s-sql rather than plain vanilla sql would be the following:
 
 
     (query (:create-table so-items
@@ -128,6 +141,20 @@ You can create tables directly without the need to define a class, and in more c
               (qty :type (or integer db-null))
               (net-price :type (or numeric db-null)))
              (:primary-key item-id so-id)))
+
+
+Restated using vanilla sql:
+
+
+    (query "CREATE TABLE so_items (
+                 item_id INTEGER NOT NULL,
+                 so_id INTEGER REFERENCES so_headers(id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT,
+                 product_id INTEGER,
+                 qty INTEGER,
+                 net_price NUMERIC,
+                 PRIMARY KEY (item_id, so_id)
+                 );"
+    )
 
 
 In the above case, the new table's name will be so-items (actually in the database it will be so_items because sql does not allow hyphens. The column item-id is an integer and cannot be null. The column so-id is also an integer, but is allowed to be null and is a foreign key to the id field in the so-headers table so-headers. The primary key is actually a composite of item-id and so-id. (If we wanted the primary key to be just item-id, we could have specified that in the form defining item-id.)
@@ -186,6 +213,11 @@ The defprepared macro creates a function that takes the same amount of arguments
 
     (disconnect-toplevel)
 
+## Authentication
+Postmodern can use either md5 or scram-sha-256 authentication. Scram-sha-256 authentication is obviously more secure, but slower than md5, so take that into account if you are planning on opening and closing many connections without using a connection pooling setup..
+
+Other authentication methods have not been tested. Please let us know if there is a authentication method that you believe should be considered.
+
 ## Running tests
 ---
 
@@ -207,6 +239,8 @@ parameters to run the tests:
 - User: test
 - Password: <empty>
 - Hostname: localhost
+- Port: 5432
+- Use-SSL :NO
 
 If connection with these parameters fails then you will be asked to
 provide the connection parameters interactively.  The parameters will
@@ -266,15 +300,12 @@ It is important to understand how postgresql (not postmodern) handles timestamps
 Keeping that in mind, [Simple-date](http://marijnhaverbeke.nl/postmodern/simple-date.html) has no concept of time zones. If you really need your time-keeping to be reliable and/or universal you might consider using [local-time](https://github.com/dlowe-net/local-time), which solves the same problem as simple-date, but does understand time zones. We are considering the best ways to make life easier for users of the two libraries.
 
 ### Portability
-The Lisp code in Postmodern is theoretically portable across implementations, and seems to work on all major ones and even less major ones such as  Genera. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).
+The Lisp code in Postmodern is theoretically portable across implementations, and testing is normally done on sbcl, ccl and ecl. ABCL currently has issues with utf-8 and :null. Clisp has its normal issues with an outdated asdf. Please let us know if it does not work on the implementation that you normally use. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).
 
-The library is not likely to work for PostgreSQL versions older than 8.4.
-Other features only work in newer Postgresql versions as the features
-were only introduced in those newer versions.
-
+The library is not likely to work for PostgreSQL versions older than 8.4. Other features only work in newer Postgresql versions as the features were only introduced in those newer versions.
 
 ### Things that should be implemented
-Postmodern is under active development so Issues and feature requests should
+Postmodern is under active development so issues and feature requests should
 be flagged on [[https://github.com/marijnh/Postmodern][Postmodern's site on github]].
 
 It would be a nice feature if Postmodern could help you with defining your

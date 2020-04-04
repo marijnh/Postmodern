@@ -11,7 +11,7 @@
         ecl lispworks openmcl sbcl genera)
   (pushnew :postmodern-thread-safe *features*)
 
-  #+(or allegro clasp clisp ecl lispworks mcl openmcl cmu sbcl)
+  #+(or allegro clasp clisp ecl lispworks mcl openmcl cmu sbcl armedbear)
   (pushnew :postmodern-use-mop *features*))
 
 (defsystem "postmodern"
@@ -19,6 +19,7 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
+  :version "1.3.0"
   :depends-on ("alexandria"
                "cl-postgres"
                "s-sql"
@@ -48,9 +49,9 @@
   :components
   ((:module "postmodern/tests"
             :components ((:file "test-package")
-			 (:file "tests")
-                         (:file "test-dao" :depends-on ("test-package"))
-                         (:file "test-execute-file"))))
+                         (:file "tests")
+                         #+postmodern-use-mop (:file "test-dao" :depends-on ("test-package"))
+                         (:file "test-execute-file" :depends-on ("test-package")))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
              (uiop:symbol-call :fiveam '#:run! :postmodern)))

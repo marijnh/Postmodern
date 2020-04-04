@@ -73,8 +73,8 @@ No guarantee is given with respect to resolution or timing on any item.
 - [ ]   Prepared Query Review (comments requested on any work that should be done here)
 - [ ]   Reading large bytea column over ssl connection errors have been reported. Postgresql does not
         have a chunk API so the network is handling the content as a whole.
-- [ ]   SCRAM authentication (postgresql 10) (Have branch in testing that works with ironclad, can it be done with less heavy lifting?).
-- [ ]   Normalize password for SCRAM
+- [X]   SCRAM authentication (postgresql 10) (Have branch in testing that works with ironclad, can it be done with less heavy lifting?).
+- [X]   Normalize password for SCRAM
 - [ ]   Alter system (postgresql 9.4)
 - [X]   Create temp tables
 
