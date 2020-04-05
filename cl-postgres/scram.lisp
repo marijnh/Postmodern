@@ -173,11 +173,12 @@
 
 (defun gen-salted-password (password server-salt iterations &key (digest :sha256) (salt-type :byte-array))
   "Takes an password (must be an ascii string) and server salt (by default presumed byte-array but can be set for :string or :hex) and an integer iterations. Digest is presumed to be :sha256 but can be set to other valid ironclad digests. returns a byte-array"
-  (cond ((eq salt-type :string) (setf server-salt (ironclad:ascii-string-to-byte-array server-salt)) )
-        ((eq salt-type :byte-array) t)
-        ((eq salt-type :base64-string) (setf server-salt (cl-base64:base64-string-to-usb8-array server-salt)))
-        ((eq salt-type :hex) (setf server-salt (ironclad:hex-string-to-byte-array server-salt)))
-        (t (cerror "Please enter valid salt-type" "unknown salt-type in gen-salted-password")))
+  (case salt-type
+    (:string (setf server-salt (ironclad:ascii-string-to-byte-array server-salt)) )
+    (:byte-array t)
+    (:base64-string (setf server-salt (cl-base64:base64-string-to-usb8-array server-salt)))
+    (:hex (setf server-salt (ironclad:hex-string-to-byte-array server-salt)))
+    (t (cerror "Please enter valid salt-type" "unknown salt-type in gen-salted-password")))
   (ironclad:pbkdf2-hash-password
    (ironclad:ascii-string-to-byte-array (saslprep-normalize password))
    :salt server-salt
@@ -198,8 +199,7 @@
 
 (defun validate-server-nonce (server-nonce client-nonce)
   "checks whether the server-nonce begins with the client-nonce. Both need to be normal strings."
-  (if (= 0 (search client-nonce server-nonce))
-      t
+  (when (not (= 0 (search client-nonce server-nonce)))
       (error 'protocol-violation
              :message "Client-nonce not found at beginning of server-nonce")))
 
@@ -218,7 +218,6 @@ It returns the server-response as a normal string, the server-provided-salt as a
          (server-salt (cdr (assoc "s" split-response :test 'equal)))
          (server-iterations (parse-integer (cdr (assoc "i" split-response :test 'equal))))
          (num-of-split (length split-response)))
-    (when (not server-nonce-validated) (error 'cl-postgres-error:protocol-violation :message "Server did not validate client nonce"))
     (when (not (= 3 num-of-split)) (error 'protocol-error
                                           :message (format nil "There was an error in parsing the server response. Parsing had ~a results instead of 3" num-of-split)))
     (values server-nonce server-salt server-iterations)))
@@ -233,7 +232,6 @@ It returns the server-response as a normal string, the server-provided-salt as a
     (ironclad:ascii-string-to-byte-array message))))
 
 (defun gen-stored-key (client-key)
-
   (ironclad:digest-sequence :sha256 client-key))
 
 (defun gen-auth-message (client-initial-response server-response final-message-part1)
@@ -242,7 +240,7 @@ It returns the server-response as a normal string, the server-provided-salt as a
           (if (and (search "n,," client-initial-response)
                    (= 0 (search "n,," client-initial-response)))
               (subseq client-initial-response 3)
-              (format nil "~a" client-initial-response))
+              client-initial-response)
           server-response
           final-message-part1))
 
