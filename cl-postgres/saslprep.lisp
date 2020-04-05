@@ -8,6 +8,8 @@
 ;; RFC 5802 https://tools.ietf.org/html/rfc5802
 ;; RFC 7677 https://tools.ietf.org/html/rfc7677
 
+(defvar *printable-ascii-chars* '(#\  #\! #\" #\# #\$ #\% #\& #\' #\( #\) #\* #\+ #\, #\- #\. #\/ #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\: #\; #\< #\= #\> #\? #\@ #\A #\B #\C #\D #\E #\F #\G #\H #\I #\J #\K #\L #\M #\N #\O #\P #\Q #\R #\S #\T #\U #\V #\W #\X #\Y #\Z #\[ #\\ #\] #\^ #\_ #\` #\a #\b #\c #\d #\e #\f #\g #\h #\i #\j #\k #\l #\m #\n #\o #\p #\q #\r #\s #\t #\u #\v #\w #\x #\y #\z #\{ #\| #\} #\~))
+
 (define-condition bad-char-error (error)
   ((message
     :initarg :message
@@ -40,7 +42,7 @@
 
 (defun char-printable-ascii-p (ch)
   "Returns t if the char is printable ascii."
-  (if (member ch '(#\  #\! #\" #\# #\$ #\% #\& #\' #\( #\) #\* #\+ #\, #\- #\. #\/ #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\: #\; #\< #\= #\> #\? #\@ #\A #\B #\C #\D #\E #\F #\G #\H #\I #\J #\K #\L #\M #\N #\O #\P #\Q #\R #\S #\T #\U #\V #\W #\X #\Y #\Z #\[ #\\ #\] #\^ #\_ #\` #\a #\b #\c #\d #\e #\f #\g #\h #\i #\j #\k #\l #\m #\n #\o #\p #\q #\r #\s #\t #\u #\v #\w #\x #\y #\z #\{ #\| #\} #\~))
+  (if (member ch *printable-ascii-chars*)
       t
       nil))
 
@@ -55,7 +57,6 @@
 
 (defun char-mapped-to-nothing-p (chr)
   "Returns t if the character should be mapped to nothing per RFC 3454 Table B.1 and RFC 4013"
-;  (gethash ch hsh)
   (when (not (or (characterp chr) (integerp chr)))
     (bad-char-error "Passing unknown type data to char-mapped-to-nothing-p" :value chr))
   (let ((chr-code-point (if (integerp chr) (coerce chr 'fixnum) (char-code chr))))
