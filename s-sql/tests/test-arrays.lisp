@@ -70,19 +70,19 @@ equality tests with arrays requires equalp, not equal."
   (is (equal (sql (:create-table array_int ((vector :type (or int[][] db-null)))))
              "CREATE TABLE array_int (vector INT[][])"))
   (with-test-connection
-    (build-receipe-tables)
+    (build-recipe-tables)
 
 ;;; 1. checking for records that have a specific tag
     (is (equal (query (:limit
                      (:order-by
-                      (:select 'receipe-id 'name 'text
-                               :from 'receipes
-                               :where (:in 'receipe-id
+                      (:select 'recipe-id 'name 'text
+                               :from 'recipes
+                               :where (:in 'recipe-id
                                            (:set
-                                            (:select 'receipe-id
-                                                     :from 'receipe-tags-array
+                                            (:select 'recipe-id
+                                                     :from 'recipe-tags-array
                                                      :where (:@> 'tags (:array[] "bulgur"))))))
-                      'receipe-id)
+                      'recipe-id)
                      25 0))
              '((5 "Kibbe nayeh" "(#(raw meat bulgur onion spices pita bread))")
                (8 "Tabbouleh" "(#(bulgur tomatoes onions parsley))"))))
@@ -91,50 +91,50 @@ equality tests with arrays requires equalp, not equal."
     (is (equalp (query (:limit
                        (:order-by
                         (:select '*
-                                 :from 'receipes
-                                 :where (:in 'receipe-id
+                                 :from 'recipes
+                                 :where (:in 'recipe-id
                                              (:set
-                                              (:select 'receipe-id
-                                                       :from 'receipe-tags-array
+                                              (:select 'recipe-id
+                                                       :from 'recipe-tags-array
                                                        :where (:@> 'tags (:array[] "bulgur" "parsley"))))))
-                        'receipe-id)
+                        'recipe-id)
                        25))
                '((8 "Tabbouleh" "(#(bulgur tomatoes onions parsley))"))))
 
 ;;; 3. Test the update array with an lisp array (changing onion to onions in the one row where it is singular
-    (query (:update 'receipe-tags-array
+    (query (:update 'recipe-tags-array
                     :set 'tags #("raw meat" "bulgur" "onions" "spices" "pita bread")
-                    :where (:= 'receipe-id 5)))
+                    :where (:= 'recipe-id 5)))
 
-    (is (equalp (query (:select 'tags :from 'receipe-tags-array :where (:= 'receipe-id 5)))
+    (is (equalp (query (:select 'tags :from 'recipe-tags-array :where (:= 'recipe-id 5)))
                '((#("raw meat" "bulgur" "onions" "spices" "pita bread")))))
 
 ;;; 4. Checking array-length function
-    (is (equalp (query (:select 'receipe-id (:array-length 'tags 1) 'tags
-                               :from 'receipe-tags-array
-                               :where (:= 'receipe-id 6)))
+    (is (equalp (query (:select 'recipe-id (:array-length 'tags 1) 'tags
+                               :from 'recipe-tags-array
+                               :where (:= 'recipe-id 6)))
                '((6 8
                   #("meat" "cheese" "zaatar" "kishik" "tomatoes" "cucumbers" "mint leaves"
                     "olives")))))
 
 ;;; 5. checking cardinality functions (same as array-length)
     (is (equal (query (:select (:cardinality 'tags)
-                                              :from 'receipe-tags-array
-                                              :where (:= 'receipe-id 6))
+                                              :from 'recipe-tags-array
+                                              :where (:= 'recipe-id 6))
                                      :single)
         8))
 
 ;;; 6. checking that it is returning an array for the tags
     (is (equalp (type-of (query (:select 'tags
-                                        :from 'receipe-tags-array
-                                        :where (:= 'receipe-id 6))
+                                        :from 'recipe-tags-array
+                                        :where (:= 'recipe-id 6))
                                :single))
                '(SIMPLE-VECTOR 8)))
 
 ;;; 7. checking unnest, which expands every array entry into a separate row. In this case we will
 ;;; limit it to distinct items and order it for easy checking
     (is (equal (query (:order-by (:select (:as (:unnest 'tags) 'tag) :distinct
-                                          :from 'receipe-tags-array)
+                                          :from 'recipe-tags-array)
                                  'tag))
                '(("bulgur") ("cheese") ("chicken") ("chickpeas") ("cucumbers") ("eggplant")
                  ("filo dough") ("garlic") ("greens") ("honey") ("kishik") ("lemon")
@@ -146,7 +146,7 @@ equality tests with arrays requires equalp, not equal."
 ;;; 8 counting each unique tag
 
     (is (equal (query (:order-by (:with (:as 'p (:select (:as (:unnest 'tags) 'tag)
-                                                         :from 'receipe-tags-array))
+                                                         :from 'recipe-tags-array))
                                         (:select 'tag (:as (:count 'tag) 'cnt)
                                                  :from 'p :group-by 'tag))
                                  (:desc 'cnt) 'tag))
@@ -159,23 +159,23 @@ equality tests with arrays requires equalp, not equal."
                  ("tomato paste" 1) ("yogurt" 1) ("zaatar" 1))))
 
 ;;; 9. checking array-append function
-    (query (:update 'receipe-tags-array :set 'tags (:array-append 'tags "appended-items")
-                    :where (:= 'receipe-id 5)))
+    (query (:update 'recipe-tags-array :set 'tags (:array-append 'tags "appended-items")
+                    :where (:= 'recipe-id 5)))
 
-    (is (equalp (query (:select 'tags :from 'receipe-tags-array :where (:= 'receipe-id 5)))
+    (is (equalp (query (:select 'tags :from 'recipe-tags-array :where (:= 'recipe-id 5)))
                '((#("raw meat" "bulgur" "onions" "spices" "pita bread" "appended-items")))))
 
 ;;; Resetting the array in that row
-    (query (:update 'receipe-tags-array
+    (query (:update 'recipe-tags-array
                     :set 'tags #("raw meat" "bulgur" "onions" "spices" "pita bread")
-                    :where (:= 'receipe-id 5)))
+                    :where (:= 'recipe-id 5)))
 
 ;;; checking array-replace function
 ;;; this version checks all the rows, even those without the target string
-    (query (:update 'receipe-tags-array :set 'tags (:array-replace 'tags "spices" "chocolate")))
+    (query (:update 'recipe-tags-array :set 'tags (:array-replace 'tags "spices" "chocolate")))
 
     (is (equal (query (:order-by (:with (:as 'p (:select (:as (:unnest 'tags) 'tag)
-                                                         :from 'receipe-tags-array))
+                                                         :from 'recipe-tags-array))
                                         (:select 'tag (:as (:count 'tag) 'cnt)
                                                  :from 'p :group-by 'tag))
                                  (:desc 'cnt) 'tag))
@@ -189,12 +189,12 @@ equality tests with arrays requires equalp, not equal."
 
 ;;; reseting chocolate back to spices using a different method that just updates the arrays with chocolate
 ;;; This is accomplished with the use of :<@
-    (query (:update 'receipe-tags-array :set 'tags (:array-replace 'tags  "chocolate" "spices")
+    (query (:update 'recipe-tags-array :set 'tags (:array-replace 'tags  "chocolate" "spices")
                     :where (:<@ "{\"chocolate\"}" 'tags)))
 
 ;;; checking the the reset happened correctly
     (is (equal (query (:order-by (:with (:as 'p (:select (:as (:unnest 'tags) 'tag)
-                                                         :from 'receipe-tags-array))
+                                                         :from 'recipe-tags-array))
                                         (:select 'tag (:as (:count 'tag) 'cnt)
                                                  :from 'p :group-by 'tag))
                                  (:desc 'cnt) 'tag))
@@ -207,12 +207,12 @@ equality tests with arrays requires equalp, not equal."
                  ("tomato paste" 1) ("yogurt" 1) ("zaatar" 1))))
 
 ;;; checking use of any and passing in an array. Note the need to use :any* instead of :any
-    (is (equal (query (:select 'receipe-id 'name
-                               :from 'receipes
+    (is (equal (query (:select 'recipe-id 'name
+                               :from 'recipes
                                :where (:= 'name (:any* #("Trout" "Shish Taouk" "Hamburger")))))
                '((4 "Shish Taouk"))))
     (is (equalp (query (:select '*
-                                :from 'receipe-tags-array
+                                :from 'recipe-tags-array
                                 :where (:= "chicken" (:any* 'tags ))))
                 '((4
                    #("chicken" "lemon juice" "garlic" "paprika" "yogurt" "tomato paste"
@@ -220,9 +220,9 @@ equality tests with arrays requires equalp, not equal."
 
 ;;; checking use of the or operator :&& (two different ways of passing the tested items in an array
     (is (equalp (query (:order-by (:select '*
-                                           :from 'receipe-tags-array
+                                           :from 'recipe-tags-array
                                            :where (:&& 'tags (:array[] "parsley" "cheese")))
-                                  'receipe-id))
+                                  'recipe-id))
                 '((6
                    #("meat" "cheese" "zaatar" "kishik" "tomatoes" "cucumbers" "mint leaves"
                      "olives"))
@@ -231,9 +231,9 @@ equality tests with arrays requires equalp, not equal."
                   (10 #("cheese" "sugar syrup" "pistachios")))))
     (is (equalp (let ((tst-arry #("parsley" "cheese")))
                   (query (:order-by (:select '*
-                                             :from 'receipe-tags-array
+                                             :from 'recipe-tags-array
                                              :where (:&& 'tags tst-arry))
-                                    'receipe-id)))
+                                    'recipe-id)))
                 '((6
                    #("meat" "cheese" "zaatar" "kishik" "tomatoes" "cucumbers" "mint leaves"
                      "olives"))
@@ -242,66 +242,66 @@ equality tests with arrays requires equalp, not equal."
                   (10 #("cheese" "sugar syrup" "pistachios")))))
 
 ;;; checking contains :@> and contained by :<@ by operators
-    (is (equalp (query (:order-by (:select '* :from 'receipe-tags-array
+    (is (equalp (query (:order-by (:select '* :from 'recipe-tags-array
                                            :where (:<@ (:array[] "tomatoes" "cheese")
                                                        'tags))
-                                  'receipe-id))
+                                  'recipe-id))
                 '((6
                    #("meat" "cheese" "zaatar" "kishik" "tomatoes" "cucumbers" "mint leaves"
                      "olives")))))
 
-    (is (equalp (query (:order-by (:select '* :from 'receipe-tags-array
+    (is (equalp (query (:order-by (:select '* :from 'recipe-tags-array
                                            :where (:@> 'tags
                                                        (:array[] "tomatoes" "cheese")))
-                                  'receipe-id))
+                                  'recipe-id))
                 '((6
                    #("meat" "cheese" "zaatar" "kishik" "tomatoes" "cucumbers" "mint leaves"
                      "olives")))))
 
-    (is (equalp (query (:order-by (:select '* :from 'receipe-tags-array
+    (is (equalp (query (:order-by (:select '* :from 'recipe-tags-array
                                            :where (:@> (:array[] "tomatoes" "cheese")
                                                        'tags))
-                                  'receipe-id))
+                                  'recipe-id))
                 nil))
-    (is (equalp (query (:order-by (:select '* :from 'receipe-tags-array
+    (is (equalp (query (:order-by (:select '* :from 'recipe-tags-array
                                            :where (:<@ 'tags
                                                        (:array[] "tomatoes" "cheese")))
-                                  'receipe-id))
+                                  'recipe-id))
                 nil))
 
 
 ;;; checking selection of an item or slice of items from an array. Note the use of the :[] sql-op.
 ;;; Also remember that postgrsql arrays start at 1
-    (is (equal (query (:select 'receipe-id (:[] 'tags 2)
-                               :from 'receipe-tags-array
-                               :where (:= 'receipe-id 3)))
+    (is (equal (query (:select 'recipe-id (:[] 'tags 2)
+                               :from 'recipe-tags-array
+                               :where (:= 'recipe-id 3)))
                '((3 "olive oil"))))
-    (is (equalp (query (:select 'receipe-id (:[] 'tags 2 3)
-                               :from 'receipe-tags-array
-                               :where (:= 'receipe-id 3)))
+    (is (equalp (query (:select 'recipe-id (:[] 'tags 2 3)
+                               :from 'recipe-tags-array
+                               :where (:= 'recipe-id 3)))
                '((3 #("olive oil" "eggplant")))))
 
-    (is (equal (sql (:select 'receipe-id (:[] 'tags 2 3)
-                             :from 'receipe-tags-array
-                             :where (:= 'receipe-id 3)))
-               "(SELECT receipe_id, (tags)[2:3] FROM receipe_tags_array WHERE (receipe_id = 3))"))
+    (is (equal (sql (:select 'recipe-id (:[] 'tags 2 3)
+                             :from 'recipe-tags-array
+                             :where (:= 'recipe-id 3)))
+               "(SELECT recipe_id, (tags)[2:3] FROM recipe_tags_array WHERE (recipe_id = 3))"))
 
 ;;; checking array-dims function
-    (is (equal (query (:select 'receipe-id (:array-dims 'tags)
-                               :from 'receipe-tags-array
-                               :where (:= 'receipe-id 3)))
+    (is (equal (query (:select 'recipe-id (:array-dims 'tags)
+                               :from 'recipe-tags-array
+                               :where (:= 'recipe-id 3)))
                '((3 "[1:4]"))))
 
 ;;; checking passing a lisp array as a variable
     (let ((lisp-arry #("wine" "garlic" "soy sauce")))
-      (query (:update 'receipe-tags-array
+      (query (:update 'recipe-tags-array
                       :set 'tags '$1
-                      :where (:= 'receipe-id 11))
+                      :where (:= 'recipe-id 11))
              lisp-arry))
 
     (is (equalp (query (:select  '*
-                                :from 'receipe-tags-array
-                                :where (:= 'receipe-id 11)))
+                                :from 'recipe-tags-array
+                                :where (:= 'recipe-id 11)))
                '((11 #("wine" "garlic" "soy sauce")))))))
 
 (test array-operators
@@ -444,7 +444,7 @@ equality tests with arrays requires equalp, not equal."
   "Array-agg returns the result in an array (both sql and, in postmodern, a lisp array).
    Note the first example filters out null values as well as separating the y and n users."
   (with-test-connection
-    (build-receipe-tables)
+    (build-recipe-tables)
     (query (:drop-table :if-exists 'agg-data))
     (query (:create-table agg-data ((id :type integer))))
     (query (:insert-into 'agg-data (:select '* :from (:generate-series 1 5))))
@@ -475,13 +475,13 @@ equality tests with arrays requires equalp, not equal."
                              :from (:as 'groups 'g)
                              :group-by 'g.id))
                "(SELECT g.id, ARRAY_AGG(g.users) FILTER (WHERE (g.canonical = E'Y')) AS canonical_users, ARRAY_AGG(g.users) FILTER (WHERE (g.canonical = E'N')) AS non_canonical_users FROM groups AS g GROUP BY g.id)"))
-    (is (equalp (query (:select (:array-agg 'name) :from 'receipes) :single)
+    (is (equalp (query (:select (:array-agg 'name) :from 'recipes) :single)
                #("Fattoush" "Shawarma" "Baba Ghanoush" "Shish Taouk" "Kibbe nayeh" "Manakeesh"
                  "Fakafek" "Tabbouleh" "Kofta" "Kunafeh" "Baklava")))
     (is (equal (query (:select (:array-to-string (:array-agg 'tags) ", ")
-                               :from 'receipe-tags-array
-                               :left-join 'receipes
-                               :on (:= 'receipes.receipe-id 'receipe-tags-array.receipe-id)
-                               :where (:= 'receipes.name "Shawarma"))
+                               :from 'recipe-tags-array
+                               :left-join 'recipes
+                               :on (:= 'recipes.recipe-id 'recipe-tags-array.recipe-id)
+                               :where (:= 'recipes.name "Shawarma"))
                       :single)
                "meat, tahini sauce, pita bread"))))
