@@ -42,9 +42,7 @@
 
 (defun char-printable-ascii-p (ch)
   "Returns t if the char is printable ascii."
-  (if (member ch *printable-ascii-chars*)
-      t
-      nil))
+  (member ch *printable-ascii-chars*))
 
 (defun string-printable-ascii-p (str)
   "Returns t if every character in the string is printable ascii."
@@ -62,10 +60,8 @@
   (let ((chr-code-point (if (integerp chr) (coerce chr 'fixnum) (char-code chr))))
     (declare (optimize speed)
              (integer chr-code-point))
-    (if (or (member chr-code-point '(#x00AD #x1806 #x200B #x2060 #xFEFF #x034F #x180B #x180C #x180D #x200C #x200D))
-                    (and (>= chr-code-point #xFE00) (<= chr-code-point #xFE0F)))
-        t
-        nil)))
+    (or (member chr-code-point '(#x00AD #x1806 #x200B #x2060 #xFEFF #x034F #x180B #x180C #x180D #x200C #x200D))
+        (and (>= chr-code-point #xFE00) (<= chr-code-point #xFE0F)))))
 
 (defun char-mapped-to-space-p (chr)
   "If character is mapped to space per RFC 3454 Table C.1.2 and RFC 4013, then return t, else nil"
@@ -74,10 +70,8 @@
   (let ((chr-code-point (if (integerp chr) (coerce chr 'fixnum) (char-code chr))))
     (declare (optimize speed)
              (integer chr-code-point))
-    (if (or (member chr-code-point '(#x00A0 #x1680  #x202F #x205F #x3000))
-            (and (>= chr-code-point #x2000) (<= chr-code-point #x200B)))
-      t
-      nil)))
+    (or (member chr-code-point '(#x00A0 #x1680  #x202F #x205F #x3000))
+        (and (>= chr-code-point #x2000) (<= chr-code-point #x200B)))))
 
 (defun string-mapped-to-nothing (str)
   "Reads a string and removes any character that should be mapped to nothing per RFC 3454 and RFC 4013."
