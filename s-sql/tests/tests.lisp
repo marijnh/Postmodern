@@ -14,15 +14,10 @@
   "Takes the 6 item parameter list from prompt-connection and restates it for pomo:with-connection. Note that cl-postgres does not provide the pooled connection - that is only in postmodern - so that parameter is not passed."
   (when (and (listp param-lst)
              (= 6 (length param-lst)))
-    (let ((db (pop param-lst))
-          (user (pop param-lst))
-          (password (pop param-lst))
-          (host (pop param-lst))
-          (port (pop param-lst))
-          (use-ssl (pop param-lst)))
+    (destructuring-bind (db user password host port use-ssl) param-lst
       (list db user password host :port port :use-ssl use-ssl))))
 
-(defvar *s-sql-db-spec* nil
+(defvar *s-sql-db-spec* '()
   "A list of connection parameters to use when running the tests.  The order is: database name, user, password, hostname, port and use-ssl.")
 
 (defmacro with-test-connection (&body body)
@@ -62,21 +57,21 @@
     (is (equal (query (:select '* :from 'null-test :where (:= 'id 2)))
         '((2 :null))))))
 
-(defun build-receipe-tables ()
-  "Build receipe tables uses in array tests"
+(defun build-recipe-tables ()
+  "Build recipe tables uses in array tests"
   (with-test-connection
-    (query (:drop-table :if-exists 'receipes :cascade))
-    (query (:drop-table :if-exists 'receipe-tags-array :cascade))
-    (query (:create-table receipes
-                          ((receipe-id :type serial :constraint 'receipekey-id :primary-key 't :unique)
+    (query (:drop-table :if-exists 'recipes :cascade))
+    (query (:drop-table :if-exists 'recipe-tags-array :cascade))
+    (query (:create-table recipes
+                          ((recipe-id :type serial :constraint 'recipekey-id :primary-key 't :unique)
                            (name :type text)
                            (text :type text))))
 
-    (query (:create-table receipe-tags-array ((receipe-id :type integer :references ((receipes receipe-id)))
+    (query (:create-table recipe-tags-array ((recipe-id :type integer :references ((recipes recipe-id)))
                                               (tags :type text[] :default "{}"))))
 
-    (query (:create-unique-index 'receipe-tags-id-receipe-id :on "receipe-tags-array"  :fields 'receipe-id))
-    (query (:create-index 'receipe-tags-id-tags :on "receipe-tags-array" :using gin :fields 'tags))
+    (query (:create-unique-index 'recipe-tags-id-recipe-id :on "recipe-tags-array"  :fields 'recipe-id))
+    (query (:create-index 'recipe-tags-id-tags :on "recipe-tags-array" :using gin :fields 'tags))
 
 
     (loop for x in '(("Fattoush" #("greens" "pita bread" "olive oil" "garlic" "lemon" "salt" "spices"))
@@ -90,13 +85,13 @@
                      ("Kofta" #("minced meat" "parsley" "spices" "onions"))
                      ("Kunafeh" #("cheese" "sugar syrup" "pistachios"))
                      ("Baklava" #("filo dough" "honey" "nuts"))) do
-         (query (:insert-into 'receipes :set 'name (first x) 'text (format nil "~a" (rest x))))
+         (query (:insert-into 'recipes :set 'name (first x) 'text (format nil "~a" (rest x))))
          (query
-          (:insert-into 'receipe-tags-array
-                        :set 'receipe-id
-                        (:select 'receipe-id
-                                 :from 'receipes
-                                 :where (:= 'receipes.name (first x)))
+          (:insert-into 'recipe-tags-array
+                        :set 'recipe-id
+                        (:select 'recipe-id
+                                 :from 'recipes
+                                 :where (:= 'recipes.name (first x)))
                         'tags (second x))))))
 
 (defun build-employee-table ()
