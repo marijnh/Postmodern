@@ -50,7 +50,7 @@
   ((:module "postmodern/tests"
             :components ((:file "test-package")
                          (:file "tests")
-                         #+postmodern-use-mop (:file "test-dao" :depends-on ("test-package"))
+                         (:feature :postmodern-use-mop (:file "test-dao" :depends-on ("test-package")))
                          (:file "test-execute-file" :depends-on ("test-package")))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
