@@ -446,22 +446,21 @@ it does not have a where clause capability."
 (defun list-table-indices (table-name &optional strings-p)
   "List the index names and the related columns in a single table. "
   (when (table-exists-p (to-sql-name table-name))
-    (let ((result (alexandria:flatten
-                   (query
-                    (:order-by
-                     (:select
-                      (:as 'i.relname 'index-name) (:as 'a.attname 'column-name)
-                      :from (:as 'pg-class 't1) (:as 'pg-class 'i) (:as 'pg-index 'ix)
-                      (:as 'pg-attribute 'a)
-                      :where
-                      (:and (:= 't1.oid 'ix.indrelid)
-                            (:= 'i.oid 'ix.indexrelid)
-                            (:= 'a.attrelid 't1.oid)
-                            (:= 'a.attnum (:any* 'ix.indkey))
-                            (:= 't1.relkind "r")
-                            (:= 't1.relname '$1)))
-                     'i.relname)
-                    (to-sql-name table-name)))))
+    (let ((result (query
+                   (:order-by
+                    (:select
+                     (:as 'i.relname 'index-name) (:as 'a.attname 'column-name)
+                     :from (:as 'pg-class 't1) (:as 'pg-class 'i) (:as 'pg-index 'ix)
+                     (:as 'pg-attribute 'a)
+                     :where
+                     (:and (:= 't1.oid 'ix.indrelid)
+                           (:= 'i.oid 'ix.indexrelid)
+                           (:= 'a.attrelid 't1.oid)
+                           (:= 'a.attnum (:any* 'ix.indkey))
+                           (:= 't1.relkind "r")
+                           (:= 't1.relname '$1)))
+                    'i.relname)
+                   (to-sql-name table-name))))
       (if strings-p result (mapcar 'from-sql-name result)))))
 
 (defun list-indexed-column-and-attributes (table-name)
