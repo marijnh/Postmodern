@@ -444,7 +444,7 @@ it does not have a where clause capability."
     (if strings-p result (mapcar 'from-sql-name result))))
 
 (defun list-table-indices (table-name &optional strings-p)
-  "List the index names and the related columns in a single table. "
+  "List the index names and the related columns in a single table. Each index will be in a separate sublist."
   (when (table-exists-p (to-sql-name table-name))
     (let ((result (query
                    (:order-by
@@ -896,3 +896,11 @@ and calls > ~a
 ORDER BY ~a
 DESC LIMIT ~a;" num-calls ob limit)))
     (query sql-statement)))
+
+(defun list-installed-extensions ()
+  "Lists extensions that are already installed in the database."
+  (query "select * from pg_extension"))
+
+(defun list-available-extensions ()
+  "Lists extensions that are available to be installed in the database. Returns a list of lists where each sublist has the name of the extension, the default version, the installed version (if any) and a comment string."
+  (query (:select '* :from 'pg-available-extensions)))

@@ -614,13 +614,12 @@ Returns a list of the functions in the database from the information_schema.
 ** function list-indices (&optional strings-p)
 → list
 
-Return a list of the indexs in a database. Turn them into keywords if
-strings-p is not true.
+Return a list of the indexs in a database. Turn them into keywords if strings-p is not true.
 
 ** function list-table-indices (table-name &optional strings-p)
 → list
 
-List the index names and the related columns in a table.
+List the index names and the related columns in a table. Returns a list of alists.
 
 ** function index-exists-p (name)
 → boolean
@@ -716,6 +715,15 @@ Just changes the database assuming you are using a toplevel connection.
 Recommended only for development work. Returns the name of the newly
 connected database as a string.
 
+** function list-installed-extensions ()
+→ list
+
+Return a list of the installed extension
+
+** function list-available-extensions ()
+→ list
+
+Lists extensions that are available to be installed in the database. Returns a list of lists where each sublist has the name of the extension, the default version, the installed version (if any) and a comment string.
 
 * Database access objects
 Postmodern contains a simple system for defining CLOS classes that
