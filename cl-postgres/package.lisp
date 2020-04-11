@@ -17,6 +17,7 @@
            #:connection-meta
            #:connection-parameters
            #:get-postgresql-version
+           #:postgresql-version-at-least
            #:open-database
            #:reopen-database
            #:database-open-p

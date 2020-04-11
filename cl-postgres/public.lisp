@@ -35,6 +35,23 @@ connection when it is somehow closed."))
 but it can be returned as a list of integers or as a float."
   (gethash "server_version" (connection-parameters connection)))
 
+(defun postgresql-version-at-least (desired-version connection)
+  "Takes a postgresql version number which should be a string with the major and minor versions separated by a period e.g. '12.2' or '9.6.17'. Checks against the connection understanding of the running postgresql version and returns t if the running version is the requested version or newer."
+  (flet ((validate-input (str)
+           (unless (or (not (stringp desired-version))
+                       (= 0 (length str)))
+             (every (lambda (char)
+                      (or (digit-char-p char)
+                          (eq char #\.)))
+                    str)))
+         (convert-to-integer (split-versions)
+           (apply #'+ (loop for x in split-versions counting x into y collect (/ (* x 10000) (expt 100 y))))))
+    (when (validate-input desired-version)
+      (let ((current-version (mapcar #'parse-integer (split-sequence:split-sequence #\. (get-postgresql-version connection) :remove-empty-subseqs t))))
+        (setf desired-version (mapcar #'parse-integer (split-sequence:split-sequence #\. desired-version :remove-empty-subseqs t)))
+        (when (>= (convert-to-integer current-version) (convert-to-integer desired-version))
+            t)))))
+
 (defun connection-meta (connection)
   "Retrieves the meta field of a connection, the primary purpose of
 which is to store information about the prepared statements that
