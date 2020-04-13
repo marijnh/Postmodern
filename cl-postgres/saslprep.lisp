@@ -88,9 +88,9 @@
 (defun string-mapped-to-space (str)
   "Reads a string and converts any character which should be mapped to a space pre RFC 3454 and RFC 4013 to a space."
   (let ((s1 (coerce str 'simple-vector)))
-    (loop for x across s1 counting x into y do
+    (loop for x across s1 for y from 0 do
          (when (char-mapped-to-space-p x)
-           (setf (aref s1 (- y 1)) #\Space)))
+           (setf (aref s1 y) #\Space)))
     (coerce s1 'string)))
 
 (defun saslprep-normalize (str &optional (form :nfkc))
