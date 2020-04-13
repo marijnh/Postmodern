@@ -903,4 +903,4 @@ DESC LIMIT ~a;" num-calls ob limit)))
 
 (defun list-available-extensions ()
   "Lists extensions that are available to be installed in the database. Returns a list of lists where each sublist has the name of the extension, the default version, the installed version (if any) and a comment string."
-  (query (:select '* :from 'pg-available-extensions)))
+  (query "select * from pg_available_extensions"))
