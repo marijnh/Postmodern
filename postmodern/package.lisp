@@ -65,7 +65,7 @@
    #:list-available-extensions
 
    #:deftable #:*table-name* #:*table-symbol*
-   #:create-table #:create-all-tables #:create-package-tables
+   #:create-table #:create-all-tables #:create-package-tables #:drop-table
    #:\!index #:\!unique-index #:\!foreign #:\!unique
    #:create-schema #:drop-schema #:list-schemata
    #:with-schema #:schema-exists-p #:set-search-path #:get-search-path
