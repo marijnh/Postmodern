@@ -461,7 +461,7 @@ it does not have a where clause capability."
                            (:= 't1.relname '$1)))
                     'i.relname)
                    (to-sql-name table-name))))
-      (if strings-p result (mapcar 'from-sql-name result)))))
+      (if strings-p result (loop for x in result collect (mapcar 'from-sql-name x))))))
 
 (defun list-indexed-column-and-attributes (table-name)
   "List the indexed columns and their attributes in a table. Includes primary key."
@@ -565,32 +565,34 @@ the fully qualified table name e.g. schema-name.table-name."
    table schema))
 
 ;;;; Constraints
-(defun list-unique-or-primary-constraints (table-name)
-  "List constraints on a table."
+(defun list-unique-or-primary-constraints (table-name &optional (strings-p))
+  "List constraints on a table. Table-name
+can be either a string or quoted. Turns constraints into keywords if strings-p is not true."
   (setf table-name (to-sql-name table-name))
   (when (table-exists-p table-name)
-    (query (:select
-            'relname
-            :from 'pg-class
-            :where
-            (:in 'oid (:select 'indexrelid
-                               :from 'pg-index 'pg-class
-                               :where (:and
-                                       (:= 'pg-class.relname '$1)
-                                       (:= 'pg-class.oid 'pg-index.indrelid)
-                                       (:or (:= 'indisunique "t")
-                                            (:= 'indisprimary "t"))))))
-           table-name)))
+    (let ((result (query (:select 'relname
+                          :from 'pg-class
+                          :where
+                          (:in 'oid (:select 'indexrelid
+                                             :from 'pg-index 'pg-class
+                                             :where (:and
+                                                     (:= 'pg-class.relname '$1)
+                                                     (:= 'pg-class.oid 'pg-index.indrelid)
+                                                     (:or (:= 'indisunique "t")
+                                                          (:= 'indisprimary "t"))))))
+                         table-name)))
+      (if strings-p result (loop for x in result collect (mapcar 'from-sql-name x))))))
 
-(defun list-all-constraints (table-name)
+(defun list-all-constraints (table-name &optional (strings-p))
   "Uses information_schema to list all the constraints in a table. Table-name
-can be either a string or quoted."
+can be either a string or quoted. Turns constraints into keywords if strings-p is not true."
   (setf table-name (to-sql-name table-name))
   (when (table-exists-p table-name)
-    (query (:select 'constraint-name 'constraint-type
-		    :from 'information-schema.table-constraints
-		    :where (:= 'table-name '$1))
-	   table-name)))
+    (let ((result (query (:select 'constraint-name 'constraint-type
+		                       :from 'information-schema.table-constraints
+		                       :where (:= 'table-name '$1))
+                         table-name)))
+      (if strings-p result (loop for x in result collect (mapcar 'from-sql-name x))))))
 
 (defun describe-constraint (table-name constraint-name)
   "Return a list of alists of the descriptions a particular constraint given
