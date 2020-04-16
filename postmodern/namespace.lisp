@@ -74,7 +74,6 @@ By default, this function only changes the search path for the current session."
 (defun create-schema (schema)
   "Creating a non existing schema.
    If the schema exists an error is raised."
-  ;;(format t "creating schema: ~a" schema)
   (execute (format nil "CREATE SCHEMA ~a" (s-sql:to-sql-name schema t))))
 
 (defun drop-schema (schema &key (if-exists nil) (cascade nil))

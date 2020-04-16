@@ -216,10 +216,12 @@ but get it from the postmodern connection parameters."
   "Polite way of terminating a query at the database (as opposed to calling close-database).
 Slower than (terminate-backend pid) and does not always work."
     (let ((database-name (cl-postgres::connection-db database))
-        (user (cl-postgres::connection-user database))
-        (password (cl-postgres::connection-password database))
-        (host (cl-postgres::connection-host database)))
-    (with-connection `(,database-name ,user ,password ,host)
+          (user (cl-postgres::connection-user database))
+          (password (cl-postgres::connection-password database))
+          (host (cl-postgres::connection-host database))
+          (port (cl-postgres::connection-port database))
+          (use-ssl (cl-postgres::connection-use-ssl database)))
+    (with-connection `(,database-name ,user ,password ,host :PORT ,port :USE-SSL ,use-ssl)
       (query "select pg_cancel_backend($1);" pid))))
 
 (defun terminate-backend (pid &optional (database *database*))
@@ -228,6 +230,8 @@ Faster than (cancel-backend pid) and more reliable."
   (let ((database-name (cl-postgres::connection-db database))
         (user (cl-postgres::connection-user database))
         (password (cl-postgres::connection-password database))
-        (host (cl-postgres::connection-host database)))
-    (with-connection `(,database-name ,user ,password ,host)
+        (host (cl-postgres::connection-host database))
+        (port (cl-postgres::connection-port database))
+        (use-ssl (cl-postgres::connection-use-ssl database)))
+    (with-connection `(,database-name ,user ,password ,host :PORT,port :USE-SSL ,use-ssl)
       (query "select pg_terminate_backend($1);" pid))))

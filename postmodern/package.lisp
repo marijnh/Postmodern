@@ -15,11 +15,17 @@
    #:\!dao-def #:*ignore-unknown-columns*)
 
   (:export
-   #:connect #:disconnect #:reconnect
-   #:call-with-connection #:with-connection
-   #:*database* #:connected-p #:database-connection
+   #:connect
+   #:disconnect
+   #:reconnect
+   #:call-with-connection
+   #:with-connection
+   #:*database*
+   #:connected-p
+   #:database-connection
    #:connect-toplevel #:disconnect-toplevel
-   #:clear-connection-pool #:*max-pool-size* #:*default-use-ssl*
+   #:clear-connection-pool #:*max-pool-size*
+   #:*default-use-ssl*
    #:list-connections
    #:query #:execute #:doquery
    #:parse-queries #:read-queries #:execute-file
@@ -55,9 +61,11 @@
    #:bloat-measurement
    #:unused-indexes
    #:check-query-performance
+   #:list-installed-extensions
+   #:list-available-extensions
 
    #:deftable #:*table-name* #:*table-symbol*
-   #:create-table #:create-all-tables #:create-package-tables
+   #:create-table #:create-all-tables #:create-package-tables #:drop-table
    #:\!index #:\!unique-index #:\!foreign #:\!unique
    #:create-schema #:drop-schema #:list-schemata
    #:with-schema #:schema-exists-p #:set-search-path #:get-search-path

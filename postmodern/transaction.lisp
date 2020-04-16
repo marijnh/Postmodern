@@ -79,7 +79,6 @@ will set the isolation-level used by the transaction."
     (setf (transaction-open-p transaction) nil)
     (mapc #'funcall (commit-hooks transaction))))
 
-
 (defclass savepoint-handle (transaction-handle)
   ((name :initform (error "Savepoint name is not provided.")
          :initarg :name :reader savepoint-name)

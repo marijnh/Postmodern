@@ -17,6 +17,7 @@
            #:connection-meta
            #:connection-parameters
            #:get-postgresql-version
+           #:postgresql-version-at-least
            #:open-database
            #:reopen-database
            #:database-open-p
@@ -110,7 +111,14 @@
            #:server-shutdown
            #:syntax-error-or-access-violation
            #:system-error
-           #:unique-violation))
+           #:unique-violation
+           #:protocol-violation
+           #:connection-exception
+           #:connection-does-not-exist
+           #:connection-failure
+           #:sqlclient-unable-to-establish-sqlconnection
+           #:sqlserver-rejected-establishment-of-sqlconnection
+           #:transaction-resolution-unknown))
 
 (defpackage :cl-postgres-oid
   (:use :common-lisp)

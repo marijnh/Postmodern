@@ -11,11 +11,18 @@
 
 (fiveam:in-suite :postmodern)
 
+(defun prompt-connection-to-postmodern-db-spec (param-lst)
+  "Takes the 6 item parameter list from prompt-connection and restates it for pomo:with-connection. Note that cl-postgres does not provide the pooled connection - that is only in postmodern - so that parameter is not passed."
+  (when (and (listp param-lst)
+             (= 6 (length param-lst)))
+    (destructuring-bind (db user password host port use-ssl) param-lst
+      (list db user password host :port port :use-ssl use-ssl))))
+
 (defmacro with-test-connection (&body body)
-  `(with-connection (prompt-connection) ,@body))
+  `(with-connection (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection)) ,@body))
 
 (defmacro with-pooled-test-connection (&body body)
-  `(with-connection (append (prompt-connection) '(:pooled-p t)) ,@body))
+  `(with-connection (append (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection)) '(:pooled-p t)) ,@body))
 
 (defmacro protect (&body body)
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
@@ -31,7 +38,7 @@
     (is (not (null *database*)))))
 
 (test connection-pool
-  (let* ((db-params (append (prompt-connection) '(:pooled-p t)))
+  (let* ((db-params (append (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection)) '(:pooled-p t)))
          (pooled (apply 'connect db-params)))
     (disconnect pooled)
     (let ((pooled* (apply 'connect db-params)))
@@ -72,11 +79,11 @@
         (cl-postgres:copy-sql-readtable
          simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
   (with-test-connection
-    (is (time= (query (:select (:type (encode-date 1980 2 1) date)) :single)
+    (is (time= (query (:select (:type (simple-date:encode-date 1980 2 1) date)) :single)
                (encode-date 1980 2 1)))
-    (is (time= (query (:select (:type (encode-timestamp 2040 3 19 12 15 0 2) timestamp)) :single)
+    (is (time= (query (:select (:type (simple-date:encode-timestamp 2040 3 19 12 15 0 2) timestamp)) :single)
                (encode-timestamp 2040 3 19 12 15 0 2)))
-    (is (time= (query (:select (:type (encode-interval :month -1 :hour 24) interval)) :single)
+    (is (time= (query (:select (:type (simple-date:encode-interval :month -1 :hour 24) interval)) :single)
                (encode-interval :month -1 :hour 24))))
   ;;; Reset readtable to default
   (setf cl-postgres:*sql-readtable*
@@ -196,7 +203,7 @@
     (defprepared select1 "select \"from\" from from_test where to_destination = $1" :single)
       ;; the funcall creates the prepared statements logged in the postmodern connection
       ;; and the postgresql connection
-      (is (equal "Reykjavík" (funcall 'select1 "Seyðisfjörður")))
+    (is (equal "Reykjavík" (funcall 'select1 "Seyðisfjörður")))
       (execute (:drop-table 'from-test))))
 
 (test prepare-pooled
@@ -719,57 +726,58 @@ and second the string name for the datatype."
   (is (equal (sql (postmodern::make-list-query "i"))
              "E'((SELECT relname FROM pg_catalog.pg_class INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid) WHERE ((relkind = E''i'') and (nspname NOT IN (E''pg_catalog'', E''pg_toast'')) and pg_catalog.pg_table_is_visible(pg_class.oid))) ORDER BY relname)'")))
 
-(test list-indexes-and-constraints
+(test list-indices-and-constraints
   "Test various index functions"
   (with-test-connection
-    (when (table-exists-p 'test-uniq)
-      (execute (:drop-table 'test-uniq)))
-    (query (:create-table 'test-uniq ((id :type integer))
-                          (:primary-key 'id)))
+    (pomo:drop-table 'people :if-exists t :cascade t)
+    (query (:create-table 'people ((id :type (or integer db-null) :primary-key :identity-by-default) (first-name :type (or (varchar 50) db-null))
+                                   (last-name :type (or (varchar 50) db-null)))))
+    (query (:create-index 'idx-people-names :on 'people :fields 'last-name 'first-name))
+    (query (:create-index 'idx-people-first-names :on 'people :fields 'first-name))
+    (query (:insert-rows-into 'people
+                          :columns 'first-name 'last-name
+                          :values '(("Eliza" "Gregory")  ("Dean" "Rodgers")  ("Christine" "Alvarez")  ("Dennis" "Peterson")
+                          ("Ernest" "Roberts")  ("Jorge" "Wood")  ("Harvey" "Strickland")  ("Eugene" "Rivera")
+                          ("Tillie" "Bell")  ("Marie" "Lloyd")  ("John" "Lyons")  ("Lucas" "Gray")  ("Edward" "May")
+                          ("Randy" "Fields")  ("Nell" "Malone")  ("Jacob" "Maxwell")  ("Vincent" "Adams")
+                          ("Henrietta" "Schneider")  ("Ernest" "Mendez")  ("Jean" "Adams")  ("Olivia" "Adams"))))
     (let ((idx-symbol (first (list-indices)))
           (idx-string (first (list-indices t))))
       (is (pomo:index-exists-p idx-symbol))
       (is (pomo:index-exists-p idx-string)))
-    (is (equal (list-table-indices "test-uniq")
-               '(:TEST-UNIQ-PKEY :ID)))
-    (is (equal (list-table-indices 'test-uniq)
-               '(:TEST-UNIQ-PKEY :ID)))
-    (is (equal (list-table-indices "test-uniq" t)
-               '("test_uniq_pkey" "id")))
-    (is (equal (list-table-indices 'test-uniq t)
-               '("test_uniq_pkey" "id")))
-    (execute (:drop-table 'test-uniq))
-    (query (:create-table 'test-uniq ((id :type integer))
-                          (:primary-key "id")))
-    (is (equal (list-table-indices "test-uniq")
-               '(:TEST-UNIQ-PKEY :ID)))
-    (is (equal (list-table-indices 'test-uniq)
-               '(:TEST-UNIQ-PKEY :ID)))
-    (is (equal (list-table-indices "test-uniq" t)
-               '("test_uniq_pkey" "id")))
-    (is (equal (list-table-indices 'test-uniq t)
-               '("test_uniq_pkey" "id")))
-    (is (equal (list-unique-or-primary-constraints "test-uniq")
-               '(("test_uniq_pkey"))))
-    (is (equal (list-unique-or-primary-constraints 'test-uniq)
-               '(("test_uniq_pkey"))))
-    (is (equal (length (list-all-constraints 'test-uniq))
+    (is (equal (list-table-indices 'people)
+               '((:IDX-PEOPLE-FIRST-NAMES :FIRST-NAME) (:IDX-PEOPLE-NAMES :FIRST-NAME)
+                 (:IDX-PEOPLE-NAMES :LAST-NAME) (:PEOPLE-PKEY :ID))))
+    (is (equal (list-table-indices 'people t)
+               '(("idx_people_first_names" "first_name") ("idx_people_names" "first_name")
+          ("idx_people_names" "last_name") ("people_pkey" "id"))))
+    (is (equal (list-table-indices "people")
+               '((:IDX-PEOPLE-FIRST-NAMES :FIRST-NAME) (:IDX-PEOPLE-NAMES :FIRST-NAME)
+                 (:IDX-PEOPLE-NAMES :LAST-NAME) (:PEOPLE-PKEY :ID))))
+    (is (equal (list-table-indices "people" t)
+               '(("idx_people_first_names" "first_name") ("idx_people_names" "first_name")
+          ("idx_people_names" "last_name") ("people_pkey" "id"))))
+    (is (equal (list-unique-or-primary-constraints "people" t)
+               '(("people_pkey"))))
+    (is (equal (list-unique-or-primary-constraints "people")
+               '((:PEOPLE-PKEY))))
+    (is (equal (length (list-all-constraints 'people))
                2))
-    (is (equal (length (list-all-constraints "test-uniq"))
+    (is (equal (length (list-all-constraints "people"))
                2))
-    (query (:alter-table 'test-uniq :drop-constraint 'test-uniq-pkey))
-    (is (equal (length (list-all-constraints "test-uniq"))
+    (query (:alter-table 'people :drop-constraint 'people-pkey))
+    (is (equal (length (list-all-constraints "people"))
                1))
-    (execute (:drop-table 'test-uniq))))
+    (execute (:drop-table 'people))))
 
-(test drop-indexes
+(test drop-indices
   "Test drop index variations"
   (with-test-connection
     (query (:drop-table :if-exists 'george :cascade))
     (query (:create-table 'george ((id :type integer))))
     (query (:create-index 'george-idx :on 'george :fields 'id))
     (is (equal (list-table-indices 'george)
-               '(:GEORGE-IDX :ID)))
+               '((:GEORGE-IDX :ID))))
     (is (index-exists-p 'george-idx))
     (query (:drop-index :if-exists 'george-idx))
     (is (not (index-exists-p 'george-idx)))

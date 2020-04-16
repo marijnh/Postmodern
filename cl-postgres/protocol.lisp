@@ -35,42 +35,42 @@ from the socket."
                    ((consp chars) (mapcar #'char-code chars))
                    (t (char-code chars)))))
       `(let* ((,socket-name ,socket))
-        (declare (type stream ,socket-name))
-        (labels ((,iter-name ()
-                   (let ((,char-name (read-uint1 ,socket-name))
-                         (,size-name (read-uint4 ,socket-name)))
-                     (declare (type (unsigned-byte 8) ,char-name)
-                              (type (unsigned-byte 32) ,size-name)
-                              (ignorable ,size-name))
-                     (case ,char-name
-                       (#.(char-code #\A)
-                          (get-notification ,socket-name)
-                          (,iter-name))
-                       (#.(char-code #\E) (get-error ,socket-name))
-                       (#.(char-code #\S) ;; ParameterStatus: read and continue
-                          (update-parameter ,socket-name)
-                          (,iter-name))
-                       (#.(char-code #\K) ;; Backendkey : read and continue
-                          (update-backend-key-data ,socket-name)
-                          (,iter-name))
-                       (#.(char-code #\N) ;; A warning
-                          (get-warning ,socket-name)
-                          (,iter-name))
-                       ,@(mapcar (lambda (clause)
-                                   `(,(expand-characters (first clause))
-                                      ,(if (eq (second clause) :skip)
-                                           `(skip-bytes ,socket-name (- ,size-name 4))
-                                           (if size-sym
-                                               `(let ((,size-sym (- ,size-name 4)))
-                                                  ,@(cdr clause))
-                                               `(progn ,@(cdr clause))))))
-                                 clauses)
-                       ,@(unless t-found
-                                 `((t (ensure-socket-is-closed ,socket-name)
-                                      (error 'protocol-error
-                                             :message (format nil "Unexpected message received: ~A"
-                                                              (code-char ,char-name))))))))))
-          (,iter-name))))))
+         (declare (type stream ,socket-name))
+         (labels ((,iter-name ()
+                    (let ((,char-name (read-uint1 ,socket-name))
+                          (,size-name (read-uint4 ,socket-name)))
+                      (declare (type (unsigned-byte 8) ,char-name)
+                               (type (unsigned-byte 32) ,size-name)
+                               (ignorable ,size-name))
+                      (case ,char-name
+                        (#.(char-code #\A)
+                           (get-notification ,socket-name)
+                           (,iter-name))
+                        (#.(char-code #\E) (get-error ,socket-name))
+                        (#.(char-code #\S) ;; ParameterStatus: read and continue
+                           (update-parameter ,socket-name)
+                           (,iter-name))
+                        (#.(char-code #\K) ;; Backendkey : read and continue
+                           (update-backend-key-data ,socket-name)
+                           (,iter-name))
+                        (#.(char-code #\N) ;; A warning
+                           (get-warning ,socket-name)
+                           (,iter-name))
+                        ,@(mapcar (lambda (clause)
+                                    `(,(expand-characters (first clause))
+                                       ,(if (eq (second clause) :skip)
+                                            `(skip-bytes ,socket-name (- ,size-name 4))
+                                            (if size-sym
+                                                `(let ((,size-sym (- ,size-name 4)))
+                                                   ,@(cdr clause))
+                                                `(progn ,@(cdr clause))))))
+                                  clauses)
+                        ,@(unless t-found
+                            `((t (ensure-socket-is-closed ,socket-name)
+                                 (error 'protocol-error
+                                        :message (format nil "Unexpected message received: ~A"
+                                                         (code-char ,char-name))))))))))
+           (,iter-name))))))
 
 (defparameter *connection-params* nil
   "Bound to the current connection's parameter table when executing
@@ -84,15 +84,15 @@ a query.")
 (defun update-backend-key-data (socket)
   (let ((pid (read-uint4 socket))
         (secret-key (read-uint4 socket)))
-        (setf (gethash "pid" *connection-params*) pid)
-        (setf (gethash "secret-key" *connection-params*) secret-key)))
+    (setf (gethash "pid" *connection-params*) pid)
+    (setf (gethash "secret-key" *connection-params*) secret-key)))
 
 (defun read-byte-delimited (socket)
   "Read the fields of a null-terminated list of byte + string values
 and put them in an alist."
   (loop :for type = (read-uint1 socket)
-        :until (zerop type)
-        :collect (cons (code-char type) (read-str socket))))
+     :until (zerop type)
+     :collect (cons (code-char type) (read-str socket))))
 
 (define-condition postgresql-notification (simple-warning)
   ((pid :initarg :pid :accessor postgresql-notification-pid)
@@ -169,16 +169,15 @@ be matched against it."
     (force-output socket)
     (ecase (read-byte socket)
       (#.(char-code #\S)
-       (setf socket (funcall make-ssl-stream socket :key *ssl-key-file*
-                                                    :certificate *ssl-certificate-file*
-                                                    :hostname hostname)))
+         (setf socket (funcall make-ssl-stream socket :key *ssl-key-file*
+                               :certificate *ssl-certificate-file*
+                               :hostname hostname)))
       (#.(char-code #\N)
-       (when required
-         (error 'database-error :message "Server does not support SSL encryption."))))))
+         (when required
+           (error 'database-error :message "Server does not support SSL encryption."))))))
 
 (defun authenticate (socket conn)
-  "Try to initiate a connection. Caller should close the socket if
-this raises a condition."
+  "Try to initiate a connection. Caller should close the socket if this raises a condition."
 
   (let ((gss-context nil)
         (gss-init-function nil)
@@ -186,14 +185,15 @@ this raises a condition."
         (password (connection-password conn))
         (database (connection-db conn))
         (hostname (connection-host conn))
-        (use-ssl (connection-use-ssl conn)))
-
+        (use-ssl (connection-use-ssl conn))
+        (client-nonce nil)
+        (client-initial-response nil)
+        (expected-server-signature nil))
     (unless (eq use-ssl :no)
       (setf socket (initiate-ssl socket (member use-ssl '(:yes :full))
                                  (if (eq use-ssl :full) hostname))))
     (startup-message socket user database)
     (force-output socket)
-
     (labels ((init-gss-msg (in-buffer)
                (when (null gss-init-function)
                  (when (null (find-package "CL-GSS"))
@@ -212,35 +212,59 @@ this raises a condition."
                  (when buffer
                    (gss-auth-buffer-message socket buffer))
                  (force-output socket)
-                 continue-needed)))
+                 continue-needed))
+             (scram-msg-init (in-buffer)
+               (let ((server-message (cl-postgres-trivial-utf-8:utf-8-bytes-to-string in-buffer)))
+                 (when (not (equal "SCRAM-SHA-256" (subseq server-message 0 13)))
+                   (cerror "Mixed messages on authentication methods" server-message))
+                 (setf client-nonce (gen-client-nonce))
+                 (setf client-initial-response (gen-client-initial-response user client-nonce))
+                 (scram-type-message socket client-initial-response)
+                 (force-output socket)))
+             (scram-msg-cont (in-buffer)
+               (multiple-value-bind (cont-message calculated-server-signature)
+                   (aggregated-gen-final-client-message user client-nonce (cl-postgres-trivial-utf-8:utf-8-bytes-to-string in-buffer) password
+                                                        :salt-type :base64-string
+                                                        :response-type :utf8-string)
+                 (setf expected-server-signature calculated-server-signature)
+                 (scram-cont-message socket cont-message)
+                 (force-output socket)))
+             (scram-msg-fin (in-buffer)
+               (when (not (equal (cdar (split-server-response in-buffer)) expected-server-signature))
+                 (cerror "Server signature not validated. Something is wrong"
+                         (cdar (split-server-response in-buffer))))))
 
       (loop
-         (message-case socket :length-sym size
-           ;; Authentication message
-           (#\R (let ((type (read-uint4 socket)))
-                  (ecase type
-                    (0 (return))
-                    (2 (error 'database-error :message "Unsupported Kerberos authentication requested."))
-                    (3 (unless password (error "Server requested plain-password authentication, but no password was given."))
-                       (plain-password-message socket password)
-                       (force-output socket))
-                    (4 (error 'database-error :message "Unsupported crypt authentication requested."))
-                    (5 (unless password (error "Server requested md5-password authentication, but no password was given."))
-                       (md5-password-message socket password user (read-bytes socket 4))
-                       (force-output socket))
-                    (6 (error 'database-error :message "Unsupported SCM authentication requested."))
-                    (7 (when gss-context
-                         (error 'database-error :message "Got GSS init message when a context was already established"))
-                       (init-gss-msg nil))
-                    (8 (unless gss-context
-                         (error 'database-error :message "Got GSS continuation message without a context"))
-                       (init-gss-msg (read-bytes socket (- size 4)))))))))))
-  (loop
-   (message-case socket
-     ;; ReadyForQuery
-     (#\Z (read-uint1 socket)
-          (return))))
+         (message-case socket :length-sym size             ;; Authentication message
+             (#\R (let ((type (read-uint4 socket)))
+                    (ecase type
+                      (0 (return))
+                      (2 (error 'database-error :message "Unsupported Kerberos authentication requested."))
+                      (3 (unless password (error "Server requested plain-password authentication, but no password was given."))
+                         (plain-password-message socket password)
+                         (force-output socket))
+                      (4 (error 'database-error :message "Unsupported crypt authentication requested."))
+                      (5 (unless password (error "Server requested md5-password authentication, but no password was given."))
+                         (md5-password-message socket password user (read-bytes socket 4))
+                         (force-output socket))
+                      (6 (error 'database-error :message "Unsupported SCM authentication requested."))
+                      (7 (when gss-context
+                           (error 'database-error :message "Got GSS init message when a context was already established"))
+                         (init-gss-msg nil))
+                      (8 (unless gss-context
+                           (error 'database-error :message "Got GSS continuation message without a context"))
+                         (init-gss-msg (read-bytes socket (- size 4))))
+                      (9 ) ; auth_required_sspi or auth_req_sspi sspi negotiate without wrap() see postgresql source code src/libpq/pqcomm.h
+                      (10 (scram-msg-init (read-bytes socket (- size 4)))) ;(read-simple-str socket)
+                      (11 (scram-msg-cont (read-bytes socket (- size 4)))) ;auth_sasl_continue or auth_req_sasl_cont
+                      (12 (scram-msg-fin (read-bytes socket (- size 4))))))))))
+    (loop
+       (message-case socket
+           ;; ReadyForQuery
+           (#\Z (read-uint1 socket)
+                (return)))))
   socket)
+
 
 (defclass field-description ()
   ((name :initarg :name :accessor field-name)
@@ -299,29 +323,29 @@ copy-in/copy-out states \(which are not supported)."
   (declare (type stream socket)
            #.*optimize*)
   (loop
-   (message-case socket
-     ;; CommandComplete
-     (#\C (let* ((command-tag (read-str socket))
-                 (space (position #\Space command-tag :from-end t)))
-            (when space
-              (setf *effected-rows* (parse-integer command-tag :junk-allowed t
-                                                   :start (1+ space))))
-            (return-from look-for-row nil)))
-     ;; CopyInResponse
-     (#\G (read-uint1 socket)
-          (skip-bytes socket (* 2 (read-uint2 socket))) ;; The field formats
-          (copy-done-message socket)
-          (error 'database-error :message "Copy-in not supported."))
-     ;; CopyOutResponse
-     (#\H (read-uint1 socket)
-          (skip-bytes socket (* 2 (read-uint2 socket))) ;; The field formats
-          (error 'database-error :message "Copy-out not supported."))
-      ;; DataRow
-     (#\D (skip-bytes socket 2)
-          (return-from look-for-row t))
-     ;; EmptyQueryResponse
-     (#\I (warn "Empty query sent.")
-          (return-from look-for-row nil)))))
+     (message-case socket
+                   ;; CommandComplete
+                   (#\C (let* ((command-tag (read-str socket))
+                               (space (position #\Space command-tag :from-end t)))
+                          (when space
+                            (setf *effected-rows* (parse-integer command-tag :junk-allowed t
+                                                                 :start (1+ space))))
+                          (return-from look-for-row nil)))
+                   ;; CopyInResponse
+                   (#\G (read-uint1 socket)
+                        (skip-bytes socket (* 2 (read-uint2 socket))) ;; The field formats
+                        (copy-done-message socket)
+                        (error 'database-error :message "Copy-in not supported."))
+                   ;; CopyOutResponse
+                   (#\H (read-uint1 socket)
+                        (skip-bytes socket (* 2 (read-uint2 socket))) ;; The field formats
+                        (error 'database-error :message "Copy-out not supported."))
+                   ;; DataRow
+                   (#\D (skip-bytes socket 2)
+                        (return-from look-for-row t))
+                   ;; EmptyQueryResponse
+                   (#\I (warn "Empty query sent.")
+                        (return-from look-for-row nil)))))
 
 (defun try-to-sync (socket sync-sent)
   "Try to re-synchronize a connection by sending a sync message if it
@@ -336,10 +360,10 @@ message."
                (force-output socket))
              ;; TODO initiate timeout on the socket read, signal timeout error
              (loop :while (and (not ok) (open-stream-p socket))
-                   :do (message-case socket
-                         (#\Z (read-uint1 socket)
-                              (setf ok t))
-                         (t :skip))))
+                :do (message-case socket
+                                  (#\Z (read-uint1 socket)
+                                       (setf ok t))
+                                  (t :skip))))
         (unless ok
           ;; if we can't sync, make sure the socket is shot
           ;; (e.g. a timeout, or aborting execution with a restart from sldb)
@@ -351,16 +375,16 @@ connection if something in the block raises a condition. Not hygienic
 at all, only used right below here."
   `(let ((sync-sent nil)
          (ok nil))
-    (handler-case
-      (unwind-protect
-           (multiple-value-prog1
-               (progn ,@body)
-             (setf ok t))
-        (unless ok
-          (try-to-sync socket sync-sent)))
-      (end-of-file (c)
-        (ensure-socket-is-closed socket :abort t)
-        (error c)))))
+     (handler-case
+         (unwind-protect
+              (multiple-value-prog1
+                  (progn ,@body)
+                (setf ok t))
+           (unless ok
+             (try-to-sync socket sync-sent)))
+       (end-of-file (c)
+         (ensure-socket-is-closed socket :abort t)
+         (error c)))))
 
 (defmacro returning-effected-rows (value &body body)
   "Computes a value, then runs a body, then returns, as multiple
@@ -381,38 +405,38 @@ results."
            (type string query)
            #.*optimize*)
   (with-syncing
-    (with-query (query)
-      (let ((row-description nil))
-        (simple-parse-message socket query)
-        (simple-describe-message socket)
-        (flush-message socket)
-        (force-output socket)
-        (message-case socket
-          ;; ParseComplete
-          (#\1))
-        (message-case socket
-          ;; ParameterDescription
-          (#\t :skip))
-        (message-case socket
-          ;; RowDescription
-          (#\T (setf row-description (read-field-descriptions socket)))
-          ;; NoData
-          (#\n))
-        (simple-bind-message socket (map 'vector 'field-binary-p row-description))
-        (simple-execute-message socket)
-        (sync-message socket)
-        (setf sync-sent t)
-        (force-output socket)
-        (message-case socket
-          ;; BindComplete
-          (#\2))
-        (returning-effected-rows
-            (if row-description
-                (funcall row-reader socket row-description)
-                (look-for-row socket))
+      (with-query (query)
+        (let ((row-description nil))
+          (simple-parse-message socket query)
+          (simple-describe-message socket)
+          (flush-message socket)
+          (force-output socket)
           (message-case socket
-            ;; ReadyForQuery, skipping transaction status
-            (#\Z (read-uint1 socket))))))))
+                        ;; ParseComplete
+                        (#\1))
+          (message-case socket
+                        ;; ParameterDescription
+                        (#\t :skip))
+          (message-case socket
+                        ;; RowDescription
+                        (#\T (setf row-description (read-field-descriptions socket)))
+                        ;; NoData
+                        (#\n))
+          (simple-bind-message socket (map 'vector 'field-binary-p row-description))
+          (simple-execute-message socket)
+          (sync-message socket)
+          (setf sync-sent t)
+          (force-output socket)
+          (message-case socket
+                        ;; BindComplete
+                        (#\2))
+          (returning-effected-rows
+           (if row-description
+               (funcall row-reader socket row-description)
+               (look-for-row socket))
+           (message-case socket
+                         ;; ReadyForQuery, skipping transaction status
+                         (#\Z (read-uint1 socket))))))))
 
 (defun send-parse (socket name query)
   "Send a parse command to the server, giving it a name."
@@ -420,13 +444,13 @@ results."
            (type string name query)
            #.*optimize*)
   (with-syncing
-    (with-query (query)
-      (parse-message socket name query)
-      (flush-message socket)
-      (force-output socket)
-      (message-case socket
-        ;; ParseComplete
-        (#\1)))))
+      (with-query (query)
+        (parse-message socket name query)
+        (flush-message socket)
+        (force-output socket)
+        (message-case socket
+                      ;; ParseComplete
+                      (#\1)))))
 
 (defun send-close (socket name)
   "Send a close command to the server, giving it a name."
@@ -434,12 +458,12 @@ results."
            (type string name)
            #.*optimize*)
   (with-syncing
-    (close-prepared-message socket name)
+      (close-prepared-message socket name)
     (flush-message socket)
     (force-output socket)
     (message-case socket
-      ;; CloseComplete
-      (#\3))))
+                  ;; CloseComplete
+                  (#\3))))
 
 (defun send-execute (socket name parameters row-reader)
   "Execute a previously parsed query, and apply the given row-reader
@@ -449,62 +473,62 @@ to the result."
            (type list parameters)
            #.*optimize*)
   (with-syncing
-    (let ((row-description nil)
-          (n-parameters 0))
-      (declare (type (unsigned-byte 16) n-parameters))
-      (describe-prepared-message socket name)
-      (flush-message socket)
-      (force-output socket)
-      (message-case socket
-        ;; ParameterDescription
-        (#\t (setf n-parameters (read-uint2 socket))
-             (skip-bytes socket (* 4 n-parameters))))
-      (message-case socket
-        ;; RowDescription
-        (#\T (setf row-description (read-field-descriptions socket)))
-        ;; NoData
-        (#\n))
-      (unless (= (length parameters) n-parameters)
-        (error 'database-error
-               :message (format nil "Incorrect number of parameters given for prepared statement ~A. ~A parameters expected. ~A parameters received." name n-parameters (length parameters))))
-      (bind-message socket name (map 'vector 'field-binary-p row-description)
-                    parameters)
-      (simple-execute-message socket)
-      (sync-message socket)
-      (setf sync-sent t)
-      (force-output socket)
-      (message-case socket
-        ;; BindComplete
-        (#\2))
-      (returning-effected-rows
-          (if row-description
-              (funcall row-reader socket row-description)
-              (look-for-row socket))
+      (let ((row-description nil)
+            (n-parameters 0))
+        (declare (type (unsigned-byte 16) n-parameters))
+        (describe-prepared-message socket name)
+        (flush-message socket)
+        (force-output socket)
         (message-case socket
-          ;; CommandComplete
-          (#\C (read-str socket)
-               (message-case socket
-                 (#\Z (read-uint1 socket))))
-          ;; ReadyForQuery, skipping transaction status
-          (#\Z (read-uint1 socket)))))))
+                      ;; ParameterDescription
+                      (#\t (setf n-parameters (read-uint2 socket))
+                           (skip-bytes socket (* 4 n-parameters))))
+        (message-case socket
+                      ;; RowDescription
+                      (#\T (setf row-description (read-field-descriptions socket)))
+                      ;; NoData
+                      (#\n))
+        (unless (= (length parameters) n-parameters)
+          (error 'database-error
+                 :message (format nil "Incorrect number of parameters given for prepared statement ~A. ~A parameters expected. ~A parameters received." name n-parameters (length parameters))))
+        (bind-message socket name (map 'vector 'field-binary-p row-description)
+                      parameters)
+        (simple-execute-message socket)
+        (sync-message socket)
+        (setf sync-sent t)
+        (force-output socket)
+        (message-case socket
+                      ;; BindComplete
+                      (#\2))
+        (returning-effected-rows
+         (if row-description
+             (funcall row-reader socket row-description)
+             (look-for-row socket))
+         (message-case socket
+                       ;; CommandComplete
+                       (#\C (read-str socket)
+                            (message-case socket
+                                          (#\Z (read-uint1 socket))))
+                       ;; ReadyForQuery, skipping transaction status
+                       (#\Z (read-uint1 socket)))))))
 
 (defun build-row-reader (function-form fields body)
   "Helper for the following two macros."
   (let ((socket (gensym)))
     `(,@function-form (,socket ,fields)
-      (declare (type stream ,socket)
-               (type (simple-array field-description) ,fields))
-      (flet ((next-row ()
-               (look-for-row ,socket))
-             (next-field (field)
-               (declare (type field-description field))
-               (let ((size (read-int4 ,socket)))
-                 (declare (type (signed-byte 32) size))
-                 (if (eq size -1)
-                     :null
-                     (funcall (field-interpreter field)
-                              ,socket size)))))
-        ,@body))))
+                      (declare (type stream ,socket)
+                               (type (simple-array field-description) ,fields))
+                      (flet ((next-row ()
+                               (look-for-row ,socket))
+                             (next-field (field)
+                               (declare (type field-description field))
+                               (let ((size (read-int4 ,socket)))
+                                 (declare (type (signed-byte 32) size))
+                                 (if (eq size -1)
+                                     :null
+                                     (funcall (field-interpreter field)
+                                              ,socket size)))))
+                        ,@body))))
 
 (defmacro row-reader ((fields) &body body)
   "Create a row-reader, using the given name for the fields argument
