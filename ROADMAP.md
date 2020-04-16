@@ -14,7 +14,6 @@ No guarantee is given with respect to resolution or timing on any item.
 
 ## Sql support
 - [ ]   Hypothetical Set Aggregates Functions (rank, dense-rank, percent-rank, cume-dist)
-        This is a current work-around using the def-sql-op :empty-set which is overly verbose. Better ideas would be welcomed.
 - [ ]   UUID (see e.g  https://github.com/michaeljforster/cl-postgres-plus-uuid)
         Postgresql has a uuid extension. A database owner needs to add the extension manually to the specific database, calling:
         create extension if not exists "uuid-ossp";

@@ -19,7 +19,7 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
-  :version "1.3.0"
+  :version "1.30"
   :depends-on ("alexandria"
                "cl-postgres"
                "s-sql"
