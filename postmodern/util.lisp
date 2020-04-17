@@ -765,7 +765,6 @@ Recommended only for development work."
                                    'extname))
        collect (first x)))
 
-
 (defun replace-non-alphanumeric-chars (str &optional (replacement #\_))
   "Takes a string and a replacement char and replaces any character which is not alphanumeric or an asterisk
 with a specified character - by default an underscore and returns the modified string."
@@ -898,11 +897,3 @@ and calls > ~a
 ORDER BY ~a
 DESC LIMIT ~a;" num-calls ob limit)))
     (query sql-statement)))
-
-(defun list-installed-extensions ()
-  "Lists extensions that are already installed in the database."
-  (query "select * from pg_extension"))
-
-(defun list-available-extensions ()
-  "Lists extensions that are available to be installed in the database. Returns a list of lists where each sublist has the name of the extension, the default version, the installed version (if any) and a comment string."
-  (query "select * from pg_available_extensions"))
