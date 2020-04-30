@@ -5,6 +5,11 @@ body {
   color: black;
 }
 
+@media screen and (max-width: 699px) {
+  body { padding: 20px 5px }
+  h1.title { text-align: left }
+}
+
 h1 {
   font-size: 250%;
   border-bottom: 3px solid #449977;
