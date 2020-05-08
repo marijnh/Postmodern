@@ -102,6 +102,7 @@ You do not have to pull in the whole result of a query at once, you can also ite
     (doquery (:select 'x 'y :from 'some-imaginary-table) (x y)
       (format t "On this row, x = ~A and y = ~A.~%" x y))
 
+
 You can work directly with the database or you can use a simple database-access-class (aka dao) which would cover all the fields in a row.
 This is what a database-access class looks like:
 
@@ -117,7 +118,33 @@ This is what a database-access class looks like:
       (:keys name))
 
 
-The above defines a class that can be used to handle records in a table with three columns: name, inhabitants, and sovereign. In simple cases, the information above is enough to define the table as well:
+The above defines a class that can be used to handle records in a table with three columns: name, inhabitants, and sovereign. The :keys parameter specifies which column(s) are used for the primary key. Once you have created the class, you can return an instance of the country class by calling
+
+
+    (get-dao 'country "Croatia")
+
+
+You can also define classes that use multiple columns in the primary key:
+
+
+    (defclass points ()
+      ((x :col-type integer :initarg :x
+          :reader point-x)
+       (y :col-type integer :initarg :y
+          :reader point-y)
+       (value :col-type integer :initarg :value
+              :accessor value))
+      (:metaclass dao-class)
+      (:keys x y))
+
+
+In this case, retrieving a points record would look like the following where 12 and 34 would be the values you are looking to find in the x column and y column respectively.:
+
+
+    (get-dao 'points 12 34)
+
+
+In simple cases, the information above is enough to define the table as well:
 
 
     (dao-table-definition 'country)
@@ -152,9 +179,7 @@ Restated using vanilla sql:
                  product_id INTEGER,
                  qty INTEGER,
                  net_price NUMERIC,
-                 PRIMARY KEY (item_id, so_id)
-                 );"
-    )
+                 PRIMARY KEY (item_id, so_id));")
 
 
 In the above case, the new table's name will be so-items (actually in the database it will be so_items because sql does not allow hyphens. The column item-id is an integer and cannot be null. The column so-id is also an integer, but is allowed to be null and is a foreign key to the id field in the so-headers table so-headers. The primary key is actually a composite of item-id and so-id. (If we wanted the primary key to be just item-id, we could have specified that in the form defining item-id.)
@@ -308,8 +333,7 @@ The library is not likely to work for PostgreSQL versions older than 8.4. Other 
 Postmodern is under active development so issues and feature requests should
 be flagged on [[https://github.com/marijnh/Postmodern](Postmodern's site on github).
 
-Some areas that are currently under consideration can be found in the ROADMAP.md
-file.
+Some areas that are currently under consideration can be found in the ROADMAP.md file.
 
 ## Resources
 ---

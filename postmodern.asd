@@ -18,6 +18,7 @@
   :description "PostgreSQL programming API"
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
+  :homepage  "https://github.com/marijnh/Postmodern"
   :license "zlib"
   :version "1.30"
   :depends-on ("alexandria"

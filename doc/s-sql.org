@@ -11,14 +11,23 @@ the work as possible at compile-time, so that at runtime a string concatenation
 is all that is needed to produce the final SQL query.
 
 * Interface
+  :PROPERTIES:
+  :ID:       462ce6d8-f967-4bce-817e-d1762ebfd41f
+  :END:
 #+NAME: SQL
 ** macro sql (form)
+   :PROPERTIES:
+   :ID:       9de76637-62f7-4c7c-a5d1-1f37491b3db3
+   :END:
 → string
 
 Convert the given form (a list starting with a keyword) to an SQL query string
 at compile time, according to the rules described here.
 
 ** function sql-compile (form)
+   :PROPERTIES:
+   :ID:       8d161d2a-06cb-4334-9ee6-86e805eb5295
+   :END:
 → string
 
 This is the run-time variant of the sql macro. It converts the given list to
@@ -26,6 +35,9 @@ an SQL query, with the same rules except that symbols in this list do not
 have to be quoted to be interpreted as identifiers.
 
 ** function sql-template (form)
+   :PROPERTIES:
+   :ID:       e16e8407-01af-4907-9ed6-2b3c1f12dd1b
+   :END:
 
 In cases where you do need to build the query at run time, yet you do not
 want to re-compile it all the time, this function can be used to compile it
@@ -35,17 +47,26 @@ every $$. When called, this returned function produces an SQL string in
 which the placeholders have been replaced by the values of the arguments.
 
 ** function enable-s-sql-syntax (&optional (char #\Q))
+   :PROPERTIES:
+   :ID:       bee65d01-61d4-4823-b0ab-26789642cdb3
+   :END:
 
 Modifies the current readtable to add a #Q syntax that is read as (sql ...).
 The character to use can be overridden by passing an argument.
 
 #+NAME: sql escape string
 ** function sql-escape-string (string)
+   :PROPERTIES:
+   :ID:       02edac61-f915-4d5f-b52e-d4b7ace29352
+   :END:
 → string
 
 [[http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS][Escapes]] a string for inclusion in a PostgreSQL query.
 
 ** method sql-escape (value)
+   :PROPERTIES:
+   :ID:       59d7247c-c2fa-46c3-b682-dab17fac8812
+   :END:
 → string
 
 A generalisation of sql-escape-string Looks at the type of the value passed,
@@ -53,6 +74,9 @@ and properly writes it out it for inclusion in an SQL query. Symbols will be
 converted to SQL names.
 
 ** variable *standard-sql-strings*
+   :PROPERTIES:
+   :ID:       95a70c76-0fcb-4967-88a2-3460bbcb5311
+   :END:
 
 Used to configure whether S-SQL will use standard SQL strings (just replace #\'
 with ''), or backslash-style escaping. Setting this to NIL is always safe, but
@@ -62,6 +86,9 @@ in future versions of PostgreSQL), the noise in queries can be reduced by settin
 this to T.
 
 ** variable *escape-sql-names-p*
+   :PROPERTIES:
+   :ID:       974ac94c-23eb-4bba-b324-d79fba034c1d
+   :END:
 
 Determines whether double quotes are added around column, table, and ** function names in
 queries. Valid values:
@@ -79,11 +106,17 @@ well supported. Postgresql itself will downcase unquoted identifiers. This will 
 future if requested.
 
 ** function sql-type-name (type)
+   :PROPERTIES:
+   :ID:       79bc7903-3321-4e01-a0a0-819ad61179b5
+   :END:
 → string
 
 Create the SQL equivalent of the given Lisp type, if one is known. See types.
 
 ** function to-sql-name (name &optional (escape-p *escape-sql-names-p*))
+   :PROPERTIES:
+   :ID:       46c8eab0-4fac-4b14-8193-6b93c985ad0f
+   :END:
 → string
 
 Convert a symbol or string to a name that can be used as an SQL identifier by
@@ -94,12 +127,18 @@ is :literal then the name will be escaped only and this will be a a delimited
 identifier or quoted identifier. See
 
 ** function from-sql-name (string)
+   :PROPERTIES:
+   :ID:       5a8737c8-f850-4807-974c-8f711cc9ae1c
+   :END:
 → keyword
 
 Convert a string that represents an SQL identifier to a keyword by uppercasing
 it and converting the underscores to dashes.
 
 ** macro register-sql-operators (arity &rest names)
+   :PROPERTIES:
+   :ID:       594e6029-8c94-4bb6-ad36-83ab42dc6369
+   :END:
 
 Define simple SQL operators. Arity is one of :unary (like 'not'), :unary-postfix
 (the operator comes after the operand), :n-ary (like '\+': the operator falls away
@@ -111,6 +150,9 @@ list containing a keyword and a name string.
 
 #+NAME: SQL Types
 * SQL Types
+  :PROPERTIES:
+  :ID:       fd140802-2b42-49b6-b21c-c0d4adae6136
+  :END:
 S-SQL knows the SQL equivalents to a number of Lisp types, and defines some
 extra types that can be used to denote other SQL types. The following
 table shows the correspondence:
@@ -133,12 +175,19 @@ table shows the correspondence:
 | array                          | array              |
 |                                |                    |
 
-**type db-null
+
+** type db-null
+   :PROPERTIES:
+   :ID:       73bdde0f-96d9-494e-854e-f03f6197c88f
+   :END:
 
 This is a type of which only the keyword :null is a member. It is used to represent
 NULL values from the database.
 
 * SQL Syntax
+  :PROPERTIES:
+  :ID:       13fef0a2-bbe1-44a1-9bc1-570ffdbb4093
+  :END:
 An S-SQL form is converted to a query through the following rules:
 
 - Lists starting with a keyword are operators. They are expanded as described below if they are known, otherwise they are expanded in the standard way: operator(arguments, ...)
@@ -148,6 +197,9 @@ An S-SQL form is converted to a query through the following rules:
 - Anything else is evaluated and the resulting Lisp value is converted to its textual SQL representation (or an error is raised when there is no rule for converting objects of this type). Self-quoting atoms may be converted to strings at compile-time.
 
 ** sql-op :select (&rest args)
+   :PROPERTIES:
+   :ID:       e8ff770d-fbce-461d-ac3b-4959bc8770c1
+   :END:
 
 Creates a select query. The arguments are split on the keywords found among
 them. The group of arguments immediately after :select is interpreted as
@@ -173,6 +225,9 @@ The first takes any number of arguments, and the second only one. An example:
 The following operators are defined:
 
 ** sql-op :+, :*, :%, :&, :|, :||, :and, :or, :=, :/, :!=, :<, :>, :<=, :>=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&rest args)
+   :PROPERTIES:
+   :ID:       405ec72e-7b79-4d96-aa32-1a3f931dd5a4
+   :END:
 
 These are expanded as infix operators. When meaningful, they allow more than
 two arguments. :- can also be used as a unary operator to negate a value.
@@ -184,10 +239,16 @@ handles the empty keyword symbol (written :||) specially, and treats it like :\|
 so that it can be written without escapes. With :\|, this doesn't work.
 
 ** sql-op :~, :not (arg)
+   :PROPERTIES:
+   :ID:       1604e97e-40e9-4fca-bf0a-897850766386
+   :END:
 
 Unary operators for bitwise and logical negation.
 
 ** sql-op :function (name (&rest arg-types) return-type stability body)
+   :PROPERTIES:
+   :ID:       55203563-3759-427f-8147-2396c642144d
+   :END:
 
 Create a stored procedure. The argument and return types are interpreted as
 type names and not evaluated. Stability should be one of :immutable, :stable,
@@ -198,27 +259,45 @@ gets foobars by id:
 #+END_SRC
 
 ** sql-op :~, :~*, :!~, :!~* (string pattern)
+   :PROPERTIES:
+   :ID:       228320ed-6925-4a55-92c8-b48066f7e02c
+   :END:
 
 Regular expression matching operators. The exclamation mark means 'does not match',
 the asterisk makes the match case-insensitive.
 
 ** sql-op :like, :ilike (string pattern)
+   :PROPERTIES:
+   :ID:       89ce2b9e-50d8-4376-99e5-b085639f2cae
+   :END:
 
 Simple SQL string matching operators (:ilike is case-insensitive).
 
 ** sql-op :@@
+   :PROPERTIES:
+   :ID:       7e33f04a-09f8-4177-bf8b-ae6f42eb33cc
+   :END:
 
 Fast Text Search match operator.
 
 ** sql-op :desc (column)
+   :PROPERTIES:
+   :ID:       bfa41b7a-e1be-42be-b1b7-ecaa0913391c
+   :END:
 
 Used to invert the meaning of an operator in an :order-by clause.
 
 ** sql-op :nulls-first, :nulls-last (column)
+   :PROPERTIES:
+   :ID:       53293652-8d98-40fb-b629-7f3350a1b16c
+   :END:
 
 Used to determine where :null values appear in an :order-by clause.
 
 ** sql-op :as (form name &rest fields)
+   :PROPERTIES:
+   :ID:       ca6fe6aa-07ad-4931-afe5-9d9087059dca
+   :END:
 
 Assigns a name to a column or table in a :select form. When fields are given,
 they are added after the name, in parentheses. For example, (:as 'table1 't1 'foo 'bar)
@@ -228,6 +307,9 @@ quoted, types are not (when using sql-compile or sql-template, you can leave
 out the quotes entirely).
 
 ** sql-op :cast (query)
+   :PROPERTIES:
+   :ID:       fdab4fe0-46bb-4240-b629-773c21b8d304
+   :END:
 
 The CAST operator. Takes a query as an argument, and returns the result
 explicitly cast by postgresql to a specific type.
@@ -241,6 +323,9 @@ explicitly cast by postgresql to a specific type.
 ((1.0) (2.2))
 #+END_SRC
 ** sql-op :type (query)
+   :PROPERTIES:
+   :ID:       249f05e6-b7c7-4b53-a215-73673f9aa2b0
+   :END:
 Is similar to cast but uses the postgresql :: formating. E.g.
 #+BEGIN_SRC lisp
 (sql (:select (:as (:- (:type (:now) date) 'x) 'some-date) :from (:as (:generate-series 1 10) 'x)))
@@ -248,30 +333,51 @@ Is similar to cast but uses the postgresql :: formating. E.g.
 "(SELECT (now()::DATE - x) AS some_date FROM generate_series(1, 10) AS x)"
 #+END_SRC
 ** sql-op :create-composite-type (type-name &rest args)
+   :PROPERTIES:
+   :ID:       6fdeb899-f180-47f7-b8e1-6ad314c7952b
+   :END:
 Creates a composite type with a type-name and two or more columns. E.g.
 #+BEGIN_SRC lisp
 (query (:create-composite-type 'fullname (first-name text) (last-name text)))
 #+END_SRC
 ** sql-op :exists (query)
+   :PROPERTIES:
+   :ID:       edab7fef-c6c1-4875-8b41-54bf05242554
+   :END:
 
 The EXISTS operator. Takes a query as an argument, and returns true or false
 depending on whether that query returns any rows.
 
 ** sql-op :is-null (arg)
+   :PROPERTIES:
+   :ID:       48e3d777-1fde-4e60-b8d2-d8f7b8fea7bf
+   :END:
 
 Test whether a value is null.
 
 ** sql-op :not-null (arg)
+   :PROPERTIES:
+   :ID:       74c212eb-330e-459a-bdc4-2d2e75046972
+   :END:
 Test whether a value is not null.
 ** sql-op :in (value set)
+   :PROPERTIES:
+   :ID:       45c17b50-7b34-42d9-8dd2-08ccd12fa7c0
+   :END:
 
 Test whether a value is in a set of values.
 
 ** sql-op :not-in (value set)
+   :PROPERTIES:
+   :ID:       f8f9f42f-00b7-4b17-b2fb-2ef90dd8ec2c
+   :END:
 
 Inverse of the above.
 
 ** sql-op :set (&rest elements)
+   :PROPERTIES:
+   :ID:       72eea20e-6e5f-4a9a-ba2f-f5f23327b397
+   :END:
 
 Denote a set of values. This operator has two interfaces. When
 the elements are known at compile-time, they can be given as
@@ -279,6 +385,9 @@ multiple arguments to the operator. When they are not, a
 single argument that evaluates to a list should be used.
 
 ** sql-op :array (query)
+   :PROPERTIES:
+   :ID:       f7a7e6fb-00f9-407b-b929-78f17e164052
+   :END:
 
 This is used when calling a select query into an array.  See [[file:array-notes.html][array-notes.html]]
 for more detailed notes on the use of arrays.
@@ -299,6 +408,9 @@ for more detailed notes on the use of arrays.
 #+END_SRC
 
 ** sql-op :array[] (&rest args)
+   :PROPERTIES:
+   :ID:       1b9af15e-051a-401f-a251-1a7173685c9e
+   :END:
 
 This is the general operator for arrays. It also handles statements that include
 functions in the query such as (:+ 1 2), (:pi) in the array. See [[file:array-notes.html][array-notes.html]]
@@ -315,6 +427,9 @@ for more detailed notes on the use of arrays.
 #+END_SRC
 
 ** sql-op :[] (form start &optional end)
+   :PROPERTIES:
+   :ID:       7afc83f1-4054-4a6c-8ea2-99549e037998
+   :END:
 
 Dereference an array value. If end is provided, extract a slice of the array.
 Sample usage below, but also see [[file:array-notes.html][array-notes.html]] for more detailed notes on
@@ -326,36 +441,57 @@ the use of arrays.
 #+END_SRC
 
 ** sql-op :extract (unit form)
+   :PROPERTIES:
+   :ID:       2ed4ee9b-b199-43df-9b4b-f33d67629793
+   :END:
 
 Extract a field from a date/time value. For example, (:extract :month (:now)).
 
 ** sql-op :case (&rest clauses)
+   :PROPERTIES:
+   :ID:       95c998be-86a0-4553-ba2d-b1afa04205d6
+   :END:
 
 A conditional expression. Clauses should take the form (test value). If
 test is :else, an ELSE clause will be generated.
 
 ** sql-op :between (n start end)
+   :PROPERTIES:
+   :ID:       3eb62a27-e798-47c9-99a3-34efb86b0a6e
+   :END:
 
 Test whether a value lies between two other values.
 
 ** sql-op :between-symmetric (n start end)
+   :PROPERTIES:
+   :ID:       7acf3e85-924c-42cb-84ec-4ab0430f6fc0
+   :END:
 
 Works like :between, except that the start value is not required to be
 less than the end value.
 
 ** sql-op :dot (&rest names)
+   :PROPERTIES:
+   :ID:       5d7287f0-9527-46da-8bc7-8220b49b53a2
+   :END:
 
 Can be used to combine multiple names into a name of the form A.B to
 refer to a column in a table, or a table in a schema. Note that you
 can also just use a symbol with a dot in it.
 
 ** sql-op :type (form type)
+   :PROPERTIES:
+   :ID:       ccedb33a-7e65-4a25-9e0a-a5611665c9a8
+   :END:
 
 Add a type declaration to a value, as in in "4.3::real". The second
 argument is not evaluated normally, but put through sql-type-name to
 get a type identifier.
 
 ** sql-op :raw (string)
+   :PROPERTIES:
+   :ID:       4833bb9a-223b-4d29-a9ca-8e243abb1fab
+   :END:
 
 Insert a string as-is into the query. This can be useful for doing things
 that the syntax does not support, or to re-use parts of a query across
@@ -368,6 +504,9 @@ multiple queries:
 #+END_SRC
 
 ** sql-op :limit (query amount &optional offset)
+   :PROPERTIES:
+   :ID:       1b0cc29f-7b0a-4bca-8f79-5e763fc9a356
+   :END:
 
 In S-SQL limit is not part of the select operator, but an extra
 operator that is applied to a query (this works out better when limiting
@@ -377,6 +516,9 @@ argument, and optionally offsets the result by the amount given
 as the third argument.
 
 ** sql-op :order-by (query &rest exprs)
+   :PROPERTIES:
+   :ID:       df5b679e-5f4b-4599-b533-82c3e9d4f13b
+   :END:
 
 Order the results of a query by the given expressions. See :desc for
 when you want to invert an ordering. Note: This is not the same as
@@ -384,6 +526,9 @@ passing an :order-by parameter to an aggregation operator.
 See Aggregation Operators.
 
 ** sql-op :values
+   :PROPERTIES:
+   :ID:       d7cc1523-6341-4d80-a08a-c76898a99501
+   :END:
 
 Values computes a row value or set of row values for use in a specific
 query. See the postgresql docs at:
@@ -414,6 +559,9 @@ Example:
 #+END_SRC
 
 ** sql-op :empty-set
+   :PROPERTIES:
+   :ID:       a7daaf56-9824-4a6f-8ada-313221e034cb
+   :END:
 
 This is a fudge. It returns a string "()" where something like '()
 would return "false" or :() would throw an error. Example:
@@ -425,6 +573,9 @@ would return "false" or :() would throw an error. Example:
 #+END_SRC
 
 ** sql-op :group-by
+   :PROPERTIES:
+   :ID:       8f5b4a28-a801-424d-9ff6-4460fa7f048d
+   :END:
 
 https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS
 The GROUP BY Clause is used to group together those rows in a table that
@@ -445,6 +596,9 @@ aggregates that apply to these groups. Example:
 #+END_SRC
 
 ** sql-op :grouping-sets
+   :PROPERTIES:
+   :ID:       dfcde273-6c53-488a-b8d2-43adc3a95d23
+   :END:
 
 https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS
 More complex grouping operations are possible using the concept of grouping
@@ -459,18 +613,45 @@ This operator requires postgresql 9.5 or later. For example:
 #+END_SRC
 
 * Time, Date and Interval Operators
+  :PROPERTIES:
+  :ID:       d07d0cf2-6766-4b7a-af0b-57a0c2b754eb
+  :END:
 ** sql-op :interval (arg)
+   :PROPERTIES:
+   :ID:       330de3f2-1869-47a2-8a0d-467a38e3254f
+   :END:
 Creates an interval data type, generally represented in postmodern as an alist
 ** sql-op :current-date ()
+   :PROPERTIES:
+   :ID:       6d1cf4f1-89f8-4586-9e19-58c6003e5166
+   :END:
 #+BEGIN_SRC lisp
 (query (:select (:current-date)) :single)
 #+END_SRC
 ** sql-op :current-time ()
+   :PROPERTIES:
+   :ID:       2f80fe21-7abe-4eed-aa57-1b8a11cddfd1
+   :END:
 ** sql-op :current-timestamp ()
+   :PROPERTIES:
+   :ID:       5c124bd3-f248-45dd-9965-51c368cd3225
+   :END:
 ** sql-op :timestamp (arg)
+   :PROPERTIES:
+   :ID:       1969c373-6093-46dc-9f41-001190399cbd
+   :END:
 ** sql-op :age (&rest args)
+   :PROPERTIES:
+   :ID:       e4872980-3b59-4cd5-844b-ce8912160010
+   :END:
 ** sql-op :date (arg)
+   :PROPERTIES:
+   :ID:       e155b65b-05d2-4583-a185-419817382e37
+   :END:
 ** sql-op :make-interval (&rest args)
+   :PROPERTIES:
+   :ID:       2794d9dd-9ab6-4d4b-8b9f-49056d214b67
+   :END:
 Takes lists of (time-unit value) and returns a timestamp type. Example:
 
 #+BEGIN_SRC lisp
@@ -478,6 +659,9 @@ Takes lists of (time-unit value) and returns a timestamp type. Example:
        :single)
 #+END_SRC
 ** sql-op :make-timestamp (&rest args)
+   :PROPERTIES:
+   :ID:       f4e7bf1a-25b1-4c2b-8794-9550164a0ee1
+   :END:
 Takes lists of (time-unit value) and returns a timestamptz type. Example:
 #+BEGIN_SRC lisp
 (query (:select
@@ -486,6 +670,9 @@ Takes lists of (time-unit value) and returns a timestamptz type. Example:
        :single)
 #+END_SRC
 ** sql-op :make-timestamptz (&rest args)
+   :PROPERTIES:
+   :ID:       b6f82034-e002-4dd2-9bde-ae025176cb9a
+   :END:
 Takes lists of (time-unit value) and returns a timestamptz type. Example:
 #+BEGIN_SRC lisp
 (query (:select
@@ -495,7 +682,13 @@ Takes lists of (time-unit value) and returns a timestamptz type. Example:
 #+END_SRC
 
 * Aggregation Operators
+  :PROPERTIES:
+  :ID:       cd2bdccf-0de5-4b57-a195-0c94029e8c8e
+  :END:
 ** sql-op :count (&rest args)
+   :PROPERTIES:
+   :ID:       40eed2a4-b3f5-4380-a3b7-16a5bdcbe0b3
+   :END:
 
 Count returns the number of rows for which the expression is not null.
 It can be the number of rows collected by the select statement as in:
@@ -533,6 +726,9 @@ is not used inside the filter clause. E.g.
 See tests.lisp for examples.
 
 ** sql-op :avg (&rest rest args)
+   :PROPERTIES:
+   :ID:       0e6463d4-d83c-493b-8989-4819c6e9f914
+   :END:
 
 Avg calculates the average value of a list of values. Note that if the
 filter keyword is used, the filter must be last in the avg args. If distinct
@@ -543,6 +739,9 @@ is used, it must come before filter. E.g. See tests.lisp for more examples.
 #+END_SRC
 
 ** sql-op :sum (&rest rest args)
+   :PROPERTIES:
+   :ID:       d8379b94-922b-47d3-9161-5da838b43f42
+   :END:
 
 Sum calculates the total of a list of values. Note that if the keyword filter
 is used, the filter must be last in the sum args. If distinct is used, it
@@ -555,6 +754,9 @@ for more examples.
 #+END_SRC
 
 ** sql-op ::max (&rest args)
+   :PROPERTIES:
+   :ID:       66db79ad-e7d4-43dd-a6af-fe3085c16d12
+   :END:
 
 max returns the maximum value of a set of values. Note that if the filter
 keyword is used, the filter must be last in the max args. If distinct is
@@ -567,6 +769,9 @@ See tests.lisp for more examples.
                 :from 'pbbench-history))
 #+END_SRC
 ** sql-op ::min (&rest args)
+   :PROPERTIES:
+   :ID:       02c03a2a-114d-4b4b-8214-12411c979a0f
+   :END:
 
 min returns the minimum value of a set of values. Note that if the filter
 keyword is used, the filter must be last in the min args. If distinct is
@@ -579,6 +784,9 @@ See tests.lisp for more examples.
 #+END_SRC
 
 ** sql-op ::every (&rest args)
+   :PROPERTIES:
+   :ID:       3683daea-ef97-4cb9-a78e-aa40fc3df983
+   :END:
 
 Every returns true if all input values are true, otherwise false. Note
 that if the filter keyword is used, the filter must be last in the every
@@ -592,6 +800,9 @@ properly expand it). See tests.lisp for more examples.
 #+END_SRC
 
 ** sql-op :percentile-cont (&rest args)
+   :PROPERTIES:
+   :ID:       3a6ee0b8-64cd-4937-b769-95f3ec44c32a
+   :END:
 
 Requires Postgresql 9.4 or higher. Percentile-cont returns a value
 corresponding to the specified fraction in the ordering, interpolating
@@ -611,6 +822,9 @@ to that percentile. Examples:
 
 
 ** sql-op :percentile-dist (&rest args)
+   :PROPERTIES:
+   :ID:       5f53ac18-189b-4df7-99ac-02ebbd8a9606
+   :END:
 
 Requires Postgresql 9.4 or higher. There are two required keyword parameters
 :fraction and :order-by. Percentile-dist returns the first input value whose
@@ -631,6 +845,9 @@ value corresponding to that percentile. Examples:
 #+END_SRC
 
 ** sql-op :corr (y x)
+   :PROPERTIES:
+   :ID:       36db9511-5ba0-4dfc-9646-71b2d47857b0
+   :END:
 
 The corr function returns the correlation coefficient between a set of
 dependent and independent variables. Example:
@@ -640,6 +857,9 @@ dependent and independent variables. Example:
 #+END_SRC
 
 ** sql-op :covar-pop (y x)
+   :PROPERTIES:
+   :ID:       e6b20c69-d328-4a59-b030-9c03c9201305
+   :END:
 
 The covar-pop function returns the population covariance between a set of
 dependent and independent variables. Example:
@@ -649,6 +869,9 @@ dependent and independent variables. Example:
 #+END_SRC
 
 ** sql-op :covar-samp (y x)
+   :PROPERTIES:
+   :ID:       9112880c-0d43-43bb-96b0-416e4f1e2bc3
+   :END:
 #+BEGIN_SRC lisp
 (query (:select (:covar-samp 'height 'weight)
                 :from 'people))
@@ -657,6 +880,9 @@ The covar-samp function returns the sample covariance between a set of
 dependent and independent variables. Example:
 
 ** sql-op :string-agg (&rest args)
+   :PROPERTIES:
+   :ID:       cd16b4cb-51f9-4bff-ac6e-7482fc2e1ffa
+   :END:
 
 String-agg allows you to concatenate strings using different types of
 delimiter symbols. Allowable optional keyword parameters are :distinct,
@@ -677,6 +903,9 @@ See tests.lisp for more examples.
 #+END_SRC
 
 ** sql-op :array-agg (&rest args)
+   :PROPERTIES:
+   :ID:       dbf248ce-f480-4940-93d6-837aaa22529d
+   :END:
 
 Array-agg returns a list of values concatenated into an arrays.
 Allowable optional keyword parameters are :distinct, :order-by
@@ -698,6 +927,9 @@ Example with Filter:
 #+END_SRC
 
 ** sql-op :mode (&rest args)
+   :PROPERTIES:
+   :ID:       be548451-659d-46ca-b31b-9d308b8b5cba
+   :END:
 
 Mode is used to find the most frequent input value in a group.
 See e.g. https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE
@@ -708,6 +940,9 @@ and article at https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-f
 #+END_SRC
 
 ** sql-op :regr_avgx (y x)
+   :PROPERTIES:
+   :ID:       5c3e2dc0-d238-4116-91fd-a8111225ee94
+   :END:
 
 The regr_avgx function returns the average of the independent variable
 (sum(X)/N) Example:
@@ -717,6 +952,9 @@ The regr_avgx function returns the average of the independent variable
 #+END_SRC
 
 ** sql-op :regr_avgy (y x)
+   :PROPERTIES:
+   :ID:       2fc66640-03e7-4796-8209-69fba9f346a4
+   :END:
 
 The regr_avgy function returns the average of the dependent variable
 (sum(Y)/N). Example:
@@ -726,6 +964,9 @@ The regr_avgy function returns the average of the dependent variable
 (query (:select (:regr_avgy 'height 'weight)
                 :from 'people))
 ** sql-op :regr_count (y x)
+   :PROPERTIES:
+   :ID:       293a2e93-93bf-4c08-b0f4-6d3dfe0feb6b
+   :END:
 
 The regr_count function returns the number of input rows in which both
 expressions are nonnull. Example:
@@ -735,6 +976,9 @@ expressions are nonnull. Example:
 #+END_SRC
 
 ** sql-op :regr_intercept (y x)
+   :PROPERTIES:
+   :ID:       8b92dc89-b251-4bac-ba53-58251e98d3f5
+   :END:
 
 The regr_intercept function returns the y-intercept of the least-squares-fit
 linear equation determined by the (X, Y) pairs. Example:
@@ -744,6 +988,9 @@ linear equation determined by the (X, Y) pairs. Example:
 #+END_SRC
 
 ** sql-op :regr_r2 (y x)
+   :PROPERTIES:
+   :ID:       09020f6e-166a-40e8-85ea-fdaced1f7808
+   :END:
 
 The regr_r2 function returns the square of the correlation coefficient. Example:
 #+BEGIN_SRC lisp
@@ -752,6 +999,9 @@ The regr_r2 function returns the square of the correlation coefficient. Example:
 #+END_SRC
 
 ** sql-op :regr_slope (y x)
+   :PROPERTIES:
+   :ID:       b22a7906-c571-4463-884f-4067d51cf0ac
+   :END:
 
 The regr_slope function returns the slope of the least-squares-fit linear
 equation determined by the (X, Y) pairs. Example:
@@ -761,6 +1011,9 @@ equation determined by the (X, Y) pairs. Example:
 #+END_SRC
 
 ** sql-op :regr_sxx (y x)
+   :PROPERTIES:
+   :ID:       9c7cc59e-419d-4161-9711-de2c9b0c27ec
+   :END:
 
 The regr_sxx function returns the sum(X^2) - sum(X)^2/N (“sum of squares” of
 the independent variable). Example:
@@ -770,6 +1023,9 @@ the independent variable). Example:
 #+END_SRC
 
 ** sql-op :regr_sxy (y x)
+   :PROPERTIES:
+   :ID:       24f03953-7fea-4b18-8d69-ccd5b6d9f1f5
+   :END:
 
 The regr_sxy function returns the sum(X*Y) - sum(X) * sum(Y)/N (“sum of products”
 of independent times dependent variable). Example:
@@ -779,6 +1035,9 @@ of independent times dependent variable). Example:
 #+END_SRC
 
 ** sql-op :regr_syy (y x)
+   :PROPERTIES:
+   :ID:       34f776b1-d29d-4d49-a66b-21262379510b
+   :END:
 
 The regr_syy function returns the sum(Y^2) - sum(Y)^2/N (“sum of squares”
 of the dependent variable). Example:
@@ -788,6 +1047,9 @@ of the dependent variable). Example:
 #+END_SRC
 
 ** sql-op :stddev (&rest args)
+   :PROPERTIES:
+   :ID:       e0558145-d8e0-4ea3-b9ae-cc92ef332b70
+   :END:
 
 The stddev function returns the the sample standard deviation of the input
 values. It is a historical alias for stddev-samp. Example:
@@ -797,6 +1059,9 @@ values. It is a historical alias for stddev-samp. Example:
 #+END_SRC
 
 ** sql-op :stddev-pop (&rest args)
+   :PROPERTIES:
+   :ID:       e4eeac17-7d09-45d8-8589-47d9b09a95d2
+   :END:
 
 The stddev-pop function returns the population standard deviation of the
 input values. Example:
@@ -806,6 +1071,9 @@ input values. Example:
 #+END_SRC
 
 ** sql-op :stddev-samp (&rest args)
+   :PROPERTIES:
+   :ID:       4095965c-e969-4663-9ae4-2becfe72de7a
+   :END:
 
 The stddev-samp function returns the sample standard deviation of the
 input values. Example:
@@ -815,6 +1083,9 @@ input values. Example:
 #+END_SRC
 
 ** sql-op :variance (&rest args)
+   :PROPERTIES:
+   :ID:       e4cd292a-4d33-434d-a698-4ae921a3173b
+   :END:
 
 Variance is a historical alias for var_samp. The variance function returns
 the sample variance of the input values (square of the sample standard deviation).
@@ -825,6 +1096,9 @@ Example:
 #+END_SRC
 
 ** sql-op :var-pop (&rest args)
+   :PROPERTIES:
+   :ID:       d72f79cc-b7b1-4481-a93f-6d565c6a582b
+   :END:
 
 The var-pop function returns the population variance of the input values
 (square of the population standard deviation). Example:
@@ -835,6 +1109,9 @@ The var-pop function returns the population variance of the input values
 #+END_SRC
 
 ** sql-op :var-samp (&rest args)
+   :PROPERTIES:
+   :ID:       12a5e8ba-4467-4411-a604-c8152c3fbc7d
+   :END:
 
 The var-samp function returns the sample variance of the input values
 (square of the sample standard deviation). Example:
@@ -846,6 +1123,9 @@ The var-samp function returns the sample variance of the input values
 
 Window Functions
 ** sql-op :over (form &rest args)
+   :PROPERTIES:
+   :ID:       bb6eb9f2-d9ed-4348-9467-79cae9b78819
+   :END:
 
 Over, partition-by and window are so-called window functions. A window
 function performs a calculation across a set of table rows that are
@@ -856,6 +1136,9 @@ somehow related to the current row.
 #+END_SRC
 
 ** sql-op :partition-by (&rest args)
+   :PROPERTIES:
+   :ID:       53d1397d-4f1d-4833-b0c1-79d18e943f8b
+   :END:
 
 Args is a list of one or more columns to partition by, optionally
 followed by an :order-by clause.
@@ -876,6 +1159,9 @@ Note the use of :order-by without parens:
 
 
 ** sql-op :window (form)
+   :PROPERTIES:
+   :ID:       63d29a3b-c105-4e09-ab3b-ca5e4ece17af
+   :END:
 #+BEGIN_SRC lisp
 (query (:select (:over (:sum 'salary) 'w)
                 (:over (:avg 'salary) 'w)
@@ -884,6 +1170,9 @@ Note the use of :order-by without parens:
 #+END_SRC
 
 ** sql-op :with (&rest args)
+   :PROPERTIES:
+   :ID:       38fc8a49-9a90-4f6c-930f-c704964ec991
+   :END:
 
 With provides a way to write auxillary statements for use in a larger query,
 often referred to as Common Table Expressions or CTEs.
@@ -902,6 +1191,9 @@ often referred to as Common Table Expressions or CTEs.
 #+END_SRC
 
 ** sql-op :with-recursive (&rest args)
+   :PROPERTIES:
+   :ID:       78be2433-4c26-4e2c-b333-e234393b5dc1
+   :END:
 
 Recursive modifier to a WITH statement, allowing the query to refer to its own output.
 #+BEGIN_SRC lisp
@@ -954,7 +1246,13 @@ Recursive modifier to a WITH statement, allowing the query to refer to its own o
 #+END_SRC
 
 * Table Functions
+  :PROPERTIES:
+  :ID:       dbedabf5-eaf5-4adb-b323-b42926acc81a
+  :END:
 ** sql-op :for-update (query &key of nowait)
+   :PROPERTIES:
+   :ID:       ace310e6-8bd1-4211-bf66-ef56c9b7e872
+   :END:
 
 Locks the selected rows against concurrent updates. This will prevent the
 rows from being modified or deleted by other transactions until the current
@@ -969,12 +1267,18 @@ locked immediately, instead of pausing until it's possible.
 #+END_SRC
 
 ** sql-op :for-share (query &key of nowait)
+   :PROPERTIES:
+   :ID:       457394be-ef0d-444a-ad33-fefbc39363e3
+   :END:
 
 Similar to :for-update, except it acquires a shared lock on the table,
 allowing other transactions to perform :for-share selects on the locked
 tables.
 
 ** sql-op :insert-into (table &rest rest)
+   :PROPERTIES:
+   :ID:       a63202ff-4aa9-4af3-9b82-254516db07e1
+   :END:
 
 Insert a row into a table. When the second argument is :set, the other
 arguments should be alternating field names and values, otherwise it
@@ -1004,6 +1308,9 @@ prepend the table name to the column in the where statement if you are updating.
 #+END_SRC
 
 ** sql-op :insert-rows-into (table &rest rest)
+   :PROPERTIES:
+   :ID:       26d60b83-60f5-4bb4-8a03-cd897a455139
+   :END:
 
 Insert multiple rows into a table. Specify the columns first with the
 keyword :columns then provide a list of lists of the values as a
@@ -1021,6 +1328,9 @@ parameters can be dropped. Example:
 #+END_SRC
 
 ** sql-op :update (table &rest rest)
+   :PROPERTIES:
+   :ID:       bbf790c1-9baa-4cf0-900c-16a5a2bc2081
+   :END:
 
 Update values in a table. After the table name there should follow the
 keyword :set and any number of alternating field names and values, like
@@ -1031,12 +1341,18 @@ and :returning keyword followed by a list of field names or expressions
 indicating values to be returned as query result.
 
 ** sql-op :delete-from (table &rest rest)
+   :PROPERTIES:
+   :ID:       cdee608e-71cb-4d41-9e1d-a21b7728d956
+   :END:
 
 Delete rows from the named table. Can be given a :where argument followed
 by a condition, and a :returning argument, followed by one or more
 expressions that should be returned for every deleted row.
 
 ** sql-op :create-table (name (&rest columns) &rest options)
+   :PROPERTIES:
+   :ID:       4096efd3-8b88-4c50-8a02-d3f1a1b0d682
+   :END:
 
 Create a new table. The simplest example would pass two parameters,
 the table name and a list of lists providing information for each column.
@@ -1051,6 +1367,9 @@ example.
 See [[file:create-tables.html]] for more detailed examples.
 
 *** Column Definition parameters
+    :PROPERTIES:
+    :ID:       d0a01fab-1489-47dd-8307-30c28351e8af
+    :END:
 After the table name a list of column definitions
 follows, which are lists that start with a name, followed by one or
 more of the following keyword arguments:
@@ -1091,6 +1410,9 @@ key refers to is deleted or changed. Allowed values are :restrict, :set-null,
 - :set-default, :cascade, and :no-action.
 
 *** Table Constraints
+    :PROPERTIES:
+    :ID:       6ee6a88c-1810-41f9-8cad-2c7d347f9c4a
+    :END:
 After the list of columns, zero or more extra options (table constraints) can
 be specified. These are lists starting with one of the following keywords:
 
@@ -1140,6 +1462,9 @@ For more detail and examples on building tables
 using the s-sql approach, see [[file:create-tables.html][create-tables.html]]
 
 ** sql-op :alter-table (name action &rest args)
+   :PROPERTIES:
+   :ID:       936e7ced-7f31-4c94-9d39-81b11e2cd1cd
+   :END:
 
 Alters named table. Currently changing a column's data type is not supported.
 The meaning of args depends on action:
@@ -1184,6 +1509,9 @@ Here is an example using the table defined above:
 #+END_SRC
 
 ** sql-op :drop-table (name)
+   :PROPERTIES:
+   :ID:       1f2b170f-09e2-40e6-9956-f3c44b1d2824
+   :END:
 
 Drops the named table. You may optionally pass :if-exists before the name
 to suppress the error message. You can also optionally pass :cascade after
@@ -1198,6 +1526,9 @@ etc which depend on that table.
 
 ** sql-op :truncate (&rest args)
    SCHEDULED: <2018-09-06 Thu>
+   :PROPERTIES:
+   :ID:       f17b0128-f74e-4e79-90e4-d7cc97848c46
+   :END:
 
 Truncates one or more tables, deleting all the rows. Optional keyword arguments are
 allowed in the following order. Note that :continue-identity and :restart-identity
@@ -1223,6 +1554,9 @@ Example calls would be:
 #+END_SRC
 
 ** sql-op :create-index (name &rest args)
+   :PROPERTIES:
+   :ID:       c06560b4-5dfb-4657-aa1f-dc3913fa08fc
+   :END:
 
 Create an index on a table. After the name of the index the keyword :on should
 follow, with the table name after it. Then the keyword :fields, followed by
@@ -1237,10 +1571,16 @@ be added at the end to make a partial index.
 
 
 ** sql-op :create-unique-index (name &rest args)
+   :PROPERTIES:
+   :ID:       b2f3a924-58c4-4c4e-9b08-603bb8f5bef3
+   :END:
 
 Works like :create-index, except that the index created is unique.
 
 ** sql-op :drop-index (name)
+   :PROPERTIES:
+   :ID:       e2c1e460-4d7b-449e-9b24-daa807f115b4
+   :END:
 
 Drop an index. Takes :if-exists and/or :cascade arguments like :drop-table.
 #+BEGIN_SRC lisp
@@ -1250,11 +1590,17 @@ Drop an index. Takes :if-exists and/or :cascade arguments like :drop-table.
 #+END_SRC
 
 ** sql-op :create-sequence (name &key increment min-value max-value start cache cycle)
+   :PROPERTIES:
+   :ID:       6dad55a4-a0d4-4d94-923e-e34dd21417a0
+   :END:
 
 Create a sequence with the given name. The rest of the arguments control
 the way the sequence selects values.
 
 ** sql-op :alter-sequence (name)
+   :PROPERTIES:
+   :ID:       16b308a1-ae6c-4cac-816d-1e29b28ce0b9
+   :END:
 
 Alters a sequence. See [[https://www.postgresql.org/docs/10/static/sql-altersequence.html][Postgresql documentation]] for parameters.
 
@@ -1285,6 +1631,9 @@ Sets the amount by which each subsequent increment will be increased.
 - :if-exists before the name to suppress the error message.
 
 ** sql-op :drop-sequence (name)
+   :PROPERTIES:
+   :ID:       913c35f8-c6ba-42e3-a862-a46e313985ba
+   :END:
 
 Drop a sequence. Takes :if-exists and/or :cascade arguments like :drop-table.
 #+BEGIN_SRC lisp
@@ -1294,14 +1643,23 @@ Drop a sequence. Takes :if-exists and/or :cascade arguments like :drop-table.
 #+END_SRC
 
 ** sql-op :create-view (name query)
+   :PROPERTIES:
+   :ID:       b5152a93-fc83-4e28-8678-2238987280ac
+   :END:
 
 Create a view from an S-SQL-style query.
 
 ** sql-op :drop-view (name)
+   :PROPERTIES:
+   :ID:       41ae2fb3-1d14-40a7-9cb3-eb194f90a692
+   :END:
 
 Drop a view. Takes optional :if-exists argument.
 
 ** sql-op :set-constraints (state &rest constraints)
+   :PROPERTIES:
+   :ID:       4e0e615b-cdb2-4576-a46d-20c25daf414a
+   :END:
 
 Configure whether deferrable constraints should be checked when a statement
 is executed, or when the transaction containing that statement is completed.
@@ -1311,20 +1669,32 @@ names of the constraints to be configured, or unspecified, indicating that
 all deferrable constraints should be thus configured.
 
 ** sql-op :listen (channel)
+   :PROPERTIES:
+   :ID:       254e8288-3515-4a51-8704-ea17c35f2c9b
+   :END:
 
 Tell the server to listen for notification events on channel channel,
 a string, on the current connection.
 
 ** sql-op :unlisten (channel)
+   :PROPERTIES:
+   :ID:       8899f2b4-8053-4e49-917f-8716c8ac916b
+   :END:
 
 Stop listening for events on channel.
 
 ** sql-op :notify (channel &optional payload)
+   :PROPERTIES:
+   :ID:       88d35022-2839-4ece-9688-c8517363e25a
+   :END:
 
 Signal a notification event on channel channel, a string. The optional
 payload string can be used to send additional event information to the listeners.
 
 ** sql-op :create-role (role &rest args)
+   :PROPERTIES:
+   :ID:       e4c5a84e-3a66-4a80-91de-b673beb8376d
+   :END:
 
 Create a new role (user). Following the role name are optional keywords
 arguments:
@@ -1371,10 +1741,16 @@ Here is an example of a :create-role form:
 #+END_SRC
 
 ** sql-op :create-database (name)
+   :PROPERTIES:
+   :ID:       6d429954-eb91-4a94-8655-f1e1a75f02c8
+   :END:
 
 Create a new database with the given name.
 
 ** sql-op :drop-database (name)
+   :PROPERTIES:
+   :ID:       35ecfdd0-7ba1-45cc-a73d-68323c880c29
+   :END:
 
 Drops the named database. You may optionally pass :if-exists before the
 name to suppress the error message. Examples:
@@ -1384,6 +1760,9 @@ name to suppress the error message. Examples:
 #+END_SRC
 
 ** sql-op :copy (table &rest args)
+   :PROPERTIES:
+   :ID:       962e6b5e-8ce6-4083-a17e-010679d12b32
+   :END:
 
 Move data between Postgres tables and filesystem files. Table name is required
 followed by one or more of the following keyword arguments. Documentation for
@@ -1408,4 +1787,7 @@ tutorial:
 
 #+END_SRC
 * Dynamic Queries and Composition
+  :PROPERTIES:
+  :ID:       1df403b0-bef6-40d9-983e-328a2f4c49b8
+  :END:
 See [[file:dynamic-queries.html][Dynamic-Queries.html]]
