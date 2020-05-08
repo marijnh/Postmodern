@@ -40,16 +40,22 @@ or a string. Returns a list of form '(table schema database"
                                                :test 'equal))
     (list table schema database)))
 
-(defun list-tables-in-schema (&optional (schema-name "public") lisp-strings-p)
-  "Returns a list of tables in a particular schema, defaulting to public."
-  (let ((result (alexandria:flatten
-                 (query (:order-by
-                         (:select 'table-name
-                                  :from 'information-schema.tables
-                                  :where (:= 'table-schema '$1))
-                         'table-name)
-                        (to-sql-name schema-name)))))
-    (if lisp-strings-p (mapcar 'from-sql-name result) result )))
+(defun list-tables-in-schema (&optional (schema-name "public") (strings-p nil))
+  "Returns a list of tables in a particular schema, defaulting to public. If schema-name is :all, it will return all the non-system tables in the database in fully qualified form: e.g. 'public.test_table'. If string-p is t, the names will be returned as strings with underscores converted to hyphens."
+  (let ((result (cond
+                  ((or (equal schema-name "all")
+                       (eq schema-name :all))
+                   (query "select table_schema||'.'||table_name
+                               from information_schema.tables
+                               where table_schema not in ('pg_catalog', 'information_schema')
+                               order by table_schema, table_name"))
+                  (t
+                   (query "((SELECT table_name
+                                 FROM information_schema.tables
+                                 WHERE (table_schema = $1))
+                                 ORDER BY table_name)"
+                          (to-sql-name schema-name))))))
+    (if strings-p (mapcar 'from-sql-name result) result )))
 
 (defun list-tables (&optional strings-p)
   "Return a list of the tables in a database. Turn them into keywords
