@@ -674,7 +674,7 @@
         '(("gracie"))))
     (query (:create-table "uniq.george" ((id :type integer))))
     (is (equal (list-tables-in-schema "uniq")
-        '(("george" "gracie"))))
+        '(("george") ("gracie"))))
     (is (table-exists-p "test.uniq.george"))
     (is (table-exists-p "uniq.george"))
     (is (table-exists-p "george" "uniq"))
