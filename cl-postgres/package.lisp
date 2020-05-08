@@ -64,6 +64,9 @@
            #:*ssl-key-file*
            #:*retry-connect-times*
            #:*retry-connect-delay*
+           #:string-mapped-to-nothing
+           #:string-mapped-to-space
+           #:saslprep-normalize
            #+(and sbcl unix) #:*unix-socket-dir*))
 
 (defpackage :cl-postgres-error
