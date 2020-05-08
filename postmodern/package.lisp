@@ -61,8 +61,6 @@
    #:bloat-measurement
    #:unused-indexes
    #:check-query-performance
-   #:list-installed-extensions
-   #:list-available-extensions
 
    #:deftable #:*table-name* #:*table-symbol*
    #:create-table #:create-all-tables #:create-package-tables #:drop-table

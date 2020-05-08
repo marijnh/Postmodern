@@ -56,10 +56,10 @@ By default, this function only changes the search path for the current session."
          :column))
 
 (defun list-schemas ()
-  "List schemas in the current database, excluding the pg_* system schemas."
+  "List schemas in the current database, excluding the pg_* system schemas. Should have the same result as list-schemata even though it uses different system tables."
   (loop for x in (query (:select 'nspname
                                  :from 'pg_namespace
-                                 :where (:!~* 'nspname "^pg_.*")))
+                                 :where (:!~* 'nspname "^pg_.*|information_schema")))
        collect (first x)))
 
 

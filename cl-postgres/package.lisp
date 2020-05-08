@@ -67,6 +67,7 @@
            #:string-mapped-to-nothing
            #:string-mapped-to-space
            #:saslprep-normalize
+           #:string-printable-ascii-p
            #+(and sbcl unix) #:*unix-socket-dir*))
 
 (defpackage :cl-postgres-error
