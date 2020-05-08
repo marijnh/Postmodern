@@ -304,19 +304,9 @@ The Lisp code in Postmodern is theoretically portable across implementations, an
 
 The library is not likely to work for PostgreSQL versions older than 8.4. Other features only work in newer Postgresql versions as the features were only introduced in those newer versions.
 
-### Things that should be implemented
+### Things that could be implemented
 Postmodern is under active development so issues and feature requests should
-be flagged on [[https://github.com/marijnh/Postmodern][Postmodern's site on github]].
-
-It would be a nice feature if Postmodern could help you with defining your
-database schemas and, more importantly, updating your databases when your code
-changes. It would theoretically not be hard to build a function that compares
-a schema on the Lisp side with the state of the database, and helps you to
-interactively update your database. PostgreSQL has a quite complete
-introspection system. Unfortunately it would be a lot of work to implement
-this, since databases can contain so many different types of entities
-(tables, views, indices, procedures, constraints, sequences, etc.) which are
-all created, changed, and dropped in different ways.
+be flagged on [[https://github.com/marijnh/Postmodern](Postmodern's site on github).
 
 Some areas that are currently under consideration can be found in the ROADMAP.md
 file.
