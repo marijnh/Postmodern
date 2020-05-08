@@ -80,7 +80,6 @@
    #:num-records-in-database
    #:database-exists-p
    #:database-size
-   #:create-database
    #:drop-database
    #:document-database
    #:list-databases
@@ -101,8 +100,6 @@
    ;; roles
    #:list-roles
    #:role-exists-p
-   #:create-role
-   #:grant-role-permissions
    #:drop-role
    #:list-database-users
    ;; schemas
