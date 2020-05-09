@@ -225,7 +225,9 @@ escape-p is :auto and the name contains reserved words."
   (is (equal (s-sql::to-sql-name "George-Harrison" :literal)
              "\"George-Harrison\""))
   (is (equal (s-sql:to-sql-name "george-gracie!@~#$%^&*()_+=-0987654321`QWERTGFDSAZXCVBNM<>?:LKJHYIUOP{}|/.,mnhjkl;']\[poiuy")
-             "george_gracie________*______0987654321_qwertgfdsazxcvbnm____lkjhyiuop____._mnhjkl____poiuy")))
+             "george_gracie________*______0987654321_qwertgfdsazxcvbnm____lkjhyiuop____._mnhjkl____poiuy"))
+  (is (equal (s-sql:to-sql-name "Seyðisfjörður")  ;checking unicode names
+             "seyðisfjörður")))
 
 (test from-sql-name
   "Testing from-sql-name. Convert a string to something that might have been its original
@@ -234,7 +236,9 @@ characters other than #\-)"
   (is (equal (s-sql::from-sql-name "create_all")
              :CREATE-ALL))
   (is (equal (s-sql::from-sql-name "region/los_angeles")
-             :REGION/LOS-ANGELES)))
+             :REGION/LOS-ANGELES))
+  (is (equal (from-sql-name "Seyðisfjörður") ;checking unicode names
+             :SEYÐISFJÖRÐUR)))
 
 (test sql-type-name
       "Testing sql-type-name. Transform a lisp type into a string containing
