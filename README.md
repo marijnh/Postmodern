@@ -329,6 +329,21 @@ The Lisp code in Postmodern is theoretically portable across implementations, an
 
 The library is not likely to work for PostgreSQL versions older than 8.4. Other features only work in newer Postgresql versions as the features were only introduced in those newer versions.
 
+### Reserved Words
+It is highly suggested that you do not use words that are reserved by Postgresql as identifiers (e.g. table names, columns). The reserved words are:
+
+"all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric" "authorization"
+"between" "binary" "both" "case" "cast" "check" "collate" "column" "concurrently"
+"constraint" "create" "cross" "current-catalog" "current-date" "current-role" "current-schema"
+"current-time" "current-timestamp" "current-user" "default" "deferrable"
+"desc" "distinct" "do" "else" "end" "except" "false" "fetch" "filter"
+"for" "foreign" "freeze" "from" "full" "grant" "group" "having" "ilike" "in" "initially"
+"inner" "intersect" "into" "is" "isnull" "join" "lateral" "leading" "left" "like" "limit"
+"localtime" "localtimestamp" "natural" "new" "not" "notnull"  "nowait" "null" "off" "offset" "old"
+"on" "only" "or" "order" "outer" "overlaps" "placing" "primary" "references" "returning"
+"right" "select" "session-user" "share" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
+"union" "unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"
+
 ### Things that could be implemented
 Postmodern is under active development so issues and feature requests should
 be flagged on [[https://github.com/marijnh/Postmodern](Postmodern's site on github).
