@@ -118,7 +118,7 @@
    #:create-tablespace
    #:list-tablespaces
    ;; triggers
-   #:list-triggers #:list-detailed-triggers
+   #:describe-triggers #:list-triggers #:list-detailed-triggers
    ;; util
    #:list-available-types
    #:change-toplevel-database

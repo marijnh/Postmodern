@@ -1,4 +1,4 @@
-#+TITLE: S-SQL Reference Manual
+h#+TITLE: S-SQL Reference Manual
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
 #+OPTIONS: ^:nil
@@ -22,7 +22,19 @@ is all that is needed to produce the final SQL query.
 → string
 
 Convert the given form (a list starting with a keyword) to an SQL query string
-at compile time, according to the rules described here.
+at compile time, according to the rules described here. For example:
+#+BEGIN_SRC lisp
+(sql (:select '* :from 'country :where (:= 'a 1)))
+
+ "(SELECT * FROM country WHERE (a = 1))"
+#+END_SRC
+
+but
+#+BEGIN_SRC lisp
+(sql '(:select '* :from 'country :where (:= 'a 1)))
+#+END_SRC
+
+would throw an error. For the later case you need to use sql-compile.
 
 ** function sql-compile (form)
    :PROPERTIES:
@@ -32,7 +44,19 @@ at compile time, according to the rules described here.
 
 This is the run-time variant of the sql macro. It converts the given list to
 an SQL query, with the same rules except that symbols in this list do not
-have to be quoted to be interpreted as identifiers.
+have to be quoted to be interpreted as identifiers. For example:
+#+BEGIN_SRC lisp
+(sql-compile '(:select '* :from 'country :where (:= 'a 1)))
+
+\"(SELECT * FROM country WHERE (a = 1))\"
+#+END_SRC
+
+but
+#+BEGIN_SRC lisp
+(sql (:select '* :from 'country :where (:= 'a 1)))
+#+END_SRC
+
+would throw an error. For the later case you need to use sql.
 
 ** function sql-template (form)
    :PROPERTIES:
@@ -61,7 +85,13 @@ The character to use can be overridden by passing an argument.
    :END:
 → string
 
-[[http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS][Escapes]] a string for inclusion in a PostgreSQL query.
+[[http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS][Escapes]] a string for inclusion in a PostgreSQL query. Example:
+#+BEGIN_SRC lisp
+ (sql-escape-string \"Puss in 'Boots'\")
+
+ \"E'Puss in ''Boots'''\"
+
+#+END_SRC
 
 ** method sql-escape (value)
    :PROPERTIES:
@@ -69,21 +99,51 @@ The character to use can be overridden by passing an argument.
    :END:
 → string
 
-A generalisation of sql-escape-string Looks at the type of the value passed,
-and properly writes it out it for inclusion in an SQL query. Symbols will be
-converted to SQL names.
+A generalisation of sql-escape-string looks at the type of the value passed, and properly writes it out it for inclusion in an SQL query. Symbols will be
+converted to SQL names. Examples:
+#+BEGIN_SRC lisp
+(sql-escape "tr'-x")
 
+"E'tr''-x'"
+
+(sql-escape (/ 1 13))
+
+"0.0769230769230769230769230769230769230"
+
+(sql-escape #("Baden-Wurttemberg" "Bavaria" "Berlin" "Brandenburg"))
+
+"ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']"
+#+END_SRC
+** variable *downcase-symbols*
+   :PROPERTIES:
+   :ID:       19c05bac-8209-4e48-b2e0-549ff03df44e
+   :END:
+
+When converting symbols to strings, whether to downcase the symbols is set here. The default is to downcase symbols.
 ** variable *standard-sql-strings*
    :PROPERTIES:
    :ID:       95a70c76-0fcb-4967-88a2-3460bbcb5311
    :END:
 
-Used to configure whether S-SQL will use standard SQL strings (just replace #\'
-with ''), or backslash-style escaping. Setting this to NIL is always safe, but
-when the server is configured to allow standard strings (compile-time
-parameter 'standard_conforming_strings' is 'on', which will become the default
-in future versions of PostgreSQL), the noise in queries can be reduced by setting
-this to T.
+Used to configure whether S-SQL will use standard SQL strings (just replace #\' with ''), or backslash-style escaping. Setting this to NIL is always safe, but when the server is configured to allow standard strings (compile-time parameter 'standard_conforming_strings' is 'on', which will become the default in future versions of PostgreSQL), the noise in queries can be reduced by setting this to T.
+
+** variable *postgres-reserved-words* hashtable
+   :PROPERTIES:
+   :ID:       a975b46b-5ade-4358-aa77-f83681299a94
+   :END:
+
+A set of all Postgresql's reserved words, for automatic escaping. Probably not a good idea to use these words as identifiers anyway.
+ '("all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric" "authorization"
+   "between" "binary" "both" "case" "cast" "check" "collate" "column" "concurrently"
+   "constraint" "create" "cross" "current-catalog" "current-date" "current-role" "current-schema"
+   "current-time" "current-timestamp" "current-user" "default" "deferrable"
+   "desc" "distinct" "do" "else" "end" "except" "false" "fetch" "filter"
+   "for" "foreign" "freeze" "from" "full" "grant" "group" "having" "ilike" "in" "initially"
+   "inner" "intersect" "into" "is" "isnull" "join" "lateral" "leading" "left" "like" "limit"
+   "localtime" "localtimestamp" "natural" "new" "not" "notnull" "nowait" "null" "off" "offset" "old"
+   "on" "only" "or" "order" "outer" "overlaps" "placing" "primary" "references" "returning"
+   "right" "select" "session-user" "Share" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
+   "union" "unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"))
 
 ** variable *escape-sql-names-p*
    :PROPERTIES:
@@ -111,20 +171,18 @@ future if requested.
    :END:
 → string
 
-Create the SQL equivalent of the given Lisp type, if one is known. See types.
+Transform a lisp type into a string containing something SQL understands. Default is to just use the type symbol's name.
 
-** function to-sql-name (name &optional (escape-p *escape-sql-names-p*))
+** function to-sql-name (name &optional (escape-p *escape-sql-names-p*)(ignore-reserved-words nil)
    :PROPERTIES:
    :ID:       46c8eab0-4fac-4b14-8193-6b93c985ad0f
    :END:
 → string
 
-Convert a symbol or string to a name that can be used as an SQL identifier by
-converting all non-alphanumeric characters to underscores. Also lowercases the name
-to make queries look a bit less hideous. When a second argument is given, this
-overrides the current value of *escape-sql-names-p*. If the second argument
-is :literal then the name will be escaped only and this will be a a delimited
-identifier or quoted identifier. See
+Convert a symbol or string into a name that can be a sql table, column, or operation name. Add quotes when escape-p is true, or escape-p is :auto and the name contains reserved words. Quoted or delimited identifiers can be used by passing :literal as the value of escape-p. If escape-p is :literal, and the name is a string then the string is still escaped but the symbol or string is not downcased, regardless of the setting for *downcase-symbols* and the hyphen and forward slash characters are not replaced with underscores.
+
+Ignore-reserved-words is only used internally for column names which are allowed to be reserved words, but it is not recommended.
+
 
 ** function from-sql-name (string)
    :PROPERTIES:

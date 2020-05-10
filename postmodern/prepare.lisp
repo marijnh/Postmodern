@@ -2,9 +2,7 @@
 (in-package :postmodern)
 
 (defparameter *allow-overwriting-prepared-statements* t
-  "When set to t, ensured-prepared will overwrite prepared statements having
-the same name if the query statement itself in the postmodern meta connection
-is different than the query statement provided to ensure-prepared.")
+  "When set to t, ensured-prepared will overwrite prepared statements having the same name if the query statement itself in the postmodern meta connection is different than the query statement provided to ensure-prepared.")
 
 (defun ensure-prepared (connection id query &optional (overwrite nil))
   "Make sure a statement has been prepared for this connection. If overwrite is
@@ -59,15 +57,18 @@ overwrite unless postgresql throws a duplicate-prepared-statement error."
                                   (,result-form ,base))))))))))
 
 (defmacro prepare (query &optional (format :rows))
-  "Wraps a query into a function that will prepare it once for a
-connection, and then execute it with the given parameters. The query
-should contain a placeholder \($1, $2, etc) for every parameter."
+  "Wraps a query into a function that can be used as the interface to a prepared statement. The given query (either a string or an S-SQL form) may contain placeholders, which look like $1, $2, etc. The resulting function takes one argument for every placeholder in the query, executes the prepared query, and returns the result in the format specified. (Allowed formats are the same as for query.)
+
+For queries that have to be run very often, especially when they are complex, it may help performance since the server only has to plan them once. See the [[http://www.postgresql.org/docs/current/static/sql-prepare.html][PostgreSQL manual]] for details.
+
+In some cases, the server will complain about not being able to deduce the type of the arguments in a statement. In that case you should add type declarations (either with the PostgreSQL's CAST SQL-conforming syntax or historical :: syntax, or with S-SQL's :type construct) to help it out.
+
+Note that it will attempt to automatically reconnect if database-connection-error, or admin-shutdown. It will reset prepared statements triggering an invalid-sql-statement-name error. It will overwrite old prepared statements triggering a duplicate-prepared-statement error."
   `(let ((overwrite t))
      ,(generate-prepared '(lambda) (next-statement-id) query format)))
 
 (defmacro defprepared (name query &optional (format :rows))
-  "Like prepare, but gives the function a name instead of returning
-it. The name should not be a string but may be quoted."
+  "This is the macro-style variant of prepare. It is like prepare, but gives the function a name which now becomes a top-level function for the prepared statement. The name should not be a string but may be quoted."
   (when (consp name) (setf name (s-sql::dequote name)))
   `(let ((overwrite t))
      ,(generate-prepared `(defun ,name) name query format)))
@@ -75,7 +76,7 @@ it. The name should not be a string but may be quoted."
 (defmacro defprepared-with-names (name (&rest args)
 				  (query &rest query-args)
 				  &optional (format :rows))
-  "Like defprepared, but with lambda list for statement arguments."
+  "Like defprepared, but allows to specify names of the function arguments in a lambda list as well as arguments supplied to the query."
   (let ((prepared-name (gensym "PREPARED")))
     `(let ((,prepared-name (prepare ,query ,format)))
        (declare (type function ,prepared-name))
@@ -93,16 +94,15 @@ session, otherwise nil."
       nil))
 
 (defun list-prepared-statements (&optional (names-only nil))
-  "Syntactic sugar. A query that lists the prepared statements
-in the session in which the function is run. If the optional
-names-only parameter is set to t, it will only return a list
-of the names of the prepared statements."
+  "This is syntactic sugar. A query that lists the prepared statements in the session in which the function is run. If the optional names-only parameter is set to t, it will only return a list of the names of the prepared statements."
   (if names-only
       (alexandria:flatten (query "select name from pg_prepared_statements"))
       (query "select * from pg_prepared_statements" :alists)))
 
 (defun drop-prepared-statement (name &key (location :both) (database *database*) (remove-function t))
-  "Prepared statements are stored both in the meta slot in the postmodern
+  "The statement name can be a string or quoted symbol.
+
+Prepared statements are stored both in the meta slot in the postmodern
 connection and in postgresql session information. In the case of prepared
 statements generated with defprepared, there is also a lisp function with
 the same name.
@@ -176,23 +176,18 @@ the names of the prepared statements."
       (alexandria:hash-table-alist (postmodern::connection-meta *database*))))
 
 (defun find-postgresql-prepared-statement (name)
-  "Returns the specified named prepared statement (if any) that postgresql
-has for this session."
+  "Returns the specified named prepared statement (if any) that postgresql has for this session."
   (query (:select 'statement
                   :from 'pg-prepared-statements
                   :where (:= 'name (string-upcase name)))
          :single))
 
 (defun find-postmodern-prepared-statement (name)
-  "Returns the specified named prepared statement (if any) that postmodern has put in
-the meta slot in the connection."
+  "Returns the specified named prepared statement (if any) that postmodern has put in the meta slot in the connection. Note that this is the statement itself, not the name."
   (gethash (string-upcase name) (postmodern::connection-meta *database*)))
 
 (defun reset-prepared-statement (condition)
-  "If you have received an invalid-prepared-statement error or a prepared-statement
-already exists error but the prepared statement is still in the meta slot in
-the postmodern connection, try to regenerate the prepared statement at the
-database connection level and restart the connection."
+  "If you have received an invalid-prepared-statement error or a prepared-statement already exists error but the prepared statement is still in the meta slot in the postmodern connection, this will try to regenerate the prepared statement at the database connection level and restart the connection."
   (let* ((name (pomo:database-error-extract-name condition))
          (statement (find-postmodern-prepared-statement name))
          (pid (write-to-string (first (cl-postgres::connection-pid *database*)))))

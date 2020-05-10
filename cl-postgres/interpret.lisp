@@ -10,7 +10,10 @@ interpreters for those types know how to parse them.")
   "The exported special var holding the current read table, a hash
 mapping OIDs to instances of the type-interpreter class that contain
 functions for retreiving values from the database in text, and
-possible binary, form.")
+possible binary, form.
+
+For simple use, you will not have to touch this, but it is possible that code within a Lisp image
+requires different readers in different situations, in which case you can create separate read tables.")
 
 (defun interpret-as-text (stream size)
   "This interpreter is used for types that we have no specific
@@ -55,8 +58,14 @@ this type."
     (gethash oid *sql-readtable* default-interpreter)))
 
 (defun set-sql-reader (oid function &key (table *sql-readtable*) binary-p)
-  "Add an sql reader to a readtable. When the reader is not binary, it
-is wrapped by a function that will read the string from the socket."
+  "Define a new reader for a given type. table defaults to *sql-readtable*.
+The reader function should take a single argument, a string, and transform
+that into some kind of equivalent Lisp value. When binary-p is true, the reader
+function is supposed to directly read the binary representation of the value.
+In most cases this is not recommended, but if you want to use it: provide a
+function that takes a binary input stream and an integer (the size of the
+value, in bytes), and reads the value from that stream. Note that reading
+less or more bytes than the given size will horribly break your connection."
   (assert (integerp oid))
   (if function
       (setf (gethash oid table)
@@ -331,7 +340,37 @@ used. Correct for sign bit when using integer format."
 ;; Public interface for adding date/time readers
 
 (defun set-sql-datetime-readers (&key date timestamp timestamp-with-timezone interval time
-                                 (table *sql-readtable*))
+                                   (table *sql-readtable*))
+  "Since there is no widely recognised standard way of representing dates and
+times in Common Lisp, and reading these from string representation is clunky
+and slow, this function provides a way to easily plug in binary readers for
+the date, time, timestamp, and interval types. It should be given functions
+with the following signatures:
+
+- :date (days)
+
+Where days is the amount of days since January 1st, 2000.
+
+- :timestamp (useconds)
+
+Timestamps have a microsecond resolution. Again, the zero point is the start
+of the year 2000, UTC.
+
+- :timestamp-with-timezone
+
+Like :timestamp, but for values of the 'timestamp with time zone' type (which
+PostgreSQL internally stores exactly the same as regular timestamps).
+
+- :time (useconds)
+
+Refers to a time of day, counting from midnight.
+
+- :interval (months days useconds)
+
+An interval is represented as several separate components. The reason that days
+and microseconds are separated is that you might want to take leap seconds into
+account.
+"
   (when date (set-date-reader date table))
   (when timestamp (set-usec-reader oid:+timestamp+ timestamp table))
   (when timestamp-with-timezone (set-usec-reader oid:+timestamptz+ timestamp-with-timezone table))
@@ -400,6 +439,7 @@ used. Correct for sign bit when using integer format."
 ;; Working with tables.
 
 (defun copy-sql-readtable (&optional (table *sql-readtable*))
+  "Copies a given readtable."
   (let ((new-table (make-hash-table)))
     (maphash (lambda (oid interpreter) (setf (gethash oid new-table) interpreter))
              table)
@@ -410,4 +450,5 @@ used. Correct for sign bit when using integer format."
   on.")
 
 (defun default-sql-readtable ()
+  "Returns the default readtable, containing only the readers defined by CL-postgres itself."
   *default-sql-readtable*)

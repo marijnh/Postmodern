@@ -217,7 +217,7 @@ Another test case for the classic quotes:
        finally (return q))))
 
 (defun parse-queries (file-content)
-  "read SQL queries in given string and split them, returns a list"
+  "Read SQL queries in given string and split them, returns a list"
   (with-input-from-string (s (concatenate 'string file-content ";"))
     (let ((whitespace '(#\Space #\Tab #\Newline #\Linefeed #\Page #\Return)))
       (flet ((emptyp (query) (every (alexandria:rcurry #'member whitespace) query)))
@@ -226,12 +226,17 @@ Another test case for the classic quotes:
               :collect query)))))
 
 (defun read-queries (filename)
-  "read SQL queries in given file and split them, returns a list"
+  "Read SQL queries in given file and split them, returns a list"
   (parse-queries (get-output-stream-string (read-lines filename))))
 
 (defun execute-file (pathname &optional (print nil))
-  "Executes all queries in the provided SQL file. If print is set to t,
- format will print the count of query and the query."
+  "This function will execute sql queries stored in a file. Each sql statement in the file will be run independently, but if one statement fails, subsequent query statements will not be run, but any statement prior to the failing statement will have been commited.
+
+If you want the standard transction treatment such that all statements succeed or no statement succeeds, then ensure that the file starts with a begin transaction statement and finishes with an end transaction statement. See the test file test-execute-file-broken-transaction.sql as an example.
+
+For debugging purposes, if the optional print parameter is set to t, format will print the count of the query and the query to the REPL.
+
+IMPORTANT NOTE: This utility function assumes that the file containing the sql queries can be trusted and bypasses the normal postmodern parameterization of queries."
   (let ((queries (read-queries pathname))
         (cnt 0))
     (dolist (query queries)

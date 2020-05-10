@@ -640,7 +640,7 @@
   (is (equal (split-fully-qualified-tablename 'uniq.george)
              '("george" "uniq" NIL)))
   (is (equal (split-fully-qualified-tablename "george-and-gracie")
-             '("george_and_gracie" NIL NIL)))
+             '("george_and_gracie" "public" NIL)))
   (is (equal (split-fully-qualified-tablename "test.uniq.george-and-gracie")
              '("george_and_gracie" "uniq" "test")))
   (is (equal (split-fully-qualified-tablename 'test.uniq.george-and-gracie)
@@ -663,7 +663,7 @@
     (with-schema ('uniq :if-not-exist :create) ;; changing the search path
       (is (schema-exists-p 'uniq))
       (is (schema-exists-p "uniq"))
-      (is (not (table-exists-p 'test-uniq)))
+      (is (not (table-exists-p 'test-uniq 'uniq)))
       (execute (:create-table test-uniq ((value :type integer))))
       (is (table-exists-p 'test-uniq))
       (execute (:drop-table 'test-uniq)))

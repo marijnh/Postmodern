@@ -16,8 +16,7 @@
     result))
 
 (defun implode (sep list)
-  "Reduce a list of strings to a single string, inserting a separator
-between them."
+  "Reduce a list of strings to a single string, inserting a separator between them."
   (strcat (loop :for element :on list
                 :collect (car element)
                 :if (cdr element)
@@ -80,36 +79,36 @@ must appear in the order defined."
                     "desc" "distinct" "do" "else" "end" "except" "false" "fetch" "filter"
                     "for" "foreign" "freeze" "from" "full" "grant" "group" "having" "ilike" "in" "initially"
                     "inner" "intersect" "into" "is" "isnull" "join" "lateral" "leading" "left" "like" "limit"
-                    "localtime" "localtimestamp" "natural" "new" "not" "notnull" "null" "off" "offset" "old"
+                    "localtime" "localtimestamp" "natural" "new" "not" "notnull" "nowait" "null" "off" "offset" "old"
                     "on" "only" "or" "order" "outer" "overlaps" "placing" "primary" "references" "returning"
-                    "right" "select" "session-user" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
-                    "union" "unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"
-                    "for" "nowait" "share"))
+                    "right" "select" "session-user" "Share" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
+                    "union" "unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"))
       (setf (gethash word words) t))
     words)
-  "A set of all PostgreSQL's reserved words, for automatic escaping.")
+  "A set of all PostgreSQL's reserved words, for automatic escaping. Probably not a good idea to use these words as identifiers anyway.")
 
 (defparameter *escape-sql-names-p* :auto
-  "Setting this to T will make S-SQL add double quotes around
-identifiers in queries. Setting it :auto will turn on this behaviour
-only for reserved words. Setting it to :literal will cause to-sql-name to
-escape reserved words,but will not make other changes such as changing
-forward slash to underscore.")
+  "Determines whether double quotes are added around column, table, and ** function names in
+queries. Valid values:
 
-(defvar *downcase-symbols* t)
+- T, in which case every name is escaped,
+- NIL, in which case no name is escaped,
+- :auto, which causes only [[http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html][reserved words]] to be escaped, or.
+- :literal which is the same as :auto except it has added consequence in to-sql-name (see below).
+
+The default value is :auto.
+
+Be careful when binding this with let and such ― since a lot of SQL compilation tends to happen at
+compile-time, the result might not be what you expect. Mixed case sensitivity is not currently
+well supported. Postgresql itself will downcase unquoted identifiers. This will be revisited in the
+future if requested.")
+
+(defvar *downcase-symbols* t "When converting symbols to strings, whether to downcase the symbols is set here. The default is to downcase symbols.")
 
 (defun to-sql-name (name &optional (escape-p *escape-sql-names-p*) (ignore-reserved-words nil))
-  "Convert a symbol or string into a name that can be a sql table,
-column, or operation name. Add quotes when escape-p is true, or
-escape-p is :auto and the name contains reserved words.
-Quoted or delimited identifiers can be used by passing :literal as
-the value of escape-p. If escape-p is :literal, and the name is a string then
-the string is still escaped but the symbol or string is not downcased,
-regardless of the setting for *downcase-symbols* and the hyphen
-and forward slash characters are not replaced with underscores.
+  "Convert a symbol or string into a name that can be a sql table, column, or operation name. Add quotes when escape-p is true, or escape-p is :auto and the name contains reserved words. Quoted or delimited identifiers can be used by passing :literal as the value of escape-p. If escape-p is :literal, and the name is a string then the string is still escaped but the symbol or string is not downcased, regardless of the setting for *downcase-symbols* and the hyphen and forward slash characters are not replaced with underscores.
 
-Ignore-reserved-words is only used internally for column names which are allowed
-to be reserved words, but it is not recommended."
+Ignore-reserved-words is only used internally for column names which are allowed to be reserved words, but it is not recommended."
   (declare (optimize (speed 3) (debug 0)))
   (let ((*print-pretty* nil)
         (name (if (and (consp name) (eq (car name) 'quote) (equal (length name) 2))
@@ -153,9 +152,7 @@ to be reserved words, but it is not recommended."
               :else :do (return))))))
 
 (defun from-sql-name (str)
-  "Convert a string to something that might have been its original
-lisp name. Does not work if this name contains non-alphanumeric
-characters other than #\-"
+  "Convert a string to a symbol, upcasing and replacing underscores with hyphens."
   (intern (map 'string (lambda (x) (if (eq x #\_) #\- x))
                (if (eq (readtable-case *readtable*) :upcase) (string-upcase str) str))
           (find-package :keyword)))
@@ -191,9 +188,7 @@ for declaring a type to be an integer that may be null."
 ;; the SQL type. Close enough though.
 
 (defgeneric sql-type-name (lisp-type &rest args)
-  (:documentation "Transform a lisp type into a string containing
-something SQL understands. Default is to just use the type symbol's
-name.")
+  (:documentation "Transform a lisp type into a string containing something SQL understands. Default is to just use the type symbol's name.")
   (:method ((lisp-type symbol) &rest args)
     (declare (ignore args))
     (substitute #\Space #\- (symbol-name lisp-type) :test #'char=))
@@ -246,7 +241,11 @@ name.")
   in queries can be reduced by setting this to T.")
 
 (defun sql-escape-string (string &optional prefix)
-  "Escape string data so it can be used in a query."
+  "Escape string data so it can be used in a query. Example:
+
+ (sql-escape-string \"Puss in 'Boots'\")
+
+ \"E'Puss in ''Boots'''\""
   (let ((*print-pretty* nil))
     (with-output-to-string (*standard-output*)
       (when prefix
@@ -265,8 +264,19 @@ name.")
       (princ #\'))))
 
 (defgeneric sql-escape (arg)
-  (:documentation "Get the representation of a Lisp value so that it
-can be used in a query.")
+  (:documentation "A generalisation of sql-escape-string looks at the type of the value passed, and properly writes it out it for inclusion in an SQL query. Symbols will be converted to SQL names. Examples:
+
+  (sql-escape \"tr'-x\")
+
+  \"E'tr''-x'\"
+
+  (sql-escape (/ 1 13))
+
+  \"0.0769230769230769230769230769230769230\"
+
+  (sql-escape #(\"Baden-Wurttemberg\" \"Bavaria\" \"Berlin\" \"Brandenburg\"))
+
+  \"ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']\"")
   (:method ((arg symbol))
     (if (or (typep arg 'boolean) (eq arg :null))
         (call-next-method)
@@ -332,13 +342,35 @@ If the element is a cons, then "
     (nreverse accum)))
 
 (defmacro sql (form)
-  "Compile form to a sql expression as far as possible."
+  "Convert the given form (a list starting with a keyword) to an SQL query string
+at compile time, according to the rules described here. For example:
+
+(sql (:select '* :from 'country :where (:= 'a 1)))
+ \"(SELECT * FROM country WHERE (a = 1))\"
+
+but
+
+(sql '(:select '* :from 'country :where (:= 'a 1)))
+
+would throw an error. For the later case you need to use sql-compile."
   (let ((list (reduce-strings (sql-expand form))))
     (if (= 1 (length list))
         (car list)
         `(strcat (list ,@list)))))
 
 (defun sql-compile (form)
+  "This is the run-time variant of the sql macro. It converts the given list to
+an SQL query, with the same rules except that symbols in this list do not
+have to be quoted to be interpreted as identifiers. For example:
+
+(sql-compile '(:select '* :from 'country :where (:= 'a 1)))
+ \"(SELECT * FROM country WHERE (a = 1))\"
+
+but
+
+(sql (:select '* :from 'country :where (:= 'a 1)))
+
+would throw an error. For the later case you need to use sql."
   (let ((*expand-runtime* t))
     (strcat (sql-expand form))))
 
@@ -447,6 +479,18 @@ string."
 
 ;; hstore operators
 (register-sql-operators :2+-ary :-> :=> :? :?& :?\| :|<@| :|#=| :unary :%% :%#)
+
+;;; sql-op :+, :*, :%, :&, :|, :| |, :and, :or, :=, :/, :!=, :<, :>, :<=, :>=, :^, :union, :union-all,
+;;;  :intersect, :intersect-all, :except, :except-all (&rest args)
+;;;
+;;; These are expanded as infix operators. When meaningful, they allow more than
+;;; two arguments. :- can also be used as a unary operator to negate a value.
+;;; Note that the arguments to :union, :union-all, :intersect, and :except
+;;; should be queries (:select forms).
+
+;;; Note that you'll have to escape pipe characters to enter them as keywords. S-SQL
+;;; handles the empty keyword symbol (written :||) specially, and treats it like :\|\|,
+;;; so that it can be written without escapes. With :\|, this doesn't work.
 
 (def-sql-op :|| (&rest args)
   `("(" ,@(sql-expand-list args " || ") ")"))
@@ -916,6 +960,25 @@ the proper SQL syntax for joining tables."
                         (t `(,@(if first () '(", ")) ,@(sql-expand (pop args))))))))
 
 (def-sql-op :select (&rest args)
+  "Creates a select query. The arguments are split on the keywords found among
+them. The group of arguments immediately after :select is interpreted as
+the expressions that should be selected. After this, an optional :distinct
+may follow, which will cause the query to only select distinct rows, or
+alternatively :distinct-on followed by a group of row names. Next comes the
+optional keyword :from, followed by at least one table name and then any
+number of join statements. Join statements start with one of :left-join,
+:right-join, :inner-join, :outer-join or :cross-join, then a table name or
+subquery, then the keyword :on or :using, if applicable, and then a form.
+A join can be preceded by :natural (leaving off the :on clause) to use a
+natural join. After the joins an optional :where followed by a single form
+may occur. And finally :group-by and :having can optionally be specified.
+The first takes any number of arguments, and the second only one. An example:
+
+(query (:select (:+ 'field-1 100) 'field-5
+        :from (:as 'my-table 'x)
+        :left-join 'your-table
+        :on (:= 'x.field-2 'your-table.field-1)
+        :where (:not-null 'a.field-3)))"
   (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (where ?) (group-by * ?)
                       (having ?) (window ?)) (cons :vars args)
     `("(SELECT "
@@ -930,13 +993,20 @@ the proper SQL syntax for joining tables."
       ")")))
 
 (def-sql-op :grouping-sets (&rest args)
-  "Grouping-sets allows multiple group-by in a single query
+  "Grouping-sets allows multiple group-by in a single queryhttps://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS
+More complex grouping operations are possible using the concept of grouping
+sets. The data selected by the FROM and WHERE clauses is grouped separately
+by each specified grouping set, aggregates computed for each group just as
+for simple GROUP BY clauses, and then the results returned.
+This operator requires postgresql 9.5 or later. Examples:
 
-Examples:
+  (query (:select 'city (:as (:extract 'year 'start-date)  'joining-year) (:as (:count 1) 'employee_count)
+          :from 'employee
+          :group-by (:grouping-sets (:set 'city (:extract 'year 'start-date)))))
+
     (query (:select 'c1 'c2 'c3 (:sum 'c3)
             :from 'table-name
-            :group-by (:grouping-sets (:set 'c1 'c2) (:set 'c1) (:set 'c2) (:set))))
-Note that this requires postgresql 9.5 or later."
+            :group-by (:grouping-sets (:set 'c1 'c2) (:set 'c1) (:set 'c2) (:set))))"
 
   `("GROUPING SETS ",@(sql-expand-list args) ))
 

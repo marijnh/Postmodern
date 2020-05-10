@@ -3,18 +3,11 @@
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
 #+OPTIONS: ^:nil
 
-This is the reference manual for the component named postmodern, which is
-part of a library of the same name.
+This is the reference manual for the component named postmodern, which is part of a library of the same name.
 
-Note that this package also exports the database-connection and
-database-error types from CL-postgres and a few operators from S-SQL.
+Note that this package also exports the database-connection and database-error types from CL-postgres and a few operators from S-SQL.
 
-query, execute, and any other function that would logically need to
-communicate with the database will raise a condition of the type
-database-error when something goes wrong. As a special case, errors
-that break the connection (socket errors, database shutdowns) will be
-raised as subtypes of database-connection-error, providing a :reconnect
-restart to re-try the operation that encountered to the error.
+query, execute, and any other function that would logically need to communicate with the database will raise a condition of the type database-error when something goes wrong. As a special case, errors that break the connection (socket errors, database shutdowns) will be raised as subtypes of database-connection-error, providing a :reconnect restart to re-try the operation that encountered to the error.
 
 * Connecting
   :PROPERTIES:
@@ -25,37 +18,29 @@ restart to re-try the operation that encountered to the error.
    :ID:       821e500c-5206-4f8b-a505-266d18faf8cb
    :END:
 
-Objects of this type represent database connections.
+Representation of a database connection. Contains login information in order to be able to automatically re-establish a connection when it is somehow closed.
 
-** function connect (database user password host &key (port 5432) pooled-p use-ssl)
+** function connect (database user-name password host &key (port 5432) pooled-p use-ssl)
    :PROPERTIES:
    :ID:       66e24327-bae9-4378-987c-ccdacc312ddf
    :END:
 → database-connection
 
-Create a new database connection for the given user and the database.
-Port will default to 5432, which is where most PostgreSQL servers are
-running. If pooled-p is T, a connection will be taken from a pool of
-connections of this type, if one is available there, and when the connection
-is disconnected it will be put back into this pool instead. use-ssl can
-be :no, :yes, or :try, as in open-database, and defaults to the value
-of *default-use-ssl*.
+Create a new database connection for the given user and the database. Port will default to 5432, which is where most PostgreSQL servers are running. If pooled-p is T, a connection will be taken from a pool of connections of this type, if one is available there, and when the connection is disconnected it will be put back into this pool instead. use-ssl can be :no, :yes, or :try, as in open-database, and defaults to the value of *default-use-ssl*.
 
 ** variable *default-use-ssl*
    :PROPERTIES:
    :ID:       106f14f7-270e-4e27-a238-34c50b14e44b
    :END:
 
-The default for connect's use-ssl argument. This starts at :no. If you
-set it to anything else, be sure to also load the CL+SSL library.
+The default for connect's use-ssl argument. This starts at :no. If you set it to anything else, be sure to also load the CL+SSL library.
 
 ** method disconnect (database-connection)
    :PROPERTIES:
    :ID:       4c9746be-27ce-485c-b35e-d739e7def9c4
    :END:
 
-Disconnects a normal database connection, or moves a pooled connection
-into the pool.
+Disconnects a normal database connection, or moves a pooled connection into the pool.
 
 ** function connected-p (database-connection)
    :PROPERTIES:
@@ -63,52 +48,42 @@ into the pool.
    :END:
 → boolean
 
-Returns a boolean indicating whether the given connection is still connected
-to the server.
+Returns a boolean indicating whether the given connection is still connected to the server.
 
 ** method reconnect (database-connection)
    :PROPERTIES:
    :ID:       6e117ba4-b3f7-48f3-9616-67e3c3e2b7e4
    :END:
 
-Reconnect a disconnected database connection. This is not allowed for pooled
-connections ― after they are disconnected they might be in use by some other
-process, and should no longer be used.
+Reconnect a disconnected database connection. This is not allowed for pooled connections ― after they are disconnected they might be in use by some other process, and should no longer be used.
 
 ** variable *database*
    :PROPERTIES:
    :ID:       73c9e729-4db7-4ef3-a095-7b91a9db6238
    :END:
 
-Special variable holding the current database. Most functions and macros
-operating on a database assume this binds to a connected database.
+Special variable holding the current database. Most functions and macros operating on a database assume this binds to a connected database.
 
 ** macro with-connection (spec &body body)
    :PROPERTIES:
    :ID:       c5d5b7f9-9555-4a0e-b691-1b10742e482d
    :END:
 
-Evaluates the body with *database* bound to a connection as specified by
-spec, which should be list that connect can be applied to.
+Evaluates the body with *database* bound to a connection as specified by spec, which should be list that connect can be applied to.
 
 ** macro call-with-connection (spec thunk)
    :PROPERTIES:
    :ID:       476f90d8-15ac-49fb-ac19-1dc3dfdfcef7
    :END:
 
-The functional backend to with-connection. Binds *database* to a new
-connection as specified by spec, which should be a list that connect can
-be applied to, and runs the zero-argument function given as second argument
-in the new environment. When the function returns or throws, the new
-connection is disconnected.
+The functional backend to with-connection. Binds *database* to a new connection as specified by spec, which should be a list that connect can be applied to, and runs the zero-argument function given as second argument in the new environment. When the function returns or throws, the new connection is disconnected.
 
-** function connect-toplevel (database user password host &key (port 5432))
+** function connect-toplevel (database user-name password host &key (port 5432))
    :PROPERTIES:
    :ID:       ffab8aae-0ed7-4466-a68d-fc90d2e36dbe
    :END:
 
-Bind the *database* to a new connection. Use this if you only need one
-connection, or if you want a connection for debugging from the REPL.
+Bind the *database* to a new connection. Use this if you only need one connection, or if you want a connection for debugging from the REPL.
 
 ** function disconnect-toplevel ()
    :PROPERTIES:
@@ -129,9 +104,7 @@ Disconnect and remove all connections from the connection pools.
    :ID:       92ab48e3-bf8f-4327-8d9c-69b6c168f94e
    :END:
 
-Set the maximum amount of connections kept in a single connection pool, where
-a pool consists of all the stored connections with the exact same connect
-arguments. Defaults to NIL, which means there is no maximum.
+Set the maximum amount of connections kept in a single connection pool, where a pool consists of all the stored connections with the exact same connect arguments. Defaults to NIL, which means there is no maximum.
 
 ** function list-connections ()
    :PROPERTIES:
@@ -139,7 +112,7 @@ arguments. Defaults to NIL, which means there is no maximum.
    :END:
 → list
 
-List the current postgresql connections to the currently connected database.
+List the current postgresql connections to the currently connected database. It does this by returningo info from pg_stat_activity on open connections.
 * Querying
   :PROPERTIES:
   :ID:       e5e99216-0a15-4de8-b1d9-21bdcdf378fa
@@ -173,28 +146,21 @@ instead. Any of the following formats can be used, with the default being :rows:
 | (:dao type)	       | Return a list of DAOs of the given type. The names of the fields returned by the query must match slots in the DAO class the same way as with query-dao. |
 | (:dao type :single) | 	Return a single DAO of the given type.                                                                                                                 |
 
-If the database returns information about the amount rows that were affected,
-such as with updating or deleting queries, this is returned as a second value.
+If the database returns information about the amount rows that were affected, such as with updating or deleting queries, this is returned as a second value.
 
 ** macro execute (query &rest args)
    :PROPERTIES:
    :ID:       b494a547-353c-4de4-8071-e8703a62b919
    :END:
 
-Like query called with format :none. Returns the amount of affected rows as
-its first returned value. (Also returns this amount as the second returned
-value, but use of this is deprecated.)
+Execute a query, ignore the results. So, in effect, Like a query called with format :none. Returns the amount of affected rows as its first returned value. (Also returns this amount as the second returned value, but use of this is deprecated.)
 
 ** macro doquery (query (&rest names) &body body)
    :PROPERTIES:
    :ID:       db023195-6f0f-446d-9188-0886d895202b
    :END:
 
-Execute the given query (a string or a list starting with a keyword),
-iterating over the rows in the result. The body will be executed with the
-values in the row bound to the symbols given in names. To iterate over a
-parameterised query, one can specify a list whose car is the query, and
-whose cdr contains the arguments. For example:
+Execute the given query (a string or a list starting with a keyword), iterating over the rows in the result. The body will be executed with the values in the row bound to the symbols given in names. To iterate over a parameterised query, one can specify a list whose car is the query, and whose cdr contains the arguments. For example:
 #+BEGIN_SRC lisp
 (doquery (:select 'name 'score :from 'scores) (n s)
   (incf (gethash n *scores*) s))
@@ -209,27 +175,13 @@ whose cdr contains the arguments. For example:
    :END:
 → function
 
-Wraps a query into a function that can be used as the interface to a prepared
-statement. The given query (either a string or an S-SQL form) may contain
-placeholders, which look like $1, $2, etc. The resulting function takes one
-argument for every placeholder in the query, executes the prepared query,
-and returns the result in the format specified. (Allowed formats are the
-same as for query.)
+Wraps a query into a function that can be used as the interface to a prepared statement. The given query (either a string or an S-SQL form) may contain placeholders, which look like $1, $2, etc. The resulting function takes one argument for every placeholder in the query, executes the prepared query, and returns the result in the format specified. (Allowed formats are the same as for query.)
 
-For queries that have to be run very often, especially when they are complex,
-it may help performance since the server only has to plan them once. See
-the [[http://www.postgresql.org/docs/current/static/sql-prepare.html][PostgreSQL manual]] for details.
+For queries that have to be run very often, especially when they are complex, it may help performance since the server only has to plan them once. See the [[http://www.postgresql.org/docs/current/static/sql-prepare.html][PostgreSQL manual]] for details.
 
-In some cases, the server will complain about not being able to deduce the
-type of the arguments in a statement. In that case you should add type
-declarations (either with the PostgreSQL's CAST SQL-conforming syntax or
-historical :: syntax, or with S-SQL's :type construct) to help it out.
+In some cases, the server will complain about not being able to deduce the type of the arguments in a statement. In that case you should add type declarations (either with the PostgreSQL's CAST SQL-conforming syntax or historical :: syntax, or with S-SQL's :type construct) to help it out.
 
-Note that it will attempt to automatically reconnect if
-database-connection-error, or admin-shutdown. It will reset prepared
-statements triggering an invalid-sql-statement-name error. It will
-overwrite old prepared statements triggering a duplicate-prepared-statement
-error.
+Note that it will attempt to automatically reconnect if database-connection-error, or admin-shutdown. It will reset prepared statements triggering an invalid-sql-statement-name error. It will overwrite old prepared statements triggering a duplicate-prepared-statement error.
 
 ** macro defprepared (name query &optional (format :rows))
    :PROPERTIES:
@@ -237,17 +189,14 @@ error.
    :END:
 → function
 
-This is the macro-style variant of prepare. It is like prepare, but gives
-the function a name which now becomes a top-level function for the
-prepared statement. The name should not be quoted or a string.
+This is the macro-style variant of prepare. It is like prepare, but gives the function a name which now becomes a top-level function for the prepared statement. The name should not a string but may be quoted.
 
 ** macro defprepared-with-names (name (&rest args) (query &rest query-args) &optional (format :rows))
    :PROPERTIES:
    :ID:       b29f3cc1-4af4-4619-9817-ecbc06d98d51
    :END:
 
-Like defprepared, but allows to specify names of the function arguments as
-well as arguments supplied to the query.
+Like defprepared, but allows to specify names of the function arguments in a lambda list as well as arguments supplied to the query.
 #+BEGIN_SRC lisp
 (defprepared-with-names user-messages (user &key (limit 10))
   ("select * from messages
@@ -306,7 +255,7 @@ Further discussion of transactions and isolation levels can found
    :ID:       c5f3a2df-ebef-4180-af02-f54921552736
    :END:
 
-Commit the given transaction.
+Immediately commit an open transaction.
 
 ** function abort-transaction (transaction)
    :PROPERTIES:
@@ -320,44 +269,51 @@ Roll back the given transaction.
    :ID:       2b3980a2-969c-4376-92aa-ce9ee5867b6c
    :END:
 
-Can only be used within a transaction. Establishes a savepoint with the given
-name at the start of body, and binds the same name to a handle for that
-savepoint. At the end of body, the savepoint is released, unless a
-condition is thrown, in which case it is rolled back.
+Can only be used within a transaction. Establishes a savepoint with the given name at the start of body, and binds the same name to a handle for that savepoint. The body is executed and, at the end of body, the savepoint is released, unless a condition is thrown, in which case it is rolled back. Execute the body within a savepoint, releasing savepoint when the body exits normally, and rolling back otherwise. NAME is both the variable that can be used to release or rolled back before the body unwinds, and the SQL name of the savepoint.
 
 ** function release-savepoint (savepoint)
    :PROPERTIES:
    :ID:       1d876de8-f717-4a15-a222-18aa4c344583
    :END:
 
-Release the given savepoint.
+Immediately release a savepoint, commiting its results.
 
 ** function rollback-savepoint (savepoint)
    :PROPERTIES:
    :ID:       a19e709e-b574-4494-bb79-aa788fcc0200
    :END:
 
-Roll back the given savepoint.
+Immediately roll back a savepoint, aborting the results.
 
-** function commit-hooks (transaction-or-savepoint), setf (commit-hooks transaction-or-savepoint)
+** method commit-hooks (transaction-or-savepoint), setf (commit-hooks transaction-or-savepoint)
    :PROPERTIES:
    :ID:       c297fecf-bcb8-451c-bd91-22892d04c96d
    :END:
 
-An accessor for the transaction or savepoint's list of commit hooks, each of
-which should be a function with no required arguments. These functions will
-be executed when a transaction is committed or a savepoint released.
+An accessor for the transaction or savepoint's list of commit hooks, each of which should be a function with no required arguments. These functions will be executed when a transaction is committed or a savepoint released.
 
 ** function abort-hooks (transaction-or-savepoint), setf (abort-hooks transaction-or-savepoint)
    :PROPERTIES:
    :ID:       7dd2980a-9f3d-4bff-a1f5-0745adecba24
    :END:
 
-An accessor for the transaction or savepoint's list of abort hooks, each of
-which should be a function with no required arguments. These functions will
-be executed when a transaction is aborted or a savepoint rolled back
-(whether via a non-local transfer of control or explicitly by either
-abort-transaction or rollback-savepoint).
+An accessor for the transaction or savepoint's list of abort hooks, each of which should be a function with no required arguments. These functions will be executed when a transaction is aborted or a savepoint rolled back (whether via a non-local transfer of control or explicitly by either abort-transaction or rollback-savepoint).
+
+** *isolation-level*
+   :PROPERTIES:
+   :ID:       01275b50-0fa5-4b2f-968f-c360bc3efde0
+   :END:
+
+The transaction isolation level currently in use. Defaults to :read-committed-rw
+
+You can specify the following isolation levels in postmodern transactions:
+
+- :read-committed-rw (read committed with read and write)
+- :read-committed-ro (read committed with read only)
+- :repeatable-read-rw (repeatable read with read and write)
+- :repeatable-read-ro (repeatable read with read only)
+- :serializable (serializable with reand and write)
+
 
 ** macro with-logical-transaction ((&optional name isolation-level) &body body)
    :PROPERTIES:
@@ -404,67 +360,35 @@ expected here:
    :ID:       196ef5b0-9c58-4f28-9766-e37334448d3c
    :END:
 
-Roll back the given logical transaction, regardless of whether it is an
-actual transaction or a savepoint.
+Roll back the given logical transaction, regardless of whether it is an actual transaction or a savepoint.
 
 ** function commit-logical-transaction (transaction-or-savepoint)
    :PROPERTIES:
    :ID:       33fd01cd-603f-48e0-a2d9-1433d9b7f4db
    :END:
 
-Commit the given logical transaction, regardless of whether it is an
-actual transaction or a savepoint.
+Commit the given logical transaction, regardless of whether it is an actual transaction or a savepoint.
 
 ** variable *current-logical-transaction*
    :PROPERTIES:
    :ID:       2a5d91c2-f990-4a3c-a775-5e1fd539fee8
    :END:
 
-This is bound to the current transaction-handle or savepoint-handle instance
-representing the innermost open logical transaction.
+This is bound to the current transaction-handle or savepoint-handle instance representing the innermost open logical transaction.
 
 ** macro ensure-transaction (&body body)
    :PROPERTIES:
    :ID:       34881db5-1c47-444e-bb55-bb6249d4764c
    :END:
 
-Ensures that body is executed within a transaction, but does not begin a
-new transaction if one is already in progress.
+Ensures that body is executed within a transaction, but does not begin a new transaction if one is already in progress.
 
-** macro with-schema ((namespace &key :strict t :if-not-exist :create :drop-after) &body body)
+** macro ensure-transaction-with-isolation-level (isolation-level &body body)
    :PROPERTIES:
-   :ID:       70159647-6efd-4fcc-acf0-86b24594822b
+   :ID:       dba390df-3c75-4d4c-b8c9-79af3f763914
    :END:
 
-Sets the current schema to namespace and executes the body. Before executing
-body the PostgreSQL's session variable search_path is set to the given
-namespace. After executing body the search_path variable is restored
-to the original value. If the keyword :strict is set to T then the namespace
-is only the scheme on the search path upon the body execution. Otherwise the
-namespace is just first schema on the search path upon the the body execution.
-If :if-not-exist is NIL, an error is signaled. If :drop-after is T the
-namespace is dropped from the database after the body execution.
-
-** function sequence-next (sequence)
-   :PROPERTIES:
-   :ID:       3001c5dd-da96-4263-b427-c04368e8cf41
-   :END:
-→ integer
-
-Get the next value from a sequence. The sequence identifier can be either a
-string or a symbol, in the latter case it will be converted to a string
-according to S-SQL rules.
-
-** function coalesce (&rest arguments)
-   :PROPERTIES:
-   :ID:       1df6bd25-618b-4a00-8ec2-cc5b0548b045
-   :END:
-→ value
-
-Returns the first non-NIL, non-NULL (as in :null) argument, or NIL if none are
-present. Useful for providing a fall-back value for the result of a query, or,
-when given only one argument, for transforming :nulls to NIL.
-
+Executes body within a with-transaction form if and only if no transaction is already in progress. This adds the ability to specify an isolation level other than the current default
 
 * Helper functions for Prepared Statements
   :PROPERTIES:
@@ -476,17 +400,14 @@ when given only one argument, for transforming :nulls to NIL.
    :ID:       ca5ba066-3d35-4bb1-97b1-c22436c1bc6d
    :END:
 
-When set to t, ensured-prepared will overwrite prepared statements having
-the same name if the query statement itself in the postmodern meta connection
-is different than the query statement provided to ensure-prepared.
+When set to t, ensured-prepared will overwrite prepared statements having the same name if the query statement itself in the postmodern meta connection is different than the query statement provided to ensure-prepared.
 
 ** function prepared-statement-exists-p (name)
    :PROPERTIES:
    :ID:       a9d22ab2-b849-475c-b325-a91638aed7a0
    :END:
 → boolean
-This returns t if the prepared statement exists in the current
-postgresql session, otherwise nil.
+This returns t if the prepared statement exists in the current postgresql session, otherwise nil.
 
 ** function list-prepared-statements(&optional (names-only nil))
    :PROPERTIES:
@@ -494,22 +415,30 @@ postgresql session, otherwise nil.
    :END:
 → list
 
-This is syntactic sugar. It runs a query that lists the prepared statements in
-the session in which the function is run. If the names-only parameter is set
-to t, it will only return a list of the names of the prepared statements.
+This is syntactic sugar. It runs a query that lists the prepared statements in the session in which the function is run. If the names-only parameter is set to t, it will only return a list of the names of the prepared statements.
 
 ** function drop-prepared-statement (statement-name &key (location :both) (database *database*))
    :PROPERTIES:
    :ID:       7ce9f5ff-3750-4359-9850-e9a23b0a279a
    :END:
 
+The statement name can be a string or quoted symbol.
+
 Prepared statements are stored both in the meta slot in the postmodern
-connection and in postgresql session information. If you know the prepared
-statement name, you can delete the prepared statement from both locations (the
-default behavior), just from postmodern (passing :postmodern to the location
-key parameter) or just from postgresql (passing :postgresql to the location
-key parameter). If you pass the name 'All' as the statement name, it will
-delete all prepared statements. The statement name can be a string or quoted symbol.
+connection and in postgresql session information. In the case of prepared
+statements generated with defprepared, there is also a lisp function with
+the same name.
+
+If you know the prepared statement name, you can delete the prepared statement
+from both locations (the default behavior), just from postmodern by passing
+:postmodern to the location key parameter or just from postgresql by passing
+:postgresql to the location key parameter.
+
+If you pass the name 'All' as the statement name, it will
+delete all prepared statements.
+
+The default behavior is to also remove any lisp function of the same name.
+This behavior is controlled by the remove-function key parameter.
 
 ** function list-postmodern-prepared-statements (&optional (names-only nil))
    :PROPERTIES:
@@ -517,8 +446,7 @@ delete all prepared statements. The statement name can be a string or quoted sym
    :END:
 → list
 
-List the prepared statements that postmodern has put in the meta slot in
-the connection. It will return a list of alists of form:
+List the prepared statements that postmodern has put in the meta slot in the connection. It will return a list of alists of form:
   ((:NAME . \"SNY24\")
   (:STATEMENT . \"(SELECT name, salary FROM employee WHERE (city = $1))\")
   (:PREPARE-TIME . #<TIMESTAMP 25-11-2018T15:36:43,385>)
@@ -533,8 +461,7 @@ the names of the prepared statements.
    :END:
 → string
 
-Returns the specified named prepared statement (if any) that postgresql has for this
-session.
+Returns the specified named prepared statement (if any) that postgresql has for this session and placed in the meta slot in the connection.
 
 ** function find-postmodern-prepared-statement (name)
    :PROPERTIES:
@@ -542,9 +469,7 @@ session.
    :END:
 → string
 
-Returns the specified named prepared statement (if any) that postmodern has
-put in the meta slot in the connection. Note that this is the statement itself,
-not the name.
+Returns the specified named prepared statement (if any) that postmodern has put in the meta slot in the connection. Note that this is the statement itself, not the name.
 
 ** function reset-prepared-statement (condition)
    :PROPERTIES:
@@ -552,10 +477,7 @@ not the name.
    :END:
 → restart
 
-If you have received an invalid-prepared-statement error but the prepared
-statement is still in the meta slot in the postmodern connection, this will
-try to regenerate the prepared statement at the database connection level
-and restart the connection.
+If you have received an invalid-prepared-statement error but the prepared statement is still in the meta slot in the postmodern connection, this will try to regenerate the prepared statement at the database connection level and restart the connection.
 
 ** function get-pid ()
    :PROPERTIES:
@@ -571,8 +493,7 @@ Get the process id used by postgresql for this connection.
    :END:
 → integer
 
-Get the process id used by postgresql for this connection,
-but get it from the postmodern connection parameters.
+Get the process id used by postgresql for this connection, but get it from the postmodern connection parameters.
 
 ** function cancel-backend (pid)
    :PROPERTIES:
@@ -589,120 +510,358 @@ Slower than (terminate-backend pid) and does not always work.
 
 Less polite way of terminating at the database (as opposed to calling close-database).
 Faster than (cancel-backend pid) and more reliable.
+* Database access objects
+  :PROPERTIES:
+  :ID:       8e7cee8c-f2b9-4569-bf65-e8f3d2f9e31b
+  :END:
+Postmodern contains a simple system for defining CLOS classes that represent rows in the database. This is not intended as a full-fledged object-relational magic system ― while serious ORM systems have their place, they are notoriously hard to get right, and are outside of the scope of
+a humble SQL library like this.
 
-* Inspecting the database
+** metaclass dao-class
+   :PROPERTIES:
+   :ID:       bbf28a59-551a-4805-b2f6-b2d0bd8feaf3
+   :END:
+
+At the heart of Postmodern's DAO system is the dao-class metaclass. It allows you to define classes for your database-access objects as regular CLOS classes. Some of the slots in these classes will refer to columns in the database. To specify that a slot refers to a column, give it a :col-type option containing an S-SQL type expression (useful if you want to be able to derive a table definition from the class definition), or simply a :column option with value T. Such slots can also take a :col-default option, used to provide a database-side default value as an S-SQL expression. You can use the :col-name initarg (whose unevaluated value will be passed to to-sql-name) to specify the slot's column's name.
+
+DAO class definitions support two extra class options: :table-name to give the name of the table that the class refers to (defaults to the class name), and :keys to provide a set of primary keys for the table. If more than one key is provided, this creates a multi-column primary key and all keys must be specified when using operations such as update-dao and get-dao. When no primary keys are defined, operations such as update-dao and get-dao will not work.
+
+IMPORTANT: Class finalization for a dao class instance are wrapped with a thread lock. However, any time you are using threads and a class that inherits from other classes, you should ensure that classes are finalized before you start generating threads that create new instances of that class.
+
+Simple example:
+#+BEGIN_SRC lisp
+(defclass users ()
+  ((name :col-type string :initarg :name :accessor user-name)
+   (creditcard :col-type (or db-null integer) :initarg :card :col-default :null)
+   (score :col-type bigint :col-default 0 :accessor user-score))
+  (:metaclass dao-class)
+  (:keys name))
+#+END_SRC
+
+The (or db-null integer) form is used to indicate a column can have NULL values.
+
+When inheriting from DAO classes, a subclass' set of columns also contains all the columns of its superclasses. The primary key for such a class is the union of its own keys and all the keys from its superclasses. Classes inheriting from DAO classes should probably always use the dao-class metaclass themselves.
+
+When a DAO is created with make-instance, the :fetch-defaults keyword argument can be passed, which, when T, will cause a query to fetch the default values for all slots that refers to columns with defaults and were not bound through initargs. In some cases, such as serial columns, which have an implicit default, this will not work. You can work around this by creating your own sequence, e.g. "my_sequence", and defining a (:nextval "my_sequence") default.
+
+Finally, DAO class slots can have an option :ghost t to specify them as ghost slots. These are selected when retrieving instances, but not written when updating or inserting, or even included in the table definition. The only known use for this to date is for creating the table with (oids=true), and specify a slot like this:
+#+BEGIN_SRC lisp
+(oid :col-type integer :ghost t :accessor get-oid)
+#+END_SRC
+
+** method dao-keys (class)
+   :PROPERTIES:
+   :ID:       959682ab-ee0f-4afe-8cf3-38bb5f6de672
+   :END:
+→ list
+
+Returns list of slot names that are the primary key of DAO class. This is likely interesting if you have primary keys which are composed of more than one slot. Pay careful attention to situations where the primary key not only has more than one column, but they are actually in a different order than they are in the database table itself. You can check this with the internal find-primary-key-info function. Obviously the table needs to have been defined. The class must be quoted.
+#+BEGIN_SRC lisp
+(pomo:find-primary-key-info 'country1)
+
+(("name" "text") ("id" "integer"))
+#+END_SRC
+
+** method dao-keys (dao)
+   :PROPERTIES:
+   :ID:       4fa1fc88-dfb8-433f-90dc-c88e8908a5a8
+   :END:
+→ list
+
+Returns list of values that are the primary key of dao.
+
+** method dao-exists-p (dao)
+   :PROPERTIES:
+   :ID:       4a55236e-edfb-4f07-a237-fae3453fc99d
+   :END:
+→ boolean
+
+Test whether a row with the same primary key as the given dao exists in the database. Will also return NIL when any of the key slots in the object are unbound.
+
+** method make-dao (type &rest args &key &allow-other-keys)
+   :PROPERTIES:
+   :ID:       a812726c-52ea-4321-9bae-f9646bccc128
+   :END:
+→ dao
+
+Combines make-instance with insert-dao. Make the instance of the given class and insert it into the database, returning the created dao.
+
+** macro define-dao-finalization (((dao-name class) &rest keyword-args) &body body)
+   :PROPERTIES:
+   :ID:       645a03ec-739a-4ee5-b83d-dcbe43ef009a
+   :END:
+
+Create an :around-method for make-dao. The body is executed in a lexical environment where dao-name is bound to a freshly created and inserted DAO. The representation of the DAO in the database is then updated to reflect changes that body might have introduced. Useful for processing values of slots with the type serial, which are unknown before insert-dao.
+
+** method get-dao (type &rest keys)
+   :PROPERTIES:
+   :ID:       6dd7dd12-0f9a-4c47-94ee-43f0886df956
+   :END:
+→ dao
+
+Select the DAO object from the row that has the given primary key values, or NIL if no such row exists. Objects created by this function will have initialize-instance called on them (after loading in the values from the database) without any arguments ― even :default-initargs are skipped. The same goes for select-dao and query-dao.
+
+** macro select-dao (type &optional (test t) &rest sort)
+   :PROPERTIES:
+   :ID:       8b3533e5-2399-47e4-8fac-5345ec44c878
+   :END:
+→ list
+
+Select DAO objects for the rows in the associated table for which the given test (either an S-SQL expression or a string) holds. When sorting arguments are given, which can also be S-SQL forms or strings, these are used to sort the result.
+
+(Note that, if you want to sort, you have to pass the test argument.)
+#+BEGIN_SRC lisp
+(select-dao 'user (:> 'score 10000) 'name)
+#+END_SRC
+
+** macro do-select-dao (((type type-var) &optional (test t) &rest sort) &body body)
+   :PROPERTIES:
+   :ID:       b1a7accd-8c3e-429b-a8c8-35f2283855c4
+   :END:
+
+Like select-dao, but iterates over the results rather than returning them.
+For each matching DAO, body is evaluated with type-var bound to the DAO
+instance.
+
+Example:
+#+BEGIN_SRC lisp
+(do-select-dao (('user user) (:> 'score 10000) 'name)
+  (pushnew user high-scorers))
+#+END_SRC
+
+** macro query-dao (type query &rest args)
+   :PROPERTIES:
+   :ID:       134f9dcb-0784-461b-a38c-85c14d850910
+   :END:
+→ list
+
+Execute the given query (which can be either a string or an S-SQL expression) and return the result as DAOs of the given type. If the query contains placeholders ($1, $2, etc) their values can be given as extra arguments. The names of the fields returned by the query must either match slots in the DAO class, or be bound through with-column-writers.
+
+** function do-query-dao (((type type-var) query &rest args) &body body)
+   :PROPERTIES:
+   :ID:       8f5738c2-a11e-4c1b-91bc-b52f62502fbd
+   :END:
+→ list
+
+Like query-dao, but iterates over the results rather than returning them.
+For each matching DAO, body is evaluated with type-var bound to the instance.
+
+Example:
+#+BEGIN_SRC lisp
+(do-query-dao (('user user) (:order-by (:select '* :from 'user :where (:> 'score 10000)) 'name))
+  (pushnew user high-scorers))
+#+END_SRC
+
+** variable *ignore-unknown-columns*
+   :PROPERTIES:
+   :ID:       a6627d60-61f4-4a9b-86e7-5c1454a4e487
+   :END:
+
+Normally, when get-dao, select-dao, or query-dao finds a column in the database that's not in the DAO class, it will raise an error. Setting this variable to a non-NIL will cause it to simply ignore the unknown column.
+
+** method insert-dao (dao)
+   :PROPERTIES:
+   :ID:       6e534cce-6d6a-4710-875e-bf53aadb2045
+   :END:
+→ dao
+
+Insert the given dao into the database. Column slots of the object which are unbound implies the database defaults. Hence, if these columns has no defaults defined in the database, the the insertion of the dao will be failed. (This feature only works on PostgreSQL 8.2 and up.)
+
+** method update-dao (dao)
+   :PROPERTIES:
+   :ID:       faf45a30-c384-461f-9367-9e7c40c466a5
+   :END:
+→ dao
+
+Update the representation of the given dao in the database to the values in the object. This is not defined for tables that do not have any non-primary-key columns. Raises an error when no row matching the dao exists.
+
+** function save-dao (dao)
+   :PROPERTIES:
+   :ID:       a61016ef-bf72-4d7f-804f-c4396098833b
+   :END:
+→ boolean
+
+Tries to insert the given dao using insert-dao. If this raises a unique key violation error, it tries to update it by using update-dao instead. Be aware that there is a possible race condition here ― if some other process deletes the row at just the right moment, the update fails as well. Returns a boolean telling you whether a new row was inserted.
+
+This function is unsafe to use inside of a transaction ― when a row with the given keys already exists, the transaction will be aborted. Use
+save-dao/transaction instead in such a situation.
+
+See also: upsert-dao.
+
+** function save-dao/transaction (dao)
+   :PROPERTIES:
+   :ID:       0162b077-c274-48b0-9d5d-655de2482012
+   :END:
+→ boolean
+
+The transaction safe version of save-dao. Tries to insert the given dao using insert-dao. If this raises a unique key violation error, it tries to update it by using update-dao instead. Be aware that there is a possible race condition here ― if some other process deletes the row at just the right moment, the update fails as well. Returns a boolean telling you whether a new row was inserted.
+
+Acts exactly like save-dao, except that it protects its attempt to insert the object with a rollback point, so that a failure will not abort the transaction.
+
+See also: upsert-dao.
+
+** method upsert-dao (dao)
+   :PROPERTIES:
+   :ID:       ab8ea79a-1761-402c-a1bc-3a5c4fd53c24
+   :END:
+→ dao
+
+Like save-dao or save-dao/transaction but using a different method that doesn't involve a database exception. This is safe to use both in and outside a
+transaction, though it's advisable to always do it in a transaction to prevent a race condition. The way it works is:
+
+If the object contains unbound slots, we call insert-dao directly, thus the behavior is like save-dao.
+
+Otherwise we try to update a record with the same primary key. If the PostgreSQL returns a non-zero number of rows updated it treated as the
+record is already exists in the database, and we stop here.
+
+If the PostgreSQL returns a zero number of rows updated, it treated as the record does not exist and we call insert-dao.
+
+The race condition might occur at step 3 if there's no transaction: if UPDATE returns zero number of rows updated and another thread inserts
+the record at that moment, the insertion implied by step 3 will fail.
+
+Note, that triggers and rules may affect the number of inserted or updated rows returned by PostgreSQL, so zero or non-zero number of affected rows may
+not actually indicate the existence of record in the database.
+
+This method returns two values: the DAO object and a boolean (T if the object was inserted, NIL if it was updated).
+
+** method delete-dao (dao)
+   :PROPERTIES:
+   :ID:       f3371904-cd84-4392-a301-0f910bcf1b90
+   :END:
+
+Delete the given dao from the database.
+
+** function dao-table-name (class)
+   :PROPERTIES:
+   :ID:       718c03fe-5c70-43c1-a986-bc361d1e2ee6
+   :END:
+→ string
+
+Get the name of the table associated with the given DAO class (or symbol naming such a class).
+
+** function dao-table-definition (class)
+   :PROPERTIES:
+   :ID:       e796fdb5-a8d9-4399-893a-6783dd925e78
+   :END:
+→ string
+
+Given a DAO class, or the name of one, this will produce an SQL query string with a definition of the table. This is just the bare simple definition, so if you need any extra indices or or constraints, you'll have to write your own queries to add them, in which case look to s-sql's create-table function.
+
+** macro with-column-writers ((&rest writers) &body body)
+   :PROPERTIES:
+   :ID:       52b95f7c-f8f0-4e53-8e60-622746f18e16
+   :END:
+
+Provides control over the way get-dao, select-dao, and query-dao read values from the database. This is not commonly needed, but can be used to reduce the amount of queries a system makes. writers should be a list of alternating column names (strings or symbols) and writers, where writers are either symbols referring to a slot in the objects, or functions taking two arguments ― an instance and a value ― which can be used to somehow store the value in the new instance. When any DAO-fetching function is called in the body, and columns matching the given names are encountered in the result, the writers are used instead of the default behaviour (try and store the value in the slot that matches the column name).
+
+An example of using this is to add some non-column slots to a DAO class, and use query-dao within a with-column-writers form to pull in extra information about the objects, and immediately store it in the new instances.
+
+* Table definition and creation
+  :PROPERTIES:
+  :ID:       1c0a254a-4a0e-4012-b519-8fe8cbf9ae02
+  :END:
+It can be useful to have the SQL statements needed to build an application's tables available from the source code, to do things like automatically deploying a database. The following macro and functions allow you to group sets of SQL statements under symbols, with some shortcuts for common elements
+in table definitions.
+
+** macro deftable (name &body definition)
+   :PROPERTIES:
+   :ID:       39e40910-e25a-4db4-bd0a-b4b6d1a75630
+   :END:
+
+Define a table. name can be either a symbol or a (symbol string) list. In the first case, the table name is derived from the symbol's name by S-SQL's rules. In the second case, the name is given explicitly. The body of definitions can contain anything that evaluates to a string, as well as S-SQL expressions. The variables *table-name* and *table-symbol* are bound to the relevant values in the body. Note that the evaluation of the definition is ordered, so you'll generally want to create your table first and then define indices on it.
+
+** variable *table-name*
+   :PROPERTIES:
+   :ID:       3e565b16-153c-4281-8f17-3653e7a9dc5d
+   :END:
+
+Used inside deftable to find the name of the table being defined.
+
+** variable **table-symbol*
+   :PROPERTIES:
+   :ID:       551359a0-8d5b-4d4f-932d-df8759105ee1
+   :END:
+
+Used inside deftable to find the symbol naming the table being defined.
+
+** function !dao-def ()
+   :PROPERTIES:
+   :ID:       eb1680a7-2a82-4e6a-b31b-aeea22bf7362
+   :END:
+
+Should only be used inside a deftable form. Define this table using the corresponding DAO class' slots. Adds the result of calling dao-table-definition on *table-symbol* to the definition.
+
+** function !index (&rest columns), !unique-index (&rest columns)
+   :PROPERTIES:
+   :ID:       5ceae010-3712-400a-9c8c-0616b8406390
+   :END:
+
+Used inside a deftable form. Define an index on the table being defined. The columns can be given as symbols or strings.
+
+** function !foreign (target fields &rest target-fields/on-delete/on-update/deferrable/initially-deferred)
+   :PROPERTIES:
+   :ID:       1378528c-3e7a-452b-8775-b3d84d897ebd
+   :END:
+
+Used insde a deftable form. Add a foreign key to the table being defined. target-table is the referenced table. columns is a list of column names or single name in this table, and, if the columns have different names in the referenced table, target-columns must be another list of column names or single column name of the target-table, or :primary-key to denote the column(s) of the target-table's primary key as referenced column(s).
+
+The on-delete and on-update arguments can be used to specify ON DELETE and ON UPDATE actions, as per the keywords allowed in create-table. In addition, the deferrable and initially-deferred arguments can be used to indicate whether constraint checking can be deferred until the current transaction completed, and whether this should be done by default. Note that none of these are really &key arguments, but rather are picked out of a &rest arg at runtime, so that they can be specified even when target-columns is not given.
+
+** function !unique (target-fields &key deferrable initially-deferred)
+   :PROPERTIES:
+   :ID:       c4631db6-9994-40df-97b7-150df71bb121
+   :END:
+
+Constrains one or more columns to only contain unique (combinations of) values, with deferrable and initially-deferred defined as in !foreign
+
+** function create-table (symbol)
+   :PROPERTIES:
+   :ID:       333d4860-6cfe-4009-80f8-a480174d64e1
+   :END:
+
+Takes the name of a dao-class and creates the table identified by symbol by executing all forms in its definition as found in the *tables* list.
+
+** function create-all-tables ()
+   :PROPERTIES:
+   :ID:       7477cdc4-59bf-47fb-9b60-25ee9c38eb66
+   :END:
+
+Creates all defined tables.
+
+** function create-package-tables (package)
+   :PROPERTIES:
+   :ID:       8e36190a-a3a4-4e66-8df4-0a6b6b74f617
+   :END:
+
+Creates all tables identified by symbols interned in the given package.
+
+** variables *table-name*, *table-symbol*
+   :PROPERTIES:
+   :ID:       25924943-75d9-4612-b2a3-dc94f292c2a5
+   :END:
+
+Used inside deftable to find the name of the table being defined.
+
+Used inside deftable to find the symbol naming the table being defined.
+
+** function drop-table (table-name &key if-exists cascade)
+   :PROPERTIES:
+   :ID:       0427ecce-416e-4266-a5c7-90e58e22e0b7
+   :END:
+
+If a table exists, drop a table. Available additional key parameters are :if-exists and :cascade.
+
+* Database Information
   :PROPERTIES:
   :ID:       ecc7ca5e-9117-488b-aa7c-011d56409f76
   :END:
-** function list-tables (&optional strings-p)
-   :PROPERTIES:
-   :ID:       bd228cd6-3651-48ca-a9c5-a27737fbaacc
-   :END:
-→ list
-
-Returns a list of the tables in the current database and schema. When strings-p is T,
-the names will be given as strings, otherwise as keywords.
-
-** function list-tables-in-schema (&optional (schema-name "public") (strings-p nil))
-   :PROPERTIES:
-   :ID:       6e7c1873-ad5b-4cd0-9389-b6389cb7ea05
-   :END:
-→ list
-
-Returns a list of tables in a particular schema, defaulting to public. If schema-name is :all, it will return all the non-system tables in the database in fully qualified form: e.g. 'public.test_table'. If string-p is t, the names will be returned as strings with underscores converted to hyphens.
-
-** function table-exists-p (name)
-   :PROPERTIES:
-   :ID:       ece4d92b-dd60-434e-b864-e42c743deaa6
-   :END:
-→ boolean
-
-Tests whether a table with the given name exists. The name can be either a
-string or a symbol. It can also be qualified in the form of 'schema.table
-or 'database.schema.table
-
-** function table-description (name &optional schema-name)
-   :PROPERTIES:
-   :ID:       45344f09-e8f2-4f82-a0f8-297623478ad8
-   :END:
-→ list
-
-Returns a list of the fields in the named table. Each field is represented by
-a list of three elements: the field name, the type, and a boolean indicating
-whether the field may be NULL. Optionally, schema-name can be specified to
-restrict the result to fields from the named schema. Without it, all fields in
-the table are returned, regardless of their schema.
-
-** function list-sequences (&optional strings-p)
-   :PROPERTIES:
-   :ID:       8f8b89c8-9d01-460f-b60f-020e8658bbe7
-   :END:
-→ list
-
-Returns a list of the sequences in the current database. When strings-p is T,
-the names will be given as strings, otherwise as keywords.
-
-** function sequence-exists-p (name)
-   :PROPERTIES:
-   :ID:       e64dd37f-81c2-43f8-88fe-8444771b7631
-   :END:
-→ boolean
-
-Tests whether a sequence with the given name exists. The name can be either a
-string or a symbol.
-
-** function list-views (&optional strings-p)
-   :PROPERTIES:
-   :ID:       9e9e757e-9efa-4445-9fe1-b66e78f025a8
-   :END:
-→ list
-
-Returns list of the user defined views in the current database. When strings-p
-is T, the names will be returned as strings, otherwise as keywords.
-
-** function view-exists-p (name)
-   :PROPERTIES:
-   :ID:       24cd0fc5-8fb0-4b57-9504-71d9520abf6f
-   :END:
-→ boolean
-
-Tests whether a view with the given name exists. The name can be either a
-string or a symbol.
-
-** function list-schemata ()
-   :PROPERTIES:
-   :ID:       8fa081ea-d959-457d-89ae-980bbb997148
-   :END:
-→ list
-
-Returns list of the user defined schemata (as strings) and the quantity of
-existing schemata.
-
-** function schema-exist-p (schema) NOW DEPRECATED IN FAVOR OF schema-exists-p which is more consistent with naming of other functions.
-   :PROPERTIES:
-   :ID:       dd6a1dc8-b911-43f2-8909-8b9ec37044aa
-   :END:
-→ boolean
-
-Tests the existence of a given schema. Returns T if the schema exists or NIL
-otherwise.
-
-** function schema-exists-p (schema)
-   :PROPERTIES:
-   :ID:       f52064e9-e859-416e-bb67-20f5de49613e
-   :END:
-→ boolean
-
-Tests the existence of a given schema. Returns T if the schema exists or NIL
-otherwise.
-
 ** function database-version ()
    :PROPERTIES:
    :ID:       9243f0ff-2001-4427-8cf9-33f9a9b6fd5c
    :END:
 → string
 
-Returns the version of the current postgresql database.
+Returns the version string provided by postgresql of the current postgresql server. E.g. "PostgreSQL 12.2 on x86_64-pc-linux-gnu, compiled by gcc (Arch Linux 9.3.0-1) 9.3.0, 64-bit"
 
 ** function num-records-in-database ()
    :PROPERTIES:
@@ -710,8 +869,7 @@ Returns the version of the current postgresql database.
    :END:
 → list
 
-Returns a list of lists with schema, table name and approximate number of
-records in the currently connected database.
+Returns a list of lists with schema, table name and approximate number of records in the currently connected database.
 
 ** function current-database ()
    :PROPERTIES:
@@ -727,7 +885,7 @@ Returns the string name of the current database.
    :END:
 → boolean
 
-Checks to see if a particular database exists.
+Checks to see if a particular database exists. Returns T if true, nil if not.
 
 ** function database-size (&optional database-name)
    :PROPERTIES:
@@ -751,6 +909,216 @@ default order is by database name. Pass t as a parameter to :order-by-size
 for order by size. Setting size to nil will return just the database names
 in a single list ordered by name. This function excludes the template databases
 
+
+** function list-database-functions ()
+   :PROPERTIES:
+   :ID:       61f0e7e5-cf5d-4c2e-967d-588808d1a1bc
+   :END:
+→ list
+
+Returns a list of the functions in the database from the information_schema.
+
+
+DEPRECATED FOR DESCRIBE-TRIGGERS. List detailed information on the triggers from the information_schema table.
+** function list-database-users ()
+   :PROPERTIES:
+   :ID:       adfb5355-fd04-4835-a2bd-337dc9402915
+   :END:
+→ list
+
+List database users (actually 'roles' in Postgresql terminology).
+** function list-roles (&optional (lt nil))
+   :PROPERTIES:
+   :ID:       e6d13898-e158-4001-b54c-cc7e58342023
+   :END:
+→ list
+
+Returns a list of alists of rolenames, role attributes and membership in roles. See https://www.postgresql.org/docs/current/role-membership.html for an explanation. Optionally passing :alists or :plists can be used to set the return list types to :alists or :plists. This is the same as the psql function \du.
+
+** function list-available-extensions ()
+   :PROPERTIES:
+   :ID:       353cafc2-ca5c-4197-b820-3662dbbea2e3
+   :END:
+→ list
+
+List the postgresql extensions which are available in the system to the currently connected database. The extensions may or may not be installed.
+** function list-installed-extensions ()
+   :PROPERTIES:
+   :ID:       922fca24-53d7-4883-844a-cf383ffc7322
+   :END:
+→ list
+
+List the postgresql extensions which are installed in the currently connected database.
+** function change-toplevel-database (new-database user password host)
+   :PROPERTIES:
+   :ID:       6d41d3c5-2013-4404-aae6-2a7cd5df4b18
+   :END:
+→ string
+
+Just changes the database assuming you are using a toplevel connection. Recommended only for development work. Returns the name of the newly connected database as a string.
+
+* Constraints
+  :PROPERTIES:
+  :ID:       b857f2fe-7b5c-4b13-9909-cb637f7ba367
+  :END:
+** function list-unique-or-primary-constraints (table-name)
+   :PROPERTIES:
+   :ID:       e5adb03e-a26a-40fa-bde2-05f541fc70cf
+   :END:
+→ list
+
+List constraints on a table. Table-name can be either a string or quoted. Turns constraints into keywords if strings-p is not true.
+
+** function list-all-constraints (table-name)
+   :PROPERTIES:
+   :ID:       d641e79f-b66f-4248-9c1a-284f07182d12
+   :END:
+→ list
+
+Users information_schema to list all the constraints in a table. Table-name can be either a string or quoted. Turns constraints into keywords if strings-p is not true.
+
+** function describe-constraint (table-name constraint-name)
+   :PROPERTIES:
+   :ID:       8d6cff99-a479-4b98-9fd5-fd77517b61b4
+   :END:
+→ list
+
+Return a list of alists of the descriptions a particular constraint given the table-name and the constraint name using the information_schema table.
+
+** function describe-foreign-key-constraints ()
+   :PROPERTIES:
+   :ID:       96f4c221-be13-440d-a7ac-0b446bfb06cc
+   :END:
+→ list
+
+Generates a list of lists of information on the foreign key constraints
+* Indexes/Indices
+  :PROPERTIES:
+  :ID:       a265f57e-3928-4386-92c0-ab2764f4fdc5
+  :END:
+** function create-index (name  &key unique if-not-exists concurrently on using fields)
+   :PROPERTIES:
+   :ID:       8724742c-e2fe-48f5-b190-7c1218f9995d
+   :END:
+
+Create an index. Slightly less sophisticated than the query version because it does not have a where clause capability.
+
+** function drop-index (name &key concurrently if-exists cascade)
+   :PROPERTIES:
+   :ID:       9a3553c3-9d58-490f-93e3-2d04b5bd72bc
+   :END:
+
+Drop an index. Available keys are :concurrently, :if-exists, and :cascade.
+
+** function list-indices (&optional strings-p)
+   :PROPERTIES:
+   :ID:       e7fa9796-6804-4446-bfda-3455432d4453
+   :END:
+→ list
+
+Return a list of the indexs in a database. Turn them into keywords if strings-p is not true.
+
+** function list-table-indices (table-name &optional strings-p)
+   :PROPERTIES:
+   :ID:       d57a9331-04b4-4920-9fe5-36d4b1d785bb
+   :END:
+→ list
+
+List the index names and the related columns in a single table. Each index will be in a separate sublist.
+
+** function index-exists-p (name)
+   :PROPERTIES:
+   :ID:       82c1851f-91cc-4e4d-b802-b2ba37ec6938
+   :END:
+→ boolean
+
+Tests whether an index with the given name exists. The name can be either a string or a symbol.
+
+** function list-indexed-column-and-attributes (table-name)
+   :PROPERTIES:
+   :ID:       47908329-5309-4319-9c16-56821f4b6233
+   :END:
+→ list
+
+List the indexed columns and their attributes in a table. Includes primary
+key.
+
+** function list-index-definitions (table-name)
+   :PROPERTIES:
+   :ID:       0078a757-8cc5-46a7-956e-ddb1fe2c579b
+   :END:
+→ list
+
+Returns a list of the definitions used to create the current indexes for
+the table
+
+* Keys
+  :PROPERTIES:
+  :ID:       342fdfce-eed8-4ed1-a208-37c417b5a291
+  :END:
+** function find-primary-key-info (table-name &optional (just-key nil))
+   :PROPERTIES:
+   :ID:       87a5e1c4-fe1b-4b9a-bdcf-7dbe62bd20f1
+   :END:
+→ list
+
+Returns a list of sublists where the sublist contains two strings. If a table primary key consists of only one column, such as 'id' there will be a single sublist where the first string is the name of the column and the second string is the string name for the datatype for that column. If the primary key for the table consists of more than one column, there will be a sublist for each column subpart of the key. The sublists will be in the order they are used in the key, not in the order they appear in the table. If just-key is set to t, the list being returned will contain just the column names in the primary key as string names with no sublists. If the table is not in the public schema, provide the fully qualified table name e.g. schema-name.table-name.
+
+** function list-foreign-keys (table-name)
+   :PROPERTIES:
+   :ID:       cb0a151a-ad44-4a7a-896d-47903d0e718b
+   :END:
+→ list
+
+Returns a list of sublists of foreign key info in the form of
+   '((constraint-name local-table local-table-column
+     foreign-table-name foreign-column-name))
+
+* Schema/Schemata
+  :PROPERTIES:
+  :ID:       eef5ba67-cfe2-47dc-b432-2a75b45765d8
+  :END:
+Schema allow you to separate tables into differnet name spaces. In different
+schemata two tables with the same name are allowed to exists. The tables can
+be referred by fully qualified names or with the macro with-schema. You could
+also set the search path with set-search-path. For listing end checking there
+are also the functions list-schemata and schema-exist-p. The following
+functions allow you to create, drop schemata and to set the search path.
+
+** macro with-schema ((namespace &key :strict t :if-not-exist :create :drop-after) &body body)
+   :PROPERTIES:
+   :ID:       70159647-6efd-4fcc-acf0-86b24594822b
+   :END:
+
+A macro to set the schema search path (namespace) of the postgresql database to include as first entry a specified schema and then executes the body. Before executing body the PostgreSQL's session variable search_path is set to the given namespace. After executing body the search_path variable is restored to the original value.
+
+   Calling with :strict 't only the specified schema is set as current search path. All other schema are then not searched any more. If strict is nil, the namespace is just first schema on the search path upon the the body execution.
+
+   Calling with :if-not-exist set to :create the schema is created if this schema did not exist.
+   Calling with :if-not-exist set to nil, an error is signaled.
+
+   calling with drop-after set to 't the schema is removed after the execution of the body form.
+
+   example :
+     (with-schema (:schema-name :strict nil :drop-after nil :if-not-exist :error)
+            (foo 1)
+            (foo 2))
+
+   example :
+     (with-schema ('uniq :if-not-exist :create) ;; changing the search path
+            (schema-exists-p 'uniq))
+
+** function list-schemata ()
+   :PROPERTIES:
+   :ID:       8fa081ea-d959-457d-89ae-980bbb997148
+   :END:
+→ list
+
+List all existing user defined schemata.
+
+Note: The query uses the portable information_schema relations instead of pg_tables relations
+SELECT schema_name FROM information_schema.schemata where schema_name !~ '(pg_*)|information_schema' ORDER BY schema_name ;
+
 ** function list-schemas ()
    :PROPERTIES:
    :ID:       06eff6ed-5de0-4947-9dd1-26ae7dedd360
@@ -759,21 +1127,128 @@ in a single list ordered by name. This function excludes the template databases
 
 List schemas in the current database, excluding the pg_* system schemas.
 
-** function list-tablespaces ()
+** function schema-exists-p (schema)
    :PROPERTIES:
-   :ID:       44a29c6a-0002-4660-920f-a9fee4c29471
+   :ID:       f52064e9-e859-416e-bb67-20f5de49613e
+   :END:
+→ boolean
+
+Tests the existence of a given schema. Returns T if the schema exists or NIL otherwise. The name provided can be either a string or quoted symbol.
+
+** function create-schema (schema)
+   :PROPERTIES:
+   :ID:       3d4619fa-faef-47b2-b6ab-61b36e8b52b2
+   :END:
+
+Creates a new schema. Raises an error if the schema is already exists.
+
+** function drop-schema (schema &key (if-exists nil) (cascade nil))
+   :PROPERTIES:
+   :ID:       cc7fe0f4-31b5-435c-9b8d-22564f7e0ad5
+   :END:
+
+Drops an existing database schema. Accepts :if-exists and/or :cascade arguments like :drop-table. A notice instead of an error is raised with the is-exists parameter.
+
+** function get-search-path ()
+   :PROPERTIES:
+   :ID:       639f826f-aed2-4a2d-811c-fe862953d195
+   :END:
+
+Returns the default schema search path for the current session.
+
+** function set-search-path (path)
+   :PROPERTIES:
+   :ID:       1fa0b1a6-af88-4083-b3f1-16b8b79aca3c
+   :END:
+
+This changes the postgresql runtime parameter controlling what order schemas are searched. You can always use fully qualified names [schema.table].
+By default, this function only changes the search path for the current session. This function is used by with-schema.
+** function split-fully-qualified-table-name (name)
+   :PROPERTIES:
+   :ID:       1aa410f7-b60b-4c95-bc4e-dacefe8cc04c
+   :END:
+→ list
+Take a tablename of the form database.schema.table or schema.table or table and return the tablename and the schema name. The name can be a symbol or a string. Returns a list of form '(table schema database. If the tablename is not fully qualified, it will assume that the schema should be \"public\".
+
+* Sequences
+  :PROPERTIES:
+  :ID:       62e4d0bd-e12f-47c6-8373-a174a7d8d7b1
+  :END:
+** function create-sequence (name &key temp if-not-exists increment min-value max-value start cache)
+   :PROPERTIES:
+   :ID:       37802810-069f-4219-a36a-1e4f754dd5f8
+   :END:
+
+  Create a sequence. Available additional key parameters are :temp :if-not-exists :increment :min-value :max-value :start and :cache. See
+https://www.postgresql.org/docs/current/static/sql-createsequence.html for details on usage.
+
+** function sequence-next (sequence)
+   :PROPERTIES:
+   :ID:       3001c5dd-da96-4263-b427-c04368e8cf41
+   :END:
+→ integer
+
+Shortcut for getting the next value from a sequence. The sequence identifier can be either a string or a symbol, in the latter case it will be converted to a string according to S-SQL rules.
+
+** function drop-sequence (name &key if-exists cascade)
+   :PROPERTIES:
+   :ID:       1998fd52-d0e1-439b-9cfa-d3f72c8a3609
    :END:
 → list
 
-Lists the tablespaces in the currently connected database.
+Drop a sequence. Name should be quoted. Available key parameters are :if-exists and :cascade.
 
-** function list-available-types ()
+** function list-sequences (&optional strings-p)
    :PROPERTIES:
-   :ID:       b5ebabe7-31f9-45b6-8ecb-6035febaa392
+   :ID:       8f8b89c8-9d01-460f-b60f-020e8658bbe7
    :END:
 → list
 
-List the available types in this postgresql version.
+Returns a list of the sequences in the current database. When strings-p is T, the names will be given as strings, otherwise as keywords.
+
+** function sequence-exists-p (name)
+   :PROPERTIES:
+   :ID:       e64dd37f-81c2-43f8-88fe-8444771b7631
+   :END:
+→ boolean
+
+Tests  whether a sequence with the given name exists. The name can be either a string or a symbol.
+
+* Tables
+  :PROPERTIES:
+  :ID:       5a351917-b940-4c94-a3dc-2795f9a76211
+  :END:
+** function list-tables (&optional strings-p)
+   :PROPERTIES:
+   :ID:       bd228cd6-3651-48ca-a9c5-a27737fbaacc
+   :END:
+→ list
+
+Return a list of the tables in the public schema of a database. By default the table names are returned as keywords. They will be returned as lowercase strings if strings-p is true.
+
+** function list-tables-in-schema (&optional (schema-name "public") (strings-p nil))
+   :PROPERTIES:
+   :ID:       6e7c1873-ad5b-4cd0-9389-b6389cb7ea05
+   :END:
+→ list
+
+Returns a list of tables in a particular schema, defaulting to public. If schema-name is :all, it will return all the non-system tables in the database in fully qualified form: e.g. 'public.test_table'. If string-p is t, the names will be returned as strings with underscores converted to hyphens.
+
+** function table-exists-p (name)
+   :PROPERTIES:
+   :ID:       ece4d92b-dd60-434e-b864-e42c743deaa6
+   :END:
+→ boolean
+
+Check whether a table exists in a particular schema. Defaults to the search path. Takes either a string or a symbol for the table name. The table-name can be fully qualified in the form of schema.table-name or database.schema.table-name. If the schema is specified either in a qualified table-name or in the optional schema-name parameter, we look directly to the information schema tables. Otherwise we use the search path which can be controlled by being within a with-schema form.
+
+** function table-description (name &optional schema-name)
+   :PROPERTIES:
+   :ID:       45344f09-e8f2-4f82-a0f8-297623478ad8
+   :END:
+→ list
+
+Returns a list of the fields in the named table. Each field is represented by a list of three elements: the field name, the type, and a boolean indicating whether the field may be NULL. Optionally, schema-name can be specified to restrict the result to fields of a table from the named schema. The table and schema names can be either strings or quoted.
 
 ** function list-table-sizes (&key (schema "public") (order-by-size nil) (size t))
    :PROPERTIES:
@@ -796,17 +1271,17 @@ result in order of size instead of by table name.
    :END:
 → list
 
-Return the size of a postgresql table in k or m. Table-name can be either a
-string or quoted.
+Return the size of a given postgresql table in k or m. Table-name can be either a string or quoted.
 
-** function more-table-info (table-name)
+** function table-description-plus (table-name)
    :PROPERTIES:
    :ID:       b35cf2c1-7dd0-4676-8f09-2d5679683942
    :END:
 → list
 
 Returns more table info than table-description. Table can be either a string
-or quoted.
+or quoted. Specifically returns ordinal-position, column-name, data-type, character-maximum-length,
+modifier, whether it is not-null and the default value.
 
 ** function list-columns (table-name)
    :PROPERTIES:
@@ -835,128 +1310,40 @@ to the pg-catalog tables.
 Determine if a particular column exists. Table name and column-name can be
 either strings or symbols.
 
-** function describe-views (&optional (schema "public")
+* Tablespaces
+  :PROPERTIES:
+  :ID:       1772a1eb-bc79-4c5f-90d5-2fc10ae49569
+  :END:
+** function list-tablespaces ()
    :PROPERTIES:
-   :ID:       51f383ba-fe58-4a5f-bf31-ac79b18170b7
+   :ID:       44a29c6a-0002-4660-920f-a9fee4c29471
    :END:
 → list
 
-Describe the current views in the specified schema. Defaults to public schema.
+Lists the tablespaces in the currently connected database. What are tablespace you ask? Per the Postgresql documentation https://www.postgresql.org/docs/current/manage-ag-tablespaces.html: Tablespaces in PostgreSQL allow database administrators to define locations in the file system where the files representing database objects can be stored. Once created, a tablespace can be referred to by name when creating database objects.
 
-** function list-database-functions ()
+By using tablespaces, an administrator can control the disk layout of a PostgreSQL installation. This is useful in at least two ways. First, if the partition or volume on which the cluster was initialized runs out of space and cannot be extended, a tablespace can be created on a different partition and used until the system can be reconfigured.
+
+Second, tablespaces allow an administrator to use knowledge of the usage pattern of database objects to optimize performance. For example, an index which is very heavily used can be placed on a very fast, highly available disk, such as an expensive solid state device. At the same time a table storing archived data which is rarely used or not performance critical could be stored on a less expensive, slower disk system.
+
+* Triggers
+  :PROPERTIES:
+  :ID:       39786cca-6778-4f0b-9187-1f3216b97cda
+  :END:
+** function describe-triggers ()
    :PROPERTIES:
-   :ID:       61f0e7e5-cf5d-4c2e-967d-588808d1a1bc
+   :ID:       10c51511-c1e4-4710-8407-3508fb96333e
    :END:
 → list
 
-Returns a list of the functions in the database from the information_schema.
-
-** function list-indices (&optional strings-p)
-   :PROPERTIES:
-   :ID:       e7fa9796-6804-4446-bfda-3455432d4453
-   :END:
-→ list
-
-Return a list of the indexs in a database. Turn them into keywords if strings-p is not true.
-
-** function list-table-indices (table-name &optional strings-p)
-   :PROPERTIES:
-   :ID:       d57a9331-04b4-4920-9fe5-36d4b1d785bb
-   :END:
-→ list
-
-List the index names and the related columns in a table. Returns a list of alists.
-
-** function index-exists-p (name)
-   :PROPERTIES:
-   :ID:       82c1851f-91cc-4e4d-b802-b2ba37ec6938
-   :END:
-→ boolean
-
-Tests whether an index with the given name exists. The name can be either a
-string or a symbol.
-
-** function list-indexed-column-and-attributes (table-name)
-   :PROPERTIES:
-   :ID:       47908329-5309-4319-9c16-56821f4b6233
-   :END:
-→ list
-
-List the indexed columns and their attributes in a table. Includes primary
-key.
-
-** function list-index-definitions (table-name)
-   :PROPERTIES:
-   :ID:       0078a757-8cc5-46a7-956e-ddb1fe2c579b
-   :END:
-→ list
-
-Returns a list of the definitions used to create the current indexes for
-the table
-
-** function find-primary-key-info (table-name &optional (just-key nil))
-   :PROPERTIES:
-   :ID:       87a5e1c4-fe1b-4b9a-bdcf-7dbe62bd20f1
-   :END:
-→ list
-
-Returns a list of two strings. First the column name of the primary
-key of the table and second the string name for the datatype. Optionally,
-just-key can be set to t and it will return just the column name of the
-primary key as a string.
-
-** function list-foreign-keys (table-name)
-   :PROPERTIES:
-   :ID:       cb0a151a-ad44-4a7a-896d-47903d0e718b
-   :END:
-→ list
-
-Returns a list of sublists of foreign key info in the form of
-   '((constraint-name local-table local-table-column
-     foreign-table-name foreign-column-name))
-
-** function list-unique-or-primary-constraints (table-name)
-   :PROPERTIES:
-   :ID:       e5adb03e-a26a-40fa-bde2-05f541fc70cf
-   :END:
-→ list
-
-List constraints on a table.
-
-** function list-all-constraints (table-name)
-   :PROPERTIES:
-   :ID:       d641e79f-b66f-4248-9c1a-284f07182d12
-   :END:
-→ list
-
-Users information_schema to list all the constraints in a table. Table-name
-can be either a string or quoted.
-
-** function describe-constraint (table-name constraint-name)
-   :PROPERTIES:
-   :ID:       8d6cff99-a479-4b98-9fd5-fd77517b61b4
-   :END:
-→ list
-
-Return a list of alists of the descriptions a particular constraint given
-the table-name and the constraint name using the information_schema table.
-
-** function describe-foreign-key-constraints ()
-   :PROPERTIES:
-   :ID:       96f4c221-be13-440d-a7ac-0b446bfb06cc
-   :END:
-→ list
-
-Generates a list of lists of information on the foreign key constraints
-
+List detailed information on the triggers from the information_schema table.
 ** function list-triggers (&optional table-name)
    :PROPERTIES:
    :ID:       68de46b8-a646-4c1d-9362-747ab1d6cc04
    :END:
 → list
 
-List distinct trigger names from the information_schema table. Table-name
-can be either quoted or string.
+List distinct trigger names from the information_schema table. Table-name can be either quoted or string. (A trigger is a specification that the database should automatically execute a particular function whenever a certain type of operation is performed. Triggers can be attached to tables (partitioned or not), views, and foreign tables. See https://www.postgresql.org/docs/current/trigger-definition.html)
 
 ** function list-detailed-triggers ()
    :PROPERTIES:
@@ -964,540 +1351,34 @@ can be either quoted or string.
    :END:
 → list
 
-List detailed information on the triggers from the information_schema table.
-** function list-database-users ()
-   :PROPERTIES:
-   :ID:       adfb5355-fd04-4835-a2bd-337dc9402915
-   :END:
-→ list
-
-List database users.
-** function list-roles (&optional (lt nil))
-   :PROPERTIES:
-   :ID:       e6d13898-e158-4001-b54c-cc7e58342023
-   :END:
-→ list
-
-Returns a list of alists of rolenames, role attributes and membership in roles.
-See https://www.postgresql.org/docs/current/role-membership.html for an explanation.
-Optionally passing :alists or :plists can be used to set the return list types to :alists or :plists.
-This is the same as the psql function \du.
-
-** function list-available-extensions ()
-   :PROPERTIES:
-   :ID:       353cafc2-ca5c-4197-b820-3662dbbea2e3
-   :END:
-→ list
-
-List the postgresql extensions which are available in the system to the
-currently connected database. The extensions may or may not be installed.
-** function list-installed-extensions ()
-   :PROPERTIES:
-   :ID:       922fca24-53d7-4883-844a-cf383ffc7322
-   :END:
-→ list
-
-List the postgresql extensions which are installed in the currently
-connected database.
-** function change-toplevel-database (new-database user password host)
-   :PROPERTIES:
-   :ID:       6d41d3c5-2013-4404-aae6-2a7cd5df4b18
-   :END:
-→ string
-
-Just changes the database assuming you are using a toplevel connection.
-Recommended only for development work. Returns the name of the newly
-connected database as a string.
-
-** function list-installed-extensions ()
-   :PROPERTIES:
-   :ID:       dba1088b-56d1-4e5e-bd1d-52e1308055a2
-   :END:
-→ list
-
-Return a list of the installed extension
-
-** function list-available-extensions ()
-   :PROPERTIES:
-   :ID:       7353d631-9896-4f78-8e52-f64d577016c6
-   :END:
-→ list
-
-Lists extensions that are available to be installed in the database. Returns a list of lists where each sublist has the name of the extension, the default version, the installed version (if any) and a comment string.
-
-* Database access objects
+* Views
   :PROPERTIES:
-  :ID:       8e7cee8c-f2b9-4569-bf65-e8f3d2f9e31b
+  :ID:       a9641e8e-3769-4af4-bdd0-3153e0dd7728
   :END:
-Postmodern contains a simple system for defining CLOS classes that
-represent rows in the database. This is not intended as a full-fledged
-object-relational magic system ― while serious ORM systems have their place,
-they are notoriously hard to get right, and are outside of the scope of
-a humble SQL library like this.
-
-** metaclass dao-class
+** function list-views (&optional strings-p)
    :PROPERTIES:
-   :ID:       bbf28a59-551a-4805-b2f6-b2d0bd8feaf3
-   :END:
-
-At the heart of Postmodern's DAO system is the dao-class metaclass. It
-allows you to define classes for your database-access objects as regular
-CLOS classes. Some of the slots in these classes will refer to columns in the
-database. To specify that a slot refers to a column, give it a :col-type
-option containing an S-SQL type expression (useful if you want to be able
-to derive a table definition from the class definition), or simply a :column
-option with value T. Such slots can also take a :col-default option, used
-to provide a database-side default value as an S-SQL expression. You can
-use the :col-name initarg (whose unevaluated value will be passed to
-to-sql-name) to specify the slot's column's name.
-
-DAO class definitions support two extra class options: :table-name to give
-the name of the table that the class refers to (defaults to the class name),
-and :keys to provide a set of primary keys for the table. When no primary
-keys are defined, operations such as update-dao and get-dao will not work.
-
-IMPORTANT: Class finalization for a dao class instance are wrapped with a
-thread lock. However, any time you are using threads and a class that inherits
-from other classes, you should ensure that classes are finalized before you
-start generating threads that create new instances of that class.
-
-Simple example:
-#+BEGIN_SRC lisp
-(defclass user ()
-  ((name :col-type string :initarg :name :accessor user-name)
-   (creditcard :col-type (or db-null integer) :initarg :card :col-default :null)
-   (score :col-type bigint :col-default 0 :accessor user-score))
-  (:metaclass dao-class)
-  (:keys name))
-#+END_SRC
-
-The (or db-null integer) form is used to indicate a column can have NULL values.
-
-When inheriting from DAO classes, a subclass' set of columns also contains all
-the columns of its superclasses. The primary key for such a class is the
-union of its own keys and all the keys from its superclasses. Classes
-inheriting from DAO classes should probably always use the dao-class
-metaclass themselves.
-
-When a DAO is created with make-instance, the :fetch-defaults keyword
-argument can be passed, which, when T, will cause a query to fetch the
-default values for all slots that refers to columns with defaults and were
-not bound through initargs. In some cases, such as serial columns, which
-have an implicit default, this will not work. You can work around this by
-creating your own sequence, e.g. "my_sequence", and defining
-a (:nextval "my_sequence") default.
-
-Finally, DAO class slots can have an option :ghost t to specify them as
-ghost slots. These are selected when retrieving instances, but not written
-when updating or inserting, or even included in the table definition. The
-only known use for this to date is for creating the table with (oids=true),
-and specify a slot like this:
-#+BEGIN_SRC lisp
-(oid :col-type integer :ghost t :accessor get-oid)
-#+END_SRC
-
-** method dao-keys (class)
-   :PROPERTIES:
-   :ID:       959682ab-ee0f-4afe-8cf3-38bb5f6de672
+   :ID:       9e9e757e-9efa-4445-9fe1-b66e78f025a8
    :END:
 → list
 
-Returns list of slot names that are the primary key of DAO class.
-This is likely interesting if you have primary keys which are composed
-of more than one slot. Pay careful attention to situations where the primary
-key not only has more than one column, but they are actually in a different
-order than they are in the database table itself. You can check this with the
-find-primary-key-info function.
-#+BEGIN_SRC lisp
-(pomo:find-primary-key-info "country1")
+Returns list of the user defined views in the current database. When strings-p is T, the names will be returned as strings, otherwise as keywords.
 
-(("name" "text") ("id" "integer"))
-#+END_SRC
-
-** method dao-keys (dao)
+** function view-exists-p (name)
    :PROPERTIES:
-   :ID:       4fa1fc88-dfb8-433f-90dc-c88e8908a5a8
-   :END:
-→ list
-
-Returns list of values that are the primary key of dao.
-
-** method dao-exists-p (dao)
-   :PROPERTIES:
-   :ID:       4a55236e-edfb-4f07-a237-fae3453fc99d
+   :ID:       24cd0fc5-8fb0-4b57-9504-71d9520abf6f
    :END:
 → boolean
 
-Test whether a row with the same primary key as the given dao exists in the
-database. Will also return NIL when any of the key slots in the object are
-unbound.
+Tests whether a view with the given name exists. Takes either a string or a symbol for the view name.
 
-** method make-dao (type &rest args &key &allow-other-keys)
+** function describe-views (&optional (schema "public")
    :PROPERTIES:
-   :ID:       a812726c-52ea-4321-9bae-f9646bccc128
-   :END:
-→ dao
-
-Combines make-instance with insert-dao. Return the created dao.
-
-** macro define-dao-finalization (((dao-name class) &rest keyword-args) &body body)
-   :PROPERTIES:
-   :ID:       645a03ec-739a-4ee5-b83d-dcbe43ef009a
-   :END:
-
-Create an :around-method for make-dao. The body is executed in a lexical
-environment where dao-name is bound to a freshly created and inserted DAO.
-The representation of the DAO in the database is then updated to reflect
-changes that body might have introduced. Useful for processing values of
-slots with the type serial, which are unknown before insert-dao.
-
-** method get-dao (type &rest keys)
-   :PROPERTIES:
-   :ID:       6dd7dd12-0f9a-4c47-94ee-43f0886df956
-   :END:
-→ dao
-
-Select the DAO object from the row that has the given primary key values, or
-NIL if no such row exists. Objects created by this function will have
-initialize-instance called on them (after loading in the values from the
-database) without any arguments ― even :default-initargs are skipped.
-The same goes for select-dao and query-dao.
-
-** macro select-dao (type &optional (test t) &rest sort)
-   :PROPERTIES:
-   :ID:       8b3533e5-2399-47e4-8fac-5345ec44c878
+   :ID:       51f383ba-fe58-4a5f-bf31-ac79b18170b7
    :END:
 → list
 
-Select DAO objects for the rows in the associated table for which the given
-test (either an S-SQL expression or a string) holds. When sorting arguments
-are given, which can also be S-SQL forms or strings, these are used to sort
-the result.
+Describe the current views in the specified schema. Includes the select statements used to create the view. Takes an optional schema but defaults to public schema.
 
-(Note that, if you want to sort, you have to pass the test argument.)
-#+BEGIN_SRC lisp
-(select-dao 'user (:> 'score 10000) 'name)
-#+END_SRC
-
-** macro do-select-dao (((type type-var) &optional (test t) &rest sort) &body body)
-   :PROPERTIES:
-   :ID:       b1a7accd-8c3e-429b-a8c8-35f2283855c4
-   :END:
-
-Like select-dao, but iterates over the results rather than returning them.
-For each matching DAO, body is evaluated with type-var bound to the DAO
-instance.
-#+BEGIN_SRC lisp
-(do-select-dao (('user user) (:> 'score 10000) 'name)
-  (pushnew user high-scorers))
-#+END_SRC
-
-** macro query-dao (type query &rest args)
-   :PROPERTIES:
-   :ID:       134f9dcb-0784-461b-a38c-85c14d850910
-   :END:
-→ list
-
-Execute the given query (which can be either a string or an S-SQL expression)
-and return the result as DAOs of the given type. If the query contains
-placeholders ($1, $2, etc) their values can be given as extra arguments.
-The names of the fields returned by the query must either match slots in
-the DAO class, or be bound through with-column-writers.
-
-** function do-query-dao (((type type-var) query &rest args) &body body)
-   :PROPERTIES:
-   :ID:       8f5738c2-a11e-4c1b-91bc-b52f62502fbd
-   :END:
-→ list
-
-Like query-dao, but iterates over the results rather than returning them.
-For each matching DAO, body is evaluated with type-var bound to the instance.
-#+BEGIN_SRC lisp
-(do-query-dao (('user user) (:order-by (:select '* :from 'user :where (:> 'score 10000)) 'name))
-  (pushnew user high-scorers))
-#+END_SRC
-
-** variable *ignore-unknown-columns*
-   :PROPERTIES:
-   :ID:       a6627d60-61f4-4a9b-86e7-5c1454a4e487
-   :END:
-
-Normally, when get-dao, select-dao, or query-dao finds a column in the database
-that's not in the DAO class, it will raise an error. Setting this variable to
-a non-NIL will cause it to simply ignore the unknown column.
-
-** method insert-dao (dao)
-   :PROPERTIES:
-   :ID:       6e534cce-6d6a-4710-875e-bf53aadb2045
-   :END:
-→ dao
-
-Insert the given dao into the database. Column slots of the object which
-are unbound implies the database defaults. Hence, if these columns has
-no defaults defined in the database, the the insertion of the dao will
-be failed. (This feature only works on PostgreSQL 8.2 and up.)
-
-** method update-dao (dao)
-   :PROPERTIES:
-   :ID:       faf45a30-c384-461f-9367-9e7c40c466a5
-   :END:
-→ dao
-
-Update the representation of the given dao in the database to the values
-in the object. This is not defined for tables that do not have any
-non-primary-key columns. Raises an error when no row matching the dao exists.
-
-** function save-dao (dao)
-   :PROPERTIES:
-   :ID:       a61016ef-bf72-4d7f-804f-c4396098833b
-   :END:
-→ boolean
-
-Tries to insert the given dao using insert-dao. If this raises a unique key
-violation error, it tries to update it by using update-dao instead. Be
-aware that there is a possible race condition here ― if some other process
-deletes the row at just the right moment, the update fails as well. Returns
-a boolean telling you whether a new row was inserted.
-
-This function is unsafe to use inside of a transaction ― when a row with the
-given keys already exists, the transaction will be aborted. Use
-save-dao/transaction instead in such a situation.
-
-See also: upsert-dao.
-
-** function save-dao/transaction (dao)
-   :PROPERTIES:
-   :ID:       0162b077-c274-48b0-9d5d-655de2482012
-   :END:
-→ boolean
-
-Acts exactly like save-dao, except that it protects its attempt to insert the
-object with a rollback point, so that a failure will not abort the transaction.
-
-See also: upsert-dao.
-
-** method upsert-dao (dao)
-   :PROPERTIES:
-   :ID:       ab8ea79a-1761-402c-a1bc-3a5c4fd53c24
-   :END:
-→ dao
-
-Like save-dao or save-dao/transaction but using a different method that doesn't
-involve a database exception. This is safe to use both in and outside a
-transaction, though it's advisable to always do it in a transaction to
-prevent a race condition. The way it works is:
-
-If the object contains unbound slots, we call insert-dao directly, thus
-the behavior is like save-dao.
-
-Otherwise we try to update a record with the same primary key. If the
-PostgreSQL returns a non-zero number of rows updated it treated as the
-record is already exists in the database, and we stop here.
-
-If the PostgreSQL returns a zero number of rows updated, it treated as
-the record does not exist and we call insert-dao.
-
-The race condition might occur at step 3 if there's no transaction:
-if UPDATE returns zero number of rows updated and another thread inserts
-the record at that moment, the insertion implied by step 3 will fail.
-
-Note, that triggers and rules may affect the number of inserted or updated
-rows returned by PostgreSQL, so zero or non-zero number of affected rows may
-not actually indicate the existence of record in the database.
-
-This method returns two values: the DAO object and a boolean (T if the object
-was inserted, NIL if it was updated).
-
-** method delete-dao (dao)
-   :PROPERTIES:
-   :ID:       f3371904-cd84-4392-a301-0f910bcf1b90
-   :END:
-
-Delete the given dao from the database.
-
-** function dao-table-name (class)
-   :PROPERTIES:
-   :ID:       718c03fe-5c70-43c1-a986-bc361d1e2ee6
-   :END:
-→ string
-
-Get the name of the table associated with the given DAO class (or
-symbol naming such a class).
-
-** function dao-table-definition (class)
-   :PROPERTIES:
-   :ID:       e796fdb5-a8d9-4399-893a-6783dd925e78
-   :END:
-→ string
-
-Given a DAO class, or the name of one, this will produce an SQL query string
-with a definition of the table. This is just the bare simple definition, so
-if you need any extra indices or or constraints, you'll have to write your
-own queries to add them, in which case look to s-sql's create-table function.
-
-** macro with-column-writers ((&rest writers) &body body)
-   :PROPERTIES:
-   :ID:       52b95f7c-f8f0-4e53-8e60-622746f18e16
-   :END:
-
-Provides control over the way get-dao, select-dao, and query-dao read values
-from the database. This is not commonly needed, but can be used to reduce the
-amount of queries a system makes. writers should be a list of alternating
-column names (strings or symbols) and writers, where writers are either symbols
-referring to a slot in the objects, or functions taking two arguments ― an
-instance and a value ― which can be used to somehow store the value in the
-new instance. When any DAO-fetching function is called in the body, and columns
-matching the given names are encountered in the result, the writers are used
-instead of the default behaviour (try and store the value in the slot that
-matches the column name).
-
-An example of using this is to add some non-column slots to a DAO class, and
-use query-dao within a with-column-writers form to pull in extra information
-about the objects, and immediately store it in the new instances.
-
-* Table definition and creation
-  :PROPERTIES:
-  :ID:       1c0a254a-4a0e-4012-b519-8fe8cbf9ae02
-  :END:
-It can be useful to have the SQL statements needed to build an application's
-tables available from the source code, to do things like automatically
-deploying a database. The following macro and functions allow you to group
-sets of SQL statements under symbols, with some shortcuts for common elements
-in table definitions.
-
-** macro deftable (name &body definition)
-   :PROPERTIES:
-   :ID:       39e40910-e25a-4db4-bd0a-b4b6d1a75630
-   :END:
-
-Define a table. name can be either a symbol or a (symbol string) list.
-In the first case, the table name is derived from the symbol's name by
-S-SQL's rules. In the second case, the name is given explicitly. The body
-of definitions can contain anything that evaluates to a string, as well
-as S-SQL expressions. The variables *table-name* and *table-symbol* are
-bound to the relevant values in the body. Note that the evaluation of the
-definition is ordered, so you'll generally want to create your table first
-and then define indices on it.
-
-** function !dao-def ()
-   :PROPERTIES:
-   :ID:       eb1680a7-2a82-4e6a-b31b-aeea22bf7362
-   :END:
-
-Should only be used inside deftable's body. Adds the result of calling
-dao-table-definition on *table-symbol* to the definition.
-
-** function !index (&rest columns), !unique-index (&rest columns)
-   :PROPERTIES:
-   :ID:       5ceae010-3712-400a-9c8c-0616b8406390
-   :END:
-
-Define an index on the table being defined. The columns can be given as
-symbols or strings.
-
-** function !foreign (target-table columns &optional target-columns &key on-delete on-update deferrable initially-deferred)
-   :PROPERTIES:
-   :ID:       1378528c-3e7a-452b-8775-b3d84d897ebd
-   :END:
-
-Add a foreign key to the table being defined. target-table is the referenced
-table. columns is a list of column names or single name in this table, and,
-if the columns have different names in the referenced table, target-columns
-must be another list of column names or single column name of the target-table,
-or :primary-key to denote the column(s) of the target-table's primary key
-as referenced column(s).
-
-The on-delete and on-update arguments can be used to specify ON DELETE and
-ON UPDATE actions, as per the keywords allowed in create-table. In addition,
-the deferrable and initially-deferred arguments can be used to indicate whether
-constraint checking can be deferred until the current transaction completed,
-and whether this should be done by default. Note that none of these are
-really &key arguments, but rather are picked out of a &rest arg at runtime,
-so that they can be specified even when target-columns is not given.
-
-** function !unique (target-fields &key deferrable initially-deferred)
-   :PROPERTIES:
-   :ID:       c4631db6-9994-40df-97b7-150df71bb121
-   :END:
-
-Constrains one or more columns to only contain unique (combinations of) values,
-with deferrable and initially-deferred defined as in !foreign
-
-** function create-table (symbol)
-   :PROPERTIES:
-   :ID:       333d4860-6cfe-4009-80f8-a480174d64e1
-   :END:
-
-Creates the table identified by symbol by executing all forms in its definition.
-
-** function create-all-tables ()
-   :PROPERTIES:
-   :ID:       7477cdc4-59bf-47fb-9b60-25ee9c38eb66
-   :END:
-
-Creates all defined tables.
-
-** function create-package-tables (package)
-   :PROPERTIES:
-   :ID:       8e36190a-a3a4-4e66-8df4-0a6b6b74f617
-   :END:
-
-Creates all tables identified by symbols interned in the given package.
-
-** variables *table-name*, *table-symbol*
-   :PROPERTIES:
-   :ID:       25924943-75d9-4612-b2a3-dc94f292c2a5
-   :END:
-
-These variables are bound to the relevant name and symbol while the forms of a
-table definition are evaluated. Can be used to define shorthands like the ones
-below.
-
-* Schemata
-  :PROPERTIES:
-  :ID:       7f622a14-9063-4a4f-8919-bb66edc241b9
-  :END:
-Schema allow you to separate tables into differnet name spaces. In different
-schemata two tables with the same name are allowed to exists. The tables can
-be referred by fully qualified names or with the macro with-schema. You could
-also set the search path with set-search-path. For listing end checking there
-are also the functions list-schemata and schema-exist-p. The following
-functions allow you to create, drop schemata and to set the search path.
-
-** function create-schema (schema)
-   :PROPERTIES:
-   :ID:       3d4619fa-faef-47b2-b6ab-61b36e8b52b2
-   :END:
-
-Creates a new schema. Raises an error if the schema is already exists.
-
-** function drop-schema (schema &key (if-exists nil) (cascade nil))
-   :PROPERTIES:
-   :ID:       cc7fe0f4-31b5-435c-9b8d-22564f7e0ad5
-   :END:
-
-Removes a schema. Accepts :if-exists and/or :cascade arguments like :drop-table.
-
-** function get-search-path ()
-   :PROPERTIES:
-   :ID:       639f826f-aed2-4a2d-811c-fe862953d195
-   :END:
-
-Retrieve the current search path.
-
-** function set-search-path (path)
-   :PROPERTIES:
-   :ID:       1fa0b1a6-af88-4083-b3f1-16b8b79aca3c
-   :END:
-
-Sets the search path to the path. This function is used by with-schema.
-** function split-fully-qualified-table-name (name)
-   :PROPERTIES:
-   :ID:       1aa410f7-b60b-4c95-bc4e-dacefe8cc04c
-   :END:
-→ list
-Takes a name of the form database.schema.table or schema.table or just table
-and returns a list in the form '(table schema database)
 
 * Database Health Measurements
   :PROPERTIES:
@@ -1550,26 +1431,261 @@ rows/calls and the cache hit percentage.
   :PROPERTIES:
   :ID:       73c18602-c501-4399-ac07-cab915309777
   :END:
+** function coalesce (&rest arguments)
+   :PROPERTIES:
+   :ID:       1df6bd25-618b-4a00-8ec2-cc5b0548b045
+   :END:
+→ value
+
+Returns the first non-NIL, non-NULL (as in :null) argument, or NIL if none are present. Useful for providing a fall-back value for the result of a query, or, when given only one argument, for transforming :nulls to NIL.
+
 ** function execute-file (filename &optional (print nil))
    :PROPERTIES:
    :ID:       37df40a0-86b4-4aef-828e-68663f74927e
    :END:
-This function will execute sql queries stored in a file.
-Each sql statement in the file will be run independently, but
-if one statement fails, subsequent query statements will not
-be run, but any statement prior to the failing statement will
-have been commited.
+This function will execute sql queries stored in a file. Each sql statement in the file will be run independently, but if one statement fails, subsequent query statements will not be run, but any statement prior to the failing statement will have been commited.
 
-If you want the standard transction treatment such that all
-statements succeed or no statement succeeds, then ensure that
-the file starts with a "begin transaction" statement and finishes
-with an "end transaction" statement. See the test file
-test-execute-file-broken-transaction.sql as an example.
+If you want the standard transction treatment such that all statements succeed or no statement succeeds, then ensure that the file starts with a "begin transaction" statement and finishes with an "end transaction" statement. See the test file test-execute-file-broken-transaction.sql as an example.
 
-For debugging purposes, if the optional print
-parameter is set to t, format will print the count of the query
-and the query to the REPL.
+For debugging purposes, if the optional print parameter is set to t, format will print the count of the query and the query to the REPL.
 
-IMPORTANT NOTE: This utility function assumes that the file
-containing the sql queries can be trusted and bypasses the
-normal postmodern parameterization of queries.
+IMPORTANT NOTE: This utility function assumes that the file containing the sql queries can be trusted and bypasses the normal postmodern parameterization of queries.
+* Imported From s-sql
+  :PROPERTIES:
+  :ID:       cd3d88e6-1e81-4675-bd17-409efdc39730
+  :END:
+** macro sql (form)
+   :PROPERTIES:
+   :ID:       9de76637-62f7-4c7c-a5d1-1f37491b3db3
+   :END:
+→ string
+
+Convert the given form (a list starting with a keyword) to an SQL query string
+at compile time, according to the rules described here. For example:
+#+BEGIN_SRC lisp
+(sql (:select '* :from 'country :where (:= 'a 1)))
+ "(SELECT * FROM country WHERE (a = 1))"
+#+END_SRC
+
+but
+#+BEGIN_SRC lisp
+(sql '(:select '* :from 'country :where (:= 'a 1)))
+#+END_SRC
+
+would throw an error. For the later case you need to use sql-compile.
+
+** function sql-compile (form)
+   :PROPERTIES:
+   :ID:       8d161d2a-06cb-4334-9ee6-86e805eb5295
+   :END:
+→ string
+
+This is the run-time variant of the sql macro. It converts the given list to
+an SQL query, with the same rules except that symbols in this list do not
+have to be quoted to be interpreted as identifiers. For example:
+#+BEGIN_SRC lisp
+ (sql-compile '(:select '* :from 'country :where (:= 'a 1)))
+
+  \"(SELECT * FROM country WHERE (a = 1))\"
+#+END_SRC
+
+but
+#+BEGIN_SRC lisp
+(sql (:select '* :from 'country :where (:= 'a 1)))
+#+END_SRC
+would throw an error. For the later case you need to use sql.
+
+** deftype smallint ()
+   :PROPERTIES:
+   :ID:       3b558b7d-532c-4375-a80a-4526112ae132
+   :END:
+
+  '(signed-byte 16)
+** deftype bigint ()
+   :PROPERTIES:
+   :ID:       d5d5048e-f212-4b5a-ae63-c18d2a411279
+   :END:
+
+  '(signed-byte 64)
+** deftype numeric (&optional precision/scale scale)
+   :PROPERTIES:
+   :ID:       4eb58260-f8e3-4562-bfff-17211cdd98da
+   :END:
+
+  (declare (ignore precision/scale scale))
+  'number
+** deftype double-precision ()
+   :PROPERTIES:
+   :ID:       b4ec051b-d257-47c6-9876-25aec64f967a
+   :END:
+
+  'double-float
+** deftype bytea ()
+   :PROPERTIES:
+   :ID:       2532e5a0-cbb5-490a-b142-e971ad0730f7
+   :END:
+
+  '(array (unsigned-byte 8))
+** deftype text ()
+   :PROPERTIES:
+   :ID:       d2867c78-0b66-4b45-882e-115a1192de11
+   :END:
+
+  'string
+** deftype varchar (length)
+   :PROPERTIES:
+   :ID:       eecec060-840e-42c3-9b6e-74789b19f3ac
+   :END:
+
+  (declare (ignore length))
+  `string)
+** deftype serial ()
+   :PROPERTIES:
+   :ID:       cc755c1e-af5f-4958-9e18-7b47831cd786
+   :END:
+
+'integer
+** deftype serial8 ()
+   :PROPERTIES:
+   :ID:       db403045-9608-45f9-8f17-aa3dd951d614
+   :END:
+
+'integer
+
+** deftype db-null ()
+   :PROPERTIES:
+   :ID:       fb204ed8-0ac7-4c74-ad47-ff9e95b75561
+   :END:
+
+Type for representing NULL values. Use like (or integer db-null) for declaring a type to be an integer that may be null."
+  '(eql :null)
+
+** function from-sql-name (str)
+   :PROPERTIES:
+   :ID:       408c0a66-6772-4999-8759-bebeee43646c
+   :END:
+
+Convert a string to a symbol, upcasing and replacing underscores with hyphens.
+** function list-available-types ()
+   :PROPERTIES:
+   :ID:       b5ebabe7-31f9-45b6-8ecb-6035febaa392
+   :END:
+→ list
+
+List the available data types in the connected postgresql version, It returns a list of lists, each sublist containing the oid (object identifier number) and the name of the data types. E.g. (21 "smallint")
+
+** function parse-queries (file-content)
+   :PROPERTIES:
+   :ID:       d9c23921-9839-422d-aeea-df8bfc11df47
+   :END:
+→ list
+
+Read SQL queries in given string and split them, returns a list.
+** function read-queries (filename)
+   :PROPERTIES:
+   :ID:       b871c68d-2b31-444d-8c2d-9d7093fef956
+   :END:
+
+Read SQL queries in a given file and split them, returns a list.
+** function sql-escape-string (string)
+   :PROPERTIES:
+   :ID:       02edac61-f915-4d5f-b52e-d4b7ace29352
+   :END:
+→ string
+
+[[http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS][Escapes]] a string for inclusion in a PostgreSQL query. Example:
+#+BEGIN_SRC lisp
+ (sql-escape-string \"Puss in 'Boots'\")
+
+ \"E'Puss in ''Boots'''\"
+
+#+END_SRC
+
+
+** method sql-escape (arg)
+   :PROPERTIES:
+   :ID:       8b533d2c-53ec-4f34-b19a-fd68bbef9384
+   :END:
+
+A generalisation of sql-escape-string looks at the type of the value passed, and properly writes it out it for inclusion in an SQL query. Symbols will be
+converted to SQL names. Examples:
+#+BEGIN_SRC lisp
+(sql-escape "tr'-x")
+
+"E'tr''-x'"
+
+(sql-escape (/ 1 13))
+
+"0.0769230769230769230769230769230769230"
+
+(sql-escape #("Baden-Wurttemberg" "Bavaria" "Berlin" "Brandenburg"))
+
+"ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']"
+#+END_SRC
+** variable *escape-sql-names-p*
+   :PROPERTIES:
+   :ID:       fc3763af-74e4-44ed-903e-7c32be128bd3
+   :END:
+
+Determines whether double quotes are added around column, table, and ** function names in
+queries. Valid values:
+
+- T, in which case every name is escaped,
+- NIL, in which case no name is escape,
+- :auto, which causes only [[http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html][reserved words]] to be escaped, or.
+- :literal which is the same as :auto except it has added consequence in to-sql-name (see below).
+
+The default value is :auto.
+
+Be careful when binding this with let and such ― since a lot of SQL compilation tends to happen at
+compile-time, the result might not be what you expect. Mixed case sensitivity is not currently
+well supported. Postgresql itself will downcase unquoted identifiers. This will be revisited in the
+future if requested.
+** function to-sql-name (name &optional (escape-p *escape-sql-names-p*) (ignore-reserved-words nil))
+   :PROPERTIES:
+   :ID:       1b4f5a57-87f7-42f5-ae3c-eff5b41122b3
+   :END:
+
+Convert a symbol or string into a name that can be a sql table, column, or operation name. Add quotes when escape-p is true, or escape-p is :auto and the name contains reserved words. Quoted or delimited identifiers can be used by passing :literal as the value of escape-p. If escape-p is :literal, and the name is a string then the string is still escaped but the symbol or string is not downcased, regardless of the setting for *downcase-symbols* and the hyphen and forward slash characters are not replaced with underscores.
+
+Ignore-reserved-words is only used internally for column names which are allowed to be reserved words, but it is not recommended.
+
+** condition sql-error
+   :PROPERTIES:
+   :ID:       800c314e-4ff7-435e-84ea-fe6d3ec71353
+   :END:
+        No documentation provided.
+
+
+* Conditions Imported From cl-postgres
+  :PROPERTIES:
+  :ID:       800ef5ef-fa19-428d-83b9-f38581e38d09
+  :END:
+** condition database-connection-error
+   :PROPERTIES:
+   :ID:       5d0fdf49-8efa-4e7e-8b9d-925cb19630e1
+   :END:
+
+Conditions of this type are signalled when an error occurs that breaks the connection socket. They offer a :reconnect restart.
+
+** condition database-error
+   :PROPERTIES:
+   :ID:       0ce0752e-d58b-4072-9de1-8c791ab627d0
+   :END:
+
+This is the condition type that will be used to signal virtually all database-related errors (though in some cases socket errors may be raised when a connection fails on the IP level).
+
+** function database-error-constraint-name (err)
+   :PROPERTIES:
+   :ID:       300b1531-c01f-4674-b08c-4624d5502a5c
+   :END:
+
+Given a database-error for an integrity violation, will attempt to
+extract the constraint name.
+
+** function database-error-extract-name (err)
+   :PROPERTIES:
+   :ID:       91e02238-2910-47d1-9fdd-c466147fe69c
+   :END:
+
+Given a database-error, will extract the critical name from the error message.

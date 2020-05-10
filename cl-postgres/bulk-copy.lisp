@@ -15,6 +15,11 @@
 
 
 (defun open-db-writer (db-spec table columns)
+  "Opens a table stream into which rows can be written one at a time using
+db-write-row. db is either a connection object or a list of arguments that
+could be passed to open-database. table is the name of an existing table
+into which this writer will write rows. If you don't have data for all
+columns, use columns to indicate those that you do."
   (let* ((own-connection (listp db-spec))
          (copier (make-instance 'bulk-copier
                    :own-connection own-connection
@@ -25,6 +30,8 @@
     copier))
 
 (defun close-db-writer (self &key (abort nil))
+  "Closes a bulk writer opened by open-db-writer. Will close the associated
+database connection when it was created for this copier, or abort is true."
   (unwind-protect
        (let* ((connection (copier-database self))
               (socket (connection-socket connection)))
@@ -36,6 +43,11 @@
   (copier-count self))
 
 (defun db-write-row (self row &optional (data (prepare-row self row)))
+  "Writes row-data into the table and columns referenced by the writer.
+row-data is a list of Lisp objects, one for each column included when
+opening the writer. Arrays (the elements of which must all be the same type)
+will be serialized into their PostgreSQL representation before being written
+into the DB."
   (let* ((connection (copier-database self))
 	 (socket (connection-socket connection)))
     (with-reconnect-restart connection

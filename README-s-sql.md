@@ -20,43 +20,35 @@ S-SQL knows the SQL equivalents to a number of Lisp types, and defines some
 extra types that can be used to denote other SQL types. The following
 table shows the correspondence:
 
- Lisp type                      | 	SQL type
-------------------------------  | --------------------
- smallint	                    | smallint
- integer	                    | integer
- bigint	                        | bigint
- (numeric X Y)                  | numeric(X, Y)
- float, real	                | real
- double-float, double-precision | double-precision
- string, text                   | text
- (string X)                     | char(X)
- (varchar X)	                | varchar(X)
- boolean	                    | boolean
- bytea	                        | bytea
- date	                        | date
- timestamp	                    | timestamp
- interval	                    | interval
- array                          | array
+| Lisp type                      | 	SQL type |
+| -----------------------------  | ------------------- |
+| smallint	                    | smallint |
+| integer	                    | integer |
+| bigint	                        | bigint |
+| (numeric X Y)                  | numeric(X, Y) |
+| float, real	                | real |
+| double-float, double-precision | double-precision |
+| string, text                   | text |
+| (string X)                     | char(X) |
+| (varchar X)	                | varchar(X) |
+| boolean	                    | boolean |
+| bytea	                        | bytea |
+| date	                        | date |
+| timestamp	                    | timestamp |
+| interval	                    | interval |
+| array                          | array |
 
 - type db-null
 
 This is a type of which only the keyword :null is a member. It is used to represent
 NULL values from the database.
 
-<a id="org6afbee2"></a>
-
 # Dynamic Queries, Composition and Parameterized Queries
-
-
-<a id="org93eb5ad"></a>
 
 ## Overview
 
 The question gets asked how to build dynamic or composable queries
 in postmodern. First we need to understand the context - is the programmer building the query or are you taking data from a user and using that to build a query?
-
-
-<a id="orgc3f4259"></a>
 
 ### Programmer Built Queries
 
@@ -91,15 +83,12 @@ For purposes of this example, we will use the following employee table:
 
 1.  Approach #1 Use sql-compile
 
-    Sql-compile does a run-time compilation of an s-sql expression. In the
-    following example, we create a function that accepts a where-clause,
-    a table-name, 3 columns to select and two parameters to go into the where
-    clause.
+Sql-compile does a run-time compilation of an s-sql expression. In the following example, we create a function that accepts a where-clause, a table-name, 3 columns to select and two parameters to go into the where clause.
 
-        (defun toy-example (where-clause table-name col1 col2 col3 arg1 arg2)
-          (with-test-connection
+    (defun toy-example (where-clause table-name col1 col2 col3 arg1 arg2)
+           (with-test-connection
            (query (sql-compile
-                   (append `(:select ,col1 ,col2 ,col3 :from ,table-name :where)
+                    (append `(:select ,col1 ,col2 ,col3 :from ,table-name :where)
                            where-clause))
                   arg1 arg2)))
 
@@ -107,15 +96,13 @@ For purposes of this example, we will use the following employee table:
 
         ((6 "James" "Toronto") (9 "Mary" "Toronto"))
 
-    If we just look at what this call to sql-compile in toy-example generates, it would look like:
+If we just look at what this call to sql-compile in toy-example generates, it would look like:
 
         "(SELECT id, name, city FROM employee WHERE ((city = $1) and (salary > $2)))"
 
-    This example is still a parameterized query but for security reasons you will
-    need to be very careful how you generate the where clause.
+This example is still a parameterized query but for security reasons you will need to be very careful how you generate the where clause.
 
-    Another example with sql-compile and append, in this case updating a table and
-    setting two columns to NULL.
+Another example with sql-compile and append, in this case updating a table and setting two columns to NULL.
 
         (sql-compile (append '(:update :table1 :set)
                              (loop for a in '("col1" "col2")
@@ -124,14 +111,11 @@ For purposes of this example, we will use the following employee table:
 
         "UPDATE table1 SET E'col1' = NULL, E'col2' = NULL"
 
-    Lets think about it differently. What if we know the universe of columns we
-    want to select, but want to conditionally select some of them. Suppose we
-    know our targetted table has columns:
+Lets think about it differently. What if we know the universe of columns we  want to select, but want to conditionally select some of them. Suppose we know our targetted table has columns:
 
     'id 'name 'salary 'start-date 'city 'region 'age.
 
-    We may decide we always want name, city and age, but salary and start-date are
-    conditional.
+We may decide we always want name, city and age, but salary and start-date are conditional.
 
         (defun toy-example-2 (salaryp start-date-p)
           (sql-compile
@@ -160,7 +144,7 @@ For purposes of this example, we will use the following employee table:
          ("Alison" "New York" 38 90620) ("Chris" "Vancouver" 22 26020)
          ("Mary" "Toronto" 34 60020))
 
-    You could skip the (remove nil&#x2026; portion and substitute t for nil. E.g.
+You could skip the (remove nil&#x2026; portion and substitute t for nil. E.g.
 
         (defun toy-example-2 (salaryp start-date-p)
           (sql-compile
@@ -169,9 +153,9 @@ For purposes of this example, we will use the following employee table:
                      ,(if start-date-p 'start-date t)
                      :from 'employee)))
 
-    But I prefer to remove those segments completely from the query.
+But I prefer to remove those segments completely from the query.
 
-    Following on this same thread of thought, you can define a portion of the sql in a let clause:
+Following on this same thread of thought, you can define a portion of the sql in a let clause:
 
         (let ((sql1 '(:= name "Jason")))
           (query (sql-compile
@@ -179,7 +163,7 @@ For purposes of this example, we will use the following employee table:
 
         (("Jason" "New York" 29))
 
-    An example of this would be getting more columns depending on the postgresql server versionr:
+An example of this would be getting more columns depending on the postgresql server versionr:
 
         (defun more-table-info (table-name)
           "Returns variable amounts of information depending on the postgresql server version"
@@ -206,13 +190,9 @@ For purposes of this example, we will use the following employee table:
 
 2.  Approach #2 Use :raw
 
-    To quote Marijn, the :raw keyword takes a string and inserts it straight
-    into the query. I try to stay away from :raw if possible, but sometimes&#x2026;
+To quote Marijn, the :raw keyword takes a string and inserts it straight into the query. I try to stay away from :raw if possible, but sometimes&#x2026;
 
         (query (:select (:raw "tmp1.name") :from (:as 'baz (:raw "tmp1"))))
-
-
-<a id="org73dbeb0"></a>
 
 ### Queries with User Input
 

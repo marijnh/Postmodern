@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<!-- 2018-10-07 Sun 10:35 -->
-<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- 2020-05-10 Sun 18:26 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>S-SQL Reference Manual</title>
-<meta name="generator" content="Org mode" />
+<meta name="generator" content="Org mode">
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
   .title  { text-align: center;
@@ -251,155 +249,165 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
+<header>
 <h1 class="title">S-SQL Reference Manual</h1>
-<div id="table-of-contents">
+</header><nav id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgea79ff8">Interface</a>
+<li><a href="#orgba3b985">Interface</a>
 <ul>
-<li><a href="#org59062d4">macro sql (form)</a></li>
-<li><a href="#org9da6b46">function sql-compile (form)</a></li>
-<li><a href="#org32dc2d3">function sql-template (form)</a></li>
-<li><a href="#org6f539a2">function enable-s-sql-syntax (&amp;optional (char #\Q))</a></li>
-<li><a href="#org47c05e0">function sql-escape-string (string)</a></li>
-<li><a href="#org5324b2c">method sql-escape (value)</a></li>
-<li><a href="#orgeef6495">variable <b>standard-sql-strings</b></a></li>
-<li><a href="#orgcd83009">variable <b>escape-sql-names-p</b></a></li>
-<li><a href="#org26526d1">function sql-type-name (type)</a></li>
-<li><a href="#orgde5997d">function to-sql-name (name &amp;optional (escape-p <b>escape-sql-names-p</b>))</a></li>
-<li><a href="#orga7ee3a6">function from-sql-name (string)</a></li>
-<li><a href="#orge32024e">macro register-sql-operators (arity &amp;rest names)</a></li>
+<li><a href="#org0af83af">macro sql (form)</a></li>
+<li><a href="#org1aba58a">function sql-compile (form)</a></li>
+<li><a href="#org9a361f0">function sql-template (form)</a></li>
+<li><a href="#org95ef4c5">function enable-s-sql-syntax (&amp;optional (char #\Q))</a></li>
+<li><a href="#orgc53ee2b">function sql-escape-string (string)</a></li>
+<li><a href="#orgac5cf6a">method sql-escape (value)</a></li>
+<li><a href="#org3d4608f">variable <b>downcase-symbols</b></a></li>
+<li><a href="#org1489ea5">variable <b>standard-sql-strings</b></a></li>
+<li><a href="#org5d82cf4">variable <b>postgres-reserved-words</b> hashtable</a></li>
+<li><a href="#org99e7b0c">variable <b>escape-sql-names-p</b></a></li>
+<li><a href="#org1890444">function sql-type-name (type)</a></li>
+<li><a href="#orge19bc70">function to-sql-name (name &amp;optional (escape-p <b>escape-sql-names-p</b>)(ignore-reserved-words nil)</a></li>
+<li><a href="#orge34934e">function from-sql-name (string)</a></li>
+<li><a href="#org381f425">macro register-sql-operators (arity &amp;rest names)</a></li>
 </ul>
 </li>
-<li><a href="#orgc935f86">SQL Types</a></li>
-<li><a href="#org17abf1b">SQL Syntax</a>
+<li><a href="#org318f825">SQL Types</a>
 <ul>
-<li><a href="#org045eaf9">sql-op :select (&amp;rest args)</a></li>
-<li><a href="#orgc7328de">sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</a></li>
-<li><a href="#org11b68c8">sql-op :~, :not (arg)</a></li>
-<li><a href="#orge526cdd">sql-op :function (name (&amp;rest arg-types) return-type stability body)</a></li>
-<li><a href="#orgab122e0">sql-op :~, :~*, :!~, :!~* (string pattern)</a></li>
-<li><a href="#org1139f84">sql-op :like, :ilike (string pattern)</a></li>
-<li><a href="#org997192f">sql-op :@@</a></li>
-<li><a href="#org3a14a34">sql-op :desc (column)</a></li>
-<li><a href="#org88cb97f">sql-op :nulls-first, :nulls-last (column)</a></li>
-<li><a href="#orgf2b79c8">sql-op :as (form name &amp;rest fields)</a></li>
-<li><a href="#orgec06e4a">sql-op :cast (query)</a></li>
-<li><a href="#org39a5961">sql-op :type (query)</a></li>
-<li><a href="#org2eb3a98">sql-op :create-composite-type (type-name &amp;rest args)</a></li>
-<li><a href="#org403b50a">sql-op :exists (query)</a></li>
-<li><a href="#org5aff9f7">sql-op :is-null (arg)</a></li>
-<li><a href="#org0d94750">sql-op :not-null (arg)</a></li>
-<li><a href="#orgd1126bf">sql-op :in (value set)</a></li>
-<li><a href="#org3a2c53d">sql-op :not-in (value set)</a></li>
-<li><a href="#org3b55586">sql-op :set (&amp;rest elements)</a></li>
-<li><a href="#org466e9d0">sql-op :array (query)</a></li>
-<li><a href="#orga93252b">sql-op :array[] (&amp;rest args)</a></li>
-<li><a href="#org34115a3">sql-op :[] (form start &amp;optional end)</a></li>
-<li><a href="#orgef55ec4">sql-op :extract (unit form)</a></li>
-<li><a href="#org49dbfc7">sql-op :case (&amp;rest clauses)</a></li>
-<li><a href="#orgac8b084">sql-op :between (n start end)</a></li>
-<li><a href="#org2295aeb">sql-op :between-symmetric (n start end)</a></li>
-<li><a href="#org77e84cb">sql-op :dot (&amp;rest names)</a></li>
-<li><a href="#orgcacdbda">sql-op :type (form type)</a></li>
-<li><a href="#orgce94be1">sql-op :raw (string)</a></li>
-<li><a href="#orga94ef3d">sql-op :limit (query amount &amp;optional offset)</a></li>
-<li><a href="#org4d5eee3">sql-op :order-by (query &amp;rest exprs)</a></li>
-<li><a href="#org670a2f7">sql-op :values</a></li>
-<li><a href="#orged5ce72">sql-op :empty-set</a></li>
-<li><a href="#orga818172">sql-op :group-by</a></li>
-<li><a href="#orgf208b6b">sql-op :grouping-sets</a></li>
+<li><a href="#org857b531">type db-null</a></li>
 </ul>
 </li>
-<li><a href="#orgf21ed02">Time, Date and Interval Operators</a>
+<li><a href="#orge40d9c4">SQL Syntax</a>
 <ul>
-<li><a href="#orgb1a16d5">sql-op :interval (arg)</a></li>
-<li><a href="#org14c44be">sql-op :current-date ()</a></li>
-<li><a href="#org39358b2">sql-op :current-time ()</a></li>
-<li><a href="#org857f8bf">sql-op :current-timestamp ()</a></li>
-<li><a href="#org5591a74">sql-op :timestamp (arg)</a></li>
-<li><a href="#org1836b21">sql-op :age (&amp;rest args)</a></li>
-<li><a href="#org37efdd7">sql-op :date (arg)</a></li>
+<li><a href="#org4e517af">sql-op :select (&amp;rest args)</a></li>
+<li><a href="#org2b5cf70">sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</a></li>
+<li><a href="#org3cb5b9f">sql-op :~, :not (arg)</a></li>
+<li><a href="#org08048a3">sql-op :function (name (&amp;rest arg-types) return-type stability body)</a></li>
+<li><a href="#org89a639e">sql-op :~, :~*, :!~, :!~* (string pattern)</a></li>
+<li><a href="#orga174b0e">sql-op :like, :ilike (string pattern)</a></li>
+<li><a href="#org5e184b5">sql-op :@@</a></li>
+<li><a href="#org293e92a">sql-op :desc (column)</a></li>
+<li><a href="#org4c9fe76">sql-op :nulls-first, :nulls-last (column)</a></li>
+<li><a href="#orgaf80a93">sql-op :as (form name &amp;rest fields)</a></li>
+<li><a href="#org6a62102">sql-op :cast (query)</a></li>
+<li><a href="#org8ba46b8">sql-op :type (query)</a></li>
+<li><a href="#org0d82f16">sql-op :create-composite-type (type-name &amp;rest args)</a></li>
+<li><a href="#org3cc5240">sql-op :exists (query)</a></li>
+<li><a href="#orga0239e4">sql-op :is-null (arg)</a></li>
+<li><a href="#org193dd6a">sql-op :not-null (arg)</a></li>
+<li><a href="#org52f6098">sql-op :in (value set)</a></li>
+<li><a href="#org916f95c">sql-op :not-in (value set)</a></li>
+<li><a href="#org8fa489d">sql-op :set (&amp;rest elements)</a></li>
+<li><a href="#orgd2eb27c">sql-op :array (query)</a></li>
+<li><a href="#org4420897">sql-op :array[] (&amp;rest args)</a></li>
+<li><a href="#orgaae0505">sql-op :[] (form start &amp;optional end)</a></li>
+<li><a href="#orgc70e5a6">sql-op :extract (unit form)</a></li>
+<li><a href="#org7994768">sql-op :case (&amp;rest clauses)</a></li>
+<li><a href="#org502491e">sql-op :between (n start end)</a></li>
+<li><a href="#orgbfa1cba">sql-op :between-symmetric (n start end)</a></li>
+<li><a href="#orge5dddb0">sql-op :dot (&amp;rest names)</a></li>
+<li><a href="#org77cd76d">sql-op :type (form type)</a></li>
+<li><a href="#org8ded86f">sql-op :raw (string)</a></li>
+<li><a href="#org94934b9">sql-op :limit (query amount &amp;optional offset)</a></li>
+<li><a href="#orgf9b71a0">sql-op :order-by (query &amp;rest exprs)</a></li>
+<li><a href="#org95c7b09">sql-op :values</a></li>
+<li><a href="#orgac7e8d4">sql-op :empty-set</a></li>
+<li><a href="#org6aee8af">sql-op :group-by</a></li>
+<li><a href="#orgff011cc">sql-op :grouping-sets</a></li>
 </ul>
 </li>
-<li><a href="#org480dc10">Aggregation Operators</a>
+<li><a href="#org224b407">Time, Date and Interval Operators</a>
 <ul>
-<li><a href="#org415fb49">sql-op :count (&amp;rest args)</a></li>
-<li><a href="#org5c4fa17">sql-op :avg (&amp;rest rest args)</a></li>
-<li><a href="#orgb0477dc">sql-op :sum (&amp;rest rest args)</a></li>
-<li><a href="#org9cd3200">sql-op ::max (&amp;rest args)</a></li>
-<li><a href="#org074efc1">sql-op ::min (&amp;rest args)</a></li>
-<li><a href="#orgecff730">sql-op ::every (&amp;rest args)</a></li>
-<li><a href="#org2147e61">sql-op :percentile-cont (&amp;rest args)</a></li>
-<li><a href="#org11bb0dd">sql-op :percentile-dist (&amp;rest args)</a></li>
-<li><a href="#org2b2e99b">sql-op :corr (y x)</a></li>
-<li><a href="#org5891378">sql-op :covar-pop (y x)</a></li>
-<li><a href="#org2150435">sql-op :covar-samp (y x)</a></li>
-<li><a href="#org15a7757">sql-op :string-agg (&amp;rest args)</a></li>
-<li><a href="#orgc293686">sql-op :array-agg (&amp;rest args)</a></li>
-<li><a href="#org39a2386">sql-op :mode (&amp;rest args)</a></li>
-<li><a href="#org12d674f">sql-op :regr_avgx (y x)</a></li>
-<li><a href="#orgfd0019e">sql-op :regr_avgy (y x)</a></li>
-<li><a href="#org8b744f9">sql-op :regr_count (y x)</a></li>
-<li><a href="#org3897e40">sql-op :regr_intercept (y x)</a></li>
-<li><a href="#orga9d4e44">sql-op :regr_r2 (y x)</a></li>
-<li><a href="#org89f8221">sql-op :regr_slope (y x)</a></li>
-<li><a href="#orgeee0791">sql-op :regr_sxx (y x)</a></li>
-<li><a href="#org0e43938">sql-op :regr_sxy (y x)</a></li>
-<li><a href="#org5f4aa6a">sql-op :regr_syy (y x)</a></li>
-<li><a href="#orga946d81">sql-op :stddev (&amp;rest args)</a></li>
-<li><a href="#org2cb7f31">sql-op :stddev-pop (&amp;rest args)</a></li>
-<li><a href="#orgf8e114c">sql-op :stddev-samp (&amp;rest args)</a></li>
-<li><a href="#orgfd333e2">sql-op :variance (&amp;rest args)</a></li>
-<li><a href="#orge04186f">sql-op :var-pop (&amp;rest args)</a></li>
-<li><a href="#org6f03b56">sql-op :var-samp (&amp;rest args)</a></li>
-<li><a href="#org3c900c9">sql-op :over (form &amp;rest args)</a></li>
-<li><a href="#org04fb231">sql-op :partition-by (&amp;rest args)</a></li>
-<li><a href="#org174cf90">sql-op :window (form)</a></li>
-<li><a href="#org1e35be3">sql-op :with (&amp;rest args)</a></li>
-<li><a href="#orga78cfb0">sql-op :with-recursive (&amp;rest args)</a></li>
+<li><a href="#orgad39f5a">sql-op :interval (arg)</a></li>
+<li><a href="#orgd76ef12">sql-op :current-date ()</a></li>
+<li><a href="#orga874d6b">sql-op :current-time ()</a></li>
+<li><a href="#org6fbea2c">sql-op :current-timestamp ()</a></li>
+<li><a href="#org23c69d4">sql-op :timestamp (arg)</a></li>
+<li><a href="#org77c2c24">sql-op :age (&amp;rest args)</a></li>
+<li><a href="#org4409788">sql-op :date (arg)</a></li>
+<li><a href="#org669f260">sql-op :make-interval (&amp;rest args)</a></li>
+<li><a href="#org243201c">sql-op :make-timestamp (&amp;rest args)</a></li>
+<li><a href="#orgcac0446">sql-op :make-timestamptz (&amp;rest args)</a></li>
 </ul>
 </li>
-<li><a href="#org94f2acc">Table Functions</a>
+<li><a href="#orgf690c14">Aggregation Operators</a>
 <ul>
-<li><a href="#orgc5ee32c">sql-op :for-update (query &amp;key of nowait)</a></li>
-<li><a href="#org3283a62">sql-op :for-share (query &amp;key of nowait)</a></li>
-<li><a href="#org9d854d6">sql-op :insert-into (table &amp;rest rest)</a></li>
-<li><a href="#org6f54651">sql-op :insert-rows-into (table &amp;rest rest)</a></li>
-<li><a href="#orgad27c04">sql-op :update (table &amp;rest rest)</a></li>
-<li><a href="#org45969c8">sql-op :delete-from (table &amp;rest rest)</a></li>
-<li><a href="#orge73f54c">sql-op :create-table (name (&amp;rest columns) &amp;rest options)</a>
-<ul>
-<li><a href="#orge98b440">Column Definition parameters</a></li>
-<li><a href="#orgcd7d88b">Table Constraints</a></li>
+<li><a href="#orgc72a174">sql-op :count (&amp;rest args)</a></li>
+<li><a href="#org4761523">sql-op :avg (&amp;rest rest args)</a></li>
+<li><a href="#org89e2a4b">sql-op :sum (&amp;rest rest args)</a></li>
+<li><a href="#orgc90409a">sql-op ::max (&amp;rest args)</a></li>
+<li><a href="#org51455c1">sql-op ::min (&amp;rest args)</a></li>
+<li><a href="#orgbc54137">sql-op ::every (&amp;rest args)</a></li>
+<li><a href="#org5ed36fb">sql-op :percentile-cont (&amp;rest args)</a></li>
+<li><a href="#org87a41fb">sql-op :percentile-dist (&amp;rest args)</a></li>
+<li><a href="#org0d4307e">sql-op :corr (y x)</a></li>
+<li><a href="#orgff08d57">sql-op :covar-pop (y x)</a></li>
+<li><a href="#orge18f79c">sql-op :covar-samp (y x)</a></li>
+<li><a href="#orgb49b552">sql-op :string-agg (&amp;rest args)</a></li>
+<li><a href="#orgb4fdc1e">sql-op :array-agg (&amp;rest args)</a></li>
+<li><a href="#orgebcbddd">sql-op :mode (&amp;rest args)</a></li>
+<li><a href="#org021ec3a">sql-op :regr_avgx (y x)</a></li>
+<li><a href="#org7495790">sql-op :regr_avgy (y x)</a></li>
+<li><a href="#org2abb7bb">sql-op :regr_count (y x)</a></li>
+<li><a href="#org21e4651">sql-op :regr_intercept (y x)</a></li>
+<li><a href="#orge6fa61f">sql-op :regr_r2 (y x)</a></li>
+<li><a href="#orgdd3231b">sql-op :regr_slope (y x)</a></li>
+<li><a href="#org12c4fac">sql-op :regr_sxx (y x)</a></li>
+<li><a href="#org73ff88f">sql-op :regr_sxy (y x)</a></li>
+<li><a href="#orgfc750df">sql-op :regr_syy (y x)</a></li>
+<li><a href="#org608cd76">sql-op :stddev (&amp;rest args)</a></li>
+<li><a href="#org4711541">sql-op :stddev-pop (&amp;rest args)</a></li>
+<li><a href="#org0f19c3a">sql-op :stddev-samp (&amp;rest args)</a></li>
+<li><a href="#orgfa850a0">sql-op :variance (&amp;rest args)</a></li>
+<li><a href="#orga46865a">sql-op :var-pop (&amp;rest args)</a></li>
+<li><a href="#org5e4939d">sql-op :var-samp (&amp;rest args)</a></li>
+<li><a href="#org683ecd9">sql-op :over (form &amp;rest args)</a></li>
+<li><a href="#org61df1f4">sql-op :partition-by (&amp;rest args)</a></li>
+<li><a href="#org19127b3">sql-op :window (form)</a></li>
+<li><a href="#orgca1f6da">sql-op :with (&amp;rest args)</a></li>
+<li><a href="#orga649c3a">sql-op :with-recursive (&amp;rest args)</a></li>
 </ul>
 </li>
-<li><a href="#org780fc17">sql-op :alter-table (name action &amp;rest args)</a></li>
-<li><a href="#orgcb5207e">sql-op :drop-table (name)</a></li>
-<li><a href="#org55cbaff">sql-op :truncate (&amp;rest args)</a></li>
-<li><a href="#orgc67c435">sql-op :create-index (name &amp;rest args)</a></li>
-<li><a href="#org993aa9f">sql-op :create-unique-index (name &amp;rest args)</a></li>
-<li><a href="#org3732290">sql-op :drop-index (name)</a></li>
-<li><a href="#org371d5df">sql-op :create-sequence (name &amp;key increment min-value max-value start cache cycle)</a></li>
-<li><a href="#org2776aef">sql-op :alter-sequence (name)</a></li>
-<li><a href="#org9ac2bc0">sql-op :drop-sequence (name)</a></li>
-<li><a href="#org03ea29a">sql-op :create-view (name query)</a></li>
-<li><a href="#orgb099849">sql-op :drop-view (name)</a></li>
-<li><a href="#orgc947053">sql-op :set-constraints (state &amp;rest constraints)</a></li>
-<li><a href="#orgf304b23">sql-op :listen (channel)</a></li>
-<li><a href="#org8a4149b">sql-op :unlisten (channel)</a></li>
-<li><a href="#orgfacf1ea">sql-op :notify (channel &amp;optional payload)</a></li>
-<li><a href="#org693dbfe">sql-op :create-role (role &amp;rest args)</a></li>
-<li><a href="#org048a544">sql-op :create-database (name)</a></li>
-<li><a href="#org161476a">sql-op :drop-database (name)</a></li>
-<li><a href="#orge8ec10f">sql-op :copy (table &amp;rest args)</a></li>
+<li><a href="#org73dbbd7">Table Functions</a>
+<ul>
+<li><a href="#org712ce1b">sql-op :for-update (query &amp;key of nowait)</a></li>
+<li><a href="#org8053ed4">sql-op :for-share (query &amp;key of nowait)</a></li>
+<li><a href="#orgaf3aa25">sql-op :insert-into (table &amp;rest rest)</a></li>
+<li><a href="#orge8932fe">sql-op :insert-rows-into (table &amp;rest rest)</a></li>
+<li><a href="#orgdc1ae42">sql-op :update (table &amp;rest rest)</a></li>
+<li><a href="#org9159b7c">sql-op :delete-from (table &amp;rest rest)</a></li>
+<li><a href="#org9e1c55d">sql-op :create-table (name (&amp;rest columns) &amp;rest options)</a>
+<ul>
+<li><a href="#orgcf55684">Column Definition parameters</a></li>
+<li><a href="#orgcfd8620">Table Constraints</a></li>
 </ul>
 </li>
-<li><a href="#org4f1702f">Dynamic Queries and Composition</a></li>
+<li><a href="#org00e7464">sql-op :alter-table (name action &amp;rest args)</a></li>
+<li><a href="#orgd356f90">sql-op :drop-table (name)</a></li>
+<li><a href="#org4a7abc0">sql-op :truncate (&amp;rest args)</a></li>
+<li><a href="#org3ff22a5">sql-op :create-index (name &amp;rest args)</a></li>
+<li><a href="#orgcc857d9">sql-op :create-unique-index (name &amp;rest args)</a></li>
+<li><a href="#orgf03fa3f">sql-op :drop-index (name)</a></li>
+<li><a href="#org755eae6">sql-op :create-sequence (name &amp;key increment min-value max-value start cache cycle)</a></li>
+<li><a href="#org939d0be">sql-op :alter-sequence (name)</a></li>
+<li><a href="#org015da84">sql-op :drop-sequence (name)</a></li>
+<li><a href="#orgc86378c">sql-op :create-view (name query)</a></li>
+<li><a href="#org61c6183">sql-op :drop-view (name)</a></li>
+<li><a href="#org1ff1f39">sql-op :set-constraints (state &amp;rest constraints)</a></li>
+<li><a href="#org79e2337">sql-op :listen (channel)</a></li>
+<li><a href="#org3b72b99">sql-op :unlisten (channel)</a></li>
+<li><a href="#orge7002dc">sql-op :notify (channel &amp;optional payload)</a></li>
+<li><a href="#orgf73f4f7">sql-op :create-role (role &amp;rest args)</a></li>
+<li><a href="#orgf27f700">sql-op :create-database (name)</a></li>
+<li><a href="#org1c1ba08">sql-op :drop-database (name)</a></li>
+<li><a href="#org4ff0d49">sql-op :copy (table &amp;rest args)</a></li>
+</ul>
+</li>
+<li><a href="#orga4014f9">Dynamic Queries and Composition</a></li>
 </ul>
 </div>
-</div>
+</nav>
 <p>
 This is the reference manual for the S-SQL component of the postmodern library.
 </p>
@@ -411,27 +419,45 @@ the work as possible at compile-time, so that at runtime a string concatenation
 is all that is needed to produce the final SQL query.
 </p>
 
-<div id="outline-container-orgea79ff8" class="outline-2">
-<h2 id="orgea79ff8">Interface</h2>
-<div class="outline-text-2" id="text-orgea79ff8">
+<div id="outline-container-orgba3b985" class="outline-2">
+<h2 id="orgba3b985"><a id="ID-462ce6d8-f967-4bce-817e-d1762ebfd41f"></a>Interface</h2>
+<div class="outline-text-2" id="text-orgba3b985">
 </div>
-<div id="outline-container-org59062d4" class="outline-3">
-<h3 id="org59062d4">macro sql (form)</h3>
-<div class="outline-text-3" id="text-org59062d4">
+<div id="outline-container-org0af83af" class="outline-3">
+<h3 id="org0af83af"><a id="ID-9de76637-62f7-4c7c-a5d1-1f37491b3db3"></a>macro sql (form)</h3>
+<div class="outline-text-3" id="text-org0af83af">
 <p>
 → string
 </p>
 
 <p>
 Convert the given form (a list starting with a keyword) to an SQL query string
-at compile time, according to the rules described here.
+at compile time, according to the rules described here. For example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(sql (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'a 1)))
+
+ <span style="color: #cd8162;">"(SELECT * FROM country WHERE (a = 1))"</span>
+</pre>
+</div>
+
+<p>
+but
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(sql '(<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'a 1)))
+</pre>
+</div>
+
+<p>
+would throw an error. For the later case you need to use sql-compile.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org9da6b46" class="outline-3">
-<h3 id="org9da6b46">function sql-compile (form)</h3>
-<div class="outline-text-3" id="text-org9da6b46">
+<div id="outline-container-org1aba58a" class="outline-3">
+<h3 id="org1aba58a"><a id="ID-8d161d2a-06cb-4334-9ee6-86e805eb5295"></a>function sql-compile (form)</h3>
+<div class="outline-text-3" id="text-org1aba58a">
 <p>
 → string
 </p>
@@ -439,14 +465,32 @@ at compile time, according to the rules described here.
 <p>
 This is the run-time variant of the sql macro. It converts the given list to
 an SQL query, with the same rules except that symbols in this list do not
-have to be quoted to be interpreted as identifiers.
+have to be quoted to be interpreted as identifiers. For example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(sql-compile '(<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'a 1)))
+
+\"(SELECT * FROM country WHERE (a = 1))\"
+</pre>
+</div>
+
+<p>
+but
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(sql (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'a 1)))
+</pre>
+</div>
+
+<p>
+would throw an error. For the later case you need to use sql.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org32dc2d3" class="outline-3">
-<h3 id="org32dc2d3">function sql-template (form)</h3>
-<div class="outline-text-3" id="text-org32dc2d3">
+<div id="outline-container-org9a361f0" class="outline-3">
+<h3 id="org9a361f0"><a id="ID-e16e8407-01af-4907-9ed6-2b3c1f12dd1b"></a>function sql-template (form)</h3>
+<div class="outline-text-3" id="text-org9a361f0">
 <p>
 In cases where you do need to build the query at run time, yet you do not
 want to re-compile it all the time, this function can be used to compile it
@@ -458,60 +502,102 @@ which the placeholders have been replaced by the values of the arguments.
 </div>
 </div>
 
-<div id="outline-container-org6f539a2" class="outline-3">
-<h3 id="org6f539a2">function enable-s-sql-syntax (&amp;optional (char #\Q))</h3>
-<div class="outline-text-3" id="text-org6f539a2">
+<div id="outline-container-org95ef4c5" class="outline-3">
+<h3 id="org95ef4c5"><a id="ID-bee65d01-61d4-4823-b0ab-26789642cdb3"></a>function enable-s-sql-syntax (&amp;optional (char #\Q))</h3>
+<div class="outline-text-3" id="text-org95ef4c5">
 <p>
 Modifies the current readtable to add a #Q syntax that is read as (sql &#x2026;).
 The character to use can be overridden by passing an argument.
 </p>
 </div>
 </div>
-<div id="outline-container-org47c05e0" class="outline-3">
-<h3 id="org47c05e0">function sql-escape-string (string)</h3>
-<div class="outline-text-3" id="text-org47c05e0">
+<div id="outline-container-orgc53ee2b" class="outline-3">
+<h3 id="orgc53ee2b"><a id="ID-02edac61-f915-4d5f-b52e-d4b7ace29352"></a>function sql-escape-string (string)</h3>
+<div class="outline-text-3" id="text-orgc53ee2b">
 <p>
 → string
 </p>
 
 <p>
-<a href="http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS">Escapes</a> a string for inclusion in a PostgreSQL query.
+<a href="http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS">Escapes</a> a string for inclusion in a PostgreSQL query. Example:
 </p>
+<div class="org-src-container">
+<pre class="src src-lisp">(sql-escape-string \"Puss in 'Boots'\")
+
+\"E'Puss in ''Boots'''\"
+
+</pre>
+</div>
 </div>
 </div>
 
-<div id="outline-container-org5324b2c" class="outline-3">
-<h3 id="org5324b2c">method sql-escape (value)</h3>
-<div class="outline-text-3" id="text-org5324b2c">
+<div id="outline-container-orgac5cf6a" class="outline-3">
+<h3 id="orgac5cf6a"><a id="ID-59d7247c-c2fa-46c3-b682-dab17fac8812"></a>method sql-escape (value)</h3>
+<div class="outline-text-3" id="text-orgac5cf6a">
 <p>
 → string
 </p>
 
 <p>
-A generalisation of sql-escape-string Looks at the type of the value passed,
-and properly writes it out it for inclusion in an SQL query. Symbols will be
-converted to SQL names.
+A generalisation of sql-escape-string looks at the type of the value passed, and properly writes it out it for inclusion in an SQL query. Symbols will be
+converted to SQL names. Examples:
 </p>
-</div>
-</div>
+<div class="org-src-container">
+<pre class="src src-lisp">(sql-escape <span style="color: #cd8162;">"tr'-x"</span>)
 
-<div id="outline-container-orgeef6495" class="outline-3">
-<h3 id="orgeef6495">variable <b>standard-sql-strings</b></h3>
-<div class="outline-text-3" id="text-orgeef6495">
+<span style="color: #cd8162;">"E'tr''-x'"</span>
+
+(sql-escape (/ 1 13))
+
+<span style="color: #cd8162;">"0.0769230769230769230769230769230769230"</span>
+
+(sql-escape #(<span style="color: #cd8162;">"Baden-Wurttemberg"</span> <span style="color: #cd8162;">"Bavaria"</span> <span style="color: #cd8162;">"Berlin"</span> <span style="color: #cd8162;">"Brandenburg"</span>))
+
+<span style="color: #cd8162;">"ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']"</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org3d4608f" class="outline-3">
+<h3 id="org3d4608f"><a id="ID-19c05bac-8209-4e48-b2e0-549ff03df44e"></a>variable <b>downcase-symbols</b></h3>
+<div class="outline-text-3" id="text-org3d4608f">
 <p>
-Used to configure whether S-SQL will use standard SQL strings (just replace #\'
-with ''), or backslash-style escaping. Setting this to NIL is always safe, but
-when the server is configured to allow standard strings (compile-time
-parameter 'standard_conforming_strings' is 'on', which will become the default
-in future versions of PostgreSQL), the noise in queries can be reduced by setting
-this to T.
+When converting symbols to strings, whether to downcase the symbols is set here. The default is to downcase symbols.
+</p>
+</div>
+</div>
+<div id="outline-container-org1489ea5" class="outline-3">
+<h3 id="org1489ea5"><a id="ID-95a70c76-0fcb-4967-88a2-3460bbcb5311"></a>variable <b>standard-sql-strings</b></h3>
+<div class="outline-text-3" id="text-org1489ea5">
+<p>
+Used to configure whether S-SQL will use standard SQL strings (just replace #\' with ''), or backslash-style escaping. Setting this to NIL is always safe, but when the server is configured to allow standard strings (compile-time parameter 'standard_conforming_strings' is 'on', which will become the default in future versions of PostgreSQL), the noise in queries can be reduced by setting this to T.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgcd83009" class="outline-3">
-<h3 id="orgcd83009">variable <b>escape-sql-names-p</b></h3>
-<div class="outline-text-3" id="text-orgcd83009">
+<div id="outline-container-org5d82cf4" class="outline-3">
+<h3 id="org5d82cf4"><a id="ID-a975b46b-5ade-4358-aa77-f83681299a94"></a>variable <b>postgres-reserved-words</b> hashtable</h3>
+<div class="outline-text-3" id="text-org5d82cf4">
+<p>
+A set of all Postgresql's reserved words, for automatic escaping. Probably not a good idea to use these words as identifiers anyway.
+ '("all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric" "authorization"
+   "between" "binary" "both" "case" "cast" "check" "collate" "column" "concurrently"
+   "constraint" "create" "cross" "current-catalog" "current-date" "current-role" "current-schema"
+   "current-time" "current-timestamp" "current-user" "default" "deferrable"
+   "desc" "distinct" "do" "else" "end" "except" "false" "fetch" "filter"
+   "for" "foreign" "freeze" "from" "full" "grant" "group" "having" "ilike" "in" "initially"
+   "inner" "intersect" "into" "is" "isnull" "join" "lateral" "leading" "left" "like" "limit"
+   "localtime" "localtimestamp" "natural" "new" "not" "notnull" "nowait" "null" "off" "offset" "old"
+   "on" "only" "or" "order" "outer" "overlaps" "placing" "primary" "references" "returning"
+   "right" "select" "session-user" "Share" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
+   "union" "unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"))
+</p>
+</div>
+</div>
+
+<div id="outline-container-org99e7b0c" class="outline-3">
+<h3 id="org99e7b0c"><a id="ID-974ac94c-23eb-4bba-b324-d79fba034c1d"></a>variable <b>escape-sql-names-p</b></h3>
+<div class="outline-text-3" id="text-org99e7b0c">
 <p>
 Determines whether double quotes are added around column, table, and ** function names in
 queries. Valid values:
@@ -537,40 +623,40 @@ future if requested.
 </div>
 </div>
 
-<div id="outline-container-org26526d1" class="outline-3">
-<h3 id="org26526d1">function sql-type-name (type)</h3>
-<div class="outline-text-3" id="text-org26526d1">
+<div id="outline-container-org1890444" class="outline-3">
+<h3 id="org1890444"><a id="ID-79bc7903-3321-4e01-a0a0-819ad61179b5"></a>function sql-type-name (type)</h3>
+<div class="outline-text-3" id="text-org1890444">
 <p>
 → string
 </p>
 
 <p>
-Create the SQL equivalent of the given Lisp type, if one is known. See types.
+Transform a lisp type into a string containing something SQL understands. Default is to just use the type symbol's name.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgde5997d" class="outline-3">
-<h3 id="orgde5997d">function to-sql-name (name &amp;optional (escape-p <b>escape-sql-names-p</b>))</h3>
-<div class="outline-text-3" id="text-orgde5997d">
+<div id="outline-container-orge19bc70" class="outline-3">
+<h3 id="orge19bc70"><a id="ID-46c8eab0-4fac-4b14-8193-6b93c985ad0f"></a>function to-sql-name (name &amp;optional (escape-p <b>escape-sql-names-p</b>)(ignore-reserved-words nil)</h3>
+<div class="outline-text-3" id="text-orge19bc70">
 <p>
 → string
 </p>
 
 <p>
-Convert a symbol or string to a name that can be used as an SQL identifier by
-converting all non-alphanumeric characters to underscores. Also lowercases the name
-to make queries look a bit less hideous. When a second argument is given, this
-overrides the current value of <b>escape-sql-names-p</b>. If the second argument
-is :literal then the name will be escaped only and this will be a a delimited
-identifier or quoted identifier. See
+Convert a symbol or string into a name that can be a sql table, column, or operation name. Add quotes when escape-p is true, or escape-p is :auto and the name contains reserved words. Quoted or delimited identifiers can be used by passing :literal as the value of escape-p. If escape-p is :literal, and the name is a string then the string is still escaped but the symbol or string is not downcased, regardless of the setting for <b>downcase-symbols</b> and the hyphen and forward slash characters are not replaced with underscores.
+</p>
+
+<p>
+Ignore-reserved-words is only used internally for column names which are allowed to be reserved words, but it is not recommended.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orga7ee3a6" class="outline-3">
-<h3 id="orga7ee3a6">function from-sql-name (string)</h3>
-<div class="outline-text-3" id="text-orga7ee3a6">
+
+<div id="outline-container-orge34934e" class="outline-3">
+<h3 id="orge34934e"><a id="ID-5a8737c8-f850-4807-974c-8f711cc9ae1c"></a>function from-sql-name (string)</h3>
+<div class="outline-text-3" id="text-orge34934e">
 <p>
 → keyword
 </p>
@@ -582,9 +668,9 @@ it and converting the underscores to dashes.
 </div>
 </div>
 
-<div id="outline-container-orge32024e" class="outline-3">
-<h3 id="orge32024e">macro register-sql-operators (arity &amp;rest names)</h3>
-<div class="outline-text-3" id="text-orge32024e">
+<div id="outline-container-org381f425" class="outline-3">
+<h3 id="org381f425"><a id="ID-594e6029-8c94-4bb6-ad36-83ab42dc6369"></a>macro register-sql-operators (arity &amp;rest names)</h3>
+<div class="outline-text-3" id="text-org381f425">
 <p>
 Define simple SQL operators. Arity is one of :unary (like 'not'), :unary-postfix
 (the operator comes after the operand), :n-ary (like '\+': the operator falls away
@@ -597,22 +683,22 @@ list containing a keyword and a name string.
 </div>
 </div>
 </div>
-<div id="outline-container-orgc935f86" class="outline-2">
-<h2 id="orgc935f86">SQL Types</h2>
-<div class="outline-text-2" id="text-orgc935f86">
+<div id="outline-container-org318f825" class="outline-2">
+<h2 id="org318f825"><a id="ID-fd140802-2b42-49b6-b21c-c0d4adae6136"></a>SQL Types</h2>
+<div class="outline-text-2" id="text-org318f825">
 <p>
 S-SQL knows the SQL equivalents to a number of Lisp types, and defines some
 extra types that can be used to denote other SQL types. The following
 table shows the correspondence:
 </p>
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table>
 
 
 <colgroup>
-<col  class="org-left" />
+<col  class="org-left">
 
-<col  class="org-left" />
+<col  class="org-left">
 </colgroup>
 <tbody>
 <tr>
@@ -701,21 +787,23 @@ table shows the correspondence:
 </tr>
 </tbody>
 </table>
+</div>
 
-<p>
-**type db-null
-</p>
 
+<div id="outline-container-org857b531" class="outline-3">
+<h3 id="org857b531"><a id="ID-73bdde0f-96d9-494e-854e-f03f6197c88f"></a>type db-null</h3>
+<div class="outline-text-3" id="text-org857b531">
 <p>
 This is a type of which only the keyword :null is a member. It is used to represent
 NULL values from the database.
 </p>
 </div>
 </div>
+</div>
 
-<div id="outline-container-org17abf1b" class="outline-2">
-<h2 id="org17abf1b">SQL Syntax</h2>
-<div class="outline-text-2" id="text-org17abf1b">
+<div id="outline-container-orge40d9c4" class="outline-2">
+<h2 id="orge40d9c4"><a id="ID-13fef0a2-bbe1-44a1-9bc1-570ffdbb4093"></a>SQL Syntax</h2>
+<div class="outline-text-2" id="text-orge40d9c4">
 <p>
 An S-SQL form is converted to a query through the following rules:
 </p>
@@ -729,9 +817,9 @@ An S-SQL form is converted to a query through the following rules:
 </ul>
 </div>
 
-<div id="outline-container-org045eaf9" class="outline-3">
-<h3 id="org045eaf9">sql-op :select (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org045eaf9">
+<div id="outline-container-org4e517af" class="outline-3">
+<h3 id="org4e517af"><a id="ID-e8ff770d-fbce-461d-ac3b-4959bc8770c1"></a>sql-op :select (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org4e517af">
 <p>
 Creates a select query. The arguments are split on the keywords found among
 them. The group of arguments immediately after :select is interpreted as
@@ -748,11 +836,11 @@ may occur. And finally :group-by and :having can optionally be specified.
 The first takes any number of arguments, and the second only one. An example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:+ 'field-1 100) 'field-5
-        :from (:as 'my-table 'x)
-        :left-join 'your-table
-        :on (:= 'x.field-2 'your-table.field-1)
-        :where (:not-null 'a.field-3)))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:+</span> 'field-1 100) 'field-5
+        <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'my-table 'x)
+        <span style="color: #98fb98; font-weight: bold;">:left-join</span> 'your-table
+        <span style="color: #98fb98; font-weight: bold;">:on</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'x.field-2 'your-table.field-1)
+        <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:not-null</span> 'a.field-3)))
 </pre>
 </div>
 
@@ -762,9 +850,9 @@ The following operators are defined:
 </div>
 </div>
 
-<div id="outline-container-orgc7328de" class="outline-3">
-<h3 id="orgc7328de">sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgc7328de">
+<div id="outline-container-org2b5cf70" class="outline-3">
+<h3 id="org2b5cf70"><a id="ID-405ec72e-7b79-4d96-aa32-1a3f931dd5a4"></a>sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org2b5cf70">
 <p>
 These are expanded as infix operators. When meaningful, they allow more than
 two arguments. :- can also be used as a unary operator to negate a value.
@@ -780,18 +868,18 @@ so that it can be written without escapes. With :\|, this doesn't work.
 </div>
 </div>
 
-<div id="outline-container-org11b68c8" class="outline-3">
-<h3 id="org11b68c8">sql-op :~, :not (arg)</h3>
-<div class="outline-text-3" id="text-org11b68c8">
+<div id="outline-container-org3cb5b9f" class="outline-3">
+<h3 id="org3cb5b9f"><a id="ID-1604e97e-40e9-4fca-bf0a-897850766386"></a>sql-op :~, :not (arg)</h3>
+<div class="outline-text-3" id="text-org3cb5b9f">
 <p>
 Unary operators for bitwise and logical negation.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orge526cdd" class="outline-3">
-<h3 id="orge526cdd">sql-op :function (name (&amp;rest arg-types) return-type stability body)</h3>
-<div class="outline-text-3" id="text-orge526cdd">
+<div id="outline-container-org08048a3" class="outline-3">
+<h3 id="org08048a3"><a id="ID-55203563-3759-427f-8147-2396c642144d"></a>sql-op :function (name (&amp;rest arg-types) return-type stability body)</h3>
+<div class="outline-text-3" id="text-org08048a3">
 <p>
 Create a stored procedure. The argument and return types are interpreted as
 type names and not evaluated. Stability should be one of :immutable, :stable,
@@ -799,15 +887,15 @@ or :volatile (see the PostgreSQL documentation). For example, a function that
 gets foobars by id:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(:function 'get-foobar (integer) foobar :stable (:select '* :from 'foobar :where (:= 'id '$1)))
+<pre class="src src-lisp">(<span style="color: #98fb98; font-weight: bold;">:function</span> 'get-foobar (integer) foobar <span style="color: #98fb98; font-weight: bold;">:stable</span> (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'foobar <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id '$1)))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgab122e0" class="outline-3">
-<h3 id="orgab122e0">sql-op :~, :~*, :!~, :!~* (string pattern)</h3>
-<div class="outline-text-3" id="text-orgab122e0">
+<div id="outline-container-org89a639e" class="outline-3">
+<h3 id="org89a639e"><a id="ID-228320ed-6925-4a55-92c8-b48066f7e02c"></a>sql-op :~, :~*, :!~, :!~* (string pattern)</h3>
+<div class="outline-text-3" id="text-org89a639e">
 <p>
 Regular expression matching operators. The exclamation mark means 'does not match',
 the asterisk makes the match case-insensitive.
@@ -815,45 +903,45 @@ the asterisk makes the match case-insensitive.
 </div>
 </div>
 
-<div id="outline-container-org1139f84" class="outline-3">
-<h3 id="org1139f84">sql-op :like, :ilike (string pattern)</h3>
-<div class="outline-text-3" id="text-org1139f84">
+<div id="outline-container-orga174b0e" class="outline-3">
+<h3 id="orga174b0e"><a id="ID-89ce2b9e-50d8-4376-99e5-b085639f2cae"></a>sql-op :like, :ilike (string pattern)</h3>
+<div class="outline-text-3" id="text-orga174b0e">
 <p>
 Simple SQL string matching operators (:ilike is case-insensitive).
 </p>
 </div>
 </div>
 
-<div id="outline-container-org997192f" class="outline-3">
-<h3 id="org997192f">sql-op :@@</h3>
-<div class="outline-text-3" id="text-org997192f">
+<div id="outline-container-org5e184b5" class="outline-3">
+<h3 id="org5e184b5"><a id="ID-7e33f04a-09f8-4177-bf8b-ae6f42eb33cc"></a>sql-op :@@</h3>
+<div class="outline-text-3" id="text-org5e184b5">
 <p>
 Fast Text Search match operator.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org3a14a34" class="outline-3">
-<h3 id="org3a14a34">sql-op :desc (column)</h3>
-<div class="outline-text-3" id="text-org3a14a34">
+<div id="outline-container-org293e92a" class="outline-3">
+<h3 id="org293e92a"><a id="ID-bfa41b7a-e1be-42be-b1b7-ecaa0913391c"></a>sql-op :desc (column)</h3>
+<div class="outline-text-3" id="text-org293e92a">
 <p>
 Used to invert the meaning of an operator in an :order-by clause.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org88cb97f" class="outline-3">
-<h3 id="org88cb97f">sql-op :nulls-first, :nulls-last (column)</h3>
-<div class="outline-text-3" id="text-org88cb97f">
+<div id="outline-container-org4c9fe76" class="outline-3">
+<h3 id="org4c9fe76"><a id="ID-53293652-8d98-40fb-b629-7f3350a1b16c"></a>sql-op :nulls-first, :nulls-last (column)</h3>
+<div class="outline-text-3" id="text-org4c9fe76">
 <p>
 Used to determine where :null values appear in an :order-by clause.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgf2b79c8" class="outline-3">
-<h3 id="orgf2b79c8">sql-op :as (form name &amp;rest fields)</h3>
-<div class="outline-text-3" id="text-orgf2b79c8">
+<div id="outline-container-orgaf80a93" class="outline-3">
+<h3 id="orgaf80a93"><a id="ID-ca6fe6aa-07ad-4931-afe5-9d9087059dca"></a>sql-op :as (form name &amp;rest fields)</h3>
+<div class="outline-text-3" id="text-orgaf80a93">
 <p>
 Assigns a name to a column or table in a :select form. When fields are given,
 they are added after the name, in parentheses. For example, (:as 'table1 't1 'foo 'bar)
@@ -865,54 +953,54 @@ out the quotes entirely).
 </div>
 </div>
 
-<div id="outline-container-orgec06e4a" class="outline-3">
-<h3 id="orgec06e4a">sql-op :cast (query)</h3>
-<div class="outline-text-3" id="text-orgec06e4a">
+<div id="outline-container-org6a62102" class="outline-3">
+<h3 id="org6a62102"><a id="ID-fdab4fe0-46bb-4240-b629-773c21b8d304"></a>sql-op :cast (query)</h3>
+<div class="outline-text-3" id="text-org6a62102">
 <p>
 The CAST operator. Takes a query as an argument, and returns the result
 explicitly cast by postgresql to a specific type.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:cast (:as "20" 'integer)))
-        :single)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:cast</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> <span style="color: #cd8162;">"20"</span> 'integer)))
+        <span style="color: #98fb98; font-weight: bold;">:single</span>)
 20
 
-(query (:union (:select (:as 1 'real))
-               (:select (:cast (:as "2.2" 'real)))))
+(query (<span style="color: #98fb98; font-weight: bold;">:union</span> (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 1 'real))
+               (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:cast</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> <span style="color: #cd8162;">"2.2"</span> 'real)))))
 ((1.0) (2.2))
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org39a5961" class="outline-3">
-<h3 id="org39a5961">sql-op :type (query)</h3>
-<div class="outline-text-3" id="text-org39a5961">
+<div id="outline-container-org8ba46b8" class="outline-3">
+<h3 id="org8ba46b8"><a id="ID-249f05e6-b7c7-4b53-a215-73673f9aa2b0"></a>sql-op :type (query)</h3>
+<div class="outline-text-3" id="text-org8ba46b8">
 <p>
 Is similar to cast but uses the postgresql :: formating. E.g.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(sql (:select (:as (:- (:type (:now) date) 'x) 'some-date) :from (:as (:generate-series 1 10) 'x)))
+<pre class="src src-lisp">(sql (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:-</span> (<span style="color: #98fb98; font-weight: bold;">:type</span> (<span style="color: #98fb98; font-weight: bold;">:now</span>) date) 'x) 'some-date) <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:generate-series</span> 1 10) 'x)))
 
-"(SELECT (now()::DATE - x) AS some_date FROM generate_series(1, 10) AS x)"
+<span style="color: #cd8162;">"(SELECT (now()::DATE - x) AS some_date FROM generate_series(1, 10) AS x)"</span>
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org2eb3a98" class="outline-3">
-<h3 id="org2eb3a98">sql-op :create-composite-type (type-name &amp;rest args)</h3>
-<div class="outline-text-3" id="text-org2eb3a98">
+<div id="outline-container-org0d82f16" class="outline-3">
+<h3 id="org0d82f16"><a id="ID-6fdeb899-f180-47f7-b8e1-6ad314c7952b"></a>sql-op :create-composite-type (type-name &amp;rest args)</h3>
+<div class="outline-text-3" id="text-org0d82f16">
 <p>
 Creates a composite type with a type-name and two or more columns. E.g.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-composite-type 'fullname (first-name text) (last-name text)))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-composite-type</span> 'fullname (first-name text) (last-name text)))
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org403b50a" class="outline-3">
-<h3 id="org403b50a">sql-op :exists (query)</h3>
-<div class="outline-text-3" id="text-org403b50a">
+<div id="outline-container-org3cc5240" class="outline-3">
+<h3 id="org3cc5240"><a id="ID-edab7fef-c6c1-4875-8b41-54bf05242554"></a>sql-op :exists (query)</h3>
+<div class="outline-text-3" id="text-org3cc5240">
 <p>
 The EXISTS operator. Takes a query as an argument, and returns true or false
 depending on whether that query returns any rows.
@@ -920,44 +1008,44 @@ depending on whether that query returns any rows.
 </div>
 </div>
 
-<div id="outline-container-org5aff9f7" class="outline-3">
-<h3 id="org5aff9f7">sql-op :is-null (arg)</h3>
-<div class="outline-text-3" id="text-org5aff9f7">
+<div id="outline-container-orga0239e4" class="outline-3">
+<h3 id="orga0239e4"><a id="ID-48e3d777-1fde-4e60-b8d2-d8f7b8fea7bf"></a>sql-op :is-null (arg)</h3>
+<div class="outline-text-3" id="text-orga0239e4">
 <p>
 Test whether a value is null.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org0d94750" class="outline-3">
-<h3 id="org0d94750">sql-op :not-null (arg)</h3>
-<div class="outline-text-3" id="text-org0d94750">
+<div id="outline-container-org193dd6a" class="outline-3">
+<h3 id="org193dd6a"><a id="ID-74c212eb-330e-459a-bdc4-2d2e75046972"></a>sql-op :not-null (arg)</h3>
+<div class="outline-text-3" id="text-org193dd6a">
 <p>
 Test whether a value is not null.
 </p>
 </div>
 </div>
-<div id="outline-container-orgd1126bf" class="outline-3">
-<h3 id="orgd1126bf">sql-op :in (value set)</h3>
-<div class="outline-text-3" id="text-orgd1126bf">
+<div id="outline-container-org52f6098" class="outline-3">
+<h3 id="org52f6098"><a id="ID-45c17b50-7b34-42d9-8dd2-08ccd12fa7c0"></a>sql-op :in (value set)</h3>
+<div class="outline-text-3" id="text-org52f6098">
 <p>
 Test whether a value is in a set of values.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org3a2c53d" class="outline-3">
-<h3 id="org3a2c53d">sql-op :not-in (value set)</h3>
-<div class="outline-text-3" id="text-org3a2c53d">
+<div id="outline-container-org916f95c" class="outline-3">
+<h3 id="org916f95c"><a id="ID-f8f9f42f-00b7-4b17-b2fb-2ef90dd8ec2c"></a>sql-op :not-in (value set)</h3>
+<div class="outline-text-3" id="text-org916f95c">
 <p>
 Inverse of the above.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org3b55586" class="outline-3">
-<h3 id="org3b55586">sql-op :set (&amp;rest elements)</h3>
-<div class="outline-text-3" id="text-org3b55586">
+<div id="outline-container-org8fa489d" class="outline-3">
+<h3 id="org8fa489d"><a id="ID-72eea20e-6e5f-4a9a-ba2f-f5f23327b397"></a>sql-op :set (&amp;rest elements)</h3>
+<div class="outline-text-3" id="text-org8fa489d">
 <p>
 Denote a set of values. This operator has two interfaces. When
 the elements are known at compile-time, they can be given as
@@ -967,25 +1055,25 @@ single argument that evaluates to a list should be used.
 </div>
 </div>
 
-<div id="outline-container-org466e9d0" class="outline-3">
-<h3 id="org466e9d0">sql-op :array (query)</h3>
-<div class="outline-text-3" id="text-org466e9d0">
+<div id="outline-container-orgd2eb27c" class="outline-3">
+<h3 id="orgd2eb27c"><a id="ID-f7a7e6fb-00f9-407b-b929-78f17e164052"></a>sql-op :array (query)</h3>
+<div class="outline-text-3" id="text-orgd2eb27c">
 <p>
 This is used when calling a select query into an array.  See <a href="array-notes.html">array-notes.html</a>
 for more detailed notes on the use of arrays.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:order-by
-        (:select 'r.rolename
-                 (:as (:array
-                       (:select 'b.rolename
-                                :from (:as 'pg_catalog.pg-auth-members 'm)
-                                :inner-join (:as 'pg-catalog.pg-roles 'b)
-                                :on (:= 'm.roleid 'b.oid)
-                                :where (:= 'm.member 'r.oid )))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:order-by</span>
+        (<span style="color: #98fb98; font-weight: bold;">:select</span> 'r.rolename
+                 (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:array</span>
+                       (<span style="color: #98fb98; font-weight: bold;">:select</span> 'b.rolename
+                                <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'pg_catalog.pg-auth-members 'm)
+                                <span style="color: #98fb98; font-weight: bold;">:inner-join</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'pg-catalog.pg-roles 'b)
+                                <span style="color: #98fb98; font-weight: bold;">:on</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'm.roleid 'b.oid)
+                                <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'm.member 'r.oid )))
                       'memberof)
 
-                 :from (:as 'pg-catalog.pg-roles 'r))
+                 <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'pg-catalog.pg-roles 'r))
         1))
 
 </pre>
@@ -993,21 +1081,21 @@ for more detailed notes on the use of arrays.
 </div>
 </div>
 
-<div id="outline-container-orga93252b" class="outline-3">
-<h3 id="orga93252b">sql-op :array[] (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orga93252b">
+<div id="outline-container-org4420897" class="outline-3">
+<h3 id="org4420897"><a id="ID-1b9af15e-051a-401f-a251-1a7173685c9e"></a>sql-op :array[] (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org4420897">
 <p>
 This is the general operator for arrays. It also handles statements that include
 functions in the query such as (:+ 1 2), (:pi) in the array. See <a href="array-notes.html">array-notes.html</a>
 for more detailed notes on the use of arrays.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:array-prepend 1 (:array[] 2 3))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:array-prepend</span> 1 (<span style="color: #98fb98; font-weight: bold;">:array[]</span> 2 3))))
 
 ((#(1 2 3)))
 
-(query (:select (:array-prepend 1 (:array[] 2 3)))
-       :single)
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:array-prepend</span> 1 (<span style="color: #98fb98; font-weight: bold;">:array[]</span> 2 3)))
+       <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
 #(1 2 3)
 </pre>
@@ -1015,35 +1103,35 @@ for more detailed notes on the use of arrays.
 </div>
 </div>
 
-<div id="outline-container-org34115a3" class="outline-3">
-<h3 id="org34115a3">sql-op :[] (form start &amp;optional end)</h3>
-<div class="outline-text-3" id="text-org34115a3">
+<div id="outline-container-orgaae0505" class="outline-3">
+<h3 id="orgaae0505"><a id="ID-7afc83f1-4054-4a6c-8ea2-99549e037998"></a>sql-op :[] (form start &amp;optional end)</h3>
+<div class="outline-text-3" id="text-orgaae0505">
 <p>
 Dereference an array value. If end is provided, extract a slice of the array.
 Sample usage below, but also see <a href="array-notes.html">array-notes.html</a> for more detailed notes on
 the use of arrays.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select 'receipe-id (:[] 'tags 2 3)
-                :from 'receipe-tags-array
-                :where (:= 'receipe-id 3)))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'receipe-id (<span style="color: #98fb98; font-weight: bold;">:[]</span> 'tags 2 3)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'receipe-tags-array
+                <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'receipe-id 3)))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgef55ec4" class="outline-3">
-<h3 id="orgef55ec4">sql-op :extract (unit form)</h3>
-<div class="outline-text-3" id="text-orgef55ec4">
+<div id="outline-container-orgc70e5a6" class="outline-3">
+<h3 id="orgc70e5a6"><a id="ID-2ed4ee9b-b199-43df-9b4b-f33d67629793"></a>sql-op :extract (unit form)</h3>
+<div class="outline-text-3" id="text-orgc70e5a6">
 <p>
 Extract a field from a date/time value. For example, (:extract :month (:now)).
 </p>
 </div>
 </div>
 
-<div id="outline-container-org49dbfc7" class="outline-3">
-<h3 id="org49dbfc7">sql-op :case (&amp;rest clauses)</h3>
-<div class="outline-text-3" id="text-org49dbfc7">
+<div id="outline-container-org7994768" class="outline-3">
+<h3 id="org7994768"><a id="ID-95c998be-86a0-4553-ba2d-b1afa04205d6"></a>sql-op :case (&amp;rest clauses)</h3>
+<div class="outline-text-3" id="text-org7994768">
 <p>
 A conditional expression. Clauses should take the form (test value). If
 test is :else, an ELSE clause will be generated.
@@ -1051,18 +1139,18 @@ test is :else, an ELSE clause will be generated.
 </div>
 </div>
 
-<div id="outline-container-orgac8b084" class="outline-3">
-<h3 id="orgac8b084">sql-op :between (n start end)</h3>
-<div class="outline-text-3" id="text-orgac8b084">
+<div id="outline-container-org502491e" class="outline-3">
+<h3 id="org502491e"><a id="ID-3eb62a27-e798-47c9-99a3-34efb86b0a6e"></a>sql-op :between (n start end)</h3>
+<div class="outline-text-3" id="text-org502491e">
 <p>
 Test whether a value lies between two other values.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org2295aeb" class="outline-3">
-<h3 id="org2295aeb">sql-op :between-symmetric (n start end)</h3>
-<div class="outline-text-3" id="text-org2295aeb">
+<div id="outline-container-orgbfa1cba" class="outline-3">
+<h3 id="orgbfa1cba"><a id="ID-7acf3e85-924c-42cb-84ec-4ab0430f6fc0"></a>sql-op :between-symmetric (n start end)</h3>
+<div class="outline-text-3" id="text-orgbfa1cba">
 <p>
 Works like :between, except that the start value is not required to be
 less than the end value.
@@ -1070,9 +1158,9 @@ less than the end value.
 </div>
 </div>
 
-<div id="outline-container-org77e84cb" class="outline-3">
-<h3 id="org77e84cb">sql-op :dot (&amp;rest names)</h3>
-<div class="outline-text-3" id="text-org77e84cb">
+<div id="outline-container-orge5dddb0" class="outline-3">
+<h3 id="orge5dddb0"><a id="ID-5d7287f0-9527-46da-8bc7-8220b49b53a2"></a>sql-op :dot (&amp;rest names)</h3>
+<div class="outline-text-3" id="text-orge5dddb0">
 <p>
 Can be used to combine multiple names into a name of the form A.B to
 refer to a column in a table, or a table in a schema. Note that you
@@ -1081,9 +1169,9 @@ can also just use a symbol with a dot in it.
 </div>
 </div>
 
-<div id="outline-container-orgcacdbda" class="outline-3">
-<h3 id="orgcacdbda">sql-op :type (form type)</h3>
-<div class="outline-text-3" id="text-orgcacdbda">
+<div id="outline-container-org77cd76d" class="outline-3">
+<h3 id="org77cd76d"><a id="ID-ccedb33a-7e65-4a25-9e0a-a5611665c9a8"></a>sql-op :type (form type)</h3>
+<div class="outline-text-3" id="text-org77cd76d">
 <p>
 Add a type declaration to a value, as in in "4.3::real". The second
 argument is not evaluated normally, but put through sql-type-name to
@@ -1092,27 +1180,27 @@ get a type identifier.
 </div>
 </div>
 
-<div id="outline-container-orgce94be1" class="outline-3">
-<h3 id="orgce94be1">sql-op :raw (string)</h3>
-<div class="outline-text-3" id="text-orgce94be1">
+<div id="outline-container-org8ded86f" class="outline-3">
+<h3 id="org8ded86f"><a id="ID-4833bb9a-223b-4d29-a9ca-8e243abb1fab"></a>sql-op :raw (string)</h3>
+<div class="outline-text-3" id="text-org8ded86f">
 <p>
 Insert a string as-is into the query. This can be useful for doing things
 that the syntax does not support, or to re-use parts of a query across
 multiple queries:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(let* ((test (sql (:and (:= 'foo 22) (:not-null 'bar))))
-       (rows (query (:select '* :from 'baz :where (:raw test)))))
-  (query (:delete-from 'baz :where (:raw test)))
-  (do-stuff rows))
+<pre class="src src-lisp">(<span style="color: #00ffff;">let*</span> ((test (sql (<span style="color: #98fb98; font-weight: bold;">:and</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'foo 22) (<span style="color: #98fb98; font-weight: bold;">:not-null</span> 'bar))))
+       (rows (query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'baz <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:raw</span> test)))))
+  (query (<span style="color: #98fb98; font-weight: bold;">:delete-from</span> 'baz <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:raw</span> test)))
+  (<span style="color: #00ffff;">do-stuff</span> rows))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orga94ef3d" class="outline-3">
-<h3 id="orga94ef3d">sql-op :limit (query amount &amp;optional offset)</h3>
-<div class="outline-text-3" id="text-orga94ef3d">
+<div id="outline-container-org94934b9" class="outline-3">
+<h3 id="org94934b9"><a id="ID-1b0cc29f-7b0a-4bca-8f79-5e763fc9a356"></a>sql-op :limit (query amount &amp;optional offset)</h3>
+<div class="outline-text-3" id="text-org94934b9">
 <p>
 In S-SQL limit is not part of the select operator, but an extra
 operator that is applied to a query (this works out better when limiting
@@ -1124,9 +1212,9 @@ as the third argument.
 </div>
 </div>
 
-<div id="outline-container-org4d5eee3" class="outline-3">
-<h3 id="org4d5eee3">sql-op :order-by (query &amp;rest exprs)</h3>
-<div class="outline-text-3" id="text-org4d5eee3">
+<div id="outline-container-orgf9b71a0" class="outline-3">
+<h3 id="orgf9b71a0"><a id="ID-df5b679e-5f4b-4599-b533-82c3e9d4f13b"></a>sql-op :order-by (query &amp;rest exprs)</h3>
+<div class="outline-text-3" id="text-orgf9b71a0">
 <p>
 Order the results of a query by the given expressions. See :desc for
 when you want to invert an ordering. Note: This is not the same as
@@ -1136,9 +1224,9 @@ See Aggregation Operators.
 </div>
 </div>
 
-<div id="outline-container-org670a2f7" class="outline-3">
-<h3 id="org670a2f7">sql-op :values</h3>
-<div class="outline-text-3" id="text-org670a2f7">
+<div id="outline-container-org95c7b09" class="outline-3">
+<h3 id="org95c7b09"><a id="ID-d7cc1523-6341-4d80-a08a-c76898a99501"></a>sql-op :values</h3>
+<div class="outline-text-3" id="text-org95c7b09">
 <p>
 Values computes a row value or set of row values for use in a specific
 query. See the postgresql docs at:
@@ -1147,51 +1235,51 @@ and <a href="https://www.postgresql.org/docs/current/static/sql-values.html">htt
 Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select '*
-                :from (:as (:values (:set 1 "one")
-                                    (:set 2 "two")
-                                    (:set 3 "three"))
-                           (:t1 'num 'letter))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '*
+                <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:values</span> (<span style="color: #98fb98; font-weight: bold;">:set</span> 1 <span style="color: #cd8162;">"one"</span>)
+                                    (<span style="color: #98fb98; font-weight: bold;">:set</span> 2 <span style="color: #cd8162;">"two"</span>)
+                                    (<span style="color: #98fb98; font-weight: bold;">:set</span> 3 <span style="color: #cd8162;">"three"</span>))
+                           (<span style="color: #98fb98; font-weight: bold;">:t1</span> 'num 'letter))))
 
-(query (:select 'a 'b 'c (:cast (:as (:* 50 (:random)) 'int))
-                :from (:as (:values (:set "a") (:set "b")) (:d1 'a))
-                (:as (:values (:set "c") (:set "d")) (:d2 'b))
-                (:as (:values (:set "e") (:set "f")) (:d3 'c))))
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'a 'b 'c (<span style="color: #98fb98; font-weight: bold;">:cast</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:*</span> 50 (<span style="color: #98fb98; font-weight: bold;">:random</span>)) 'int))
+                <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:values</span> (<span style="color: #98fb98; font-weight: bold;">:set</span> <span style="color: #cd8162;">"a"</span>) (<span style="color: #98fb98; font-weight: bold;">:set</span> <span style="color: #cd8162;">"b"</span>)) (<span style="color: #98fb98; font-weight: bold;">:d1</span> 'a))
+                (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:values</span> (<span style="color: #98fb98; font-weight: bold;">:set</span> <span style="color: #cd8162;">"c"</span>) (<span style="color: #98fb98; font-weight: bold;">:set</span> <span style="color: #cd8162;">"d"</span>)) (<span style="color: #98fb98; font-weight: bold;">:d2</span> 'b))
+                (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:values</span> (<span style="color: #98fb98; font-weight: bold;">:set</span> <span style="color: #cd8162;">"e"</span>) (<span style="color: #98fb98; font-weight: bold;">:set</span> <span style="color: #cd8162;">"f"</span>)) (<span style="color: #98fb98; font-weight: bold;">:d3</span> 'c))))
 
 (query
- (:with-recursive
-  (:as (:t1 'n)
-       (:union-all (:values (:set 1))
-                   (:select (:+ 'n 1)
-                            :from 't1
-                            :where (:&lt; 'n 100))))
-  (:select (:sum 'n) :from 't1))
- :single)
+ (<span style="color: #00ffff;">:with-recursive</span>
+  (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:t1</span> 'n)
+       (<span style="color: #98fb98; font-weight: bold;">:union-all</span> (<span style="color: #98fb98; font-weight: bold;">:values</span> (<span style="color: #98fb98; font-weight: bold;">:set</span> 1))
+                   (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:+</span> 'n 1)
+                            <span style="color: #98fb98; font-weight: bold;">:from</span> 't1
+                            <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'n 100))))
+  (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:sum</span> 'n) <span style="color: #98fb98; font-weight: bold;">:from</span> 't1))
+ <span style="color: #98fb98; font-weight: bold;">:single</span>)
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orged5ce72" class="outline-3">
-<h3 id="orged5ce72">sql-op :empty-set</h3>
-<div class="outline-text-3" id="text-orged5ce72">
+<div id="outline-container-orgac7e8d4" class="outline-3">
+<h3 id="orgac7e8d4"><a id="ID-a7daaf56-9824-4a6f-8ada-313221e034cb"></a>sql-op :empty-set</h3>
+<div class="outline-text-3" id="text-orgac7e8d4">
 <p>
 This is a fudge. It returns a string "()" where something like '()
 would return "false" or :() would throw an error. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select 'appnumber 'day (:sum 'inserts)
-                (:sum 'updates) (:sum 'deletes) (:sum 'transactions)
-                :from 'db-details
-                :group-by (:grouping-sets (:set 'appnumber 'day (:empty-set)))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'appnumber 'day (<span style="color: #98fb98; font-weight: bold;">:sum</span> 'inserts)
+                (<span style="color: #98fb98; font-weight: bold;">:sum</span> 'updates) (<span style="color: #98fb98; font-weight: bold;">:sum</span> 'deletes) (<span style="color: #98fb98; font-weight: bold;">:sum</span> 'transactions)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'db-details
+                <span style="color: #98fb98; font-weight: bold;">:group-by</span> (<span style="color: #98fb98; font-weight: bold;">:grouping-sets</span> (<span style="color: #98fb98; font-weight: bold;">:set</span> 'appnumber 'day (<span style="color: #98fb98; font-weight: bold;">:empty-set</span>)))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orga818172" class="outline-3">
-<h3 id="orga818172">sql-op :group-by</h3>
-<div class="outline-text-3" id="text-orga818172">
+<div id="outline-container-org6aee8af" class="outline-3">
+<h3 id="org6aee8af"><a id="ID-8f5b4a28-a801-424d-9ff6-4460fa7f048d"></a>sql-op :group-by</h3>
+<div class="outline-text-3" id="text-org6aee8af">
 <p>
 <a href="https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS">https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS</a>
 The GROUP BY Clause is used to group together those rows in a table that
@@ -1202,22 +1290,22 @@ the group. This is done to eliminate redundancy in the output and/or compute
 aggregates that apply to these groups. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:order-by
-        (:select 'mems.surname 'mems.firstname 'mems.memid (:as (:min 'bks.starttime) 'starttime)
-                 :from (:as 'cd.bookings 'bks)
-                 :inner-join (:as 'cd.members 'mems)
-                 :on (:= 'mems.memid 'bks.memid)
-                 :where (:&gt;= 'starttime "2012-09-01")
-                 :group-by 'mems.surname 'mems.firstname 'mems.memid)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:order-by</span>
+        (<span style="color: #98fb98; font-weight: bold;">:select</span> 'mems.surname 'mems.firstname 'mems.memid (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:min</span> 'bks.starttime) 'starttime)
+                 <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'cd.bookings 'bks)
+                 <span style="color: #98fb98; font-weight: bold;">:inner-join</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'cd.members 'mems)
+                 <span style="color: #98fb98; font-weight: bold;">:on</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'mems.memid 'bks.memid)
+                 <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&gt;=</span> 'starttime <span style="color: #cd8162;">"2012-09-01"</span>)
+                 <span style="color: #98fb98; font-weight: bold;">:group-by</span> 'mems.surname 'mems.firstname 'mems.memid)
         'mems.memid))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgf208b6b" class="outline-3">
-<h3 id="orgf208b6b">sql-op :grouping-sets</h3>
-<div class="outline-text-3" id="text-orgf208b6b">
+<div id="outline-container-orgff011cc" class="outline-3">
+<h3 id="orgff011cc"><a id="ID-dfcde273-6c53-488a-b8d2-43adc3a95d23"></a>sql-op :grouping-sets</h3>
+<div class="outline-text-3" id="text-orgff011cc">
 <p>
 <a href="https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS">https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS</a>
 More complex grouping operations are possible using the concept of grouping
@@ -1227,61 +1315,122 @@ for simple GROUP BY clauses, and then the results returned.
 This operator requires postgresql 9.5 or later. For example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select 'city (:as (:extract 'year 'start-date)  'joining-year) (:as (:count 1) 'employee_count)
-                :from 'employee
-                :group-by (:grouping-sets (:set 'city (:extract 'year 'start-date)))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'city (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:extract</span> 'year 'start-date)  'joining-year) (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:count</span> 1) 'employee_count)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'employee
+                <span style="color: #98fb98; font-weight: bold;">:group-by</span> (<span style="color: #98fb98; font-weight: bold;">:grouping-sets</span> (<span style="color: #98fb98; font-weight: bold;">:set</span> 'city (<span style="color: #98fb98; font-weight: bold;">:extract</span> 'year 'start-date)))))
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgf21ed02" class="outline-2">
-<h2 id="orgf21ed02">Time, Date and Interval Operators</h2>
-<div class="outline-text-2" id="text-orgf21ed02">
+<div id="outline-container-org224b407" class="outline-2">
+<h2 id="org224b407"><a id="ID-d07d0cf2-6766-4b7a-af0b-57a0c2b754eb"></a>Time, Date and Interval Operators</h2>
+<div class="outline-text-2" id="text-org224b407">
 </div>
-<div id="outline-container-orgb1a16d5" class="outline-3">
-<h3 id="orgb1a16d5">sql-op :interval (arg)</h3>
-<div class="outline-text-3" id="text-orgb1a16d5">
+<div id="outline-container-orgad39f5a" class="outline-3">
+<h3 id="orgad39f5a"><a id="ID-330de3f2-1869-47a2-8a0d-467a38e3254f"></a>sql-op :interval (arg)</h3>
+<div class="outline-text-3" id="text-orgad39f5a">
 <p>
 Creates an interval data type, generally represented in postmodern as an alist
 </p>
 </div>
 </div>
-<div id="outline-container-org14c44be" class="outline-3">
-<h3 id="org14c44be">sql-op :current-date ()</h3>
-</div>
-<div id="outline-container-org39358b2" class="outline-3">
-<h3 id="org39358b2">sql-op :current-time ()</h3>
-</div>
-<div id="outline-container-org857f8bf" class="outline-3">
-<h3 id="org857f8bf">sql-op :current-timestamp ()</h3>
-</div>
-<div id="outline-container-org5591a74" class="outline-3">
-<h3 id="org5591a74">sql-op :timestamp (arg)</h3>
-</div>
-<div id="outline-container-org1836b21" class="outline-3">
-<h3 id="org1836b21">sql-op :age (&amp;rest args)</h3>
-</div>
-<div id="outline-container-org37efdd7" class="outline-3">
-<h3 id="org37efdd7">sql-op :date (arg)</h3>
+<div id="outline-container-orgd76ef12" class="outline-3">
+<h3 id="orgd76ef12"><a id="ID-6d1cf4f1-89f8-4586-9e19-58c6003e5166"></a>sql-op :current-date ()</h3>
+<div class="outline-text-3" id="text-orgd76ef12">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:current-date</span>)) <span style="color: #98fb98; font-weight: bold;">:single</span>)
+</pre>
 </div>
 </div>
-<div id="outline-container-org480dc10" class="outline-2">
-<h2 id="org480dc10">Aggregation Operators</h2>
-<div class="outline-text-2" id="text-org480dc10">
 </div>
-<div id="outline-container-org415fb49" class="outline-3">
-<h3 id="org415fb49">sql-op :count (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org415fb49">
+<div id="outline-container-orga874d6b" class="outline-3">
+<h3 id="orga874d6b"><a id="ID-2f80fe21-7abe-4eed-aa57-1b8a11cddfd1"></a>sql-op :current-time ()</h3>
+<div class="outline-text-3" id="text-orga874d6b">
+</div>
+</div>
+<div id="outline-container-org6fbea2c" class="outline-3">
+<h3 id="org6fbea2c"><a id="ID-5c124bd3-f248-45dd-9965-51c368cd3225"></a>sql-op :current-timestamp ()</h3>
+<div class="outline-text-3" id="text-org6fbea2c">
+</div>
+</div>
+<div id="outline-container-org23c69d4" class="outline-3">
+<h3 id="org23c69d4"><a id="ID-1969c373-6093-46dc-9f41-001190399cbd"></a>sql-op :timestamp (arg)</h3>
+<div class="outline-text-3" id="text-org23c69d4">
+</div>
+</div>
+<div id="outline-container-org77c2c24" class="outline-3">
+<h3 id="org77c2c24"><a id="ID-e4872980-3b59-4cd5-844b-ce8912160010"></a>sql-op :age (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org77c2c24">
+</div>
+</div>
+<div id="outline-container-org4409788" class="outline-3">
+<h3 id="org4409788"><a id="ID-e155b65b-05d2-4583-a185-419817382e37"></a>sql-op :date (arg)</h3>
+<div class="outline-text-3" id="text-org4409788">
+</div>
+</div>
+<div id="outline-container-org669f260" class="outline-3">
+<h3 id="org669f260"><a id="ID-2794d9dd-9ab6-4d4b-8b9f-49056d214b67"></a>sql-op :make-interval (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org669f260">
+<p>
+Takes lists of (time-unit value) and returns a timestamp type. Example:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:make-interval</span> (<span style="color: #cd8162;">"days"</span> 4) (<span style="color: #cd8162;">"hours"</span> 10) (<span style="color: #cd8162;">"secs"</span> 1.2)))
+       <span style="color: #98fb98; font-weight: bold;">:single</span>)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org243201c" class="outline-3">
+<h3 id="org243201c"><a id="ID-f4e7bf1a-25b1-4c2b-8794-9550164a0ee1"></a>sql-op :make-timestamp (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org243201c">
+<p>
+Takes lists of (time-unit value) and returns a timestamptz type. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span>
+          (<span style="color: #98fb98; font-weight: bold;">:make-timestamptz</span> (<span style="color: #cd8162;">"year"</span> 2014) (<span style="color: #cd8162;">"month"</span> 1) (<span style="color: #cd8162;">"mday"</span> 13)
+                             (<span style="color: #cd8162;">"hour"</span> 21) (<span style="color: #cd8162;">"min"</span> 50) (<span style="color: #cd8162;">"sec"</span> 0)))
+       <span style="color: #98fb98; font-weight: bold;">:single</span>)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgcac0446" class="outline-3">
+<h3 id="orgcac0446"><a id="ID-b6f82034-e002-4dd2-9bde-ae025176cb9a"></a>sql-op :make-timestamptz (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgcac0446">
+<p>
+Takes lists of (time-unit value) and returns a timestamptz type. Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span>
+          (<span style="color: #98fb98; font-weight: bold;">:make-timestamptz</span> (<span style="color: #cd8162;">"year"</span> 2014) (<span style="color: #cd8162;">"month"</span> 1) (<span style="color: #cd8162;">"mday"</span> 13)
+                             (<span style="color: #cd8162;">"hour"</span> 21) (<span style="color: #cd8162;">"min"</span> 50) (<span style="color: #cd8162;">"sec"</span> 0) (<span style="color: #cd8162;">"timezone"</span> <span style="color: #cd8162;">"Asia/Tokyo"</span>)))
+       <span style="color: #98fb98; font-weight: bold;">:single</span>)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf690c14" class="outline-2">
+<h2 id="orgf690c14"><a id="ID-cd2bdccf-0de5-4b57-a195-0c94029e8c8e"></a>Aggregation Operators</h2>
+<div class="outline-text-2" id="text-orgf690c14">
+</div>
+<div id="outline-container-orgc72a174" class="outline-3">
+<h3 id="orgc72a174"><a id="ID-40eed2a4-b3f5-4380-a3b7-16a5bdcbe0b3"></a>sql-op :count (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgc72a174">
 <p>
 Count returns the number of rows for which the expression is not null.
 It can be the number of rows collected by the select statement as in:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:count '*)
-                :from 'table1
-                :where (:= 'price 100)))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:count</span> '*)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'table1
+                <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'price 100)))
 </pre>
 </div>
 
@@ -1290,8 +1439,8 @@ or it can be a smaller number of rows based on the allowed keyword
 parameters :distinct and :filter or some other type of condition as in:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:count 'memid :distinct)
-                :from 'cd.bookings))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:count</span> 'memid <span style="color: #98fb98; font-weight: bold;">:distinct</span>)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'cd.bookings))
 </pre>
 </div>
 <p>
@@ -1299,10 +1448,10 @@ or
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:as (:count '* :distinct) 'unfiltered)
-                (:as (:count '* :filter (:= 1 'bid))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:count</span> '* <span style="color: #98fb98; font-weight: bold;">:distinct</span>) 'unfiltered)
+                (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:count</span> '* <span style="color: #98fb98; font-weight: bold;">:filter</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 1 'bid))
                      'filtered)
-                :from 'testtable))
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'testtable))
 </pre>
 </div>
 
@@ -1312,10 +1461,10 @@ is used, it must come before filter. Unlike standard sql, the word 'where'
 is not used inside the filter clause. E.g.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:count '*)
-                (:count '* :filter (:= 1 'bid))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:count</span> '*)
+                (<span style="color: #98fb98; font-weight: bold;">:count</span> '* <span style="color: #98fb98; font-weight: bold;">:filter</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 1 'bid))
                 'id
-                :from 'pbbench-history))
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'pbbench-history))
 </pre>
 </div>
 
@@ -1325,25 +1474,25 @@ See tests.lisp for examples.
 </div>
 </div>
 
-<div id="outline-container-org5c4fa17" class="outline-3">
-<h3 id="org5c4fa17">sql-op :avg (&amp;rest rest args)</h3>
-<div class="outline-text-3" id="text-org5c4fa17">
+<div id="outline-container-org4761523" class="outline-3">
+<h3 id="org4761523"><a id="ID-0e6463d4-d83c-493b-8989-4819c6e9f914"></a>sql-op :avg (&amp;rest rest args)</h3>
+<div class="outline-text-3" id="text-org4761523">
 <p>
 Avg calculates the average value of a list of values. Note that if the
 filter keyword is used, the filter must be last in the avg args. If distinct
 is used, it must come before filter. E.g. See tests.lisp for more examples.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:avg '*) (:avg '* :filter (:= 1 'bid)) 'id
-                :from 'pbbench-history))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:avg</span> '*) (<span style="color: #98fb98; font-weight: bold;">:avg</span> '* <span style="color: #98fb98; font-weight: bold;">:filter</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 1 'bid)) 'id
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'pbbench-history))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgb0477dc" class="outline-3">
-<h3 id="orgb0477dc">sql-op :sum (&amp;rest rest args)</h3>
-<div class="outline-text-3" id="text-orgb0477dc">
+<div id="outline-container-org89e2a4b" class="outline-3">
+<h3 id="org89e2a4b"><a id="ID-d8379b94-922b-47d3-9161-5da838b43f42"></a>sql-op :sum (&amp;rest rest args)</h3>
+<div class="outline-text-3" id="text-org89e2a4b">
 <p>
 Sum calculates the total of a list of values. Note that if the keyword filter
 is used, the filter must be last in the sum args. If distinct is used, it
@@ -1352,16 +1501,16 @@ inside the filter clause (s-sql will properly expand it). See tests.lisp
 for more examples.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:sum '*) (:sum '* :filter (:= 1 'bid)) 'id
-                :from 'pbbench-history))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:sum</span> '*) (<span style="color: #98fb98; font-weight: bold;">:sum</span> '* <span style="color: #98fb98; font-weight: bold;">:filter</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 1 'bid)) 'id
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'pbbench-history))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org9cd3200" class="outline-3">
-<h3 id="org9cd3200">sql-op ::max (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org9cd3200">
+<div id="outline-container-orgc90409a" class="outline-3">
+<h3 id="orgc90409a"><a id="ID-66db79ad-e7d4-43dd-a6af-fe3085c16d12"></a>sql-op ::max (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgc90409a">
 <p>
 max returns the maximum value of a set of values. Note that if the filter
 keyword is used, the filter must be last in the max args. If distinct is
@@ -1371,15 +1520,15 @@ See tests.lisp for more examples.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:max '*) (:max '* :filter (:= 1 'bid)) 'id
-                :from 'pbbench-history))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:max</span> '*) (<span style="color: #98fb98; font-weight: bold;">:max</span> '* <span style="color: #98fb98; font-weight: bold;">:filter</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 1 'bid)) 'id
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'pbbench-history))
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org074efc1" class="outline-3">
-<h3 id="org074efc1">sql-op ::min (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org074efc1">
+<div id="outline-container-org51455c1" class="outline-3">
+<h3 id="org51455c1"><a id="ID-02c03a2a-114d-4b4b-8214-12411c979a0f"></a>sql-op ::min (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org51455c1">
 <p>
 min returns the minimum value of a set of values. Note that if the filter
 keyword is used, the filter must be last in the min args. If distinct is
@@ -1388,16 +1537,16 @@ is not used inside the filter clause (s-sql will properly expand it).
 See tests.lisp for more examples.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:min '*) (:min '* :filter (:= 1 'bid)) 'id
-                :from 'pbbench-history))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:min</span> '*) (<span style="color: #98fb98; font-weight: bold;">:min</span> '* <span style="color: #98fb98; font-weight: bold;">:filter</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 1 'bid)) 'id
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'pbbench-history))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgecff730" class="outline-3">
-<h3 id="orgecff730">sql-op ::every (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgecff730">
+<div id="outline-container-orgbc54137" class="outline-3">
+<h3 id="orgbc54137"><a id="ID-3683daea-ef97-4cb9-a78e-aa40fc3df983"></a>sql-op ::every (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgbc54137">
 <p>
 Every returns true if all input values are true, otherwise false. Note
 that if the filter keyword is used, the filter must be last in the every
@@ -1406,17 +1555,17 @@ the word 'where' is not used inside the filter clause (s-sql will
 properly expand it). See tests.lisp for more examples.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select '* (:every (:like 'studname "%h"))
-                :from 'tbl-students
-                :group-by 'studname 'studid 'studgrades))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* (<span style="color: #98fb98; font-weight: bold;">:every</span> (<span style="color: #98fb98; font-weight: bold;">:like</span> 'studname <span style="color: #cd8162;">"%h"</span>))
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'tbl-students
+                <span style="color: #98fb98; font-weight: bold;">:group-by</span> 'studname 'studid 'studgrades))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org2147e61" class="outline-3">
-<h3 id="org2147e61">sql-op :percentile-cont (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org2147e61">
+<div id="outline-container-org5ed36fb" class="outline-3">
+<h3 id="org5ed36fb"><a id="ID-3a6ee0b8-64cd-4937-b769-95f3ec44c32a"></a>sql-op :percentile-cont (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org5ed36fb">
 <p>
 Requires Postgresql 9.4 or higher. Percentile-cont returns a value
 corresponding to the specified fraction in the ordering, interpolating
@@ -1427,21 +1576,21 @@ parameter, with each non-null element replaced by the value corresponding
 to that percentile. Examples:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:percentile-cont :fraction 0.5 :order-by 'number-of-staff)
-                :from 'schools))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:percentile-cont</span> <span style="color: #98fb98; font-weight: bold;">:fraction</span> 0.5 <span style="color: #98fb98; font-weight: bold;">:order-by</span> 'number-of-staff)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'schools))
 
-(query (:select (:percentile-cont :fraction array[0.25 0.5 0.75 1]
-                                  :order-by 'number-of-staff)
-                :from  'schools))
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:percentile-cont</span> <span style="color: #98fb98; font-weight: bold;">:fraction</span> array[0.25 0.5 0.75 1]
+                                  <span style="color: #98fb98; font-weight: bold;">:order-by</span> 'number-of-staff)
+                <span style="color: #98fb98; font-weight: bold;">:from</span>  'schools))
 </pre>
 </div>
 </div>
 </div>
 
 
-<div id="outline-container-org11bb0dd" class="outline-3">
-<h3 id="org11bb0dd">sql-op :percentile-dist (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org11bb0dd">
+<div id="outline-container-org87a41fb" class="outline-3">
+<h3 id="org87a41fb"><a id="ID-5f53ac18-189b-4df7-99ac-02ebbd8a9606"></a>sql-op :percentile-dist (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org87a41fb">
 <p>
 Requires Postgresql 9.4 or higher. There are two required keyword parameters
 :fraction and :order-by. Percentile-dist returns the first input value whose
@@ -1452,55 +1601,55 @@ value corresponding to that percentile. Examples:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:percentile-dist :fraction 0.5
-                                  :order-by 'number-of-staff)
-                :from 'schools))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:percentile-dist</span> <span style="color: #98fb98; font-weight: bold;">:fraction</span> 0.5
+                                  <span style="color: #98fb98; font-weight: bold;">:order-by</span> 'number-of-staff)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'schools))
 
-(query (:select (:percentile-dist :fraction array[0.25 0.5 0.75 1]
-                                  :order-by 'number-of-staff)
-                :from  'schools))
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:percentile-dist</span> <span style="color: #98fb98; font-weight: bold;">:fraction</span> array[0.25 0.5 0.75 1]
+                                  <span style="color: #98fb98; font-weight: bold;">:order-by</span> 'number-of-staff)
+                <span style="color: #98fb98; font-weight: bold;">:from</span>  'schools))
 
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org2b2e99b" class="outline-3">
-<h3 id="org2b2e99b">sql-op :corr (y x)</h3>
-<div class="outline-text-3" id="text-org2b2e99b">
+<div id="outline-container-org0d4307e" class="outline-3">
+<h3 id="org0d4307e"><a id="ID-36db9511-5ba0-4dfc-9646-71b2d47857b0"></a>sql-op :corr (y x)</h3>
+<div class="outline-text-3" id="text-org0d4307e">
 <p>
 The corr function returns the correlation coefficient between a set of
 dependent and independent variables. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:corr 'height 'weight)
-                :from 'people))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:corr</span> 'height 'weight)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'people))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org5891378" class="outline-3">
-<h3 id="org5891378">sql-op :covar-pop (y x)</h3>
-<div class="outline-text-3" id="text-org5891378">
+<div id="outline-container-orgff08d57" class="outline-3">
+<h3 id="orgff08d57"><a id="ID-e6b20c69-d328-4a59-b030-9c03c9201305"></a>sql-op :covar-pop (y x)</h3>
+<div class="outline-text-3" id="text-orgff08d57">
 <p>
 The covar-pop function returns the population covariance between a set of
 dependent and independent variables. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:covar-pop 'height 'weight)
-                :from 'people))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:covar-pop</span> 'height 'weight)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'people))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org2150435" class="outline-3">
-<h3 id="org2150435">sql-op :covar-samp (y x)</h3>
-<div class="outline-text-3" id="text-org2150435">
+<div id="outline-container-orge18f79c" class="outline-3">
+<h3 id="orge18f79c"><a id="ID-9112880c-0d43-43bb-96b0-416e4f1e2bc3"></a>sql-op :covar-samp (y x)</h3>
+<div class="outline-text-3" id="text-orge18f79c">
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:covar-samp 'height 'weight)
-                :from 'people))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:covar-samp</span> 'height 'weight)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'people))
 </pre>
 </div>
 <p>
@@ -1510,9 +1659,9 @@ dependent and independent variables. Example:
 </div>
 </div>
 
-<div id="outline-container-org15a7757" class="outline-3">
-<h3 id="org15a7757">sql-op :string-agg (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org15a7757">
+<div id="outline-container-orgb49b552" class="outline-3">
+<h3 id="orgb49b552"><a id="ID-cd16b4cb-51f9-4bff-ac6e-7482fc2e1ffa"></a>sql-op :string-agg (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgb49b552">
 <p>
 String-agg allows you to concatenate strings using different types of
 delimiter symbols. Allowable optional keyword parameters are :distinct,
@@ -1521,24 +1670,24 @@ postgresql 9.0 or later. Filter requires postgresql 9.4 or later.
 See tests.lisp for more examples.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:as (:string-agg 'bp.step-type \",\" )
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:string-agg</span> 'bp.step-type \",\" )
                      'step-summary)
-                :from 'business-process))
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'business-process))
 
-(query (:select 'mid (:as (:string-agg  'y \",\" :distinct :order-by (:desc 'y))
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'mid (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:string-agg</span>  'y \",\" <span style="color: #98fb98; font-weight: bold;">:distinct</span> <span style="color: #98fb98; font-weight: bold;">:order-by</span> (<span style="color: #98fb98; font-weight: bold;">:desc</span> 'y))
                           'words)
-                :from 'moves))
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'moves))
 
-(query (:select (:string-agg  'name "," :order-by (:desc 'name) :filter (:&lt; 'id 4))
-                :from 'employee))
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:string-agg</span>  'name <span style="color: #cd8162;">","</span> <span style="color: #98fb98; font-weight: bold;">:order-by</span> (<span style="color: #98fb98; font-weight: bold;">:desc</span> 'name) <span style="color: #98fb98; font-weight: bold;">:filter</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 4))
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'employee))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgc293686" class="outline-3">
-<h3 id="orgc293686">sql-op :array-agg (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgc293686">
+<div id="outline-container-orgb4fdc1e" class="outline-3">
+<h3 id="orgb4fdc1e"><a id="ID-dbf248ce-f480-4940-93d6-837aaa22529d"></a>sql-op :array-agg (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgb4fdc1e">
 <p>
 Array-agg returns a list of values concatenated into an arrays.
 Allowable optional keyword parameters are :distinct, :order-by
@@ -1555,52 +1704,52 @@ detailed notes on the use of arrays.
 Example with Filter:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select 'g.id
-                (:as (:array-agg 'g.users :filter (:= 'g.canonical \"Y\"))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'g.id
+                (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:array-agg</span> 'g.users <span style="color: #98fb98; font-weight: bold;">:filter</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'g.canonical \"Y\"))
                      'canonical-users)
-                (:as (:array-agg 'g.users :filter (:= 'g.canonical \"N\"))
+                (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:array-agg</span> 'g.users <span style="color: #98fb98; font-weight: bold;">:filter</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'g.canonical \"N\"))
                      'non-canonical-users)
-                :from (:as 'groups 'g)
-                :group-by 'g.id))
+                <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'groups 'g)
+                <span style="color: #98fb98; font-weight: bold;">:group-by</span> 'g.id))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org39a2386" class="outline-3">
-<h3 id="org39a2386">sql-op :mode (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org39a2386">
+<div id="outline-container-orgebcbddd" class="outline-3">
+<h3 id="orgebcbddd"><a id="ID-be548451-659d-46ca-b31b-9d308b8b5cba"></a>sql-op :mode (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgebcbddd">
 <p>
 Mode is used to find the most frequent input value in a group.
 See e.g. <a href="https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE">https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE</a>
 and article at <a href="https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-function">https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-function</a>
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:mode 'items)
-                :from 'item-table))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:mode</span> 'items)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'item-table))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org12d674f" class="outline-3">
-<h3 id="org12d674f">sql-op :regr_avgx (y x)</h3>
-<div class="outline-text-3" id="text-org12d674f">
+<div id="outline-container-org021ec3a" class="outline-3">
+<h3 id="org021ec3a"><a id="ID-5c3e2dc0-d238-4116-91fd-a8111225ee94"></a>sql-op :regr_avgx (y x)</h3>
+<div class="outline-text-3" id="text-org021ec3a">
 <p>
 The regr_avgx function returns the average of the independent variable
 (sum(X)/N) Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:regr_avgx 'height 'weight)
-                :from 'people))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:regr_avgx</span> 'height 'weight)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'people))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgfd0019e" class="outline-3">
-<h3 id="orgfd0019e">sql-op :regr_avgy (y x)</h3>
-<div class="outline-text-3" id="text-orgfd0019e">
+<div id="outline-container-org7495790" class="outline-3">
+<h3 id="org7495790"><a id="ID-2fc66640-03e7-4796-8209-69fba9f346a4"></a>sql-op :regr_avgy (y x)</h3>
+<div class="outline-text-3" id="text-org7495790">
 <p>
 The regr_avgy function returns the average of the dependent variable
 (sum(Y)/N). Example:
@@ -1615,198 +1764,198 @@ The regr_avgy function returns the average of the dependent variable
 </p>
 </div>
 </div>
-<div id="outline-container-org8b744f9" class="outline-3">
-<h3 id="org8b744f9">sql-op :regr_count (y x)</h3>
-<div class="outline-text-3" id="text-org8b744f9">
+<div id="outline-container-org2abb7bb" class="outline-3">
+<h3 id="org2abb7bb"><a id="ID-293a2e93-93bf-4c08-b0f4-6d3dfe0feb6b"></a>sql-op :regr_count (y x)</h3>
+<div class="outline-text-3" id="text-org2abb7bb">
 <p>
 The regr_count function returns the number of input rows in which both
 expressions are nonnull. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:regr_count 'height 'weight)
-                :from 'people))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:regr_count</span> 'height 'weight)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'people))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org3897e40" class="outline-3">
-<h3 id="org3897e40">sql-op :regr_intercept (y x)</h3>
-<div class="outline-text-3" id="text-org3897e40">
+<div id="outline-container-org21e4651" class="outline-3">
+<h3 id="org21e4651"><a id="ID-8b92dc89-b251-4bac-ba53-58251e98d3f5"></a>sql-op :regr_intercept (y x)</h3>
+<div class="outline-text-3" id="text-org21e4651">
 <p>
 The regr_intercept function returns the y-intercept of the least-squares-fit
 linear equation determined by the (X, Y) pairs. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:regr_intercept 'height 'weight)
-                :from 'people))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:regr_intercept</span> 'height 'weight)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'people))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orga9d4e44" class="outline-3">
-<h3 id="orga9d4e44">sql-op :regr_r2 (y x)</h3>
-<div class="outline-text-3" id="text-orga9d4e44">
+<div id="outline-container-orge6fa61f" class="outline-3">
+<h3 id="orge6fa61f"><a id="ID-09020f6e-166a-40e8-85ea-fdaced1f7808"></a>sql-op :regr_r2 (y x)</h3>
+<div class="outline-text-3" id="text-orge6fa61f">
 <p>
 The regr_r2 function returns the square of the correlation coefficient. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:regr_r2 'height 'weight)
-                :from 'people))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:regr_r2</span> 'height 'weight)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'people))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org89f8221" class="outline-3">
-<h3 id="org89f8221">sql-op :regr_slope (y x)</h3>
-<div class="outline-text-3" id="text-org89f8221">
+<div id="outline-container-orgdd3231b" class="outline-3">
+<h3 id="orgdd3231b"><a id="ID-b22a7906-c571-4463-884f-4067d51cf0ac"></a>sql-op :regr_slope (y x)</h3>
+<div class="outline-text-3" id="text-orgdd3231b">
 <p>
 The regr_slope function returns the slope of the least-squares-fit linear
 equation determined by the (X, Y) pairs. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:regr_slope 'height 'weight)
-                :from 'people))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:regr_slope</span> 'height 'weight)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'people))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgeee0791" class="outline-3">
-<h3 id="orgeee0791">sql-op :regr_sxx (y x)</h3>
-<div class="outline-text-3" id="text-orgeee0791">
+<div id="outline-container-org12c4fac" class="outline-3">
+<h3 id="org12c4fac"><a id="ID-9c7cc59e-419d-4161-9711-de2c9b0c27ec"></a>sql-op :regr_sxx (y x)</h3>
+<div class="outline-text-3" id="text-org12c4fac">
 <p>
 The regr_sxx function returns the sum(X^2) - sum(X)^2/N (“sum of squares” of
 the independent variable). Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:regr_sxx 'height 'weight)
-                :from 'people))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:regr_sxx</span> 'height 'weight)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'people))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org0e43938" class="outline-3">
-<h3 id="org0e43938">sql-op :regr_sxy (y x)</h3>
-<div class="outline-text-3" id="text-org0e43938">
+<div id="outline-container-org73ff88f" class="outline-3">
+<h3 id="org73ff88f"><a id="ID-24f03953-7fea-4b18-8d69-ccd5b6d9f1f5"></a>sql-op :regr_sxy (y x)</h3>
+<div class="outline-text-3" id="text-org73ff88f">
 <p>
 The regr_sxy function returns the sum(X*Y) - sum(X) * sum(Y)/N (“sum of products”
 of independent times dependent variable). Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:regr_sxy 'height 'weight)
-                :from 'people))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:regr_sxy</span> 'height 'weight)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'people))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org5f4aa6a" class="outline-3">
-<h3 id="org5f4aa6a">sql-op :regr_syy (y x)</h3>
-<div class="outline-text-3" id="text-org5f4aa6a">
+<div id="outline-container-orgfc750df" class="outline-3">
+<h3 id="orgfc750df"><a id="ID-34f776b1-d29d-4d49-a66b-21262379510b"></a>sql-op :regr_syy (y x)</h3>
+<div class="outline-text-3" id="text-orgfc750df">
 <p>
 The regr_syy function returns the sum(Y^2) - sum(Y)^2/N (“sum of squares”
 of the dependent variable). Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:regr_syy 'salary 'age)
-                :from 'employee))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:regr_syy</span> 'salary 'age)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'employee))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orga946d81" class="outline-3">
-<h3 id="orga946d81">sql-op :stddev (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orga946d81">
+<div id="outline-container-org608cd76" class="outline-3">
+<h3 id="org608cd76"><a id="ID-e0558145-d8e0-4ea3-b9ae-cc92ef332b70"></a>sql-op :stddev (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org608cd76">
 <p>
 The stddev function returns the the sample standard deviation of the input
 values. It is a historical alias for stddev-samp. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:stddev 'salary)
-                :from 'employee))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:stddev</span> 'salary)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'employee))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org2cb7f31" class="outline-3">
-<h3 id="org2cb7f31">sql-op :stddev-pop (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org2cb7f31">
+<div id="outline-container-org4711541" class="outline-3">
+<h3 id="org4711541"><a id="ID-e4eeac17-7d09-45d8-8589-47d9b09a95d2"></a>sql-op :stddev-pop (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org4711541">
 <p>
 The stddev-pop function returns the population standard deviation of the
 input values. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:stddev-pop 'salary)
-                :from 'employee))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:stddev-pop</span> 'salary)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'employee))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgf8e114c" class="outline-3">
-<h3 id="orgf8e114c">sql-op :stddev-samp (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgf8e114c">
+<div id="outline-container-org0f19c3a" class="outline-3">
+<h3 id="org0f19c3a"><a id="ID-4095965c-e969-4663-9ae4-2becfe72de7a"></a>sql-op :stddev-samp (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org0f19c3a">
 <p>
 The stddev-samp function returns the sample standard deviation of the
 input values. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:stddev-samp 'salary)
-                :from 'employee))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:stddev-samp</span> 'salary)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'employee))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgfd333e2" class="outline-3">
-<h3 id="orgfd333e2">sql-op :variance (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgfd333e2">
+<div id="outline-container-orgfa850a0" class="outline-3">
+<h3 id="orgfa850a0"><a id="ID-e4cd292a-4d33-434d-a698-4ae921a3173b"></a>sql-op :variance (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgfa850a0">
 <p>
 Variance is a historical alias for var_samp. The variance function returns
 the sample variance of the input values (square of the sample standard deviation).
 Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:variance 'salary)
-                :from 'employee))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:variance</span> 'salary)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'employee))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orge04186f" class="outline-3">
-<h3 id="orge04186f">sql-op :var-pop (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orge04186f">
+<div id="outline-container-orga46865a" class="outline-3">
+<h3 id="orga46865a"><a id="ID-d72f79cc-b7b1-4481-a93f-6d565c6a582b"></a>sql-op :var-pop (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orga46865a">
 <p>
 The var-pop function returns the population variance of the input values
 (square of the population standard deviation). Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:var-pop 'salary)
-                :from 'employee)
-       :single)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:var-pop</span> 'salary)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'employee)
+       <span style="color: #98fb98; font-weight: bold;">:single</span>)
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org6f03b56" class="outline-3">
-<h3 id="org6f03b56">sql-op :var-samp (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org6f03b56">
+<div id="outline-container-org5e4939d" class="outline-3">
+<h3 id="org5e4939d"><a id="ID-12a5e8ba-4467-4411-a604-c8152c3fbc7d"></a>sql-op :var-samp (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org5e4939d">
 <p>
 The var-samp function returns the sample variance of the input values
 (square of the sample standard deviation). Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:var-samp 'salary)
-                :from 'employee)
-       :single)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:var-samp</span> 'salary)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'employee)
+       <span style="color: #98fb98; font-weight: bold;">:single</span>)
 </pre>
 </div>
 
@@ -1815,34 +1964,34 @@ Window Functions
 </p>
 </div>
 </div>
-<div id="outline-container-org3c900c9" class="outline-3">
-<h3 id="org3c900c9">sql-op :over (form &amp;rest args)</h3>
-<div class="outline-text-3" id="text-org3c900c9">
+<div id="outline-container-org683ecd9" class="outline-3">
+<h3 id="org683ecd9"><a id="ID-bb6eb9f2-d9ed-4348-9467-79cae9b78819"></a>sql-op :over (form &amp;rest args)</h3>
+<div class="outline-text-3" id="text-org683ecd9">
 <p>
 Over, partition-by and window are so-called window functions. A window
 function performs a calculation across a set of table rows that are
 somehow related to the current row.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select 'salary (:over (:sum 'salary))
-                :from 'empsalary))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'salary (<span style="color: #98fb98; font-weight: bold;">:over</span> (<span style="color: #98fb98; font-weight: bold;">:sum</span> 'salary))
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'empsalary))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org04fb231" class="outline-3">
-<h3 id="org04fb231">sql-op :partition-by (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org04fb231">
+<div id="outline-container-org61df1f4" class="outline-3">
+<h3 id="org61df1f4"><a id="ID-53d1397d-4f1d-4833-b0c1-79d18e943f8b"></a>sql-op :partition-by (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org61df1f4">
 <p>
 Args is a list of one or more columns to partition by, optionally
 followed by an :order-by clause.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select 'depname 'subdepname 'empno 'salary
-                (:over (:avg 'salary)
-                       (:partition-by 'depname 'subdepname))
-                :from 'empsalary))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'depname 'subdepname 'empno 'salary
+                (<span style="color: #98fb98; font-weight: bold;">:over</span> (<span style="color: #98fb98; font-weight: bold;">:avg</span> 'salary)
+                       (<span style="color: #98fb98; font-weight: bold;">:partition-by</span> 'depname 'subdepname))
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'empsalary))
 </pre>
 </div>
 
@@ -1850,119 +1999,119 @@ followed by an :order-by clause.
 Note the use of :order-by without parens:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select 'depname 'empno 'salary
-                (:over (:rank)
-                       (:partition-by 'depname :order-by (:desc 'salary)))
-                :from 'empsalary))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'depname 'empno 'salary
+                (<span style="color: #98fb98; font-weight: bold;">:over</span> (<span style="color: #98fb98; font-weight: bold;">:rank</span>)
+                       (<span style="color: #98fb98; font-weight: bold;">:partition-by</span> 'depname <span style="color: #98fb98; font-weight: bold;">:order-by</span> (<span style="color: #98fb98; font-weight: bold;">:desc</span> 'salary)))
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'empsalary))
 </pre>
 </div>
 </div>
 </div>
 
 
-<div id="outline-container-org174cf90" class="outline-3">
-<h3 id="org174cf90">sql-op :window (form)</h3>
-<div class="outline-text-3" id="text-org174cf90">
+<div id="outline-container-org19127b3" class="outline-3">
+<h3 id="org19127b3"><a id="ID-63d29a3b-c105-4e09-ab3b-ca5e4ece17af"></a>sql-op :window (form)</h3>
+<div class="outline-text-3" id="text-org19127b3">
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:over (:sum 'salary) 'w)
-                (:over (:avg 'salary) 'w)
-                :from 'empsalary :window
-                (:as 'w (:partition-by 'depname :order-by (:desc 'salary)))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:over</span> (<span style="color: #98fb98; font-weight: bold;">:sum</span> 'salary) 'w)
+                (<span style="color: #98fb98; font-weight: bold;">:over</span> (<span style="color: #98fb98; font-weight: bold;">:avg</span> 'salary) 'w)
+                <span style="color: #98fb98; font-weight: bold;">:from</span> 'empsalary <span style="color: #98fb98; font-weight: bold;">:window</span>
+                (<span style="color: #98fb98; font-weight: bold;">:as</span> 'w (<span style="color: #98fb98; font-weight: bold;">:partition-by</span> 'depname <span style="color: #98fb98; font-weight: bold;">:order-by</span> (<span style="color: #98fb98; font-weight: bold;">:desc</span> 'salary)))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org1e35be3" class="outline-3">
-<h3 id="org1e35be3">sql-op :with (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org1e35be3">
+<div id="outline-container-orgca1f6da" class="outline-3">
+<h3 id="orgca1f6da"><a id="ID-38fc8a49-9a90-4f6c-930f-c704964ec991"></a>sql-op :with (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgca1f6da">
 <p>
 With provides a way to write auxillary statements for use in a larger query,
 often referred to as Common Table Expressions or CTEs.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:with (:as 'upd
-                   (:parens
-                    (:update 'employees :set 'sales-count (:+ 'sales-count 1)
-                             :where (:= 'id
-                                        (:select 'sales-person
-                                                 :from 'accounts
-                                                 :where (:= 'name "Acme Corporation")))
-                             :returning '*)))
-              (:insert-into 'employees-log
-                            (:select '* (:current-timestamp) :from
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:with</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'upd
+                   (<span style="color: #98fb98; font-weight: bold;">:parens</span>
+                    (<span style="color: #98fb98; font-weight: bold;">:update</span> 'employees <span style="color: #98fb98; font-weight: bold;">:set</span> 'sales-count (<span style="color: #98fb98; font-weight: bold;">:+</span> 'sales-count 1)
+                             <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id
+                                        (<span style="color: #98fb98; font-weight: bold;">:select</span> 'sales-person
+                                                 <span style="color: #98fb98; font-weight: bold;">:from</span> 'accounts
+                                                 <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'name <span style="color: #cd8162;">"Acme Corporation"</span>)))
+                             <span style="color: #98fb98; font-weight: bold;">:returning</span> '*)))
+              (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'employees-log
+                            (<span style="color: #98fb98; font-weight: bold;">:select</span> '* (<span style="color: #98fb98; font-weight: bold;">:current-timestamp</span>) <span style="color: #98fb98; font-weight: bold;">:from</span>
                                      'upd))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orga78cfb0" class="outline-3">
-<h3 id="orga78cfb0">sql-op :with-recursive (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orga78cfb0">
+<div id="outline-container-orga649c3a" class="outline-3">
+<h3 id="orga649c3a"><a id="ID-78be2433-4c26-4e2c-b333-e234393b5dc1"></a>sql-op :with-recursive (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orga649c3a">
 <p>
 Recursive modifier to a WITH statement, allowing the query to refer to its own output.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:with-recursive
-      (:as (:t1 'n)
-           (:union-all (:values (:set 1))
-                       (:select (:+ 'n 1)
-                                :from 't1
-                                :where (:&lt; 'n 100))))
-      (:select (:sum 'n) :from 't1)))
+<pre class="src src-lisp">(query (<span style="color: #00ffff;">:with-recursive</span>
+      (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:t1</span> 'n)
+           (<span style="color: #98fb98; font-weight: bold;">:union-all</span> (<span style="color: #98fb98; font-weight: bold;">:values</span> (<span style="color: #98fb98; font-weight: bold;">:set</span> 1))
+                       (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:+</span> 'n 1)
+                                <span style="color: #98fb98; font-weight: bold;">:from</span> 't1
+                                <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'n 100))))
+      (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:sum</span> 'n) <span style="color: #98fb98; font-weight: bold;">:from</span> 't1)))
 
-(query (:with-recursive
-      (:as (:included_parts 'sub-part 'part 'quantity)
-           (:union-all
-            (:select 'sub-part 'part 'quantity
-                     :from 'parts
-                     :where (:= 'part "our-product"))
-            (:select 'p.sub-part 'p.part 'p.quantity
-                     :from (:as 'included-parts 'pr)
-                     (:as 'parts 'p)
-                     :where (:= 'p.part 'pr.sub-part) )))
-      (:select 'sub-part (:as (:sum 'quantity) 'total-quantity)
-               :from 'included-parts
-               :group-by 'sub-part)))
+(query (<span style="color: #00ffff;">:with-recursive</span>
+      (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:included_parts</span> 'sub-part 'part 'quantity)
+           (<span style="color: #98fb98; font-weight: bold;">:union-all</span>
+            (<span style="color: #98fb98; font-weight: bold;">:select</span> 'sub-part 'part 'quantity
+                     <span style="color: #98fb98; font-weight: bold;">:from</span> 'parts
+                     <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'part <span style="color: #cd8162;">"our-product"</span>))
+            (<span style="color: #98fb98; font-weight: bold;">:select</span> 'p.sub-part 'p.part 'p.quantity
+                     <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'included-parts 'pr)
+                     (<span style="color: #98fb98; font-weight: bold;">:as</span> 'parts 'p)
+                     <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'p.part 'pr.sub-part) )))
+      (<span style="color: #98fb98; font-weight: bold;">:select</span> 'sub-part (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:sum</span> 'quantity) 'total-quantity)
+               <span style="color: #98fb98; font-weight: bold;">:from</span> 'included-parts
+               <span style="color: #98fb98; font-weight: bold;">:group-by</span> 'sub-part)))
 
-(query (:with-recursive
-      (:as (:search-graph 'id 'link 'data 'depth)
-           (:union-all (:select 'g.id 'g.link 'g.data 1
-                                :from (:as 'graph 'g))
-                       (:select 'g.id 'g.link 'g.data (:+ 'sg.depth 1)
-                                :from (:as 'graph 'g) (:as 'search-graph 'sg)
-                                :where (:= 'g.id 'sg.link))))
-      (:select '* :from 'search-graph)))
+(query (<span style="color: #00ffff;">:with-recursive</span>
+      (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:search-graph</span> 'id 'link 'data 'depth)
+           (<span style="color: #98fb98; font-weight: bold;">:union-all</span> (<span style="color: #98fb98; font-weight: bold;">:select</span> 'g.id 'g.link 'g.data 1
+                                <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'graph 'g))
+                       (<span style="color: #98fb98; font-weight: bold;">:select</span> 'g.id 'g.link 'g.data (<span style="color: #98fb98; font-weight: bold;">:+</span> 'sg.depth 1)
+                                <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'graph 'g) (<span style="color: #98fb98; font-weight: bold;">:as</span> 'search-graph 'sg)
+                                <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'g.id 'sg.link))))
+      (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'search-graph)))
 
-(query (:with-recursive
-      (:as (:search-graph 'id 'link 'data'depth 'path 'cycle)
-           (:union-all
-            (:select 'g.id 'g.link 'g.data 1
-                     (:[] 'g.f1 'g.f2) nil
-                     :from (:as 'graph 'g))
-            (:select 'g.id 'g.link 'g.data (:+ 'sg.depth 1)
-                     (:|| 'path (:row 'g.f1 'g.f2))
-                     (:= (:row 'g.f1 'g.f2)
-                         (:any* 'path))
-                     :from (:as 'graph 'g)
-                     (:as 'search-graph 'sg)
-                     :where (:and (:= 'g.id 'sg.link)
-                                  (:not 'cycle)))))
-      (:select '* :from 'search-graph)))
+(query (<span style="color: #00ffff;">:with-recursive</span>
+      (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:search-graph</span> 'id 'link 'data'depth 'path 'cycle)
+           (<span style="color: #98fb98; font-weight: bold;">:union-all</span>
+            (<span style="color: #98fb98; font-weight: bold;">:select</span> 'g.id 'g.link 'g.data 1
+                     (<span style="color: #98fb98; font-weight: bold;">:[]</span> 'g.f1 'g.f2) nil
+                     <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'graph 'g))
+            (<span style="color: #98fb98; font-weight: bold;">:select</span> 'g.id 'g.link 'g.data (<span style="color: #98fb98; font-weight: bold;">:+</span> 'sg.depth 1)
+                     (:|| 'path (<span style="color: #98fb98; font-weight: bold;">:row</span> 'g.f1 'g.f2))
+                     (<span style="color: #98fb98; font-weight: bold;">:=</span> (<span style="color: #98fb98; font-weight: bold;">:row</span> 'g.f1 'g.f2)
+                         (<span style="color: #98fb98; font-weight: bold;">:any*</span> 'path))
+                     <span style="color: #98fb98; font-weight: bold;">:from</span> (<span style="color: #98fb98; font-weight: bold;">:as</span> 'graph 'g)
+                     (<span style="color: #98fb98; font-weight: bold;">:as</span> 'search-graph 'sg)
+                     <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:and</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'g.id 'sg.link)
+                                  (<span style="color: #98fb98; font-weight: bold;">:not</span> 'cycle)))))
+      (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'search-graph)))
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org94f2acc" class="outline-2">
-<h2 id="org94f2acc">Table Functions</h2>
-<div class="outline-text-2" id="text-org94f2acc">
+<div id="outline-container-org73dbbd7" class="outline-2">
+<h2 id="org73dbbd7"><a id="ID-dbedabf5-eaf5-4adb-b323-b42926acc81a"></a>Table Functions</h2>
+<div class="outline-text-2" id="text-org73dbbd7">
 </div>
-<div id="outline-container-orgc5ee32c" class="outline-3">
-<h3 id="orgc5ee32c">sql-op :for-update (query &amp;key of nowait)</h3>
-<div class="outline-text-3" id="text-orgc5ee32c">
+<div id="outline-container-org712ce1b" class="outline-3">
+<h3 id="org712ce1b"><a id="ID-ace310e6-8bd1-4211-bf66-ef56c9b7e872"></a>sql-op :for-update (query &amp;key of nowait)</h3>
+<div class="outline-text-3" id="text-org712ce1b">
 <p>
 Locks the selected rows against concurrent updates. This will prevent the
 rows from being modified or deleted by other transactions until the current
@@ -1974,15 +2123,15 @@ If :nowait is provided, PostgreSQL will throw an error if a table cannot be
 locked immediately, instead of pausing until it's possible.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:for-update (:select :* :from 'foo 'bar 'baz) :of 'bar 'baz :nowait))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:for-update</span> (<span style="color: #98fb98; font-weight: bold;">:select</span> <span style="color: #98fb98; font-weight: bold;">:*</span> <span style="color: #98fb98; font-weight: bold;">:from</span> 'foo 'bar 'baz) <span style="color: #98fb98; font-weight: bold;">:of</span> 'bar 'baz <span style="color: #98fb98; font-weight: bold;">:nowait</span>))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org3283a62" class="outline-3">
-<h3 id="org3283a62">sql-op :for-share (query &amp;key of nowait)</h3>
-<div class="outline-text-3" id="text-org3283a62">
+<div id="outline-container-org8053ed4" class="outline-3">
+<h3 id="org8053ed4"><a id="ID-457394be-ef0d-444a-ad33-fefbc39363e3"></a>sql-op :for-share (query &amp;key of nowait)</h3>
+<div class="outline-text-3" id="text-org8053ed4">
 <p>
 Similar to :for-update, except it acquires a shared lock on the table,
 allowing other transactions to perform :for-share selects on the locked
@@ -1991,9 +2140,9 @@ tables.
 </div>
 </div>
 
-<div id="outline-container-org9d854d6" class="outline-3">
-<h3 id="org9d854d6">sql-op :insert-into (table &amp;rest rest)</h3>
-<div class="outline-text-3" id="text-org9d854d6">
+<div id="outline-container-orgaf3aa25" class="outline-3">
+<h3 id="orgaf3aa25"><a id="ID-a63202ff-4aa9-4af3-9b82-254516db07e1"></a>sql-op :insert-into (table &amp;rest rest)</h3>
+<div class="outline-text-3" id="text-orgaf3aa25">
 <p>
 Insert a row into a table. When the second argument is :set, the other
 arguments should be alternating field names and values, otherwise it
@@ -2001,7 +2150,7 @@ should be a :select form that will produce the values to be inserted.
 Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:insert-into 'my-table :set 'field-1 42 'field-2 "foobar"))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'my-table <span style="color: #98fb98; font-weight: bold;">:set</span> 'field-1 42 'field-2 <span style="color: #cd8162;">"foobar"</span>))
 </pre>
 </div>
 
@@ -2022,26 +2171,26 @@ an "upsert". Note that as per the postgresql sql documentation you must
 prepend the table name to the column in the where statement if you are updating.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
-                     :on-conflict-update 'column-A
-                     :update-set 'column-B '$2
-                     :where (:= 'test-table.column-A '$1)) "c" 37)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-table <span style="color: #98fb98; font-weight: bold;">:set</span> 'column-A '$1 'column-B '$2
+                     <span style="color: #98fb98; font-weight: bold;">:on-conflict-update</span> 'column-A
+                     <span style="color: #98fb98; font-weight: bold;">:update-set</span> 'column-B '$2
+                     <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'test-table.column-A '$1)) <span style="color: #cd8162;">"c"</span> 37)
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org6f54651" class="outline-3">
-<h3 id="org6f54651">sql-op :insert-rows-into (table &amp;rest rest)</h3>
-<div class="outline-text-3" id="text-org6f54651">
+<div id="outline-container-orge8932fe" class="outline-3">
+<h3 id="orge8932fe"><a id="ID-26d60b83-60f5-4bb4-8a03-cd897a455139"></a>sql-op :insert-rows-into (table &amp;rest rest)</h3>
+<div class="outline-text-3" id="text-orge8932fe">
 <p>
 Insert multiple rows into a table. Specify the columns first with the
 keyword :columns then provide a list of lists of the values as a
 parameter to the keyword :values. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:insert-rows-into 'my-table :columns 'field-1 'field-2
-                                    :values '((42 "foobar") (23 "foobaz"))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:insert-rows-into</span> 'my-table <span style="color: #98fb98; font-weight: bold;">:columns</span> 'field-1 'field-2
+                                    <span style="color: #98fb98; font-weight: bold;">:values</span> '((42 <span style="color: #cd8162;">"foobar"</span>) (23 <span style="color: #cd8162;">"foobaz"</span>))))
 </pre>
 </div>
 
@@ -2050,16 +2199,16 @@ If you will use the default columns, this can be simplified and the :columns
 parameters can be dropped. Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:insert-rows-into 'my-table
-                          :values '((42 "foobar") (23 "foobaz"))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:insert-rows-into</span> 'my-table
+                          <span style="color: #98fb98; font-weight: bold;">:values</span> '((42 <span style="color: #cd8162;">"foobar"</span>) (23 <span style="color: #cd8162;">"foobaz"</span>))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgad27c04" class="outline-3">
-<h3 id="orgad27c04">sql-op :update (table &amp;rest rest)</h3>
-<div class="outline-text-3" id="text-orgad27c04">
+<div id="outline-container-orgdc1ae42" class="outline-3">
+<h3 id="orgdc1ae42"><a id="ID-bbf790c1-9baa-4cf0-900c-16a5a2bc2081"></a>sql-op :update (table &amp;rest rest)</h3>
+<div class="outline-text-3" id="text-orgdc1ae42">
 <p>
 Update values in a table. After the table name there should follow the
 keyword :set and any number of alternating field names and values, like
@@ -2072,9 +2221,9 @@ indicating values to be returned as query result.
 </div>
 </div>
 
-<div id="outline-container-org45969c8" class="outline-3">
-<h3 id="org45969c8">sql-op :delete-from (table &amp;rest rest)</h3>
-<div class="outline-text-3" id="text-org45969c8">
+<div id="outline-container-org9159b7c" class="outline-3">
+<h3 id="org9159b7c"><a id="ID-cdee608e-71cb-4d41-9e1d-a21b7728d956"></a>sql-op :delete-from (table &amp;rest rest)</h3>
+<div class="outline-text-3" id="text-org9159b7c">
 <p>
 Delete rows from the named table. Can be given a :where argument followed
 by a condition, and a :returning argument, followed by one or more
@@ -2083,16 +2232,16 @@ expressions that should be returned for every deleted row.
 </div>
 </div>
 
-<div id="outline-container-orge73f54c" class="outline-3">
-<h3 id="orge73f54c">sql-op :create-table (name (&amp;rest columns) &amp;rest options)</h3>
-<div class="outline-text-3" id="text-orge73f54c">
+<div id="outline-container-org9e1c55d" class="outline-3">
+<h3 id="org9e1c55d"><a id="ID-4096efd3-8b88-4c50-8a02-d3f1a1b0d682"></a>sql-op :create-table (name (&amp;rest columns) &amp;rest options)</h3>
+<div class="outline-text-3" id="text-org9e1c55d">
 <p>
 Create a new table. The simplest example would pass two parameters,
 the table name and a list of lists providing information for each column.
 For example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table 'george ((id :type integer))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'george ((id <span style="color: #98fb98; font-weight: bold;">:type</span> integer))))
 </pre>
 </div>
 <p>
@@ -2106,9 +2255,9 @@ See <a href="create-tables.html">create-tables.html</a> for more detailed exampl
 </p>
 </div>
 
-<div id="outline-container-orge98b440" class="outline-4">
-<h4 id="orge98b440">Column Definition parameters</h4>
-<div class="outline-text-4" id="text-orge98b440">
+<div id="outline-container-orgcf55684" class="outline-4">
+<h4 id="orgcf55684"><a id="ID-d0a01fab-1489-47dd-8307-30c28351e8af"></a>Column Definition parameters</h4>
+<div class="outline-text-4" id="text-orgcf55684">
 <p>
 After the table name a list of column definitions
 follows, which are lists that start with a name, followed by one or
@@ -2178,9 +2327,9 @@ key refers to is deleted or changed. Allowed values are :restrict, :set-null,
 </div>
 </div>
 
-<div id="outline-container-orgcd7d88b" class="outline-4">
-<h4 id="orgcd7d88b">Table Constraints</h4>
-<div class="outline-text-4" id="text-orgcd7d88b">
+<div id="outline-container-orgcfd8620" class="outline-4">
+<h4 id="orgcfd8620"><a id="ID-6ee6a88c-1810-41f9-8cad-2c7d347f9c4a"></a>Table Constraints</h4>
+<div class="outline-text-4" id="text-orgcfd8620">
 <p>
 After the list of columns, zero or more extra options (table constraints) can
 be specified. These are lists starting with one of the following keywords:
@@ -2239,14 +2388,14 @@ the sql macro.
 Here is an example of a :create-table form:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(:create-table enemy
-  ((name :type string :primary-key t)
-   (age :type integer)
-   (address :type (or db-null string) :references (important-addresses :cascade :cascade))
-   (fatal-weakness :type text :default "None")
-   (identifying-color :type (string 20) :unique t))
-  (:foreign-key (identifying-color) (colors name))
-  (:constraint enemy-age-check :check (:&gt; 'age 12)))
+<pre class="src src-lisp">(<span style="color: #98fb98; font-weight: bold;">:create-table</span> enemy
+  ((name <span style="color: #98fb98; font-weight: bold;">:type</span> string <span style="color: #98fb98; font-weight: bold;">:primary-key</span> t)
+   (age <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
+   (address <span style="color: #98fb98; font-weight: bold;">:type</span> (or db-null string) <span style="color: #98fb98; font-weight: bold;">:references</span> (important-addresses <span style="color: #98fb98; font-weight: bold;">:cascade</span> <span style="color: #98fb98; font-weight: bold;">:cascade</span>))
+   (fatal-weakness <span style="color: #98fb98; font-weight: bold;">:type</span> text <span style="color: #98fb98; font-weight: bold;">:default</span> <span style="color: #cd8162;">"None"</span>)
+   (identifying-color <span style="color: #98fb98; font-weight: bold;">:type</span> (string 20) <span style="color: #98fb98; font-weight: bold;">:unique</span> t))
+  (<span style="color: #98fb98; font-weight: bold;">:foreign-key</span> (identifying-color) (colors name))
+  (<span style="color: #98fb98; font-weight: bold;">:constraint</span> enemy-age-check <span style="color: #98fb98; font-weight: bold;">:check</span> (<span style="color: #98fb98; font-weight: bold;">:&gt;</span> 'age 12)))
 </pre>
 </div>
 <p>
@@ -2257,9 +2406,9 @@ using the s-sql approach, see <a href="create-tables.html">create-tables.html</a
 </div>
 </div>
 
-<div id="outline-container-org780fc17" class="outline-3">
-<h3 id="org780fc17">sql-op :alter-table (name action &amp;rest args)</h3>
-<div class="outline-text-3" id="text-org780fc17">
+<div id="outline-container-org00e7464" class="outline-3">
+<h3 id="org00e7464"><a id="ID-936e7ced-7f31-4c94-9d39-81b11e2cd1cd"></a>sql-op :alter-table (name action &amp;rest args)</h3>
+<div class="outline-text-3" id="text-org00e7464">
 <p>
 Alters named table. Currently changing a column's data type is not supported.
 The meaning of args depends on action:
@@ -2337,9 +2486,9 @@ Here is an example using the table defined above:
 </div>
 </div>
 
-<div id="outline-container-orgcb5207e" class="outline-3">
-<h3 id="orgcb5207e">sql-op :drop-table (name)</h3>
-<div class="outline-text-3" id="text-orgcb5207e">
+<div id="outline-container-orgd356f90" class="outline-3">
+<h3 id="orgd356f90"><a id="ID-1f2b170f-09e2-40e6-9956-f3c44b1d2824"></a>sql-op :drop-table (name)</h3>
+<div class="outline-text-3" id="text-orgd356f90">
 <p>
 Drops the named table. You may optionally pass :if-exists before the name
 to suppress the error message. You can also optionally pass :cascade after
@@ -2347,17 +2496,18 @@ the name to indicate that it should also drop any other tables, indices,
 etc which depend on that table.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:drop-table 'table1))
-(query (:drop-table :if-exists 'table1))
-(query (:drop-table :if-exists 'table1 :cascade))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:drop-table</span> 'table1))
+(query (<span style="color: #98fb98; font-weight: bold;">:drop-table</span> <span style="color: #98fb98; font-weight: bold;">:if-exists</span> 'table1))
+(query (<span style="color: #98fb98; font-weight: bold;">:drop-table</span> <span style="color: #98fb98; font-weight: bold;">:if-exists</span> 'table1 <span style="color: #98fb98; font-weight: bold;">:cascade</span>))
+(query (<span style="color: #98fb98; font-weight: bold;">:drop-table</span> (<span style="color: #98fb98; font-weight: bold;">:if-exists</span> 'table1-with-longer-name) <span style="color: #98fb98; font-weight: bold;">:cascade</span>))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org55cbaff" class="outline-3">
-<h3 id="org55cbaff">sql-op :truncate (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org55cbaff">
+<div id="outline-container-org4a7abc0" class="outline-3">
+<h3 id="org4a7abc0"><a id="ID-f17b0128-f74e-4e79-90e4-d7cc97848c46"></a>sql-op :truncate (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org4a7abc0">
 <p>
 Truncates one or more tables, deleting all the rows. Optional keyword arguments are
 allowed in the following order. Note that :continue-identity and :restart-identity
@@ -2375,24 +2525,24 @@ make no sense if both are included.
 Example calls would be:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:truncate 'bigtable 'fattable))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:truncate</span> 'bigtable 'fattable))
 
-(query (:truncate 'bigtable 'fattable :only))
+(query (<span style="color: #98fb98; font-weight: bold;">:truncate</span> 'bigtable 'fattable <span style="color: #98fb98; font-weight: bold;">:only</span>))
 
-(query (:truncate 'bigtable 'fattable :only :continue-identity))
+(query (<span style="color: #98fb98; font-weight: bold;">:truncate</span> 'bigtable 'fattable <span style="color: #98fb98; font-weight: bold;">:only</span> <span style="color: #98fb98; font-weight: bold;">:continue-identity</span>))
 
-(query (:truncate 'bigtable 'fattable :restart-identity))
+(query (<span style="color: #98fb98; font-weight: bold;">:truncate</span> 'bigtable 'fattable <span style="color: #98fb98; font-weight: bold;">:restart-identity</span>))
 
-(query (:truncate 'bigtable 'fattable :only :restart-identity :cascade ))
+(query (<span style="color: #98fb98; font-weight: bold;">:truncate</span> 'bigtable 'fattable <span style="color: #98fb98; font-weight: bold;">:only</span> <span style="color: #98fb98; font-weight: bold;">:restart-identity</span> <span style="color: #98fb98; font-weight: bold;">:cascade</span> ))
 
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgc67c435" class="outline-3">
-<h3 id="orgc67c435">sql-op :create-index (name &amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgc67c435">
+<div id="outline-container-org3ff22a5" class="outline-3">
+<h3 id="org3ff22a5"><a id="ID-c06560b4-5dfb-4657-aa1f-dc3913fa08fc"></a>sql-op :create-index (name &amp;rest args)</h3>
+<div class="outline-text-3" id="text-org3ff22a5">
 <p>
 Create an index on a table. After the name of the index the keyword :on should
 follow, with the table name after it. Then the keyword :fields, followed by
@@ -2401,42 +2551,42 @@ be added at the end to make a partial index.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(sql (:create-index 'gin-idx :on "historical-events" :using gin :fields 'data))
+<pre class="src src-lisp">(sql (<span style="color: #98fb98; font-weight: bold;">:create-index</span> 'gin-idx <span style="color: #98fb98; font-weight: bold;">:on</span> <span style="color: #cd8162;">"historical-events"</span> <span style="color: #98fb98; font-weight: bold;">:using</span> gin <span style="color: #98fb98; font-weight: bold;">:fields</span> 'data))
 
-"CREATE INDEX gin_idx ON historical_events USING GIN (data)"
+<span style="color: #cd8162;">"CREATE INDEX gin_idx ON historical_events USING GIN (data)"</span>
 </pre>
 </div>
 </div>
 </div>
 
 
-<div id="outline-container-org993aa9f" class="outline-3">
-<h3 id="org993aa9f">sql-op :create-unique-index (name &amp;rest args)</h3>
-<div class="outline-text-3" id="text-org993aa9f">
+<div id="outline-container-orgcc857d9" class="outline-3">
+<h3 id="orgcc857d9"><a id="ID-b2f3a924-58c4-4c4e-9b08-603bb8f5bef3"></a>sql-op :create-unique-index (name &amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgcc857d9">
 <p>
 Works like :create-index, except that the index created is unique.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org3732290" class="outline-3">
-<h3 id="org3732290">sql-op :drop-index (name)</h3>
-<div class="outline-text-3" id="text-org3732290">
+<div id="outline-container-orgf03fa3f" class="outline-3">
+<h3 id="orgf03fa3f"><a id="ID-e2c1e460-4d7b-449e-9b24-daa807f115b4"></a>sql-op :drop-index (name)</h3>
+<div class="outline-text-3" id="text-orgf03fa3f">
 <p>
 Drop an index. Takes :if-exists and/or :cascade arguments like :drop-table.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:drop-index 'index1))
-(query (:drop-index :if-exists 'index1))
-(query (:drop-index :if-exists 'index1 :cascade))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:drop-index</span> 'index1))
+(query (<span style="color: #98fb98; font-weight: bold;">:drop-index</span> <span style="color: #98fb98; font-weight: bold;">:if-exists</span> 'index1))
+(query (<span style="color: #98fb98; font-weight: bold;">:drop-index</span> <span style="color: #98fb98; font-weight: bold;">:if-exists</span> 'index1 <span style="color: #98fb98; font-weight: bold;">:cascade</span>))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org371d5df" class="outline-3">
-<h3 id="org371d5df">sql-op :create-sequence (name &amp;key increment min-value max-value start cache cycle)</h3>
-<div class="outline-text-3" id="text-org371d5df">
+<div id="outline-container-org755eae6" class="outline-3">
+<h3 id="org755eae6"><a id="ID-6dad55a4-a0d4-4d94-923e-e34dd21417a0"></a>sql-op :create-sequence (name &amp;key increment min-value max-value start cache cycle)</h3>
+<div class="outline-text-3" id="text-org755eae6">
 <p>
 Create a sequence with the given name. The rest of the arguments control
 the way the sequence selects values.
@@ -2444,9 +2594,9 @@ the way the sequence selects values.
 </div>
 </div>
 
-<div id="outline-container-org2776aef" class="outline-3">
-<h3 id="org2776aef">sql-op :alter-sequence (name)</h3>
-<div class="outline-text-3" id="text-org2776aef">
+<div id="outline-container-org939d0be" class="outline-3">
+<h3 id="org939d0be"><a id="ID-16b308a1-ae6c-4cac-816d-1e29b28ce0b9"></a>sql-op :alter-sequence (name)</h3>
+<div class="outline-text-3" id="text-org939d0be">
 <p>
 Alters a sequence. See <a href="https://www.postgresql.org/docs/10/static/sql-altersequence.html">Postgresql documentation</a> for parameters.
 </p>
@@ -2485,42 +2635,42 @@ Sets the amount by which each subsequent increment will be increased.
 </div>
 </div>
 
-<div id="outline-container-org9ac2bc0" class="outline-3">
-<h3 id="org9ac2bc0">sql-op :drop-sequence (name)</h3>
-<div class="outline-text-3" id="text-org9ac2bc0">
+<div id="outline-container-org015da84" class="outline-3">
+<h3 id="org015da84"><a id="ID-913c35f8-c6ba-42e3-a862-a46e313985ba"></a>sql-op :drop-sequence (name)</h3>
+<div class="outline-text-3" id="text-org015da84">
 <p>
 Drop a sequence. Takes :if-exists and/or :cascade arguments like :drop-table.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:drop-sequence 'sequence1))
-(query (:drop-sequence :if-exists 'sequence1))
-(query (:drop-sequence :if-exists 'sequence1 :cascade))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:drop-sequence</span> 'sequence1))
+(query (<span style="color: #98fb98; font-weight: bold;">:drop-sequence</span> <span style="color: #98fb98; font-weight: bold;">:if-exists</span> 'sequence1))
+(query (<span style="color: #98fb98; font-weight: bold;">:drop-sequence</span> <span style="color: #98fb98; font-weight: bold;">:if-exists</span> 'sequence1 <span style="color: #98fb98; font-weight: bold;">:cascade</span>))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org03ea29a" class="outline-3">
-<h3 id="org03ea29a">sql-op :create-view (name query)</h3>
-<div class="outline-text-3" id="text-org03ea29a">
+<div id="outline-container-orgc86378c" class="outline-3">
+<h3 id="orgc86378c"><a id="ID-b5152a93-fc83-4e28-8678-2238987280ac"></a>sql-op :create-view (name query)</h3>
+<div class="outline-text-3" id="text-orgc86378c">
 <p>
 Create a view from an S-SQL-style query.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgb099849" class="outline-3">
-<h3 id="orgb099849">sql-op :drop-view (name)</h3>
-<div class="outline-text-3" id="text-orgb099849">
+<div id="outline-container-org61c6183" class="outline-3">
+<h3 id="org61c6183"><a id="ID-41ae2fb3-1d14-40a7-9cb3-eb194f90a692"></a>sql-op :drop-view (name)</h3>
+<div class="outline-text-3" id="text-org61c6183">
 <p>
 Drop a view. Takes optional :if-exists argument.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgc947053" class="outline-3">
-<h3 id="orgc947053">sql-op :set-constraints (state &amp;rest constraints)</h3>
-<div class="outline-text-3" id="text-orgc947053">
+<div id="outline-container-org1ff1f39" class="outline-3">
+<h3 id="org1ff1f39"><a id="ID-4e0e615b-cdb2-4576-a46d-20c25daf414a"></a>sql-op :set-constraints (state &amp;rest constraints)</h3>
+<div class="outline-text-3" id="text-org1ff1f39">
 <p>
 Configure whether deferrable constraints should be checked when a statement
 is executed, or when the transaction containing that statement is completed.
@@ -2532,9 +2682,9 @@ all deferrable constraints should be thus configured.
 </div>
 </div>
 
-<div id="outline-container-orgf304b23" class="outline-3">
-<h3 id="orgf304b23">sql-op :listen (channel)</h3>
-<div class="outline-text-3" id="text-orgf304b23">
+<div id="outline-container-org79e2337" class="outline-3">
+<h3 id="org79e2337"><a id="ID-254e8288-3515-4a51-8704-ea17c35f2c9b"></a>sql-op :listen (channel)</h3>
+<div class="outline-text-3" id="text-org79e2337">
 <p>
 Tell the server to listen for notification events on channel channel,
 a string, on the current connection.
@@ -2542,18 +2692,18 @@ a string, on the current connection.
 </div>
 </div>
 
-<div id="outline-container-org8a4149b" class="outline-3">
-<h3 id="org8a4149b">sql-op :unlisten (channel)</h3>
-<div class="outline-text-3" id="text-org8a4149b">
+<div id="outline-container-org3b72b99" class="outline-3">
+<h3 id="org3b72b99"><a id="ID-8899f2b4-8053-4e49-917f-8716c8ac916b"></a>sql-op :unlisten (channel)</h3>
+<div class="outline-text-3" id="text-org3b72b99">
 <p>
 Stop listening for events on channel.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgfacf1ea" class="outline-3">
-<h3 id="orgfacf1ea">sql-op :notify (channel &amp;optional payload)</h3>
-<div class="outline-text-3" id="text-orgfacf1ea">
+<div id="outline-container-orge7002dc" class="outline-3">
+<h3 id="orge7002dc"><a id="ID-88d35022-2839-4ece-9688-c8517363e25a"></a>sql-op :notify (channel &amp;optional payload)</h3>
+<div class="outline-text-3" id="text-orge7002dc">
 <p>
 Signal a notification event on channel channel, a string. The optional
 payload string can be used to send additional event information to the listeners.
@@ -2561,9 +2711,9 @@ payload string can be used to send additional event information to the listeners
 </div>
 </div>
 
-<div id="outline-container-org693dbfe" class="outline-3">
-<h3 id="org693dbfe">sql-op :create-role (role &amp;rest args)</h3>
-<div class="outline-text-3" id="text-org693dbfe">
+<div id="outline-container-orgf73f4f7" class="outline-3">
+<h3 id="orgf73f4f7"><a id="ID-e4c5a84e-3a66-4a80-91de-b673beb8376d"></a>sql-op :create-role (role &amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgf73f4f7">
 <p>
 Create a new role (user). Following the role name are optional keywords
 arguments:
@@ -2630,42 +2780,42 @@ added as a new member.
 Here is an example of a :create-role form:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-role 'user23
-                     :options 'SUPERUSER 'NOINHERIT 'LOGIN
-                     :password "mypassword"
-                     :connection-limit 100 :role 'users))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-role</span> 'user23
+                     <span style="color: #98fb98; font-weight: bold;">:options</span> 'SUPERUSER 'NOINHERIT 'LOGIN
+                     <span style="color: #98fb98; font-weight: bold;">:password</span> <span style="color: #cd8162;">"mypassword"</span>
+                     <span style="color: #98fb98; font-weight: bold;">:connection-limit</span> 100 <span style="color: #98fb98; font-weight: bold;">:role</span> 'users))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org048a544" class="outline-3">
-<h3 id="org048a544">sql-op :create-database (name)</h3>
-<div class="outline-text-3" id="text-org048a544">
+<div id="outline-container-orgf27f700" class="outline-3">
+<h3 id="orgf27f700"><a id="ID-6d429954-eb91-4a94-8655-f1e1a75f02c8"></a>sql-op :create-database (name)</h3>
+<div class="outline-text-3" id="text-orgf27f700">
 <p>
 Create a new database with the given name.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org161476a" class="outline-3">
-<h3 id="org161476a">sql-op :drop-database (name)</h3>
-<div class="outline-text-3" id="text-org161476a">
+<div id="outline-container-org1c1ba08" class="outline-3">
+<h3 id="org1c1ba08"><a id="ID-35ecfdd0-7ba1-45cc-a73d-68323c880c29"></a>sql-op :drop-database (name)</h3>
+<div class="outline-text-3" id="text-org1c1ba08">
 <p>
 Drops the named database. You may optionally pass :if-exists before the
-name to suppress the error message.
+name to suppress the error message. Examples:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:drop-database 'database-name))
-(query (:drop-database :if-exists 'database-name))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:drop-database</span> 'database-name))
+(query (<span style="color: #98fb98; font-weight: bold;">:drop-database</span> <span style="color: #98fb98; font-weight: bold;">:if-exists</span> 'database-name))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orge8ec10f" class="outline-3">
-<h3 id="orge8ec10f">sql-op :copy (table &amp;rest args)</h3>
-<div class="outline-text-3" id="text-orge8ec10f">
+<div id="outline-container-org4ff0d49" class="outline-3">
+<h3 id="org4ff0d49"><a id="ID-962e6b5e-8ce6-4083-a17e-010679d12b32"></a>sql-op :copy (table &amp;rest args)</h3>
+<div class="outline-text-3" id="text-org4ff0d49">
 <p>
 Move data between Postgres tables and filesystem files. Table name is required
 followed by one or more of the following keyword arguments. Documentation for
@@ -2674,38 +2824,34 @@ tutorial:
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query
-   (:copy 'faa.d_airlines
-    :columns 'airlineid 'airline_desc
-    :from "/home/gpadmin/gpdb-sandbox-tutorials/faa/L_AIRLINE_ID.csv"
-    :on-segment t
-    :binary t
-    :oids t
-    :header t
-    :delimiter ","
-    :null "NULL"
-    :escape "my-escape-string"
-    :newline "CR"
-    :csv t
-    :log-errors t
-    :segment-reject-limit 100 'ROWS))
+   (<span style="color: #98fb98; font-weight: bold;">:copy</span> 'faa.d_airlines
+    <span style="color: #98fb98; font-weight: bold;">:columns</span> 'airlineid 'airline_desc
+    <span style="color: #98fb98; font-weight: bold;">:from</span> <span style="color: #cd8162;">"/home/gpadmin/gpdb-sandbox-tutorials/faa/L_AIRLINE_ID.csv"</span>
+    <span style="color: #98fb98; font-weight: bold;">:on-segment</span> t
+    <span style="color: #98fb98; font-weight: bold;">:binary</span> t
+    <span style="color: #98fb98; font-weight: bold;">:oids</span> t
+    <span style="color: #98fb98; font-weight: bold;">:header</span> t
+    <span style="color: #98fb98; font-weight: bold;">:delimiter</span> <span style="color: #cd8162;">","</span>
+    <span style="color: #98fb98; font-weight: bold;">:null</span> <span style="color: #cd8162;">"NULL"</span>
+    <span style="color: #98fb98; font-weight: bold;">:escape</span> <span style="color: #cd8162;">"my-escape-string"</span>
+    <span style="color: #98fb98; font-weight: bold;">:newline</span> <span style="color: #cd8162;">"CR"</span>
+    <span style="color: #98fb98; font-weight: bold;">:csv</span> t
+    <span style="color: #98fb98; font-weight: bold;">:log-errors</span> t
+    <span style="color: #98fb98; font-weight: bold;">:segment-reject-limit</span> 100 'ROWS))
 
 </pre>
 </div>
 </div>
 </div>
 </div>
-<div id="outline-container-org4f1702f" class="outline-2">
-<h2 id="org4f1702f">Dynamic Queries and Composition</h2>
-<div class="outline-text-2" id="text-org4f1702f">
+<div id="outline-container-orga4014f9" class="outline-2">
+<h2 id="orga4014f9"><a id="ID-1df403b0-bef6-40d9-983e-328a2f4c49b8"></a>Dynamic Queries and Composition</h2>
+<div class="outline-text-2" id="text-orga4014f9">
 <p>
 See <a href="dynamic-queries.html">Dynamic-Queries.html</a>
 </p>
 </div>
 </div>
-</div>
-<div id="postamble" class="status">
-<p class="date">Created: 2018-10-07 Sun 10:35</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

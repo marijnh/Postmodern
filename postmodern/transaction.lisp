@@ -2,8 +2,26 @@
 (in-package :postmodern)
 
 (defparameter *transaction-level* 0)
-(defparameter *current-logical-transaction* nil)
-(defparameter *isolation-level* :read-committed-rw)
+(defparameter *current-logical-transaction* nil "This is bound to the current transaction-handle or savepoint-handle instance representing the innermost open logical transaction.")
+(defparameter *isolation-level* :read-committed-rw "The transaction isolation level currently in use. You can specify the following isolation levels in postmodern transactions:
+
+- :read-committed-rw (read committed with read and write)
+- :read-committed-ro (read committed with read only)
+- :repeatable-read-rw (repeatable read with read and write)
+- :repeatable-read-ro (repeatable read with read only)
+- :serializable (serializable with reand and write)")
+
+(defgeneric abort-hooks (obj)
+  (:documentation "An accessor for the transaction or savepoint's list of abort hooks, each of which should be a function with no required arguments. These functions will be executed when a transaction is aborted or a savepoint rolled back (whether via a non-local transfer of control or explicitly by either abort-transaction or rollback-savepoint)."))
+
+(defgeneric abort-logical-transaction (obj)
+  (:documentation "Roll back the given logical transaction, regardless of whether it is an actual transaction or a savepoint."))
+
+(defgeneric commit-hooks (obj)
+  (:documentation "An accessor for the transaction or savepoint's list of commit hooks, each of which should be a function with no required arguments. These functions will be executed when a transaction is committed or a savepoint released."))
+
+(defgeneric commit-logical-transaction (obj)
+  (:documentation "Commit the given logical transaction, regardless of whether it is an actual transaction or a savepoint."))
 
 (defclass transaction-handle ()
   ((open-p :initform t :accessor transaction-open-p)
@@ -49,11 +67,36 @@ arguments) to be executed at commit and abort time, respectively."))
       (abort-transaction transaction))))
 
 (defmacro with-transaction ((&optional name isolation-level) &body body)
-  "Execute the body within a database transaction, committing when the
-body exits normally, and aborting otherwise. An optional name and/or
-isolation-level can be given to the transaction. The name can be used to
-force a commit or abort before the body unwinds. The isolation-level
-will set the isolation-level used by the transaction."
+  "Execute the given body within a database transaction, committing it when the body exits normally, and aborting otherwise. An optional name and/or isolation-level can be given to the transaction. The name can be used to force a commit or abort before the body unwinds. The isolation-level will set the isolation-level used by the transaction.
+
+You can specify the following isolation levels in postmodern transactions:
+
+- :read-committed-rw (read committed with read and write)
+- :read-committed-ro (read committed with read only)
+- :repeatable-read-rw (repeatable read with read and write)
+- :repeatable-read-ro (repeatable read with read only)
+- :serializable (serializable with reand and write)
+
+Sample usage where george is just the name given to the transaction (not quoted or a string) and ... simply indicates other statements would be expected here:
+
+(with-transaction ()
+  (execute (:insert-into 'test-data :set 'value 77))
+  ...)
+
+(with-transaction (george)
+  (execute (:insert-into 'test-data :set 'value 22))
+  ...)
+
+(with-transaction (george :read-committed-rw)
+  (execute (:insert-into 'test-data :set 'value 33))
+  (query (:select '* :from 'test-data))
+  ...)
+
+(with-transaction (:serializable)
+  (execute (:insert-into 'test-data :set 'value 44))
+  ...)
+
+Further discussion of transactions and isolation levels can found in the isolation notes file in the doc folder."
   (let ((transaction-name (or (when (not (isolation-level-p name))
                                   name)
                               (gensym "anonymous-transaction"))))
@@ -64,7 +107,7 @@ will set the isolation-level used by the transaction."
                             ,isolation-level)))
 
 (defun abort-transaction (transaction)
-  "Immediately abort an open transaction."
+  "Roll back the given transaction."
   (when (transaction-open-p transaction)
     (let ((*database* (transaction-connection transaction)))
       (execute "ABORT"))
@@ -99,14 +142,11 @@ associated database connection of a savepoint."))
       (rollback-savepoint savepoint))))
 
 (defmacro with-savepoint (name &body body)
-  "Execute the body within a savepoint, releasing savepoint when the
-body exits normally, and rolling back otherwise. NAME is both the
-variable that can be used to release or rolled back before the body
-unwinds, and the SQL name of the savepoint."
+  "Can only be used within a transaction. Establishes a savepoint with the given name at the start of body, and binds the same name to a handle for that savepoint. The body is executed and, at the end of body, the savepoint is released, unless a condition is thrown, in which case it is rolled back. Execute the body within a savepoint, releasing savepoint when the body exits normally, and rolling back otherwise. NAME is both the variable that can be used to release or rolled back before the body unwinds, and the SQL name of the savepoint."
   `(call-with-savepoint ',name (lambda (,name) (declare (ignorable ,name)) ,@body)))
 
 (defun rollback-savepoint (savepoint)
-  "Immediately roll back a savepoint, aborting it results."
+  "Immediately roll back a savepoint, aborting the results."
   (when (savepoint-open-p savepoint)
     (let ((*database* (savepoint-connection savepoint)))
       (execute (format nil "ROLLBACK TO SAVEPOINT ~A"
@@ -131,9 +171,39 @@ unwinds, and the SQL name of the savepoint."
 (defmacro with-logical-transaction ((&optional (name nil name-p)
                                        (isolation-level *isolation-level* isolation-level-p))
                                     &body body)
-  "Executes the body within a with-transaction (if no transaction is
-already in progress) or a with-savepoint (if one is), binding the
-transaction or savepoint to NAME (if supplied)"
+  "Executes body within a with-transaction form if no transaction is currently
+in progress, otherwise simulates a nested transaction by executing it
+within a with-savepoint form. The transaction or savepoint is bound to name
+if one is supplied. The isolation-level will set the isolation-level used by the transaction.
+
+You can specify the following isolation levels in postmodern transactions:
+
+- :read-committed-rw (read committed with read and write)
+- :read-committed-ro (read committed with read only)
+- :repeatable-read-rw (repeatable read with read and write)
+- :repeatable-read-ro (repeatable read with read only)
+- :serializable (serializable with reand and write)
+
+Sample usage where george is just the name given to the transaction (not
+quoted or a string) and ... simply indicates other statements would be
+expected here:
+
+
+  (with-logical-transaction ()
+    (execute (:insert-into 'test-data :set 'value 77))
+    ...)
+
+  (with-logical-transaction (george)
+    (execute (:insert-into 'test-data :set 'value 22))
+    ...)
+
+  (with-logical-transaction (george :read-committed-rw)
+    (execute (:insert-into 'test-data :set 'value 33))
+    ...)
+
+  (with-logical-transaction (:serializable)
+    (execute (:insert-into 'test-data :set 'value 44))
+    ...)"
   (let* ((effective-name (if (and name-p (not (isolation-level-p name)))
                              name
                              (gensym)))
@@ -167,12 +237,10 @@ transaction or savepoint to NAME (if supplied)"
       (funcall thunk)))
 
 (defmacro ensure-transaction (&body body)
-  "Executes body within a with-transaction form if and only if no
-transaction is already in progress."
+  "Ensures that body is executed within a transaction, but does not begin a new transaction if one is already in progress."
   `(call-with-ensured-transaction (lambda () ,@body)))
 
 (defmacro ensure-transaction-with-isolation-level (isolation-level &body body)
-  "Executes body within a with-transaction form if and only if no
-transaction is already in progress. This adds the ability to specify an isolatin
+  "Executes body within a with-transaction form if and only if no transaction is already in progress. This adds the ability to specify an isolation
 level other than the current default"
   `(call-with-ensured-transaction (lambda () ,@body) ,isolation-level))

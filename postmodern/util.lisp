@@ -8,9 +8,13 @@ symbols to string with the S-SQL rules."
       name
       (to-sql-name name)))
 
-(defun sequence-next (sequence)
-  "Shortcut for getting the next value from a sequence."
-  (query (:select (:nextval (to-identifier sequence))) :single))
+(defun coalesce (&rest args)
+  "Returns the first non-NIL, non-NULL (as in :null) argument, or NIL if none are present. Useful for providing a fall-back value for the result of a query, or, when given only one argument, for transforming :nulls to NIL."
+  (some (lambda (x) (if (eq x :null) nil x)) args))
+
+(defun database-version ()
+  "Returns the version string provided by postgresql of the current postgresql server. E.g. 'PostgreSQL 12.2 on x86_64-pc-linux-gnu, compiled by gcc (Arch Linux 9.3.0-1) 9.3.0, 64-bit'"
+  (query (:select (:version)) :single))
 
 (defmacro make-list-query (relkind)
   "Helper macro for the functions that list tables, sequences, and
@@ -32,136 +36,14 @@ exists."
                                                 (:= 'pg_class.relname (to-identifier ,name))))))))
 
 (defun split-fully-qualified-tablename (name)
-  "Take a tablename of the form database.schema.table or schema.table
-and return the tablename and the schema name. The name can be a symbol
-or a string. Returns a list of form '(table schema database"
+  "Take a tablename of the form database.schema.table or schema.table or table and return the tablename and the schema name. The name can be a symbol or a string. Returns a list of form '(table schema database. If the tablename is not fully qualified, it will assume that the schema should be \"public\"."
   (destructuring-bind (table &optional schema database)
       (nreverse (split-sequence:split-sequence #\. (to-sql-name name)
                                                :test 'equal))
+    (when (not schema) (setf schema "public"))
     (list table schema database)))
 
-(defun list-tables-in-schema (&optional (schema-name "public") (strings-p nil))
-  "Returns a list of tables in a particular schema, defaulting to public. If schema-name is :all, it will return all the non-system tables in the database in fully qualified form: e.g. 'public.test_table'. If string-p is t, the names will be returned as strings with underscores converted to hyphens."
-  (let ((result (cond
-                  ((or (equal schema-name "all")
-                       (eq schema-name :all))
-                   (query "select table_schema||'.'||table_name
-                               from information_schema.tables
-                               where table_schema not in ('pg_catalog', 'information_schema')
-                               order by table_schema, table_name"))
-                  (t
-                   (query "((SELECT table_name
-                                 FROM information_schema.tables
-                                 WHERE (table_schema = $1))
-                                 ORDER BY table_name)"
-                          (to-sql-name schema-name))))))
-    (if strings-p (mapcar 'from-sql-name result) result )))
-
-(defun list-tables (&optional strings-p)
-  "Return a list of the tables in a database. Turn them into keywords
-if strings-p is not true."
-  (let ((result (query (make-list-query "r") :column)))
-    (if strings-p result (mapcar 'from-sql-name result))))
-
-(defun table-exists-p (table-name &optional (schema-name nil))
-  "Check whether a table exists in a particular schema. Defaults to the search path.
-Takes either a string or a symbol for the table name. The table-name can be fully
-qualified in the form of schema.table-name or database.schema.table-name. If
-the schema is specified either in a qualified table-name or in the optional
-schema-name parameter, we look directly to the information schema tables. Otherwise
-we use the search path which can be controlled by being within a with-schema form."
-  (let* ((destructured-table-name (split-fully-qualified-tablename table-name))
-         (schema (or (second destructured-table-name) schema-name))
-         (table (or (first destructured-table-name) table-name))
-         (result (if schema
-                     (member (to-sql-name table)
-                             (alexandria:flatten
-                              (query (:order-by
-                                      (:select 'table-name
-                                               :from 'information-schema.tables
-                                               :where (:= 'table-schema '$1))
-                                      'table-name)
-                                     (s-sql::to-sql-name schema)))
-                             :test 'equal)
-                     (query (make-exists-query "r" table) :single))))
-    (if result t nil)))
-
-(defun create-sequence (name &key temp if-not-exists increment min-value max-value start cache)
-  "Create a sequence. Available additional key parameters are
-:temp :if-not-exists :increment :min-value :max-value :start and :cache. See
-https://www.postgresql.org/docs/current/static/sql-createsequence.html for details on usage."
-  (let ((query-string
-         (concatenate 'string
-                      "CREATE "
-                      (if temp "TEMP " "")
-                      "SEQUENCE "
-                      (if if-not-exists "IF NOT EXISTS " "")
-                      (to-sql-name name)
-                      (if increment (concatenate 'string " INCREMENT BY " (format nil "~a" increment)) "")
-                      (if min-value (concatenate 'string " MINVALUE " (format nil "~a" min-value)) "")
-                      (if max-value (concatenate 'string " MAXVALUE " (format nil "~a" max-value)) "")
-                      (if start (concatenate 'string " START " (format nil "~a" start)) "")
-                      (if cache (concatenate 'string " CACHE " (format nil "~a" cache)) ""))))
-    (query query-string)))
-
-(defun drop-sequence (name &key if-exists cascade)
-  "Drop a sequence. Name should be quoted. Available key parameters are :if-exists and :cascade"
-  (let ((query-string
-         (concatenate 'string
-                      "DROP "
-                      "SEQUENCE "
-                      (if if-exists "IF EXISTS " "")
-                      (to-sql-name name)
-                      (if cascade " CASCADE" ""))))
-    (query query-string)))
-
-(defun list-sequences (&optional strings-p)
-  "Return a list of the sequences in a database. Turn them into
-keywords if strings-p is not true."
-  (let ((result (query (make-list-query "S") :column)))
-    (if strings-p result (mapcar 'from-sql-name result))))
-
-(defun sequence-exists-p (sequence)
-  "Check whether a sequence exists. Takes either a string or a symbol
-for the sequence name."
-  (query (make-exists-query "S" (to-sql-name sequence)) :single))
-
-(defun list-views (&optional strings-p)
-  "Return a list of the views in a database. Turn them into keywords
-if strings-p is not true."
-  (let ((result (query (make-list-query "v") :column)))
-    (if strings-p result (mapcar 'from-sql-name result))))
-
-(defun view-exists-p (view)
-  "Check whether a view exists. Takes either a string or a symbol for
-the view name."
-  (query (make-exists-query "v" view) :single))
-
-(defun table-description (table-name &optional schema-name)
-  "Return a list of (name type null-allowed) lists for the fields of a
-table."
-  (setf table-name (to-sql-name table-name))
-  (when schema-name (setf schema-name (to-sql-name schema-name)))
-  (let ((schema-test (if (and schema-name (schema-exists-p schema-name) (table-exists-p table-name))
-                         (sql (:= 'pg-namespace.nspname schema-name))
-                         "true")))
-    (mapcar #'butlast
-            (query (:order-by (:select 'attname 'typname (:not 'attnotnull) 'attnum :distinct
-                                       :from 'pg-catalog.pg-attribute
-                                       :inner-join 'pg-catalog.pg-type :on (:= 'pg-type.oid 'atttypid)
-                                       :inner-join 'pg-catalog.pg-class :on (:and (:= 'pg-class.oid 'attrelid)
-                                                                                  (:= 'pg-class.relname (to-identifier table-name)))
-                                       :inner-join 'pg-catalog.pg-namespace :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
-                                       :where (:and (:> 'attnum 0) (:raw schema-test)))
-                              'attnum)))))
-
-(defun coalesce (&rest args)
-  "Returns t if any argument is not nil or :null."
-  (some (lambda (x) (if (eq x :null) nil x)) args))
-
-(defun database-version ()
-  "Returns the version of the current postgresql database."
-  (query (:select (:version)) :single))
+;;; Databases
 
 (defun num-records-in-database ()
   "Returns a list of lists with schema, table name and approximate number of records
@@ -175,7 +57,7 @@ in the currently connected database."
   (query (:select (:current-database)) :single))
 
 (defun database-exists-p (database-name)
-  "Determine if a particular database exists. "
+  "Checks to see if a particular database exists. Returns T if true, nil if not."
   (setf database-name (to-sql-name database-name))
   (if (member database-name (list-databases :size nil) :test 'equal) t nil))
 
@@ -222,20 +104,68 @@ ordered by name. This function excludes the template databases."
                           (:raw order-by-size)))
             collect (first x)))))
 
-
 ;;;; Schemas
 ;;;; See namespace.lisp
 
+;;; Sequences
+(defun sequence-next (sequence)
+  "Shortcut for getting the next value from a sequence. The sequence identifier can be either a string or a symbol, in the latter case it will be converted to a string according to S-SQL rules."
+  (query (:select (:nextval (to-identifier sequence))) :single))
+
+(defun create-sequence (name &key temp if-not-exists increment min-value max-value start cache)
+  "Create a sequence. Available additional key parameters are
+:temp :if-not-exists :increment :min-value :max-value :start and :cache. See
+https://www.postgresql.org/docs/current/static/sql-createsequence.html for details on usage."
+  (let ((query-string
+         (concatenate 'string
+                      "CREATE "
+                      (if temp "TEMP " "")
+                      "SEQUENCE "
+                      (if if-not-exists "IF NOT EXISTS " "")
+                      (to-sql-name name)
+                      (if increment (concatenate 'string " INCREMENT BY " (format nil "~a" increment)) "")
+                      (if min-value (concatenate 'string " MINVALUE " (format nil "~a" min-value)) "")
+                      (if max-value (concatenate 'string " MAXVALUE " (format nil "~a" max-value)) "")
+                      (if start (concatenate 'string " START " (format nil "~a" start)) "")
+                      (if cache (concatenate 'string " CACHE " (format nil "~a" cache)) ""))))
+    (query query-string)))
+
+(defun drop-sequence (name &key if-exists cascade)
+  "Drop a sequence. Name should be quoted. Available key parameters are :if-exists and :cascade"
+  (let ((query-string
+         (concatenate 'string
+                      "DROP "
+                      "SEQUENCE "
+                      (if if-exists "IF EXISTS " "")
+                      (to-sql-name name)
+                      (if cascade " CASCADE" ""))))
+    (query query-string)))
+
+(defun list-sequences (&optional strings-p)
+  "Return a list of the sequences in a database. Turn them into
+keywords if strings-p is not true."
+  (let ((result (query (make-list-query "S") :column)))
+    (if strings-p result (mapcar 'from-sql-name result))))
+
+(defun sequence-exists-p (sequence)
+  "Tests whether a sequence with the given name exists. The name can be either a string or a symbol."
+  (query (make-exists-query "S" (to-sql-name sequence)) :single))
+
+
 ;;;; Tablespaces
 (defun list-tablespaces ()
-  "Lists the tablespaces in the currently connected database."
+  "Lists the tablespaces in the currently connected database. What are tablespace you ask? Per the Postgresql documentation https://www.postgresql.org/docs/current/manage-ag-tablespaces.html: Tablespaces in PostgreSQL allow database administrators to define locations in the file system where the files representing database objects can be stored. Once created, a tablespace can be referred to by name when creating database objects.
+
+By using tablespaces, an administrator can control the disk layout of a PostgreSQL installation. This is useful in at least two ways. First, if the partition or volume on which the cluster was initialized runs out of space and cannot be extended, a tablespace can be created on a different partition and used until the system can be reconfigured.
+
+Second, tablespaces allow an administrator to use knowledge of the usage pattern of database objects to optimize performance. For example, an index which is very heavily used can be placed on a very fast, highly available disk, such as an expensive solid state device. At the same time a table storing archived data which is rarely used or not performance critical could be stored on a less expensive, slower disk system."
   (loop for x in (query (:order-by (:select (:as 'spcname 'name)
                                             :from 'pg_tablespace)
                                    'spcname))
        collect (first x)))
 
 (defun list-available-types ()
-  "List the available types in this postgresql version."
+  "List the available data types in the connected postgresql version, It returns a list of lists, each sublist containing the oid (object identifier number) and the name of the data types. E.g. (21 "smallint")"
   (query (:select 'oid (:as (:format-type :oid :NULL) 'typename)
                   :from 'pg-type
                   :where (:= 'typtype "b"))))
@@ -244,16 +174,57 @@ ordered by name. This function excludes the template databases."
 ;;; Tables
 ;;; create table can only be done either using a deftable approach or s-sql
 
-(defun drop-table (name &key if-exists cascade)
+(defun list-tables-in-schema (&optional (schema-name "public") (strings-p nil))
+  "Returns a list of tables in a particular schema, defaulting to public. If schema-name is :all, it will return all the non-system tables in the database in fully qualified form: e.g. 'public.test_table'. If string-p is t, the names will be returned as strings with underscores converted to hyphens."
+  (let ((result (cond
+                  ((or (equal schema-name "all")
+                       (eq schema-name :all))
+                   (query "select table_schema||'.'||table_name
+                               from information_schema.tables
+                               where table_schema not in ('pg_catalog', 'information_schema')
+                               order by table_schema, table_name"))
+                  (t
+                   (query "((SELECT table_name
+                                 FROM information_schema.tables
+                                 WHERE (table_schema = $1))
+                                 ORDER BY table_name)"
+                          (to-sql-name schema-name))))))
+    (if strings-p (mapcar 'from-sql-name result) result )))
+
+(defun list-tables (&optional (strings-p nil))
+  "Return a list of the tables in the public schema of a database. By default the table names are returned as keywords. They will be returned as lowercase strings if strings-p is true."
+  (let ((result (query (make-list-query "r") :column)))
+    (if strings-p result (mapcar 'from-sql-name result))))
+
+(defun table-exists-p (table-name &optional (schema-name nil))
+  "Check whether a table exists in a particular schema. Defaults to the search path. Takes either a string or a symbol for the table name. The table-name can be fully qualified in the form of schema.table-name or database.schema.table-name. If the schema is specified either in a qualified table-name or in the optional schema-name parameter, we look directly to the information schema tables. Otherwise we use the search path which can be controlled by being within a with-schema form."
+  (let* ((destructured-table-name (split-fully-qualified-tablename table-name))
+         (schema (if schema-name schema-name (second destructured-table-name)))
+         (table (or (first destructured-table-name) table-name))
+         (result (if schema
+                     (member (to-sql-name table)
+                             (alexandria:flatten
+                              (query (:order-by
+                                      (:select 'table-name
+                                               :from 'information-schema.tables
+                                               :where (:= 'table-schema '$1))
+                                      'table-name)
+                                     (to-sql-name schema)))
+                             :test 'equal)
+                     (query (make-exists-query "r" table) :single))))
+    (if result t nil)))
+
+(defun drop-table (table-name &key if-exists cascade)
   "Drop a table. Available additional key parameters are :if-exists and :cascade."
-  (let ((query-string
-         (concatenate 'string
-                      "DROP "
-                      "TABLE "
-                      (if if-exists "IF EXISTS " "")
-                      (to-sql-name name)
-                      (if cascade " CASCADE" ""))))
-    (query query-string)))
+  (when (table-exists-p table-name)
+    (let ((query-string
+           (concatenate 'string
+                        "DROP "
+                        "TABLE "
+                        (if if-exists "IF EXISTS " "")
+                        (to-sql-name table-name)
+                        (if cascade " CASCADE" ""))))
+      (query query-string))))
 
 (defun list-table-sizes (&key (schema "public") (order-by-size nil) (size t))
   "Returns a list of lists (table-name, size in 8k pages) of tables in the current database.
@@ -293,12 +264,29 @@ Setting order-by-size to t will return the result in order of size instead of by
 
 
 (defun table-size (table-name)
-  "Return the size of a postgresql table in k or m. Table-name can be either a string or quoted."
+  "Return the size of a given postgresql table in k or m. Table-name can be either a string or quoted."
   (query (:select (:pg_size_pretty (:pg_total_relation_size '$1)))
          :single
          (to-sql-name table-name)))
 
-(defun more-table-info (table-name)
+(defun table-description (table-name &optional schema-name)
+  "Returns a list of the fields in the named table. Each field is represented by a list of three elements: the field name, the type, and a boolean indicating whether the field may be NULL. Optionally, schema-name can be specified to restrict the result to fields of a table from the named schema. The table and schema names can be either strings or quoted."
+  (setf table-name (to-sql-name table-name))
+  (when schema-name (setf schema-name (to-sql-name schema-name)))
+  (let ((schema-test (if (and schema-name (schema-exists-p schema-name) (table-exists-p table-name))
+                         (sql (:= 'pg-namespace.nspname schema-name))
+                         "true")))
+    (mapcar #'butlast
+            (query (:order-by (:select 'attname 'typname (:not 'attnotnull) 'attnum :distinct
+                                       :from 'pg-catalog.pg-attribute
+                                       :inner-join 'pg-catalog.pg-type :on (:= 'pg-type.oid 'atttypid)
+                                       :inner-join 'pg-catalog.pg-class :on (:and (:= 'pg-class.oid 'attrelid)
+                                                                                  (:= 'pg-class.relname (to-identifier table-name)))
+                                       :inner-join 'pg-catalog.pg-namespace :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+                                       :where (:and (:> 'attnum 0) (:raw schema-test)))
+                              'attnum)))))
+
+(defun table-description-plus (table-name)
   "Returns more table info than table-description. Table can be either a string or quoted.
 Specifically returns ordinal-position, column-name, data-type, character-maximum-length,
 modifier, whether it is not-null and the default value. "
@@ -363,8 +351,17 @@ rather than directly."
          :single))
 
 ;;; Views
+(defun list-views (&optional strings-p)
+  "Returns list of the user defined views in the current database. When strings-p is T, the names will be returned as strings, otherwise as keywords."
+  (let ((result (query (make-list-query "v") :column)))
+    (if strings-p result (mapcar 'from-sql-name result))))
+
+(defun view-exists-p (view)
+  "Tests whether a view with the given name exists. Takes either a string or a symbol for the view name."
+  (query (make-exists-query "v" view) :single))
+
 (defun describe-views (&optional (schema "public"))
-  "Describe the current views in the specified schema. Takes an optional schema
+  "Describe the current views in the specified schema. Includes the select statements used to create the view. Takes an optional schema
 name but defaults to public schema."
   (setf schema (to-sql-name schema))
   (query
@@ -406,13 +403,11 @@ name but defaults to public schema."
 
 ;;;; Indices
 (defun index-exists-p (index-name)
-  "Check whether a index exists. Takes either a string or a symbol for
-the index name."
+  "Tests whether an index with the given name exists. The name can be either a string or a symbol."
   (query (make-exists-query "i" (to-sql-name index-name)) :single))
 
 (defun create-index (name  &key unique if-not-exists concurrently on using fields)
-  "Create an index. Slightly less sophisticated than the query version because
-it does not have a where clause capability."
+  "Create an index. Slightly less sophisticated than the query version because it does not have a where clause capability."
   (let ((query-string
          (concatenate 'string
                       "CREATE "
@@ -495,17 +490,7 @@ it does not have a where clause capability."
 
 ;;;; Keys
 (defun find-primary-key-info (table &optional (just-key nil))
-  "Returns a list of sublists where the sublist contains two strings.
-If a table primary key consists of only one column, such as 'id' there
-will be a single sublist where the first string is the name of the column
-and the second string is the string name for the datatype for that column.
-If the primary key for the table consists of more than one column, there
-will be a sublist for each column subpart of the key. The sublists will
-be in the order they are used in the key, not in the order they appear
-in the table. If just-key is set to t, the list being returned will
-contain just the column names in the primary key as string names
-with no sublists. If the table is not in the public schema, provide
-the fully qualified table name e.g. schema-name.table-name."
+  "Returns a list of sublists where the sublist contains two strings. If a table primary key consists of only one column, such as 'id' there will be a single sublist where the first string is the name of the column and the second string is the string name for the datatype for that column. If the primary key for the table consists of more than one column, there will be a sublist for each column subpart of the key. The sublists will be in the order they are used in the key, not in the order they appear in the table. If just-key is set to t, the list being returned will contain just the column names in the primary key as string names with no sublists. If the table is not in the public schema, provide the fully qualified table name e.g. schema-name.table-name."
   (when (symbolp table) (setf table (s-sql:to-sql-name table)))
   (let ((info (query (:order-by
          (:select
@@ -683,8 +668,17 @@ table."
 
 
 ;;;; Triggers
+(defun describe-triggers ()
+  "List detailed information on the triggers from the information_schema table."
+  (query
+   (:select '*
+            :from 'information-schema.triggers
+            :where
+            (:not-in 'trigger-schema
+                     (:set "pg_catalog" "information_schema")))))
+
 (defun list-triggers (&optional table-name)
-  "List distinct trigger names from the information_schema table. Table-name can be either quoted or string."
+  "List distinct trigger names from the information_schema table. Table-name can be either quoted or string. (A trigger is a specification that the database should automatically execute a particular function whenever a certain type of operation is performed. Triggers can be attached to tables (partitioned or not), views, and foreign tables. See https://www.postgresql.org/docs/current/trigger-definition.html)"
   (if table-name
       (progn
         (setf table-name (to-sql-name table-name))
@@ -705,7 +699,7 @@ table."
            collect (first x))))
 
 (defun list-detailed-triggers ()
-  "List detailed information on the triggers from the information_schema table."
+  "DEPRECATED FOR DESCRIBE-TRIGGERS.List detailed information on the triggers from the information_schema table."
   (query
    (:select '*
             :from 'information-schema.triggers
@@ -717,7 +711,7 @@ table."
 
 ;;; Roles
 (defun list-database-users ()
-  "List database users."
+  "List database users (actually 'roles' in Postgresql terminology)."
   (loop for x in (query (:order-by
                          (:select 'usename :from 'pg_user)
                          'usename))
@@ -750,23 +744,24 @@ The optional parameter can be used to set the return list types to :alists or :p
 
 (defun change-toplevel-database (new-database user password host)
   "Just changes the database assuming you are using a toplevel connection.
-Recommended only for development work."
+Recommended only for development work. Returns the name of the newly
+connected database as a string."
   (disconnect-toplevel)
   (connect-toplevel (to-sql-name new-database) user password host)
   (current-database))
 
 (defun list-connections ()
-  "Returns info from pg_stat_activity on open connections"
+  "List the current postgresql connections to the currently connected database. It does this by returningo info from pg_stat_activity on open connections."
   (query (:select '* :from 'pg-stat-activity)))
 
 (defun list-available-extensions ()
-  "Returns available postgresql extensions per pg_available_extensions"
+  "List the postgresql extensions which are available in the system to the currently connected database. The extensions may or may not be installed."
   (loop for x in (query (:order-by (:select 'name :from 'pg-available-extensions)
                                    'name))
      collect (first x)))
 
 (defun list-installed-extensions ()
-  "Returns postgresql extensions actually installed in the database per pg_available_extensions"
+  "List the postgresql extensions which are installed in the currently connected database."
   (loop for x in (query (:order-by (:select 'extname :from 'pg-extension)
                                    'extname))
        collect (first x)))
@@ -795,7 +790,8 @@ Borrowed from: https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-
            pg_statio_user_tables;"))
 
 (defun bloat-measurement ()
-  "Bloat measurement of unvacuumed dead tuples. Borrowed from: https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/"
+  "Bloat measurement of unvacuumed dead tuples. Borrowed from: https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/ who
+borrowed it from https://github.com/heroku/heroku-pg-extras/tree/master/commands."
   (query "WITH constants AS (
   SELECT current_setting('block_size')::numeric AS bs, 23 AS hdr, 4 AS ma
 ), bloat_info AS (

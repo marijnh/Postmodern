@@ -274,9 +274,11 @@ name."
 (test sql-escape
   "Testing sql-escape. Get the representation of a Lisp value so that it
 can be used in a query."
-    (is (equal (sql-escape (/ 1 13))
+  (is (equal (sql-escape "tr'-x")
+             "E'tr''-x'"))
+  (is (equal (sql-escape (/ 1 13))
                "0.0769230769230769230769230769230769230"))
-    (is (equal (sql-escape #("Baden-Wurttemberg" "Bavaria" "Berlin" "Brandenburg"))
+  (is (equal (sql-escape #("Baden-Wurttemberg" "Bavaria" "Berlin" "Brandenburg"))
                "ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']")))
 
 (test sql-expand

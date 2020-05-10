@@ -7,6 +7,10 @@
 (defgeneric connection-db (cl)
   (:method ((cl t)) nil))
 
+(defgeneric connection-parameters (obj)
+  (:documentation "This method returns a mapping (string to string) containing all the
+configuration parameters for the connection."))
+
 (defclass database-connection ()
   ((host :initarg :host :reader connection-host)
    (port :initarg :port :reader connection-port)
@@ -25,14 +29,13 @@ login information in order to be able to automatically re-establish a
 connection when it is somehow closed."))
 
 (defvar *retry-connect-times* 5
-  "How many times to we try to connect again. Borrowed from pgloader")
+  "How many times do we try to connect again. Borrowed from pgloader")
 
 (defvar *retry-connect-delay* 0.5
   "How many seconds to wait before trying to connect again. Borrowed from pgloader")
 
 (defun get-postgresql-version (connection)
-  "Retrieves the version number of the connected postgresql database. The default is returning it as a string,
-but it can be returned as a list of integers or as a float."
+  "Retrieves the version number of the connected postgresql database as a string."
   (gethash "server_version" (connection-parameters connection)))
 
 (defun postgresql-version-at-least (desired-version connection)
@@ -55,9 +58,9 @@ but it can be returned as a list of integers or as a float."
             t)))))
 
 (defun connection-meta (connection)
-  "Retrieves the meta field of a connection, the primary purpose of
-which is to store information about the prepared statements that
-exists for it."
+  "This method provides access to a hash table that is associated with the
+current database connection, and is used to store information about the
+prepared statements that have been parsed for this connection."
   (or (slot-value connection 'meta)
       (let ((meta-data (make-hash-table :test 'equal)))
         (setf (slot-value connection 'meta) meta-data)
@@ -70,15 +73,18 @@ These are needed for cancelling connections and error processing with respect to
         (gethash "secret-key" (slot-value connection 'parameters))))
 
 (defun database-open-p (connection)
-  "Returns a boolean indicating whether the given connection is
-currently connected."
+  "Returns a boolean indicating whether the given connection is currently connected."
   (and (connection-socket connection)
        (open-stream-p (connection-socket connection))))
 
 (defun open-database (database user password host &optional (port 5432) (use-ssl :no) (service "postgres"))
-  "Create and connect a database object. use-ssl may be :no, :try, :yes, or
-:full (NOTE: :yes only verifies that the server cert is issued by a trusted CA,
-but does not verify the server hostname; use :full to also verify the hostname)."
+  "Create and open a connection for the specified server, database, and user. use-ssl may be :no, :try, :yes, or :full; where :try means 'if the server
+supports it', :yes only verifies that the server cert is issued by a trusted CA, but does not verify the server hostname.
+:full 'means expect a CA-signed cert for the supplied host name' and verify the server hostname.
+When it is anything but :no, you must have the CL+SSL package loaded to initiate the connection.
+
+On SBCL and Clozure CL, the value :unix may be passed for host, in order to
+connect using a Unix domain socket instead of a TCP socket."
   (check-type database string)
   (check-type user string)
   (check-type password (or null string))
@@ -240,15 +246,15 @@ if it isn't."
   (values))
 
 (defun reopen-database (conn &optional (connection-attempts 0))
-  "Reconnect a disconnected database connection."
+  "Re-establish a database connection for a previously closed connection object.
+(Calling this on a connection that is still open is harmless.)"
   (loop :while (not (database-open-p conn))
      :repeat *retry-connect-times*
      :do
        (initiate-connection conn connection-attempts)))
 
 (defun ensure-connection (conn &optional (connection-attempts 0))
-  "Used to make sure a connection object is connected before doing
-anything with it."
+  "Used to make sure a connection object is connected before doing anything with it."
   (unless conn
     (error "No database connection selected."))
   (unless (database-open-p conn)
@@ -260,7 +266,7 @@ anything with it."
                        (initiate-connection conn connection-attempts))))))
 
 (defun close-database (connection)
-  "Gracefully disconnect a database connection."
+  "Close a database connection. It is advisable to call this on connections when you are done with them. Otherwise the open socket will stick around until it is garbage collected, and no one will tell the database server that we are done with it."
   (when (database-open-p connection)
     (terminate-connection (connection-socket connection)))
   (values))
@@ -311,8 +317,7 @@ offering a :reconnect restart."
       (,body-name)))))
 
 (defun wait-for-notification (connection)
-  "Perform a blocking wait for asynchronous notification. Return the
-channel string, the payload and notifying pid as multiple values."
+  "This function blocks until asynchronous notification is received on the connection. Return the channel string, the payload and notifying pid as multiple values. The PostgreSQL LISTEN command must be used to enable listening for notifications."
   (block nil
     (with-reconnect-restart connection
       (handler-bind ((postgresql-notification
@@ -323,15 +328,15 @@ channel string, the payload and notifying pid as multiple values."
         (message-case (connection-socket connection))))))
 
 (defun exec-query (connection query &optional (row-reader 'ignore-row-reader))
-  "Execute a query string and apply the given row-reader to the
-result."
+  "Sends the given query to the given connection, and interprets the results (if there are any) with the given row-reader. If the database returns information about the amount of rows affected, this is returned as a second value."
   (check-type query string)
   (with-reconnect-restart connection
     (using-connection connection
       (send-query (connection-socket connection) query row-reader))))
 
 (defun prepare-query (connection name query)
-  "Prepare a query string and store it under the given name."
+  "Parse and plan the given query, and store it under the given name. Note that prepared statements are per-connection, so they can only be executed through
+the same connection that prepared them."
   (check-type query string)
   (check-type name string)
   (with-reconnect-restart connection
@@ -341,7 +346,7 @@ result."
 
 (defun unprepare-query (connection name)
   "Close the prepared query given by name by closing the session connection.
-Does not remove the query from the meta slot in connection"
+Does not remove the query from the meta slot in connection."
   (check-type name string)
   (with-reconnect-restart connection
     (using-connection connection
@@ -349,7 +354,8 @@ Does not remove the query from the meta slot in connection"
       (values))))
 
 (defun exec-prepared (connection name parameters &optional (row-reader 'ignore-row-reader))
-  "Execute a previously prepared query with the given parameters, apply a
+  "Execute the prepared statement by the given name. Parameters should be given as a list. Each value in this list should be of a type that to-sql-string has been specialised on. (Byte arrays will be passed in their binary form, without being put through to-sql-string.) The result of the executing the
+statement, if any, is interpreted by the given row reader, and returned. Again, the number or affected rows is optionally returned as a second value.
 row-reader to the result."
   (check-type name string)
   (check-type parameters list)

@@ -2,10 +2,18 @@
 (in-package :cl-postgres)
 
 (defparameter *current-query* nil)
-(defparameter *query-log* nil)
-(defparameter *query-callback* 'log-query)
+(defparameter *query-log* nil "When debugging, it can be helpful to inspect the queries that are being sent
+to the database. Set this variable to an output stream value (*standard-output*, for example) to have CL-postgres log every query it makes.")
+(defparameter *query-callback* 'log-query "When profiling or debugging, the *query-log* may not give enough information,
+or reparsing its output may not be feasible. This variable may be set to a designator of function taking two arguments. This function will be then called
+after every query, and receive query string and internal time units (as in (CL:GET-INTERNAL-REAL-TIME)) spent in query as its arguments.
+
+Default value of this variable is 'LOG-QUERY, which takes care of *QUERY-LOG* processing. If you provide custom query callback and wish to keep *QUERY-LOG*
+functionality, you will have to call LOG-QUERY from your callback function")
 
 (defun log-query (query time-units)
+  "This function is default value of *QUERY-CALLBACK* and logs queries
+to *QUERY-LOG* if it is not NIL."
   (when *query-log*
     (format *query-log* "CL-POSTGRES query (~ams): ~a~%"
             (round (/ (* 1000 time-units)
@@ -29,21 +37,22 @@
 ;;
 (define-condition database-error (error)
   ((error-code :initarg :code :initform nil :reader database-error-code
-               :documentation "Code: the SQLSTATE code for the error (see Appendix A). Not localizable. Always present.")
+               :documentation "Code: the Postgresql SQLSTATE code for the error (see the Postgresql Manual Appendix A for their meaning). Not localizable. Always present.")
    (message :initarg :message :accessor database-error-message
             :documentation "Message: the primary human-readable error message. This should be accurate but terse (typically one line). Always present.")
    (detail :initarg :detail :initform nil :reader database-error-detail
-           :documentation "Detail: an optional secondary error message carrying more detail about the problem. Might run to multiple lines.")
+           :documentation "Detail: an optional secondary error message carrying more detail about the problem. Might run to multiple lines or NIL if none is available.")
    (hint :initarg :hint :initform nil :reader database-error-hint
          :documentation "Hint: an optional suggestion what to do about the problem.")
    (context :initarg :context :initform nil :reader database-error-context
             :documentation "Where: an indication of the context in which the error occurred. Presently this includes a call stack traceback of active procedural language functions and internally-generated queries. The trace is one entry per line, most recent first."
 )
    (query :initform *current-query* :reader database-error-query
-          :documentation "Query that led to the error, if any.")
+          :documentation "Query that led to the error, or NIL if no query was involved.")
    (position :initarg :position :initform nil :reader database-error-position
              :documentation "Position: the field value is a decimal ASCII integer, indicating an error cursor position as an index into the original query string. The first character has index 1, and positions are measured in characters not bytes.")
-   (cause :initarg :cause :initform nil :reader database-error-cause))
+   (cause :initarg :cause :initform nil :reader database-error-cause
+          :documentation "The condition that caused this error, or NIL when it was not caused by another condition."))
   (:report (lambda (err stream)
              (format stream "Database error~@[ ~A~]: ~A~@[~&DETAIL: ~A~]~@[~&HINT: ~A~]~@[~&CONTEXT: ~A~]~@[~&QUERY: ~A~]~@[~VT^~]"
                      (database-error-code err)
@@ -53,14 +62,12 @@
                      (database-error-context err)
                      (database-error-query err)
                      (database-error-position err))))
-  (:documentation "This is the condition type that will be used to
-signal virtually all database-related errors \(though in some cases
-socket errors may be raised when a connection fails on the IP
-level)."))
+  (:documentation "This is the condition type that will be used to signal virtually all database-related errors \(though in some cases
+socket errors may be raised when a connection fails on the IP level). For errors that you may want to catch by type, the cl-postgres-error package defines a bucket of subtypes used for specific errors. See the cl-postgres/package.lisp file for a list."))
 
 (defun database-error-constraint-name (err)
-  "Given a database-error for an integrity violation, will attempt to
-extract the constraint name."
+  "For integrity-violation error, given a database-error for an integrity violation, will attempt to
+extract and return the constraint name (or nil if no constraint was found)."
   (labels ((extract-quoted-part (string n)
              "Extracts the Nth quoted substring from STRING."
              (let* ((start-quote-inst (* 2 n))
@@ -80,7 +87,8 @@ extract the constraint name."
         (cl-postgres-error:check-violation (extract-quoted-part message 1))))))
 
 (defun database-error-extract-name (err)
-  "Given a database-error, will extract the critical name from the error message."
+  "For various errors, returns the name provided by the error message
+ (or nil if no such name was found)."
   (labels ((extract-quoted-part (string n)
              "Extracts the Nth quoted substring from STRING."
              (let* ((start-quote-inst (* 2 n))
@@ -100,9 +108,26 @@ extract the constraint name."
               (extract-quoted-part message 0))))))
 
 (define-condition database-connection-error (database-error) ()
-  (:documentation "Conditions of this type are signalled when an error
-occurs that breaks the connection socket. They offer a :reconnect
-restart."))
+  (:documentation "Subtype of database-error. An error of this type (or one of its subclasses)
+is signaled when a query is attempted with a connection object that is no
+longer connected, or a database connection becomes invalid during a query.
+Always provides a :reconnect restart, which will cause the library to make an
+attempt to restore the connection and re-try the query.
+
+The following shows an example use of this feature, a way to ensure that the
+first connection error causes a reconnect attempt, while others pass through
+as normal. A variation on this theme could continue trying to reconnect, with
+successively longer pauses.
+
+  (defun call-with-single-reconnect (fun)
+    (let ((reconnected nil))
+      (handler-bind
+          ((database-connection-error
+            (lambda (err)
+              (when (not reconnected)
+                (setf reconnected t)
+                (invoke-restart :reconnect)))))
+        (funcall fun))))"))
 (define-condition database-connection-lost (database-connection-error) ()
   (:documentation "Raised when a query is initiated on a disconnected
 connection object."))

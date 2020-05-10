@@ -108,9 +108,28 @@ looks like an S-SQL query."
       query))
 
 (defmacro query (query &rest args/format)
-  "Execute a query, optionally with arguments to put in the place of
-$X elements. If one of the arguments is a known result style or a class name,
-it specifies the format in which the results should be returned."
+  "Execute the given query, which can be either a string or an S-SQL form (list starting with a keyword). If the query contains placeholders ($1, $2, etc)
+their values can be given as extra arguments. If one of these arguments is a keyword occurring in the table below, it will not be used as a query
+argument, but will determine the format in which the results are returned instead. Any of the following formats can be used, with the default being :rows:
+
+| :none	             | Ignore the result values.                                                                         |
+| :lists, :rows      | Return a list of lists, each list containing the values for a row.                                |
+| :list, :row        | Return a single row as a list.                                                                    |
+| :alists	           | Return a list of alists which map column names to values, with the names represented as keywords. |
+| :alist	           | Return a single row as an alist.                                                                  |
+| :array-hash        | Return an array of hashtables which map column names to hash table keys                           |
+| :str-alists        | Like :alists, but use the original column names.                                                  |
+| :str-alist	       | Return a single row as an alist, with strings for names.                                          |
+| :plists	           | Return a list of plists which map column names to values,with the names represented as keywords.  |
+| :plist	           | Return a single row as a plist.                                                                   |
+| :column	           | Return a single column as a list.                                                                 |
+| :single	           | Return a single value.                                                                            |
+| :single!	         | Like :single, but raise an error when the number of selected rows is not equal to 1.              |
+| (:dao type)	       | Return a list of DAOs of the given type. The names of the fields returned by the query must       |
+|                    |   match slots in the DAO class the same way as with query-dao.                                    |
+| (:dao type :single)| Return a single DAO of the given type.                                                            |
+
+If the database returns information about the amount rows that were affected, such as with updating or deleting queries, this is returned as a second value."
   (let* ((format :rows)
          (args (loop :for arg :in args/format
 		              :if (or (dao-spec-for-format arg)
@@ -126,15 +145,18 @@ it specifies the format in which the results should be returned."
         `(,result-form ,base)))))
 
 (defmacro execute (query &rest args)
-  "Execute a query, ignore the results."
+  "Execute a query, ignore the results. So, in effect, like a query called with format :none. Returns the amount of affected rows as its first returned value. (Also returns this amount as the second returned value, but use of this is deprecated.)"
   `(let ((rows (nth-value 1 (query ,query ,@args :none))))
      (if rows (values rows rows) 0)))
 
 (defmacro doquery (query (&rest names) &body body)
- "Iterate over the rows in the result of a query, binding the given
-names to the results and executing body for every row. Query can be a
-string, an s-sql query, or a list starting with one of those, followed
-by the arguments to parameterize the query with."
+ "Execute the given query (a string or a list starting with a keyword), iterating over the rows in the result. The body will be executed with the values in the row bound to the symbols given in names. To iterate over a parameterised query, one can specify a list whose car is the query, and whose cdr contains the arguments. For example:
+
+(doquery (:select 'name 'score :from 'scores) (n s)
+  (incf (gethash n *scores*) s))
+
+(doquery ((:select 'name :from 'scores :where (:> 'score '$1)) 100) (name)
+  (print name))"
  (let* ((fields (gensym))
         (query-name (gensym))
         args

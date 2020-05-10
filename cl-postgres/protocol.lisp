@@ -97,7 +97,11 @@ and put them in an alist."
 (define-condition postgresql-notification (simple-warning)
   ((pid :initarg :pid :accessor postgresql-notification-pid)
    (channel :initarg :channel :accessor postgresql-notification-channel)
-   (payload :initarg :payload :accessor postgresql-notification-payload)))
+   (payload :initarg :payload :accessor postgresql-notification-payload))
+  (:documentation "The condition that is signalled when a notification message is received from
+the PostgreSQL server. This is a WARNING condition which is caught by the
+WAIT-FOR-NOTIFICATION function that implements synchronous waiting for
+notifications."))
 
 (defun get-notification (socket)
   "Read an asynchronous notification message from the socket and
@@ -265,6 +269,13 @@ be matched against it."
                 (return)))))
   socket)
 
+(defgeneric field-name (field)
+  (:documentation "This can be used to get information about the fields read by a row reader.
+Given a field description, it returns the name the database associated with this column."))
+
+(defgeneric field-type (field)
+  (:documentation "This extracts the PostgreSQL OID associated with this column. You can, if
+you really want to, query the pg_types table to find out more about the types denoted by OIDs."))
 
 (defclass field-description ()
   ((name :initarg :name :accessor field-name)
@@ -531,7 +542,30 @@ to the result."
                         ,@body))))
 
 (defmacro row-reader ((fields) &body body)
-  "Create a row-reader, using the given name for the fields argument
+  "Creates a row-reader, using the given name for the variable. Inside the body
+this variable refers to a vector of field descriptions. On top of that, two
+local functions are bound, next-row and next-field. The first will start
+reading the next row in the result, and returns a boolean indicating whether
+there is another row. The second will read and return one field, and should
+be passed the corresponding field description from the fields argument as a
+parameter.
+
+A row reader should take care to iterate over all the rows in a result, and
+within each row iterate over all the fields. This means it should contain
+an outer loop that calls next-row, and every time next-row returns T it
+should iterate over the fields vector and call next-field for every field.
+
+The definition of list-row-reader should give you an idea what a row reader
+looks like:
+
+  (row-reader (fields)
+    (loop :while (next-row)
+          :collect (loop :for field :across fields
+                         :collect (next-field field))))
+
+Obviously, row readers should not do things with the database connection
+like, say, close it or start a new query, since it still reading out the
+results from the current query.Create a row-reader, using the given name for the fields argument
 and the given body for reading the rows. A row reader is a function
 that is used to do something with the results of a query. It has two
 local functions: next-row and next-field, the first should be called
@@ -542,6 +576,6 @@ in a row. See list-row-reader in public.lisp for an example."
   (build-row-reader '(lambda) fields body))
 
 (defmacro def-row-reader (name (fields) &body body)
-  "Create a row reader, as in the row-reader macro, and assign a name
-to it."
+  "The defun-like variant of row-reader: creates a row reader and gives it a
+top-level function name."
   (build-row-reader `(defun ,name) fields body))

@@ -94,7 +94,7 @@
     (coerce s1 'string)))
 
 (defun saslprep-normalize (str &optional (form :nfkc))
-  "Scans string. If any character should be mapped to nothing, it eliminates that character. If any character is not printable ascii, it returns nil. If every character remaining after eliminations is printable ascii, it returns the printable-ascii string. "
+  "Scans string. If any character should be mapped to nothing, it eliminates that character. If any character is not printable ascii, it returns nil. If every character remaining after eliminations is printable ascii, it returns the printable-ascii string. It then calls (uax-15:normalize str form) to normalize the string based on the provided unicode form, defaulting to :nfkc."
   (when (string-printable-ascii-p str)
     (return-from saslprep-normalize str))
   (setf str (string-mapped-to-nothing str))
