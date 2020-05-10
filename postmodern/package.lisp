@@ -79,7 +79,7 @@
    #:find-postmodern-prepared-statement
    #:find-postgresql-prepared-statement
    #:reset-prepared-statement
-   #:get-pid #:cancel-backend #:terminate-backend
+   #:get-pg-backend-pid #:cancel-backend #:terminate-backend
    #:get-pid-from-postmodern
 
    ;; Reduced S-SQL interface

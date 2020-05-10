@@ -416,7 +416,7 @@ statement is still in the meta slot in the postmodern connection, this will
 try to regenerate the prepared statement at the database connection level
 and restart the connection.
 
-** function get-pid ()
+** function get-pg-backend-pid ()
 → integer
 
 Get the process id used by postgresql for this connection.

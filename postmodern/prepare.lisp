@@ -203,7 +203,7 @@ database connection level and restart the connection."
       (cl-postgres:prepare-query *database* name statement)
       (invoke-restart 'reset-prepared-statement))))
 
-(defun get-pid ()
+(defun get-pg-backend-pid ()
   "Get the process id used by postgresql for this connection."
   (query "select pg_backend_pid()" :single))
 

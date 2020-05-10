@@ -304,7 +304,7 @@
       (is (equal (query "select pg_backend_pid()" :single)
                  (funcall getpid)))
       (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
-      (let ((pid (pomo:get-pid)))
+      (let ((pid (pomo:get-pg-backend-pid)))
         (pomo:terminate-backend pid)
         (signals database-connection-error
           (query "select pg_backend_pid()" :single)))
@@ -383,7 +383,7 @@
          (is (equal (query "select pg_backend_pid()" :single)
                     (funcall getpid)))
          (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
-         (let ((pid (pomo:get-pid)))
+         (let ((pid (pomo:get-pg-backend-pid)))
            (pomo:terminate-backend pid)
            (signals database-connection-error
                     (query "select pg_backend_pid()" :single)))
