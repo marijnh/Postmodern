@@ -255,7 +255,7 @@
 
 (defpackage :cl-postgres-ieee-floats
   (:use :common-lisp)
-  (:nicknames :clp-iee-floats)
+  (:nicknames :clp-ieee-floats)
   (:export :make-float-converters
 	   :encode-float32
 	   :decode-float32
