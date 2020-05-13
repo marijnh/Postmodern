@@ -29,7 +29,9 @@ from the socket."
         (char-name (gensym))
         (iter-name (gensym))
         (t-found nil)
-        (size-sym (and (eq (car clauses) :length-sym) (progn (pop clauses) (pop clauses)))))
+        (size-sym (and (eq (car clauses) :length-sym)
+                       (progn (pop clauses)
+                              (pop clauses)))))
     (flet ((expand-characters (chars)
              (cond ((eq chars t) (setf t-found t) t)
                    ((consp chars) (mapcar #'char-code chars))
@@ -44,32 +46,35 @@ from the socket."
                                (ignorable ,size-name))
                       (case ,char-name
                         (#.(char-code #\A)
-                           (get-notification ,socket-name)
-                           (,iter-name))
+                         (get-notification ,socket-name)
+                         (,iter-name))
                         (#.(char-code #\E) (get-error ,socket-name))
                         (#.(char-code #\S) ;; ParameterStatus: read and continue
-                           (update-parameter ,socket-name)
-                           (,iter-name))
+                         (update-parameter ,socket-name)
+                         (,iter-name))
                         (#.(char-code #\K) ;; Backendkey : read and continue
-                           (update-backend-key-data ,socket-name)
-                           (,iter-name))
+                         (update-backend-key-data ,socket-name)
+                         (,iter-name))
                         (#.(char-code #\N) ;; A warning
-                           (get-warning ,socket-name)
-                           (,iter-name))
-                        ,@(mapcar (lambda (clause)
-                                    `(,(expand-characters (first clause))
-                                       ,(if (eq (second clause) :skip)
-                                            `(skip-bytes ,socket-name (- ,size-name 4))
-                                            (if size-sym
-                                                `(let ((,size-sym (- ,size-name 4)))
-                                                   ,@(cdr clause))
-                                                `(progn ,@(cdr clause))))))
-                                  clauses)
+                         (get-warning ,socket-name)
+                         (,iter-name))
+                        ,@(mapcar
+                           (lambda (clause)
+                             `(,(expand-characters (first clause))
+                               ,(if (eq (second clause) :skip)
+                                    `(skip-bytes ,socket-name (- ,size-name 4))
+                                    (if size-sym
+                                        `(let ((,size-sym (- ,size-name 4)))
+                                           ,@(cdr clause))
+                                        `(progn ,@(cdr clause))))))
+                           clauses)
                         ,@(unless t-found
                             `((t (ensure-socket-is-closed ,socket-name)
                                  (error 'protocol-error
-                                        :message (format nil "Unexpected message received: ~A"
-                                                         (code-char ,char-name))))))))))
+                                        :message
+                                        (format nil
+                                                "Unexpected message received: ~A"
+                                                (code-char ,char-name))))))))))
            (,iter-name))))))
 
 (defparameter *connection-params* nil
@@ -91,17 +96,17 @@ a query.")
   "Read the fields of a null-terminated list of byte + string values
 and put them in an alist."
   (loop :for type = (read-uint1 socket)
-     :until (zerop type)
-     :collect (cons (code-char type) (read-str socket))))
+        :until (zerop type)
+        :collect (cons (code-char type) (read-str socket))))
 
 (define-condition postgresql-notification (simple-warning)
   ((pid :initarg :pid :accessor postgresql-notification-pid)
    (channel :initarg :channel :accessor postgresql-notification-channel)
    (payload :initarg :payload :accessor postgresql-notification-payload))
-  (:documentation "The condition that is signalled when a notification message is received from
-the PostgreSQL server. This is a WARNING condition which is caught by the
-WAIT-FOR-NOTIFICATION function that implements synchronous waiting for
-notifications."))
+  (:documentation "The condition that is signalled when a notification message
+is received from the PostgreSQL server. This is a WARNING condition which is
+caught by the WAIT-FOR-NOTIFICATION function that implements synchronous
+waiting for notifications."))
 
 (defun get-notification (socket)
   "Read an asynchronous notification message from the socket and
@@ -113,8 +118,8 @@ signal a condition for it."
           :pid pid
           :channel channel
           :payload payload
-          :format-control "Asynchronous notification ~S~@[ (payload: ~S)~] received from ~
-                           server process with PID ~D."
+          :format-control "Asynchronous notification ~S~@[ (payload: ~S)~]
+                           received from ~ server process with PID ~D."
           :format-arguments (list channel payload pid))))
 
 (defun get-error (socket)
@@ -148,7 +153,8 @@ database-error condition."
              (cdr (assoc char data))))
       (warn 'postgresql-warning
             :format-control "PostgreSQL warning: ~A~@[~%~A~]"
-            :format-arguments (list (get-field #\M) (or (get-field #\D) (get-field #\H)))))))
+            :format-arguments (list (get-field #\M) (or (get-field #\D)
+                                                        (get-field #\H)))))))
 
 (defparameter *ssl-certificate-file* nil
   "When set to a filename, this file will be used as client
@@ -167,21 +173,26 @@ does not support SSL. When hostname is supplied, the server's certificate will
 be matched against it."
     (unless make-ssl-stream
       (unless (find-package :cl+ssl)
-        (error 'database-error :message "CL+SSL is not loaded. Load it to enable SSL."))
-      (setf make-ssl-stream (intern (string '#:make-ssl-client-stream) :cl+ssl)))
+        (error 'database-error
+               :message "CL+SSL is not loaded. Load it to enable SSL."))
+      (setf make-ssl-stream (intern
+                             (string '#:make-ssl-client-stream) :cl+ssl)))
     (ssl-request-message socket)
     (force-output socket)
     (ecase (read-byte socket)
       (#.(char-code #\S)
-         (setf socket (funcall make-ssl-stream socket :key *ssl-key-file*
-                               :certificate *ssl-certificate-file*
-                               :hostname hostname)))
+       (setf socket (funcall make-ssl-stream socket
+                             :key *ssl-key-file*
+                             :certificate *ssl-certificate-file*
+                             :hostname hostname)))
       (#.(char-code #\N)
-         (when required
-           (error 'database-error :message "Server does not support SSL encryption."))))))
+       (when required
+         (error 'database-error
+                :message "Server does not support SSL encryption."))))))
 
 (defun authenticate (socket conn)
-  "Try to initiate a connection. Caller should close the socket if this raises a condition."
+  "Try to initiate a connection. Caller should close the socket if this raises
+a condition."
 
   (let ((gss-context nil)
         (gss-init-function nil)
@@ -201,13 +212,17 @@ be matched against it."
     (labels ((init-gss-msg (in-buffer)
                (when (null gss-init-function)
                  (when (null (find-package "CL-GSS"))
-                   (error 'database-error :message  "To use GSS authentication, make sure the CL-GSS package is loaded."))
+                   (error 'database-error
+                          :message  "To use GSS authentication, make sure the
+CL-GSS package is loaded."))
                  (setq gss-init-function (find-symbol "INIT-SEC" "CL-GSS"))
                  (unless gss-init-function
-                   (error 'database-error :message "INIT-SEC not found in CL-GSS package")))
+                   (error 'database-error
+                          :message "INIT-SEC not found in CL-GSS package")))
                (multiple-value-bind (continue-needed context buffer flags)
                    (funcall gss-init-function
-                            (format nil "~a@~a" (connection-service conn) (connection-host conn))
+                            (format nil "~a@~a" (connection-service conn)
+                                    (connection-host conn))
                             :flags '(:mutual)
                             :context gss-context
                             :input-token in-buffer)
@@ -218,64 +233,94 @@ be matched against it."
                  (force-output socket)
                  continue-needed))
              (scram-msg-init (in-buffer)
-               (let ((server-message (cl-postgres-trivial-utf-8:utf-8-bytes-to-string in-buffer)))
-                 (when (not (equal "SCRAM-SHA-256" (subseq server-message 0 13)))
-                   (cerror "Mixed messages on authentication methods" server-message))
+               (let ((server-message
+                       (cl-postgres-trivial-utf-8:utf-8-bytes-to-string
+                        in-buffer)))
+                 (when (not (equal "SCRAM-SHA-256"
+                                   (subseq server-message 0 13)))
+                   (cerror "Mixed messages on authentication methods"
+                           server-message))
                  (setf client-nonce (gen-client-nonce))
-                 (setf client-initial-response (gen-client-initial-response user client-nonce))
+                 (setf client-initial-response (gen-client-initial-response
+                                                user client-nonce))
                  (scram-type-message socket client-initial-response)
                  (force-output socket)))
              (scram-msg-cont (in-buffer)
                (multiple-value-bind (cont-message calculated-server-signature)
-                   (aggregated-gen-final-client-message user client-nonce (cl-postgres-trivial-utf-8:utf-8-bytes-to-string in-buffer) password
-                                                        :salt-type :base64-string
-                                                        :response-type :utf8-string)
+                   (aggregated-gen-final-client-message
+                    user client-nonce (clp-utf8:utf-8-bytes-to-string in-buffer)
+                    password
+                    :salt-type :base64-string
+                    :response-type :utf8-string)
                  (setf expected-server-signature calculated-server-signature)
                  (scram-cont-message socket cont-message)
                  (force-output socket)))
              (scram-msg-fin (in-buffer)
-               (when (not (equal (cdar (split-server-response in-buffer)) expected-server-signature))
+               (when (not (equal (cdar (split-server-response in-buffer))
+                                 expected-server-signature))
                  (cerror "Server signature not validated. Something is wrong"
                          (cdar (split-server-response in-buffer))))))
 
       (loop
-         (message-case socket :length-sym size             ;; Authentication message
-             (#\R (let ((type (read-uint4 socket)))
-                    (ecase type
-                      (0 (return))
-                      (2 (error 'database-error :message "Unsupported Kerberos authentication requested."))
-                      (3 (unless password (error "Server requested plain-password authentication, but no password was given."))
-                         (plain-password-message socket password)
-                         (force-output socket))
-                      (4 (error 'database-error :message "Unsupported crypt authentication requested."))
-                      (5 (unless password (error "Server requested md5-password authentication, but no password was given."))
-                         (md5-password-message socket password user (read-bytes socket 4))
-                         (force-output socket))
-                      (6 (error 'database-error :message "Unsupported SCM authentication requested."))
-                      (7 (when gss-context
-                           (error 'database-error :message "Got GSS init message when a context was already established"))
-                         (init-gss-msg nil))
-                      (8 (unless gss-context
-                           (error 'database-error :message "Got GSS continuation message without a context"))
-                         (init-gss-msg (read-bytes socket (- size 4))))
-                      (9 ) ; auth_required_sspi or auth_req_sspi sspi negotiate without wrap() see postgresql source code src/libpq/pqcomm.h
-                      (10 (scram-msg-init (read-bytes socket (- size 4)))) ;(read-simple-str socket)
-                      (11 (scram-msg-cont (read-bytes socket (- size 4)))) ;auth_sasl_continue or auth_req_sasl_cont
-                      (12 (scram-msg-fin (read-bytes socket (- size 4))))))))))
+        (message-case socket :length-sym size       ;; Authentication message
+                      (#\R (let ((type (read-uint4 socket)))
+                             (ecase type
+                               (0 (return))
+                               (2 (error 'database-error
+                                         :message "Unsupported Kerberos
+authentication requested."))
+                               (3 (unless password
+                                    (error "Server requested plain-password
+authentication, but no password was given."))
+                                (plain-password-message socket password)
+                                (force-output socket))
+                               (4 (error 'database-error
+                                         :message "Unsupported crypt
+authentication requested."))
+                               (5 (unless password
+                                    (error "Server requested md5-password
+authentication, but no password was given."))
+                                (md5-password-message socket password user
+                                                      (read-bytes socket 4))
+                                (force-output socket))
+                               (6 (error 'database-error
+                                         :message "Unsupported SCM
+authentication requested."))
+                               (7 (when gss-context
+                                    (error 'database-error
+                                           :message "Got GSS init message when
+a context was already established"))
+                                (init-gss-msg nil))
+                               (8 (unless gss-context
+                                    (error 'database-error
+                                           :message "Got GSS continuation
+message without a context"))
+                                (init-gss-msg (read-bytes socket (- size 4))))
+                               (9 ) ; auth_required_sspi or auth_req_sspi sspi
+                                    ;negotiate without wrap() see postgresql
+                                    ; source code src/libpq/pqcomm.h
+                               (10 (scram-msg-init
+                                    (read-bytes socket (- size 4)))) ;(read-simple-str socket)
+                               (11 (scram-msg-cont
+                                    (read-bytes socket (- size 4)))) ;auth_sasl_continue or auth_req_sasl_cont
+                               (12 (scram-msg-fin
+                                    (read-bytes socket (- size 4))))))))))
     (loop
-       (message-case socket
-           ;; ReadyForQuery
-           (#\Z (read-uint1 socket)
-                (return)))))
+      (message-case socket
+                    ;; ReadyForQuery
+                    (#\Z (read-uint1 socket)
+                         (return)))))
   socket)
 
 (defgeneric field-name (field)
-  (:documentation "This can be used to get information about the fields read by a row reader.
-Given a field description, it returns the name the database associated with this column."))
+  (:documentation "This can be used to get information about the fields read
+by a row reader. Given a field description, it returns the name the database
+associated with this column."))
 
 (defgeneric field-type (field)
-  (:documentation "This extracts the PostgreSQL OID associated with this column. You can, if
-you really want to, query the pg_types table to find out more about the types denoted by OIDs."))
+  (:documentation "This extracts the PostgreSQL OID associated with this column.
+You can, if you really want to, query the pg_types table to find out more about
+the types denoted by OIDs."))
 
 (defclass field-description ()
   ((name :initarg :name :accessor field-name)
@@ -307,11 +352,15 @@ array of field-description objects."
                  (type (unsigned-byte 32) type-id))
         (setf (elt descriptions i)
               (if (interpreter-binary-p interpreter)
-                  (make-instance 'field-description :name name :type-id type-id
-                                 :interpreter (type-interpreter-binary-reader interpreter)
+                  (make-instance 'field-description
+                                 :name name :type-id type-id
+                                 :interpreter (type-interpreter-binary-reader
+                                               interpreter)
                                  :receive-binary-p t)
-                  (make-instance 'field-description :name name :type-id type-id
-                                 :interpreter (type-interpreter-text-reader interpreter)
+                  (make-instance 'field-description
+                                 :name name :type-id type-id
+                                 :interpreter (type-interpreter-text-reader
+                                               interpreter)
                                  :receive-binary-p nil)))))
     descriptions))
 
@@ -334,29 +383,33 @@ copy-in/copy-out states \(which are not supported)."
   (declare (type stream socket)
            #.*optimize*)
   (loop
-     (message-case socket
-                   ;; CommandComplete
-                   (#\C (let* ((command-tag (read-str socket))
-                               (space (position #\Space command-tag :from-end t)))
-                          (when space
-                            (setf *effected-rows* (parse-integer command-tag :junk-allowed t
-                                                                 :start (1+ space))))
-                          (return-from look-for-row nil)))
-                   ;; CopyInResponse
-                   (#\G (read-uint1 socket)
-                        (skip-bytes socket (* 2 (read-uint2 socket))) ;; The field formats
-                        (copy-done-message socket)
-                        (error 'database-error :message "Copy-in not supported."))
-                   ;; CopyOutResponse
-                   (#\H (read-uint1 socket)
-                        (skip-bytes socket (* 2 (read-uint2 socket))) ;; The field formats
-                        (error 'database-error :message "Copy-out not supported."))
-                   ;; DataRow
-                   (#\D (skip-bytes socket 2)
-                        (return-from look-for-row t))
-                   ;; EmptyQueryResponse
-                   (#\I (warn "Empty query sent.")
-                        (return-from look-for-row nil)))))
+    (message-case socket
+                  ;; CommandComplete
+                  (#\C (let* ((command-tag (read-str socket))
+                              (space (position #\Space command-tag
+                                               :from-end t)))
+                         (when space
+                           (setf *effected-rows*
+                                 (parse-integer command-tag :junk-allowed t
+                                                            :start (1+ space))))
+                         (return-from look-for-row nil)))
+                  ;; CopyInResponse
+                  (#\G (read-uint1 socket)
+                       (skip-bytes socket (* 2 (read-uint2 socket))) ; The field formats
+                       (copy-done-message socket)
+                       (error 'database-error
+                              :message "Copy-in not supported."))
+                  ;; CopyOutResponse
+                  (#\H (read-uint1 socket)
+                       (skip-bytes socket (* 2 (read-uint2 socket))) ; The field formats
+                       (error 'database-error
+                              :message "Copy-out not supported."))
+                  ;; DataRow
+                  (#\D (skip-bytes socket 2)
+                       (return-from look-for-row t))
+                  ;; EmptyQueryResponse
+                  (#\I (warn "Empty query sent.")
+                       (return-from look-for-row nil)))))
 
 (defun try-to-sync (socket sync-sent)
   "Try to re-synchronize a connection by sending a sync message if it
@@ -371,10 +424,10 @@ message."
                (force-output socket))
              ;; TODO initiate timeout on the socket read, signal timeout error
              (loop :while (and (not ok) (open-stream-p socket))
-                :do (message-case socket
-                                  (#\Z (read-uint1 socket)
-                                       (setf ok t))
-                                  (t :skip))))
+                   :do (message-case socket
+                                     (#\Z (read-uint1 socket)
+                                          (setf ok t))
+                                     (t :skip))))
         (unless ok
           ;; if we can't sync, make sure the socket is shot
           ;; (e.g. a timeout, or aborting execution with a restart from sldb)
@@ -430,10 +483,12 @@ results."
                         (#\t :skip))
           (message-case socket
                         ;; RowDescription
-                        (#\T (setf row-description (read-field-descriptions socket)))
+                        (#\T (setf row-description (read-field-descriptions
+                                                    socket)))
                         ;; NoData
                         (#\n))
-          (simple-bind-message socket (map 'vector 'field-binary-p row-description))
+          (simple-bind-message socket (map 'vector
+                                           'field-binary-p row-description))
           (simple-execute-message socket)
           (sync-message socket)
           (setf sync-sent t)
@@ -496,12 +551,15 @@ to the result."
                            (skip-bytes socket (* 4 n-parameters))))
         (message-case socket
                       ;; RowDescription
-                      (#\T (setf row-description (read-field-descriptions socket)))
+                      (#\T (setf row-description
+                                 (read-field-descriptions socket)))
                       ;; NoData
                       (#\n))
         (unless (= (length parameters) n-parameters)
           (error 'database-error
-                 :message (format nil "Incorrect number of parameters given for prepared statement ~A. ~A parameters expected. ~A parameters received." name n-parameters (length parameters))))
+                 :message (format nil "Incorrect number of parameters given for
+prepared statement ~A. ~A parameters expected. ~A parameters received."
+                                  name n-parameters (length parameters))))
         (bind-message socket name (map 'vector 'field-binary-p row-description)
                       parameters)
         (simple-execute-message socket)
@@ -558,17 +616,17 @@ should iterate over the fields vector and call next-field for every field.
 The definition of list-row-reader should give you an idea what a row reader
 looks like:
 
-  (row-reader (fields)
-    (loop :while (next-row)
-          :collect (loop :for field :across fields
-                         :collect (next-field field))))
+    (row-reader (fields)
+      (loop :while (next-row)
+            :collect (loop :for field :across fields
+                           :collect (next-field field))))
 
 Obviously, row readers should not do things with the database connection
 like, say, close it or start a new query, since it still reading out the
-results from the current query.Create a row-reader, using the given name for the fields argument
-and the given body for reading the rows. A row reader is a function
-that is used to do something with the results of a query. It has two
-local functions: next-row and next-field, the first should be called
+results from the current query.Create a row-reader, using the given name
+for the fields argument and the given body for reading the rows. A row reader
+is a function that is used to do something with the results of a query. It has
+two local functions: next-row and next-field, the first should be called
 once per row and will return a boolean indicating whether there are
 any more rows, the second should be called once for every element in
 the fields vector, with that field as argument, to read a single value

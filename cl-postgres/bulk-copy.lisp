@@ -23,7 +23,9 @@ columns, use columns to indicate those that you do."
   (let* ((own-connection (listp db-spec))
          (copier (make-instance 'bulk-copier
                    :own-connection own-connection
-                   :database (if own-connection (apply 'open-database db-spec) db-spec)
+                   :database (if own-connection
+                                 (apply 'open-database db-spec)
+                                 db-spec)
                    :table table
                    :columns columns)))
     (initialize-copier copier)
@@ -82,27 +84,30 @@ into the DB."
       (using-connection connection
 	(send-copy-start socket query)))))
 
-
 (defun copier-write-value (s val)
   (typecase val
-    (string (let ((pg-string (with-output-to-string (str)
-                               (loop for byte across (cl-postgres-trivial-utf-8:string-to-utf-8-bytes val) do
-                                    (case (code-char byte)
-                                      (#\Space (princ " " str))
-                                      ((#\Newline #\Tab) (format str "\\~a" (code-char byte)))
-                                      (#\\ (progn (princ #\\ str) (princ #\\ str)))
-                                      (otherwise (if (and (< 32 byte)
-                                                          (> 127 byte))
-                                                     (write-char (code-char byte) str)
-                                                     (princ (format nil "\\~o" byte) str))))))))
-              #+nil(print `(:loading ,pg-string))
-              (princ pg-string s)))
+    (string
+     (let ((pg-string
+             (with-output-to-string (str)
+               (loop for byte across (cl-postgres-trivial-utf-8:string-to-utf-8-bytes val) do
+                 (case (code-char byte)
+                   (#\Space (princ " " str))
+                   ((#\Newline #\Tab) (format str "\\~a" (code-char byte)))
+                   (#\\ (progn (princ #\\ str) (princ #\\ str)))
+                   (otherwise (if (and (< 32 byte)
+                                       (> 127 byte))
+                                  (write-char (code-char byte) str)
+                                  (princ (format nil "\\~o" byte) str))))))))
+       #+nil(print `(:loading ,pg-string))
+       (princ pg-string s)))
     (number (princ val s))
     (null (princ "false" s))
-    (symbol (case val
-              (:null (princ "\\N" s))
-              ((t) (princ "true" s))
-              (otherwise (error "copier-write-val: Symbols shouldn't be getting this far ~a" val))))))
+    (symbol
+     (case val
+       (:null (princ "\\N" s))
+       ((t) (princ "true" s))
+       (otherwise
+        (error "copier-write-val: Symbols shouldn't be getting this far ~a" val))))))
 
 (defun copier-write-sequence (s vector)
   (write-char #\{ s)

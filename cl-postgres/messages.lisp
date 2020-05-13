@@ -20,7 +20,8 @@ message definitions themselves stay readable."
                       (ecase (first part)
                         (uint
                          (incf base-length (second part))
-                         `(,(integer-writer-name (second part) nil) ,socket ,(third part)))
+                         `(,(integer-writer-name (second part) nil) ,socket
+                           ,(third part)))
                         (string
                          (push `(,name ,(second part)) strings)
                          (incf base-length 1) ;; The null terminator
@@ -36,9 +37,9 @@ message definitions themselves stay readable."
     (when id
       (push `(write-uint1 ,socket ,(char-code id)) writers))
     `(defun ,name ,(cons socket arglist)
-      (declare (type stream ,socket)
-               #.*optimize*)
-      (let ,strings ,@writers))))
+       (declare (type stream ,socket)
+                #.*optimize*)
+       (let ,strings ,@writers))))
 
 ;; Try to enable SSL for a connection.
 (define-message ssl-request-message nil ()
@@ -67,9 +68,9 @@ message definitions themselves stay readable."
   (let ((digits #.(coerce "0123456789abcdef" 'simple-base-string))
         (result (make-string (* (length bytes) 2) :element-type 'base-char)))
     (loop :for byte :across bytes
-	  :for pos :from 0 :by 2
-	  :do (setf (char result pos) (aref digits (ldb (byte 4 4) byte))
-		    (char result (1+ pos)) (aref digits (ldb (byte 4 0) byte))))
+          :for pos :from 0 :by 2
+          :do (setf (char result pos) (aref digits (ldb (byte 4 4) byte))
+                    (char result (1+ pos)) (aref digits (ldb (byte 4 0) byte))))
     result))
 
 (defun md5-password (password user salt)
@@ -79,8 +80,10 @@ message definitions themselves stay readable."
            #.*optimize*)
   (flet ((md5-and-hex (sequence)
            (bytes-to-hex-string (md5:md5sum-sequence sequence))))
-    (let* ((pass1 (md5-and-hex (enc-string-bytes (concatenate 'string password user))))
-           (pass2 (md5-and-hex (concatenate '(vector (unsigned-byte 8) *) (enc-string-bytes pass1) salt))))
+    (let* ((pass1 (md5-and-hex (enc-string-bytes (concatenate 'string password
+                                                              user))))
+           (pass2 (md5-and-hex (concatenate '(vector (unsigned-byte 8) *)
+                                            (enc-string-bytes pass1) salt))))
       (concatenate 'string "md5" pass2))))
 
 ;; Identify a user with an MD5-hashed password.
@@ -92,9 +95,10 @@ message definitions themselves stay readable."
 
 ;; Scram messages
 (define-message scram-type-message #\p (client-initial-message)
-  (string "SCRAM-SHA-256") ; we are skipping the possibility for scram-sha-256-plus at the moment
+  (string "SCRAM-SHA-256") ; we are skipping scram-sha-256-plus at the moment
   (uint 4 (enc-byte-length client-initial-message))
-  (bytes (cl-postgres-trivial-utf-8:string-to-utf-8-bytes client-initial-message)))
+  (bytes (cl-postgres-trivial-utf-8:string-to-utf-8-bytes
+          client-initial-message)))
 
 (define-message scram-cont-message #\p (final-message)
   (bytes (cl-postgres-trivial-utf-8:string-to-utf-8-bytes final-message)))

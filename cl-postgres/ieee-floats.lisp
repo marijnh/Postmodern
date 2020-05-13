@@ -39,28 +39,28 @@
 ;;     significand are supposed to come after the 'decimal dot'.
 
 (defmacro make-float-converters (encoder-name
-				 decoder-name
-				 exponent-bits
-				 significand-bits
-				 support-nan-and-infinity-p)
+                                 decoder-name
+                                 exponent-bits
+                                 significand-bits
+                                 support-nan-and-infinity-p)
   "Writes an encoder and decoder function for floating point
 numbers with the given amount of exponent and significand
 bits (plus an extra sign bit). If support-nan-and-infinity-p is
 true, the decoders will also understand these special cases. NaN
-is represented as :not-a-number, and the infinities as 
+is represented as :not-a-number, and the infinities as
 :positive-infinity and :negative-infinity. Note that this means
 that the in- or output of these functions is not just floating
 point numbers anymore, but also keywords."
   (let* ((total-bits (+ 1 exponent-bits significand-bits))
-	 (exponent-offset (1- (expt 2 (1- exponent-bits)))) ; (A)
-	 (sign-part `(ldb (byte 1 ,(1- total-bits)) bits))
-	 (exponent-part `(ldb (byte ,exponent-bits ,significand-bits) bits))
-	 (significand-part `(ldb (byte ,significand-bits 0) bits))
-	 (nan support-nan-and-infinity-p)
-	 (max-exponent (1- (expt 2 exponent-bits)))) ; (B)
+         (exponent-offset (1- (expt 2 (1- exponent-bits)))) ; (A)
+         (sign-part `(ldb (byte 1 ,(1- total-bits)) bits))
+         (exponent-part `(ldb (byte ,exponent-bits ,significand-bits) bits))
+         (significand-part `(ldb (byte ,significand-bits 0) bits))
+         (nan support-nan-and-infinity-p)
+         (max-exponent (1- (expt 2 exponent-bits)))) ; (B)
     `(progn
        (defun ,encoder-name (float)
-	 ,@(unless nan `((declare (type float float))))
+         ,@(unless nan `((declare (type float float))))
          (multiple-value-bind (sign significand exponent)
              (cond ,@(when nan `(((eq float :not-a-number)
                                   (values 0 1 ,max-exponent))
@@ -71,38 +71,45 @@ point numbers anymore, but also keywords."
                    ((zerop float)
                     (values 0 0 0))
                    (t
-                    (multiple-value-bind (significand exponent sign) (decode-float float)
+                    (multiple-value-bind (significand exponent sign)
+                        (decode-float float)
                       (let ((exponent (+ (1- exponent) ,exponent-offset))
                             (sign (if (= sign 1.0) 0 1)))
                         (unless (< exponent ,(expt 2 exponent-bits))
-                          (error "Floating point overflow when encoding ~A." float))
+                          (error "Floating point overflow when encoding ~A."
+                                 float))
                         (if (< exponent 0) ; (C)
-                            (values sign (ash (round (* ,(expt 2 significand-bits) significand)) exponent) 0)
-                            (values sign (round (* ,(expt 2 significand-bits) (1- (* significand 2)))) exponent))))))
-	   (let ((bits 0))
-	     (declare (type (unsigned-byte ,total-bits) bits))
-	     (setf ,sign-part sign
-		   ,exponent-part exponent
-		   ,significand-part significand)
-	     bits)))
+                            (values sign (ash (round (* ,(expt 2 significand-bits)
+                                                        significand))
+                                              exponent)
+                                    0)
+                            (values sign (round (* ,(expt 2 significand-bits)
+                                                   (1- (* significand 2))))
+                                    exponent))))))
+           (let ((bits 0))
+             (declare (type (unsigned-byte ,total-bits) bits))
+             (setf ,sign-part sign
+                   ,exponent-part exponent
+                   ,significand-part significand)
+             bits)))
 
        (defun ,decoder-name (bits)
-	 (declare (type (unsigned-byte ,total-bits) bits))
-	 (let* ((sign ,sign-part)
-		(exponent ,exponent-part)
-		(significand ,significand-part))
-	   ,@(when nan `((when (= exponent ,max-exponent)
-			   (return-from ,decoder-name 
-			     (cond ((not (zerop significand)) :not-a-number)
-				   ((zerop sign) :positive-infinity)
-				   (t :negative-infinity))))))
+         (declare (type (unsigned-byte ,total-bits) bits))
+         (let* ((sign ,sign-part)
+                (exponent ,exponent-part)
+                (significand ,significand-part))
+           ,@(when nan `((when (= exponent ,max-exponent)
+                           (return-from ,decoder-name
+                             (cond ((not (zerop significand)) :not-a-number)
+                                   ((zerop sign) :positive-infinity)
+                                   (t :negative-infinity))))))
            (if (zerop exponent) ; (D)
                (setf exponent 1)
                (setf (ldb (byte 1 ,significand-bits) significand) 1))
-	   (unless (zerop sign)
-	     (setf significand (- significand)))
-	   (scale-float (float significand ,(if (> total-bits 32) 1.0d0 1.0))
-			(- exponent ,(+ exponent-offset significand-bits)))))))) ; (E)
+           (unless (zerop sign)
+             (setf significand (- significand)))
+           (scale-float (float significand ,(if (> total-bits 32) 1.0d0 1.0))
+                        (- exponent ,(+ exponent-offset significand-bits)))))))) ; (E)
 
 ;; And instances of the above for the common forms of floats.
 (make-float-converters encode-float32 decode-float32 8 23 nil)

@@ -60,25 +60,25 @@ Here's a test case straight from the PostgreSQL docs:
 
 (with-input-from-string (s "
 create function f(text)
-   returns bool
-   language sql
+returns bool
+language sql
 as $function$
 BEGIN
-    RETURN ($1 ~ $q$[\\t\\r\\n\\v\\\\]$q$);
+RETURN ($1 ~ $q$[\\t\\r\\n\\v\\\\]$q$);
 END;
 $function$;")
-        (parse-query s (make-parser)))
+(parse-query s (make-parser)))
 
 
 Another test case for the classic quotes:
 
-      (with-pgsql-connection ("pgsql:///pginstall")
-        (query
-         (with-input-from-string (s "select E'\\';' as \";\";")
-           (parse-query s)) :alists))
+(with-pgsql-connection ("pgsql:///pginstall")
+(query
+(with-input-from-string (s "select E'\\';' as \";\";")
+(parse-query s)) :alists))
 
-      should return
-      (((:|;| . "';")))
+should return
+(((:|;| . "';")))
 |#
 
 (defun parse-query (stream &optional (state (make-parser)))
@@ -90,7 +90,7 @@ Another test case for the classic quotes:
 
    See the following docs for some of the parser complexity background:
 
-    http://www.postgresql.org/docs/9.3/static/sql-syntax-lexical.html#SQL-SYNTAX-DOLLAR-QUOTING
+   http://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-DOLLAR-QUOTING
 
    Parser states are:
 
@@ -104,96 +104,96 @@ Another test case for the classic quotes:
      - ESC    read escaped text (with backslash)"
   (handler-case
       (loop
-         :until (eq :eoq (parser-state state))
-         :for char := (read-char stream)
-         :do (case char
-               (#\\       (case (parser-state state)
-                            (:esc    (setf (parser-state state) :eqt))
-                            (:eqt    (setf (parser-state state) :esc)))
+        :until (eq :eoq (parser-state state))
+        :for char := (read-char stream)
+        :do (case char
+              (#\\       (case (parser-state state)
+                           (:esc    (setf (parser-state state) :eqt))
+                           (:eqt    (setf (parser-state state) :esc)))
 
-                          (write-char char (parser-stream state)))
+               (write-char char (parser-stream state)))
 
-               (#\'       (case (parser-state state)
-                            (:eat    (setf (parser-state state) :eqt))
-                            (:esc    (setf (parser-state state) :eqt))
-                            (:eqt    (setf (parser-state state) :eat))
-                            (:tag
+              (#\'       (case (parser-state state)
+                           (:eat    (setf (parser-state state) :eqt))
+                           (:esc    (setf (parser-state state) :eqt))
+                           (:eqt    (setf (parser-state state) :eat))
+                           (:tag
+                            (progn
+                              ;; a tag name can't contain a single-quote
+                              ;; get back to previous state
+                              (let ((tag (pop-current-tag state)))
+                                (format (parser-stream state) "$~a" tag))
+                              (reset-state state))))
+
+               (write-char char (parser-stream state)))
+
+              (#\"       (case (parser-state state)
+                           (:eat    (setf (parser-state state) :edq))
+                           (:edq    (setf (parser-state state) :eat)))
+
+               (write-char char (parser-stream state)))
+
+              (#\$       (case (parser-state state)
+                           (:eat    (setf (parser-state state) :tag))
+                           (:ett    (setf (parser-state state) :tag))
+                           (:tag    (setf (parser-state state) :eot)))
+
+               ;; we act depending on the NEW state
+               (case (parser-state state)
+                 ((:eat :eqt :edq)
+                  (write-char char (parser-stream state)))
+
+                 (:tag (push-new-tag state))
+
+                 (:eot       ; check the tag stack
+                  (cond ((= 1 (length (parser-tags state)))
+                         ;; it's an opening tag, collect the text now
+                         (format-current-tag state)
+                         (reset-state state :tagp t))
+
+                        (t   ; are we closing the current tag?
+                         (if (maybe-close-tags state)
+                             (reset-state state :tagp t)
+
+                             ;; not the same tags, switch state back
+                             ;; don't forget to add the opening tag
                              (progn
-                               ;; a tag name can't contain a single-quote
-                               ;; get back to previous state
-                               (let ((tag (pop-current-tag state)))
-                                 (format (parser-stream state) "$~a" tag))
-                               (reset-state state))))
+                               (format-current-tag state)
+                               (setf (parser-state state) :ett))))))))
 
-                          (write-char char (parser-stream state)))
+              (#\;       (case (parser-state state)
+                           (:eat      (setf (parser-state state) :eoq))
+                           (otherwise (write-char char (parser-stream state)))))
 
-               (#\"       (case (parser-state state)
-                            (:eat    (setf (parser-state state) :edq))
-                            (:edq    (setf (parser-state state) :eat)))
+              (otherwise (cond ((member (parser-state state) '(:eat :eqt :ett :edq))
+                                (write-char char (parser-stream state)))
 
-                          (write-char char (parser-stream state)))
+                               ;; see
+                               ;; http://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS-ESCAPE
+                               ;; we re-inject whatever we read in the \x
+                               ;; syntax into the stream and let PostgreSQL
+                               ;; be the judge of what it means.
+                               ((member (parser-state state) '(:esc))
+                                (write-char char (parser-stream state))
+                                (setf (parser-state state) :eqt))
 
-               (#\$       (case (parser-state state)
-                            (:eat    (setf (parser-state state) :tag))
-                            (:ett    (setf (parser-state state) :tag))
-                            (:tag    (setf (parser-state state) :eot)))
+                               ((member (parser-state state) '(:tag))
+                                ;; only letters are allowed in tags
+                                (if (alpha-char-p char)
+                                    (extend-current-tag state char)
 
-                          ;; we act depending on the NEW state
-                          (case (parser-state state)
-                            ((:eat :eqt :edq)
-                             (write-char char (parser-stream state)))
-
-                            (:tag (push-new-tag state))
-
-                            (:eot       ; check the tag stack
-                             (cond ((= 1 (length (parser-tags state)))
-                                    ;; it's an opening tag, collect the text now
-                                    (format-current-tag state)
-                                    (reset-state state :tagp t))
-
-                                   (t   ; are we closing the current tag?
-                                    (if (maybe-close-tags state)
-                                        (reset-state state :tagp t)
-
-                                        ;; not the same tags, switch state back
-                                        ;; don't forget to add the opening tag
-                                        (progn
-                                          (format-current-tag state)
-                                          (setf (parser-state state) :ett))))))))
-
-               (#\;       (case (parser-state state)
-                            (:eat      (setf (parser-state state) :eoq))
-                            (otherwise (write-char char (parser-stream state)))))
-
-               (otherwise (cond ((member (parser-state state) '(:eat :eqt :ett :edq))
-                                 (write-char char (parser-stream state)))
-
-                                ;; see
-                                ;; http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS-ESCAPE
-                                ;; we re-inject whatever we read in the \x
-                                ;; syntax into the stream and let PostgreSQL
-                                ;; be the judge of what it means.
-                                ((member (parser-state state) '(:esc))
-                                 (write-char char (parser-stream state))
-                                 (setf (parser-state state) :eqt))
-
-                                ((member (parser-state state) '(:tag))
-                                 ;; only letters are allowed in tags
-                                 (if (alpha-char-p char)
-                                     (extend-current-tag state char)
-
-                                     (progn
-                                       ;; not a tag actually: remove the
-                                       ;; parser-tags entry and push back its
-                                       ;; contents to the main output stream
-                                       (let ((tag (pop-current-tag state)))
-                                         (format (parser-stream state)
-                                                 "$~a~c"
-                                                 tag
-                                                 char))
-                                       (reset-state state)))))))
-         :finally (return
-                    (get-output-stream-string (parser-stream state))))
+                                    (progn
+                                      ;; not a tag actually: remove the
+                                      ;; parser-tags entry and push back its
+                                      ;; contents to the main output stream
+                                      (let ((tag (pop-current-tag state)))
+                                        (format (parser-stream state)
+                                                "$~a~c"
+                                                tag
+                                                char))
+                                      (reset-state state)))))))
+        :finally (return
+                   (get-output-stream-string (parser-stream state))))
     (end-of-file (e)
       (unless (eq :eat (parser-state state))
         (error e)))))
@@ -203,18 +203,18 @@ Another test case for the classic quotes:
    apply \i include instructions."
   (with-open-file (s filename :direction :input)
     (loop
-       for line = (read-line s nil)
-       while line
-       do (if (or (and (> (length line) 3)
-                       (string= "\\i " (subseq line 0 3)))
-                  (and (> (length line) 4)
-                       (string= "\\ir " (subseq line 0 4))))
-            (let ((include-filename
-                  (merge-pathnames (subseq line 3)
-                    (directory-namestring filename))))
-                (read-lines include-filename q))
-            (format q "~a~%" line))
-       finally (return q))))
+      for line = (read-line s nil)
+      while line
+      do (if (or (and (> (length line) 3)
+                      (string= "\\i " (subseq line 0 3)))
+                 (and (> (length line) 4)
+                      (string= "\\ir " (subseq line 0 4))))
+             (let ((include-filename
+                     (merge-pathnames (subseq line 3)
+                                      (directory-namestring filename))))
+               (read-lines include-filename q))
+             (format q "~a~%" line))
+      finally (return q))))
 
 (defun parse-queries (file-content)
   "Read SQL queries in given string and split them, returns a list"
@@ -230,13 +230,22 @@ Another test case for the classic quotes:
   (parse-queries (get-output-stream-string (read-lines filename))))
 
 (defun execute-file (pathname &optional (print nil))
-  "This function will execute sql queries stored in a file. Each sql statement in the file will be run independently, but if one statement fails, subsequent query statements will not be run, but any statement prior to the failing statement will have been commited.
+  "This function will execute sql queries stored in a file. Each sql statement
+in the file will be run independently, but if one statement fails, subsequent
+query statements will not be run, but any statement prior to the failing
+statement will have been commited.
 
-If you want the standard transction treatment such that all statements succeed or no statement succeeds, then ensure that the file starts with a begin transaction statement and finishes with an end transaction statement. See the test file test-execute-file-broken-transaction.sql as an example.
+If you want the standard transction treatment such that all statements succeed
+or no statement succeeds, then ensure that the file starts with a begin
+transaction statement and finishes with an end transaction statement. See the
+test file test-execute-file-broken-transaction.sql as an example.
 
-For debugging purposes, if the optional print parameter is set to t, format will print the count of the query and the query to the REPL.
+For debugging purposes, if the optional print parameter is set to t, format
+will print the count of the query and the query to the REPL.
 
-IMPORTANT NOTE: This utility function assumes that the file containing the sql queries can be trusted and bypasses the normal postmodern parameterization of queries."
+IMPORTANT NOTE: This utility function assumes that the file containing the
+sql queries can be trusted and bypasses the normal postmodern parameterization
+of queries."
   (let ((queries (read-queries pathname))
         (cnt 0))
     (dolist (query queries)

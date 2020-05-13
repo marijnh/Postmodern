@@ -601,6 +601,12 @@ Create an :around-method for make-dao. The body is executed in a lexical environ
 
 Select the DAO object from the row that has the given primary key values, or NIL if no such row exists. Objects created by this function will have initialize-instance called on them (after loading in the values from the database) without any arguments ― even :default-initargs are skipped. The same goes for select-dao and query-dao.
 
+From an sql perspective, the standard call to get-dao translates as:
+
+#+BEGIN_SRC sql
+select * from table
+#+END_SRC
+
 ** macro select-dao (type &optional (test t) &rest sort)
    :PROPERTIES:
    :ID:       8b3533e5-2399-47e4-8fac-5345ec44c878

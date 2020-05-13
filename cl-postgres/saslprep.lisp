@@ -8,7 +8,15 @@
 ;; RFC 5802 https://tools.ietf.org/html/rfc5802
 ;; RFC 7677 https://tools.ietf.org/html/rfc7677
 
-(defvar *printable-ascii-chars* '(#\  #\! #\" #\# #\$ #\% #\& #\' #\( #\) #\* #\+ #\, #\- #\. #\/ #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\: #\; #\< #\= #\> #\? #\@ #\A #\B #\C #\D #\E #\F #\G #\H #\I #\J #\K #\L #\M #\N #\O #\P #\Q #\R #\S #\T #\U #\V #\W #\X #\Y #\Z #\[ #\\ #\] #\^ #\_ #\` #\a #\b #\c #\d #\e #\f #\g #\h #\i #\j #\k #\l #\m #\n #\o #\p #\q #\r #\s #\t #\u #\v #\w #\x #\y #\z #\{ #\| #\} #\~))
+(defvar *printable-ascii-chars* '(#\  #\! #\" #\# #\$ #\% #\& #\' #\( #\) #\*
+                                  #\+ #\, #\- #\. #\/ #\0 #\1 #\2 #\3 #\4 #\5
+                                  #\6 #\7 #\8 #\9 #\: #\; #\< #\= #\> #\? #\@
+                                  #\A #\B #\C #\D #\E #\F #\G #\H #\I #\J #\K
+                                  #\L #\M #\N #\O #\P #\Q #\R #\S #\T #\U #\V
+                                  #\W #\X #\Y #\Z #\[ #\\ #\] #\^ #\_ #\` #\a
+                                  #\b #\c #\d #\e #\f #\g #\h #\i #\j #\k #\l
+                                  #\m #\n #\o #\p #\q #\r #\s #\t #\u #\v #\w
+                                  #\x #\y #\z #\{ #\| #\} #\~))
 
 (define-condition bad-char-error (error)
   ((message
@@ -54,47 +62,60 @@
        (<= 126)))
 
 (defun char-mapped-to-nothing-p (chr)
-  "Returns t if the character should be mapped to nothing per RFC 3454 Table B.1 and RFC 4013"
+  "Returns t if the character should be mapped to nothing per RFC 3454
+Table B.1 and RFC 4013"
   (when (not (or (characterp chr) (integerp chr)))
-    (bad-char-error "Passing unknown type data to char-mapped-to-nothing-p" :value chr))
-  (let ((chr-code-point (if (integerp chr) (coerce chr 'fixnum) (char-code chr))))
+    (bad-char-error "Passing unknown type data to char-mapped-to-nothing-p"
+                    :value chr))
+  (let ((chr-code-point (if (integerp chr) (coerce chr 'fixnum)
+                            (char-code chr))))
     (declare (optimize speed)
              (integer chr-code-point))
-    (or (member chr-code-point '(#x00AD #x1806 #x200B #x2060 #xFEFF #x034F #x180B #x180C #x180D #x200C #x200D))
+    (or (member chr-code-point '(#x00AD #x1806 #x200B #x2060 #xFEFF #x034F
+                                 #x180B #x180C #x180D #x200C #x200D))
         (and (>= chr-code-point #xFE00) (<= chr-code-point #xFE0F)))))
 
 (defun char-mapped-to-space-p (chr)
-  "If character is mapped to space per RFC 3454 Table C.1.2 and RFC 4013, then return t, else nil"
+  "If character is mapped to space per RFC 3454 Table C.1.2 and RFC 4013, then
+return t, else nil"
   (when (not (or (characterp chr) (integerp chr)))
-    (bad-char-error "Passing unknown type data to char-mapped-to-space-p" :value chr))
-  (let ((chr-code-point (if (integerp chr) (coerce chr 'fixnum) (char-code chr))))
+    (bad-char-error "Passing unknown type data to char-mapped-to-space-p"
+                    :value chr))
+  (let ((chr-code-point (if (integerp chr) (coerce chr 'fixnum)
+                            (char-code chr))))
     (declare (optimize speed)
              (integer chr-code-point))
     (or (member chr-code-point '(#x00A0 #x1680  #x202F #x205F #x3000))
         (and (>= chr-code-point #x2000) (<= chr-code-point #x200B)))))
 
 (defun string-mapped-to-nothing (str)
-  "Reads a string and removes any character that should be mapped to nothing per RFC 3454 and RFC 4013."
+  "Reads a string and removes any character that should be mapped to nothing per
+RFC 3454 and RFC 4013."
   (let ((s1 (coerce str 'simple-vector))
         (lst nil))
     (loop for x across s1 counting x into y do
-         (cond ((char-mapped-to-nothing-p x))
-               ((characterp x)
-                (push x lst))
-               (t (return-from string-mapped-to-nothing))))
+      (cond ((char-mapped-to-nothing-p x))
+            ((characterp x)
+             (push x lst))
+            (t (return-from string-mapped-to-nothing))))
     (setf lst (nreverse lst))
     (format nil "~{~A~}" lst)))
 
 (defun string-mapped-to-space (str)
-  "Reads a string and converts any character which should be mapped to a space pre RFC 3454 and RFC 4013 to a space."
+  "Reads a string and converts any character which should be mapped to a space
+pre RFC 3454 and RFC 4013 to a space."
   (let ((s1 (coerce str 'simple-vector)))
     (loop for x across s1 for y from 0 do
-         (when (char-mapped-to-space-p x)
-           (setf (aref s1 y) #\Space)))
+      (when (char-mapped-to-space-p x)
+        (setf (aref s1 y) #\Space)))
     (coerce s1 'string)))
 
 (defun saslprep-normalize (str &optional (form :nfkc))
-  "Scans string. If any character should be mapped to nothing, it eliminates that character. If any character is not printable ascii, it returns nil. If every character remaining after eliminations is printable ascii, it returns the printable-ascii string. It then calls (uax-15:normalize str form) to normalize the string based on the provided unicode form, defaulting to :nfkc."
+  "Scans string. If any character should be mapped to nothing, it eliminates
+that character. If any character is not printable ascii, it returns nil. If
+every character remaining after eliminations is printable ascii, it returns the
+printable-ascii string. It then calls (uax-15:normalize str form) to normalize
+the string based on the provided unicode form, defaulting to :nfkc."
   (when (string-printable-ascii-p str)
     (return-from saslprep-normalize str))
   (setf str (string-mapped-to-nothing str))

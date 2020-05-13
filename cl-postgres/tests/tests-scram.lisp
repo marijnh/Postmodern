@@ -44,7 +44,8 @@
                   "QSXCR+Q6sek8bf92")))
 
 
-;; potential testing help at https://md5calc.com/hash/sha256/, https://coding.tools/base64-encode, https://www.online-toolz.com/tools/text-hex-convertor.php
+;; potential testing help at https://md5calc.com/hash/sha256/,
+;; https://coding.tools/base64-encode, https://www.online-toolz.com/tools/text-hex-convertor.php
 
 ;; The Following is using SHA1, not SHA256
 ;; Here is a complete example:

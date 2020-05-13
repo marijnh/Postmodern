@@ -2,13 +2,19 @@
 (in-package :cl-postgres)
 
 (defparameter *current-query* nil)
-(defparameter *query-log* nil "When debugging, it can be helpful to inspect the queries that are being sent
-to the database. Set this variable to an output stream value (*standard-output*, for example) to have CL-postgres log every query it makes.")
-(defparameter *query-callback* 'log-query "When profiling or debugging, the *query-log* may not give enough information,
-or reparsing its output may not be feasible. This variable may be set to a designator of function taking two arguments. This function will be then called
-after every query, and receive query string and internal time units (as in (CL:GET-INTERNAL-REAL-TIME)) spent in query as its arguments.
+(defparameter *query-log* nil "When debugging, it can be helpful to inspect the
+queries that are being sent to the database. Set this variable to an output
+stream value (*standard-output*, for example) to have CL-postgres log every
+query it makes.")
+(defparameter *query-callback* 'log-query "When profiling or debugging, the
+*query-log* may not give enough information, or reparsing its output may not be
+feasible. This variable may be set to a designator of function taking two
+arguments. This function will be then called after every query, and receive
+query string and internal time units (as in (CL:GET-INTERNAL-REAL-TIME)) spent
+in query as its arguments.
 
-Default value of this variable is 'LOG-QUERY, which takes care of *QUERY-LOG* processing. If you provide custom query callback and wish to keep *QUERY-LOG*
+Default value of this variable is 'LOG-QUERY, which takes care of *QUERY-LOG*
+processing. If you provide custom query callback and wish to keep *QUERY-LOG*
 functionality, you will have to call LOG-QUERY from your callback function")
 
 (defun log-query (query time-units)
@@ -37,42 +43,64 @@ to *QUERY-LOG* if it is not NIL."
 ;;
 (define-condition database-error (error)
   ((error-code :initarg :code :initform nil :reader database-error-code
-               :documentation "Code: the Postgresql SQLSTATE code for the error (see the Postgresql Manual Appendix A for their meaning). Not localizable. Always present.")
+               :documentation "Code: the Postgresql SQLSTATE code for the error
+ (see the Postgresql Manual Appendix A for their meaning). Not localizable.
+ Always present.")
    (message :initarg :message :accessor database-error-message
-            :documentation "Message: the primary human-readable error message. This should be accurate but terse (typically one line). Always present.")
+            :documentation "Message: the primary human-readable error message.
+This should be accurate but terse (typically one line). Always present.")
    (detail :initarg :detail :initform nil :reader database-error-detail
-           :documentation "Detail: an optional secondary error message carrying more detail about the problem. Might run to multiple lines or NIL if none is available.")
+           :documentation "Detail: an optional secondary error message carrying
+more detail about the problem. Might run to multiple lines or NIL if none is
+available.")
    (hint :initarg :hint :initform nil :reader database-error-hint
-         :documentation "Hint: an optional suggestion what to do about the problem.")
+         :documentation "Hint: an optional suggestion what to do about the
+problem.")
    (context :initarg :context :initform nil :reader database-error-context
-            :documentation "Where: an indication of the context in which the error occurred. Presently this includes a call stack traceback of active procedural language functions and internally-generated queries. The trace is one entry per line, most recent first."
+            :documentation "Where: an indication of the context in which the
+error occurred. Presently this includes a call stack traceback of active
+procedural language functions and internally-generated queries. The trace is
+one entry per line, most recent first."
 )
    (query :initform *current-query* :reader database-error-query
-          :documentation "Query that led to the error, or NIL if no query was involved.")
+          :documentation "Query that led to the error, or NIL if no query was
+involved.")
    (position :initarg :position :initform nil :reader database-error-position
-             :documentation "Position: the field value is a decimal ASCII integer, indicating an error cursor position as an index into the original query string. The first character has index 1, and positions are measured in characters not bytes.")
+             :documentation "Position: the field value is a decimal ASCII
+integer, indicating an error cursor position as an index into the original query
+string. The first character has index 1, and positions are measured in
+characters not bytes.")
    (cause :initarg :cause :initform nil :reader database-error-cause
-          :documentation "The condition that caused this error, or NIL when it was not caused by another condition."))
-  (:report (lambda (err stream)
-             (format stream "Database error~@[ ~A~]: ~A~@[~&DETAIL: ~A~]~@[~&HINT: ~A~]~@[~&CONTEXT: ~A~]~@[~&QUERY: ~A~]~@[~VT^~]"
-                     (database-error-code err)
-                     (database-error-message err)
-                     (database-error-detail err)
-                     (database-error-hint err)
-                     (database-error-context err)
-                     (database-error-query err)
-                     (database-error-position err))))
-  (:documentation "This is the condition type that will be used to signal virtually all database-related errors \(though in some cases
-socket errors may be raised when a connection fails on the IP level). For errors that you may want to catch by type, the cl-postgres-error package defines a bucket of subtypes used for specific errors. See the cl-postgres/package.lisp file for a list."))
+          :documentation "The condition that caused this error, or NIL when it
+was not caused by another condition."))
+  (:report
+   (lambda (err stream)
+     (format stream
+             "Database error~@[ ~A~]: ~A~@[~&DETAIL: ~A~]~@[~&HINT: ~A~]~@[~&CONTEXT: ~A~]~@[~&QUERY: ~A~]~@[~VT^~]"
+             (database-error-code err)
+             (database-error-message err)
+             (database-error-detail err)
+             (database-error-hint err)
+             (database-error-context err)
+             (database-error-query err)
+             (database-error-position err))))
+  (:documentation "This is the condition type that will be used to signal
+virtually all database-related errors \(though in some cases
+socket errors may be raised when a connection fails on the IP level). For errors
+that you may want to catch by type, the cl-postgres-error package defines a
+bucket of subtypes used for specific errors. See the cl-postgres/package.lisp
+file for a list."))
 
 (defun database-error-constraint-name (err)
-  "For integrity-violation error, given a database-error for an integrity violation, will attempt to
-extract and return the constraint name (or nil if no constraint was found)."
+  "For integrity-violation error, given a database-error for an integrity
+violation, will attempt to extract and return the constraint name (or nil if no
+constraint was found)."
   (labels ((extract-quoted-part (string n)
              "Extracts the Nth quoted substring from STRING."
              (let* ((start-quote-inst (* 2 n))
                     (start-quote-pos (position-nth #\" string start-quote-inst))
-                    (end-quote-pos (position #\" string :start (1+ start-quote-pos))))
+                    (end-quote-pos (position #\" string
+                                             :start (1+ start-quote-pos))))
                (subseq string (1+ start-quote-pos) end-quote-pos)))
            (position-nth (item seq n)
              "Finds the position of the zero-indexed Nth ITEM in SEQ."
@@ -81,10 +109,14 @@ extract and return the constraint name (or nil if no constraint was found)."
                    :finally (return pos))))
     (let ((message (database-error-message err)))
       (typecase err
-        (cl-postgres-error:not-null-violation (extract-quoted-part message 0))
-        (cl-postgres-error:unique-violation (extract-quoted-part message 0))
-        (cl-postgres-error:foreign-key-violation (extract-quoted-part message 1))
-        (cl-postgres-error:check-violation (extract-quoted-part message 1))))))
+        (cl-postgres-error:not-null-violation
+         (extract-quoted-part message 0))
+        (cl-postgres-error:unique-violation
+         (extract-quoted-part message 0))
+        (cl-postgres-error:foreign-key-violation
+         (extract-quoted-part message 1))
+        (cl-postgres-error:check-violation
+         (extract-quoted-part message 1))))))
 
 (defun database-error-extract-name (err)
   "For various errors, returns the name provided by the error message
@@ -93,7 +125,8 @@ extract and return the constraint name (or nil if no constraint was found)."
              "Extracts the Nth quoted substring from STRING."
              (let* ((start-quote-inst (* 2 n))
                     (start-quote-pos (position-nth #\" string start-quote-inst))
-                    (end-quote-pos (position #\" string :start (1+ start-quote-pos))))
+                    (end-quote-pos (position #\" string
+                                             :start (1+ start-quote-pos))))
                (subseq string (1+ start-quote-pos) end-quote-pos)))
            (position-nth (item seq n)
              "Finds the position of the zero-indexed Nth ITEM in SEQ."
@@ -108,26 +141,27 @@ extract and return the constraint name (or nil if no constraint was found)."
               (extract-quoted-part message 0))))))
 
 (define-condition database-connection-error (database-error) ()
-  (:documentation "Subtype of database-error. An error of this type (or one of its subclasses)
-is signaled when a query is attempted with a connection object that is no
-longer connected, or a database connection becomes invalid during a query.
-Always provides a :reconnect restart, which will cause the library to make an
-attempt to restore the connection and re-try the query.
+  (:documentation "Subtype of database-error. An error of this type (or one of
+its subclasses) is signaled when a query is attempted with a connection object
+that is no longer connected, or a database connection becomes invalid during a
+query. Always provides a :reconnect restart, which will cause the library to
+make an attempt to restore the connection and re-try the query.
 
 The following shows an example use of this feature, a way to ensure that the
 first connection error causes a reconnect attempt, while others pass through
 as normal. A variation on this theme could continue trying to reconnect, with
 successively longer pauses.
 
-  (defun call-with-single-reconnect (fun)
-    (let ((reconnected nil))
-      (handler-bind
-          ((database-connection-error
-            (lambda (err)
-              (when (not reconnected)
-                (setf reconnected t)
-                (invoke-restart :reconnect)))))
-        (funcall fun))))"))
+    (defun call-with-single-reconnect (fun)
+      (let ((reconnected nil))
+        (handler-bind
+            ((database-connection-error
+              (lambda (err)
+                (when (not reconnected)
+                  (setf reconnected t)
+                  (invoke-restart :reconnect)))))
+          (funcall fun))))"))
+
 (define-condition database-connection-lost (database-connection-error) ()
   (:documentation "Raised when a query is initiated on a disconnected
 connection object."))
@@ -174,7 +208,8 @@ giving them a database-connection-error superclass."))
 (deferror "42501" insufficient-privilege syntax-error-or-access-violation)
 (deferror "40" transaction-rollback)
 (deferror "40001" serialization-failure transaction-rollback)
-(deferror "40002" transaction-integrity-constraint-violation transaction-rollback)
+(deferror "40002" transaction-integrity-constraint-violation
+  transaction-rollback)
 (deferror "40003" statement-completion-unknown transaction-rollback)
 (deferror "40P01" deadlock-detected transaction-rollback)
 (deferror "42P01" undefined-table syntax-error-or-access-violation)
@@ -196,7 +231,9 @@ giving them a database-connection-error superclass."))
 (deferror "55P03" lock-not-available object-state-error)
 (deferror "57" operator-intervention)
 (deferror "57014" query-canceled operator-intervention)
-(define-condition server-shutdown (operator-intervention database-connection-error) ())
+(define-condition server-shutdown (operator-intervention
+                                   database-connection-error)
+  ())
 (deferror "57P01" admin-shutdown server-shutdown)
 (deferror "57P02" crash-shutdown server-shutdown)
 (deferror "57P03" cannot-connect-now operator-intervention)
