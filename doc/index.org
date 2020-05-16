@@ -17,10 +17,13 @@ are that Postmodern has no intention of being portable across different SQL
 implementations (it embraces non-standard PostgreSQL features), and approaches
 extensions like lispy SQL and database access objects in a quite different way.
 This library was written because the CLSQL approach did not really work for
-me, your mileage may vary.
+me. Your mileage may vary.
 
 
 * Dependencies
+  :PROPERTIES:
+  :ID:       216c43d0-57ff-4ae3-a302-6d04a3d79665
+  :END:
 The library depends on [[http://quickdocs.org/usocket/][usocket]] (except on [[http://sbcl.org/][SBCL]] and [[https://franz.com/products/allegrocl/][ACL]], where the built-in socket library is used), [[https://github.com/pmai/md5.git][md5]], [[https://github.com/pcostanza/closer-mop.git][closer-mop]], [[https://github.com/sionescu/bordeaux-threads.git][bordeaux-threads]] if you want
 thread-safe connection pools, and [[https://github.com/cl-plus-ssl/cl-plus-ssl.git][CL+SSL]] when SSL connections are needed.
 
@@ -36,9 +39,12 @@ SQL types. It is not loaded by default and you can use [[https://github.com/dlow
 - [[file:s-sql.html][S-SQL]] is used to compile s-expressions to strings of SQL code, escaping any Lisp values inside, and doing as much as
 possible of the work at compile time. Finally,
 
-- [[file:postmodern.html][Postmodern]] itself is the library that tries to put all these things together into a convenient programming interface.
+- [[file:postmodern.html][Postmodern]] itself is a wrapper around these packages and provides higher level functions, a very simple data access object that can be mapped directly to database tables and some convient utilities. It then tries to put all these things together into a convenient programming interface.itself is the library that tries to put all these things together into a convenient programming interface.
 
 * License
+  :PROPERTIES:
+  :ID:       8ba6488f-4b3c-47f7-8a50-844363c5f484
+  :END:
 Postmodern is released under a zlib-style license. Which approximately
 means you can use the code in whatever way you like, except for passing
 it off as your own or releasing a modified version without indication
@@ -48,6 +54,9 @@ The functions execute-file.lisp were ported from [[https://github.com/dimitri/pg
 Dimitri Fontaine and are released under a BSD-3 license.
 
 * Download and installation
+  :PROPERTIES:
+  :ID:       d4cca0ee-ff7f-4530-9be7-e9b3de62bdb4
+  :END:
 We suggest using [[https://quicklisp.org][quicklisp.org]] for installation.
 
 A git repository with the most recent changes can be viewed or checked out at:
@@ -55,6 +64,9 @@ A git repository with the most recent changes can be viewed or checked out at:
 > git clone [[https://github.com/marijnh/Postmodern]]
 
 * Quickstart
+  :PROPERTIES:
+  :ID:       f55510fb-3715-4cdd-9e37-4ab0e968e72d
+  :END:
 This quickstart is intended to give you a feel of the way coding with
 Postmodern works. Further details about the workings of the library
 can be found in the reference manuals linked below.
@@ -74,14 +86,18 @@ password 'surveiller', you can connect like this:
 
 Which will establish a connection to be used by all code, except for that
 wrapped in a with-connection form, which takes the same arguments but only
-establishes the connection locally. If the Postgresql server is running on a port other than 5432,
+establishes the connection locally. Connect-toplevel will maintain a single
+connection for the life of the session.
+
+If the Postgresql server is running on a port other than 5432,
 you would also pass the appropriate keyword port parameter. E.g.:
 
 #+BEGIN_SRC lisp
 (connect-toplevel "testdb" "foucault" "surveiller" "localhost" :port 5434)
 #+END_SRC
 
-Ssl connections would similarly use the keyword parameter :use-ssl and pass :yes, :no or :try
+Ssl connections would similarly use the keyword parameter :use-ssl and
+pass :yes, :no or :try
 
 Now for a basic sanity test:
 #+BEGIN_SRC lisp
@@ -121,7 +137,8 @@ also iterate over it with the doquery macro:
   (format t "On this row, x = ~A and y = ~A.~%" x y))
 #+END_SRC
 
-You can work directly with the database or you can use a simple database-access-class (aka dao) which would cover all the fields in a row.
+You can work directly with the database or you can use a simple
+database-access-class (aka dao) which would cover all the fields in a row.
 This is what a database-access class looks like:
 #+BEGIN_SRC lisp
 (defclass country ()
@@ -134,27 +151,41 @@ This is what a database-access class looks like:
   (:metaclass dao-class)
   (:keys name))
 #+END_SRC
-
 The above defines a class that can be used to handle records in a table with
-three columns: name, inhabitants, and sovereign. In simple cases, the
-information above is enough to define the table as well:
-#+BEGIN_SRC lisp
-(dao-table-definition 'country)
-;; => "CREATE TABLE country (
-;;      name TEXT NOT NULL,
-;;      inhabitants INTEGER NOT NULL,
-;;      sovereign TEXT,
-;;      PRIMARY KEY (name))"
+three columns: name, inhabitants, and sovereign. The :keys parameter specifies
+which column(s) are used for the primary key. Once you have created the class,
+you can return an instance of the country class by calling
 
-(execute (dao-table-definition 'country))
+#+BEGIN_SRC lisp
+(get-dao 'country "Croatia")
 #+END_SRC
 
-This defines our table in the database. execute works like query, but does
-not expect any results back.
+You can also define classes that use multiple columns in the primary key:
+
+#+BEGIN_SRC lisp
+(defclass points ()
+  ((x :col-type integer :initarg :x
+      :reader point-x)
+   (y :col-type integer :initarg :y
+      :reader point-y)
+   (value :col-type integer :initarg :value
+          :accessor value))
+  (:metaclass dao-class)
+  (:keys x y))
+#+END_SRC
+
+In this case, retrieving a points record would look like the following where
+12 and 34 would be the values you are looking to find in the x column and y
+column respectively.:
+
+#+BEGIN_SRC lisp
+(get-dao 'points 12 34)
+#+END_SRC
 
 You can create tables directly without the need to define a class, and in more
-complicated cases, you will need to use the create-table operator. One example
-using s-sql rather than plain vanilla sql would be the following:
+complicated cases, you will need to use the create-table operator or plain
+vanilla sql. One example using s-sql rather than plain vanilla sql would be the
+following:
 #+BEGIN_SRC lisp
 (query (:create-table so-items
          ((item-id :type integer)
@@ -170,7 +201,8 @@ Restated using vanilla sql:
 #+BEGIN_SRC sql
 (query "CREATE TABLE so_items (
  item_id INTEGER NOT NULL,
- so_id INTEGER REFERENCES so_headers(id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT,
+ so_id INTEGER REFERENCES so_headers(id)
+               MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT,
  product_id INTEGER,
  qty INTEGER,
  net_price NUMERIC,
@@ -179,17 +211,38 @@ Restated using vanilla sql:
 )
 #+END_SRC
 
-In the above case, the new table's name will be so-items (actually in the
-database it will be so_items because sql does not allow hyphens. The column
-item-id is an integer and cannot be null. The column so-id is also an integer,
-but is allowed to be null and is a foreign key to the id field in the so-headers
-table so-headers. The primary key is actually a composite of item-id and so-id.
-(If we wanted the primary key to be just item-id, we could have specified that
-in the form defining item-id.) For more detail and examples on building tables
-using the s-sql approach, see [[file:create-tables.html][create-tables.html]]
+In the above case, the new table's name will be so_items because sql does not
+allow hyphens and plain vanilla sql will require that. Ppostmodern will
+generally allow you to use the quoted symbol 'so-items. This is also true for
+all the column names. The column item-id is an integer and cannot be null. The
+column so-id is also an integer, but is allowed to be null and is a foreign key
+to the id field in the so-headers table so-headers. The primary key is actually
+a composite of item-id and so-id. (If we wanted the primary key to be just
+item-id, we could have specified that in the form defining item-id.)
 
+For more detail and examples on building tables using the s-sql approach,
+see [[file:create-tables.html][create-tables.html]]
 
-Let us add a few countries:
+In simple cases you can also use a previously defined dao to create a table as
+well using the dao-table-definition function which generates the plain vanilla
+sql for creating a table described above.
+
+#+BEGIN_SRC lisp
+(dao-table-definition 'country)
+
+;; => "CREATE TABLE country (
+;;      name TEXT NOT NULL,
+;;      inhabitants INTEGER NOT NULL,
+;;      sovereign TEXT,
+;;      PRIMARY KEY (name))"
+
+(execute (dao-table-definition 'country))
+#+END_SRC
+
+This defines our table in the database. execute works like query, but does
+not expect any results back.
+
+Let us go back to our approach using a dao class and add a few countries:
 #+BEGIN_SRC lisp
 (insert-dao (make-instance 'country :name "The Netherlands"
                                     :inhabitants 16800000
@@ -204,6 +257,7 @@ Then, to update Croatia's population, we could do this:
   (setf (country-inhabitants croatia) 4500000)
   (update-dao croatia))
 (query (:select '* :from 'country))
+
 ;; => (("The Netherlands" 16800000 "Willem-Alexander")
 ;;     ("Croatia" 4500000 :NULL))
 #+END_SRC
@@ -212,7 +266,8 @@ Next, to demonstrate a bit more of the S-SQL syntax, here is the query the
 utility function list-tables uses to get a list of the tables in a database:
 #+BEGIN_SRC lisp
 (sql (:select 'relname :from 'pg-catalog.pg-class
-      :inner-join 'pg-catalog.pg-namespace :on (:= 'relnamespace 'pg-namespace.oid)
+      :inner-join 'pg-catalog.pg-namespace :on (:= 'relnamespace
+                                                   'pg-namespace.oid)
       :where (:and (:= 'relkind "r")
                    (:not-in 'nspname (:set "pg_catalog" "pg_toast"))
                    (:pg-catalog.pg-table-is-visible 'pg-class.oid))))
@@ -250,7 +305,94 @@ faster, especially for complex queries.
 (disconnect-toplevel)
 #+END_SRC
 
+* Authentication
+  :PROPERTIES:
+  :ID:       5ad46584-6887-4866-9c40-633768c0d39a
+  :END:
+Postmodern can use either md5 or scram-sha-256 authentication. Scram-sha-256
+authentication is obviously more secure, but slower than md5, so take that into
+account if you are planning on opening and closing many connections without
+using a connection pooling setup..
+
+Other authentication methods have not been tested. Please let us know if there
+is a authentication method that you believe should be considered.
+
+* Running tests
+  :PROPERTIES:
+  :ID:       bd354217-9828-444b-afbf-41e9f0d522ca
+  :END:
+
+Postmodern uses [[https://github.com/sionescu/fiveam][FiveAM]] for
+testing.  The different component systems of Postmodern have tests
+defined in corresponding test systems, each defining a test suite.
+The test systems and corresponding top-level test suites are:
+
+- `:postmodern` in `postmodern/tests`,
+- `:cl-postgres` in `cl-postgres/tests`,
+- `:s-sql` in `s-sql/tests`, and
+- `:simple-date` in `simple-date/tests`.
+
+Before running the tests make sure PostgreSQL is running and a test
+database is created.  By default tests use the following connection
+parameters to run the tests:
+
+- Database name: test
+- User: test
+- Password: <empty>
+- Hostname: localhost
+- Port: 5432
+- Use-SSL :NO
+
+If connection with these parameters fails then you will be asked to
+provide the connection parameters interactively.  The parameters will
+be stored in `cl-postgres-tests:*test-connection*` variable and
+automatically used on successive test runs.  This variable can also be
+set manually before running the tests.
+
+To test a particular component one would first load the corresponding
+test system, and then run the test suite.  For example, to test the
+`postmodern` system in the REPL one would do the following:
+#+BEGIN_SRC lisp
+(ql:quickload "postmodern/tests")
+(5am:run! :postmodern)
+
+    ;; ... test output ...
+#+END_SRC
+
+
+It is also possible to test multiple components at once by first
+loading test systems and then running all tests:
+#+BEGIN_SRC lisp
+(ql:quickload '("cl-postgres/tests" "s-sql/tests"))
+(5am:run-all-tests)
+
+    ;; ... test output ...
+#+END_SRC
+
+To run the tests from command-line specify the same forms using your
+implementation's command-line syntax.  For instance, to test all
+Postmodern components on SBCL, use the following command:
+
+    env DB_USER=$USER sbcl --noinform \
+        --eval '(ql:quickload "postmodern/tests")' \
+        --eval '(ql:quickload "cl-postgres/tests")' \
+        --eval '(ql:quickload "s-sql/tests")' \
+        --eval '(ql:quickload "simple-date/tests")' \
+        --eval '(progn (setq 5am:*print-names* nil) (5am:run-all-tests))' \
+        --eval '(sb-ext:exit)'
+
+As you can see from above, database connection parameters can be
+provided using environment variables:
+
+- `DB_NAME`: database name,
+- `DB_USER`: user,
+- `DB_PASS`: password,
+- `DB_HOST`: hostname.
+
 * Reference
+  :PROPERTIES:
+  :ID:       27b39236-15ee-42c3-958a-3c9c903c4567
+  :END:
 The reference manuals for the different components of Postmodern are kept
 in separate files. For using the library in the most straightforward way,
 you only really need to read the Postmodern reference and glance over the
@@ -271,8 +413,75 @@ if you just want a low-level library for talking to a PostgreSQL server.
 - [[file:cl-postgres.html][CL-postgres]]
 
 
+* Data Types
+  :PROPERTIES:
+  :ID:       d089d05b-4485-4fb5-9097-5a66492bc470
+  :END:
+** Data Types
+   :PROPERTIES:
+   :ID:       deae4656-1b87-4518-9718-3b3e8c35f6c5
+   :END:
+For a short comparison of lisp and Postgresql data types (date and time datatypes are described in the next section)
+
+| SQL type         | Description                                                                       |
+|------------------+-----------------------------------------------------------------------------------|
+| smallint         | -32,768 to +32,768 2-byte storage                                                 |
+| integer          | -2147483648 to +2147483647 integer, 4-byte storage                                |
+| bigint           | -9223372036854775808 to 9223372036854775807 integer 8-byte storage                |
+| numeric(X, Y)    |                                                                                   |
+| real             | single-precision floating point number, 6 decimal digit precision 4-byte storage  |
+| double-precision | double-precision floating point number, 15 decimal digit precision 8-byte storage |
+| text             | variable length string, no limit specified                                        |
+| char(X)          | char(length), blank-padded string, fixed storage length                           |
+| varchar(X)       | varchar(length), non-blank-padded string, variable storage length                 |
+| boolean          | boolean, 'true'/'false', 1 byte                                                   |
+| bytea            |                                                                                   |
+| date             | date range: 4713 BC to 5874897 AD                                                 |
+| interval         | See [[file:interval-notes.html][interval]]                                                                      |
+| array            |                                                                                   |
+
+
+| PG Type          | Sample Postmodern Return Value                                              | Lisp Type (per sbcl)                 |
+|------------------+-----------------------------------------------------------------------------+--------------------------------------|
+| boolean          | T                                                                           | BOOLEAN                              |
+| boolean          | NIL  *Note: within Postgresql this will show 'f'                            | BOOLEAN                              |
+| int2             | 273                                                                         | (INTEGER 0 4611686018427387903)      |
+| int4             | 2                                                                           | (INTEGER 0 4611686018427387903)      |
+| char             | A                                                                           | (VECTOR CHARACTER 64)                |
+| varchar          | id&wl;19                                                                    | (VECTOR CHARACTER 64)                |
+| numeric          | 78239/100                                                                   | RATIO                                |
+| json             | { "customer": "John Doe", "items": {"product": "Beer","qty": 6}}            | (VECTOR CHARACTER 64)                |
+| jsonb            | {"title": "Sleeping Beauties", "genres": ["Fiction", "Thriller", "Horror"]} | (VECTOR CHARACTER 128)               |
+| float            | 782.31                                                                      | SINGLE-FLOAT                         |
+| point            | (0.0d0 0.0d0)                                                               | CONS                                 |
+| lseg             | ((-1.0d0 0.0d0) (2.0d0 4.0d0))                                              | CONS                                 |
+| path             | ((1,0),(2,4))                                                               | (VECTOR CHARACTER 64)                |
+| box              | ((1.0d0 1.0d0) (0.0d0 0.0d0))                                               | CONS                                 |
+| polygon          | ((21,0),(2,4))                                                              | (VECTOR CHARACTER 64)                |
+| line             | {2,-1,0}                                                                    | (VECTOR CHARACTER 64)                |
+| double_precision | 2.38921379231d8                                                             | DOUBLE-FLOAT                         |
+| double_float     | 2.3892137923231d8                                                           | DOUBLE-FLOAT                         |
+| circle           | <(0,0),2>                                                                   | (VECTOR CHARACTER 64)                |
+| cidr             | 100.24.10.0/24                                                              | (VECTOR CHARACTER 64)                |
+| inet             | 100.24.10.0/24                                                              | (VECTOR CHARACTER 64)                |
+| interval         | #<INTERVAL P1Y3H20m>                                                        | INTERVAL                             |
+| bit              | #*1                                                                         | (SIMPLE-BIT-VECTOR 1)                |
+| int4range        | [11,24)                                                                     | (VECTOR CHARACTER 64)                |
+| uuid             | 40e6215d-b5c6-4896-987c-f30f3678f608                                        | (VECTOR CHARACTER 64)                |
+| text_array       | #(text one text two text three)                                             | (SIMPLE-VECTOR 3)                    |
+| integer_array    | #(3 5 7 8)                                                                  | (SIMPLE-VECTOR 4)                    |
+| bytea            | #(222 173 190 239)                                                          | (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (4)) |
+| text             | Lorem ipsum dolor sit amet, consectetur adipiscing elit                     | (VECTOR CHARACTER 64)                |
+| enum_mood        | happy *Note: enum_mood was defined as 'sad','ok' or 'happy'                 | (VECTOR CHARACTER 64)                |
+
 * Caveats and to-dos
-** Timezones and Simple-Date
+  :PROPERTIES:
+  :ID:       157ea05f-4c49-4e49-8cf9-a3df4bf16b09
+  :END:
+** Timezones and Simple-Date and Local-Time
+   :PROPERTIES:
+   :ID:       8ff631c8-994f-4658-bbc4-779afc80bdf2
+   :END:
 It is important to understand how postgresql (not postmodern) handles
 timestamps and timestamps with time zones. Postgresql keeps everything
 in UTC, it does not store a timezone even in a timezone aware column.
@@ -285,20 +494,25 @@ There is a good writeup of timezones at
 [[http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html]]
 and [[http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/][http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/]].
 
+Without simple-date or local-time properly loaded, sample date and time data
+from postgresql will look like:
+
+| PG Type         |                                        Sample Return Value | Lisp Type                       |
+|-----------------+------------------------------------------------------------+---------------------------------|
+| date            |                                                 3798576000 | (INTEGER 0 4611686018427387903) |
+| time_wo_tz      | ((HOURS 9) (MINUTES 47) (SECONDS 9) (MICROSECONDS 926531)) | CONS                            |
+| time_w_tz       |                                         09:47:16.510459-04 | (VECTOR CHARACTER 64)           |
+| timestamp_wo_tz |                                                 3798611253 | (INTEGER 0 4611686018427387903) |
+| timestamp_w_tz  |                                                 3798625647 | (INTEGER 0 4611686018427387903) |
 
 The Simple-date add-on library (not enabled by default)
 provides types (CLOS classes) for dates, timestamps, and intervals
 similar to the ones SQL databases use, in order to be able to store and read
 these to and from a database in a straighforward way. A few obvious operations
-are defined on these types. However, [[http://marijnhaverbeke.nl/postmodern/simple-date.html][Simple-date]] has no concept of time zones.
-If you need your time-keeping to be reliable and/or universal then you might consider
-using another library, [[https://github.com/dlowe-net/local-time][local-time]], which solves the same problem as simple-date, but
-does understand time zones. It does have some code for integrating with
-cl-postgres. See
-[[https://github.com/dlowe-net/local-time/blob/master/src/integration/cl-postgres.lisp]]
+are defined on these types.
 
 To use simple-date with cl-postgres or postmodern,
-load simple-date-cl-postgres-glue to register suitable SQL
+load simple-date-cl-postgres-glue and register suitable SQL
 readers and writers for the associated database types.
 
 #+BEGIN_SRC lisp
@@ -306,33 +520,57 @@ readers and writers for the associated database types.
 
 (setf cl-postgres:*sql-readtable*
         (cl-postgres:copy-sql-readtable
-         simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
+          simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
 #+END_SRC
+
+With simple date loaded, the same data will look like this:
+
+| PG Type                    | Sample Return Value                  | Lisp Type             |
+|----------------------------+--------------------------------------+-----------------------|
+| date                       | #<DATE 16-05-2020>                   | DATE                  |
+| time_without_timezone      | #<TIME-OF-DAY 09:47:09.926531>       | TIME-OF-DAY           |
+| time_with_timezone         | 09:47:16.510459-04                   | (VECTOR CHARACTER 64) |
+| timestamp_without_timezone | #<TIMESTAMP 16-05-2020T09:47:33,315> | TIMESTAMP             |
+| timestamp_with_timezone    | #<TIMESTAMP 16-05-2020T13:47:27,855> | TIMESTAMP             |
 
 To get back to the default cl-postgres reader:
 #+BEGIN_SRC lisp
 (setf cl-postgres:*sql-readtable*
         (cl-postgres:copy-sql-readtable
-         cl-postgres::*default-sql-readtable*))
+          cl-postgres::*default-sql-readtable*))
 #+END_SRC
+However [[http://marijnhaverbeke.nl/postmodern/simple-date.html][Simple-date]] has no concept of time zones. Many users use another library, [[https://github.com/dlowe-net/local-time][local-time]],
+which solves the same problem as simple-date, but does understand time zones.
 
-To use the simple-date reader when cl-postgres is using the default:
+For those who want to use local-time, to enable the local-time reader:
 #+BEGIN_SRC lisp
-(setf cl-postgres:*sql-readtable*
-        (cl-postgres:copy-sql-readtable
-         simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
-#+END_SRC
-
-As a reminder for those who want to use local-time, to enable the local-time
-reader:
-#+BEGIN_SRC lisp
+(ql:quickload :cl-postgres+local-time)
 (local-time:set-local-time-cl-postgres-readers)
 #+END_SRC
 
+With that set postgresql time datatype returns look like:
+With local-time loaded and local-time:set-local-time-cl-postgres-readers run,
+the same sample data looks like:
+
+| PG Type                    | Sample Return Value              | Lisp Type             |
+|----------------------------+----------------------------------+-----------------------|
+| date                       | 2020-05-15T20:00:00.000000-04:00 | TIMESTAMP             |
+| time_without_timezone      | 2000-03-01T04:47:09.926531-05:00 | TIMESTAMP             |
+| time_with_timezone         | 09:47:16.510459-04               | (VECTOR CHARACTER 64) |
+| timestamp_without_timezone | 2020-05-16T05:47:33.315622-04:00 | TIMESTAMP             |
+| timestamp_with_timezone    | 2020-05-16T09:47:27.855146-04:00 | TIMESTAMP             |
+
+
 ** Portability
+   :PROPERTIES:
+   :ID:       769a0e88-de54-4356-a474-72708accbafb
+   :END:
 The Lisp code in Postmodern is theoretically portable across implementations,
 and seems to work on all major ones as well as some minor ones such as Genera.
 It is regularly tested on ccl, sbcl, ecl and cmucl.
+
+ABCL currently has issues with utf-8 and :null..
+
 Implementations that do not have meta-object protocol support will not have
 DAOs, but all other parts of the library should work (all widely used
 implementations do support this).
@@ -341,24 +579,42 @@ The library is not likely to work for PostgreSQL versions older than 8.4.
 Other features only work in newer Postgresql versions as the features
 were only introduced in those newer versions.
 
+** Reserved Words
+   :PROPERTIES:
+   :ID:       671c5e6a-f548-4791-86a5-575b3fcc0aa5
+   :END:
+It is highly suggested that you do not use words that are reserved by Postgresql
+and the sql standard as identifiers (e.g. table names, columns). The reserved
+words are:
+
+"all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric"
+"authorization" "between" "binary" "both" "case" "cast" "check" "collate"
+"column" "concurrently" "constraint" "create" "cross" "current-catalog"
+"current-date" "current-role" "current-schema" "current-time"
+"current-timestamp" "current-user" "default" "deferrable" "desc" "distinct" "do"
+"else" "end" "except" "false" "fetch" "filter" "for" "foreign" "freeze" "from"
+"full" "grant" "group" "having" "ilike" "in" "initially" "inner" "intersect"
+"into" "is" "isnull" "join" "lateral" "leading" "left" "like" "limit"
+"localtime" "localtimestamp" "natural" "new" "not" "notnull"  "nowait" "null"
+"off" "offset" "old" "on" "only" "or" "order" "outer" "overlaps" "placing"
+"primary" "references" "returning" "right" "select" "session-user" "share"
+"similar" "some" "symmetric" "table" "then" "to" "trailing" "true" "union"
+"unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"
+
 ** Things that should be implemented
+   :PROPERTIES:
+   :ID:       50d91126-93f1-4f50-96ad-bd63a7278866
+   :END:
 Postmodern is under active development so Issues and feature requests should
 be flagged on [[https://github.com/marijnh/Postmodern][Postmodern's site on github]].
-
-It would be a nice feature if Postmodern could help you with defining your
-database schemas and, more importantly, updating your databases when your code
-changes. It would theoretically not be hard to build a function that compares
-a schema on the Lisp side with the state of the database, and helps you to
-interactively update your database. PostgreSQL has a quite complete
-introspection system. Unfortunately it would be a lot of work to implement
-this, since databases can contain so many different types of entities
-(tables, views, indices, procedures, constraints, sequences, etc.) which are
-all created, changed, and dropped in different ways.
 
 Some areas that are currently under consideration can be found in the ROADMAP.md
 file.
 
 * Resources
+  :PROPERTIES:
+  :ID:       eb969965-5221-48f8-bb79-5a93fe451454
+  :END:
 - [[https://mailman.common-lisp.net/listinfo/postmodern-devel][Mailing List]]
 - [[https://sites.google.com/site/sabraonthehill/postmodern-examples][A collection of Postmodern examples]]
 - [[http://www.postgresql.org/docs/current/static/index.html][The PostgreSQL manuals]]

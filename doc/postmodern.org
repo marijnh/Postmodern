@@ -333,6 +333,8 @@ You can specify the following isolation levels in postmodern transactions:
 - :repeatable-read-ro (repeatable read with read only)
 - :serializable (serializable with reand and write)
 
+For more information see [[file:isolation-notes.html][isolation-notes]]
+
 Sample usage where "george" is just the name given to the transaction (not
 quoted or a string) and ... simply indicates other statements would be
 expected here:

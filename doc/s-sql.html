@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-05-10 Sun 18:26 -->
+<!-- 2020-05-16 Sat 15:27 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>S-SQL Reference Manual</title>
@@ -255,156 +255,165 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgba3b985">Interface</a>
+<li><a href="#org501d8e1">Interface</a>
 <ul>
-<li><a href="#org0af83af">macro sql (form)</a></li>
-<li><a href="#org1aba58a">function sql-compile (form)</a></li>
-<li><a href="#org9a361f0">function sql-template (form)</a></li>
-<li><a href="#org95ef4c5">function enable-s-sql-syntax (&amp;optional (char #\Q))</a></li>
-<li><a href="#orgc53ee2b">function sql-escape-string (string)</a></li>
-<li><a href="#orgac5cf6a">method sql-escape (value)</a></li>
-<li><a href="#org3d4608f">variable <b>downcase-symbols</b></a></li>
-<li><a href="#org1489ea5">variable <b>standard-sql-strings</b></a></li>
-<li><a href="#org5d82cf4">variable <b>postgres-reserved-words</b> hashtable</a></li>
-<li><a href="#org99e7b0c">variable <b>escape-sql-names-p</b></a></li>
-<li><a href="#org1890444">function sql-type-name (type)</a></li>
-<li><a href="#orge19bc70">function to-sql-name (name &amp;optional (escape-p <b>escape-sql-names-p</b>)(ignore-reserved-words nil)</a></li>
-<li><a href="#orge34934e">function from-sql-name (string)</a></li>
-<li><a href="#org381f425">macro register-sql-operators (arity &amp;rest names)</a></li>
+<li><a href="#org3e56749">macro sql (form)</a></li>
+<li><a href="#org0ad3a22">function sql-compile (form)</a></li>
+<li><a href="#orgd160a85">function sql-template (form)</a></li>
+<li><a href="#org2865a4e">function enable-s-sql-syntax (&amp;optional (char #\Q))</a></li>
+<li><a href="#orgb8aef99">function sql-escape-string (string)</a></li>
+<li><a href="#org4f6d234">method sql-escape (value)</a></li>
+<li><a href="#org549ef0e">variable <b>downcase-symbols</b></a></li>
+<li><a href="#org3365b3b">variable <b>standard-sql-strings</b></a></li>
+<li><a href="#org7dba828">variable <b>postgres-reserved-words</b> hashtable</a></li>
+<li><a href="#orgb80156a">variable <b>escape-sql-names-p</b></a></li>
+<li><a href="#orgacd9996">function sql-type-name (type)</a></li>
+<li><a href="#org773a2a5">function to-sql-name (name &amp;optional (escape-p <b>escape-sql-names-p</b>)(ignore-reserved-words nil)</a></li>
+<li><a href="#org4049bce">function from-sql-name (string)</a></li>
+<li><a href="#org7db1958">macro register-sql-operators (arity &amp;rest names)</a></li>
 </ul>
 </li>
-<li><a href="#org318f825">SQL Types</a>
+<li><a href="#orgb1b42c2">SQL Types</a>
 <ul>
-<li><a href="#org857b531">type db-null</a></li>
+<li><a href="#orgced3597">type db-null</a></li>
 </ul>
 </li>
-<li><a href="#orge40d9c4">SQL Syntax</a>
+<li><a href="#org7a72c41">SQL Syntax</a>
 <ul>
-<li><a href="#org4e517af">sql-op :select (&amp;rest args)</a></li>
-<li><a href="#org2b5cf70">sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</a></li>
-<li><a href="#org3cb5b9f">sql-op :~, :not (arg)</a></li>
-<li><a href="#org08048a3">sql-op :function (name (&amp;rest arg-types) return-type stability body)</a></li>
-<li><a href="#org89a639e">sql-op :~, :~*, :!~, :!~* (string pattern)</a></li>
-<li><a href="#orga174b0e">sql-op :like, :ilike (string pattern)</a></li>
-<li><a href="#org5e184b5">sql-op :@@</a></li>
-<li><a href="#org293e92a">sql-op :desc (column)</a></li>
-<li><a href="#org4c9fe76">sql-op :nulls-first, :nulls-last (column)</a></li>
-<li><a href="#orgaf80a93">sql-op :as (form name &amp;rest fields)</a></li>
-<li><a href="#org6a62102">sql-op :cast (query)</a></li>
-<li><a href="#org8ba46b8">sql-op :type (query)</a></li>
-<li><a href="#org0d82f16">sql-op :create-composite-type (type-name &amp;rest args)</a></li>
-<li><a href="#org3cc5240">sql-op :exists (query)</a></li>
-<li><a href="#orga0239e4">sql-op :is-null (arg)</a></li>
-<li><a href="#org193dd6a">sql-op :not-null (arg)</a></li>
-<li><a href="#org52f6098">sql-op :in (value set)</a></li>
-<li><a href="#org916f95c">sql-op :not-in (value set)</a></li>
-<li><a href="#org8fa489d">sql-op :set (&amp;rest elements)</a></li>
-<li><a href="#orgd2eb27c">sql-op :array (query)</a></li>
-<li><a href="#org4420897">sql-op :array[] (&amp;rest args)</a></li>
-<li><a href="#orgaae0505">sql-op :[] (form start &amp;optional end)</a></li>
-<li><a href="#orgc70e5a6">sql-op :extract (unit form)</a></li>
-<li><a href="#org7994768">sql-op :case (&amp;rest clauses)</a></li>
-<li><a href="#org502491e">sql-op :between (n start end)</a></li>
-<li><a href="#orgbfa1cba">sql-op :between-symmetric (n start end)</a></li>
-<li><a href="#orge5dddb0">sql-op :dot (&amp;rest names)</a></li>
-<li><a href="#org77cd76d">sql-op :type (form type)</a></li>
-<li><a href="#org8ded86f">sql-op :raw (string)</a></li>
-<li><a href="#org94934b9">sql-op :limit (query amount &amp;optional offset)</a></li>
-<li><a href="#orgf9b71a0">sql-op :order-by (query &amp;rest exprs)</a></li>
-<li><a href="#org95c7b09">sql-op :values</a></li>
-<li><a href="#orgac7e8d4">sql-op :empty-set</a></li>
-<li><a href="#org6aee8af">sql-op :group-by</a></li>
-<li><a href="#orgff011cc">sql-op :grouping-sets</a></li>
+<li><a href="#org65e962b">sql-op :select (&amp;rest args)</a></li>
+<li><a href="#orgc8613b6">sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</a></li>
+<li><a href="#org7d6a767">sql-op :~, :not (arg)</a></li>
+<li><a href="#org189aa10">sql-op :function (name (&amp;rest arg-types) return-type stability body)</a></li>
+<li><a href="#org55e7372">sql-op :~, :~*, :!~, :!~* (string pattern)</a></li>
+<li><a href="#org985aa3e">sql-op :like, :ilike (string pattern)</a></li>
+<li><a href="#orga1bf114">sql-op :@@</a></li>
+<li><a href="#org5c95fb8">sql-op :desc (column)</a></li>
+<li><a href="#org50bd3ad">sql-op :nulls-first, :nulls-last (column)</a></li>
+<li><a href="#org5c3fbc5">sql-op :as (form name &amp;rest fields)</a></li>
+<li><a href="#org3c26ab7">sql-op :cast (query)</a></li>
+<li><a href="#org574a8d2">sql-op :type (query)</a></li>
+<li><a href="#org3588737">sql-op :create-composite-type (type-name &amp;rest args)</a></li>
+<li><a href="#orgc773f87">sql-op :exists (query)</a></li>
+<li><a href="#org2249114">sql-op :is-null (arg)</a></li>
+<li><a href="#orgf2a8612">sql-op :not-null (arg)</a></li>
+<li><a href="#org0cd468f">sql-op :in (value set)</a></li>
+<li><a href="#org373cf09">sql-op :not-in (value set)</a></li>
+<li><a href="#orgb64328b">sql-op :set (&amp;rest elements)</a></li>
+<li><a href="#orgd0e4ad2">sql-op :array (query)</a></li>
+<li><a href="#org57c74e1">sql-op :array[] (&amp;rest args)</a></li>
+<li><a href="#org91e0ff6">sql-op :[] (form start &amp;optional end)</a></li>
+<li><a href="#org9e86d82">sql-op :extract (unit form)</a></li>
+<li><a href="#org9c66f32">sql-op :case (&amp;rest clauses)</a></li>
+<li><a href="#org57ac1f5">sql-op :between (n start end)</a></li>
+<li><a href="#org4e09b12">sql-op :between-symmetric (n start end)</a></li>
+<li><a href="#orgcc5a08f">sql-op :dot (&amp;rest names)</a></li>
+<li><a href="#orgae524fd">sql-op :type (form type)</a></li>
+<li><a href="#org2e6bd1a">sql-op :raw (string)</a></li>
+<li><a href="#org6c19170">sql-op :limit (query amount &amp;optional offset)</a></li>
+<li><a href="#org5abe831">sql-op :order-by (query &amp;rest exprs)</a></li>
+<li><a href="#orgb115768">sql-op :values</a></li>
+<li><a href="#org194be4e">sql-op :empty-set</a></li>
+<li><a href="#org7ed59e3">sql-op :group-by</a></li>
+<li><a href="#org9b3333b">sql-op :grouping-sets</a></li>
 </ul>
 </li>
-<li><a href="#org224b407">Time, Date and Interval Operators</a>
+<li><a href="#org587c3a5">Time, Date and Interval Operators</a>
 <ul>
-<li><a href="#orgad39f5a">sql-op :interval (arg)</a></li>
-<li><a href="#orgd76ef12">sql-op :current-date ()</a></li>
-<li><a href="#orga874d6b">sql-op :current-time ()</a></li>
-<li><a href="#org6fbea2c">sql-op :current-timestamp ()</a></li>
-<li><a href="#org23c69d4">sql-op :timestamp (arg)</a></li>
-<li><a href="#org77c2c24">sql-op :age (&amp;rest args)</a></li>
-<li><a href="#org4409788">sql-op :date (arg)</a></li>
-<li><a href="#org669f260">sql-op :make-interval (&amp;rest args)</a></li>
-<li><a href="#org243201c">sql-op :make-timestamp (&amp;rest args)</a></li>
-<li><a href="#orgcac0446">sql-op :make-timestamptz (&amp;rest args)</a></li>
+<li><a href="#orgc69ded6">sql-op :interval (arg)</a></li>
+<li><a href="#org5445413">sql-op :current-date ()</a></li>
+<li><a href="#orgc6d6477">sql-op :current-time ()</a></li>
+<li><a href="#org084c77f">sql-op :current-timestamp ()</a></li>
+<li><a href="#org3157bdf">sql-op :timestamp (arg)</a></li>
+<li><a href="#org3369b59">sql-op :age (&amp;rest args)</a></li>
+<li><a href="#orgad83347">sql-op :date (arg)</a></li>
+<li><a href="#org9613bb0">sql-op :make-interval (&amp;rest args)</a></li>
+<li><a href="#orgb64e598">sql-op :make-timestamp (&amp;rest args)</a></li>
+<li><a href="#org7b1b4de">sql-op :make-timestamptz (&amp;rest args)</a></li>
 </ul>
 </li>
-<li><a href="#orgf690c14">Aggregation Operators</a>
+<li><a href="#orgbf8712f">Aggregation Operators</a>
 <ul>
-<li><a href="#orgc72a174">sql-op :count (&amp;rest args)</a></li>
-<li><a href="#org4761523">sql-op :avg (&amp;rest rest args)</a></li>
-<li><a href="#org89e2a4b">sql-op :sum (&amp;rest rest args)</a></li>
-<li><a href="#orgc90409a">sql-op ::max (&amp;rest args)</a></li>
-<li><a href="#org51455c1">sql-op ::min (&amp;rest args)</a></li>
-<li><a href="#orgbc54137">sql-op ::every (&amp;rest args)</a></li>
-<li><a href="#org5ed36fb">sql-op :percentile-cont (&amp;rest args)</a></li>
-<li><a href="#org87a41fb">sql-op :percentile-dist (&amp;rest args)</a></li>
-<li><a href="#org0d4307e">sql-op :corr (y x)</a></li>
-<li><a href="#orgff08d57">sql-op :covar-pop (y x)</a></li>
-<li><a href="#orge18f79c">sql-op :covar-samp (y x)</a></li>
-<li><a href="#orgb49b552">sql-op :string-agg (&amp;rest args)</a></li>
-<li><a href="#orgb4fdc1e">sql-op :array-agg (&amp;rest args)</a></li>
-<li><a href="#orgebcbddd">sql-op :mode (&amp;rest args)</a></li>
-<li><a href="#org021ec3a">sql-op :regr_avgx (y x)</a></li>
-<li><a href="#org7495790">sql-op :regr_avgy (y x)</a></li>
-<li><a href="#org2abb7bb">sql-op :regr_count (y x)</a></li>
-<li><a href="#org21e4651">sql-op :regr_intercept (y x)</a></li>
-<li><a href="#orge6fa61f">sql-op :regr_r2 (y x)</a></li>
-<li><a href="#orgdd3231b">sql-op :regr_slope (y x)</a></li>
-<li><a href="#org12c4fac">sql-op :regr_sxx (y x)</a></li>
-<li><a href="#org73ff88f">sql-op :regr_sxy (y x)</a></li>
-<li><a href="#orgfc750df">sql-op :regr_syy (y x)</a></li>
-<li><a href="#org608cd76">sql-op :stddev (&amp;rest args)</a></li>
-<li><a href="#org4711541">sql-op :stddev-pop (&amp;rest args)</a></li>
-<li><a href="#org0f19c3a">sql-op :stddev-samp (&amp;rest args)</a></li>
-<li><a href="#orgfa850a0">sql-op :variance (&amp;rest args)</a></li>
-<li><a href="#orga46865a">sql-op :var-pop (&amp;rest args)</a></li>
-<li><a href="#org5e4939d">sql-op :var-samp (&amp;rest args)</a></li>
-<li><a href="#org683ecd9">sql-op :over (form &amp;rest args)</a></li>
-<li><a href="#org61df1f4">sql-op :partition-by (&amp;rest args)</a></li>
-<li><a href="#org19127b3">sql-op :window (form)</a></li>
-<li><a href="#orgca1f6da">sql-op :with (&amp;rest args)</a></li>
-<li><a href="#orga649c3a">sql-op :with-recursive (&amp;rest args)</a></li>
+<li><a href="#orgdfc4ea7">sql-op :count (&amp;rest args)</a></li>
+<li><a href="#org063a112">sql-op :avg (&amp;rest rest args)</a></li>
+<li><a href="#orgd433f12">sql-op :sum (&amp;rest rest args)</a></li>
+<li><a href="#org38017f3">sql-op ::max (&amp;rest args)</a></li>
+<li><a href="#org38666c1">sql-op ::min (&amp;rest args)</a></li>
+<li><a href="#orgf54716f">sql-op ::every (&amp;rest args)</a></li>
+<li><a href="#orge975bc9">sql-op :percentile-cont (&amp;rest args)</a></li>
+<li><a href="#org748a418">sql-op :percentile-dist (&amp;rest args)</a></li>
+<li><a href="#org1c058ab">sql-op :corr (y x)</a></li>
+<li><a href="#orgd1535af">sql-op :covar-pop (y x)</a></li>
+<li><a href="#org922a8ea">sql-op :covar-samp (y x)</a></li>
+<li><a href="#org1581370">sql-op :string-agg (&amp;rest args)</a></li>
+<li><a href="#orgfc058e4">sql-op :array-agg (&amp;rest args)</a></li>
+<li><a href="#orgd2e44f7">sql-op :mode (&amp;rest args)</a></li>
+<li><a href="#org5ba67f1">sql-op :regr_avgx (y x)</a></li>
+<li><a href="#orgd75448f">sql-op :regr_avgy (y x)</a></li>
+<li><a href="#orgd475897">sql-op :regr_count (y x)</a></li>
+<li><a href="#org185748d">sql-op :regr_intercept (y x)</a></li>
+<li><a href="#orgd28d0c2">sql-op :regr_r2 (y x)</a></li>
+<li><a href="#org255a831">sql-op :regr_slope (y x)</a></li>
+<li><a href="#org2da276e">sql-op :regr_sxx (y x)</a></li>
+<li><a href="#org1a032f9">sql-op :regr_sxy (y x)</a></li>
+<li><a href="#org4de2313">sql-op :regr_syy (y x)</a></li>
+<li><a href="#orge3008aa">sql-op :stddev (&amp;rest args)</a></li>
+<li><a href="#orgc44c19f">sql-op :stddev-pop (&amp;rest args)</a></li>
+<li><a href="#orgffc6d9d">sql-op :stddev-samp (&amp;rest args)</a></li>
+<li><a href="#org9f6d760">sql-op :variance (&amp;rest args)</a></li>
+<li><a href="#orga3887b6">sql-op :var-pop (&amp;rest args)</a></li>
+<li><a href="#org6507f83">sql-op :var-samp (&amp;rest args)</a></li>
+<li><a href="#orgea55393">sql-op :over (form &amp;rest args)</a></li>
+<li><a href="#orgbe7a4a4">sql-op :partition-by (&amp;rest args)</a></li>
+<li><a href="#org231dcc7">sql-op :window (form)</a></li>
+<li><a href="#orgc9bcb91">sql-op :with (&amp;rest args)</a></li>
+<li><a href="#orgbb25245">sql-op :with-recursive (&amp;rest args)</a></li>
 </ul>
 </li>
-<li><a href="#org73dbbd7">Table Functions</a>
+<li><a href="#org2ba61ef">Table Functions</a>
 <ul>
-<li><a href="#org712ce1b">sql-op :for-update (query &amp;key of nowait)</a></li>
-<li><a href="#org8053ed4">sql-op :for-share (query &amp;key of nowait)</a></li>
-<li><a href="#orgaf3aa25">sql-op :insert-into (table &amp;rest rest)</a></li>
-<li><a href="#orge8932fe">sql-op :insert-rows-into (table &amp;rest rest)</a></li>
-<li><a href="#orgdc1ae42">sql-op :update (table &amp;rest rest)</a></li>
-<li><a href="#org9159b7c">sql-op :delete-from (table &amp;rest rest)</a></li>
-<li><a href="#org9e1c55d">sql-op :create-table (name (&amp;rest columns) &amp;rest options)</a>
+<li><a href="#org67fc5b4">sql-op :for-update (query &amp;key of nowait)</a></li>
+<li><a href="#orgc58d7be">sql-op :for-share (query &amp;key of nowait)</a></li>
+<li><a href="#org9c35d1b">sql-op :insert-into (table &amp;rest rest)</a></li>
+<li><a href="#org84686d9">sql-op :insert-rows-into (table &amp;rest rest)</a></li>
+<li><a href="#orge0ce1c8">sql-op :update (table &amp;rest rest)</a></li>
+<li><a href="#org8ac39db">sql-op :delete-from (table &amp;rest rest)</a></li>
+<li><a href="#org85099f7">sql-op :create-table (name (&amp;rest columns) &amp;rest options)</a>
 <ul>
-<li><a href="#orgcf55684">Column Definition parameters</a></li>
-<li><a href="#orgcfd8620">Table Constraints</a></li>
+<li><a href="#org61479f3">Column Definition parameters</a></li>
+<li><a href="#org0f04e4a">Table Constraints</a></li>
 </ul>
 </li>
-<li><a href="#org00e7464">sql-op :alter-table (name action &amp;rest args)</a></li>
-<li><a href="#orgd356f90">sql-op :drop-table (name)</a></li>
-<li><a href="#org4a7abc0">sql-op :truncate (&amp;rest args)</a></li>
-<li><a href="#org3ff22a5">sql-op :create-index (name &amp;rest args)</a></li>
-<li><a href="#orgcc857d9">sql-op :create-unique-index (name &amp;rest args)</a></li>
-<li><a href="#orgf03fa3f">sql-op :drop-index (name)</a></li>
-<li><a href="#org755eae6">sql-op :create-sequence (name &amp;key increment min-value max-value start cache cycle)</a></li>
-<li><a href="#org939d0be">sql-op :alter-sequence (name)</a></li>
-<li><a href="#org015da84">sql-op :drop-sequence (name)</a></li>
-<li><a href="#orgc86378c">sql-op :create-view (name query)</a></li>
-<li><a href="#org61c6183">sql-op :drop-view (name)</a></li>
-<li><a href="#org1ff1f39">sql-op :set-constraints (state &amp;rest constraints)</a></li>
-<li><a href="#org79e2337">sql-op :listen (channel)</a></li>
-<li><a href="#org3b72b99">sql-op :unlisten (channel)</a></li>
-<li><a href="#orge7002dc">sql-op :notify (channel &amp;optional payload)</a></li>
-<li><a href="#orgf73f4f7">sql-op :create-role (role &amp;rest args)</a></li>
-<li><a href="#orgf27f700">sql-op :create-database (name)</a></li>
-<li><a href="#org1c1ba08">sql-op :drop-database (name)</a></li>
-<li><a href="#org4ff0d49">sql-op :copy (table &amp;rest args)</a></li>
+<li><a href="#orgae5fa70">sql-op :alter-table (name action &amp;rest args)</a></li>
+<li><a href="#org139f021">sql-op :drop-table (name)</a></li>
+<li><a href="#orgffa30e3">sql-op :truncate (&amp;rest args)</a></li>
+<li><a href="#org591caf5">sql-op :create-index (name &amp;rest args)</a></li>
+<li><a href="#orgdf4af7b">sql-op :create-unique-index (name &amp;rest args)</a></li>
+<li><a href="#orgc6bd0c3">sql-op :drop-index (name)</a></li>
+<li><a href="#orgf27b599">sql-op :create-sequence (name &amp;key increment min-value max-value start cache cycle)</a></li>
+<li><a href="#org002c30c">sql-op :alter-sequence (name)</a></li>
+<li><a href="#org0f40b65">sql-op :drop-sequence (name)</a></li>
+<li><a href="#org49639f7">sql-op :create-view (name query)</a></li>
+<li><a href="#orgf972b50">sql-op :drop-view (name)</a></li>
+<li><a href="#org7e55719">sql-op :set-constraints (state &amp;rest constraints)</a></li>
+<li><a href="#org9074391">sql-op :listen (channel)</a></li>
+<li><a href="#org4c9614b">sql-op :unlisten (channel)</a></li>
+<li><a href="#org26de207">sql-op :notify (channel &amp;optional payload)</a></li>
+<li><a href="#org5d3c774">sql-op :create-role (role &amp;rest args)</a></li>
+<li><a href="#orgf8c85a3">sql-op :create-database (name)</a></li>
+<li><a href="#orgcad2edd">sql-op :drop-database (name)</a></li>
+<li><a href="#orgf7dd2b4">sql-op :copy (table &amp;rest args)</a></li>
 </ul>
 </li>
-<li><a href="#orga4014f9">Dynamic Queries and Composition</a></li>
+<li><a href="#dynamic-queries-composition-and-parameterized-queries">Dynamic Queries, Composition and Parameterized Queries</a>
+<ul>
+<li><a href="#overview">Overview</a>
+<ul>
+<li><a href="#programmer-built-queries">Programmer Built Queries</a></li>
+<li><a href="#queries-with-user-input">Queries with User Input</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </div>
 </nav>
@@ -419,13 +428,14 @@ the work as possible at compile-time, so that at runtime a string concatenation
 is all that is needed to produce the final SQL query.
 </p>
 
-<div id="outline-container-orgba3b985" class="outline-2">
-<h2 id="orgba3b985"><a id="ID-462ce6d8-f967-4bce-817e-d1762ebfd41f"></a>Interface</h2>
-<div class="outline-text-2" id="text-orgba3b985">
+
+<div id="outline-container-org501d8e1" class="outline-2">
+<h2 id="org501d8e1"><a id="ID-462ce6d8-f967-4bce-817e-d1762ebfd41f"></a>Interface</h2>
+<div class="outline-text-2" id="text-org501d8e1">
 </div>
-<div id="outline-container-org0af83af" class="outline-3">
-<h3 id="org0af83af"><a id="ID-9de76637-62f7-4c7c-a5d1-1f37491b3db3"></a>macro sql (form)</h3>
-<div class="outline-text-3" id="text-org0af83af">
+<div id="outline-container-org3e56749" class="outline-3">
+<h3 id="org3e56749"><a id="ID-9de76637-62f7-4c7c-a5d1-1f37491b3db3"></a>macro sql (form)</h3>
+<div class="outline-text-3" id="text-org3e56749">
 <p>
 → string
 </p>
@@ -455,9 +465,9 @@ would throw an error. For the later case you need to use sql-compile.
 </div>
 </div>
 
-<div id="outline-container-org1aba58a" class="outline-3">
-<h3 id="org1aba58a"><a id="ID-8d161d2a-06cb-4334-9ee6-86e805eb5295"></a>function sql-compile (form)</h3>
-<div class="outline-text-3" id="text-org1aba58a">
+<div id="outline-container-org0ad3a22" class="outline-3">
+<h3 id="org0ad3a22"><a id="ID-8d161d2a-06cb-4334-9ee6-86e805eb5295"></a>function sql-compile (form)</h3>
+<div class="outline-text-3" id="text-org0ad3a22">
 <p>
 → string
 </p>
@@ -488,9 +498,9 @@ would throw an error. For the later case you need to use sql.
 </div>
 </div>
 
-<div id="outline-container-org9a361f0" class="outline-3">
-<h3 id="org9a361f0"><a id="ID-e16e8407-01af-4907-9ed6-2b3c1f12dd1b"></a>function sql-template (form)</h3>
-<div class="outline-text-3" id="text-org9a361f0">
+<div id="outline-container-orgd160a85" class="outline-3">
+<h3 id="orgd160a85"><a id="ID-e16e8407-01af-4907-9ed6-2b3c1f12dd1b"></a>function sql-template (form)</h3>
+<div class="outline-text-3" id="text-orgd160a85">
 <p>
 In cases where you do need to build the query at run time, yet you do not
 want to re-compile it all the time, this function can be used to compile it
@@ -502,18 +512,18 @@ which the placeholders have been replaced by the values of the arguments.
 </div>
 </div>
 
-<div id="outline-container-org95ef4c5" class="outline-3">
-<h3 id="org95ef4c5"><a id="ID-bee65d01-61d4-4823-b0ab-26789642cdb3"></a>function enable-s-sql-syntax (&amp;optional (char #\Q))</h3>
-<div class="outline-text-3" id="text-org95ef4c5">
+<div id="outline-container-org2865a4e" class="outline-3">
+<h3 id="org2865a4e"><a id="ID-bee65d01-61d4-4823-b0ab-26789642cdb3"></a>function enable-s-sql-syntax (&amp;optional (char #\Q))</h3>
+<div class="outline-text-3" id="text-org2865a4e">
 <p>
 Modifies the current readtable to add a #Q syntax that is read as (sql &#x2026;).
 The character to use can be overridden by passing an argument.
 </p>
 </div>
 </div>
-<div id="outline-container-orgc53ee2b" class="outline-3">
-<h3 id="orgc53ee2b"><a id="ID-02edac61-f915-4d5f-b52e-d4b7ace29352"></a>function sql-escape-string (string)</h3>
-<div class="outline-text-3" id="text-orgc53ee2b">
+<div id="outline-container-orgb8aef99" class="outline-3">
+<h3 id="orgb8aef99"><a id="ID-02edac61-f915-4d5f-b52e-d4b7ace29352"></a>function sql-escape-string (string)</h3>
+<div class="outline-text-3" id="text-orgb8aef99">
 <p>
 → string
 </p>
@@ -531,9 +541,9 @@ The character to use can be overridden by passing an argument.
 </div>
 </div>
 
-<div id="outline-container-orgac5cf6a" class="outline-3">
-<h3 id="orgac5cf6a"><a id="ID-59d7247c-c2fa-46c3-b682-dab17fac8812"></a>method sql-escape (value)</h3>
-<div class="outline-text-3" id="text-orgac5cf6a">
+<div id="outline-container-org4f6d234" class="outline-3">
+<h3 id="org4f6d234"><a id="ID-59d7247c-c2fa-46c3-b682-dab17fac8812"></a>method sql-escape (value)</h3>
+<div class="outline-text-3" id="text-org4f6d234">
 <p>
 → string
 </p>
@@ -558,26 +568,26 @@ converted to SQL names. Examples:
 </div>
 </div>
 </div>
-<div id="outline-container-org3d4608f" class="outline-3">
-<h3 id="org3d4608f"><a id="ID-19c05bac-8209-4e48-b2e0-549ff03df44e"></a>variable <b>downcase-symbols</b></h3>
-<div class="outline-text-3" id="text-org3d4608f">
+<div id="outline-container-org549ef0e" class="outline-3">
+<h3 id="org549ef0e"><a id="ID-19c05bac-8209-4e48-b2e0-549ff03df44e"></a>variable <b>downcase-symbols</b></h3>
+<div class="outline-text-3" id="text-org549ef0e">
 <p>
 When converting symbols to strings, whether to downcase the symbols is set here. The default is to downcase symbols.
 </p>
 </div>
 </div>
-<div id="outline-container-org1489ea5" class="outline-3">
-<h3 id="org1489ea5"><a id="ID-95a70c76-0fcb-4967-88a2-3460bbcb5311"></a>variable <b>standard-sql-strings</b></h3>
-<div class="outline-text-3" id="text-org1489ea5">
+<div id="outline-container-org3365b3b" class="outline-3">
+<h3 id="org3365b3b"><a id="ID-95a70c76-0fcb-4967-88a2-3460bbcb5311"></a>variable <b>standard-sql-strings</b></h3>
+<div class="outline-text-3" id="text-org3365b3b">
 <p>
 Used to configure whether S-SQL will use standard SQL strings (just replace #\' with ''), or backslash-style escaping. Setting this to NIL is always safe, but when the server is configured to allow standard strings (compile-time parameter 'standard_conforming_strings' is 'on', which will become the default in future versions of PostgreSQL), the noise in queries can be reduced by setting this to T.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org5d82cf4" class="outline-3">
-<h3 id="org5d82cf4"><a id="ID-a975b46b-5ade-4358-aa77-f83681299a94"></a>variable <b>postgres-reserved-words</b> hashtable</h3>
-<div class="outline-text-3" id="text-org5d82cf4">
+<div id="outline-container-org7dba828" class="outline-3">
+<h3 id="org7dba828"><a id="ID-a975b46b-5ade-4358-aa77-f83681299a94"></a>variable <b>postgres-reserved-words</b> hashtable</h3>
+<div class="outline-text-3" id="text-org7dba828">
 <p>
 A set of all Postgresql's reserved words, for automatic escaping. Probably not a good idea to use these words as identifiers anyway.
  '("all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric" "authorization"
@@ -595,9 +605,9 @@ A set of all Postgresql's reserved words, for automatic escaping. Probably not a
 </div>
 </div>
 
-<div id="outline-container-org99e7b0c" class="outline-3">
-<h3 id="org99e7b0c"><a id="ID-974ac94c-23eb-4bba-b324-d79fba034c1d"></a>variable <b>escape-sql-names-p</b></h3>
-<div class="outline-text-3" id="text-org99e7b0c">
+<div id="outline-container-orgb80156a" class="outline-3">
+<h3 id="orgb80156a"><a id="ID-974ac94c-23eb-4bba-b324-d79fba034c1d"></a>variable <b>escape-sql-names-p</b></h3>
+<div class="outline-text-3" id="text-orgb80156a">
 <p>
 Determines whether double quotes are added around column, table, and ** function names in
 queries. Valid values:
@@ -623,9 +633,9 @@ future if requested.
 </div>
 </div>
 
-<div id="outline-container-org1890444" class="outline-3">
-<h3 id="org1890444"><a id="ID-79bc7903-3321-4e01-a0a0-819ad61179b5"></a>function sql-type-name (type)</h3>
-<div class="outline-text-3" id="text-org1890444">
+<div id="outline-container-orgacd9996" class="outline-3">
+<h3 id="orgacd9996"><a id="ID-79bc7903-3321-4e01-a0a0-819ad61179b5"></a>function sql-type-name (type)</h3>
+<div class="outline-text-3" id="text-orgacd9996">
 <p>
 → string
 </p>
@@ -636,9 +646,9 @@ Transform a lisp type into a string containing something SQL understands. Defaul
 </div>
 </div>
 
-<div id="outline-container-orge19bc70" class="outline-3">
-<h3 id="orge19bc70"><a id="ID-46c8eab0-4fac-4b14-8193-6b93c985ad0f"></a>function to-sql-name (name &amp;optional (escape-p <b>escape-sql-names-p</b>)(ignore-reserved-words nil)</h3>
-<div class="outline-text-3" id="text-orge19bc70">
+<div id="outline-container-org773a2a5" class="outline-3">
+<h3 id="org773a2a5"><a id="ID-46c8eab0-4fac-4b14-8193-6b93c985ad0f"></a>function to-sql-name (name &amp;optional (escape-p <b>escape-sql-names-p</b>)(ignore-reserved-words nil)</h3>
+<div class="outline-text-3" id="text-org773a2a5">
 <p>
 → string
 </p>
@@ -654,9 +664,9 @@ Ignore-reserved-words is only used internally for column names which are allowed
 </div>
 
 
-<div id="outline-container-orge34934e" class="outline-3">
-<h3 id="orge34934e"><a id="ID-5a8737c8-f850-4807-974c-8f711cc9ae1c"></a>function from-sql-name (string)</h3>
-<div class="outline-text-3" id="text-orge34934e">
+<div id="outline-container-org4049bce" class="outline-3">
+<h3 id="org4049bce"><a id="ID-5a8737c8-f850-4807-974c-8f711cc9ae1c"></a>function from-sql-name (string)</h3>
+<div class="outline-text-3" id="text-org4049bce">
 <p>
 → keyword
 </p>
@@ -668,9 +678,9 @@ it and converting the underscores to dashes.
 </div>
 </div>
 
-<div id="outline-container-org381f425" class="outline-3">
-<h3 id="org381f425"><a id="ID-594e6029-8c94-4bb6-ad36-83ab42dc6369"></a>macro register-sql-operators (arity &amp;rest names)</h3>
-<div class="outline-text-3" id="text-org381f425">
+<div id="outline-container-org7db1958" class="outline-3">
+<h3 id="org7db1958"><a id="ID-594e6029-8c94-4bb6-ad36-83ab42dc6369"></a>macro register-sql-operators (arity &amp;rest names)</h3>
+<div class="outline-text-3" id="text-org7db1958">
 <p>
 Define simple SQL operators. Arity is one of :unary (like 'not'), :unary-postfix
 (the operator comes after the operand), :n-ary (like '\+': the operator falls away
@@ -683,9 +693,9 @@ list containing a keyword and a name string.
 </div>
 </div>
 </div>
-<div id="outline-container-org318f825" class="outline-2">
-<h2 id="org318f825"><a id="ID-fd140802-2b42-49b6-b21c-c0d4adae6136"></a>SQL Types</h2>
-<div class="outline-text-2" id="text-org318f825">
+<div id="outline-container-orgb1b42c2" class="outline-2">
+<h2 id="orgb1b42c2"><a id="ID-fd140802-2b42-49b6-b21c-c0d4adae6136"></a>SQL Types</h2>
+<div class="outline-text-2" id="text-orgb1b42c2">
 <p>
 S-SQL knows the SQL equivalents to a number of Lisp types, and defines some
 extra types that can be used to denote other SQL types. The following
@@ -699,100 +709,107 @@ table shows the correspondence:
 <col  class="org-left">
 
 <col  class="org-left">
+
+<col  class="org-left">
 </colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Lisp type</th>
+<th scope="col" class="org-left">SQL type</th>
+<th scope="col" class="org-left">Description</th>
+</tr>
+</thead>
 <tbody>
 <tr>
-<td class="org-left">Lisp type</td>
-<td class="org-left">SQL type</td>
-</tr>
-
-<tr>
+<td class="org-left">integer</td>
 <td class="org-left">smallint</td>
-<td class="org-left">smallint</td>
+<td class="org-left">-32,768 to +32,768 2-byte storage</td>
 </tr>
 
 <tr>
 <td class="org-left">integer</td>
 <td class="org-left">integer</td>
+<td class="org-left">-2147483648 to +2147483647 integer, 4-byte storage</td>
 </tr>
 
 <tr>
+<td class="org-left">integer</td>
 <td class="org-left">bigint</td>
-<td class="org-left">bigint</td>
+<td class="org-left">-9223372036854775808 to 9223372036854775807 integer 8-byte storage</td>
 </tr>
 
 <tr>
 <td class="org-left">(numeric X Y)</td>
 <td class="org-left">numeric(X, Y)</td>
+<td class="org-left">&#xa0;</td>
 </tr>
 
 <tr>
 <td class="org-left">float, real</td>
 <td class="org-left">real</td>
+<td class="org-left">single-precision floating point number, 6 decimal digit precision 4-byte storage</td>
 </tr>
 
 <tr>
-<td class="org-left">double-float, double-precision</td>
+<td class="org-left">double-float</td>
 <td class="org-left">double-precision</td>
+<td class="org-left">double-precision floating point number, 15 decimal digit precision 8-byte storage</td>
 </tr>
 
 <tr>
 <td class="org-left">string, text</td>
 <td class="org-left">text</td>
+<td class="org-left">variable length string, no limit specified</td>
 </tr>
 
 <tr>
-<td class="org-left">(string X)</td>
+<td class="org-left">string</td>
 <td class="org-left">char(X)</td>
+<td class="org-left">char(length), blank-padded string, fixed storage length</td>
 </tr>
 
 <tr>
-<td class="org-left">(varchar X)</td>
+<td class="org-left">string</td>
 <td class="org-left">varchar(X)</td>
+<td class="org-left">varchar(length), non-blank-padded string, variable storage length</td>
 </tr>
 
 <tr>
 <td class="org-left">boolean</td>
 <td class="org-left">boolean</td>
+<td class="org-left">boolean, 'true'/'false', 1 byte</td>
 </tr>
 
 <tr>
 <td class="org-left">bytea</td>
 <td class="org-left">bytea</td>
-</tr>
-
-<tr>
-<td class="org-left">date</td>
-<td class="org-left">date</td>
-</tr>
-
-<tr>
-<td class="org-left">timestamp</td>
-<td class="org-left">timestamp</td>
-</tr>
-
-<tr>
-<td class="org-left"><a href="interval-info.html">interval</a></td>
-<td class="org-left">interval</td>
-</tr>
-
-<tr>
-<td class="org-left">array</td>
-<td class="org-left">array</td>
-</tr>
-
-<tr>
 <td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">date</td>
+<td class="org-left">date</td>
+<td class="org-left">date range: 4713 BC to 5874897 AD</td>
+</tr>
+
+<tr>
+<td class="org-left"><a href="interval-notes.html">interval</a></td>
+<td class="org-left">interval</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">array</td>
+<td class="org-left">array</td>
 <td class="org-left">&#xa0;</td>
 </tr>
 </tbody>
 </table>
 </div>
 
-
-<div id="outline-container-org857b531" class="outline-3">
-<h3 id="org857b531"><a id="ID-73bdde0f-96d9-494e-854e-f03f6197c88f"></a>type db-null</h3>
-<div class="outline-text-3" id="text-org857b531">
+<div id="outline-container-orgced3597" class="outline-3">
+<h3 id="orgced3597"><a id="ID-73bdde0f-96d9-494e-854e-f03f6197c88f"></a>type db-null</h3>
+<div class="outline-text-3" id="text-orgced3597">
 <p>
 This is a type of which only the keyword :null is a member. It is used to represent
 NULL values from the database.
@@ -801,25 +818,31 @@ NULL values from the database.
 </div>
 </div>
 
-<div id="outline-container-orge40d9c4" class="outline-2">
-<h2 id="orge40d9c4"><a id="ID-13fef0a2-bbe1-44a1-9bc1-570ffdbb4093"></a>SQL Syntax</h2>
-<div class="outline-text-2" id="text-orge40d9c4">
+<div id="outline-container-org7a72c41" class="outline-2">
+<h2 id="org7a72c41"><a id="ID-13fef0a2-bbe1-44a1-9bc1-570ffdbb4093"></a>SQL Syntax</h2>
+<div class="outline-text-2" id="text-org7a72c41">
 <p>
 An S-SQL form is converted to a query through the following rules:
 </p>
 
 <ul class="org-ul">
-<li>Lists starting with a keyword are operators. They are expanded as described below if they are known, otherwise they are expanded in the standard way: operator(arguments, &#x2026;)</li>
+<li>Lists starting with a keyword are operators. They are expanded as
+described below if they are known, otherwise they are expanded in the
+standard way: operator(arguments, &#x2026;)</li>
 
-<li>Quoted symbols or keywords are interpreted as names of columns or tables, and converted to strings with to-sql-name.</li>
+<li>Quoted symbols or keywords are interpreted as names of columns or
+tables, and converted to strings with to-sql-name.</li>
 
-<li>Anything else is evaluated and the resulting Lisp value is converted to its textual SQL representation (or an error is raised when there is no rule for converting objects of this type). Self-quoting atoms may be converted to strings at compile-time.</li>
+<li>Anything else is evaluated and the resulting Lisp value is converted
+to its textual SQL representation (or an error is raised when there is
+no rule for converting objects of this type). Self-quoting atoms may
+be converted to strings at compile-time.</li>
 </ul>
 </div>
 
-<div id="outline-container-org4e517af" class="outline-3">
-<h3 id="org4e517af"><a id="ID-e8ff770d-fbce-461d-ac3b-4959bc8770c1"></a>sql-op :select (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org4e517af">
+<div id="outline-container-org65e962b" class="outline-3">
+<h3 id="org65e962b"><a id="ID-e8ff770d-fbce-461d-ac3b-4959bc8770c1"></a>sql-op :select (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org65e962b">
 <p>
 Creates a select query. The arguments are split on the keywords found among
 them. The group of arguments immediately after :select is interpreted as
@@ -850,9 +873,9 @@ The following operators are defined:
 </div>
 </div>
 
-<div id="outline-container-org2b5cf70" class="outline-3">
-<h3 id="org2b5cf70"><a id="ID-405ec72e-7b79-4d96-aa32-1a3f931dd5a4"></a>sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org2b5cf70">
+<div id="outline-container-orgc8613b6" class="outline-3">
+<h3 id="orgc8613b6"><a id="ID-405ec72e-7b79-4d96-aa32-1a3f931dd5a4"></a>sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgc8613b6">
 <p>
 These are expanded as infix operators. When meaningful, they allow more than
 two arguments. :- can also be used as a unary operator to negate a value.
@@ -868,18 +891,18 @@ so that it can be written without escapes. With :\|, this doesn't work.
 </div>
 </div>
 
-<div id="outline-container-org3cb5b9f" class="outline-3">
-<h3 id="org3cb5b9f"><a id="ID-1604e97e-40e9-4fca-bf0a-897850766386"></a>sql-op :~, :not (arg)</h3>
-<div class="outline-text-3" id="text-org3cb5b9f">
+<div id="outline-container-org7d6a767" class="outline-3">
+<h3 id="org7d6a767"><a id="ID-1604e97e-40e9-4fca-bf0a-897850766386"></a>sql-op :~, :not (arg)</h3>
+<div class="outline-text-3" id="text-org7d6a767">
 <p>
 Unary operators for bitwise and logical negation.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org08048a3" class="outline-3">
-<h3 id="org08048a3"><a id="ID-55203563-3759-427f-8147-2396c642144d"></a>sql-op :function (name (&amp;rest arg-types) return-type stability body)</h3>
-<div class="outline-text-3" id="text-org08048a3">
+<div id="outline-container-org189aa10" class="outline-3">
+<h3 id="org189aa10"><a id="ID-55203563-3759-427f-8147-2396c642144d"></a>sql-op :function (name (&amp;rest arg-types) return-type stability body)</h3>
+<div class="outline-text-3" id="text-org189aa10">
 <p>
 Create a stored procedure. The argument and return types are interpreted as
 type names and not evaluated. Stability should be one of :immutable, :stable,
@@ -893,9 +916,9 @@ gets foobars by id:
 </div>
 </div>
 
-<div id="outline-container-org89a639e" class="outline-3">
-<h3 id="org89a639e"><a id="ID-228320ed-6925-4a55-92c8-b48066f7e02c"></a>sql-op :~, :~*, :!~, :!~* (string pattern)</h3>
-<div class="outline-text-3" id="text-org89a639e">
+<div id="outline-container-org55e7372" class="outline-3">
+<h3 id="org55e7372"><a id="ID-228320ed-6925-4a55-92c8-b48066f7e02c"></a>sql-op :~, :~*, :!~, :!~* (string pattern)</h3>
+<div class="outline-text-3" id="text-org55e7372">
 <p>
 Regular expression matching operators. The exclamation mark means 'does not match',
 the asterisk makes the match case-insensitive.
@@ -903,45 +926,45 @@ the asterisk makes the match case-insensitive.
 </div>
 </div>
 
-<div id="outline-container-orga174b0e" class="outline-3">
-<h3 id="orga174b0e"><a id="ID-89ce2b9e-50d8-4376-99e5-b085639f2cae"></a>sql-op :like, :ilike (string pattern)</h3>
-<div class="outline-text-3" id="text-orga174b0e">
+<div id="outline-container-org985aa3e" class="outline-3">
+<h3 id="org985aa3e"><a id="ID-89ce2b9e-50d8-4376-99e5-b085639f2cae"></a>sql-op :like, :ilike (string pattern)</h3>
+<div class="outline-text-3" id="text-org985aa3e">
 <p>
 Simple SQL string matching operators (:ilike is case-insensitive).
 </p>
 </div>
 </div>
 
-<div id="outline-container-org5e184b5" class="outline-3">
-<h3 id="org5e184b5"><a id="ID-7e33f04a-09f8-4177-bf8b-ae6f42eb33cc"></a>sql-op :@@</h3>
-<div class="outline-text-3" id="text-org5e184b5">
+<div id="outline-container-orga1bf114" class="outline-3">
+<h3 id="orga1bf114"><a id="ID-7e33f04a-09f8-4177-bf8b-ae6f42eb33cc"></a>sql-op :@@</h3>
+<div class="outline-text-3" id="text-orga1bf114">
 <p>
 Fast Text Search match operator.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org293e92a" class="outline-3">
-<h3 id="org293e92a"><a id="ID-bfa41b7a-e1be-42be-b1b7-ecaa0913391c"></a>sql-op :desc (column)</h3>
-<div class="outline-text-3" id="text-org293e92a">
+<div id="outline-container-org5c95fb8" class="outline-3">
+<h3 id="org5c95fb8"><a id="ID-bfa41b7a-e1be-42be-b1b7-ecaa0913391c"></a>sql-op :desc (column)</h3>
+<div class="outline-text-3" id="text-org5c95fb8">
 <p>
 Used to invert the meaning of an operator in an :order-by clause.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org4c9fe76" class="outline-3">
-<h3 id="org4c9fe76"><a id="ID-53293652-8d98-40fb-b629-7f3350a1b16c"></a>sql-op :nulls-first, :nulls-last (column)</h3>
-<div class="outline-text-3" id="text-org4c9fe76">
+<div id="outline-container-org50bd3ad" class="outline-3">
+<h3 id="org50bd3ad"><a id="ID-53293652-8d98-40fb-b629-7f3350a1b16c"></a>sql-op :nulls-first, :nulls-last (column)</h3>
+<div class="outline-text-3" id="text-org50bd3ad">
 <p>
 Used to determine where :null values appear in an :order-by clause.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgaf80a93" class="outline-3">
-<h3 id="orgaf80a93"><a id="ID-ca6fe6aa-07ad-4931-afe5-9d9087059dca"></a>sql-op :as (form name &amp;rest fields)</h3>
-<div class="outline-text-3" id="text-orgaf80a93">
+<div id="outline-container-org5c3fbc5" class="outline-3">
+<h3 id="org5c3fbc5"><a id="ID-ca6fe6aa-07ad-4931-afe5-9d9087059dca"></a>sql-op :as (form name &amp;rest fields)</h3>
+<div class="outline-text-3" id="text-org5c3fbc5">
 <p>
 Assigns a name to a column or table in a :select form. When fields are given,
 they are added after the name, in parentheses. For example, (:as 'table1 't1 'foo 'bar)
@@ -953,9 +976,9 @@ out the quotes entirely).
 </div>
 </div>
 
-<div id="outline-container-org6a62102" class="outline-3">
-<h3 id="org6a62102"><a id="ID-fdab4fe0-46bb-4240-b629-773c21b8d304"></a>sql-op :cast (query)</h3>
-<div class="outline-text-3" id="text-org6a62102">
+<div id="outline-container-org3c26ab7" class="outline-3">
+<h3 id="org3c26ab7"><a id="ID-fdab4fe0-46bb-4240-b629-773c21b8d304"></a>sql-op :cast (query)</h3>
+<div class="outline-text-3" id="text-org3c26ab7">
 <p>
 The CAST operator. Takes a query as an argument, and returns the result
 explicitly cast by postgresql to a specific type.
@@ -972,9 +995,9 @@ explicitly cast by postgresql to a specific type.
 </div>
 </div>
 </div>
-<div id="outline-container-org8ba46b8" class="outline-3">
-<h3 id="org8ba46b8"><a id="ID-249f05e6-b7c7-4b53-a215-73673f9aa2b0"></a>sql-op :type (query)</h3>
-<div class="outline-text-3" id="text-org8ba46b8">
+<div id="outline-container-org574a8d2" class="outline-3">
+<h3 id="org574a8d2"><a id="ID-249f05e6-b7c7-4b53-a215-73673f9aa2b0"></a>sql-op :type (query)</h3>
+<div class="outline-text-3" id="text-org574a8d2">
 <p>
 Is similar to cast but uses the postgresql :: formating. E.g.
 </p>
@@ -986,9 +1009,9 @@ Is similar to cast but uses the postgresql :: formating. E.g.
 </div>
 </div>
 </div>
-<div id="outline-container-org0d82f16" class="outline-3">
-<h3 id="org0d82f16"><a id="ID-6fdeb899-f180-47f7-b8e1-6ad314c7952b"></a>sql-op :create-composite-type (type-name &amp;rest args)</h3>
-<div class="outline-text-3" id="text-org0d82f16">
+<div id="outline-container-org3588737" class="outline-3">
+<h3 id="org3588737"><a id="ID-6fdeb899-f180-47f7-b8e1-6ad314c7952b"></a>sql-op :create-composite-type (type-name &amp;rest args)</h3>
+<div class="outline-text-3" id="text-org3588737">
 <p>
 Creates a composite type with a type-name and two or more columns. E.g.
 </p>
@@ -998,9 +1021,9 @@ Creates a composite type with a type-name and two or more columns. E.g.
 </div>
 </div>
 </div>
-<div id="outline-container-org3cc5240" class="outline-3">
-<h3 id="org3cc5240"><a id="ID-edab7fef-c6c1-4875-8b41-54bf05242554"></a>sql-op :exists (query)</h3>
-<div class="outline-text-3" id="text-org3cc5240">
+<div id="outline-container-orgc773f87" class="outline-3">
+<h3 id="orgc773f87"><a id="ID-edab7fef-c6c1-4875-8b41-54bf05242554"></a>sql-op :exists (query)</h3>
+<div class="outline-text-3" id="text-orgc773f87">
 <p>
 The EXISTS operator. Takes a query as an argument, and returns true or false
 depending on whether that query returns any rows.
@@ -1008,44 +1031,44 @@ depending on whether that query returns any rows.
 </div>
 </div>
 
-<div id="outline-container-orga0239e4" class="outline-3">
-<h3 id="orga0239e4"><a id="ID-48e3d777-1fde-4e60-b8d2-d8f7b8fea7bf"></a>sql-op :is-null (arg)</h3>
-<div class="outline-text-3" id="text-orga0239e4">
+<div id="outline-container-org2249114" class="outline-3">
+<h3 id="org2249114"><a id="ID-48e3d777-1fde-4e60-b8d2-d8f7b8fea7bf"></a>sql-op :is-null (arg)</h3>
+<div class="outline-text-3" id="text-org2249114">
 <p>
 Test whether a value is null.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org193dd6a" class="outline-3">
-<h3 id="org193dd6a"><a id="ID-74c212eb-330e-459a-bdc4-2d2e75046972"></a>sql-op :not-null (arg)</h3>
-<div class="outline-text-3" id="text-org193dd6a">
+<div id="outline-container-orgf2a8612" class="outline-3">
+<h3 id="orgf2a8612"><a id="ID-74c212eb-330e-459a-bdc4-2d2e75046972"></a>sql-op :not-null (arg)</h3>
+<div class="outline-text-3" id="text-orgf2a8612">
 <p>
 Test whether a value is not null.
 </p>
 </div>
 </div>
-<div id="outline-container-org52f6098" class="outline-3">
-<h3 id="org52f6098"><a id="ID-45c17b50-7b34-42d9-8dd2-08ccd12fa7c0"></a>sql-op :in (value set)</h3>
-<div class="outline-text-3" id="text-org52f6098">
+<div id="outline-container-org0cd468f" class="outline-3">
+<h3 id="org0cd468f"><a id="ID-45c17b50-7b34-42d9-8dd2-08ccd12fa7c0"></a>sql-op :in (value set)</h3>
+<div class="outline-text-3" id="text-org0cd468f">
 <p>
 Test whether a value is in a set of values.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org916f95c" class="outline-3">
-<h3 id="org916f95c"><a id="ID-f8f9f42f-00b7-4b17-b2fb-2ef90dd8ec2c"></a>sql-op :not-in (value set)</h3>
-<div class="outline-text-3" id="text-org916f95c">
+<div id="outline-container-org373cf09" class="outline-3">
+<h3 id="org373cf09"><a id="ID-f8f9f42f-00b7-4b17-b2fb-2ef90dd8ec2c"></a>sql-op :not-in (value set)</h3>
+<div class="outline-text-3" id="text-org373cf09">
 <p>
 Inverse of the above.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org8fa489d" class="outline-3">
-<h3 id="org8fa489d"><a id="ID-72eea20e-6e5f-4a9a-ba2f-f5f23327b397"></a>sql-op :set (&amp;rest elements)</h3>
-<div class="outline-text-3" id="text-org8fa489d">
+<div id="outline-container-orgb64328b" class="outline-3">
+<h3 id="orgb64328b"><a id="ID-72eea20e-6e5f-4a9a-ba2f-f5f23327b397"></a>sql-op :set (&amp;rest elements)</h3>
+<div class="outline-text-3" id="text-orgb64328b">
 <p>
 Denote a set of values. This operator has two interfaces. When
 the elements are known at compile-time, they can be given as
@@ -1055,9 +1078,9 @@ single argument that evaluates to a list should be used.
 </div>
 </div>
 
-<div id="outline-container-orgd2eb27c" class="outline-3">
-<h3 id="orgd2eb27c"><a id="ID-f7a7e6fb-00f9-407b-b929-78f17e164052"></a>sql-op :array (query)</h3>
-<div class="outline-text-3" id="text-orgd2eb27c">
+<div id="outline-container-orgd0e4ad2" class="outline-3">
+<h3 id="orgd0e4ad2"><a id="ID-f7a7e6fb-00f9-407b-b929-78f17e164052"></a>sql-op :array (query)</h3>
+<div class="outline-text-3" id="text-orgd0e4ad2">
 <p>
 This is used when calling a select query into an array.  See <a href="array-notes.html">array-notes.html</a>
 for more detailed notes on the use of arrays.
@@ -1081,9 +1104,9 @@ for more detailed notes on the use of arrays.
 </div>
 </div>
 
-<div id="outline-container-org4420897" class="outline-3">
-<h3 id="org4420897"><a id="ID-1b9af15e-051a-401f-a251-1a7173685c9e"></a>sql-op :array[] (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org4420897">
+<div id="outline-container-org57c74e1" class="outline-3">
+<h3 id="org57c74e1"><a id="ID-1b9af15e-051a-401f-a251-1a7173685c9e"></a>sql-op :array[] (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org57c74e1">
 <p>
 This is the general operator for arrays. It also handles statements that include
 functions in the query such as (:+ 1 2), (:pi) in the array. See <a href="array-notes.html">array-notes.html</a>
@@ -1103,9 +1126,9 @@ for more detailed notes on the use of arrays.
 </div>
 </div>
 
-<div id="outline-container-orgaae0505" class="outline-3">
-<h3 id="orgaae0505"><a id="ID-7afc83f1-4054-4a6c-8ea2-99549e037998"></a>sql-op :[] (form start &amp;optional end)</h3>
-<div class="outline-text-3" id="text-orgaae0505">
+<div id="outline-container-org91e0ff6" class="outline-3">
+<h3 id="org91e0ff6"><a id="ID-7afc83f1-4054-4a6c-8ea2-99549e037998"></a>sql-op :[] (form start &amp;optional end)</h3>
+<div class="outline-text-3" id="text-org91e0ff6">
 <p>
 Dereference an array value. If end is provided, extract a slice of the array.
 Sample usage below, but also see <a href="array-notes.html">array-notes.html</a> for more detailed notes on
@@ -1120,18 +1143,18 @@ the use of arrays.
 </div>
 </div>
 
-<div id="outline-container-orgc70e5a6" class="outline-3">
-<h3 id="orgc70e5a6"><a id="ID-2ed4ee9b-b199-43df-9b4b-f33d67629793"></a>sql-op :extract (unit form)</h3>
-<div class="outline-text-3" id="text-orgc70e5a6">
+<div id="outline-container-org9e86d82" class="outline-3">
+<h3 id="org9e86d82"><a id="ID-2ed4ee9b-b199-43df-9b4b-f33d67629793"></a>sql-op :extract (unit form)</h3>
+<div class="outline-text-3" id="text-org9e86d82">
 <p>
 Extract a field from a date/time value. For example, (:extract :month (:now)).
 </p>
 </div>
 </div>
 
-<div id="outline-container-org7994768" class="outline-3">
-<h3 id="org7994768"><a id="ID-95c998be-86a0-4553-ba2d-b1afa04205d6"></a>sql-op :case (&amp;rest clauses)</h3>
-<div class="outline-text-3" id="text-org7994768">
+<div id="outline-container-org9c66f32" class="outline-3">
+<h3 id="org9c66f32"><a id="ID-95c998be-86a0-4553-ba2d-b1afa04205d6"></a>sql-op :case (&amp;rest clauses)</h3>
+<div class="outline-text-3" id="text-org9c66f32">
 <p>
 A conditional expression. Clauses should take the form (test value). If
 test is :else, an ELSE clause will be generated.
@@ -1139,18 +1162,18 @@ test is :else, an ELSE clause will be generated.
 </div>
 </div>
 
-<div id="outline-container-org502491e" class="outline-3">
-<h3 id="org502491e"><a id="ID-3eb62a27-e798-47c9-99a3-34efb86b0a6e"></a>sql-op :between (n start end)</h3>
-<div class="outline-text-3" id="text-org502491e">
+<div id="outline-container-org57ac1f5" class="outline-3">
+<h3 id="org57ac1f5"><a id="ID-3eb62a27-e798-47c9-99a3-34efb86b0a6e"></a>sql-op :between (n start end)</h3>
+<div class="outline-text-3" id="text-org57ac1f5">
 <p>
 Test whether a value lies between two other values.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgbfa1cba" class="outline-3">
-<h3 id="orgbfa1cba"><a id="ID-7acf3e85-924c-42cb-84ec-4ab0430f6fc0"></a>sql-op :between-symmetric (n start end)</h3>
-<div class="outline-text-3" id="text-orgbfa1cba">
+<div id="outline-container-org4e09b12" class="outline-3">
+<h3 id="org4e09b12"><a id="ID-7acf3e85-924c-42cb-84ec-4ab0430f6fc0"></a>sql-op :between-symmetric (n start end)</h3>
+<div class="outline-text-3" id="text-org4e09b12">
 <p>
 Works like :between, except that the start value is not required to be
 less than the end value.
@@ -1158,9 +1181,9 @@ less than the end value.
 </div>
 </div>
 
-<div id="outline-container-orge5dddb0" class="outline-3">
-<h3 id="orge5dddb0"><a id="ID-5d7287f0-9527-46da-8bc7-8220b49b53a2"></a>sql-op :dot (&amp;rest names)</h3>
-<div class="outline-text-3" id="text-orge5dddb0">
+<div id="outline-container-orgcc5a08f" class="outline-3">
+<h3 id="orgcc5a08f"><a id="ID-5d7287f0-9527-46da-8bc7-8220b49b53a2"></a>sql-op :dot (&amp;rest names)</h3>
+<div class="outline-text-3" id="text-orgcc5a08f">
 <p>
 Can be used to combine multiple names into a name of the form A.B to
 refer to a column in a table, or a table in a schema. Note that you
@@ -1169,9 +1192,9 @@ can also just use a symbol with a dot in it.
 </div>
 </div>
 
-<div id="outline-container-org77cd76d" class="outline-3">
-<h3 id="org77cd76d"><a id="ID-ccedb33a-7e65-4a25-9e0a-a5611665c9a8"></a>sql-op :type (form type)</h3>
-<div class="outline-text-3" id="text-org77cd76d">
+<div id="outline-container-orgae524fd" class="outline-3">
+<h3 id="orgae524fd"><a id="ID-ccedb33a-7e65-4a25-9e0a-a5611665c9a8"></a>sql-op :type (form type)</h3>
+<div class="outline-text-3" id="text-orgae524fd">
 <p>
 Add a type declaration to a value, as in in "4.3::real". The second
 argument is not evaluated normally, but put through sql-type-name to
@@ -1180,9 +1203,9 @@ get a type identifier.
 </div>
 </div>
 
-<div id="outline-container-org8ded86f" class="outline-3">
-<h3 id="org8ded86f"><a id="ID-4833bb9a-223b-4d29-a9ca-8e243abb1fab"></a>sql-op :raw (string)</h3>
-<div class="outline-text-3" id="text-org8ded86f">
+<div id="outline-container-org2e6bd1a" class="outline-3">
+<h3 id="org2e6bd1a"><a id="ID-4833bb9a-223b-4d29-a9ca-8e243abb1fab"></a>sql-op :raw (string)</h3>
+<div class="outline-text-3" id="text-org2e6bd1a">
 <p>
 Insert a string as-is into the query. This can be useful for doing things
 that the syntax does not support, or to re-use parts of a query across
@@ -1198,9 +1221,9 @@ multiple queries:
 </div>
 </div>
 
-<div id="outline-container-org94934b9" class="outline-3">
-<h3 id="org94934b9"><a id="ID-1b0cc29f-7b0a-4bca-8f79-5e763fc9a356"></a>sql-op :limit (query amount &amp;optional offset)</h3>
-<div class="outline-text-3" id="text-org94934b9">
+<div id="outline-container-org6c19170" class="outline-3">
+<h3 id="org6c19170"><a id="ID-1b0cc29f-7b0a-4bca-8f79-5e763fc9a356"></a>sql-op :limit (query amount &amp;optional offset)</h3>
+<div class="outline-text-3" id="text-org6c19170">
 <p>
 In S-SQL limit is not part of the select operator, but an extra
 operator that is applied to a query (this works out better when limiting
@@ -1212,9 +1235,9 @@ as the third argument.
 </div>
 </div>
 
-<div id="outline-container-orgf9b71a0" class="outline-3">
-<h3 id="orgf9b71a0"><a id="ID-df5b679e-5f4b-4599-b533-82c3e9d4f13b"></a>sql-op :order-by (query &amp;rest exprs)</h3>
-<div class="outline-text-3" id="text-orgf9b71a0">
+<div id="outline-container-org5abe831" class="outline-3">
+<h3 id="org5abe831"><a id="ID-df5b679e-5f4b-4599-b533-82c3e9d4f13b"></a>sql-op :order-by (query &amp;rest exprs)</h3>
+<div class="outline-text-3" id="text-org5abe831">
 <p>
 Order the results of a query by the given expressions. See :desc for
 when you want to invert an ordering. Note: This is not the same as
@@ -1224,9 +1247,9 @@ See Aggregation Operators.
 </div>
 </div>
 
-<div id="outline-container-org95c7b09" class="outline-3">
-<h3 id="org95c7b09"><a id="ID-d7cc1523-6341-4d80-a08a-c76898a99501"></a>sql-op :values</h3>
-<div class="outline-text-3" id="text-org95c7b09">
+<div id="outline-container-orgb115768" class="outline-3">
+<h3 id="orgb115768"><a id="ID-d7cc1523-6341-4d80-a08a-c76898a99501"></a>sql-op :values</h3>
+<div class="outline-text-3" id="text-orgb115768">
 <p>
 Values computes a row value or set of row values for use in a specific
 query. See the postgresql docs at:
@@ -1260,9 +1283,9 @@ Example:
 </div>
 </div>
 
-<div id="outline-container-orgac7e8d4" class="outline-3">
-<h3 id="orgac7e8d4"><a id="ID-a7daaf56-9824-4a6f-8ada-313221e034cb"></a>sql-op :empty-set</h3>
-<div class="outline-text-3" id="text-orgac7e8d4">
+<div id="outline-container-org194be4e" class="outline-3">
+<h3 id="org194be4e"><a id="ID-a7daaf56-9824-4a6f-8ada-313221e034cb"></a>sql-op :empty-set</h3>
+<div class="outline-text-3" id="text-org194be4e">
 <p>
 This is a fudge. It returns a string "()" where something like '()
 would return "false" or :() would throw an error. Example:
@@ -1277,9 +1300,9 @@ would return "false" or :() would throw an error. Example:
 </div>
 </div>
 
-<div id="outline-container-org6aee8af" class="outline-3">
-<h3 id="org6aee8af"><a id="ID-8f5b4a28-a801-424d-9ff6-4460fa7f048d"></a>sql-op :group-by</h3>
-<div class="outline-text-3" id="text-org6aee8af">
+<div id="outline-container-org7ed59e3" class="outline-3">
+<h3 id="org7ed59e3"><a id="ID-8f5b4a28-a801-424d-9ff6-4460fa7f048d"></a>sql-op :group-by</h3>
+<div class="outline-text-3" id="text-org7ed59e3">
 <p>
 <a href="https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS">https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS</a>
 The GROUP BY Clause is used to group together those rows in a table that
@@ -1303,9 +1326,9 @@ aggregates that apply to these groups. Example:
 </div>
 </div>
 
-<div id="outline-container-orgff011cc" class="outline-3">
-<h3 id="orgff011cc"><a id="ID-dfcde273-6c53-488a-b8d2-43adc3a95d23"></a>sql-op :grouping-sets</h3>
-<div class="outline-text-3" id="text-orgff011cc">
+<div id="outline-container-org9b3333b" class="outline-3">
+<h3 id="org9b3333b"><a id="ID-dfcde273-6c53-488a-b8d2-43adc3a95d23"></a>sql-op :grouping-sets</h3>
+<div class="outline-text-3" id="text-org9b3333b">
 <p>
 <a href="https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS">https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-GROUPING-SETS</a>
 More complex grouping operations are possible using the concept of grouping
@@ -1324,55 +1347,55 @@ This operator requires postgresql 9.5 or later. For example:
 </div>
 </div>
 
-<div id="outline-container-org224b407" class="outline-2">
-<h2 id="org224b407"><a id="ID-d07d0cf2-6766-4b7a-af0b-57a0c2b754eb"></a>Time, Date and Interval Operators</h2>
-<div class="outline-text-2" id="text-org224b407">
+<div id="outline-container-org587c3a5" class="outline-2">
+<h2 id="org587c3a5"><a id="ID-d07d0cf2-6766-4b7a-af0b-57a0c2b754eb"></a>Time, Date and Interval Operators</h2>
+<div class="outline-text-2" id="text-org587c3a5">
 </div>
-<div id="outline-container-orgad39f5a" class="outline-3">
-<h3 id="orgad39f5a"><a id="ID-330de3f2-1869-47a2-8a0d-467a38e3254f"></a>sql-op :interval (arg)</h3>
-<div class="outline-text-3" id="text-orgad39f5a">
+<div id="outline-container-orgc69ded6" class="outline-3">
+<h3 id="orgc69ded6"><a id="ID-330de3f2-1869-47a2-8a0d-467a38e3254f"></a>sql-op :interval (arg)</h3>
+<div class="outline-text-3" id="text-orgc69ded6">
 <p>
 Creates an interval data type, generally represented in postmodern as an alist
 </p>
 </div>
 </div>
-<div id="outline-container-orgd76ef12" class="outline-3">
-<h3 id="orgd76ef12"><a id="ID-6d1cf4f1-89f8-4586-9e19-58c6003e5166"></a>sql-op :current-date ()</h3>
-<div class="outline-text-3" id="text-orgd76ef12">
+<div id="outline-container-org5445413" class="outline-3">
+<h3 id="org5445413"><a id="ID-6d1cf4f1-89f8-4586-9e19-58c6003e5166"></a>sql-op :current-date ()</h3>
+<div class="outline-text-3" id="text-org5445413">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:current-date</span>)) <span style="color: #98fb98; font-weight: bold;">:single</span>)
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-orga874d6b" class="outline-3">
-<h3 id="orga874d6b"><a id="ID-2f80fe21-7abe-4eed-aa57-1b8a11cddfd1"></a>sql-op :current-time ()</h3>
-<div class="outline-text-3" id="text-orga874d6b">
+<div id="outline-container-orgc6d6477" class="outline-3">
+<h3 id="orgc6d6477"><a id="ID-2f80fe21-7abe-4eed-aa57-1b8a11cddfd1"></a>sql-op :current-time ()</h3>
+<div class="outline-text-3" id="text-orgc6d6477">
 </div>
 </div>
-<div id="outline-container-org6fbea2c" class="outline-3">
-<h3 id="org6fbea2c"><a id="ID-5c124bd3-f248-45dd-9965-51c368cd3225"></a>sql-op :current-timestamp ()</h3>
-<div class="outline-text-3" id="text-org6fbea2c">
+<div id="outline-container-org084c77f" class="outline-3">
+<h3 id="org084c77f"><a id="ID-5c124bd3-f248-45dd-9965-51c368cd3225"></a>sql-op :current-timestamp ()</h3>
+<div class="outline-text-3" id="text-org084c77f">
 </div>
 </div>
-<div id="outline-container-org23c69d4" class="outline-3">
-<h3 id="org23c69d4"><a id="ID-1969c373-6093-46dc-9f41-001190399cbd"></a>sql-op :timestamp (arg)</h3>
-<div class="outline-text-3" id="text-org23c69d4">
+<div id="outline-container-org3157bdf" class="outline-3">
+<h3 id="org3157bdf"><a id="ID-1969c373-6093-46dc-9f41-001190399cbd"></a>sql-op :timestamp (arg)</h3>
+<div class="outline-text-3" id="text-org3157bdf">
 </div>
 </div>
-<div id="outline-container-org77c2c24" class="outline-3">
-<h3 id="org77c2c24"><a id="ID-e4872980-3b59-4cd5-844b-ce8912160010"></a>sql-op :age (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org77c2c24">
+<div id="outline-container-org3369b59" class="outline-3">
+<h3 id="org3369b59"><a id="ID-e4872980-3b59-4cd5-844b-ce8912160010"></a>sql-op :age (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org3369b59">
 </div>
 </div>
-<div id="outline-container-org4409788" class="outline-3">
-<h3 id="org4409788"><a id="ID-e155b65b-05d2-4583-a185-419817382e37"></a>sql-op :date (arg)</h3>
-<div class="outline-text-3" id="text-org4409788">
+<div id="outline-container-orgad83347" class="outline-3">
+<h3 id="orgad83347"><a id="ID-e155b65b-05d2-4583-a185-419817382e37"></a>sql-op :date (arg)</h3>
+<div class="outline-text-3" id="text-orgad83347">
 </div>
 </div>
-<div id="outline-container-org669f260" class="outline-3">
-<h3 id="org669f260"><a id="ID-2794d9dd-9ab6-4d4b-8b9f-49056d214b67"></a>sql-op :make-interval (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org669f260">
+<div id="outline-container-org9613bb0" class="outline-3">
+<h3 id="org9613bb0"><a id="ID-2794d9dd-9ab6-4d4b-8b9f-49056d214b67"></a>sql-op :make-interval (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org9613bb0">
 <p>
 Takes lists of (time-unit value) and returns a timestamp type. Example:
 </p>
@@ -1384,9 +1407,9 @@ Takes lists of (time-unit value) and returns a timestamp type. Example:
 </div>
 </div>
 </div>
-<div id="outline-container-org243201c" class="outline-3">
-<h3 id="org243201c"><a id="ID-f4e7bf1a-25b1-4c2b-8794-9550164a0ee1"></a>sql-op :make-timestamp (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org243201c">
+<div id="outline-container-orgb64e598" class="outline-3">
+<h3 id="orgb64e598"><a id="ID-f4e7bf1a-25b1-4c2b-8794-9550164a0ee1"></a>sql-op :make-timestamp (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgb64e598">
 <p>
 Takes lists of (time-unit value) and returns a timestamptz type. Example:
 </p>
@@ -1399,9 +1422,9 @@ Takes lists of (time-unit value) and returns a timestamptz type. Example:
 </div>
 </div>
 </div>
-<div id="outline-container-orgcac0446" class="outline-3">
-<h3 id="orgcac0446"><a id="ID-b6f82034-e002-4dd2-9bde-ae025176cb9a"></a>sql-op :make-timestamptz (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgcac0446">
+<div id="outline-container-org7b1b4de" class="outline-3">
+<h3 id="org7b1b4de"><a id="ID-b6f82034-e002-4dd2-9bde-ae025176cb9a"></a>sql-op :make-timestamptz (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org7b1b4de">
 <p>
 Takes lists of (time-unit value) and returns a timestamptz type. Example:
 </p>
@@ -1416,13 +1439,13 @@ Takes lists of (time-unit value) and returns a timestamptz type. Example:
 </div>
 </div>
 
-<div id="outline-container-orgf690c14" class="outline-2">
-<h2 id="orgf690c14"><a id="ID-cd2bdccf-0de5-4b57-a195-0c94029e8c8e"></a>Aggregation Operators</h2>
-<div class="outline-text-2" id="text-orgf690c14">
+<div id="outline-container-orgbf8712f" class="outline-2">
+<h2 id="orgbf8712f"><a id="ID-cd2bdccf-0de5-4b57-a195-0c94029e8c8e"></a>Aggregation Operators</h2>
+<div class="outline-text-2" id="text-orgbf8712f">
 </div>
-<div id="outline-container-orgc72a174" class="outline-3">
-<h3 id="orgc72a174"><a id="ID-40eed2a4-b3f5-4380-a3b7-16a5bdcbe0b3"></a>sql-op :count (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgc72a174">
+<div id="outline-container-orgdfc4ea7" class="outline-3">
+<h3 id="orgdfc4ea7"><a id="ID-40eed2a4-b3f5-4380-a3b7-16a5bdcbe0b3"></a>sql-op :count (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgdfc4ea7">
 <p>
 Count returns the number of rows for which the expression is not null.
 It can be the number of rows collected by the select statement as in:
@@ -1474,9 +1497,9 @@ See tests.lisp for examples.
 </div>
 </div>
 
-<div id="outline-container-org4761523" class="outline-3">
-<h3 id="org4761523"><a id="ID-0e6463d4-d83c-493b-8989-4819c6e9f914"></a>sql-op :avg (&amp;rest rest args)</h3>
-<div class="outline-text-3" id="text-org4761523">
+<div id="outline-container-org063a112" class="outline-3">
+<h3 id="org063a112"><a id="ID-0e6463d4-d83c-493b-8989-4819c6e9f914"></a>sql-op :avg (&amp;rest rest args)</h3>
+<div class="outline-text-3" id="text-org063a112">
 <p>
 Avg calculates the average value of a list of values. Note that if the
 filter keyword is used, the filter must be last in the avg args. If distinct
@@ -1490,9 +1513,9 @@ is used, it must come before filter. E.g. See tests.lisp for more examples.
 </div>
 </div>
 
-<div id="outline-container-org89e2a4b" class="outline-3">
-<h3 id="org89e2a4b"><a id="ID-d8379b94-922b-47d3-9161-5da838b43f42"></a>sql-op :sum (&amp;rest rest args)</h3>
-<div class="outline-text-3" id="text-org89e2a4b">
+<div id="outline-container-orgd433f12" class="outline-3">
+<h3 id="orgd433f12"><a id="ID-d8379b94-922b-47d3-9161-5da838b43f42"></a>sql-op :sum (&amp;rest rest args)</h3>
+<div class="outline-text-3" id="text-orgd433f12">
 <p>
 Sum calculates the total of a list of values. Note that if the keyword filter
 is used, the filter must be last in the sum args. If distinct is used, it
@@ -1508,9 +1531,9 @@ for more examples.
 </div>
 </div>
 
-<div id="outline-container-orgc90409a" class="outline-3">
-<h3 id="orgc90409a"><a id="ID-66db79ad-e7d4-43dd-a6af-fe3085c16d12"></a>sql-op ::max (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgc90409a">
+<div id="outline-container-org38017f3" class="outline-3">
+<h3 id="org38017f3"><a id="ID-66db79ad-e7d4-43dd-a6af-fe3085c16d12"></a>sql-op ::max (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org38017f3">
 <p>
 max returns the maximum value of a set of values. Note that if the filter
 keyword is used, the filter must be last in the max args. If distinct is
@@ -1526,9 +1549,9 @@ See tests.lisp for more examples.
 </div>
 </div>
 </div>
-<div id="outline-container-org51455c1" class="outline-3">
-<h3 id="org51455c1"><a id="ID-02c03a2a-114d-4b4b-8214-12411c979a0f"></a>sql-op ::min (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org51455c1">
+<div id="outline-container-org38666c1" class="outline-3">
+<h3 id="org38666c1"><a id="ID-02c03a2a-114d-4b4b-8214-12411c979a0f"></a>sql-op ::min (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org38666c1">
 <p>
 min returns the minimum value of a set of values. Note that if the filter
 keyword is used, the filter must be last in the min args. If distinct is
@@ -1544,9 +1567,9 @@ See tests.lisp for more examples.
 </div>
 </div>
 
-<div id="outline-container-orgbc54137" class="outline-3">
-<h3 id="orgbc54137"><a id="ID-3683daea-ef97-4cb9-a78e-aa40fc3df983"></a>sql-op ::every (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgbc54137">
+<div id="outline-container-orgf54716f" class="outline-3">
+<h3 id="orgf54716f"><a id="ID-3683daea-ef97-4cb9-a78e-aa40fc3df983"></a>sql-op ::every (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgf54716f">
 <p>
 Every returns true if all input values are true, otherwise false. Note
 that if the filter keyword is used, the filter must be last in the every
@@ -1563,9 +1586,9 @@ properly expand it). See tests.lisp for more examples.
 </div>
 </div>
 
-<div id="outline-container-org5ed36fb" class="outline-3">
-<h3 id="org5ed36fb"><a id="ID-3a6ee0b8-64cd-4937-b769-95f3ec44c32a"></a>sql-op :percentile-cont (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org5ed36fb">
+<div id="outline-container-orge975bc9" class="outline-3">
+<h3 id="orge975bc9"><a id="ID-3a6ee0b8-64cd-4937-b769-95f3ec44c32a"></a>sql-op :percentile-cont (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orge975bc9">
 <p>
 Requires Postgresql 9.4 or higher. Percentile-cont returns a value
 corresponding to the specified fraction in the ordering, interpolating
@@ -1588,9 +1611,9 @@ to that percentile. Examples:
 </div>
 
 
-<div id="outline-container-org87a41fb" class="outline-3">
-<h3 id="org87a41fb"><a id="ID-5f53ac18-189b-4df7-99ac-02ebbd8a9606"></a>sql-op :percentile-dist (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org87a41fb">
+<div id="outline-container-org748a418" class="outline-3">
+<h3 id="org748a418"><a id="ID-5f53ac18-189b-4df7-99ac-02ebbd8a9606"></a>sql-op :percentile-dist (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org748a418">
 <p>
 Requires Postgresql 9.4 or higher. There are two required keyword parameters
 :fraction and :order-by. Percentile-dist returns the first input value whose
@@ -1614,9 +1637,9 @@ value corresponding to that percentile. Examples:
 </div>
 </div>
 
-<div id="outline-container-org0d4307e" class="outline-3">
-<h3 id="org0d4307e"><a id="ID-36db9511-5ba0-4dfc-9646-71b2d47857b0"></a>sql-op :corr (y x)</h3>
-<div class="outline-text-3" id="text-org0d4307e">
+<div id="outline-container-org1c058ab" class="outline-3">
+<h3 id="org1c058ab"><a id="ID-36db9511-5ba0-4dfc-9646-71b2d47857b0"></a>sql-op :corr (y x)</h3>
+<div class="outline-text-3" id="text-org1c058ab">
 <p>
 The corr function returns the correlation coefficient between a set of
 dependent and independent variables. Example:
@@ -1629,9 +1652,9 @@ dependent and independent variables. Example:
 </div>
 </div>
 
-<div id="outline-container-orgff08d57" class="outline-3">
-<h3 id="orgff08d57"><a id="ID-e6b20c69-d328-4a59-b030-9c03c9201305"></a>sql-op :covar-pop (y x)</h3>
-<div class="outline-text-3" id="text-orgff08d57">
+<div id="outline-container-orgd1535af" class="outline-3">
+<h3 id="orgd1535af"><a id="ID-e6b20c69-d328-4a59-b030-9c03c9201305"></a>sql-op :covar-pop (y x)</h3>
+<div class="outline-text-3" id="text-orgd1535af">
 <p>
 The covar-pop function returns the population covariance between a set of
 dependent and independent variables. Example:
@@ -1644,9 +1667,9 @@ dependent and independent variables. Example:
 </div>
 </div>
 
-<div id="outline-container-orge18f79c" class="outline-3">
-<h3 id="orge18f79c"><a id="ID-9112880c-0d43-43bb-96b0-416e4f1e2bc3"></a>sql-op :covar-samp (y x)</h3>
-<div class="outline-text-3" id="text-orge18f79c">
+<div id="outline-container-org922a8ea" class="outline-3">
+<h3 id="org922a8ea"><a id="ID-9112880c-0d43-43bb-96b0-416e4f1e2bc3"></a>sql-op :covar-samp (y x)</h3>
+<div class="outline-text-3" id="text-org922a8ea">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:covar-samp</span> 'height 'weight)
                 <span style="color: #98fb98; font-weight: bold;">:from</span> 'people))
@@ -1659,9 +1682,9 @@ dependent and independent variables. Example:
 </div>
 </div>
 
-<div id="outline-container-orgb49b552" class="outline-3">
-<h3 id="orgb49b552"><a id="ID-cd16b4cb-51f9-4bff-ac6e-7482fc2e1ffa"></a>sql-op :string-agg (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgb49b552">
+<div id="outline-container-org1581370" class="outline-3">
+<h3 id="org1581370"><a id="ID-cd16b4cb-51f9-4bff-ac6e-7482fc2e1ffa"></a>sql-op :string-agg (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org1581370">
 <p>
 String-agg allows you to concatenate strings using different types of
 delimiter symbols. Allowable optional keyword parameters are :distinct,
@@ -1685,9 +1708,9 @@ See tests.lisp for more examples.
 </div>
 </div>
 
-<div id="outline-container-orgb4fdc1e" class="outline-3">
-<h3 id="orgb4fdc1e"><a id="ID-dbf248ce-f480-4940-93d6-837aaa22529d"></a>sql-op :array-agg (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgb4fdc1e">
+<div id="outline-container-orgfc058e4" class="outline-3">
+<h3 id="orgfc058e4"><a id="ID-dbf248ce-f480-4940-93d6-837aaa22529d"></a>sql-op :array-agg (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgfc058e4">
 <p>
 Array-agg returns a list of values concatenated into an arrays.
 Allowable optional keyword parameters are :distinct, :order-by
@@ -1716,9 +1739,9 @@ Example with Filter:
 </div>
 </div>
 
-<div id="outline-container-orgebcbddd" class="outline-3">
-<h3 id="orgebcbddd"><a id="ID-be548451-659d-46ca-b31b-9d308b8b5cba"></a>sql-op :mode (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgebcbddd">
+<div id="outline-container-orgd2e44f7" class="outline-3">
+<h3 id="orgd2e44f7"><a id="ID-be548451-659d-46ca-b31b-9d308b8b5cba"></a>sql-op :mode (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgd2e44f7">
 <p>
 Mode is used to find the most frequent input value in a group.
 See e.g. <a href="https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE">https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE</a>
@@ -1732,9 +1755,9 @@ and article at <a href="https://tapoueh.org/blog/2017/11/the-mode-ordered-set-ag
 </div>
 </div>
 
-<div id="outline-container-org021ec3a" class="outline-3">
-<h3 id="org021ec3a"><a id="ID-5c3e2dc0-d238-4116-91fd-a8111225ee94"></a>sql-op :regr_avgx (y x)</h3>
-<div class="outline-text-3" id="text-org021ec3a">
+<div id="outline-container-org5ba67f1" class="outline-3">
+<h3 id="org5ba67f1"><a id="ID-5c3e2dc0-d238-4116-91fd-a8111225ee94"></a>sql-op :regr_avgx (y x)</h3>
+<div class="outline-text-3" id="text-org5ba67f1">
 <p>
 The regr_avgx function returns the average of the independent variable
 (sum(X)/N) Example:
@@ -1747,9 +1770,9 @@ The regr_avgx function returns the average of the independent variable
 </div>
 </div>
 
-<div id="outline-container-org7495790" class="outline-3">
-<h3 id="org7495790"><a id="ID-2fc66640-03e7-4796-8209-69fba9f346a4"></a>sql-op :regr_avgy (y x)</h3>
-<div class="outline-text-3" id="text-org7495790">
+<div id="outline-container-orgd75448f" class="outline-3">
+<h3 id="orgd75448f"><a id="ID-2fc66640-03e7-4796-8209-69fba9f346a4"></a>sql-op :regr_avgy (y x)</h3>
+<div class="outline-text-3" id="text-orgd75448f">
 <p>
 The regr_avgy function returns the average of the dependent variable
 (sum(Y)/N). Example:
@@ -1764,9 +1787,9 @@ The regr_avgy function returns the average of the dependent variable
 </p>
 </div>
 </div>
-<div id="outline-container-org2abb7bb" class="outline-3">
-<h3 id="org2abb7bb"><a id="ID-293a2e93-93bf-4c08-b0f4-6d3dfe0feb6b"></a>sql-op :regr_count (y x)</h3>
-<div class="outline-text-3" id="text-org2abb7bb">
+<div id="outline-container-orgd475897" class="outline-3">
+<h3 id="orgd475897"><a id="ID-293a2e93-93bf-4c08-b0f4-6d3dfe0feb6b"></a>sql-op :regr_count (y x)</h3>
+<div class="outline-text-3" id="text-orgd475897">
 <p>
 The regr_count function returns the number of input rows in which both
 expressions are nonnull. Example:
@@ -1779,9 +1802,9 @@ expressions are nonnull. Example:
 </div>
 </div>
 
-<div id="outline-container-org21e4651" class="outline-3">
-<h3 id="org21e4651"><a id="ID-8b92dc89-b251-4bac-ba53-58251e98d3f5"></a>sql-op :regr_intercept (y x)</h3>
-<div class="outline-text-3" id="text-org21e4651">
+<div id="outline-container-org185748d" class="outline-3">
+<h3 id="org185748d"><a id="ID-8b92dc89-b251-4bac-ba53-58251e98d3f5"></a>sql-op :regr_intercept (y x)</h3>
+<div class="outline-text-3" id="text-org185748d">
 <p>
 The regr_intercept function returns the y-intercept of the least-squares-fit
 linear equation determined by the (X, Y) pairs. Example:
@@ -1794,9 +1817,9 @@ linear equation determined by the (X, Y) pairs. Example:
 </div>
 </div>
 
-<div id="outline-container-orge6fa61f" class="outline-3">
-<h3 id="orge6fa61f"><a id="ID-09020f6e-166a-40e8-85ea-fdaced1f7808"></a>sql-op :regr_r2 (y x)</h3>
-<div class="outline-text-3" id="text-orge6fa61f">
+<div id="outline-container-orgd28d0c2" class="outline-3">
+<h3 id="orgd28d0c2"><a id="ID-09020f6e-166a-40e8-85ea-fdaced1f7808"></a>sql-op :regr_r2 (y x)</h3>
+<div class="outline-text-3" id="text-orgd28d0c2">
 <p>
 The regr_r2 function returns the square of the correlation coefficient. Example:
 </p>
@@ -1808,9 +1831,9 @@ The regr_r2 function returns the square of the correlation coefficient. Example:
 </div>
 </div>
 
-<div id="outline-container-orgdd3231b" class="outline-3">
-<h3 id="orgdd3231b"><a id="ID-b22a7906-c571-4463-884f-4067d51cf0ac"></a>sql-op :regr_slope (y x)</h3>
-<div class="outline-text-3" id="text-orgdd3231b">
+<div id="outline-container-org255a831" class="outline-3">
+<h3 id="org255a831"><a id="ID-b22a7906-c571-4463-884f-4067d51cf0ac"></a>sql-op :regr_slope (y x)</h3>
+<div class="outline-text-3" id="text-org255a831">
 <p>
 The regr_slope function returns the slope of the least-squares-fit linear
 equation determined by the (X, Y) pairs. Example:
@@ -1823,9 +1846,9 @@ equation determined by the (X, Y) pairs. Example:
 </div>
 </div>
 
-<div id="outline-container-org12c4fac" class="outline-3">
-<h3 id="org12c4fac"><a id="ID-9c7cc59e-419d-4161-9711-de2c9b0c27ec"></a>sql-op :regr_sxx (y x)</h3>
-<div class="outline-text-3" id="text-org12c4fac">
+<div id="outline-container-org2da276e" class="outline-3">
+<h3 id="org2da276e"><a id="ID-9c7cc59e-419d-4161-9711-de2c9b0c27ec"></a>sql-op :regr_sxx (y x)</h3>
+<div class="outline-text-3" id="text-org2da276e">
 <p>
 The regr_sxx function returns the sum(X^2) - sum(X)^2/N (“sum of squares” of
 the independent variable). Example:
@@ -1838,9 +1861,9 @@ the independent variable). Example:
 </div>
 </div>
 
-<div id="outline-container-org73ff88f" class="outline-3">
-<h3 id="org73ff88f"><a id="ID-24f03953-7fea-4b18-8d69-ccd5b6d9f1f5"></a>sql-op :regr_sxy (y x)</h3>
-<div class="outline-text-3" id="text-org73ff88f">
+<div id="outline-container-org1a032f9" class="outline-3">
+<h3 id="org1a032f9"><a id="ID-24f03953-7fea-4b18-8d69-ccd5b6d9f1f5"></a>sql-op :regr_sxy (y x)</h3>
+<div class="outline-text-3" id="text-org1a032f9">
 <p>
 The regr_sxy function returns the sum(X*Y) - sum(X) * sum(Y)/N (“sum of products”
 of independent times dependent variable). Example:
@@ -1853,9 +1876,9 @@ of independent times dependent variable). Example:
 </div>
 </div>
 
-<div id="outline-container-orgfc750df" class="outline-3">
-<h3 id="orgfc750df"><a id="ID-34f776b1-d29d-4d49-a66b-21262379510b"></a>sql-op :regr_syy (y x)</h3>
-<div class="outline-text-3" id="text-orgfc750df">
+<div id="outline-container-org4de2313" class="outline-3">
+<h3 id="org4de2313"><a id="ID-34f776b1-d29d-4d49-a66b-21262379510b"></a>sql-op :regr_syy (y x)</h3>
+<div class="outline-text-3" id="text-org4de2313">
 <p>
 The regr_syy function returns the sum(Y^2) - sum(Y)^2/N (“sum of squares”
 of the dependent variable). Example:
@@ -1868,9 +1891,9 @@ of the dependent variable). Example:
 </div>
 </div>
 
-<div id="outline-container-org608cd76" class="outline-3">
-<h3 id="org608cd76"><a id="ID-e0558145-d8e0-4ea3-b9ae-cc92ef332b70"></a>sql-op :stddev (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org608cd76">
+<div id="outline-container-orge3008aa" class="outline-3">
+<h3 id="orge3008aa"><a id="ID-e0558145-d8e0-4ea3-b9ae-cc92ef332b70"></a>sql-op :stddev (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orge3008aa">
 <p>
 The stddev function returns the the sample standard deviation of the input
 values. It is a historical alias for stddev-samp. Example:
@@ -1883,9 +1906,9 @@ values. It is a historical alias for stddev-samp. Example:
 </div>
 </div>
 
-<div id="outline-container-org4711541" class="outline-3">
-<h3 id="org4711541"><a id="ID-e4eeac17-7d09-45d8-8589-47d9b09a95d2"></a>sql-op :stddev-pop (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org4711541">
+<div id="outline-container-orgc44c19f" class="outline-3">
+<h3 id="orgc44c19f"><a id="ID-e4eeac17-7d09-45d8-8589-47d9b09a95d2"></a>sql-op :stddev-pop (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgc44c19f">
 <p>
 The stddev-pop function returns the population standard deviation of the
 input values. Example:
@@ -1898,9 +1921,9 @@ input values. Example:
 </div>
 </div>
 
-<div id="outline-container-org0f19c3a" class="outline-3">
-<h3 id="org0f19c3a"><a id="ID-4095965c-e969-4663-9ae4-2becfe72de7a"></a>sql-op :stddev-samp (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org0f19c3a">
+<div id="outline-container-orgffc6d9d" class="outline-3">
+<h3 id="orgffc6d9d"><a id="ID-4095965c-e969-4663-9ae4-2becfe72de7a"></a>sql-op :stddev-samp (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgffc6d9d">
 <p>
 The stddev-samp function returns the sample standard deviation of the
 input values. Example:
@@ -1913,9 +1936,9 @@ input values. Example:
 </div>
 </div>
 
-<div id="outline-container-orgfa850a0" class="outline-3">
-<h3 id="orgfa850a0"><a id="ID-e4cd292a-4d33-434d-a698-4ae921a3173b"></a>sql-op :variance (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgfa850a0">
+<div id="outline-container-org9f6d760" class="outline-3">
+<h3 id="org9f6d760"><a id="ID-e4cd292a-4d33-434d-a698-4ae921a3173b"></a>sql-op :variance (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org9f6d760">
 <p>
 Variance is a historical alias for var_samp. The variance function returns
 the sample variance of the input values (square of the sample standard deviation).
@@ -1929,9 +1952,9 @@ Example:
 </div>
 </div>
 
-<div id="outline-container-orga46865a" class="outline-3">
-<h3 id="orga46865a"><a id="ID-d72f79cc-b7b1-4481-a93f-6d565c6a582b"></a>sql-op :var-pop (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orga46865a">
+<div id="outline-container-orga3887b6" class="outline-3">
+<h3 id="orga3887b6"><a id="ID-d72f79cc-b7b1-4481-a93f-6d565c6a582b"></a>sql-op :var-pop (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orga3887b6">
 <p>
 The var-pop function returns the population variance of the input values
 (square of the population standard deviation). Example:
@@ -1945,9 +1968,9 @@ The var-pop function returns the population variance of the input values
 </div>
 </div>
 
-<div id="outline-container-org5e4939d" class="outline-3">
-<h3 id="org5e4939d"><a id="ID-12a5e8ba-4467-4411-a604-c8152c3fbc7d"></a>sql-op :var-samp (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org5e4939d">
+<div id="outline-container-org6507f83" class="outline-3">
+<h3 id="org6507f83"><a id="ID-12a5e8ba-4467-4411-a604-c8152c3fbc7d"></a>sql-op :var-samp (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org6507f83">
 <p>
 The var-samp function returns the sample variance of the input values
 (square of the sample standard deviation). Example:
@@ -1964,9 +1987,9 @@ Window Functions
 </p>
 </div>
 </div>
-<div id="outline-container-org683ecd9" class="outline-3">
-<h3 id="org683ecd9"><a id="ID-bb6eb9f2-d9ed-4348-9467-79cae9b78819"></a>sql-op :over (form &amp;rest args)</h3>
-<div class="outline-text-3" id="text-org683ecd9">
+<div id="outline-container-orgea55393" class="outline-3">
+<h3 id="orgea55393"><a id="ID-bb6eb9f2-d9ed-4348-9467-79cae9b78819"></a>sql-op :over (form &amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgea55393">
 <p>
 Over, partition-by and window are so-called window functions. A window
 function performs a calculation across a set of table rows that are
@@ -1980,9 +2003,9 @@ somehow related to the current row.
 </div>
 </div>
 
-<div id="outline-container-org61df1f4" class="outline-3">
-<h3 id="org61df1f4"><a id="ID-53d1397d-4f1d-4833-b0c1-79d18e943f8b"></a>sql-op :partition-by (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org61df1f4">
+<div id="outline-container-orgbe7a4a4" class="outline-3">
+<h3 id="orgbe7a4a4"><a id="ID-53d1397d-4f1d-4833-b0c1-79d18e943f8b"></a>sql-op :partition-by (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgbe7a4a4">
 <p>
 Args is a list of one or more columns to partition by, optionally
 followed by an :order-by clause.
@@ -2009,9 +2032,9 @@ Note the use of :order-by without parens:
 </div>
 
 
-<div id="outline-container-org19127b3" class="outline-3">
-<h3 id="org19127b3"><a id="ID-63d29a3b-c105-4e09-ab3b-ca5e4ece17af"></a>sql-op :window (form)</h3>
-<div class="outline-text-3" id="text-org19127b3">
+<div id="outline-container-org231dcc7" class="outline-3">
+<h3 id="org231dcc7"><a id="ID-63d29a3b-c105-4e09-ab3b-ca5e4ece17af"></a>sql-op :window (form)</h3>
+<div class="outline-text-3" id="text-org231dcc7">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:over</span> (<span style="color: #98fb98; font-weight: bold;">:sum</span> 'salary) 'w)
                 (<span style="color: #98fb98; font-weight: bold;">:over</span> (<span style="color: #98fb98; font-weight: bold;">:avg</span> 'salary) 'w)
@@ -2022,9 +2045,9 @@ Note the use of :order-by without parens:
 </div>
 </div>
 
-<div id="outline-container-orgca1f6da" class="outline-3">
-<h3 id="orgca1f6da"><a id="ID-38fc8a49-9a90-4f6c-930f-c704964ec991"></a>sql-op :with (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgca1f6da">
+<div id="outline-container-orgc9bcb91" class="outline-3">
+<h3 id="orgc9bcb91"><a id="ID-38fc8a49-9a90-4f6c-930f-c704964ec991"></a>sql-op :with (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgc9bcb91">
 <p>
 With provides a way to write auxillary statements for use in a larger query,
 often referred to as Common Table Expressions or CTEs.
@@ -2046,9 +2069,9 @@ often referred to as Common Table Expressions or CTEs.
 </div>
 </div>
 
-<div id="outline-container-orga649c3a" class="outline-3">
-<h3 id="orga649c3a"><a id="ID-78be2433-4c26-4e2c-b333-e234393b5dc1"></a>sql-op :with-recursive (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orga649c3a">
+<div id="outline-container-orgbb25245" class="outline-3">
+<h3 id="orgbb25245"><a id="ID-78be2433-4c26-4e2c-b333-e234393b5dc1"></a>sql-op :with-recursive (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgbb25245">
 <p>
 Recursive modifier to a WITH statement, allowing the query to refer to its own output.
 </p>
@@ -2105,13 +2128,13 @@ Recursive modifier to a WITH statement, allowing the query to refer to its own o
 </div>
 </div>
 
-<div id="outline-container-org73dbbd7" class="outline-2">
-<h2 id="org73dbbd7"><a id="ID-dbedabf5-eaf5-4adb-b323-b42926acc81a"></a>Table Functions</h2>
-<div class="outline-text-2" id="text-org73dbbd7">
+<div id="outline-container-org2ba61ef" class="outline-2">
+<h2 id="org2ba61ef"><a id="ID-dbedabf5-eaf5-4adb-b323-b42926acc81a"></a>Table Functions</h2>
+<div class="outline-text-2" id="text-org2ba61ef">
 </div>
-<div id="outline-container-org712ce1b" class="outline-3">
-<h3 id="org712ce1b"><a id="ID-ace310e6-8bd1-4211-bf66-ef56c9b7e872"></a>sql-op :for-update (query &amp;key of nowait)</h3>
-<div class="outline-text-3" id="text-org712ce1b">
+<div id="outline-container-org67fc5b4" class="outline-3">
+<h3 id="org67fc5b4"><a id="ID-ace310e6-8bd1-4211-bf66-ef56c9b7e872"></a>sql-op :for-update (query &amp;key of nowait)</h3>
+<div class="outline-text-3" id="text-org67fc5b4">
 <p>
 Locks the selected rows against concurrent updates. This will prevent the
 rows from being modified or deleted by other transactions until the current
@@ -2129,9 +2152,9 @@ locked immediately, instead of pausing until it's possible.
 </div>
 </div>
 
-<div id="outline-container-org8053ed4" class="outline-3">
-<h3 id="org8053ed4"><a id="ID-457394be-ef0d-444a-ad33-fefbc39363e3"></a>sql-op :for-share (query &amp;key of nowait)</h3>
-<div class="outline-text-3" id="text-org8053ed4">
+<div id="outline-container-orgc58d7be" class="outline-3">
+<h3 id="orgc58d7be"><a id="ID-457394be-ef0d-444a-ad33-fefbc39363e3"></a>sql-op :for-share (query &amp;key of nowait)</h3>
+<div class="outline-text-3" id="text-orgc58d7be">
 <p>
 Similar to :for-update, except it acquires a shared lock on the table,
 allowing other transactions to perform :for-share selects on the locked
@@ -2140,9 +2163,9 @@ tables.
 </div>
 </div>
 
-<div id="outline-container-orgaf3aa25" class="outline-3">
-<h3 id="orgaf3aa25"><a id="ID-a63202ff-4aa9-4af3-9b82-254516db07e1"></a>sql-op :insert-into (table &amp;rest rest)</h3>
-<div class="outline-text-3" id="text-orgaf3aa25">
+<div id="outline-container-org9c35d1b" class="outline-3">
+<h3 id="org9c35d1b"><a id="ID-a63202ff-4aa9-4af3-9b82-254516db07e1"></a>sql-op :insert-into (table &amp;rest rest)</h3>
+<div class="outline-text-3" id="text-org9c35d1b">
 <p>
 Insert a row into a table. When the second argument is :set, the other
 arguments should be alternating field names and values, otherwise it
@@ -2180,9 +2203,9 @@ prepend the table name to the column in the where statement if you are updating.
 </div>
 </div>
 
-<div id="outline-container-orge8932fe" class="outline-3">
-<h3 id="orge8932fe"><a id="ID-26d60b83-60f5-4bb4-8a03-cd897a455139"></a>sql-op :insert-rows-into (table &amp;rest rest)</h3>
-<div class="outline-text-3" id="text-orge8932fe">
+<div id="outline-container-org84686d9" class="outline-3">
+<h3 id="org84686d9"><a id="ID-26d60b83-60f5-4bb4-8a03-cd897a455139"></a>sql-op :insert-rows-into (table &amp;rest rest)</h3>
+<div class="outline-text-3" id="text-org84686d9">
 <p>
 Insert multiple rows into a table. Specify the columns first with the
 keyword :columns then provide a list of lists of the values as a
@@ -2206,9 +2229,9 @@ parameters can be dropped. Example:
 </div>
 </div>
 
-<div id="outline-container-orgdc1ae42" class="outline-3">
-<h3 id="orgdc1ae42"><a id="ID-bbf790c1-9baa-4cf0-900c-16a5a2bc2081"></a>sql-op :update (table &amp;rest rest)</h3>
-<div class="outline-text-3" id="text-orgdc1ae42">
+<div id="outline-container-orge0ce1c8" class="outline-3">
+<h3 id="orge0ce1c8"><a id="ID-bbf790c1-9baa-4cf0-900c-16a5a2bc2081"></a>sql-op :update (table &amp;rest rest)</h3>
+<div class="outline-text-3" id="text-orge0ce1c8">
 <p>
 Update values in a table. After the table name there should follow the
 keyword :set and any number of alternating field names and values, like
@@ -2221,9 +2244,9 @@ indicating values to be returned as query result.
 </div>
 </div>
 
-<div id="outline-container-org9159b7c" class="outline-3">
-<h3 id="org9159b7c"><a id="ID-cdee608e-71cb-4d41-9e1d-a21b7728d956"></a>sql-op :delete-from (table &amp;rest rest)</h3>
-<div class="outline-text-3" id="text-org9159b7c">
+<div id="outline-container-org8ac39db" class="outline-3">
+<h3 id="org8ac39db"><a id="ID-cdee608e-71cb-4d41-9e1d-a21b7728d956"></a>sql-op :delete-from (table &amp;rest rest)</h3>
+<div class="outline-text-3" id="text-org8ac39db">
 <p>
 Delete rows from the named table. Can be given a :where argument followed
 by a condition, and a :returning argument, followed by one or more
@@ -2232,9 +2255,9 @@ expressions that should be returned for every deleted row.
 </div>
 </div>
 
-<div id="outline-container-org9e1c55d" class="outline-3">
-<h3 id="org9e1c55d"><a id="ID-4096efd3-8b88-4c50-8a02-d3f1a1b0d682"></a>sql-op :create-table (name (&amp;rest columns) &amp;rest options)</h3>
-<div class="outline-text-3" id="text-org9e1c55d">
+<div id="outline-container-org85099f7" class="outline-3">
+<h3 id="org85099f7"><a id="ID-4096efd3-8b88-4c50-8a02-d3f1a1b0d682"></a>sql-op :create-table (name (&amp;rest columns) &amp;rest options)</h3>
+<div class="outline-text-3" id="text-org85099f7">
 <p>
 Create a new table. The simplest example would pass two parameters,
 the table name and a list of lists providing information for each column.
@@ -2255,9 +2278,9 @@ See <a href="create-tables.html">create-tables.html</a> for more detailed exampl
 </p>
 </div>
 
-<div id="outline-container-orgcf55684" class="outline-4">
-<h4 id="orgcf55684"><a id="ID-d0a01fab-1489-47dd-8307-30c28351e8af"></a>Column Definition parameters</h4>
-<div class="outline-text-4" id="text-orgcf55684">
+<div id="outline-container-org61479f3" class="outline-4">
+<h4 id="org61479f3"><a id="ID-d0a01fab-1489-47dd-8307-30c28351e8af"></a>Column Definition parameters</h4>
+<div class="outline-text-4" id="text-org61479f3">
 <p>
 After the table name a list of column definitions
 follows, which are lists that start with a name, followed by one or
@@ -2327,9 +2350,9 @@ key refers to is deleted or changed. Allowed values are :restrict, :set-null,
 </div>
 </div>
 
-<div id="outline-container-orgcfd8620" class="outline-4">
-<h4 id="orgcfd8620"><a id="ID-6ee6a88c-1810-41f9-8cad-2c7d347f9c4a"></a>Table Constraints</h4>
-<div class="outline-text-4" id="text-orgcfd8620">
+<div id="outline-container-org0f04e4a" class="outline-4">
+<h4 id="org0f04e4a"><a id="ID-6ee6a88c-1810-41f9-8cad-2c7d347f9c4a"></a>Table Constraints</h4>
+<div class="outline-text-4" id="text-org0f04e4a">
 <p>
 After the list of columns, zero or more extra options (table constraints) can
 be specified. These are lists starting with one of the following keywords:
@@ -2406,9 +2429,9 @@ using the s-sql approach, see <a href="create-tables.html">create-tables.html</a
 </div>
 </div>
 
-<div id="outline-container-org00e7464" class="outline-3">
-<h3 id="org00e7464"><a id="ID-936e7ced-7f31-4c94-9d39-81b11e2cd1cd"></a>sql-op :alter-table (name action &amp;rest args)</h3>
-<div class="outline-text-3" id="text-org00e7464">
+<div id="outline-container-orgae5fa70" class="outline-3">
+<h3 id="orgae5fa70"><a id="ID-936e7ced-7f31-4c94-9d39-81b11e2cd1cd"></a>sql-op :alter-table (name action &amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgae5fa70">
 <p>
 Alters named table. Currently changing a column's data type is not supported.
 The meaning of args depends on action:
@@ -2486,9 +2509,9 @@ Here is an example using the table defined above:
 </div>
 </div>
 
-<div id="outline-container-orgd356f90" class="outline-3">
-<h3 id="orgd356f90"><a id="ID-1f2b170f-09e2-40e6-9956-f3c44b1d2824"></a>sql-op :drop-table (name)</h3>
-<div class="outline-text-3" id="text-orgd356f90">
+<div id="outline-container-org139f021" class="outline-3">
+<h3 id="org139f021"><a id="ID-1f2b170f-09e2-40e6-9956-f3c44b1d2824"></a>sql-op :drop-table (name)</h3>
+<div class="outline-text-3" id="text-org139f021">
 <p>
 Drops the named table. You may optionally pass :if-exists before the name
 to suppress the error message. You can also optionally pass :cascade after
@@ -2505,9 +2528,9 @@ etc which depend on that table.
 </div>
 </div>
 
-<div id="outline-container-org4a7abc0" class="outline-3">
-<h3 id="org4a7abc0"><a id="ID-f17b0128-f74e-4e79-90e4-d7cc97848c46"></a>sql-op :truncate (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org4a7abc0">
+<div id="outline-container-orgffa30e3" class="outline-3">
+<h3 id="orgffa30e3"><a id="ID-f17b0128-f74e-4e79-90e4-d7cc97848c46"></a>sql-op :truncate (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgffa30e3">
 <p>
 Truncates one or more tables, deleting all the rows. Optional keyword arguments are
 allowed in the following order. Note that :continue-identity and :restart-identity
@@ -2540,9 +2563,9 @@ Example calls would be:
 </div>
 </div>
 
-<div id="outline-container-org3ff22a5" class="outline-3">
-<h3 id="org3ff22a5"><a id="ID-c06560b4-5dfb-4657-aa1f-dc3913fa08fc"></a>sql-op :create-index (name &amp;rest args)</h3>
-<div class="outline-text-3" id="text-org3ff22a5">
+<div id="outline-container-org591caf5" class="outline-3">
+<h3 id="org591caf5"><a id="ID-c06560b4-5dfb-4657-aa1f-dc3913fa08fc"></a>sql-op :create-index (name &amp;rest args)</h3>
+<div class="outline-text-3" id="text-org591caf5">
 <p>
 Create an index on a table. After the name of the index the keyword :on should
 follow, with the table name after it. Then the keyword :fields, followed by
@@ -2560,18 +2583,18 @@ be added at the end to make a partial index.
 </div>
 
 
-<div id="outline-container-orgcc857d9" class="outline-3">
-<h3 id="orgcc857d9"><a id="ID-b2f3a924-58c4-4c4e-9b08-603bb8f5bef3"></a>sql-op :create-unique-index (name &amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgcc857d9">
+<div id="outline-container-orgdf4af7b" class="outline-3">
+<h3 id="orgdf4af7b"><a id="ID-b2f3a924-58c4-4c4e-9b08-603bb8f5bef3"></a>sql-op :create-unique-index (name &amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgdf4af7b">
 <p>
 Works like :create-index, except that the index created is unique.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgf03fa3f" class="outline-3">
-<h3 id="orgf03fa3f"><a id="ID-e2c1e460-4d7b-449e-9b24-daa807f115b4"></a>sql-op :drop-index (name)</h3>
-<div class="outline-text-3" id="text-orgf03fa3f">
+<div id="outline-container-orgc6bd0c3" class="outline-3">
+<h3 id="orgc6bd0c3"><a id="ID-e2c1e460-4d7b-449e-9b24-daa807f115b4"></a>sql-op :drop-index (name)</h3>
+<div class="outline-text-3" id="text-orgc6bd0c3">
 <p>
 Drop an index. Takes :if-exists and/or :cascade arguments like :drop-table.
 </p>
@@ -2584,9 +2607,9 @@ Drop an index. Takes :if-exists and/or :cascade arguments like :drop-table.
 </div>
 </div>
 
-<div id="outline-container-org755eae6" class="outline-3">
-<h3 id="org755eae6"><a id="ID-6dad55a4-a0d4-4d94-923e-e34dd21417a0"></a>sql-op :create-sequence (name &amp;key increment min-value max-value start cache cycle)</h3>
-<div class="outline-text-3" id="text-org755eae6">
+<div id="outline-container-orgf27b599" class="outline-3">
+<h3 id="orgf27b599"><a id="ID-6dad55a4-a0d4-4d94-923e-e34dd21417a0"></a>sql-op :create-sequence (name &amp;key increment min-value max-value start cache cycle)</h3>
+<div class="outline-text-3" id="text-orgf27b599">
 <p>
 Create a sequence with the given name. The rest of the arguments control
 the way the sequence selects values.
@@ -2594,9 +2617,9 @@ the way the sequence selects values.
 </div>
 </div>
 
-<div id="outline-container-org939d0be" class="outline-3">
-<h3 id="org939d0be"><a id="ID-16b308a1-ae6c-4cac-816d-1e29b28ce0b9"></a>sql-op :alter-sequence (name)</h3>
-<div class="outline-text-3" id="text-org939d0be">
+<div id="outline-container-org002c30c" class="outline-3">
+<h3 id="org002c30c"><a id="ID-16b308a1-ae6c-4cac-816d-1e29b28ce0b9"></a>sql-op :alter-sequence (name)</h3>
+<div class="outline-text-3" id="text-org002c30c">
 <p>
 Alters a sequence. See <a href="https://www.postgresql.org/docs/10/static/sql-altersequence.html">Postgresql documentation</a> for parameters.
 </p>
@@ -2635,9 +2658,9 @@ Sets the amount by which each subsequent increment will be increased.
 </div>
 </div>
 
-<div id="outline-container-org015da84" class="outline-3">
-<h3 id="org015da84"><a id="ID-913c35f8-c6ba-42e3-a862-a46e313985ba"></a>sql-op :drop-sequence (name)</h3>
-<div class="outline-text-3" id="text-org015da84">
+<div id="outline-container-org0f40b65" class="outline-3">
+<h3 id="org0f40b65"><a id="ID-913c35f8-c6ba-42e3-a862-a46e313985ba"></a>sql-op :drop-sequence (name)</h3>
+<div class="outline-text-3" id="text-org0f40b65">
 <p>
 Drop a sequence. Takes :if-exists and/or :cascade arguments like :drop-table.
 </p>
@@ -2650,27 +2673,27 @@ Drop a sequence. Takes :if-exists and/or :cascade arguments like :drop-table.
 </div>
 </div>
 
-<div id="outline-container-orgc86378c" class="outline-3">
-<h3 id="orgc86378c"><a id="ID-b5152a93-fc83-4e28-8678-2238987280ac"></a>sql-op :create-view (name query)</h3>
-<div class="outline-text-3" id="text-orgc86378c">
+<div id="outline-container-org49639f7" class="outline-3">
+<h3 id="org49639f7"><a id="ID-b5152a93-fc83-4e28-8678-2238987280ac"></a>sql-op :create-view (name query)</h3>
+<div class="outline-text-3" id="text-org49639f7">
 <p>
 Create a view from an S-SQL-style query.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org61c6183" class="outline-3">
-<h3 id="org61c6183"><a id="ID-41ae2fb3-1d14-40a7-9cb3-eb194f90a692"></a>sql-op :drop-view (name)</h3>
-<div class="outline-text-3" id="text-org61c6183">
+<div id="outline-container-orgf972b50" class="outline-3">
+<h3 id="orgf972b50"><a id="ID-41ae2fb3-1d14-40a7-9cb3-eb194f90a692"></a>sql-op :drop-view (name)</h3>
+<div class="outline-text-3" id="text-orgf972b50">
 <p>
 Drop a view. Takes optional :if-exists argument.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org1ff1f39" class="outline-3">
-<h3 id="org1ff1f39"><a id="ID-4e0e615b-cdb2-4576-a46d-20c25daf414a"></a>sql-op :set-constraints (state &amp;rest constraints)</h3>
-<div class="outline-text-3" id="text-org1ff1f39">
+<div id="outline-container-org7e55719" class="outline-3">
+<h3 id="org7e55719"><a id="ID-4e0e615b-cdb2-4576-a46d-20c25daf414a"></a>sql-op :set-constraints (state &amp;rest constraints)</h3>
+<div class="outline-text-3" id="text-org7e55719">
 <p>
 Configure whether deferrable constraints should be checked when a statement
 is executed, or when the transaction containing that statement is completed.
@@ -2682,9 +2705,9 @@ all deferrable constraints should be thus configured.
 </div>
 </div>
 
-<div id="outline-container-org79e2337" class="outline-3">
-<h3 id="org79e2337"><a id="ID-254e8288-3515-4a51-8704-ea17c35f2c9b"></a>sql-op :listen (channel)</h3>
-<div class="outline-text-3" id="text-org79e2337">
+<div id="outline-container-org9074391" class="outline-3">
+<h3 id="org9074391"><a id="ID-254e8288-3515-4a51-8704-ea17c35f2c9b"></a>sql-op :listen (channel)</h3>
+<div class="outline-text-3" id="text-org9074391">
 <p>
 Tell the server to listen for notification events on channel channel,
 a string, on the current connection.
@@ -2692,18 +2715,18 @@ a string, on the current connection.
 </div>
 </div>
 
-<div id="outline-container-org3b72b99" class="outline-3">
-<h3 id="org3b72b99"><a id="ID-8899f2b4-8053-4e49-917f-8716c8ac916b"></a>sql-op :unlisten (channel)</h3>
-<div class="outline-text-3" id="text-org3b72b99">
+<div id="outline-container-org4c9614b" class="outline-3">
+<h3 id="org4c9614b"><a id="ID-8899f2b4-8053-4e49-917f-8716c8ac916b"></a>sql-op :unlisten (channel)</h3>
+<div class="outline-text-3" id="text-org4c9614b">
 <p>
 Stop listening for events on channel.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orge7002dc" class="outline-3">
-<h3 id="orge7002dc"><a id="ID-88d35022-2839-4ece-9688-c8517363e25a"></a>sql-op :notify (channel &amp;optional payload)</h3>
-<div class="outline-text-3" id="text-orge7002dc">
+<div id="outline-container-org26de207" class="outline-3">
+<h3 id="org26de207"><a id="ID-88d35022-2839-4ece-9688-c8517363e25a"></a>sql-op :notify (channel &amp;optional payload)</h3>
+<div class="outline-text-3" id="text-org26de207">
 <p>
 Signal a notification event on channel channel, a string. The optional
 payload string can be used to send additional event information to the listeners.
@@ -2711,9 +2734,9 @@ payload string can be used to send additional event information to the listeners
 </div>
 </div>
 
-<div id="outline-container-orgf73f4f7" class="outline-3">
-<h3 id="orgf73f4f7"><a id="ID-e4c5a84e-3a66-4a80-91de-b673beb8376d"></a>sql-op :create-role (role &amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgf73f4f7">
+<div id="outline-container-org5d3c774" class="outline-3">
+<h3 id="org5d3c774"><a id="ID-e4c5a84e-3a66-4a80-91de-b673beb8376d"></a>sql-op :create-role (role &amp;rest args)</h3>
+<div class="outline-text-3" id="text-org5d3c774">
 <p>
 Create a new role (user). Following the role name are optional keywords
 arguments:
@@ -2789,18 +2812,18 @@ Here is an example of a :create-role form:
 </div>
 </div>
 
-<div id="outline-container-orgf27f700" class="outline-3">
-<h3 id="orgf27f700"><a id="ID-6d429954-eb91-4a94-8655-f1e1a75f02c8"></a>sql-op :create-database (name)</h3>
-<div class="outline-text-3" id="text-orgf27f700">
+<div id="outline-container-orgf8c85a3" class="outline-3">
+<h3 id="orgf8c85a3"><a id="ID-6d429954-eb91-4a94-8655-f1e1a75f02c8"></a>sql-op :create-database (name)</h3>
+<div class="outline-text-3" id="text-orgf8c85a3">
 <p>
 Create a new database with the given name.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org1c1ba08" class="outline-3">
-<h3 id="org1c1ba08"><a id="ID-35ecfdd0-7ba1-45cc-a73d-68323c880c29"></a>sql-op :drop-database (name)</h3>
-<div class="outline-text-3" id="text-org1c1ba08">
+<div id="outline-container-orgcad2edd" class="outline-3">
+<h3 id="orgcad2edd"><a id="ID-35ecfdd0-7ba1-45cc-a73d-68323c880c29"></a>sql-op :drop-database (name)</h3>
+<div class="outline-text-3" id="text-orgcad2edd">
 <p>
 Drops the named database. You may optionally pass :if-exists before the
 name to suppress the error message. Examples:
@@ -2813,9 +2836,9 @@ name to suppress the error message. Examples:
 </div>
 </div>
 
-<div id="outline-container-org4ff0d49" class="outline-3">
-<h3 id="org4ff0d49"><a id="ID-962e6b5e-8ce6-4083-a17e-010679d12b32"></a>sql-op :copy (table &amp;rest args)</h3>
-<div class="outline-text-3" id="text-org4ff0d49">
+<div id="outline-container-orgf7dd2b4" class="outline-3">
+<h3 id="orgf7dd2b4"><a id="ID-962e6b5e-8ce6-4083-a17e-010679d12b32"></a>sql-op :copy (table &amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgf7dd2b4">
 <p>
 Move data between Postgres tables and filesystem files. Table name is required
 followed by one or more of the following keyword arguments. Documentation for
@@ -2844,12 +2867,250 @@ tutorial:
 </div>
 </div>
 </div>
-<div id="outline-container-orga4014f9" class="outline-2">
-<h2 id="orga4014f9"><a id="ID-1df403b0-bef6-40d9-983e-328a2f4c49b8"></a>Dynamic Queries and Composition</h2>
-<div class="outline-text-2" id="text-orga4014f9">
+<div id="outline-container-org3df0b82" class="outline-2">
+<h2 id="dynamic-queries-composition-and-parameterized-queries"><a id="org3df0b82"></a><a id="ID-d621dc4b-5ae1-408a-be3c-c553dcd5d9a6"></a>Dynamic Queries, Composition and Parameterized Queries</h2>
+<div class="outline-text-2" id="text-dynamic-queries-composition-and-parameterized-queries">
+</div>
+
+<div id="outline-container-org607b420" class="outline-3">
+<h3 id="overview"><a id="org607b420"></a><a id="ID-56999390-1d72-4ae1-bea6-1f3a5eeb08f7"></a>Overview</h3>
+<div class="outline-text-3" id="text-overview">
 <p>
-See <a href="dynamic-queries.html">Dynamic-Queries.html</a>
+The question gets asked how to build dynamic or composable queries in
+postmodern. First we need to understand the context - is the programmer
+building the query or are you taking data from a user and using that to
+build a query?
 </p>
+</div>
+
+<div id="outline-container-orgec6a6d0" class="outline-4">
+<h4 id="programmer-built-queries"><a id="orgec6a6d0"></a><a id="ID-17b9050a-026f-4552-93b3-e08cb9ba5851"></a>Programmer Built Queries</h4>
+<div class="outline-text-4" id="text-programmer-built-queries">
+<p>
+If you are not using s-sql, then it becomes easy. The query macro
+assumes that everything that is not a list starting with a keyword will
+evaluate to a string. That means you can build it with a simple format
+string
+</p>
+
+<pre class="example">
+(query (format nil "select ~a from ~a where ~a"  "carrots" "garden" "length &gt; 3"))
+</pre>
+
+<p>
+With s-sql, there are generally two approaches to building dynamic or
+composible queries: either use sql-compile or use :raw.
+</p>
+
+<p>
+For purposes of this example, we will use the following employee table:
+</p>
+
+<pre class="example">
+(query (:create-table employee ((id :type int)
+                                (name :type text)
+                                (salary :type numeric)
+                                (start_date :type date)
+                                (city :type text)
+                                (region :type char)
+                                (age :type int))))
+
+(query (:insert-rows-into 'employee
+                          :columns 'id 'name 'salary 'start-date 'city 'region 'age
+                          :values '((1 "Jason" 40420 "02/01/94" "New York" "W" 29)
+                                    (2 "Robert" 14420 "01/02/95" "Vancouver" "N" 21)
+                                    (3 "Celia" 24020 "12/03/96" "Toronto" "W" 24)
+                                    (4 "Linda" 40620 "11/04/97" "New York" "N" 28)
+                                    (5 "David" 80026 "10/05/98" "Vancouver" "W" 31)
+                                    (6 "James" 70060 "09/06/99" "Toronto" "N" 26)
+                                    (7 "Alison" 90620 "08/07/00" "New York" "W" 38)
+                                    (8 "Chris" 26020 "07/08/01" "Vancouver" "N" 22)
+                                    (9 "Mary" 60020 "06/08/02" "Toronto" "W" 34))))
+</pre>
+
+<ol class="org-ol">
+<li>Approach #1 Use sql-compile</li>
+</ol>
+
+<p>
+Sql-compile does a run-time compilation of an s-sql expression. In the
+following example, we create a function that accepts a where-clause, a
+table-name, 3 columns to select and two parameters to go into the where
+clause.
+</p>
+
+<pre class="example">
+(defun toy-example (where-clause table-name col1 col2 col3 arg1 arg2)
+       (with-test-connection
+       (query (sql-compile
+                (append `(:select ,col1 ,col2 ,col3 :from ,table-name :where)
+                       where-clause))
+              arg1 arg2)))
+
+    (toy-example '((:and (:= 'city '$1) (:&gt; 'salary '$2))) 'employee 'id 'name 'city "Toronto" 45000)
+
+    ((6 "James" "Toronto") (9 "Mary" "Toronto"))
+</pre>
+
+<p>
+If we just look at what this call to sql-compile in toy-example
+generates, it would look like:
+</p>
+
+<pre class="example">
+"(SELECT id, name, city FROM employee WHERE ((city = $1) and (salary &gt; $2)))"
+</pre>
+
+<p>
+This example is still a parameterized query but for security reasons you
+will need to be very careful how you generate the where clause.
+</p>
+
+<p>
+Another example with sql-compile and append, in this case updating a
+table and setting two columns to NULL.
+</p>
+
+<pre class="example">
+(sql-compile (append '(:update :table1 :set)
+                     (loop for a in '("col1" "col2")
+                           collect a
+                           collect :NULL)))
+
+"UPDATE table1 SET E'col1' = NULL, E'col2' = NULL"
+</pre>
+
+<p>
+Lets think about it differently. What if we know the universe of columns
+we want to select, but want to conditionally select some of them.
+Suppose we know our targetted table has columns:
+</p>
+
+<pre class="example">
+'id 'name 'salary 'start-date 'city 'region 'age.
+</pre>
+
+<p>
+We may decide we always want name, city and age, but salary and
+start-date are conditional.
+</p>
+
+<pre class="example">
+(defun toy-example-2 (salaryp start-date-p)
+  (sql-compile
+   (remove nil `(:select 'name 'city 'age
+                         ,(if salaryp 'salary nil)
+                         ,(if start-date-p 'start-date nil)
+                         :from 'employee))))
+
+(query (toy-example-2 t t))
+
+(("Jason" "New York" 29 40420 #&lt;SIMPLE-DATE:DATE 01-02-1994&gt;)
+ ("Robert" "Vancouver" 21 14420 #&lt;SIMPLE-DATE:DATE 02-01-1995&gt;)
+ ("Celia" "Toronto" 24 24020 #&lt;SIMPLE-DATE:DATE 03-12-1996&gt;)
+ ("Linda" "New York" 28 40620 #&lt;SIMPLE-DATE:DATE 04-11-1997&gt;)
+ ("David" "Vancouver" 31 80026 #&lt;SIMPLE-DATE:DATE 05-10-1998&gt;)
+ ("James" "Toronto" 26 70060 #&lt;SIMPLE-DATE:DATE 06-09-1999&gt;)
+ ("Alison" "New York" 38 90620 #&lt;SIMPLE-DATE:DATE 07-08-2000&gt;)
+ ("Chris" "Vancouver" 22 26020 #&lt;SIMPLE-DATE:DATE 08-07-2001&gt;)
+ ("Mary" "Toronto" 34 60020 #&lt;SIMPLE-DATE:DATE 08-06-2002&gt;))
+
+(query (toy-example-2 t nil))
+
+(("Jason" "New York" 29 40420) ("Robert" "Vancouver" 21 14420)
+ ("Celia" "Toronto" 24 24020) ("Linda" "New York" 28 40620)
+ ("David" "Vancouver" 31 80026) ("James" "Toronto" 26 70060)
+ ("Alison" "New York" 38 90620) ("Chris" "Vancouver" 22 26020)
+ ("Mary" "Toronto" 34 60020))
+</pre>
+
+<p>
+You could skip the (remove nil&#x2026; portion and substitute t for nil. E.g.
+</p>
+
+<pre class="example">
+(defun toy-example-2 (salaryp start-date-p)
+  (sql-compile
+   `(:select 'name 'city 'age
+             ,(if salaryp 'salary t)
+             ,(if start-date-p 'start-date t)
+             :from 'employee)))
+</pre>
+
+<p>
+But I prefer to remove those segments completely from the query.
+</p>
+
+<p>
+Following on this same thread of thought, you can define a portion of
+the sql in a let clause:
+</p>
+
+<pre class="example">
+(let ((sql1 '(:= name "Jason")))
+  (query (sql-compile
+    `(:select 'name 'city 'age :from 'employee :where ,sql1))))
+
+(("Jason" "New York" 29))
+</pre>
+
+<p>
+An example of this would be getting more columns depending on the
+postgresql server versionr:
+</p>
+
+<pre class="example">
+(defun more-table-info (table-name)
+  "Returns variable amounts of information depending on the postgresql server version"
+  (let* ((version&gt;11 (postgresql-version-at-least "12.0" *database*))
+         (version&gt;10 (postgresql-version-at-least "11.0" *database*))
+         (select-query (sql-compile
+                        `(:order-by
+                          (:select (:as 'a.attnum 'ordinal-position)
+                                   (:as 'a.attname 'column-name)
+                                   (:as 'tn.typname 'data-type)
+                                   ,(if version&gt;10 'a.attidentity t)
+                                   ,(if version&gt;11 'a.attgenerated t)
+                                   :from (:as 'pg_class 'c)
+                                   (:as 'pg_attribute 'a)
+                                   (:as 'pg_type 'tn)
+                                   :where (:and
+                                           (:= 'c.relname '$1)
+                                           (:&gt; 'a.attnum 0)
+                                           (:= 'a.attrelid 'c.oid)
+                                           (:= 'a.atttypid 'tn.oid)))
+                          'a.attnum))))
+    (query select-query
+           (to-sql-name table-name))))
+</pre>
+
+<ol class="org-ol">
+<li>Approach #2 Use :raw</li>
+</ol>
+
+<p>
+To quote Marijn, the :raw keyword takes a string and inserts it straight
+into the query. I try to stay away from :raw if possible, but
+sometimes&#x2026;
+</p>
+
+<pre class="example">
+(query (:select (:raw "tmp1.name") :from (:as 'baz (:raw "tmp1"))))
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orga2f6925" class="outline-4">
+<h4 id="queries-with-user-input"><a id="orga2f6925"></a><a id="ID-db5db32e-31b5-424e-8cb8-97bb88029515"></a>Queries with User Input</h4>
+<div class="outline-text-4" id="text-queries-with-user-input">
+<p>
+In any of the above approaches to building queries you will need to
+ensure that either you have control over the inputs or they still result
+in parameterized queries. If not you have opened yourself up to an sql
+injection attack.
+</p>
+</div>
+</div>
 </div>
 </div>
 </div>

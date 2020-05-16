@@ -1,4 +1,4 @@
-h#+TITLE: S-SQL Reference Manual
+#+TITLE: S-SQL Reference Manual
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
 #+OPTIONS: ^:nil
@@ -9,6 +9,7 @@ S-SQL provides a lispy syntax for SQL queries, and knows how to convert various
 lisp types to their textual SQL representation. It takes care to do as much of
 the work as possible at compile-time, so that at runtime a string concatenation
 is all that is needed to produce the final SQL query.
+
 
 * Interface
   :PROPERTIES:
@@ -215,24 +216,22 @@ S-SQL knows the SQL equivalents to a number of Lisp types, and defines some
 extra types that can be used to denote other SQL types. The following
 table shows the correspondence:
 
-| Lisp type                      | 	SQL type         |
-| smallint	                     | smallint           |
-| integer	                      | integer            |
-| bigint	                       | bigint             |
-| (numeric X Y)                  | 	numeric(X, Y)    |
-| float, real	                  | real               |
-| double-float, double-precision | 	double-precision |
-| string, text                   | 	text             |
-| (string X)                     | 	char(X)          |
-| (varchar X)	                  | varchar(X)         |
-| boolean	                      | boolean            |
-| bytea	                        | bytea              |
-| date	                         | date               |
-| timestamp	                    | timestamp          |
-| [[file:interval-info.html][interval]]	 | interval           |
-| array                          | array              |
-|                                |                    |
-
+| Lisp type           | SQL type         | Description                                                                       |
+|---------------------+------------------+-----------------------------------------------------------------------------------|
+| integer             | smallint         | -32,768 to +32,768 2-byte storage                                                 |
+| integer             | integer          | -2147483648 to +2147483647 integer, 4-byte storage                                |
+| integer             | bigint           | -9223372036854775808 to 9223372036854775807 integer 8-byte storage                |
+| (numeric X Y)       | numeric(X, Y)    |                                                                                   |
+| float, real         | real             | single-precision floating point number, 6 decimal digit precision 4-byte storage  |
+| double-float        | double-precision | double-precision floating point number, 15 decimal digit precision 8-byte storage |
+| string, text        | text             | variable length string, no limit specified                                        |
+| string              | char(X)          | char(length), blank-padded string, fixed storage length                           |
+| string              | varchar(X)       | varchar(length), non-blank-padded string, variable storage length                 |
+| boolean             | boolean          | boolean, 'true'/'false', 1 byte                                                   |
+| bytea               | bytea            |                                                                                   |
+| date                | date             | date range: 4713 BC to 5874897 AD                                                 |
+| [[file:interval-notes.html][interval]]            | interval         |                                                                                   |
+| array               | array            |                                                                                   |
 
 ** type db-null
    :PROPERTIES:
@@ -248,11 +247,17 @@ NULL values from the database.
   :END:
 An S-SQL form is converted to a query through the following rules:
 
-- Lists starting with a keyword are operators. They are expanded as described below if they are known, otherwise they are expanded in the standard way: operator(arguments, ...)
+- Lists starting with a keyword are operators. They are expanded as
+  described below if they are known, otherwise they are expanded in the
+  standard way: operator(arguments, ...)
 
-- Quoted symbols or keywords are interpreted as names of columns or tables, and converted to strings with to-sql-name.
+- Quoted symbols or keywords are interpreted as names of columns or
+  tables, and converted to strings with to-sql-name.
 
-- Anything else is evaluated and the resulting Lisp value is converted to its textual SQL representation (or an error is raised when there is no rule for converting objects of this type). Self-quoting atoms may be converted to strings at compile-time.
+- Anything else is evaluated and the resulting Lisp value is converted
+  to its textual SQL representation (or an error is raised when there is
+  no rule for converting objects of this type). Self-quoting atoms may
+  be converted to strings at compile-time.
 
 ** sql-op :select (&rest args)
    :PROPERTIES:
@@ -1844,8 +1849,216 @@ tutorial:
 	  :segment-reject-limit 100 'ROWS))
 
 #+END_SRC
-* Dynamic Queries and Composition
+* Dynamic Queries, Composition and Parameterized Queries
   :PROPERTIES:
-  :ID:       1df403b0-bef6-40d9-983e-328a2f4c49b8
+  :CUSTOM_ID: dynamic-queries-composition-and-parameterized-queries
+  :ID:       d621dc4b-5ae1-408a-be3c-c553dcd5d9a6
   :END:
-See [[file:dynamic-queries.html][Dynamic-Queries.html]]
+
+** Overview
+   :PROPERTIES:
+   :CUSTOM_ID: overview
+   :ID:       56999390-1d72-4ae1-bea6-1f3a5eeb08f7
+   :END:
+
+The question gets asked how to build dynamic or composable queries in
+postmodern. First we need to understand the context - is the programmer
+building the query or are you taking data from a user and using that to
+build a query?
+
+*** Programmer Built Queries
+    :PROPERTIES:
+    :CUSTOM_ID: programmer-built-queries
+    :ID:       17b9050a-026f-4552-93b3-e08cb9ba5851
+    :END:
+
+If you are not using s-sql, then it becomes easy. The query macro
+assumes that everything that is not a list starting with a keyword will
+evaluate to a string. That means you can build it with a simple format
+string
+
+#+BEGIN_EXAMPLE
+  (query (format nil "select ~a from ~a where ~a"  "carrots" "garden" "length > 3"))
+#+END_EXAMPLE
+
+With s-sql, there are generally two approaches to building dynamic or
+composible queries: either use sql-compile or use :raw.
+
+For purposes of this example, we will use the following employee table:
+
+#+BEGIN_EXAMPLE
+  (query (:create-table employee ((id :type int)
+                                  (name :type text)
+                                  (salary :type numeric)
+                                  (start_date :type date)
+                                  (city :type text)
+                                  (region :type char)
+                                  (age :type int))))
+
+  (query (:insert-rows-into 'employee
+                            :columns 'id 'name 'salary 'start-date 'city 'region 'age
+                            :values '((1 "Jason" 40420 "02/01/94" "New York" "W" 29)
+                                      (2 "Robert" 14420 "01/02/95" "Vancouver" "N" 21)
+                                      (3 "Celia" 24020 "12/03/96" "Toronto" "W" 24)
+                                      (4 "Linda" 40620 "11/04/97" "New York" "N" 28)
+                                      (5 "David" 80026 "10/05/98" "Vancouver" "W" 31)
+                                      (6 "James" 70060 "09/06/99" "Toronto" "N" 26)
+                                      (7 "Alison" 90620 "08/07/00" "New York" "W" 38)
+                                      (8 "Chris" 26020 "07/08/01" "Vancouver" "N" 22)
+                                      (9 "Mary" 60020 "06/08/02" "Toronto" "W" 34))))
+#+END_EXAMPLE
+
+1. Approach #1 Use sql-compile
+
+Sql-compile does a run-time compilation of an s-sql expression. In the
+following example, we create a function that accepts a where-clause, a
+table-name, 3 columns to select and two parameters to go into the where
+clause.
+
+#+BEGIN_EXAMPLE
+  (defun toy-example (where-clause table-name col1 col2 col3 arg1 arg2)
+         (with-test-connection
+         (query (sql-compile
+                  (append `(:select ,col1 ,col2 ,col3 :from ,table-name :where)
+                         where-clause))
+                arg1 arg2)))
+
+      (toy-example '((:and (:= 'city '$1) (:> 'salary '$2))) 'employee 'id 'name 'city "Toronto" 45000)
+
+      ((6 "James" "Toronto") (9 "Mary" "Toronto"))
+#+END_EXAMPLE
+
+If we just look at what this call to sql-compile in toy-example
+generates, it would look like:
+
+#+BEGIN_EXAMPLE
+      "(SELECT id, name, city FROM employee WHERE ((city = $1) and (salary > $2)))"
+#+END_EXAMPLE
+
+This example is still a parameterized query but for security reasons you
+will need to be very careful how you generate the where clause.
+
+Another example with sql-compile and append, in this case updating a
+table and setting two columns to NULL.
+
+#+BEGIN_EXAMPLE
+      (sql-compile (append '(:update :table1 :set)
+                           (loop for a in '("col1" "col2")
+                                 collect a
+                                 collect :NULL)))
+
+      "UPDATE table1 SET E'col1' = NULL, E'col2' = NULL"
+#+END_EXAMPLE
+
+Lets think about it differently. What if we know the universe of columns
+we want to select, but want to conditionally select some of them.
+Suppose we know our targetted table has columns:
+
+#+BEGIN_EXAMPLE
+  'id 'name 'salary 'start-date 'city 'region 'age.
+#+END_EXAMPLE
+
+We may decide we always want name, city and age, but salary and
+start-date are conditional.
+
+#+BEGIN_EXAMPLE
+      (defun toy-example-2 (salaryp start-date-p)
+        (sql-compile
+         (remove nil `(:select 'name 'city 'age
+                               ,(if salaryp 'salary nil)
+                               ,(if start-date-p 'start-date nil)
+                               :from 'employee))))
+
+      (query (toy-example-2 t t))
+
+      (("Jason" "New York" 29 40420 #<SIMPLE-DATE:DATE 01-02-1994>)
+       ("Robert" "Vancouver" 21 14420 #<SIMPLE-DATE:DATE 02-01-1995>)
+       ("Celia" "Toronto" 24 24020 #<SIMPLE-DATE:DATE 03-12-1996>)
+       ("Linda" "New York" 28 40620 #<SIMPLE-DATE:DATE 04-11-1997>)
+       ("David" "Vancouver" 31 80026 #<SIMPLE-DATE:DATE 05-10-1998>)
+       ("James" "Toronto" 26 70060 #<SIMPLE-DATE:DATE 06-09-1999>)
+       ("Alison" "New York" 38 90620 #<SIMPLE-DATE:DATE 07-08-2000>)
+       ("Chris" "Vancouver" 22 26020 #<SIMPLE-DATE:DATE 08-07-2001>)
+       ("Mary" "Toronto" 34 60020 #<SIMPLE-DATE:DATE 08-06-2002>))
+
+      (query (toy-example-2 t nil))
+
+      (("Jason" "New York" 29 40420) ("Robert" "Vancouver" 21 14420)
+       ("Celia" "Toronto" 24 24020) ("Linda" "New York" 28 40620)
+       ("David" "Vancouver" 31 80026) ("James" "Toronto" 26 70060)
+       ("Alison" "New York" 38 90620) ("Chris" "Vancouver" 22 26020)
+       ("Mary" "Toronto" 34 60020))
+#+END_EXAMPLE
+
+You could skip the (remove nil... portion and substitute t for nil. E.g.
+
+#+BEGIN_EXAMPLE
+      (defun toy-example-2 (salaryp start-date-p)
+        (sql-compile
+         `(:select 'name 'city 'age
+                   ,(if salaryp 'salary t)
+                   ,(if start-date-p 'start-date t)
+                   :from 'employee)))
+#+END_EXAMPLE
+
+But I prefer to remove those segments completely from the query.
+
+Following on this same thread of thought, you can define a portion of
+the sql in a let clause:
+
+#+BEGIN_EXAMPLE
+      (let ((sql1 '(:= name "Jason")))
+        (query (sql-compile
+          `(:select 'name 'city 'age :from 'employee :where ,sql1))))
+
+      (("Jason" "New York" 29))
+#+END_EXAMPLE
+
+An example of this would be getting more columns depending on the
+postgresql server versionr:
+
+#+BEGIN_EXAMPLE
+      (defun more-table-info (table-name)
+        "Returns variable amounts of information depending on the postgresql server version"
+        (let* ((version>11 (postgresql-version-at-least "12.0" *database*))
+               (version>10 (postgresql-version-at-least "11.0" *database*))
+               (select-query (sql-compile
+                              `(:order-by
+                                (:select (:as 'a.attnum 'ordinal-position)
+                                         (:as 'a.attname 'column-name)
+                                         (:as 'tn.typname 'data-type)
+                                         ,(if version>10 'a.attidentity t)
+                                         ,(if version>11 'a.attgenerated t)
+                                         :from (:as 'pg_class 'c)
+                                         (:as 'pg_attribute 'a)
+                                         (:as 'pg_type 'tn)
+                                         :where (:and
+                                                 (:= 'c.relname '$1)
+                                                 (:> 'a.attnum 0)
+                                                 (:= 'a.attrelid 'c.oid)
+                                                 (:= 'a.atttypid 'tn.oid)))
+                                'a.attnum))))
+          (query select-query
+                 (to-sql-name table-name))))
+#+END_EXAMPLE
+
+2. Approach #2 Use :raw
+
+To quote Marijn, the :raw keyword takes a string and inserts it straight
+into the query. I try to stay away from :raw if possible, but
+sometimes...
+
+#+BEGIN_EXAMPLE
+      (query (:select (:raw "tmp1.name") :from (:as 'baz (:raw "tmp1"))))
+#+END_EXAMPLE
+
+*** Queries with User Input
+    :PROPERTIES:
+    :CUSTOM_ID: queries-with-user-input
+    :ID:       db5db32e-31b5-424e-8cb8-97bb88029515
+    :END:
+
+In any of the above approaches to building queries you will need to
+ensure that either you have control over the inputs or they still result
+in parameterized queries. If not you have opened yourself up to an sql
+injection attack.
