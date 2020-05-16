@@ -460,7 +460,6 @@ The library is not likely to work for PostgreSQL versions older than 8.4. Other 
 ### Reserved Words
 It is highly suggested that you do not use words that are reserved by Postgresql as identifiers (e.g. table names, columns). The reserved words are:
 
-
 "all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric"
 "authorization" "between" "binary" "both" "case" "cast" "check" "collate"
 "column" "concurrently" "constraint" "create" "cross" "current-catalog"
