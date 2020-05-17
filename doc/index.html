@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-05-16 Sat 15:29 -->
+<!-- 2020-05-17 Sun 14:09 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern</title>
@@ -233,27 +233,27 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgb96113c">Dependencies</a></li>
-<li><a href="#orgcd17f30">License</a></li>
-<li><a href="#org316df0e">Download and installation</a></li>
-<li><a href="#org6eb492b">Quickstart</a></li>
-<li><a href="#orgb35f705">Authentication</a></li>
-<li><a href="#org83fd456">Running tests</a></li>
-<li><a href="#orgcb91e64">Reference</a></li>
-<li><a href="#orgb03e6c6">Data Types</a>
+<li><a href="#orgb42f71a">Dependencies</a></li>
+<li><a href="#org60d5454">License</a></li>
+<li><a href="#orgeb33b8b">Download and installation</a></li>
+<li><a href="#org4574250">Quickstart</a></li>
+<li><a href="#org66080e3">Authentication</a></li>
+<li><a href="#org6064fcd">Running tests</a></li>
+<li><a href="#org3da0672">Reference</a></li>
+<li><a href="#org85c8068">Data Types</a>
 <ul>
-<li><a href="#org3cd1b8e">Data Types</a></li>
+<li><a href="#orga72bb2e">Data Types</a></li>
 </ul>
 </li>
-<li><a href="#org1248785">Caveats and to-dos</a>
+<li><a href="#org59edc1b">Caveats and to-dos</a>
 <ul>
-<li><a href="#orgc05642b">Timezones and Simple-Date and Local-Time</a></li>
-<li><a href="#org44d4dc9">Portability</a></li>
-<li><a href="#orga340265">Reserved Words</a></li>
-<li><a href="#orgf4c2a06">Things that should be implemented</a></li>
+<li><a href="#org57eeb04">Timezones and Simple-Date and Local-Time</a></li>
+<li><a href="#org12f3c94">Portability</a></li>
+<li><a href="#orgcde2ab2">Reserved Words</a></li>
+<li><a href="#org112f920">Things that should be implemented</a></li>
 </ul>
 </li>
-<li><a href="#org6ada092">Resources</a></li>
+<li><a href="#org1e5d65d">Resources</a></li>
 </ul>
 </div>
 </nav>
@@ -280,9 +280,9 @@ me. Your mileage may vary.
 </p>
 
 
-<div id="outline-container-orgb96113c" class="outline-2">
-<h2 id="orgb96113c"><a id="ID-216c43d0-57ff-4ae3-a302-6d04a3d79665"></a>Dependencies</h2>
-<div class="outline-text-2" id="text-orgb96113c">
+<div id="outline-container-orgb42f71a" class="outline-2">
+<h2 id="orgb42f71a"><a id="ID-216c43d0-57ff-4ae3-a302-6d04a3d79665"></a>Dependencies</h2>
+<div class="outline-text-2" id="text-orgb42f71a">
 <p>
 The library depends on <a href="http://quickdocs.org/usocket/">usocket</a> (except on <a href="http://sbcl.org/">SBCL</a> and <a href="https://franz.com/products/allegrocl/">ACL</a>, where the built-in socket library is used), <a href="https://github.com/pmai/md5.git">md5</a>, <a href="https://github.com/pcostanza/closer-mop.git">closer-mop</a>, <a href="https://github.com/sionescu/bordeaux-threads.git">bordeaux-threads</a> if you want
 thread-safe connection pools, and <a href="https://github.com/cl-plus-ssl/cl-plus-ssl.git">CL+SSL</a> when SSL connections are needed.
@@ -318,9 +318,9 @@ possible of the work at compile time. Finally,
 </div>
 </div>
 
-<div id="outline-container-orgcd17f30" class="outline-2">
-<h2 id="orgcd17f30"><a id="ID-8ba6488f-4b3c-47f7-8a50-844363c5f484"></a>License</h2>
-<div class="outline-text-2" id="text-orgcd17f30">
+<div id="outline-container-org60d5454" class="outline-2">
+<h2 id="org60d5454"><a id="ID-8ba6488f-4b3c-47f7-8a50-844363c5f484"></a>License</h2>
+<div class="outline-text-2" id="text-org60d5454">
 <p>
 Postmodern is released under a zlib-style license. Which approximately
 means you can use the code in whatever way you like, except for passing
@@ -335,9 +335,9 @@ Dimitri Fontaine and are released under a BSD-3 license.
 </div>
 </div>
 
-<div id="outline-container-org316df0e" class="outline-2">
-<h2 id="org316df0e"><a id="ID-d4cca0ee-ff7f-4530-9be7-e9b3de62bdb4"></a>Download and installation</h2>
-<div class="outline-text-2" id="text-org316df0e">
+<div id="outline-container-orgeb33b8b" class="outline-2">
+<h2 id="orgeb33b8b"><a id="ID-d4cca0ee-ff7f-4530-9be7-e9b3de62bdb4"></a>Download and installation</h2>
+<div class="outline-text-2" id="text-orgeb33b8b">
 <p>
 We suggest using <a href="https://quicklisp.org">quicklisp.org</a> for installation.
 </p>
@@ -352,9 +352,9 @@ A git repository with the most recent changes can be viewed or checked out at:
 </div>
 </div>
 
-<div id="outline-container-org6eb492b" class="outline-2">
-<h2 id="org6eb492b"><a id="ID-f55510fb-3715-4cdd-9e37-4ab0e968e72d"></a>Quickstart</h2>
-<div class="outline-text-2" id="text-org6eb492b">
+<div id="outline-container-org4574250" class="outline-2">
+<h2 id="org4574250"><a id="ID-f55510fb-3715-4cdd-9e37-4ab0e968e72d"></a>Quickstart</h2>
+<div class="outline-text-2" id="text-org4574250">
 <p>
 This quickstart is intended to give you a feel of the way coding with
 Postmodern works. Further details about the workings of the library
@@ -670,9 +670,9 @@ faster, especially for complex queries.
 </div>
 </div>
 
-<div id="outline-container-orgb35f705" class="outline-2">
-<h2 id="orgb35f705"><a id="ID-5ad46584-6887-4866-9c40-633768c0d39a"></a>Authentication</h2>
-<div class="outline-text-2" id="text-orgb35f705">
+<div id="outline-container-org66080e3" class="outline-2">
+<h2 id="org66080e3"><a id="ID-5ad46584-6887-4866-9c40-633768c0d39a"></a>Authentication</h2>
+<div class="outline-text-2" id="text-org66080e3">
 <p>
 Postmodern can use either md5 or scram-sha-256 authentication. Scram-sha-256
 authentication is obviously more secure, but slower than md5, so take that into
@@ -687,9 +687,9 @@ is a authentication method that you believe should be considered.
 </div>
 </div>
 
-<div id="outline-container-org83fd456" class="outline-2">
-<h2 id="org83fd456"><a id="ID-bd354217-9828-444b-afbf-41e9f0d522ca"></a>Running tests</h2>
-<div class="outline-text-2" id="text-org83fd456">
+<div id="outline-container-org6064fcd" class="outline-2">
+<h2 id="org6064fcd"><a id="ID-bd354217-9828-444b-afbf-41e9f0d522ca"></a>Running tests</h2>
+<div class="outline-text-2" id="text-org6064fcd">
 <p>
 Postmodern uses <a href="https://github.com/sionescu/fiveam">FiveAM</a> for
 testing.  The different component systems of Postmodern have tests
@@ -783,9 +783,9 @@ provided using environment variables:
 </div>
 </div>
 
-<div id="outline-container-orgcb91e64" class="outline-2">
-<h2 id="orgcb91e64"><a id="ID-27b39236-15ee-42c3-958a-3c9c903c4567"></a>Reference</h2>
-<div class="outline-text-2" id="text-orgcb91e64">
+<div id="outline-container-org3da0672" class="outline-2">
+<h2 id="org3da0672"><a id="ID-27b39236-15ee-42c3-958a-3c9c903c4567"></a>Reference</h2>
+<div class="outline-text-2" id="text-org3da0672">
 <p>
 The reference manuals for the different components of Postmodern are kept
 in separate files. For using the library in the most straightforward way,
@@ -802,8 +802,6 @@ if you just want a low-level library for talking to a PostgreSQL server.
 
 <li><a href="array-notes.html">Array-Notes</a></li>
 
-<li><a href="execute-file.html">Executing an file of sql statements</a></li>
-
 <li><a href="simple-date.html">Simple-date</a></li>
 
 <li><a href="cl-postgres.html">CL-postgres</a></li>
@@ -812,13 +810,13 @@ if you just want a low-level library for talking to a PostgreSQL server.
 </div>
 
 
-<div id="outline-container-orgb03e6c6" class="outline-2">
-<h2 id="orgb03e6c6"><a id="ID-d089d05b-4485-4fb5-9097-5a66492bc470"></a>Data Types</h2>
-<div class="outline-text-2" id="text-orgb03e6c6">
+<div id="outline-container-org85c8068" class="outline-2">
+<h2 id="org85c8068"><a id="ID-d089d05b-4485-4fb5-9097-5a66492bc470"></a>Data Types</h2>
+<div class="outline-text-2" id="text-org85c8068">
 </div>
-<div id="outline-container-org3cd1b8e" class="outline-3">
-<h3 id="org3cd1b8e"><a id="ID-deae4656-1b87-4518-9718-3b3e8c35f6c5"></a>Data Types</h3>
-<div class="outline-text-3" id="text-org3cd1b8e">
+<div id="outline-container-orga72bb2e" class="outline-3">
+<h3 id="orga72bb2e"><a id="ID-deae4656-1b87-4518-9718-3b3e8c35f6c5"></a>Data Types</h3>
+<div class="outline-text-3" id="text-orga72bb2e">
 <p>
 For a short comparison of lisp and Postgresql data types (date and time datatypes are described in the next section)
 </p>
@@ -1114,13 +1112,13 @@ For a short comparison of lisp and Postgresql data types (date and time datatype
 </div>
 </div>
 
-<div id="outline-container-org1248785" class="outline-2">
-<h2 id="org1248785"><a id="ID-157ea05f-4c49-4e49-8cf9-a3df4bf16b09"></a>Caveats and to-dos</h2>
-<div class="outline-text-2" id="text-org1248785">
+<div id="outline-container-org59edc1b" class="outline-2">
+<h2 id="org59edc1b"><a id="ID-157ea05f-4c49-4e49-8cf9-a3df4bf16b09"></a>Caveats and to-dos</h2>
+<div class="outline-text-2" id="text-org59edc1b">
 </div>
-<div id="outline-container-orgc05642b" class="outline-3">
-<h3 id="orgc05642b"><a id="ID-8ff631c8-994f-4658-bbc4-779afc80bdf2"></a>Timezones and Simple-Date and Local-Time</h3>
-<div class="outline-text-3" id="text-orgc05642b">
+<div id="outline-container-org57eeb04" class="outline-3">
+<h3 id="org57eeb04"><a id="ID-8ff631c8-994f-4658-bbc4-779afc80bdf2"></a>Timezones and Simple-Date and Local-Time</h3>
+<div class="outline-text-3" id="text-org57eeb04">
 <p>
 It is important to understand how postgresql (not postmodern) handles
 timestamps and timestamps with time zones. Postgresql keeps everything
@@ -1277,8 +1275,11 @@ To get back to the default cl-postgres reader:
 </pre>
 </div>
 <p>
-However <a href="http://marijnhaverbeke.nl/postmodern/simple-date.html">Simple-date</a> has no concept of time zones. Many users use another library, <a href="https://github.com/dlowe-net/local-time">local-time</a>,
-which solves the same problem as simple-date, but does understand time zones.
+However <a href="http://marijnhaverbeke.nl/postmodern/simple-date.html">Simple-date</a> has no concept of time zones. Many users use another library,
+<a href="https://github.com/dlowe-net/local-time">local-time</a>, which solves the same problem as simple-date, but does understand
+time zones. One thing to remember is that PostgreSQL doesn't store timezone
+information when using `timestamp with time zone`. Time zone information only
+used to convert it to proper UTC timestamp.
 </p>
 
 <p>
@@ -1349,9 +1350,9 @@ the same sample data looks like:
 </div>
 
 
-<div id="outline-container-org44d4dc9" class="outline-3">
-<h3 id="org44d4dc9"><a id="ID-769a0e88-de54-4356-a474-72708accbafb"></a>Portability</h3>
-<div class="outline-text-3" id="text-org44d4dc9">
+<div id="outline-container-org12f3c94" class="outline-3">
+<h3 id="org12f3c94"><a id="ID-769a0e88-de54-4356-a474-72708accbafb"></a>Portability</h3>
+<div class="outline-text-3" id="text-org12f3c94">
 <p>
 The Lisp code in Postmodern is theoretically portable across implementations,
 and seems to work on all major ones as well as some minor ones such as Genera.
@@ -1376,9 +1377,9 @@ were only introduced in those newer versions.
 </div>
 </div>
 
-<div id="outline-container-orga340265" class="outline-3">
-<h3 id="orga340265"><a id="ID-671c5e6a-f548-4791-86a5-575b3fcc0aa5"></a>Reserved Words</h3>
-<div class="outline-text-3" id="text-orga340265">
+<div id="outline-container-orgcde2ab2" class="outline-3">
+<h3 id="orgcde2ab2"><a id="ID-671c5e6a-f548-4791-86a5-575b3fcc0aa5"></a>Reserved Words</h3>
+<div class="outline-text-3" id="text-orgcde2ab2">
 <p>
 It is highly suggested that you do not use words that are reserved by Postgresql
 and the sql standard as identifiers (e.g. table names, columns). The reserved
@@ -1403,9 +1404,9 @@ words are:
 </div>
 </div>
 
-<div id="outline-container-orgf4c2a06" class="outline-3">
-<h3 id="orgf4c2a06"><a id="ID-50d91126-93f1-4f50-96ad-bd63a7278866"></a>Things that should be implemented</h3>
-<div class="outline-text-3" id="text-orgf4c2a06">
+<div id="outline-container-org112f920" class="outline-3">
+<h3 id="org112f920"><a id="ID-50d91126-93f1-4f50-96ad-bd63a7278866"></a>Things that should be implemented</h3>
+<div class="outline-text-3" id="text-org112f920">
 <p>
 Postmodern is under active development so Issues and feature requests should
 be flagged on <a href="https://github.com/marijnh/Postmodern">Postmodern's site on github</a>.
@@ -1419,9 +1420,9 @@ file.
 </div>
 </div>
 
-<div id="outline-container-org6ada092" class="outline-2">
-<h2 id="org6ada092"><a id="ID-eb969965-5221-48f8-bb79-5a93fe451454"></a>Resources</h2>
-<div class="outline-text-2" id="text-org6ada092">
+<div id="outline-container-org1e5d65d" class="outline-2">
+<h2 id="org1e5d65d"><a id="ID-eb969965-5221-48f8-bb79-5a93fe451454"></a>Resources</h2>
+<div class="outline-text-2" id="text-org1e5d65d">
 <ul class="org-ul">
 <li><a href="https://mailman.common-lisp.net/listinfo/postmodern-devel">Mailing List</a></li>
 <li><a href="https://sites.google.com/site/sabraonthehill/postmodern-examples">A collection of Postmodern examples</a></li>

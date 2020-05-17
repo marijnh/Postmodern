@@ -20,7 +20,7 @@
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :homepage  "https://github.com/marijnh/Postmodern"
   :license "zlib"
-  :version "1.30"
+  :version "1.31"
   :depends-on ("alexandria"
                "cl-postgres"
                "s-sql"

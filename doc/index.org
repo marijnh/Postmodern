@@ -406,8 +406,6 @@ if you just want a low-level library for talking to a PostgreSQL server.
 
 - [[file:array-notes.html][Array-Notes]]
 
-- [[file:execute-file.html][Executing an file of sql statements]]
-
 - [[file:simple-date.html][Simple-date]]
 
 - [[file:cl-postgres.html][CL-postgres]]
