@@ -319,10 +319,10 @@ provided using environment variables:
 ---
 The reference manuals for the different components of Postmodern are kept in separate files. For using the library in the most straightforward way, you only really need to read the Postmodern reference and glance over the S-SQL reference. The simple-date reference explains the time-related data types included in Postmodern, and the CL-postgres reference might be useful if you just want a low-level library for talking to a PostgreSQL server.
 
-- [Postmodern](/doc/postmodern.html)
-- [S-SQL](/doc/s-sql.html)
-- [Simple-date](/doc/simple-date.html)
-- [CL-postgres](/doc/cl-postgres.html)
+- [Postmodern](https://marijnhaverbeke.nl/postmodern/postmodern.html)
+- [S-SQL](https://marijnhaverbeke.nl/postmodern/s-sql.html)
+- [Simple-date](https://marijnhaverbeke.nl/postmodern/simple-date.html)
+- [CL-postgres](https://marijnhaverbeke.nl/postmodern/cl-postgres.html)
 
 ## Data Types, Caveats and to-dos
 ---
@@ -366,8 +366,8 @@ For a short comparison of lisp and Postgresql data types (date and time datatype
 | box              | ((1.0d0 1.0d0) (0.0d0 0.0d0))                                               | CONS                                 |
 | polygon          | ((21,0),(2,4))                                                              | (VECTOR CHARACTER 64)                |
 | line             | {2,-1,0}                                                                    | (VECTOR CHARACTER 64)                |
-| double_precision | 2.38921379231d8                                                             | DOUBLE-FLOAT                         |
-| double_float     | 2.3892137923231d8                                                           | DOUBLE-FLOAT                         |
+| double\_precision | 2.38921379231d8                                                             | DOUBLE-FLOAT                         |
+| double\_float     | 2.3892137923231d8                                                           | DOUBLE-FLOAT                         |
 | circle           | <(0,0),2>                                                                   | (VECTOR CHARACTER 64)                |
 | cidr             | 100.24.10.0/24                                                              | (VECTOR CHARACTER 64)                |
 | inet             | 100.24.10.0/24                                                              | (VECTOR CHARACTER 64)                |
@@ -375,11 +375,15 @@ For a short comparison of lisp and Postgresql data types (date and time datatype
 | bit              | #*1                                                                         | (SIMPLE-BIT-VECTOR 1)                |
 | int4range        | [11,24)                                                                     | (VECTOR CHARACTER 64)                |
 | uuid             | 40e6215d-b5c6-4896-987c-f30f3678f608                                        | (VECTOR CHARACTER 64)                |
-| text_array       | #(text one text two text three)                                             | (SIMPLE-VECTOR 3)                    |
-| integer_array    | #(3 5 7 8)                                                                  | (SIMPLE-VECTOR 4)                    |
+| text\_array       | #(text one text two text three)                                             | (SIMPLE-VECTOR 3)                    |
+| integer\_array    | #(3 5 7 8)                                                                  | (SIMPLE-VECTOR 4)                    |
 | bytea            | #(222 173 190 239)                                                          | (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (4)) |
 | text             | Lorem ipsum dolor sit amet, consectetur adipiscing elit                     | (VECTOR CHARACTER 64)                |
-| enum_mood        | happy (Note: enum_mood was defined as 'sad','ok' or 'happy')                | (VECTOR CHARACTER 64)                |
+| enum\_mood        | happy (Note: enum_mood was defined as 'sad','ok' or 'happy')                | (VECTOR CHARACTER 64)                |
+
+---
+### Arrays
+See [array-notes.html](https://marijnhaverbeke.nl/postmodern/array-notes.html)
 
 ---
 ### Timezones
@@ -391,10 +395,10 @@ from postgresql will look like:
 | PG Type                       | Return Value                         | Lisp Type             |
 | ----------------------------- | --------------------------------     | --------------------  |
 | date                          | #<DATE 16-05-2020>                   | DATE                  |
-| time_wo_tz                    | #<TIME-OF-DAY 09:47:09.926531>       | TIME-OF-DAY           |
-| time_w_tz                     | 09:47:16.510459-04                   | (VECTOR CHARACTER 64) |
-| timestamp_wo_tz               | #<TIMESTAMP 16-05-2020T09:47:33,315> | TIMESTAMP             |
-| timestamp_w_tz                | #<TIMESTAMP 16-05-2020T13:47:27,855> | TIMESTAMP             |
+| time\_without\_timezone       | #<TIME-OF-DAY 09:47:09.926531>       | TIME-OF-DAY           |
+| time\_with\_timezone          | 09:47:16.510459-04                   | (VECTOR CHARACTER 64) |
+| timestamp\_without\_timezone  | #<TIMESTAMP 16-05-2020T09:47:33,315> | TIMESTAMP             |
+| timestamp\_with\_timezone     | #<TIMESTAMP 16-05-2020T13:47:27,855> | TIMESTAMP             |
 
 
 The Simple-date add-on library (not enabled by default)
@@ -418,10 +422,10 @@ With simple date loaded, the same data will look like this:
 | PG Type                    | Return Value                         | Lisp Type             |
 | -------------------------- | --------------------------------     | --------------------  |
 | date                       | #<DATE 16-05-2020>                   | DATE                  |
-| time_without_timezone      | #<TIME-OF-DAY 09:47:09.926531>       | TIME-OF-DAY           |
-| time_with_timezone         | 09:47:16.510459-04                   | (VECTOR CHARACTER 64) |
-| timestamp_without_timezone | #<TIMESTAMP 16-05-2020T09:47:33,315> | TIMESTAMP             |
-| timestamp_with_timezone    | #<TIMESTAMP 16-05-2020T13:47:27,855> | TIMESTAMP             |
+| time\_without\_timezone      | #<TIME-OF-DAY 09:47:09.926531>       | TIME-OF-DAY           |
+| time\_with\_timezone         | 09:47:16.510459-04                   | (VECTOR CHARACTER 64) |
+| timestamp\_without\_timezone | #<TIMESTAMP 16-05-2020T09:47:33,315> | TIMESTAMP             |
+| timestamp\_with\_timezone    | #<TIMESTAMP 16-05-2020T13:47:27,855> | TIMESTAMP             |
 
 To get back to the default cl-postgres reader:
 
