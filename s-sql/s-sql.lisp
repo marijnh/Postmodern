@@ -535,6 +535,10 @@ string."
                                  :like :ilike :->> :|#>| :|#>>|
                         :intersect (:intersect-all "intersect all")
                         :except (:except-all "except all"))
+
+;; Examples of the use of these operators is:
+;; (query (:select 'id 'text :from 'text-search :where (:~ 'text "sushi")))
+
 ;; PostGIS operators
 (register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :|@| :|\|&>|
                         :|\|>>| :~= :|@>| :|@<|)

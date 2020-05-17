@@ -328,6 +328,42 @@ gets foobars by id:
 
 Regular expression matching operators. The exclamation mark means 'does not match',
 the asterisk makes the match case-insensitive.
+#+BEGIN_SRC lisp
+(query (:select (:regexp_match "foobarbequebaz" "bar.*que")) :single)
+
+#("barbeque")
+
+(query (:select (:regexp_match "foobarbequebaz" "bar.~que")) :single)
+
+:NULL
+
+(query (:select (:~ "foobarbequebaz" "bar.*que") ) :single)
+
+t
+
+(query (:select (:!~ "foobarbequebaz" "bar.*que") ) :single)
+
+nil
+
+(query (:select (:~ "foobarbequebaz" "barque") ) :single)
+
+nil
+
+(query (:select (:~ "foobarbequebaz" "barbeque") ) :single)
+
+t
+
+(query (:select (:~ "foobarBequebaz" "barbeque") ) :single)
+
+nil
+
+(query (:select (:~* "foobarBequebaz" "barbeque") ) :single)
+
+t
+
+(query (:select 'id 'text :from 'text-search :where (:~ 'text "sushi")))
+
+#+END_SRC
 
 ** sql-op :like, :ilike (string pattern)
    :PROPERTIES:

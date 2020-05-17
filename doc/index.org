@@ -539,8 +539,11 @@ To get back to the default cl-postgres reader:
         (cl-postgres:copy-sql-readtable
           cl-postgres::*default-sql-readtable*))
 #+END_SRC
-However [[http://marijnhaverbeke.nl/postmodern/simple-date.html][Simple-date]] has no concept of time zones. Many users use another library, [[https://github.com/dlowe-net/local-time][local-time]],
-which solves the same problem as simple-date, but does understand time zones.
+However [[http://marijnhaverbeke.nl/postmodern/simple-date.html][Simple-date]] has no concept of time zones. Many users use another library,
+[[https://github.com/dlowe-net/local-time][local-time]], which solves the same problem as simple-date, but does understand
+time zones. One thing to remember is that PostgreSQL doesn't store timezone
+information when using `timestamp with time zone`. Time zone information only
+used to convert it to proper UTC timestamp.
 
 For those who want to use local-time, to enable the local-time reader:
 #+BEGIN_SRC lisp
