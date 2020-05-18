@@ -243,6 +243,7 @@ not actually indicate the existence of record in the database.
 
 This method returns two values: the DAO object and a boolean (T if the object
 was inserted, NIL if it was updated)."))
+
 (defgeneric get-dao (type &rest args)
   (:method ((class-name symbol) &rest args)
     (let ((class (find-class class-name)))
