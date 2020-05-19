@@ -607,45 +607,44 @@ fully qualified table name e.g. schema-name.table-name."
   "Returns a list of sublists of foreign key info in the form of
    '((constraint-name local-table local-table-column
      foreign-table-name foreign-column-name))"
-  (setf table (to-sql-name table))
-  (setf schema (to-sql-name schema))
-   (query
-    (:select
-     (:as 'conname 'constraint-name)
-     table
-     (:as 'att2.attname 'local-column)
-     (:as 'cl.relname 'foreign-table-name)
-     (:as 'att.attname 'foreign-table-column)
-     :from
-     (:as (:select
-           (:as (:unnest 'con1.conkey) 'parent)
-           (:as (:unnest 'con1.confkey) 'child)
-           'con1.confrelid
-           'con1.conrelid
-           'con1.conname
-           :from
-           (:as 'pg-class 'cl)
-           :inner-join (:as 'pg-namespace 'ns)
-           :on (:= 'cl.relnamespace 'ns.oid)
-           :inner-join (:as 'pg-constraint 'con1)
-           :on (:= 'con1.conrelid 'cl.oid)
-           :where
-           (:and (:= 'cl.relname '$1)
-                 (:= 'ns.nspname '$2)
-                 (:= 'con1.contype "f")))
-          'con)
-     :inner-join (:as 'pg-attribute 'att)
-     :on
-     (:and (:= 'att.attrelid 'con.confrelid)
-           (:= 'att.attnum 'con.child))
-     :inner-join (:as 'pg-class 'cl)
-     :on
-     (:= 'cl.oid 'con.confrelid)
-     :inner-join (:as 'pg-attribute 'att2)
-     :on
-     (:and (:= 'att2.attrelid 'con.conrelid)
-           (:= 'att2.attnum 'con.parent)))
-    table schema))
+  (setf table (s-sql:to-sql-name table))
+  (query
+   (:select
+    (:as 'conname 'constraint-name)
+    table
+    (:as 'att2.attname 'local-column)
+    (:as 'cl.relname 'foreign-table-name)
+    (:as 'att.attname 'foreign-table-column)
+    :from
+    (:as (:select
+          (:as (:unnest 'con1.conkey) 'parent)
+          (:as (:unnest 'con1.confkey) 'child)
+          'con1.confrelid
+          'con1.conrelid
+          'con1.conname
+          :from
+          (:as 'pg-class 'cl)
+          :inner-join (:as 'pg-namespace 'ns)
+          :on (:= 'cl.relnamespace 'ns.oid)
+          :inner-join (:as 'pg-constraint 'con1)
+          :on (:= 'con1.conrelid 'cl.oid)
+          :where
+          (:and (:= 'cl.relname '$1)
+                (:= 'ns.nspname '$2)
+                (:= 'con1.contype "f")))
+         'con)
+    :inner-join (:as 'pg-attribute 'att)
+    :on
+    (:and (:= 'att.attrelid 'con.confrelid)
+          (:= 'att.attnum 'con.child))
+    :inner-join (:as 'pg-class 'cl)
+    :on
+    (:= 'cl.oid 'con.confrelid)
+    :inner-join (:as 'pg-attribute 'att2)
+    :on
+    (:and (:= 'att2.attrelid 'con.conrelid)
+          (:= 'att2.attnum 'con.parent)))
+   table schema))
 
 ;;;; Constraints
 (defun list-unique-or-primary-constraints (table-name &optional (strings-p))
