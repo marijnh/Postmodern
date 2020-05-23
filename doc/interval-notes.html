@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<!-- 2018-08-23 Thu 14:55 -->
-<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- 2020-05-23 Sat 07:24 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Interval Notes</title>
-<meta name="generator" content="Org mode" />
+<meta name="generator" content="Org mode">
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
   .title  { text-align: center;
@@ -180,6 +178,7 @@
   /*]]>*/-->
 </style>
 <link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -229,36 +228,37 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
+<header>
 <h1 class="title">Interval Notes</h1>
-<div id="table-of-contents">
+</header><nav id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org3560efa">Setting the Baseline Default Reader</a></li>
-<li><a href="#org898d323">Universal Time and Timestamp Libraries</a></li>
-<li><a href="#org80415b8">Intervals - Introduction and Use Cases</a>
+<li><a href="#orgcc9f769">Setting the Baseline Default Reader</a></li>
+<li><a href="#orgb8cbed0">Universal Time and Timestamp Libraries</a></li>
+<li><a href="#org0334c03">Intervals - Introduction and Use Cases</a>
 <ul>
-<li><a href="#org012c0f4">Sample Interval</a></li>
-<li><a href="#org90f22cc">Allowable Formats of the parameter to Interval</a>
+<li><a href="#org369a5b2">Sample Interval</a></li>
+<li><a href="#org4de82ba">Allowable Formats of the parameter to Interval</a>
 <ul>
-<li><a href="#orgd205838">SQL Standard Format</a></li>
-<li><a href="#org2988b17">Traditional Postgresql Format</a></li>
-<li><a href="#orgc7ca9c8">ISO 8601 Format with Designators</a></li>
-<li><a href="#orga6f85aa">ISO 8601 Alternative Format</a></li>
+<li><a href="#org82d3839">SQL Standard Format</a></li>
+<li><a href="#org38d3291">Traditional Postgresql Format</a></li>
+<li><a href="#org69bf820">ISO 8601 Format with Designators</a></li>
+<li><a href="#orgd31c519">ISO 8601 Alternative Format</a></li>
 </ul>
 </li>
-<li><a href="#orgb303133">Formatting Intervals to String</a></li>
-<li><a href="#orga393752">Math with Intervals</a></li>
-<li><a href="#org1556b81">Extracting Subparts</a></li>
-<li><a href="#orgc18ee0e">Justify Days and Hours</a></li>
+<li><a href="#org1b037a5">Formatting Intervals to String</a></li>
+<li><a href="#orgf0d6e72">Math with Intervals</a></li>
+<li><a href="#orgaa0d216">Extracting Subparts</a></li>
+<li><a href="#orgf3f8ad0">Justify Days and Hours</a></li>
 </ul>
 </li>
 </ul>
 </div>
-</div>
-<div id="outline-container-org3560efa" class="outline-2">
-<h2 id="org3560efa">Setting the Baseline Default Reader</h2>
-<div class="outline-text-2" id="text-org3560efa">
+</nav>
+<div id="outline-container-orgcc9f769" class="outline-2">
+<h2 id="orgcc9f769"><a id="ID-c6baef62-f431-451c-b297-00db0e48b69f"></a>Setting the Baseline Default Reader</h2>
+<div class="outline-text-2" id="text-orgcc9f769">
 <p>
 Just to ensure that we have the same baseline readtable, we are going
 to make sure that the cl-postgres:*sql-readtable* is set to the default.
@@ -271,15 +271,15 @@ to make sure that the cl-postgres:*sql-readtable* is set to the default.
 </div>
 </div>
 </div>
-<div id="outline-container-org898d323" class="outline-2">
-<h2 id="org898d323">Universal Time and Timestamp Libraries</h2>
-<div class="outline-text-2" id="text-org898d323">
+<div id="outline-container-orgb8cbed0" class="outline-2">
+<h2 id="orgb8cbed0"><a id="ID-49a51426-a091-44f0-8248-bb1169e1f12a"></a>Universal Time and Timestamp Libraries</h2>
+<div class="outline-text-2" id="text-orgb8cbed0">
 <p>
-Absent anthing else, a query to postgresql through postmodern will return a
+Absent anything else, a query to postgresql through postmodern will return a
 universal time. E.g.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:current-timestamp)) :single)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:current-timestamp</span>)) <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
 3743806998
 </pre>
@@ -292,8 +292,8 @@ from both the system and from postgresql.
 
 <div class="org-src-container">
 <pre class="src src-lisp">(local-time:universal-to-timestamp
-  (query (:select (:current-timestamp))
-    :single))
+  (query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:current-timestamp</span>))
+    <span style="color: #98fb98; font-weight: bold;">:single</span>))
 
 @2018-08-20T19:23:34.000000-07:00
 
@@ -306,8 +306,8 @@ from both the system and from postgresql.
 #&lt;SIMPLE-DATE:TIMESTAMP 21-08-2018T02:26:00&gt;
 
 (simple-date:universal-time-to-timestamp
-  (query (:select (:current-timestamp))
-    :single))
+  (query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:current-timestamp</span>))
+    <span style="color: #98fb98; font-weight: bold;">:single</span>))
 
 #&lt;SIMPLE-DATE:TIMESTAMP 21-08-2018T02:26:18&gt;
 </pre>
@@ -324,15 +324,15 @@ clients are and what do you want to be tracking or calculating to.
 </div>
 </div>
 
-<div id="outline-container-org80415b8" class="outline-2">
-<h2 id="org80415b8">Intervals - Introduction and Use Cases</h2>
-<div class="outline-text-2" id="text-org80415b8">
+<div id="outline-container-org0334c03" class="outline-2">
+<h2 id="org0334c03"><a id="ID-7b52f41e-83c3-4f27-859f-b2bb80a53c88"></a>Intervals - Introduction and Use Cases</h2>
+<div class="outline-text-2" id="text-org0334c03">
 <p>
 For a simple tutorial on the Postgresql interval data type, there are
 several online articles, see, e.g. the official documentation at
 <a href="https://www.postgresql.org/docs/current/static/datatype-datetime.html">https://www.postgresql.org/docs/current/static/datatype-datetime.html</a>,
 <a href="https://www.postgresql.org/docs/current/static/functions-datetime.html">https://www.postgresql.org/docs/current/static/functions-datetime.html</a>
-<a href="http://www.postgresqltutorial.com/postgresql-interval/">http://www.postgresqltutorial.com/postgresql-interval/</a> or
+<a href="http://www.postgresqltutorial.com/postgresql-interval/">http://www.postgresqltutorial.com/postgresql-interval/</a>
 </p>
 
 <p>
@@ -340,95 +340,95 @@ Intervals are a way of adding, subtracting, etc a time period with a date.
 </p>
 </div>
 
-<div id="outline-container-org012c0f4" class="outline-3">
-<h3 id="org012c0f4">Sample Interval</h3>
-<div class="outline-text-3" id="text-org012c0f4">
+<div id="outline-container-org369a5b2" class="outline-3">
+<h3 id="org369a5b2"><a id="ID-630b0d70-4ca3-41d5-848f-01cda8231d95"></a>Sample Interval</h3>
+<div class="outline-text-3" id="text-org369a5b2">
 <p>
 Just to see what an interval looks like returned from a query using s-sql. Note
 that the interval parameter is a string within a form provided to the :interval sql-op.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second"))
-  :single)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"6 years 5 months 4 days 3 hours 2 minutes 1 second"</span>))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
-((:MONTHS 77) (:DAYS 4) (:SECONDS 10921) (:USECONDS 0))
+((<span style="color: #98fb98; font-weight: bold;">:MONTHS</span> 77) (<span style="color: #98fb98; font-weight: bold;">:DAYS</span> 4) (<span style="color: #98fb98; font-weight: bold;">:SECONDS</span> 10921) (<span style="color: #98fb98; font-weight: bold;">:USECONDS</span> 0))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org90f22cc" class="outline-3">
-<h3 id="org90f22cc">Allowable Formats of the parameter to Interval</h3>
-<div class="outline-text-3" id="text-org90f22cc">
+<div id="outline-container-org4de82ba" class="outline-3">
+<h3 id="org4de82ba"><a id="ID-48cca061-c649-44e3-8312-e349de885b3f"></a>Allowable Formats of the parameter to Interval</h3>
+<div class="outline-text-3" id="text-org4de82ba">
 <p>
 There are four different formats available for providing the interval parameter.
 Choose whichever one you like:
 </p>
 </div>
-<div id="outline-container-orgd205838" class="outline-4">
-<h4 id="orgd205838">SQL Standard Format</h4>
-<div class="outline-text-4" id="text-orgd205838">
+<div id="outline-container-org82d3839" class="outline-4">
+<h4 id="org82d3839"><a id="ID-b435a518-a906-4314-800c-3d18f47f8f06"></a>SQL Standard Format</h4>
+<div class="outline-text-4" id="text-org82d3839">
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:interval "1-2"))
-  :single)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"1-2"</span>))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
-((:MONTHS 14) (:DAYS 0) (:SECONDS 0) (:USECONDS 0))
+((<span style="color: #98fb98; font-weight: bold;">:MONTHS</span> 14) (<span style="color: #98fb98; font-weight: bold;">:DAYS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:SECONDS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:USECONDS</span> 0))
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org2988b17" class="outline-4">
-<h4 id="org2988b17">Traditional Postgresql Format</h4>
-<div class="outline-text-4" id="text-org2988b17">
+<div id="outline-container-org38d3291" class="outline-4">
+<h4 id="org38d3291"><a id="ID-b7058c5b-d0d9-40b6-8d07-2b02123068b3"></a>Traditional Postgresql Format</h4>
+<div class="outline-text-4" id="text-org38d3291">
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:interval "3 4:05:06"))
-  :single)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"3 4:05:06"</span>))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
-((:MONTHS 0) (:DAYS 3) (:SECONDS 14706) (:USECONDS 0))
+((<span style="color: #98fb98; font-weight: bold;">:MONTHS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:DAYS</span> 3) (<span style="color: #98fb98; font-weight: bold;">:SECONDS</span> 14706) (<span style="color: #98fb98; font-weight: bold;">:USECONDS</span> 0))
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-orgc7ca9c8" class="outline-4">
-<h4 id="orgc7ca9c8">ISO 8601 Format with Designators</h4>
-<div class="outline-text-4" id="text-orgc7ca9c8">
+<div id="outline-container-org69bf820" class="outline-4">
+<h4 id="org69bf820"><a id="ID-43a72f38-6744-48cb-9fdd-6806cea409de"></a>ISO 8601 Format with Designators</h4>
+<div class="outline-text-4" id="text-org69bf820">
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:interval "1 year 2 months 3 days 4 hours 5 minutes 6 seconds"))
-  :single)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"1 year 2 months 3 days 4 hours 5 minutes 6 seconds"</span>))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
-((:MONTHS 14) (:DAYS 3) (:SECONDS 14706) (:USECONDS 0))
+((<span style="color: #98fb98; font-weight: bold;">:MONTHS</span> 14) (<span style="color: #98fb98; font-weight: bold;">:DAYS</span> 3) (<span style="color: #98fb98; font-weight: bold;">:SECONDS</span> 14706) (<span style="color: #98fb98; font-weight: bold;">:USECONDS</span> 0))
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-orga6f85aa" class="outline-4">
-<h4 id="orga6f85aa">ISO 8601 Alternative Format</h4>
-<div class="outline-text-4" id="text-orga6f85aa">
+<div id="outline-container-orgd31c519" class="outline-4">
+<h4 id="orgd31c519"><a id="ID-14de15c4-68d8-4107-95e2-c2976344eafd"></a>ISO 8601 Alternative Format</h4>
+<div class="outline-text-4" id="text-orgd31c519">
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:interval "P0001-02-03T04:05:06"))
-  :single)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"P0001-02-03T04:05:06"</span>))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
-((:MONTHS 14) (:DAYS 3) (:SECONDS 14706) (:USECONDS 0))
+((<span style="color: #98fb98; font-weight: bold;">:MONTHS</span> 14) (<span style="color: #98fb98; font-weight: bold;">:DAYS</span> 3) (<span style="color: #98fb98; font-weight: bold;">:SECONDS</span> 14706) (<span style="color: #98fb98; font-weight: bold;">:USECONDS</span> 0))
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgb303133" class="outline-3">
-<h3 id="orgb303133">Formatting Intervals to String</h3>
-<div class="outline-text-3" id="text-orgb303133">
+<div id="outline-container-org1b037a5" class="outline-3">
+<h3 id="org1b037a5"><a id="ID-09172b69-1881-4608-bea6-bc51dbd8c3f2"></a>Formatting Intervals to String</h3>
+<div class="outline-text-3" id="text-org1b037a5">
 <p>
 You can use the :to-char sql-op with a format string to provide a single
 string version of the date/time. The ISO 8601 interval format allows
 </p>
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table>
 
 
 <colgroup>
-<col  class="org-left" />
+<col  class="org-left">
 
-<col  class="org-left" />
+<col  class="org-left">
 </colgroup>
 <tbody>
 <tr>
@@ -498,28 +498,28 @@ Just to be different, we can add weeks and days instead of years and months. E.g
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query
-  (:select
-    (:to-char
-      (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second") "WW:DD:HH24:MI:SS"))
-  :single)
+  (<span style="color: #98fb98; font-weight: bold;">:select</span>
+    (<span style="color: #98fb98; font-weight: bold;">:to-char</span>
+      (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"6 years 5 months 4 days 3 hours 2 minutes 1 second"</span>) <span style="color: #cd8162;">"WW:DD:HH24:MI:SS"</span>))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
-"331:04:03:02:01"
+<span style="color: #cd8162;">"331:04:03:02:01"</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orga393752" class="outline-3">
-<h3 id="orga393752">Math with Intervals</h3>
-<div class="outline-text-3" id="text-orga393752">
+<div id="outline-container-orgf0d6e72" class="outline-3">
+<h3 id="orgf0d6e72"><a id="ID-ce85ec08-d1b8-49b8-9a2a-eb0a6a496ed5"></a>Math with Intervals</h3>
+<div class="outline-text-3" id="text-orgf0d6e72">
 <p>
 Adding or subtracting intervals from each other will result in an interval.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:+ (:interval "2h 50min") (:interval "10min")))
-  :single)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:+</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"2h 50min"</span>) (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"10min"</span>)))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
-((:MONTHS 0) (:DAYS 0) (:SECONDS 10800) (:USECONDS 0))
+((<span style="color: #98fb98; font-weight: bold;">:MONTHS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:DAYS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:SECONDS</span> 10800) (<span style="color: #98fb98; font-weight: bold;">:USECONDS</span> 0))
 </pre>
 </div>
 
@@ -529,10 +529,10 @@ cannot add, multiple or divide two timestamps.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query
- (:select (:- (:timestamp "1999-12-30") (:timestamp "1999-12-11")))
- :single)
+ (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:-</span> (<span style="color: #98fb98; font-weight: bold;">:timestamp</span> <span style="color: #cd8162;">"1999-12-30"</span>) (<span style="color: #98fb98; font-weight: bold;">:timestamp</span> <span style="color: #cd8162;">"1999-12-11"</span>)))
+ <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
-((:MONTHS 0) (:DAYS 19) (:SECONDS 0) (:USECONDS 0))
+((<span style="color: #98fb98; font-weight: bold;">:MONTHS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:DAYS</span> 19) (<span style="color: #98fb98; font-weight: bold;">:SECONDS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:USECONDS</span> 0))
 </pre>
 </div>
 
@@ -547,28 +547,28 @@ which you can convert into a string using to-char E.g
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query
-  (:select (:- (:now) (:interval ("6 years 5 months 4 days 3 hours 2 minutes 1 second"))))
-  :single)
+  (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:-</span> (<span style="color: #98fb98; font-weight: bold;">:now</span>) (<span style="color: #98fb98; font-weight: bold;">:interval</span> (<span style="color: #cd8162;">"6 years 5 months 4 days 3 hours 2 minutes 1 second"</span>))))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
 3540933266
 
 (query
- (:select
-  (:to-char
-    (:+ (:date "2016-12-31") (:interval "25 hours"))
-    "YYYY-MM-DD"))
- :single)
+ (<span style="color: #98fb98; font-weight: bold;">:select</span>
+  (<span style="color: #98fb98; font-weight: bold;">:to-char</span>
+    (<span style="color: #98fb98; font-weight: bold;">:+</span> (<span style="color: #98fb98; font-weight: bold;">:date</span> <span style="color: #cd8162;">"2016-12-31"</span>) (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"25 hours"</span>))
+    <span style="color: #cd8162;">"YYYY-MM-DD"</span>))
+ <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
-"2017-01-01"
+<span style="color: #cd8162;">"2017-01-01"</span>
 
 (query
- (:select
-  (:to-char
-   (:- (:now) (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second"))
-   "YYYY-MM-DD hh24:mm:ss"))
- :single)
+ (<span style="color: #98fb98; font-weight: bold;">:select</span>
+  (<span style="color: #98fb98; font-weight: bold;">:to-char</span>
+   (<span style="color: #98fb98; font-weight: bold;">:-</span> (<span style="color: #98fb98; font-weight: bold;">:now</span>) (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"6 years 5 months 4 days 3 hours 2 minutes 1 second"</span>))
+   <span style="color: #cd8162;">"YYYY-MM-DD hh24:mm:ss"</span>))
+ <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
-"2012-03-19 10:03:53"
+<span style="color: #cd8162;">"2012-03-19 10:03:53"</span>
 </pre>
 </div>
 <p>
@@ -576,12 +576,12 @@ They can be cast back to the alist interval style:
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query
-  (:select
-    (:type (:- (:timestamp "2016-12-31 03:00") (:timestamp "2016-12-29 13:00"))
+  (<span style="color: #98fb98; font-weight: bold;">:select</span>
+    (<span style="color: #98fb98; font-weight: bold;">:type</span> (<span style="color: #98fb98; font-weight: bold;">:-</span> (<span style="color: #98fb98; font-weight: bold;">:timestamp</span> <span style="color: #cd8162;">"2016-12-31 03:00"</span>) (<span style="color: #98fb98; font-weight: bold;">:timestamp</span> <span style="color: #cd8162;">"2016-12-29 13:00"</span>))
            interval))
-  :single)
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
-((:MONTHS 0) (:DAYS 1) (:SECONDS 50400) (:USECONDS
+((<span style="color: #98fb98; font-weight: bold;">:MONTHS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:DAYS</span> 1) (<span style="color: #98fb98; font-weight: bold;">:SECONDS</span> 50400) (<span style="color: #98fb98; font-weight: bold;">:USECONDS</span>
 </pre>
 </div>
 <p>
@@ -590,14 +590,14 @@ type of timestamp.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(local-time:universal-to-timestamp
-  (query (:select (:- (:now) (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second")))
-    :single))
+  (query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:-</span> (<span style="color: #98fb98; font-weight: bold;">:now</span>) (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"6 years 5 months 4 days 3 hours 2 minutes 1 second"</span>)))
+    <span style="color: #98fb98; font-weight: bold;">:single</span>))
 
 @2012-03-16T17:35:32.000000-07:00
 
 (simple-date:universal-time-to-timestamp
-  (query (:select (:- (:now) (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second")))
-    :single))
+  (query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:-</span> (<span style="color: #98fb98; font-weight: bold;">:now</span>) (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"6 years 5 months 4 days 3 hours 2 minutes 1 second"</span>)))
+    <span style="color: #98fb98; font-weight: bold;">:single</span>))
 
 #&lt;SIMPLE-DATE:TIMESTAMP 17-03-2012T00:36:14&gt;
 </pre>
@@ -610,65 +610,65 @@ employees with more than 1 year of service.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query
- (:select 'city (:as (:sum (:- (:timestamp "2018-04-10")
+ (<span style="color: #98fb98; font-weight: bold;">:select</span> 'city (<span style="color: #98fb98; font-weight: bold;">:as</span> (<span style="color: #98fb98; font-weight: bold;">:sum</span> (<span style="color: #98fb98; font-weight: bold;">:-</span> (<span style="color: #98fb98; font-weight: bold;">:timestamp</span> <span style="color: #cd8162;">"2018-04-10"</span>)
                                'start-date))
                      'total-days)
-          :from 'employee
-          :group-by 'city
-          :having (:&gt; (:sum (:- (:timestamp "2018-04-10") 'start-date))
-                      (:interval "1 year"))))
+          <span style="color: #98fb98; font-weight: bold;">:from</span> 'employee
+          <span style="color: #98fb98; font-weight: bold;">:group-by</span> 'city
+          <span style="color: #98fb98; font-weight: bold;">:having</span> (<span style="color: #98fb98; font-weight: bold;">:&gt;</span> (<span style="color: #98fb98; font-weight: bold;">:sum</span> (<span style="color: #98fb98; font-weight: bold;">:-</span> (<span style="color: #98fb98; font-weight: bold;">:timestamp</span> <span style="color: #cd8162;">"2018-04-10"</span>) 'start-date))
+                      (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"1 year"</span>))))
 
-(("Vancouver" ((:MONTHS 0) (:DAYS 21746) (:SECONDS 0) (:USECONDS 0)))
- ("New York" ((:MONTHS 0) (:DAYS 22751) (:SECONDS 0) (:USECONDS 0)))
- ("Toronto" ((:MONTHS 0) (:DAYS 20374) (:SECONDS 0) (:USECONDS 0))))
+((<span style="color: #cd8162;">"Vancouver"</span> ((<span style="color: #98fb98; font-weight: bold;">:MONTHS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:DAYS</span> 21746) (<span style="color: #98fb98; font-weight: bold;">:SECONDS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:USECONDS</span> 0)))
+ (<span style="color: #cd8162;">"New York"</span> ((<span style="color: #98fb98; font-weight: bold;">:MONTHS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:DAYS</span> 22751) (<span style="color: #98fb98; font-weight: bold;">:SECONDS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:USECONDS</span> 0)))
+ (<span style="color: #cd8162;">"Toronto"</span> ((<span style="color: #98fb98; font-weight: bold;">:MONTHS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:DAYS</span> 20374) (<span style="color: #98fb98; font-weight: bold;">:SECONDS</span> 0) (<span style="color: #98fb98; font-weight: bold;">:USECONDS</span> 0))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org1556b81" class="outline-3">
-<h3 id="org1556b81">Extracting Subparts</h3>
-<div class="outline-text-3" id="text-org1556b81">
+<div id="outline-container-orgaa0d216" class="outline-3">
+<h3 id="orgaa0d216"><a id="ID-38666c25-b699-4a8a-8db7-88472b13bc0c"></a>Extracting Subparts</h3>
+<div class="outline-text-3" id="text-orgaa0d216">
 <p>
 You can extract a part of an interval using :extract.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:select (:extract "minute" (:interval "5 hours 21 minutes")))
-  :single)
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:extract</span> <span style="color: #cd8162;">"minute"</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"5 hours 21 minutes"</span>)))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
 21.0d0
 
-(query (:select (:extract "hour" (:interval "35 hours 21 minutes")))
-  :single)
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:extract</span> <span style="color: #cd8162;">"hour"</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"35 hours 21 minutes"</span>)))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
 35.0d0
 
-(query (:select (:extract "day" (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second")))
-  :single)
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:extract</span> <span style="color: #cd8162;">"day"</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"6 years 5 months 4 days 3 hours 2 minutes 1 second"</span>)))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
 4.0d0
 
-(query (:select (:extract "year" (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second")))
-  :single)
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:extract</span> <span style="color: #cd8162;">"year"</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"6 years 5 months 4 days 3 hours 2 minutes 1 second"</span>)))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
 6.0d0
 
-(query (:select (:extract "year" (:interval "6 years 15 months 4 days 3 hours 2 minutes 1 second")))
-  :single)
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:extract</span> <span style="color: #cd8162;">"year"</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"6 years 15 months 4 days 3 hours 2 minutes 1 second"</span>)))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
 7.0d0
 
-(query (:select (:extract "month" (:interval "6 years 15 months 4 days 3 hours 2 minutes 1 second")))
-  :single)
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:extract</span> <span style="color: #cd8162;">"month"</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"6 years 15 months 4 days 3 hours 2 minutes 1 second"</span>)))
+  <span style="color: #98fb98; font-weight: bold;">:single</span>)
 
 3.0d0
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-orgc18ee0e" class="outline-3">
-<h3 id="orgc18ee0e">Justify Days and Hours</h3>
-<div class="outline-text-3" id="text-orgc18ee0e">
+<div id="outline-container-orgf3f8ad0" class="outline-3">
+<h3 id="orgf3f8ad0"><a id="ID-2ad994c7-2167-41f9-8c5e-6cbc9695e912"></a>Justify Days and Hours</h3>
+<div class="outline-text-3" id="text-orgf3f8ad0">
 <p>
 You can adjust a period of days to be 30 day months and adjust a period
 of hours to be 24 hour days. For example:
@@ -688,10 +688,6 @@ of hours to be 24 hour days. For example:
 </div>
 </div>
 </div>
-</div>
-<div id="postamble" class="status">
-<p class="date">Created: 2018-08-23 Thu 14:55</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

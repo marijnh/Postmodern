@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<!-- 2018-08-23 Thu 14:56 -->
-<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- 2020-05-23 Sat 07:23 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Simple-Date</title>
-<meta name="generator" content="Org mode" />
+<meta name="generator" content="Org mode">
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
   .title  { text-align: center;
@@ -180,6 +178,7 @@
   /*]]>*/-->
 </style>
 <link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -229,41 +228,42 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
+<header>
 <h1 class="title">Simple-Date</h1>
-<div id="table-of-contents">
+</header><nav id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org18cc74d">Date type</a>
+<li><a href="#orgc96db35">Date type</a>
 <ul>
-<li><a href="#org5d56d2e">class date</a></li>
-<li><a href="#org0bb2487">function encode-date (year month day)</a></li>
-<li><a href="#org46e3166">function decode-date (date)</a></li>
-<li><a href="#org38a264c">function day-of-week (date)</a></li>
-<li><a href="#org1638436">Timestamp type</a></li>
-<li><a href="#org376fcb0">function encode-timestamp (year month day &amp;optional (hour 0) (minute 0) (second 0) (millisecond 0))</a></li>
-<li><a href="#org0bfc19b">function decode-timestamp (timestamp)</a></li>
-<li><a href="#org8df4397">function timestamp-to-universal-time (timestamp)</a></li>
-<li><a href="#orga468de8">function universal-time-to-timestamp (universal-time)</a></li>
-<li><a href="#org6208491">Interval type</a></li>
-<li><a href="#org09ff194">function encode-interval (&amp;key (year 0) (month 0) (week 0) (day 0) (hour 0) (minute 0) (second 0) (millisecond 0))</a></li>
-<li><a href="#orgda6a853">function decode-interval (interval)</a></li>
+<li><a href="#org4757ac7">class date</a></li>
+<li><a href="#orgbecb912">function encode-date (year month day)</a></li>
+<li><a href="#org17bca57">function decode-date (date)</a></li>
+<li><a href="#org9596f23">function day-of-week (date)</a></li>
+<li><a href="#org351e3fc">Timestamp type</a></li>
+<li><a href="#org9b35463">function encode-timestamp (year month day &amp;optional (hour 0) (minute 0) (second 0) (millisecond 0))</a></li>
+<li><a href="#org88dc827">function decode-timestamp (timestamp)</a></li>
+<li><a href="#org00b9c9c">function timestamp-to-universal-time (timestamp)</a></li>
+<li><a href="#orgf3fb124">function universal-time-to-timestamp (universal-time)</a></li>
+<li><a href="#org9841ce8">Interval type</a></li>
+<li><a href="#orgae89286">function encode-interval (&amp;key (year 0) (month 0) (week 0) (day 0) (hour 0) (minute 0) (second 0) (millisecond 0))</a></li>
+<li><a href="#org491ae2f">function decode-interval (interval)</a></li>
 </ul>
 </li>
-<li><a href="#org44bda7e">Operations</a>
+<li><a href="#orge311352">Operations</a>
 <ul>
-<li><a href="#org965462c">method time-add (a b)</a></li>
-<li><a href="#org79df090">method time-subtract (a b)</a></li>
-<li><a href="#orgc6191a0">method time= (a b)</a></li>
-<li><a href="#org99daad6">method time&lt; (a b)</a></li>
-<li><a href="#org5ea76ae">method time&gt; (a b)</a></li>
-<li><a href="#org96af6b8">function time&lt;= (a b)</a></li>
-<li><a href="#org1af8d7c">function time&gt;= (a b)</a></li>
+<li><a href="#orgff3d514">method time-add (a b)</a></li>
+<li><a href="#org6815ed9">method time-subtract (a b)</a></li>
+<li><a href="#orgd7aaac8">method time= (a b)</a></li>
+<li><a href="#orge502f5e">method time&lt; (a b)</a></li>
+<li><a href="#org7fb03e5">method time&gt; (a b)</a></li>
+<li><a href="#orgdc2b19c">function time&lt;= (a b)</a></li>
+<li><a href="#org7dd8012">function time&gt;= (a b)</a></li>
 </ul>
 </li>
 </ul>
 </div>
-</div>
+</nav>
 <p>
 Simple-date provides types (CLOS classes) for dates, timestamps, and intervals
 similar to the ones SQL databases use, in order to be able to store and read
@@ -272,14 +272,24 @@ are defined on these types.
 </p>
 
 <p>
-The most glaring defect of this library is its ignorance of time zones. It
-pretends the whole world lives in UTC. Use with care.
+To use this library with cl-postgres or postmodern and get the simple-date reader
+to be loaded, you need to load simple-date/postgres-glue
+and then set the readtable. This will register suitable SQL
+readers and writers for the associated database types.
 </p>
 
+<div class="org-src-container">
+<pre class="src src-lisp">(ql:quickload <span style="color: #98fb98; font-weight: bold;">:simple-date/postgres-glue</span>)
+
+(setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+         simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
+</pre>
+</div>
+
 <p>
-To use this library with cl-postgres or postmodern,
-load simple-date-cl-postgres-glue to register suitable SQL
-readers and writers for the associated database types.
+The most glaring defect of this library is its ignorance of time zones. It
+pretends the whole world lives in UTC. Use with care.
 </p>
 
 <p>
@@ -312,22 +322,22 @@ reader:
 </div>
 
 
-<div id="outline-container-org18cc74d" class="outline-2">
-<h2 id="org18cc74d">Date type</h2>
-<div class="outline-text-2" id="text-org18cc74d">
+<div id="outline-container-orgc96db35" class="outline-2">
+<h2 id="orgc96db35"><a id="ID-6cefa703-d55b-464d-bad9-7c7ceae0c90d"></a>Date type</h2>
+<div class="outline-text-2" id="text-orgc96db35">
 </div>
-<div id="outline-container-org5d56d2e" class="outline-3">
-<h3 id="org5d56d2e">class date</h3>
-<div class="outline-text-3" id="text-org5d56d2e">
+<div id="outline-container-org4757ac7" class="outline-3">
+<h3 id="org4757ac7"><a id="ID-203d5d98-5ce7-4bcb-81d9-1aeb4fe2796d"></a>class date</h3>
+<div class="outline-text-3" id="text-org4757ac7">
 <p>
 Represents a date, with no time-of-day information.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org0bb2487" class="outline-3">
-<h3 id="org0bb2487">function encode-date (year month day)</h3>
-<div class="outline-text-3" id="text-org0bb2487">
+<div id="outline-container-orgbecb912" class="outline-3">
+<h3 id="orgbecb912"><a id="ID-dbf2a874-80e1-4a43-86be-7febb1573b8d"></a>function encode-date (year month day)</h3>
+<div class="outline-text-3" id="text-orgbecb912">
 <p>
 → date
 </p>
@@ -338,9 +348,9 @@ Creates a date object.
 </div>
 </div>
 
-<div id="outline-container-org46e3166" class="outline-3">
-<h3 id="org46e3166">function decode-date (date)</h3>
-<div class="outline-text-3" id="text-org46e3166">
+<div id="outline-container-org17bca57" class="outline-3">
+<h3 id="org17bca57"><a id="ID-35da4a62-ea64-4053-aa30-4496d56a0f95"></a>function decode-date (date)</h3>
+<div class="outline-text-3" id="text-org17bca57">
 <p>
 → (values year month day)
 </p>
@@ -351,9 +361,9 @@ Extract the elements from a date object.
 </div>
 </div>
 
-<div id="outline-container-org38a264c" class="outline-3">
-<h3 id="org38a264c">function day-of-week (date)</h3>
-<div class="outline-text-3" id="text-org38a264c">
+<div id="outline-container-org9596f23" class="outline-3">
+<h3 id="org9596f23"><a id="ID-b1590639-fd02-458d-86e4-6e1bd3c1c003"></a>function day-of-week (date)</h3>
+<div class="outline-text-3" id="text-org9596f23">
 <p>
 → integer
 </p>
@@ -365,9 +375,9 @@ Determine the day of the week that the given date falls on. Value ranges from
 </div>
 </div>
 
-<div id="outline-container-org1638436" class="outline-3">
-<h3 id="org1638436">Timestamp type</h3>
-<div class="outline-text-3" id="text-org1638436">
+<div id="outline-container-org351e3fc" class="outline-3">
+<h3 id="org351e3fc"><a id="ID-6efdaace-0c1c-45ba-8376-9b91e18a0b38"></a>Timestamp type</h3>
+<div class="outline-text-3" id="text-org351e3fc">
 <p>
 class timestamp
 </p>
@@ -378,9 +388,9 @@ Represents an absolute timestamp, with a millisecond precision.
 </div>
 </div>
 
-<div id="outline-container-org376fcb0" class="outline-3">
-<h3 id="org376fcb0">function encode-timestamp (year month day &amp;optional (hour 0) (minute 0) (second 0) (millisecond 0))</h3>
-<div class="outline-text-3" id="text-org376fcb0">
+<div id="outline-container-org9b35463" class="outline-3">
+<h3 id="org9b35463"><a id="ID-f6817a2a-92e2-44aa-9060-d9ab459f6207"></a>function encode-timestamp (year month day &amp;optional (hour 0) (minute 0) (second 0) (millisecond 0))</h3>
+<div class="outline-text-3" id="text-org9b35463">
 <p>
 → timestamp
 </p>
@@ -392,9 +402,9 @@ range (i.e. 60 for minutes, 1000 for milliseconds) should be passed.
 </div>
 </div>
 
-<div id="outline-container-org0bfc19b" class="outline-3">
-<h3 id="org0bfc19b">function decode-timestamp (timestamp)</h3>
-<div class="outline-text-3" id="text-org0bfc19b">
+<div id="outline-container-org88dc827" class="outline-3">
+<h3 id="org88dc827"><a id="ID-5cb5f677-4fc4-4ab3-b2af-65579e660baf"></a>function decode-timestamp (timestamp)</h3>
+<div class="outline-text-3" id="text-org88dc827">
 <p>
 → (values year month day hour minute second millisecond)
 </p>
@@ -405,9 +415,9 @@ Decode a timestamp into its components.
 </div>
 </div>
 
-<div id="outline-container-org8df4397" class="outline-3">
-<h3 id="org8df4397">function timestamp-to-universal-time (timestamp)</h3>
-<div class="outline-text-3" id="text-org8df4397">
+<div id="outline-container-org00b9c9c" class="outline-3">
+<h3 id="org00b9c9c"><a id="ID-477dd9e6-3e72-4eaa-b1fd-cf5d06bdfd1b"></a>function timestamp-to-universal-time (timestamp)</h3>
+<div class="outline-text-3" id="text-org00b9c9c">
 <p>
 → universal-time
 </p>
@@ -419,9 +429,9 @@ Note that this will treat the timestamp as if it were in UTC.
 </div>
 </div>
 
-<div id="outline-container-orga468de8" class="outline-3">
-<h3 id="orga468de8">function universal-time-to-timestamp (universal-time)</h3>
-<div class="outline-text-3" id="text-orga468de8">
+<div id="outline-container-orgf3fb124" class="outline-3">
+<h3 id="orgf3fb124"><a id="ID-ba44156f-a860-4601-a5fe-6465d6ad8353"></a>function universal-time-to-timestamp (universal-time)</h3>
+<div class="outline-text-3" id="text-orgf3fb124">
 <p>
 → timestamp
 </p>
@@ -433,9 +443,9 @@ be treated as if it were in UTC.
 </div>
 </div>
 
-<div id="outline-container-org6208491" class="outline-3">
-<h3 id="org6208491">Interval type</h3>
-<div class="outline-text-3" id="text-org6208491">
+<div id="outline-container-org9841ce8" class="outline-3">
+<h3 id="org9841ce8"><a id="ID-316f3287-fd76-46ce-8c2b-c07ad381fc38"></a>Interval type</h3>
+<div class="outline-text-3" id="text-org9841ce8">
 <p>
 class interval
 </p>
@@ -449,9 +459,9 @@ represents is not always the same.
 </div>
 </div>
 
-<div id="outline-container-org09ff194" class="outline-3">
-<h3 id="org09ff194">function encode-interval (&amp;key (year 0) (month 0) (week 0) (day 0) (hour 0) (minute 0) (second 0) (millisecond 0))</h3>
-<div class="outline-text-3" id="text-org09ff194">
+<div id="outline-container-orgae89286" class="outline-3">
+<h3 id="orgae89286"><a id="ID-77212a01-b23f-40c7-aeec-fc93d4834f53"></a>function encode-interval (&amp;key (year 0) (month 0) (week 0) (day 0) (hour 0) (minute 0) (second 0) (millisecond 0))</h3>
+<div class="outline-text-3" id="text-orgae89286">
 <p>
 → interval
 </p>
@@ -462,9 +472,9 @@ Create an interval. Arguments may be negative and of any size.
 </div>
 </div>
 
-<div id="outline-container-orgda6a853" class="outline-3">
-<h3 id="orgda6a853">function decode-interval (interval)</h3>
-<div class="outline-text-3" id="text-orgda6a853">
+<div id="outline-container-org491ae2f" class="outline-3">
+<h3 id="org491ae2f"><a id="ID-cfd906be-cc00-437e-b250-b7d294131aa0"></a>function decode-interval (interval)</h3>
+<div class="outline-text-3" id="text-org491ae2f">
 <p>
 → (values year month day hour minute second millisecond)
 </p>
@@ -478,9 +488,9 @@ of 1 hour.
 </div>
 </div>
 
-<div id="outline-container-org44bda7e" class="outline-2">
-<h2 id="org44bda7e">Operations</h2>
-<div class="outline-text-2" id="text-org44bda7e">
+<div id="outline-container-orge311352" class="outline-2">
+<h2 id="orge311352"><a id="ID-d2616cd8-622b-464f-994e-e1f9d6309706"></a>Operations</h2>
+<div class="outline-text-2" id="text-orge311352">
 <p>
 To prevent a proliferation of different function names, generic functions
 are used for operations on time values. The semantics of these differ for
@@ -488,9 +498,9 @@ the type of the operands.
 </p>
 </div>
 
-<div id="outline-container-org965462c" class="outline-3">
-<h3 id="org965462c">method time-add (a b)</h3>
-<div class="outline-text-3" id="text-org965462c">
+<div id="outline-container-orgff3d514" class="outline-3">
+<h3 id="orgff3d514"><a id="ID-6846ba8b-a59f-475e-bc25-0c18e4fa5548"></a>method time-add (a b)</h3>
+<div class="outline-text-3" id="text-orgff3d514">
 <p>
 → value
 </p>
@@ -505,9 +515,9 @@ interpreted as an amount of milliseconds.
 </div>
 </div>
 
-<div id="outline-container-org79df090" class="outline-3">
-<h3 id="org79df090">method time-subtract (a b)</h3>
-<div class="outline-text-3" id="text-org79df090">
+<div id="outline-container-org6815ed9" class="outline-3">
+<h3 id="org6815ed9"><a id="ID-98dee89f-7178-4487-8d85-3036149f2def"></a>method time-subtract (a b)</h3>
+<div class="outline-text-3" id="text-org6815ed9">
 <p>
 → value
 </p>
@@ -520,9 +530,9 @@ them. Similarly, subtracting two intervals also gives their difference.
 </div>
 </div>
 
-<div id="outline-container-orgc6191a0" class="outline-3">
-<h3 id="orgc6191a0">method time= (a b)</h3>
-<div class="outline-text-3" id="text-orgc6191a0">
+<div id="outline-container-orgd7aaac8" class="outline-3">
+<h3 id="orgd7aaac8"><a id="ID-74acb8a0-5438-4a56-8d08-3316a7792108"></a>method time= (a b)</h3>
+<div class="outline-text-3" id="text-orgd7aaac8">
 <p>
 → boolean
 </p>
@@ -534,9 +544,9 @@ they denote the same time or period.
 </div>
 </div>
 
-<div id="outline-container-org99daad6" class="outline-3">
-<h3 id="org99daad6">method time&lt; (a b)</h3>
-<div class="outline-text-3" id="text-org99daad6">
+<div id="outline-container-orge502f5e" class="outline-3">
+<h3 id="orge502f5e"><a id="ID-02b06b96-bbd7-482a-aa3c-f9080f97c3fa"></a>method time&lt; (a b)</h3>
+<div class="outline-text-3" id="text-orge502f5e">
 <p>
 → boolean
 </p>
@@ -548,9 +558,9 @@ first is less than the second.
 </div>
 </div>
 
-<div id="outline-container-org5ea76ae" class="outline-3">
-<h3 id="org5ea76ae">method time&gt; (a b)</h3>
-<div class="outline-text-3" id="text-org5ea76ae">
+<div id="outline-container-org7fb03e5" class="outline-3">
+<h3 id="org7fb03e5"><a id="ID-6901c062-4b1c-4cb1-a9f6-6935141d5fdd"></a>method time&gt; (a b)</h3>
+<div class="outline-text-3" id="text-org7fb03e5">
 <p>
 → boolean
 </p>
@@ -562,9 +572,9 @@ first is greater than the second.
 </div>
 </div>
 
-<div id="outline-container-org96af6b8" class="outline-3">
-<h3 id="org96af6b8">function time&lt;= (a b)</h3>
-<div class="outline-text-3" id="text-org96af6b8">
+<div id="outline-container-orgdc2b19c" class="outline-3">
+<h3 id="orgdc2b19c"><a id="ID-450e4d9e-2f31-4278-817a-bb42eaf0ea04"></a>function time&lt;= (a b)</h3>
+<div class="outline-text-3" id="text-orgdc2b19c">
 <p>
 → boolean
 </p>
@@ -575,9 +585,9 @@ The inverse of time&gt;.
 </div>
 </div>
 
-<div id="outline-container-org1af8d7c" class="outline-3">
-<h3 id="org1af8d7c">function time&gt;= (a b)</h3>
-<div class="outline-text-3" id="text-org1af8d7c">
+<div id="outline-container-org7dd8012" class="outline-3">
+<h3 id="org7dd8012"><a id="ID-d77174da-9511-41c6-bc46-95d62842435c"></a>function time&gt;= (a b)</h3>
+<div class="outline-text-3" id="text-org7dd8012">
 <p>
 → boolean
 </p>
@@ -588,10 +598,6 @@ The inverse of time&lt;.
 </div>
 </div>
 </div>
-</div>
-<div id="postamble" class="status">
-<p class="date">Created: 2018-08-23 Thu 14:56</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

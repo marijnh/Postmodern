@@ -8,50 +8,69 @@ Stores the arguments used to create it, so different pools can be
 distinguished."))
 
 (defparameter *database* nil
-  "Special holding the current database. Most functions and macros
-operating on a database assume this contains a connected database.")
+  "Special holding the current database. Most functions and macros operating
+on a database assume this contains a connected database.")
 
-(defparameter *default-use-ssl* :no)
+(defparameter *default-use-ssl* :no "The default for connect's use-ssl argument.
+This starts at :no. If you set it to anything else, be sure to also load the
+CL+SSL library.")
 
-(defun connect (database-name user password host &key (port 5432) pooled-p (use-ssl *default-use-ssl*) (service "postgres"))
-  "Create and return a database connection."
+(defun connect (database-name user-name password host &key (port 5432) pooled-p
+                                                        (use-ssl *default-use-ssl*)
+                                                        (service "postgres"))
+  "Create a new database connection for the given user and the database. Port
+will default to 5432, which is where most PostgreSQL servers are running. If
+pooled-p is T, a connection will be taken from a pool of connections of this
+type, if one is available there, and when the connection is disconnected it
+will be put back into this pool instead. use-ssl can be :no, :yes, or :try,
+as in open-database, and defaults to the value of *default-use-ssl*."
   (cond (pooled-p
-         (let ((type (list database-name user password host port use-ssl)))
+         (let ((type (list database-name user-name password host port use-ssl)))
            (or (get-from-pool type)
-               (let ((connection (cl-postgres:open-database database-name user password host port use-ssl)))
-		 #-genera (change-class connection 'pooled-database-connection :pool-type type)
-		 #+genera (progn
-			      (change-class connection 'pooled-database-connection)
-			      (setf (slot-value connection 'pool-type) type))
+               (let ((connection (cl-postgres:open-database database-name user-name
+                                                            password host port
+                                                            use-ssl)))
+                 #-genera (change-class connection 'pooled-database-connection
+                                        :pool-type type)
+                 #+genera (progn
+                            (change-class connection 'pooled-database-connection)
+                            (setf (slot-value connection 'pool-type) type))
                  connection))))
-        (t (cl-postgres:open-database database-name user password host port use-ssl service))))
+        (t (cl-postgres:open-database database-name user-name password host port
+                                      use-ssl service))))
 
 (defun connected-p (database)
-  "Test whether a database connection is still connected."
+  "Returns a boolean indicating whether the given connection is still connected
+to the server."
   (cl-postgres:database-open-p database))
 
-(defun connect-toplevel (database-name user password host &key (port 5432) (use-ssl *default-use-ssl*))
-  "Set *database* to a new connection. Use this if you only need one
+(defun connect-toplevel (database-name user-name password host
+                         &key (port 5432) (use-ssl *default-use-ssl*))
+  "Bind the *database* to a new connection. Use this if you only need one
 connection, or if you want a connection for debugging from the REPL."
   (when (and *database* (connected-p *database*))
     (restart-case (error "Top-level database already connected.")
-      (replace () :report "Replace it with a new connection." (disconnect-toplevel))
+      (replace () :report "Replace it with a new connection."
+        (disconnect-toplevel))
       (leave () :report "Leave it." (return-from connect-toplevel nil))))
-  (setf *database* (connect database-name user password host :port port :use-ssl use-ssl))
+  (setf *database* (connect database-name user-name password host
+                            :port port :use-ssl use-ssl))
   (values))
 
 (defgeneric disconnect (database)
   (:method ((connection database-connection))
     (close-database connection))
-  (:documentation "Close a database connection. Returns it to a pool
-if it is a pooled connection."))
+  (:documentation "Disconnects a normal database connection, or moves a pooled
+connection into the pool."))
 
 (defgeneric reconnect (database)
   (:method ((database database-connection))
     (reopen-database database))
   (:method ((connection pooled-database-connection))
     (error "Can not reconnect a pooled database."))
-  (:documentation "Reconnect a database connection."))
+  (:documentation "Reconnect a disconnected database connection. This is not
+allowed for pooled connections ― after they are disconnected they might be in
+use by some other process, and should no longer be used."))
 
 (defun disconnect-toplevel ()
   "Disconnect *database*."
@@ -60,23 +79,25 @@ if it is a pooled connection."))
   (setf *database* nil))
 
 (defun call-with-connection (spec thunk)
-  "Binds *database* to a new connection, as specified by the spec
-argument, which should be a list of arguments that can be passed to
-connect, and runs the function given as a second argument with that
-database."
+  "The functional backend to with-connection. Binds *database* to a new connection
+as specified by spec, which should be a list that connect can be applied to, and
+runs the zero-argument function given as second argument in the new environment.
+When the function returns or throws, the new connection is disconnected."
   (let ((*database* (apply #'connect spec)))
     (unwind-protect (funcall thunk)
       (disconnect *database*))))
 
 (defmacro with-connection (spec &body body)
-  "Locally establish a database connection, and bind *database* to it."
+  "Evaluates the body with *database* bound to a connection as specified by spec,
+which should be list that connect can be applied to."
   `(let ((*database* (apply #'connect ,spec)))
-    (unwind-protect (progn ,@body)
-      (disconnect *database*))))
+     (unwind-protect (progn ,@body)
+       (disconnect *database*))))
 
 (defvar *max-pool-size* nil
-  "The maximum amount of connection that will be kept in a single
-pool, or NIL for no maximum.")
+  "Set the maximum amount of connections kept in a single connection pool, where
+a pool consists of all the stored connections with the exact same connect
+arguments. Defaults to NIL, which means there is no maximum.")
 
 (defvar *connection-pools* (make-hash-table :test 'equal)
   "Maps pool specifiers to lists of pooled connections.")
@@ -114,7 +135,7 @@ pool is full."
     (values)))
 
 (defun clear-connection-pool ()
-  "Disconnect and remove all connections in the connection pool."
+  "Disconnect and remove all connections in the connection pools."
   (with-pool-lock
     (maphash
      (lambda (type connections)

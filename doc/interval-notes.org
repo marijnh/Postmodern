@@ -1,8 +1,12 @@
 #+TITLE: Interval Notes
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 * Setting the Baseline Default Reader
+  :PROPERTIES:
+  :ID:       c6baef62-f431-451c-b297-00db0e48b69f
+  :END:
 Just to ensure that we have the same baseline readtable, we are going
 to make sure that the cl-postgres:*sql-readtable* is set to the default.
 #+BEGIN_SRC lisp
@@ -11,8 +15,11 @@ to make sure that the cl-postgres:*sql-readtable* is set to the default.
          cl-postgres::*default-sql-readtable*))
 #+END_SRC
 * Universal Time and Timestamp Libraries
+  :PROPERTIES:
+  :ID:       49a51426-a091-44f0-8248-bb1169e1f12a
+  :END:
 
-Absent anthing else, a query to postgresql through postmodern will return a
+Absent anything else, a query to postgresql through postmodern will return a
 universal time. E.g.
 #+BEGIN_SRC lisp
 (query (:select (:current-timestamp)) :single)
@@ -53,6 +60,9 @@ timezones, you will need to pay attention to where your server is, where the
 clients are and what do you want to be tracking or calculating to.
 
 * Intervals - Introduction and Use Cases
+  :PROPERTIES:
+  :ID:       7b52f41e-83c3-4f27-859f-b2bb80a53c88
+  :END:
 For a simple tutorial on the Postgresql interval data type, there are
 several online articles, see, e.g. the official documentation at
 https://www.postgresql.org/docs/current/static/datatype-datetime.html,
@@ -62,6 +72,9 @@ http://www.postgresqltutorial.com/postgresql-interval/
 Intervals are a way of adding, subtracting, etc a time period with a date.
 
 ** Sample Interval
+   :PROPERTIES:
+   :ID:       630b0d70-4ca3-41d5-848f-01cda8231d95
+   :END:
 Just to see what an interval looks like returned from a query using s-sql. Note
 that the interval parameter is a string within a form provided to the :interval sql-op.
 #+BEGIN_SRC lisp
@@ -72,9 +85,15 @@ that the interval parameter is a string within a form provided to the :interval 
 #+END_SRC
 
 ** Allowable Formats of the parameter to Interval
+   :PROPERTIES:
+   :ID:       48cca061-c649-44e3-8312-e349de885b3f
+   :END:
 There are four different formats available for providing the interval parameter.
 Choose whichever one you like:
 *** SQL Standard Format
+    :PROPERTIES:
+    :ID:       b435a518-a906-4314-800c-3d18f47f8f06
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:interval "1-2"))
   :single)
@@ -82,6 +101,9 @@ Choose whichever one you like:
 ((:MONTHS 14) (:DAYS 0) (:SECONDS 0) (:USECONDS 0))
 #+END_SRC
 *** Traditional Postgresql Format
+    :PROPERTIES:
+    :ID:       b7058c5b-d0d9-40b6-8d07-2b02123068b3
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:interval "3 4:05:06"))
   :single)
@@ -89,6 +111,9 @@ Choose whichever one you like:
 ((:MONTHS 0) (:DAYS 3) (:SECONDS 14706) (:USECONDS 0))
 #+END_SRC
 *** ISO 8601 Format with Designators
+    :PROPERTIES:
+    :ID:       43a72f38-6744-48cb-9fdd-6806cea409de
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:interval "1 year 2 months 3 days 4 hours 5 minutes 6 seconds"))
   :single)
@@ -96,6 +121,9 @@ Choose whichever one you like:
 ((:MONTHS 14) (:DAYS 3) (:SECONDS 14706) (:USECONDS 0))
 #+END_SRC
 *** ISO 8601 Alternative Format
+    :PROPERTIES:
+    :ID:       14de15c4-68d8-4107-95e2-c2976344eafd
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:interval "P0001-02-03T04:05:06"))
   :single)
@@ -104,6 +132,9 @@ Choose whichever one you like:
 #+END_SRC
 
 ** Formatting Intervals to String
+   :PROPERTIES:
+   :ID:       09172b69-1881-4608-bea6-bc51dbd8c3f2
+   :END:
 You can use the :to-char sql-op with a format string to provide a single
 string version of the date/time. The ISO 8601 interval format allows
 | Abbreviation | Description |
@@ -145,6 +176,9 @@ Just to be different, we can add weeks and days instead of years and months. E.g
 #+END_SRC
 
 ** Math with Intervals
+   :PROPERTIES:
+   :ID:       ce85ec08-d1b8-49b8-9a2a-eb0a6a496ed5
+   :END:
 Adding or subtracting intervals from each other will result in an interval.
 #+BEGIN_SRC lisp
 (query (:select (:+ (:interval "2h 50min") (:interval "10min")))
@@ -238,6 +272,9 @@ employees with more than 1 year of service.
 #+END_SRC
 
 ** Extracting Subparts
+   :PROPERTIES:
+   :ID:       38666c25-b699-4a8a-8db7-88472b13bc0c
+   :END:
 You can extract a part of an interval using :extract.
 #+BEGIN_SRC lisp
 (query (:select (:extract "minute" (:interval "5 hours 21 minutes")))
@@ -271,6 +308,9 @@ You can extract a part of an interval using :extract.
 3.0d0
 #+END_SRC
 ** Justify Days and Hours
+   :PROPERTIES:
+   :ID:       2ad994c7-2167-41f9-8c5e-6cbc9695e912
+   :END:
 You can adjust a period of days to be 30 day months and adjust a period
 of hours to be 24 hour days. For example:
 

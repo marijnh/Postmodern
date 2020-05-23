@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<!-- 2018-09-09 Sun 09:46 -->
-<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- 2020-05-16 Sat 15:32 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Transaction and Isolation Notes</title>
-<meta name="generator" content="Org mode" />
+<meta name="generator" content="Org mode">
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
   .title  { text-align: center;
@@ -229,50 +227,51 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
+<header>
 <h1 class="title">Transaction and Isolation Notes</h1>
-<div id="table-of-contents">
+</header><nav id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgce893f6">Postmodern transaction calls with transaction names and isolation levels</a></li>
-<li><a href="#orge7b7307">Introduction to ACID, Transactions and Isolation Levels</a></li>
-<li><a href="#orgad3a14b">Transactions</a>
+<li><a href="#org9e38018">Postmodern transaction calls with transaction names and isolation levels</a></li>
+<li><a href="#org2d2f344">Introduction to ACID, Transactions and Isolation Levels</a></li>
+<li><a href="#org09c84e9">Transactions</a>
 <ul>
 <li>
 <ul>
-<li><a href="#org632d2a7">What happens if we nest transactions?</a></li>
+<li><a href="#org2074f92">What happens if we nest transactions?</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org2718562">The Concurrency Problem</a>
+<li><a href="#org631971c">The Concurrency Problem</a>
 <ul>
-<li><a href="#org32ae683">Summary</a></li>
-<li><a href="#orgf171a5a">Problem Explanation</a>
+<li><a href="#org6f957cf">Summary</a></li>
+<li><a href="#orgd7826ba">Problem Explanation</a>
 <ul>
-<li><a href="#orgf168768">Dirty Read</a></li>
-<li><a href="#org98f53fd">Nonrepeatable Read</a></li>
-<li><a href="#org59035d8">Phantom Read</a></li>
-<li><a href="#org119c9a4">For More Fun</a></li>
+<li><a href="#org580ea64">Dirty Read</a></li>
+<li><a href="#org478365a">Nonrepeatable Read</a></li>
+<li><a href="#orgf85ad33">Phantom Read</a></li>
+<li><a href="#org6803710">For More Fun</a></li>
 </ul>
 </li>
-<li><a href="#orgfd76894">Isolation Levels</a>
+<li><a href="#orgad0b61f">Isolation Levels</a>
 <ul>
-<li><a href="#orgebb7a8d">Read Committed Isolation Level</a></li>
-<li><a href="#org39d8607">Repeatable Read Isolation Level</a></li>
-<li><a href="#orga4529c5">Serializable Isolation Level</a></li>
+<li><a href="#org300588e">Read Committed Isolation Level</a></li>
+<li><a href="#org281f76a">Repeatable Read Isolation Level</a></li>
+<li><a href="#orgeaaa3de">Serializable Isolation Level</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#orgc25bfba">For Futher Reading</a></li>
+<li><a href="#org0f0efcd">For Futher Reading</a></li>
 </ul>
 </div>
-</div>
+</nav>
 
-<div id="outline-container-orgce893f6" class="outline-2">
-<h2 id="orgce893f6">Postmodern transaction calls with transaction names and isolation levels</h2>
-<div class="outline-text-2" id="text-orgce893f6">
+<div id="outline-container-org9e38018" class="outline-2">
+<h2 id="org9e38018">Postmodern transaction calls with transaction names and isolation levels</h2>
+<div class="outline-text-2" id="text-org9e38018">
 <p>
 Transactions are one or more statements wrapped together which either all
 succeed and are "committed" or none of them succeed, in which case any state
@@ -325,37 +324,37 @@ and the isolation level per the key words above. Examples of use are below
 and "george" is used as the name of the transaction (not quoted or as a string):
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(with-transaction ()
-  (execute (:insert-into 'test-data :set 'value 77)))
+<pre class="src src-lisp">(<span style="color: #00ffff;">with-transaction</span> ()
+  (execute (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-data <span style="color: #98fb98; font-weight: bold;">:set</span> 'value 77)))
 
-(with-transaction (george)
-  (execute (:insert-into 'test-data :set 'value 22)))
+(<span style="color: #00ffff;">with-transaction</span> (george)
+  (execute (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-data <span style="color: #98fb98; font-weight: bold;">:set</span> 'value 22)))
 
-(with-transaction (george :read-committed-rw)
-  (execute (:insert-into 'test-data :set 'value 33)))
+(<span style="color: #00ffff;">with-transaction</span> (george <span style="color: #98fb98; font-weight: bold;">:read-committed-rw</span>)
+  (execute (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-data <span style="color: #98fb98; font-weight: bold;">:set</span> 'value 33)))
 
-(with-transaction (:serializable)
-  (execute (:insert-into 'test-data :set 'value 44)))
+(<span style="color: #00ffff;">with-transaction</span> (<span style="color: #98fb98; font-weight: bold;">:serializable</span>)
+  (execute (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-data <span style="color: #98fb98; font-weight: bold;">:set</span> 'value 44)))
 
-(with-logical-transaction ()
-  (execute (:insert-into 'test-data :set 'value 77)))
+(<span style="color: #00ffff;">with-logical-transaction</span> ()
+  (execute (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-data <span style="color: #98fb98; font-weight: bold;">:set</span> 'value 77)))
 
-(with-logical-transaction (george)
-  (execute (:insert-into 'test-data :set 'value 22)))
+(<span style="color: #00ffff;">with-logical-transaction</span> (george)
+  (execute (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-data <span style="color: #98fb98; font-weight: bold;">:set</span> 'value 22)))
 
-(with-logical-transaction (george :read-committed-rw)
-  (execute (:insert-into 'test-data :set 'value 33)))
+(<span style="color: #00ffff;">with-logical-transaction</span> (george <span style="color: #98fb98; font-weight: bold;">:read-committed-rw</span>)
+  (execute (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-data <span style="color: #98fb98; font-weight: bold;">:set</span> 'value 33)))
 
-(with-logical-transaction (:serializable)
-  (execute (:insert-into 'test-data :set 'value 44)))
+(<span style="color: #00ffff;">with-logical-transaction</span> (<span style="color: #98fb98; font-weight: bold;">:serializable</span>)
+  (execute (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-data <span style="color: #98fb98; font-weight: bold;">:set</span> 'value 44)))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orge7b7307" class="outline-2">
-<h2 id="orge7b7307">Introduction to ACID, Transactions and Isolation Levels</h2>
-<div class="outline-text-2" id="text-orge7b7307">
+<div id="outline-container-org2d2f344" class="outline-2">
+<h2 id="org2d2f344">Introduction to ACID, Transactions and Isolation Levels</h2>
+<div class="outline-text-2" id="text-org2d2f344">
 <p>
 Databases like Postgresql are not simply data storage, they are
 transaction management systems. In the context of transactions with multiple
@@ -409,19 +408,19 @@ the event of a crash, power loss, etc.
 </div>
 </div>
 
-<div id="outline-container-orgad3a14b" class="outline-2">
-<h2 id="orgad3a14b">Transactions</h2>
-<div class="outline-text-2" id="text-orgad3a14b">
+<div id="outline-container-org09c84e9" class="outline-2">
+<h2 id="org09c84e9">Transactions</h2>
+<div class="outline-text-2" id="text-org09c84e9">
 <p>
 It is easy show the impact of transactions in action. Consider the following:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(execute (:create-table test-data ((value :type integer))))
+<pre class="src src-lisp">(execute (<span style="color: #98fb98; font-weight: bold;">:create-table</span> test-data ((value <span style="color: #98fb98; font-weight: bold;">:type</span> integer))))
 
-(with-transaction ()
-  (execute (:insert-into 'test-data :set 'value 77)))
-(query (:select '* :from 'test-data))
+(<span style="color: #00ffff;">with-transaction</span> ()
+  (execute (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-data <span style="color: #98fb98; font-weight: bold;">:set</span> 'value 77)))
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'test-data))
 ((77))
 </pre>
 </div>
@@ -436,14 +435,14 @@ For purposes of the following examples, assume that we truncated
 the table prior to each example so we have the same base line each time.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(ignore-errors
-  (with-transaction ()
-    (execute (:insert-into 'test-data :set 'value 2))
-    (error "no wait")))
+<pre class="src src-lisp">(<span style="color: #00ffff;">ignore-errors</span>
+  (<span style="color: #00ffff;">with-transaction</span> ()
+    (execute (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-data <span style="color: #98fb98; font-weight: bold;">:set</span> 'value 2))
+    (<span style="color: #cd5c5c; font-weight: bold;">error</span> <span style="color: #cd8162;">"no wait"</span>)))
 NIL
-#&lt;SIMPLE-ERROR "no wait" {100D581653}&gt;
+#&lt;SIMPLE-ERROR <span style="color: #cd8162;">"no wait"</span> {100D581653}&gt;
 
-(with-test-connection (query (:select '* :from 'test-data)))
+(<span style="color: #00ffff;">with-test-connection</span> (query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'test-data)))
 NIL
 </pre>
 </div>
@@ -460,11 +459,11 @@ Now lets actually give the transaction a name and make a superflous call to
 commit-transaction within the transaction.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(with-transaction (transaction)
-  (execute (:insert-into 'test-data :set 'value 2))
+<pre class="src src-lisp">(<span style="color: #00ffff;">with-transaction</span> (transaction)
+  (execute (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-data <span style="color: #98fb98; font-weight: bold;">:set</span> 'value 2))
   (commit-transaction transaction))
 
-(query (:select '* :from 'test-data))
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'test-data))
 ((2))
 </pre>
 </div>
@@ -477,11 +476,11 @@ trigger the insertion twice.
 We can also decide to abort the transaction without triggering an error:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(with-transaction (transaction)
-  (execute (:insert-into 'test-data :set 'value 44))
+<pre class="src src-lisp">(<span style="color: #00ffff;">with-transaction</span> (transaction)
+  (execute (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'test-data <span style="color: #98fb98; font-weight: bold;">:set</span> 'value 44))
   (abort-transaction transaction))
 
-(query (:select '* :from 'test-data))
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'test-data))
 NIL
 </pre>
 </div>
@@ -491,9 +490,9 @@ abort-transaction.
 </p>
 </div>
 
-<div id="outline-container-org632d2a7" class="outline-4">
-<h4 id="org632d2a7">What happens if we nest transactions?</h4>
-<div class="outline-text-4" id="text-org632d2a7">
+<div id="outline-container-org2074f92" class="outline-4">
+<h4 id="org2074f92">What happens if we nest transactions?</h4>
+<div class="outline-text-4" id="text-org2074f92">
 <p>
 Postgresql does not fully support nested transactions. Full support of
 nested transactions would mean that a succesful sub-transaction does not get
@@ -536,13 +535,13 @@ isolation levels.
 </div>
 </div>
 
-<div id="outline-container-org2718562" class="outline-2">
-<h2 id="org2718562">The Concurrency Problem</h2>
-<div class="outline-text-2" id="text-org2718562">
+<div id="outline-container-org631971c" class="outline-2">
+<h2 id="org631971c">The Concurrency Problem</h2>
+<div class="outline-text-2" id="text-org631971c">
 </div>
-<div id="outline-container-org32ae683" class="outline-3">
-<h3 id="org32ae683">Summary</h3>
-<div class="outline-text-3" id="text-org32ae683">
+<div id="outline-container-org6f957cf" class="outline-3">
+<h3 id="org6f957cf">Summary</h3>
+<div class="outline-text-3" id="text-org6f957cf">
 <p>
 Consider when you have multiple concurrent transactions or multiple concurrent
 database events. These create potential race conditions as well as potential
@@ -609,19 +608,19 @@ handle the necessary repeats).
 We explain this table just below:
 </p>
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table>
 
 
 <colgroup>
-<col  class="org-left" />
+<col  class="org-left">
 
-<col  class="org-left" />
+<col  class="org-left">
 
-<col  class="org-left" />
+<col  class="org-left">
 
-<col  class="org-left" />
+<col  class="org-left">
 
-<col  class="org-left" />
+<col  class="org-left">
 </colgroup>
 <thead>
 <tr>
@@ -669,13 +668,13 @@ We explain this table just below:
 </div>
 </div>
 
-<div id="outline-container-orgf171a5a" class="outline-3">
-<h3 id="orgf171a5a">Problem Explanation</h3>
-<div class="outline-text-3" id="text-orgf171a5a">
+<div id="outline-container-orgd7826ba" class="outline-3">
+<h3 id="orgd7826ba">Problem Explanation</h3>
+<div class="outline-text-3" id="text-orgd7826ba">
 </div>
-<div id="outline-container-orgf168768" class="outline-4">
-<h4 id="orgf168768">Dirty Read</h4>
-<div class="outline-text-4" id="text-orgf168768">
+<div id="outline-container-org580ea64" class="outline-4">
+<h4 id="org580ea64">Dirty Read</h4>
+<div class="outline-text-4" id="text-org580ea64">
 <p>
 A Dirty Read is a transaction reads data written by a concurrent uncommitted
 transaction. You can specify a transaction as having a “Read Uncommitted”
@@ -686,13 +685,13 @@ isolation level.
 <p>
 Assume sales are 2100 at the beginning
 </p>
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table>
 
 
 <colgroup>
-<col  class="org-left" />
+<col  class="org-left">
 
-<col  class="org-left" />
+<col  class="org-left">
 </colgroup>
 <tbody>
 <tr>
@@ -734,9 +733,9 @@ fully commit.
 </div>
 </div>
 
-<div id="outline-container-org98f53fd" class="outline-4">
-<h4 id="org98f53fd">Nonrepeatable Read</h4>
-<div class="outline-text-4" id="text-org98f53fd">
+<div id="outline-container-org478365a" class="outline-4">
+<h4 id="org478365a">Nonrepeatable Read</h4>
+<div class="outline-text-4" id="text-org478365a">
 <p>
 A Nonrepeatable read is a transaction re-reads data it has previously read and
 finds the data has been modified by another transaction that committed since
@@ -746,13 +745,13 @@ the initial read.
 <p>
 Assume sales are 2100 at the beginning
 </p>
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table>
 
 
 <colgroup>
-<col  class="org-left" />
+<col  class="org-left">
 
-<col  class="org-left" />
+<col  class="org-left">
 </colgroup>
 <tbody>
 <tr>
@@ -811,7 +810,7 @@ s-sql, you can include :for-share or :for-update in the select statement. E.g.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:for-update (:select :* :from 'foo 'bar 'baz) :of 'bar 'baz :nowait))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:for-update</span> (<span style="color: #98fb98; font-weight: bold;">:select</span> <span style="color: #98fb98; font-weight: bold;">:*</span> <span style="color: #98fb98; font-weight: bold;">:from</span> 'foo 'bar 'baz) <span style="color: #98fb98; font-weight: bold;">:of</span> 'bar 'baz <span style="color: #98fb98; font-weight: bold;">:nowait</span>))
 </pre>
 </div>
 <p>
@@ -820,9 +819,9 @@ See <a href="s-sql.html">s-sql.html</a> for further details.
 </div>
 </div>
 
-<div id="outline-container-org59035d8" class="outline-4">
-<h4 id="org59035d8">Phantom Read</h4>
-<div class="outline-text-4" id="text-org59035d8">
+<div id="outline-container-orgf85ad33" class="outline-4">
+<h4 id="orgf85ad33">Phantom Read</h4>
+<div class="outline-text-4" id="text-orgf85ad33">
 <p>
 A Phantom Read is where a transaction re-executes a query returning a set of
 rows and finds that the set of rows has changed (not necessarily row 215,
@@ -835,13 +834,13 @@ will not solve this problem.
 Assume first select returns 50:
 </p>
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table>
 
 
 <colgroup>
-<col  class="org-left" />
+<col  class="org-left">
 
-<col  class="org-left" />
+<col  class="org-left">
 </colgroup>
 <tbody>
 <tr>
@@ -890,22 +889,22 @@ internally to the transaction.
 </div>
 </div>
 
-<div id="outline-container-org119c9a4" class="outline-4">
-<h4 id="org119c9a4">For More Fun</h4>
-<div class="outline-text-4" id="text-org119c9a4">
+<div id="outline-container-org6803710" class="outline-4">
+<h4 id="org6803710">For More Fun</h4>
+<div class="outline-text-4" id="text-org6803710">
 <p>
 Now consider you have banking application A which runs in multiple sessions and
 does not use transactions and the user withdraws 100 from each of two sessions
 and the balance started at 300.
 </p>
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table>
 
 
 <colgroup>
-<col  class="org-left" />
+<col  class="org-left">
 
-<col  class="org-left" />
+<col  class="org-left">
 </colgroup>
 <tbody>
 <tr>
@@ -954,13 +953,13 @@ difference.
 <p>
 Now implemented slightly differently:
 </p>
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table>
 
 
 <colgroup>
-<col  class="org-left" />
+<col  class="org-left">
 
-<col  class="org-left" />
+<col  class="org-left">
 </colgroup>
 <tbody>
 <tr>
@@ -1001,17 +1000,17 @@ leading to solutions such as "row level locking" and "isolation levels".
 </div>
 </div>
 
-<div id="outline-container-orgfd76894" class="outline-3">
-<h3 id="orgfd76894">Isolation Levels</h3>
-<div class="outline-text-3" id="text-orgfd76894">
+<div id="outline-container-orgad0b61f" class="outline-3">
+<h3 id="orgad0b61f">Isolation Levels</h3>
+<div class="outline-text-3" id="text-orgad0b61f">
 <p>
 The official postgresql documentation can be found <a href="https://www.postgresql.org/docs/current/static/transaction-iso.html">here</a>.
 </p>
 </div>
 
-<div id="outline-container-orgebb7a8d" class="outline-4">
-<h4 id="orgebb7a8d">Read Committed Isolation Level</h4>
-<div class="outline-text-4" id="text-orgebb7a8d">
+<div id="outline-container-org300588e" class="outline-4">
+<h4 id="org300588e">Read Committed Isolation Level</h4>
+<div class="outline-text-4" id="text-org300588e">
 <p>
 Read Committed is the default isolation level in Postgresql. In general
 it has the best balance between locking and performance. This isolation level
@@ -1043,13 +1042,13 @@ Assume our banking problem using transactions at the Postgresql default
 isolation level of "read committed".
 </p>
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table>
 
 
 <colgroup>
-<col  class="org-left" />
+<col  class="org-left">
 
-<col  class="org-left" />
+<col  class="org-left">
 </colgroup>
 <tbody>
 <tr>
@@ -1113,9 +1112,9 @@ and tells the database to update the balance to 100.
 </div>
 </div>
 
-<div id="outline-container-org39d8607" class="outline-4">
-<h4 id="org39d8607">Repeatable Read Isolation Level</h4>
-<div class="outline-text-4" id="text-org39d8607">
+<div id="outline-container-org281f76a" class="outline-4">
+<h4 id="org281f76a">Repeatable Read Isolation Level</h4>
+<div class="outline-text-4" id="text-org281f76a">
 <p>
 In Postgresql, a “Repeatable Read” isolation level takes a snapshot of the
 current state of the database and all queries in the transaction will use
@@ -1165,9 +1164,9 @@ above, so the result in this case is the same as "read committed".
 </div>
 </div>
 
-<div id="outline-container-orga4529c5" class="outline-4">
-<h4 id="orga4529c5">Serializable Isolation Level</h4>
-<div class="outline-text-4" id="text-orga4529c5">
+<div id="outline-container-orgeaaa3de" class="outline-4">
+<h4 id="orgeaaa3de">Serializable Isolation Level</h4>
+<div class="outline-text-4" id="text-orgeaaa3de">
 <p>
 The Serializable Isolation level tells postgresql to effectively serialize all
 transactions. That ensures validity at the cost of a hit to performance.
@@ -1190,9 +1189,9 @@ two errors can be expected:
 </div>
 </div>
 
-<div id="outline-container-orgc25bfba" class="outline-2">
-<h2 id="orgc25bfba">For Futher Reading</h2>
-<div class="outline-text-2" id="text-orgc25bfba">
+<div id="outline-container-org0f0efcd" class="outline-2">
+<h2 id="org0f0efcd">For Futher Reading</h2>
+<div class="outline-text-2" id="text-org0f0efcd">
 <ul class="org-ul">
 <li><a href="https://www.postgresql.org/docs/current/static/transaction-iso.html">https://www.postgresql.org/docs/current/static/transaction-iso.html</a></li>
 <li><a href="https://www.postgresql.org/docs/current/static/sql-set-transaction.html">https://www.postgresql.org/docs/current/static/sql-set-transaction.html</a></li>
@@ -1217,10 +1216,6 @@ two errors can be expected:
 </ul>
 </div>
 </div>
-</div>
-<div id="postamble" class="status">
-<p class="date">Created: 2018-09-09 Sun 09:46</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

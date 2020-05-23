@@ -1,8 +1,12 @@
 #+TITLE: Dynamic Query Notes
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 * Overview
+  :PROPERTIES:
+  :ID:       3a08705b-191f-47c7-99fb-60714a522b4a
+  :END:
 The question often gets asked how to build dynamic or composable queries
 in postmodern. First we need to remember that the query macro assumes that
 everything that is not a list starting with a keyword will evaluate to a
@@ -15,6 +19,9 @@ parameterized queries. If not you have opened yourself up to an sql injection
 attack.
 
 * Approach #1 Use sql-compile
+  :PROPERTIES:
+  :ID:       9d70b61d-1a93-48ef-a2ed-ecc3e8e0dd2c
+  :END:
 Sql-compile does a run-time compilation of an s-sql expression. In the
 following example, we create a function that accepts a where-clause,
 a table-name, 3 columns to select and two parameters to go into the where
@@ -110,6 +117,9 @@ sql in a let clause:
 #+END_SRC
 
 * Approach #2 Use :raw
+  :PROPERTIES:
+  :ID:       cde3bff7-cf1c-4d85-81d8-d4010ed91102
+  :END:
 To quote Marijn, the :raw keyword takes a string and inserts it straight
 into the query. I try to stay away from :raw if possible, but sometimes...
 

@@ -4,6 +4,7 @@
 ;; Utils
 
 (define-condition sql-error (simple-error) ())
+
 (defun sql-error (control &rest args)
   (error 'sql-error :format-control control :format-arguments args))
 
@@ -16,12 +17,12 @@
     result))
 
 (defun implode (sep list)
-  "Reduce a list of strings to a single string, inserting a separator
-between them."
+  "Reduce a list of strings to a single string, inserting a separator between
+them."
   (strcat (loop :for element :on list
                 :collect (car element)
                 :if (cdr element)
-                :collect sep)))
+                  :collect sep)))
 
 (defun split-on-keywords% (shape list)
   "Helper function for split-on-keywords. Extracts the values
@@ -38,13 +39,29 @@ errors."
                      (cond (found
                             (let ((after-me (nthcdr (1+ found) values)))
                               (unless (or after-me no-args)
-                                (sql-error "Keyword ~A encountered at end of arguments." me))
+                                (sql-error "Keyword ~A encountered at end of
+arguments."
+                                           me))
                               (let ((next (next-word (cdr words) after-me)))
                                 (cond
-                                  (no-args (unless (zerop next) (sql-error "Keyword ~A does not take any arguments." me)))
-                                  (multi (unless (>= next 1) (sql-error "Not enough arguments to keyword ~A." me)))
-                                  (t (unless (= next 1) (sql-error "Keyword ~A takes exactly one argument." me))))
-                                (push (cons (caar words) (if no-args t (subseq after-me 0 next))) result)
+                                  (no-args
+                                   (unless (zerop next)
+                                     (sql-error "Keyword ~A does not take any
+arguments."
+                                                me)))
+                                  (multi
+                                   (unless (>= next 1)
+                                     (sql-error "Not enough arguments to
+keyword ~A."
+                                                me)))
+                                  (t (unless (= next 1)
+                                       (sql-error "Keyword ~A takes exactly
+one argument."
+                                                  me))))
+                                (push (cons (caar words)
+                                            (if no-args t
+                                                (subseq after-me 0 next)))
+                                      result)
                                 found)))
                            (optional
                             (next-word (cdr words) values))
@@ -67,52 +84,73 @@ must appear in the order defined."
             ,@(mapcar (lambda (word)
                         `(,(first word) (cdr (assoc ',(first word) ,alist))))
                       words))
-        ,@body)))
+       ,@body)))
 
 ;; Converting between symbols and SQL strings.
 
 (defparameter *postgres-reserved-words*
   (let ((words (make-hash-table :test 'equal)))
-    (dolist (word '("all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric" "authorization"
-                    "between" "binary" "both" "case" "cast" "check" "collate" "column" "concurrently"
-                    "constraint" "create" "cross" "current-catalog" "current-date" "current-role" "current-schema"
-                    "current-time" "current-timestamp" "current-user" "default" "deferrable"
-                    "desc" "distinct" "do" "else" "end" "except" "false" "fetch" "filter"
-                    "for" "foreign" "freeze" "from" "full" "grant" "group" "having" "ilike" "in" "initially"
-                    "inner" "intersect" "into" "is" "isnull" "join" "lateral" "leading" "left" "like" "limit"
-                    "localtime" "localtimestamp" "natural" "new" "not" "notnull" "null" "off" "offset" "old"
-                    "on" "only" "or" "order" "outer" "overlaps" "placing" "primary" "references" "returning"
-                    "right" "select" "session-user" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
-                    "union" "unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"
-                    "for" "nowait" "share"))
+    (dolist (word '("all" "analyse" "analyze" "and" "any" "array" "as" "asc"
+                    "asymmetric" "authorization" "between" "binary" "both"
+                    "case" "cast" "check" "collate" "column" "concurrently"
+                    "constraint" "create" "cross" "current-catalog"
+                    "current-date" "current-role" "current-schema"
+                    "current-time" "current-timestamp" "current-user" "default"
+                    "deferrable" "desc" "distinct" "do" "else" "end" "except"
+                    "false" "fetch" "filter"  "for" "foreign" "freeze" "from"
+                    "full" "grant" "group" "having" "ilike" "in" "initially"
+                    "inner" "intersect" "into" "is" "isnull" "join" "lateral"
+                    "leading" "left" "like" "limit" "localtime" "localtimestamp"
+                    "natural" "new" "not" "notnull" "nowait" "null" "off"
+                    "offset" "old" "on" "only" "or" "order" "outer" "overlaps"
+                    "placing" "primary" "references" "returning" "right"
+                    "select" "session-user" "Share" "similar" "some" "symmetric"
+                    "table" "then" "to" "trailing" "true" "union" "unique"
+                    "user" "using" "variadic" "verbose" "when" "where" "window"
+                    "with"))
       (setf (gethash word words) t))
     words)
-  "A set of all PostgreSQL's reserved words, for automatic escaping.")
+  "A set of all PostgreSQL's reserved words, for automatic escaping. Probably
+not a good idea to use these words as identifiers anyway.")
 
 (defparameter *escape-sql-names-p* :auto
-  "Setting this to T will make S-SQL add double quotes around
-identifiers in queries. Setting it :auto will turn on this behaviour
-only for reserved words. Setting it to :literal will cause to-sql-name to
-escape reserved words,but will not make other changes such as changing
-forward slash to underscore.")
+  "Determines whether double quotes are added around column, table, and **
+function names in queries. Valid values:
 
-(defvar *downcase-symbols* t)
+- T, in which case every name is escaped,
+- NIL, in which case no name is escaped,
+- :auto, which causes only reserved words to be escaped, or.
+- :literal which is the same as :auto except it has added consequence in
+  to-sql-name (see below).
 
-(defun to-sql-name (name &optional (escape-p *escape-sql-names-p*) (ignore-reserved-words nil))
-  "Convert a symbol or string into a name that can be a sql table,
-column, or operation name. Add quotes when escape-p is true, or
-escape-p is :auto and the name contains reserved words.
-Quoted or delimited identifiers can be used by passing :literal as
-the value of escape-p. If escape-p is :literal, and the name is a string then
-the string is still escaped but the symbol or string is not downcased,
-regardless of the setting for *downcase-symbols* and the hyphen
-and forward slash characters are not replaced with underscores.
+The default value is :auto.
+
+Be careful when binding this with let and such ― since a lot of SQL compilation
+tends to happen at compile-time, the result might not be what you expect. Mixed
+case sensitivity is not currently well supported. Postgresql itself will
+downcase unquoted identifiers. This will be revisited in the future if
+requested.")
+
+(defvar *downcase-symbols* t
+  "When converting symbols to strings, whether to downcase the symbols is set
+here. The default is to downcase symbols.")
+
+(defun to-sql-name (name &optional (escape-p *escape-sql-names-p*)
+                           (ignore-reserved-words nil))
+  "Convert a symbol or string into a name that can be a sql table, column, or
+operation name. Add quotes when escape-p is true, or escape-p is :auto and the
+name contains reserved words. Quoted or delimited identifiers can be used by
+passing :literal as the value of escape-p. If escape-p is :literal, and the
+name is a string then the string is still escaped but the symbol or string is
+not downcased, regardless of the setting for *downcase-symbols* and the
+hyphen and forward slash characters are not replaced with underscores.
 
 Ignore-reserved-words is only used internally for column names which are allowed
 to be reserved words, but it is not recommended."
   (declare (optimize (speed 3) (debug 0)))
   (let ((*print-pretty* nil)
-        (name (if (and (consp name) (eq (car name) 'quote) (equal (length name) 2))
+        (name (if (and (consp name) (eq (car name) 'quote) (equal (length name)
+                                                                  2))
                   (string (cadr name))
                   (string name))))
     (with-output-to-string (*standard-output*)
@@ -120,14 +158,16 @@ to be reserved words, but it is not recommended."
                (let ((result (make-string (- to from))))
                  (loop :for i :from from :below to
                        :for p :from 0
-                       :do (setf (char result p) (if (and *downcase-symbols*
-                                                          (not (eq escape-p :literal)))
-                                                     (char-downcase (char str i))
-                                                     (char str i))))
+                       :do (setf (char result p)
+                                 (if (and *downcase-symbols*
+                                          (not (eq escape-p :literal)))
+                                     (char-downcase (char str i))
+                                     (char str i))))
                  result))
              (write-element (str)
                (declare (type string str))
-               (let ((escape-p (cond ((and (eq escape-p :auto) (not ignore-reserved-words))
+               (let ((escape-p (cond ((and (eq escape-p :auto)
+                                           (not ignore-reserved-words))
                                       (gethash str *postgres-reserved-words*))
                                      (ignore-reserved-words nil)
                                      (t escape-p))))
@@ -147,25 +187,30 @@ to be reserved words, but it is not recommended."
                    (write-char #\")))))
 
         (loop :for start := 0 :then (1+ dot)
-              :for dot := (position #\. name) :then (position #\. name :start start)
-              :do (write-element (subseq-downcase name start (or dot (length name))))
+              :for dot := (position #\. name) :then (position #\. name
+                                                              :start start)
+              :do (write-element (subseq-downcase name start
+                                                  (or dot (length name))))
               :if dot :do (princ #\.)
-              :else :do (return))))))
+                :else :do (return))))))
 
 (defun from-sql-name (str)
-  "Convert a string to something that might have been its original
-lisp name. Does not work if this name contains non-alphanumeric
-characters other than #\-"
+  "Convert a string to a symbol, upcasing and replacing underscores with
+hyphens."
   (intern (map 'string (lambda (x) (if (eq x #\_) #\- x))
-               (if (eq (readtable-case *readtable*) :upcase) (string-upcase str) str))
+               (if (eq (readtable-case *readtable*) :upcase)
+                   (string-upcase str)
+                   str))
           (find-package :keyword)))
 
 ;; Writing out SQL type identifiers.
 
 ;; Aliases for some types that can be expressed in SQL.
 (deftype smallint ()
+  "Also known as int2"
   '(signed-byte 16))
 (deftype bigint ()
+  "Also know as int8"
   `(signed-byte 64))
 (deftype numeric (&optional precision/scale scale)
   (declare (ignore precision/scale scale))
@@ -191,9 +236,8 @@ for declaring a type to be an integer that may be null."
 ;; the SQL type. Close enough though.
 
 (defgeneric sql-type-name (lisp-type &rest args)
-  (:documentation "Transform a lisp type into a string containing
-something SQL understands. Default is to just use the type symbol's
-name.")
+  (:documentation "Transform a lisp type into a string containing something
+SQL understands. Default is to just use the type symbol's name.")
   (:method ((lisp-type symbol) &rest args)
     (declare (ignore args))
     (substitute #\Space #\- (symbol-name lisp-type) :test #'char=))
@@ -246,7 +290,11 @@ name.")
   in queries can be reduced by setting this to T.")
 
 (defun sql-escape-string (string &optional prefix)
-  "Escape string data so it can be used in a query."
+  "Escape string data so it can be used in a query. Example:
+
+    (sql-escape-string \"Puss in 'Boots'\")
+
+     \"E'Puss in ''Boots'''\""
   (let ((*print-pretty* nil))
     (with-output-to-string (*standard-output*)
       (when prefix
@@ -256,7 +304,8 @@ name.")
         (princ #\E))
       (princ #\')
       (if *standard-sql-strings*
-          (loop :for char :across string :do (princ (if (char= char #\') "''" char)))
+          (loop :for char :across string
+                :do (princ (if (char= char #\') "''" char)))
           (loop :for char :across string
                 :do (princ (case char
                              (#\' "''")
@@ -265,8 +314,21 @@ name.")
       (princ #\'))))
 
 (defgeneric sql-escape (arg)
-  (:documentation "Get the representation of a Lisp value so that it
-can be used in a query.")
+  (:documentation "A generalisation of sql-escape-string looks at the type of
+the value passed, and properly writes it out it for inclusion in an SQL query.
+Symbols will be converted to SQL names. Examples:
+
+  (sql-escape \"tr'-x\")
+
+  \"E'tr''-x'\"
+
+  (sql-escape (/ 1 13))
+
+  \"0.0769230769230769230769230769230769230\"
+
+  (sql-escape #(\"Baden-Wurttemberg\" \"Bavaria\" \"Berlin\" \"Brandenburg\"))
+
+  \"ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']\"")
   (:method ((arg symbol))
     (if (or (typep arg 'boolean) (eq arg :null))
         (call-next-method)
@@ -275,7 +337,8 @@ can be used in a query.")
     (if (or (typep arg '(vector (unsigned-byte 8)))
             (stringp arg))
         (call-next-method)
-        (format nil "~:['{}'~;ARRAY[~:*~{~A~^, ~}]~]" (map 'list 'sql-escape arg))))
+        (format nil "~:['{}'~;ARRAY[~:*~{~A~^, ~}]~]"
+                (map 'list 'sql-escape arg))))
   (:method ((arg t))
     (multiple-value-bind (string escape) (cl-postgres:to-sql-string arg)
       (if escape
@@ -309,12 +372,12 @@ to strings (which will form a SQL query when concatenated)."
         :if rest :collect sep))
 
 (defun sql-expand-names (names &optional (sep ", "))
-  "Takes a list of elements (symbols or strings) and returns a separated list of strings.
-If the element is a cons, then "
+  "Takes a list of elements (symbols or strings) and returns a separated list
+of strings. If the element is a cons, then "
   (loop :for (name . rest) :on names
         :if (consp name) :append (let ((*expand-runtime* t))
                                    (sql-expand name))
-        :else :collect (to-sql-name name)
+          :else :collect (to-sql-name name)
         :if rest :collect sep))
 
 (defun reduce-strings (list)
@@ -332,17 +395,45 @@ If the element is a cons, then "
     (nreverse accum)))
 
 (defmacro sql (form)
-  "Compile form to a sql expression as far as possible."
+  "Convert the given form (a list starting with a keyword) to an SQL query
+string at compile time, according to the rules described here. For example:
+
+    (sql (:select '* :from 'country :where (:= 'a 1)))
+     \"(SELECT * FROM country WHERE (a = 1))\"
+
+but
+
+    (sql '(:select '* :from 'country :where (:= 'a 1)))
+
+would throw an error. For the later case you need to use sql-compile."
   (let ((list (reduce-strings (sql-expand form))))
     (if (= 1 (length list))
         (car list)
         `(strcat (list ,@list)))))
 
 (defun sql-compile (form)
+  "This is the run-time variant of the sql macro. It converts the given list to
+an SQL query, with the same rules except that symbols in this list do not
+have to be quoted to be interpreted as identifiers. For example:
+
+    (sql-compile '(:select '* :from 'country :where (:= 'a 1)))
+     \"(SELECT * FROM country WHERE (a = 1))\"
+
+but
+
+    (sql (:select '* :from 'country :where (:= 'a 1)))
+
+would throw an error. For the later case you need to use sql."
   (let ((*expand-runtime* t))
     (strcat (sql-expand form))))
 
 (defun sql-template (form)
+  "In cases where you do need to build the query at run time, yet you do not
+want to re-compile it all the time, this function can be used to compile it
+once and store the result. It takes an S-SQL form, which may contain
+$$ placeholder symbols, and returns a function that takes one argument for
+every $$. When called, this returned function produces an SQL string in
+which the placeholders have been replaced by the values of the arguments."
   (let* ((*expand-runtime* t)
          (compiled (reduce-strings (sql-expand form)))
          (*print-pretty* nil))
@@ -408,7 +499,8 @@ with a given arity."
                       (sql-expand (car args)))))
         (:2+-ary (lambda (args)
                    (unless (cdr args)
-                     (sql-error "SQL operator ~A takes at least two arguments." name))
+                     (sql-error "SQL operator ~A takes at least two arguments."
+                                name))
                    (expand-n-ary args)))
         (:n-or-unary (lambda (args)
                        (if (cdr args)
@@ -425,7 +517,8 @@ case). After the arity follow any number of operators, either just a
 keyword, in which case the downcased symbol name is used as the
 operator, or a two-element list containing a keyword and a name
 string."
-  (declare (type (member :unary :unary-postfix :n-ary :n-or-unary :2+-ary) arity))
+  (declare (type (member :unary :unary-postfix :n-ary :n-or-unary :2+-ary)
+                 arity))
   (flet ((define-op (name)
            (let ((name (if (listp name)
                            (second name)
@@ -437,18 +530,48 @@ string."
     `(progn ,@(mapcar #'define-op names))))
 
 (register-sql-operators :unary :not)
-(register-sql-operators :n-ary :+ :* :% :& :|\|| :|\|\|| :and :or :union (:union-all "union all"))
+(register-sql-operators :n-ary :+ :* :% :& :|\|| :|\|\|| :and :or :union
+                        (:union-all "union all"))
 (register-sql-operators :n-or-unary :- :~)
-(register-sql-operators :2+-ary  := :/ :!= :<> :< :> :<= :>= :^ :~* :!~ :!~* :like :ilike :->> :|#>| :|#>>|
+(register-sql-operators :2+-ary  := :/ :!= :<> :< :> :<= :>= :^ :~* :!~ :!~*
+                                 :like :ilike :->> :|#>| :|#>>|
                         :intersect (:intersect-all "intersect all")
                         :except (:except-all "except all"))
+
+;; Examples of the use of these operators is:
+;; (query (:select 'id 'text :from 'text-search :where (:~ 'text "sushi")))
+
 ;; PostGIS operators
-(register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :|@| :|\|&>| :|\|>>| :~= :|@>| :|@<|)
+(register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :|@| :|\|&>|
+                        :|\|>>| :~= :|@>| :|@<|)
 
 ;; hstore operators
 (register-sql-operators :2+-ary :-> :=> :? :?& :?\| :|<@| :|#=| :unary :%% :%#)
 
+;;; sql-op :+, :*, :%, :&, :|, :| |, :and, :or, :=, :/, :!=, :<, :>, :<=, :>=,
+;;;  :^, :union, :union-all,
+;;;  :intersect, :intersect-all, :except, :except-all (&rest args)
+;;;
+;;; These are expanded as infix operators. When meaningful, they allow more than
+;;; two arguments. :- can also be used as a unary operator to negate a value.
+;;; Note that the arguments to :union, :union-all, :intersect, and :except
+;;; should be queries (:select forms).
+
+;;; Note that you'll have to escape pipe characters to enter them as keywords.
+;;; S-SQL handles the empty keyword symbol (written :||) specially, and treats
+;;; it like :\|\|, so that it can be written without escapes. With :\|, this
+;;; doesn't work.
+
 (def-sql-op :|| (&rest args)
+  "The concatenation operator combines two or more columns into a single column
+return. E.g:
+
+(query (:select 'countries.id (:|| 'countries.name \"-\" 'regions.name)
+                :from 'countries 'regions
+                :where (:and (:= 'regions.id 'countries.region-id)
+                             (:= 'countries.name \"US\"))))
+
+((21 \"US-North America\"))"
   `("(" ,@(sql-expand-list args " || ") ")"))
 
 (def-sql-op :asc (arg)
@@ -467,14 +590,16 @@ string."
   `(,@(sql-expand form) " AS " ,@(sql-expand name)
     ,@(when fields
         `("(" ,@(loop :for field :in fields
-                      :for (name type) := (if (and (consp field) (not (eq (first field) 'quote)))
-                                              field
-                                              (list field nil))
+                      :for (name type)
+                        := (if (and (consp field)
+                                    (not (eq (first field) 'quote)))
+                               field
+                               (list field nil))
                       :for first := t :then nil
                       :unless first :collect ", "
-                      :append (sql-expand name)
+                        :append (sql-expand name)
                       :when type :append (list " " (to-type-name type)))
-          ")"))))
+              ")"))))
 
 (def-sql-op :|@@| (op1 op2)
   `("(" ,@(sql-expand op1) " @@ " ,@(sql-expand op2) ")"))
@@ -483,9 +608,11 @@ string."
   `("DISTINCT(" ,@(sql-expand-list forms) ")"))
 
 (def-sql-op :any* (query)
+  "Any needs to be considered as a special case. Postgres has both a function-call-style any and an infix any, and S-SQL's syntax doesn't allow them to be distinguished. As a result, postmodern has a regular :any sql-op and a :any* sql-op, which expand slightly differently."
   `("ANY(" ,@(sql-expand query) ")"))
 
 (def-sql-op :any (query)
+    "Any needs to be considered as a special case. Postgres has both a function-call-style any and an infix any, and S-SQL's syntax doesn't allow them to be distinguished. As a result, postmodern has a regular :any sql-op and a :any* sql-op, which expand slightly differently."
   `("ANY " ,@(sql-expand query)))
 
 (def-sql-op :all (query)
@@ -496,21 +623,23 @@ string."
   `("ARRAY(" ,@(sql-expand query) ")"))
 
 (def-sql-op :array[] (&rest args)
-  "This handles statements that include functions in the query such as (:+ 1 2), (:pi) in the array whereas just
-passing an array as #(1.0 2.4) does not and you are not selecting into an array, so do not use :array."
+  "This handles statements that include functions in the query such as (:+ 1 2),
+(:pi) in the array whereas just passing an array as #(1.0 2.4) does not and you
+are not selecting into an array, so do not use :array."
   `("ARRAY[" ,@(sql-expand-list args) "]"))
 
 (def-sql-op :[] (form start &optional end)
   "This slices arrays. Sample usage would be:
-   (query (:select (:[] 'provinces 1) :from 'array-provinces :where (:= 'name \"Germany\"))
-"
+   (query (:select (:[] 'provinces 1) :from 'array-provinces
+   :where (:= 'name \"Germany\"))"
   (if end
-      `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) ":" ,@(sql-expand end) "]")
+      `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) ":" ,@(sql-expand end)
+            "]")
       `("(" ,@(sql-expand form) ")[" ,@(sql-expand start) "]")))
 
 (def-sql-op :interval (arg  &optional precision)
   "Interval takes a string.
-See https://www.postgresql.org/docs/current/static/datatype-datetime.html#DATATYPE-INTERVAL-INPUT-EXAMPLES.
+See https://www.postgresql.org/docs/current/static/datatype-datetime.html
 It optionally take a precision parameter, which causes the result to be rounded
 to that many fractional digits in the seconds field. Without a precision
 +parameter, the result is given to the full available precision. Precision
@@ -528,7 +657,7 @@ a more human readable approach, you can use :to-char. As an example:
   `("current_date"))
 
 (def-sql-op :current-timestamp (&optional precision)
-    "Current-time and Current-timestamp deliver values with time zones. They
+  "Current-time and Current-timestamp deliver values with time zones. They
 optionally take a precision parameter, which causes the result to be rounded
 to that many fractional digits in the seconds field. Without a precision
 parameter, the result is given to the full available precision. Precision
@@ -574,13 +703,14 @@ result is given to the full available precision."
 e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
   `("make_interval("
     ,@(loop for ((x . y) . rest) on args
-         :append `(,x " := " ,(cond ((numberp y) (write-to-string y))
-                                  ((listp y)
-                                   (cond ((numberp (car y)) (write-to-string (car y)))
-                                         ((stringp (car y))
-                                          (strcat `("'" ,(car y) "'")))
-                                         (t (car y))))))
-         :if rest :collect ", ")
+            :append `(,x " := " ,(cond ((numberp y) (write-to-string y))
+                                       ((listp y)
+                                        (cond ((numberp (car y))
+                                               (write-to-string (car y)))
+                                              ((stringp (car y))
+                                               (strcat `("'" ,(car y) "'")))
+                                              (t (car y))))))
+            :if rest :collect ", ")
     ")"))
 
 (def-sql-op :make-timestamp (&rest args)
@@ -588,13 +718,14 @@ e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
 e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
   `("make_timestamp("
     ,@(loop for ((x . y) . rest) on args
-         :append `(,x " := " ,(cond ((numberp y) (write-to-string y))
-                                  ((listp y)
-                                   (cond ((numberp (car y)) (write-to-string (car y)))
-                                         ((stringp (car y))
-                                          (strcat `("'" ,(car y) "'")))
-                                         (t (car y))))))
-         :if rest :collect ", ")
+            :append `(,x " := " ,(cond ((numberp y) (write-to-string y))
+                                       ((listp y)
+                                        (cond ((numberp (car y))
+                                               (write-to-string (car y)))
+                                              ((stringp (car y))
+                                               (strcat `("'" ,(car y) "'")))
+                                              (t (car y))))))
+            :if rest :collect ", ")
     ")"))
 
 (def-sql-op :make-timestamptz (&rest args)
@@ -602,13 +733,14 @@ e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
 e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
   `("make_timestamptz("
     ,@(loop for ((x . y) . rest) on args
-         :append `(,x " := " ,(cond ((numberp y) (write-to-string y))
-                                  ((listp y)
-                                   (cond ((numberp (car y)) (write-to-string (car y)))
-                                         ((stringp (car y))
-                                          (strcat `("'" ,(car y) "'")))
-                                         (t (car y))))))
-         :if rest :collect ", ")
+            :append `(,x " := " ,(cond ((numberp y) (write-to-string y))
+                                       ((listp y)
+                                        (cond ((numberp (car y))
+                                               (write-to-string (car y)))
+                                              ((stringp (car y))
+                                               (strcat `("'" ,(car y) "'")))
+                                              (t (car y))))))
+            :if rest :collect ", ")
     ")"))
 
 
@@ -622,7 +754,7 @@ e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
   `("integer " ,@(sql-expand arg)))
 
 (def-sql-op :cast (query)
- "Cast is one of two functions that help convert one type of data to another.
+  "Cast is one of two functions that help convert one type of data to another.
  The other function is type. An example use of cast is:
 
  (query (:select (:as (:cast (:as (:* 50 (:random)) 'int)) 'x)
@@ -630,7 +762,7 @@ e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
 
  One syntactic difference between cast and type is that the cast function
  requires that the datatype be quoted. "
-   `("CAST(" ,@(sql-expand query) ")" ))
+  `("CAST(" ,@(sql-expand query) ")" ))
 
 (def-sql-op :exists (query)
   `("(EXISTS " ,@(sql-expand query) ")"))
@@ -651,11 +783,11 @@ e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
   `("EXTRACT(" ,@(sql-expand unit) " FROM " ,@(sql-expand form) ")"))
 
 (def-sql-op :values (&rest args) "values statement"
-   (split-on-keywords ((vars *) (order-by * ?)) (cons :vars args)
-     `("(VALUES "
-       ,@(sql-expand-list vars)
-       ,@(when order-by `(" ORDER BY " ,@(sql-expand-list order-by) ")"))
-       ")")))
+  (split-on-keywords ((vars *) (order-by * ?)) (cons :vars args)
+    `("(VALUES "
+      ,@(sql-expand-list vars)
+      ,@(when order-by `(" ORDER BY " ,@(sql-expand-list order-by) ")"))
+      ")")))
 
 (define-condition malformed-composite-type-error (error)
   ((text :initarg :text :reader text)))
@@ -668,37 +800,47 @@ The items will be converted to sql compatible namestrings."
       (error 'malformed-composite-type-error :text item)))
 
 (def-sql-op :count (&rest args)
-    "Count returns the number of rows. It can be the number of rows collected by the select statement as in
+  "Count returns the number of rows. It can be the number of rows collected
+by the select statement as in:
 
-  (query (:select (:count '*) :from 'table1 :where (:= 'price 100)))
+    (query (:select (:count '*) :from 'table1 :where (:= 'price 100)))
 
-or it can be a smaller number of rows based on the allowed keyword parameters :distinct and :filter as in
+or it can be a smaller number of rows based on the allowed keyword parameters
+:distinct and :filter as in:
 
-  (query (:select (:count 'memid :distinct) :from 'cd.bookings))
+    (query (:select (:count 'memid :distinct) :from 'cd.bookings))
 
   or
 
-  (query (:select (:as (:count '* :distinct) 'unfiltered)
-                (:as (:count '* :filter (:= 1 'bid)) 'filtered)
-                :from 'testtable))
+    (query (:select (:as (:count '* :distinct) 'unfiltered)
+              (:as (:count '* :filter (:= 1 'bid)) 'filtered)
+              :from 'testtable))
 
-Note that if used, the filter must be last in the count args. If distinct is used, it must come before filter.
-Unlike standard sql, the word 'where' is not used inside the filter clause.
-E.g. (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+Note that if used, the filter must be last in the count args. If distinct is
+used, it must come before filter. Unlike standard sql, the word 'where' is not
+used inside the filter clause. E.g.
+
+    (sql (:select (:count '*) (:count '* :filter (:= 1 'bid)) 'id
+          :from 'pbbench-history))
+
 See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("COUNT("
       ,@(when distinct '("DISTINCT "))
       ,@(sql-expand-list vars)
       ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))
-    ")")))
+      ")")))
 
 (def-sql-op :avg (&rest args)
-    "Avg calculates the average value of a list of values. Allowed keyword parameters are distinct and filter.
-Note that if the filter keyword is used,
-the filter must be last in the avg args. If distinct is used, it must come before filter.
-Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-E.g. (query (:select (:avg '*) (:avg '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+  "Avg calculates the average value of a list of values. Allowed keyword
+parameters are distinct and filter. Note that if the filter keyword is used,
+the filter must be last in the avg args. If distinct is used, it must come
+before filter. Unlike standard sql, the word 'where' is not used inside the
+filter clause (s-sql will properly expand it). E.g.
+
+    (query (:select (:avg '*) (:avg '* :filter (:= 1 'bid)) 'id
+            :from 'pbbench-history))
+
 See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("AVG("
@@ -707,11 +849,15 @@ See tests.lisp for examples."
       ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :sum (&rest args)
-    "Sum calculates the total of a list of values.  Allowed keyword parameters are distinct and filter.
-Note that if the keyword filter is used,
-the filter must be last in the sum args. If distinct is used, it must come before filter.
-Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-E.g. (query (:select (:sum '*) (:sum '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+  "Sum calculates the total of a list of values.  Allowed keyword parameters
+are distinct and filter. Note that if the keyword filter is used, the filter
+must be last in the sum args. If distinct is used, it must come before filter.
+Unlike standard sql, the word 'where' is not used inside the filter
+clause (s-sql will properly expand it). E.g.
+
+    (query (:select (:sum '*) (:sum '* :filter (:= 1 'bid)) 'id
+            :from 'pbbench-history))
+
 See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("SUM("
@@ -720,11 +866,15 @@ See tests.lisp for examples."
       ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :max (&rest args)
-    "Max returns the maximum value of a set of values.  Allowed keyword parameters are distinct and filter.
-Note that if the filter keyword is used,
-the filter must be last in the max args. If distinct is used, it must come before filter.
-Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-E.g. (query (:select (:max '*) (:max '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+  "Max returns the maximum value of a set of values.  Allowed keyword parameters
+are distinct and filter. Note that if the filter keyword is used, the filter must
+be last in the max args. If distinct is used, it must come before filter. Unlike
+standard sql, the word 'where' is not used inside the filter clause (s-sql will
+properly expand it). E.g.
+
+    (query (:select (:max '*) (:max '* :filter (:= 1 'bid)) 'id
+            :from 'pbbench-history))
+
 See tests.lisp for more examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("MAX("
@@ -733,11 +883,15 @@ See tests.lisp for more examples."
       ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :min (&rest args)
-    "Returns the minimum value of a set of values.  Allowed keyword parameters are distinct and filter.
-Note that if the filter keyword is used, the filter must be last in the min args.
-If distinct is used, it must come before filter.
-Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-E.g. (query (:select (:min '*) (:min '* :filter (:= 1 'bid)) 'id :from 'pbbench-history))
+  "Returns the minimum value of a set of values.  Allowed keyword parameters
+are distinct and filter. Note that if the filter keyword is used, the filter
+must be last in the min args. If distinct is used, it must come before filter.
+Unlike standard sql, the word 'where' is not used inside the filter
+clause (s-sql will properly expand it). E.g.
+
+    (query (:select (:min '*) (:min '* :filter (:= 1 'bid)) 'id
+            :from 'pbbench-history))
+
 See tests.lisp for more examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("MIN("
@@ -746,13 +900,16 @@ See tests.lisp for more examples."
       ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :every (&rest args)
-    "Returns true if all input values are true, otherwise false.  Allowed keyword parameters are distinct and filter.
-Note that if the filter keyword used, the filter must be last in the every args.
-If distinct is used, it must come before filter.
-Unlike standard sql, the word 'where' is not used inside the filter clause (s-sql will properly expand it).
-E.g. (query (:select '* (:every (:like 'studname \"%h\"))
-             :from 'tbl-students
-             :group-by 'studname 'studid 'studgrades))
+  "Returns true if all input values are true, otherwise false.  Allowed
+keyword parameters are distinct and filter. Note that if the filter keyword is
+used, the filter must be last in the every args. If distinct is used, it must
+come before filter. Unlike standard sql, the word 'where' is not used inside
+the filter clause (s-sql will properly expand it). E.g.
+
+    (query (:select '* (:every (:like 'studname \"%h\"))
+            :from 'tbl-students
+            :group-by 'studname 'studid 'studgrades))
+
 See tests.lisp for examples."
   (split-on-keywords ((vars *) (distinct - ?)  (filter * ?)) (cons :vars args)
     `("EVERY("
@@ -761,45 +918,52 @@ See tests.lisp for examples."
       ,@(when filter `(") FILTER (WHERE " ,@(sql-expand (car filter))))")")))
 
 (def-sql-op :percentile-cont (&rest args)
-  "Requires Postgresql 9.4 or higher. Percentile-cont returns a value corresponding to the specified fraction in the ordering,
-interpolating between adjacent input items if needed.
-There are two required keyword parameters :fraction and :order-by. If the fraction value is an array,
-then it returns an array of results matching the shape of the fractions parameter, with each non-null
-element replaced by the value corresponding to that percentile.
+  "Requires Postgresql 9.4 or higher. Percentile-cont returns a value
+corresponding to the specified fraction in the ordering, interpolating between
+adjacent input items if needed. There are two required keyword parameters
+:fraction and :order-by. If the fraction value is an array, then it returns an
+array of results matching the shape of the fractions parameter, with each
+non-null element replaced by the value corresponding to that percentile.
 
 Examples:
 
     (query (:select (:percentile-cont :fraction 0.5 :order-by 'number-of-staff)
                     :from 'schools))
-    (query (:select (:percentile-cont :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
-                    :from  'schools))
-"
+    (query (:select (:percentile-cont :fraction array[0.25 0.5 0.75 1]
+                    :order-by 'number-of-staff)
+                    :from  'schools))"
   (split-on-keywords ((fraction *) (order-by * )) args
     `("PERCENTILE_CONT"
       ,@(when fraction `(,(format nil "~a" fraction)))
-      ,@(when order-by `(" WITHIN GROUP (ORDER BY " ,@(sql-expand-list order-by) ")")))))
+      ,@(when order-by `(" WITHIN GROUP (ORDER BY " ,@(sql-expand-list order-by)
+                                                    ")")))))
 
 (def-sql-op :percentile-dist (&rest args)
-  "Requires Postgresql 9.4 or higher. There are two required keyword parameters :fraction and :order-by.
-Percentile-dist returns the first input value whose position in the ordering equals or exceeds
-the specified fraction. If the fraction parameter is an array eturns an array of results matching
-the shape of the fractions parameter, with each non-null element replaced by the input value
-corresponding to that percentile.
+  "Requires Postgresql 9.4 or higher. There are two required keyword parameters
+:fraction and :order-by. Percentile-dist returns the first input value whose
+position in the ordering equals or exceeds the specified fraction. If the
+fraction parameter is an array eturns an array of results matching the shape
+of the fractions parameter, with each non-null element replaced by the input
+value corresponding to that percentile.
 
 Examples:
 
    (query (:select (:percentile-dist :fraction 0.5 :order-by 'number-of-staff)
                     :from 'schools))
-    (query (:select (:percentile-dist :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
-                    :from  'schools))"
+
+    (query (:select (:percentile-dist :fraction array[0.25 0.5 0.75 1]
+                                      :order-by 'number-of-staff)
+            :from  'schools))"
 
   (split-on-keywords ((fraction *)  (order-by * )) args
     `("PERCENTILE_DIST"
       ,@(when fraction `(,(format nil "~a" fraction)))
-      ,@(when order-by `(" WITHIN GROUP (ORDER BY " ,@(sql-expand-list order-by) ")")))))
+      ,@(when order-by `(" WITHIN GROUP (ORDER BY " ,@(sql-expand-list order-by)
+                                                    ")")))))
 
 (def-sql-op :corr (y x)
-  "The corr function returns the correlation coefficient between a set of dependent and independent variables.
+  "The corr function returns the correlation coefficient between a set of
+dependent and independent variables.
 
 Example:
 
@@ -808,7 +972,8 @@ Example:
   `("CORR(" ,@ (sql-expand y) " , " ,@ (sql-expand x) ")"))
 
 (def-sql-op :covar-pop (y x)
-  "The covar-pop function returns the population covariance between a set of dependent and independent variables.
+  "The covar-pop function returns the population covariance between a set of
+dependent and independent variables.
 
 Example:
 
@@ -817,7 +982,8 @@ Example:
   `("COVAR_POP(" ,@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
 (def-sql-op :covar-samp (y x)
-  "The covar-samp function returns the sample covariance between a set of dependent and independent variables.
+  "The covar-samp function returns the sample covariance between a set of
+dependent and independent variables.
 
 Example:
 
@@ -825,14 +991,13 @@ Example:
 
   `("COVAR_SAMP(" ,@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
-
-
-
 (def-sql-op :between (n start end)
-  `("(" ,@(sql-expand n) " BETWEEN " ,@(sql-expand start) " AND " ,@(sql-expand end) ")"))
+  `("(" ,@(sql-expand n) " BETWEEN " ,@(sql-expand start) " AND "
+        ,@(sql-expand end) ")"))
 
 (def-sql-op :between-symmetric (n start end)
-  `("(" ,@(sql-expand n) " BETWEEN SYMMETRIC " ,@(sql-expand start) " AND " ,@(sql-expand end) ")"))
+  `("(" ,@(sql-expand n) " BETWEEN SYMMETRIC " ,@(sql-expand start) " AND "
+        ,@(sql-expand end) ")"))
 
 (def-sql-op :case (&rest clauses)
   `("CASE"
@@ -840,7 +1005,8 @@ Example:
             :if (eql test :else)
               :append `(" ELSE " ,@(sql-expand expr))
             :else
-              :append `(" WHEN " ,@(sql-expand test) " THEN " ,@(sql-expand expr))
+              :append `(" WHEN " ,@(sql-expand test) " THEN "
+                                 ,@(sql-expand expr))
             :end)
     " END"))
 
@@ -893,31 +1059,56 @@ the proper SQL syntax for joining tables."
                    (sql-error "Incorrect join form in select."))
                  (setf param (pop args)))
                `(" " ,@(when natural-p '("NATURAL "))
-                 ,(ecase type
-                    (:left-join "LEFT") (:right-join "RIGHT")
-                    (:inner-join "INNER") (:outer-join "FULL OUTER")
-                    (:cross-join "CROSS")) " JOIN " ,@(sql-expand table)
-                 ,@(unless (or natural-p (eq type :cross-join))
-                     (ecase kind
-                       (:on `(" ON " . ,(sql-expand param)))
-                       (:using `(" USING (" ,@(sql-expand-list param) ")")))))))
+                     ,(ecase type
+                        (:left-join "LEFT") (:right-join "RIGHT")
+                        (:inner-join "INNER") (:outer-join "FULL OUTER")
+                        (:cross-join "CROSS")) " JOIN " ,@(sql-expand table)
+                     ,@(unless (or natural-p (eq type :cross-join))
+                         (ecase kind
+                           (:on `(" ON " . ,(sql-expand param)))
+                           (:using
+                            `(" USING (" ,@(sql-expand-list param) ")")))))))
            (is-join (x)
-             (member x '(:left-join :right-join :inner-join :outer-join :cross-join))))
+             (member x '(:left-join :right-join :inner-join :outer-join
+                         :cross-join))))
     (when (null args)
       (sql-error "Empty :from clause in select"))
     (loop :for first = t :then nil :while args
           :append (cond ((is-join (car args))
-                         (when first (sql-error ":from clause starts with a join."))
+                         (when first
+                           (sql-error ":from clause starts with a join."))
                          (expand-join nil))
                         ((eq (car args) :natural)
-                         (when first (sql-error ":from clause starts with a join."))
+                         (when first
+                           (sql-error ":from clause starts with a join."))
                          (pop args)
                          (expand-join t))
-                        (t `(,@(if first () '(", ")) ,@(sql-expand (pop args))))))))
+                        (t
+                         `(,@(if first () '(", ")) ,@(sql-expand (pop args))))))))
 
 (def-sql-op :select (&rest args)
-  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?) (where ?) (group-by * ?)
-                      (having ?) (window ?)) (cons :vars args)
+  "Creates a select query. The arguments are split on the keywords found among
+them. The group of arguments immediately after :select is interpreted as
+the expressions that should be selected. After this, an optional :distinct
+may follow, which will cause the query to only select distinct rows, or
+alternatively :distinct-on followed by a group of row names. Next comes the
+optional keyword :from, followed by at least one table name and then any
+number of join statements. Join statements start with one of :left-join,
+:right-join, :inner-join, :outer-join or :cross-join, then a table name or
+subquery, then the keyword :on or :using, if applicable, and then a form.
+A join can be preceded by :natural (leaving off the :on clause) to use a
+natural join. After the joins an optional :where followed by a single form
+may occur. And finally :group-by and :having can optionally be specified.
+The first takes any number of arguments, and the second only one. An example:
+
+    (query (:select (:+ 'field-1 100) 'field-5
+            :from (:as 'my-table 'x)
+            :left-join 'your-table
+            :on (:= 'x.field-2 'your-table.field-1)
+            :where (:not-null 'a.field-3)))"
+  (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?)
+                      (where ?) (group-by * ?) (having ?) (window ?))
+      (cons :vars args)
     `("(SELECT "
       ,@(if distinct '("DISTINCT "))
       ,@(if distinct-on `("DISTINCT ON (" ,@(sql-expand-list distinct-on) ") "))
@@ -931,30 +1122,49 @@ the proper SQL syntax for joining tables."
 
 (def-sql-op :grouping-sets (&rest args)
   "Grouping-sets allows multiple group-by in a single query
+https://www.postgresql.org/docs/current/static/queries-table-expressions.html
+More complex grouping operations are possible using the concept of grouping
+sets. The data selected by the FROM and WHERE clauses is grouped separately
+by each specified grouping set, aggregates computed for each group just as
+for simple GROUP BY clauses, and then the results returned.
+This operator requires postgresql 9.5 or later. Examples:
 
-Examples:
+    (query (:select 'city (:as (:extract 'year 'start-date)  'joining-year)
+                    (:as (:count 1) 'employee_count)
+            :from 'employee
+            :group-by (:grouping-sets (:set 'city (:extract 'year 'start-date)))))
+
     (query (:select 'c1 'c2 'c3 (:sum 'c3)
             :from 'table-name
-            :group-by (:grouping-sets (:set 'c1 'c2) (:set 'c1) (:set 'c2) (:set))))
-Note that this requires postgresql 9.5 or later."
+            :group-by (:grouping-sets (:set 'c1 'c2) (:set 'c1) (:set 'c2)
+                                      (:set))))"
 
   `("GROUPING SETS ",@(sql-expand-list args) ))
 
 (def-sql-op :string-agg (&rest args)
-  "String-agg allows you to concatenate strings using different types of delimiter symbols.
-Allowable optional keyword parameters are :distinct, :order-by and :filter
+  "String-agg allows you to concatenate strings using different types of
+delimiter symbols. Allowable optional keyword parameters are :distinct,
+:order-by and :filter
 
 Examples:
 
-    (query (:select (:as (:string-agg 'bp.step-type \",\" ) 'step-summary) :from 'business-process))
+    (query (:select (:as (:string-agg 'bp.step-type \",\" ) 'step-summary)
+            :from 'business-process))
 
-    (query (:select 'mid (:as (:string-agg  'y \",\" :distinct :order-by (:desc 'y) ) 'words) :from 'moves))
+    (query (:select 'mid (:as (:string-agg  'y \",\" :distinct
+                               :order-by (:desc 'y))
+                          'words)
+            :from 'moves))
 
-    (query (:select (:string-agg  'name \",\" :order-by (:desc 'name) :filter (:< 'id 4)) :from 'employee))
+    (query (:select (:string-agg  'name \",\"
+                                  :order-by (:desc 'name)
+                                  :filter (:< 'id 4))
+            :from 'employee))
 
-Note that order-by in string-agg requires postgresql 9.0 or later. Filter requires postgresql 9.4 or later.
-See tests.lisp for examples."
-  (split-on-keywords ((vars *) (distinct - ?)  (order-by * ?)(filter * ?)) (cons :vars args)
+Note that order-by in string-agg requires postgresql 9.0 or later. Filter
+requires postgresql 9.4 or later.See tests.lisp for examples."
+  (split-on-keywords ((vars *) (distinct - ?)  (order-by * ?)(filter * ?))
+                     (cons :vars args)
     `("STRING_AGG("
       ,@(when distinct '("DISTINCT "))
       ,@(sql-expand-list vars)
@@ -968,16 +1178,17 @@ Allowable optional keyword parameters are :distinct, :order-by and :filter.
 
 Example:
   (query (:select 'g.id
-                  (:as (:array-agg 'g.users :filter (:= 'g.canonical \"Y\")) 'canonical-users)
-                  (:as (:array-agg 'g.users :filter (:= 'g.canonical \"N\")) 'non-canonical-users)
+                  (:as (:array-agg 'g.users :filter (:= 'g.canonical \"Y\"))
+                       'canonical-users)
+                  (:as (:array-agg 'g.users :filter (:= 'g.canonical \"N\"))
+                       'non-canonical-users)
                   :from (:as 'groups 'g)
                   :group-by 'g.id)
 
 Note that order-by in array-agg requires postgresql 9.0 or later.
-Filter requires postgresql 9.4 or later. See tests.lisp for examples.
-
-"
-  (split-on-keywords ((vars *) (distinct - ?)(order-by * ?) (filter * ?)) (cons :vars args)
+Filter requires postgresql 9.4 or later. See tests.lisp for examples."
+  (split-on-keywords ((vars *) (distinct - ?)(order-by * ?) (filter * ?))
+                     (cons :vars args)
     `("ARRAY_AGG("
       ,@(when distinct '("DISTINCT "))
       ,@(sql-expand-list vars)
@@ -986,14 +1197,17 @@ Filter requires postgresql 9.4 or later. See tests.lisp for examples.
       ")")))
 
 (def-sql-op :mode (&rest args)
-  "Mode is used to find the most frequent input value in a group. See e.g. https://www.postgresql.org/docs/10/static/functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE
-and article at https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-function/."
+  "Mode is used to find the most frequent input value in a group. See e.g.
+https://www.postgresql.org/docs/10/static/functions-aggregate.html
+and article at
+https://tapoueh.org/blog/2017/11/the-mode-ordered-set-aggregate-function/."
   (split-on-keywords ((vars *)) (cons :vars args)
     `("mode() within group (order by " ,@(sql-expand-list vars) ")")))
 
 
 (def-sql-op :regr-avgx (y x)
-  "The regr-avgx function returns the average of the independent variable (sum(X)/N)
+  "The regr-avgx function returns the average of the independent
+variable (sum(X)/N)
 
 Example:
 
@@ -1002,7 +1216,8 @@ Example:
   `("REGR_AVGX(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
 (def-sql-op :regr-avgy (y x)
-  "The regr-avgy function returns the average of the dependent variable (sum(Y)/N).
+  "The regr-avgy function returns the average of the dependent
+variable (sum(Y)/N).
 
 Example:
 
@@ -1010,7 +1225,8 @@ Example:
   `("REGR_AVGY(" ,@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
 (def-sql-op :regr-count (y x)
-  "The regr-count function returns the 	number of input rows in which both expressions are nonnull.
+  "The regr-count function returns the 	number of input rows in which both
+expressions are nonnull.
 
 Example:
 
@@ -1019,7 +1235,8 @@ Example:
   `("REGR_COUNT(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
 (def-sql-op :regr-intercept (y x)
-  "The regr-intercept function returns the y-intercept of the least-squares-fit linear equation determined by the (X, Y) pairs.
+  "The regr-intercept function returns the y-intercept of the least-squares-fit
+linear equation determined by the (X, Y) pairs.
 
 Example:
 
@@ -1037,7 +1254,8 @@ Example:
   `("REGR_R2(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
 (def-sql-op :regr-slope (y x)
-  "The regr-slope function returns the slope of the least-squares-fit linear equation determined by the (X, Y) pairs.
+  "The regr-slope function returns the slope of the least-squares-fit linear
+equation determined by the (X, Y) pairs.
 
 Example:
 
@@ -1046,7 +1264,8 @@ Example:
   `("REGR_SLOPE(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
 (def-sql-op :regr-sxx (y x)
-  "The regr-sxx function returns the sum(X^2) - sum(X)^2/N (“sum of squares” of the independent variable).
+  "The regr-sxx function returns the sum(X^2) - sum(X)^2/N (“sum of squares”
+of the independent variable).
 
 Example:
 
@@ -1055,7 +1274,8 @@ Example:
   `("REGR_SXX(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
 (def-sql-op :regr-sxy (y x)
-  "The regr-sxy function returns the sum(X*Y) - sum(X) * sum(Y)/N (“sum of products” of independent times dependent variable).
+  "The regr-sxy function returns the sum(X*Y) - sum(X) * sum(Y)/N
+   (\"sum of products\" of independent times dependent variable).
 
 Example:
 
@@ -1064,7 +1284,8 @@ Example:
   `("REGR_SXY(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
 (def-sql-op :regr-syy (y x)
-  "The regr-syy function returns the sum(Y^2) - sum(Y)^2/N (“sum of squares” of the dependent variable).
+  "The regr-syy function returns the sum(Y^2) - sum(Y)^2/N
+   (\"sum of squares\" of the dependent variable).
 
 Example:
 
@@ -1073,71 +1294,78 @@ Example:
   `("REGR_SYY(",@(sql-expand y) " , " ,@(sql-expand x) ")"))
 
 (def-sql-op :stddev (&rest args)
-  "The stddev function returns the the sample standard deviation of the input values. It is a historical alias
-for stddev-samp.
+  "The stddev function returns the the sample standard deviation of the input
+values. It is a historical alias for stddev-samp.
 
 Example:
 
     (query (:select (:stddev 'salary) :from 'people))"
 
   (split-on-keywords ((vars *)) (cons :vars args)
-                     `("STDDEV(",@(sql-expand-list vars) ")")))
+    `("STDDEV(",@(sql-expand-list vars) ")")))
 
 (def-sql-op :stddev-pop (&rest args)
-  "The stddev-pop function returns the population standard deviation of the input values.
+  "The stddev-pop function returns the population standard deviation of the
+input values.
 
 Example:
 
     (query (:select (:stddev-pop 'salary) :from 'people))"
 
   (split-on-keywords ((vars *)) (cons :vars args)
-                     `("STDDEV_POP(",@(sql-expand-list vars) ")")))
+    `("STDDEV_POP(",@(sql-expand-list vars) ")")))
 
 (def-sql-op :stddev-samp (&rest args)
-  "The stddev-samp function returns the sample standard deviation of the input values.
+  "The stddev-samp function returns the sample standard deviation of the input
+values.
 
 Example:
 
     (query (:select (:stddev-samp 'salary) :from 'people))"
 
   (split-on-keywords ((vars *)) (cons :vars args)
-                     `("STDDEV_SAMP(",@(sql-expand-list vars) ")")))
+    `("STDDEV_SAMP(",@(sql-expand-list vars) ")")))
 
 (def-sql-op :variance (&rest args)
-  "Variance is a historical alias for var_samp. The variance function returns the sample
-variance of the input values (square of the sample standard deviation).
+  "Variance is a historical alias for var_samp. The variance function returns
+the sample variance of the input values (square of the sample standard deviation).
 
 Example:
 
     (query (:select (:variance 'salary) :from 'people))"
 
   (split-on-keywords ((vars *)) (cons :vars args)
-                     `("VARIANCE(",@(sql-expand-list vars) ")")))
+    `("VARIANCE(",@(sql-expand-list vars) ")")))
 
 (def-sql-op :var-pop (&rest args)
-  "The var-pop function returns the population variance of the input values (square of the population standard deviation).
+  "The var-pop function returns the population variance of the input values
+   (square of the population standard deviation).
 
 Example:
 
     (query (:select (:var-pop 'salary) :from 'people))"
 
   (split-on-keywords ((vars *)) (cons :vars args)
-                     `("VAR_POP(",@(sql-expand-list vars) ")")))
+    `("VAR_POP(",@(sql-expand-list vars) ")")))
 
 (def-sql-op :var-samp (&rest args)
-  "The var-samp function returns the sample variance of the input values (square of the sample standard deviation).
+  "The var-samp function returns the sample variance of the input values
+   (square of the sample standard deviation).
 
 Example:
 
     (query (:select (:var-samp 'salary) :from 'people))"
 
   (split-on-keywords ((vars *)) (cons :vars args)
-                     `("VAR_SAMP(",@(sql-expand-list vars) ")")))
+    `("VAR_SAMP(",@(sql-expand-list vars) ")")))
 
 
 
 (def-sql-op :limit (form amount &optional offset)
-  `("(" ,@(sql-expand form) " LIMIT " ,@(if amount (sql-expand amount) (list "ALL")) ,@(if offset (cons " OFFSET " (sql-expand offset)) ()) ")"))
+  `("(" ,@(sql-expand form) " LIMIT " ,@(if amount (sql-expand amount)
+                                            (list "ALL"))
+        ,@(if offset (cons " OFFSET " (sql-expand offset)) ())
+        ")"))
 
 (def-sql-op :order-by (form &rest fields)
   (if fields
@@ -1155,9 +1383,11 @@ Example:
 (defun for-update/share (share-or-update form &rest args)
   (let* ((of-position (position :of args))
          (no-wait-position (position :nowait args))
-         (of-tables (when of-position (subseq args (1+ of-position) no-wait-position))))
+         (of-tables (when of-position (subseq args (1+ of-position)
+                                              no-wait-position))))
     `("(" ,@(sql-expand form) ,(format nil " FOR ~:@(~A~)" share-or-update)
-          ,@(when of-tables (list (format nil " OF ~{~A~^, ~}" (mapcar #'sql-compile of-tables))))
+          ,@(when of-tables (list (format nil " OF ~{~A~^, ~}"
+                                          (mapcar #'sql-compile of-tables))))
           ,@(when no-wait-position (list " NOWAIT"))
           ")")))
 
@@ -1177,8 +1407,13 @@ to runtime. Used to create stored procedures."
 
 (def-sql-op :function (name (&rest args) return-type stability body)
   (assert (member stability '(:immutable :stable :volatile)))
-  `("CREATE OR REPLACE FUNCTION " ,@(sql-expand name) " (" ,(implode ", " (mapcar 'to-type-name args))
-    ") RETURNS " ,(to-type-name return-type) " LANGUAGE SQL " ,(symbol-name stability) " AS " ,(escape-sql-expression body)))
+  `("CREATE OR REPLACE FUNCTION " ,@(sql-expand name) " ("
+                                  ,(implode ", "
+                                            (mapcar 'to-type-name args))
+                                  ") RETURNS " ,(to-type-name return-type)
+                                  " LANGUAGE SQL "
+                                  ,(symbol-name stability) " AS "
+                                  ,(escape-sql-expression body)))
 
 (def-sql-op :insert-into (table &rest rest)
   (split-on-keywords ((method *)
@@ -1187,35 +1422,54 @@ to runtime. Used to create stored procedures."
                       (on-conflict-do-nothing ? -)
                       (on-conflict-update ? *)
                       (update-set ? *)
-                       (from * ?)
-                      (where ?) (returning ? *)) (cons :method rest)
+                      (from * ?)
+                      (where ?) (returning ? *))
+      (cons :method rest)
 
-  `("INSERT INTO " ,@(sql-expand table) " "
-    ,@(cond ((eq (car method) :set)
-             (cond ((oddp (length (cdr method)))
-                    (sql-error "Invalid amount of :set arguments passed to insert-into sql operator"))
-                   ((null (cdr method)) '("DEFAULT VALUES"))
-                   (t `("(" ,@(sql-expand-list (loop :for (field nil) :on (cdr method) :by #'cddr
-                                                     :collect field))
-                            ") "
-                            ,@(cond (overriding-system-value '(" OVERRIDING SYSTEM VALUE "))
-                                    (overriding-user-value '(" OVERRIDING USER VALUE ")))
-                            " VALUES (" ,@(sql-expand-list (loop :for (nil value) :on (cdr method) :by #'cddr
-                                                              :collect value)) ")"))))
-            ((and (not (cdr method)) (consp (car method)) (keywordp (caar method)))
-             (sql-expand (car method)))
-            (t (sql-error "No :set arguments or select operator passed to insert-into sql operator")))
-    ,@(when on-conflict-do-nothing
-        `(" ON CONFLICT DO NOTHING"))
-    ,@(when on-conflict-update
-        `(" ON CONFLICT (" ,@(sql-expand-list on-conflict-update) ") DO UPDATE SET "
-                                ,@(loop :for (field value) :on update-set :by #'cddr
-                                        :for first = t :then nil
-                                        :append `(,@(if first () '(", ")) ,@(sql-expand field) " = " ,@(sql-expand value)))
-                                ,@(if from (cons " FROM " (expand-joins from)))
-                                ,@(if where (cons " WHERE " (sql-expand (car where))) ())))
-    ,@(when returning
-        `(" RETURNING " ,@(sql-expand-list returning))))))
+    `("INSERT INTO " ,@(sql-expand table) " "
+                     ,@(cond
+                         ((eq (car method) :set)
+                          (cond ((oddp (length (cdr method)))
+                                 (sql-error "Invalid amount of :set arguments
+passed to insert-into sql operator"))
+                                ((null (cdr method)) '("DEFAULT VALUES"))
+                                (t `("(" ,@(sql-expand-list
+                                            (loop :for (field nil)
+                                                    :on (cdr method)
+                                                  :by #'cddr
+                                                  :collect field))
+                                         ") "
+                                         ,@(cond (overriding-system-value
+                                                  '(" OVERRIDING SYSTEM VALUE "))
+                                                 (overriding-user-value
+                                                  '(" OVERRIDING USER VALUE ")))
+                                         " VALUES (" ,@(sql-expand-list
+                                                        (loop :for (nil value)
+                                                                :on (cdr method)
+                                                              :by #'cddr
+                                                              :collect value))
+                                         ")"))))
+                         ((and (not (cdr method)) (consp (car method))
+                               (keywordp (caar method)))
+                              (sql-expand (car method)))
+                             (t (sql-error "No :set arguments or select operator
+passed to insert-into sql operator")))
+                     ,@(when on-conflict-do-nothing
+                         `(" ON CONFLICT DO NOTHING"))
+                     ,@(when on-conflict-update
+                         `(" ON CONFLICT ("
+                           ,@(sql-expand-list on-conflict-update)
+                           ") DO UPDATE SET "
+                           ,@(loop :for (field value) :on update-set :by #'cddr
+                                   :for first = t :then nil
+                                   :append `(,@(if first () '(", "))
+                                             ,@(sql-expand field) " = "
+                                             ,@(sql-expand value)))
+                           ,@(if from (cons " FROM " (expand-joins from)))
+                           ,@(if where (cons " WHERE " (sql-expand (car where)))
+                                 ())))
+                     ,@(when returning
+                         `(" RETURNING " ,@(sql-expand-list returning))))))
 
 (def-sql-op :listen (channel)
   `("LISTEN " ,@(sql-expand channel)))
@@ -1235,8 +1489,11 @@ to runtime. Used to create stored procedures."
     (strcat
      (loop :for row :in rows :for first := t :then nil
            :when (/= (length row) length)
-           :do (sql-error "Found rows of unequal length in :insert-rows-into.")
-           :append `(,@(unless first '(", ")) "(" ,@(sql-expand-list row) ")")))))
+             :do (sql-error "Found rows of unequal length in :insert-rows-into.")
+           :append `(,@(unless first '(", "))
+                     "("
+                     ,@(sql-expand-list row)
+                     ")")))))
 
 (def-sql-op :insert-rows-into (table &rest rest)
   (split-on-keywords ((columns ? *) (values) (returning ? *)) rest
@@ -1252,31 +1509,37 @@ to runtime. Used to create stored procedures."
 (def-sql-op :update (table &rest args)
   (split-on-keywords ((set *) (from * ?) (where ?) (returning ? *)) args
     (when (oddp (length set))
-      (sql-error "Invalid amount of :set arguments passed to update sql operator"))
+      (sql-error "Invalid amount of :set arguments passed to update sql
+operator"))
     `("UPDATE " ,@(sql-expand table) " SET "
-      ,@(loop :for (field value) :on set :by #'cddr
-              :for first = t :then nil
-              :append `(,@(if first () '(", ")) ,@(sql-expand field) " = " ,@(sql-expand value)))
-      ,@(if from (cons " FROM " (expand-joins from)))
-      ,@(if where (cons " WHERE " (sql-expand (car where))) ())
-      ,@(when returning
-          (cons " RETURNING " (sql-expand-list returning))))))
+                ,@(loop :for (field value) :on set :by #'cddr
+                        :for first = t :then nil
+                        :append `(,@(if first () '(", ")) ,@(sql-expand field)
+                                  " = "
+                                  ,@(sql-expand value)))
+                ,@(if from (cons " FROM " (expand-joins from)))
+                ,@(if where (cons " WHERE " (sql-expand (car where))) ())
+                ,@(when returning
+                    (cons " RETURNING " (sql-expand-list returning))))))
 
 (def-sql-op :delete-from (table &rest args)
   (split-on-keywords ((where ?) (returning ? *)) args
     `("DELETE FROM " ,@(sql-expand table)
                      ,@(when where (cons " WHERE " (sql-expand (car where))))
-                     ,@(when returning (cons " RETURNING " (sql-expand-list returning))))))
+                     ,@(when returning (cons " RETURNING "
+                                             (sql-expand-list returning))))))
 
 (def-sql-op :over (form &rest args)
   (if args `("(" ,@(sql-expand form) " OVER " ,@(sql-expand-list args) ")")
-          `("(" ,@(sql-expand form) " OVER ()) ")))
+      `("(" ,@(sql-expand form) " OVER ()) ")))
 
 (def-sql-op :partition-by (&rest args)
   (split-on-keywords ((partition-by *) (order-by ? *)) (cons :partition-by args)
-                     `("(PARTITION BY " ,@(sql-expand-list partition-by)
-                                        ,@(when order-by (cons " ORDER BY " (sql-expand-list order-by)))
-                                            ")")))
+    `("(PARTITION BY " ,@(sql-expand-list partition-by)
+                       ,@(when order-by
+                           (cons " ORDER BY "
+                                 (sql-expand-list order-by)))
+                       ")")))
 
 (def-sql-op :parens (op) `(" (" ,@(sql-expand op) ") "))
 
@@ -1302,7 +1565,8 @@ test. "
           (if (eq (second type) 'db-null)
               (values (third type) t)
               (values (second type) t))
-          (sql-error "Invalid type: ~a. 'or' types must have two alternatives, one of which is ~s."
+          (sql-error "Invalid type: ~a. 'or' types must have two alternatives,
+one of which is ~s."
                      type 'db-null))
       (values type nil)))
 
@@ -1335,7 +1599,8 @@ test. "
 (defun %build-foreign-reference (target on-delete on-update match)
   `(" REFERENCES "
     ,@(if (consp target)
-          `(,(to-sql-name (car target)) "(" ,@(sql-expand-names (cdr target)) ")")
+          `(,(to-sql-name (car target)) "("
+            ,@(sql-expand-names (cdr target)) ")")
           `(,(to-sql-name target)))
     ,(when match (case match
                    (:match-simple " MATCH SIMPLE")
@@ -1345,19 +1610,34 @@ test. "
     " ON UPDATE " ,(expand-foreign-on* on-update)))
 
 (defun expand-table-constraint (option args)
-  "Process table constraints that precede the closing parentheses in the table definition for the base level create table.
- The difference between this and the expand-table-constraint-sok function is the parameter list
-signature. This expects to receive no sublists. The expand-table-constraint-sok function expects to list of sublists.
-This is done to maintain backwards compatibility and most general users do not need the extended version.
+  "Process table constraints that precede the closing parentheses in the table
+definition for the base level create table.  The difference between this and
+the expand-table-constraint-sok function is the parameter list signature. This
+expects to receive no sublists. The expand-table-constraint-sok function expects
+to list of sublists. This is done to maintain backwards compatibility and most
+general users do not need the extended version.
 
-Foreign keys have defaults  on-delete restrict, on-update restrict, and match simple. If you want
-to change those defaults, you need to specify them in that order.
+Foreign keys have defaults  on-delete restrict, on-update restrict, and match
+simple. If you want to change those defaults, you need to specify them in that
+order.
 
-Per the postgresql documentation at https://www.postgresql.org/docs/10/static/sql-createtable.html
+Per the postgresql documentation at
+https://www.postgresql.org/docs/10/static/sql-createtable.html
 
-A value inserted into the referencing column(s) is matched against the values of the referenced table and referenced columns using the given match type. There are three match types: MATCH FULL, MATCH PARTIAL, and MATCH SIMPLE (which is the default). MATCH FULL will not allow one column of a multicolumn foreign key to be null unless all foreign key columns are null; if they are all null, the row is not required to have a match in the referenced table. MATCH SIMPLE allows any of the foreign key columns to be null; if any of them are null, the row is not required to have a match in the referenced table. MATCH PARTIAL is not yet implemented. (Of course, NOT NULL constraints can be applied to the referencing column(s) to prevent these cases from arising.)"
+A value inserted into the referencing column(s) is matched against the values
+of the referenced table and referenced columns using the given match type.
+There are three match types: MATCH FULL, MATCH PARTIAL, and MATCH SIMPLE (which
+is the default). MATCH FULL will not allow one column of a multicolumn foreign
+key to be null unless all foreign key columns are null; if they are all null,
+the row is not required to have a match in the referenced table. MATCH SIMPLE
+allows any of the foreign key columns to be null; if any of them are null, the
+row is not required to have a match in the referenced table. MATCH PARTIAL is not
+yet implemented. (Of course, NOT NULL constraints can be applied to the
+referencing column(s) to prevent these cases from arising.)"
   (case option
-    (:constraint `("CONSTRAINT " ,(to-sql-name (car args)) " " ,@(expand-table-constraint (cadr args) (cddr args))))
+    (:constraint `("CONSTRAINT " ,(to-sql-name (car args)) " "
+                                 ,@(expand-table-constraint (cadr args)
+                                                            (cddr args))))
     (:check `("CHECK " ,@(sql-expand (car args))))
     (:primary-key `("PRIMARY KEY (" ,@(sql-expand-names args) ")"))
     (:unique `("UNIQUE (" ,@(sql-expand-names args) ")"))
@@ -1367,48 +1647,63 @@ A value inserted into the referencing column(s) is matched against the values of
     (:initially-deferred `("INITIALLY DEFERRED "))
     (:initially-immediate `("INITIALLY IMMEDIATE "))
     (:foreign-key
-     (destructuring-bind (columns target &optional (on-delete :restrict) (on-update :restrict) (match :match-simple)) args
+     (destructuring-bind (columns target &optional (on-delete :restrict)
+                                           (on-update :restrict)
+                                           (match :match-simple))
+         args
        `("FOREIGN KEY (" ,@(sql-expand-names columns) ")"
-                         ,@(%build-foreign-reference target on-delete on-update match))))))
+                         ,@(%build-foreign-reference target on-delete on-update
+                                                     match))))))
 
 (defun expand-table-constraint-sok (args)
-  "Expand-table-constraint for the create-extended-table sql-op. The difference between the two is the parameter list
-signature. This expects a list of sublists. The regular expand-table-constraint expects to receive no sublists.
+  "Expand-table-constraint for the create-extended-table sql-op. The difference
+between the two is the parameter list signature. This expects a list of sublists.
+The regular expand-table-constraint expects to receive no sublists.
 DOES NOT IMPLEMENT POSTGRESQL FUNCTION EXCLUDE."
   (split-on-keywords ((constraint ? *) (check ? *) (unique ? *) (with ? *)
                       (deferrable ? -) (primary-key ? *) (not-deferrable ? -)
                       (initially-deferred ? -)(initially-immediate ? -)
                       (foreign-key ? *))
-           args
+      args
     `(,@(when args '(", "))
       ,@(when constraint `("CONSTRAINT " ,(to-sql-name (car constraint)) " "))
-        ,@(when check `("CHECK " ,@(sql-expand (car check))))
-        ,@(when unique `("UNIQUE (" ,@(sql-expand-names unique) ")"))
-        ,@(when with `(" WITH " ,@(sql-expand (car with))))
-        ,@(when deferrable `("DEFERRABLE "))
-        ,@(when primary-key `("PRIMARY KEY (" ,@(sql-expand-names primary-key) ") "))
-        ,@(when not-deferrable `("NOT DEFERRABLE "))
-        ,@(when initially-deferred `("INITIALLY DEFERRED "))
-        ,@(when initially-immediate `("INITIALLY IMMEDIATE "))
-        ,@(when foreign-key
-            (destructuring-bind (columns target &optional (on-delete :restrict) (on-update :restrict) (match :match-simple))
-                foreign-key
-              `("FOREIGN KEY (" ,@(sql-expand-names columns) ")"
-                         ,@(%build-foreign-reference target on-delete on-update match)))))))
+      ,@(when check `("CHECK " ,@(sql-expand (car check))))
+      ,@(when unique `("UNIQUE (" ,@(sql-expand-names unique) ")"))
+      ,@(when with `(" WITH " ,@(sql-expand (car with))))
+      ,@(when deferrable `("DEFERRABLE "))
+      ,@(when primary-key `("PRIMARY KEY (" ,@(sql-expand-names primary-key)
+                                            ") "))
+      ,@(when not-deferrable `("NOT DEFERRABLE "))
+      ,@(when initially-deferred `("INITIALLY DEFERRED "))
+      ,@(when initially-immediate `("INITIALLY IMMEDIATE "))
+      ,@(when foreign-key
+          (destructuring-bind (columns target &optional (on-delete :restrict)
+                                                (on-update :restrict)
+                                                (match :match-simple))
+              foreign-key
+            `("FOREIGN KEY (" ,@(sql-expand-names columns) ")"
+                              ,@(%build-foreign-reference target on-delete
+                                                          on-update match)))))))
 
 (defun expand-extended-table-constraint (option args)
-  "Process table constraints that follow the closing parentheses in the table definition."
+  "Process table constraints that follow the closing parentheses in the table
+definition."
   (case option
     (:distributed-by `(" DISTRIBUTED BY (" ,@(sql-expand-names (car args))") "))
     (:distributed-randomly `(" DISTRIBUTED RANDOMLY "))
     (:with `(" WITH " ,@(sql-expand (car args))))
     (:tablespace `(" TABLESPACE " ,(to-sql-name (car args))))
-    (:exclude `(" EXCLUDE USING" ,@(sql-expand (car args)) ,@(sql-expand (cdr args))))
-    (:partition-by-range `(" PARTITION BY RANGE (" ,@(sql-expand (car args)) ,(when (cadr args) ", ")
-                                                   ,@(when (cadr args) (sql-expand (cadr args)))
+    (:exclude `(" EXCLUDE USING" ,@(sql-expand (car args)) ,@(sql-expand
+                                                              (cdr args))))
+    (:partition-by-range `(" PARTITION BY RANGE (" ,@(sql-expand (car args))
+                                                   ,(when (cadr args) ", ")
+                                                   ,@(when (cadr args)
+                                                       (sql-expand (cadr args)))
                                                    ")"))
-    (:partition-of `(" PARTITION OF " ,(to-sql-name (car args)) " DEFAULT "))  ;postgresql version 11 required
-    (:partition-by-list `(" PARTITION BY RANGE (" ,@(sql-expand (car args)) ")"))))
+    (:partition-of `(" PARTITION OF " ,(to-sql-name (car args))
+                                      " DEFAULT "))  ;postgresql version 11 required
+    (:partition-by-list `(" PARTITION BY RANGE (" ,@(sql-expand (car args))
+                                                  ")"))))
 
 (defun expand-identity (keywd)
   (cond ((eq keywd :identity-by-default)
@@ -1433,39 +1728,58 @@ DOES NOT IMPLEMENT POSTGRESQL FUNCTION EXCLUDE."
 
 (defun expand-table-column (column-name args)
   `(,(to-sql-name column-name) " "
-     ,@(let ((type (or (getf args :type)
-                       (sql-error "No type specified for column ~A." column-name))))
-         (multiple-value-bind (type null) (dissect-type type)
-           `(,(to-type-name type) ,@(when (not null) '(" NOT NULL")))))
-     ,@(loop :for (option value) :on args :by #'cddr
-             :append (case option
-                       (:default `(" DEFAULT " ,@(sql-expand value)))
-                       (:interval `(" " ,@(expand-interval value)))
-                       (:identity-by-default (when (eq value t) '(" GENERATED BY DEFAULT AS IDENTITY ")))
-                       (:identity-always (when (eq value t) '(" GENERATED ALWAYS AS IDENTITY ")))
-                       (:generated-as-identity-by-default (when (eq value t) '(" GENERATED BY DEFAULT AS IDENTITY ")))
-                       (:generated-as-identity-always (when (eq value t) '(" GENERATED ALWAYS AS IDENTITY ")))
-                       (:primary-key (cond ((and value (stringp value)) `(" PRIMARY KEY " ,value))
-                                           ((and value (keywordp value)) `(" PRIMARY KEY " ,@(expand-identity value)))
-                                           (t '(" PRIMARY KEY "))))
-                       (:constraint (when value `(" CONSTRAINT " ,@(sql-expand value))))
-                       (:collate (when value `(" COLLATE \"" ,value "\"")))
-                       (:unique (cond ((and value (stringp value))
-                                       `(" UNIQUE " ,@(sql-expand value)))
-                                      (value '(" UNIQUE "))
-                                      (t nil)))
-                       (:check `(" CHECK " ,@(sql-expand value)))
-                       (:references
-                        (destructuring-bind (target &optional (on-delete :restrict)
-                                                    (on-update :restrict) (match :match-simple))
-                            value
-                          (%build-foreign-reference target on-delete on-update match)))
-                       (:type ())
-                       (:deferrable (when (eq value t) '(" DEFERRABLE ")))
-                       (:not-deferrable (when (eq value t) '(" NOT DEFERRABLE ")))
-                       (:initially-deferred (when (eq value t) '(" INITIALLY DEFERRED ")))
-                       (:initially-immediate (when (eq value t) '(" INITIALLY IMMEDIATE ")))
-                       (t (sql-error "Unknown column option: ~A." option))))))
+    ,@(let ((type (or (getf args :type)
+                      (sql-error "No type specified for column ~A."
+                                 column-name))))
+        (multiple-value-bind (type null) (dissect-type type)
+          `(,(to-type-name type) ,@(when (not null) '(" NOT NULL")))))
+    ,@(loop :for (option value) :on args :by #'cddr
+            :append (case option
+                      (:default `(" DEFAULT " ,@(sql-expand value)))
+                      (:interval `(" " ,@(expand-interval value)))
+                      (:identity-by-default
+                       (when (eq value t)
+                         '(" GENERATED BY DEFAULT AS IDENTITY ")))
+                      (:identity-always
+                       (when (eq value t)
+                         '(" GENERATED ALWAYS AS IDENTITY ")))
+                      (:generated-as-identity-by-default
+                       (when (eq value t)
+                         '(" GENERATED BY DEFAULT AS IDENTITY ")))
+                      (:generated-as-identity-always
+                       (when (eq value t)
+                         '(" GENERATED ALWAYS AS IDENTITY ")))
+                      (:primary-key (cond ((and value (stringp value))
+                                           `(" PRIMARY KEY " ,value))
+                                          ((and value (keywordp value))
+                                           `(" PRIMARY KEY "
+                                             ,@(expand-identity value)))
+                                          (t '(" PRIMARY KEY "))))
+                      (:constraint (when value `(" CONSTRAINT "
+                                                 ,@(sql-expand value))))
+                      (:collate (when value `(" COLLATE \"" ,value "\"")))
+                      (:unique (cond ((and value (stringp value))
+                                      `(" UNIQUE " ,@(sql-expand value)))
+                                     (value '(" UNIQUE "))
+                                     (t nil)))
+                      (:check `(" CHECK " ,@(sql-expand value)))
+                      (:references
+                       (destructuring-bind (target
+                                            &optional (on-delete :restrict)
+                                              (on-update :restrict)
+                                              (match :match-simple))
+                           value
+                         (%build-foreign-reference target on-delete
+                                                   on-update match)))
+                      (:type ())
+                      (:deferrable (when (eq value t) '(" DEFERRABLE ")))
+                      (:not-deferrable
+                       (when (eq value t) '(" NOT DEFERRABLE ")))
+                      (:initially-deferred (when (eq value t)
+                                             '(" INITIALLY DEFERRED ")))
+                      (:initially-immediate (when (eq value t)
+                                              '(" INITIALLY IMMEDIATE ")))
+                      (t (sql-error "Unknown column option: ~A." option))))))
 
 (defun expand-composite-table-name (frm)
   "Helper function for building a composite table name"
@@ -1478,13 +1792,19 @@ DOES NOT IMPLEMENT POSTGRESQL FUNCTION EXCLUDE."
          (concatenate 'string (unless tableset  "TABLE ") (to-sql-name name)))
         ((and name (listp name))
          (case (car name)
-           (quote (concatenate 'string (unless tableset  "TABLE ") (to-sql-name (cadr name))))
-           (:temp (concatenate 'string "TEMP TABLE " (expand-table-name (cadr name) t)))
-           (:unlogged (concatenate 'string "UNLOGGED TABLE " (expand-table-name (cadr name) t)))
-           (:if-not-exists (concatenate 'string (unless tableset  "TABLE ") "IF NOT EXISTS "
+           (quote (concatenate 'string (unless tableset  "TABLE ")
+                               (to-sql-name (cadr name))))
+           (:temp (concatenate 'string "TEMP TABLE "
+                               (expand-table-name (cadr name) t)))
+           (:unlogged (concatenate 'string "UNLOGGED TABLE "
+                                   (expand-table-name (cadr name) t)))
+           (:if-not-exists (concatenate 'string (unless tableset  "TABLE ")
+                                        "IF NOT EXISTS "
                                         (expand-table-name (cadr name) t)))
-           (:of (concatenate 'string (unless tableset  "TABLE ") (expand-composite-table-name name)))
-           (t (concatenate 'string (unless tableset  "TABLE ") (to-sql-name (car name))))))
+           (:of (concatenate 'string (unless tableset  "TABLE ")
+                             (expand-composite-table-name name)))
+           (t (concatenate 'string (unless tableset  "TABLE ")
+                           (to-sql-name (car name))))))
         (t (sql-error "Unknown table option: ~A" name))))
 
 (def-sql-op :create-composite-type (type-name &rest args)
@@ -1493,89 +1813,117 @@ columns. Sample call would be:
    (sql (:create-composite-type 'fullname (first-name text) (last-name text)))"
   `("(CREATE TYPE " ,(cond ((and type-name (stringp type-name))
                             (to-sql-name type-name))
-                           ((and type-name (symbolp type-name) (boundp type-name))
+                           ((and type-name (symbolp type-name)
+                                 (boundp type-name))
                             (to-sql-name type-name))
                            ((and type-name (symbolp type-name))
                             (to-sql-name type-name))
-                           ((and type-name (consp type-name) (eq (car type-name) 'quote))
+                           ((and type-name (consp type-name)
+                                 (eq (car type-name) 'quote))
                             (to-sql-name (cadr type-name)))
                            (t "ERROR in create-composite-type type-name"))
-                           " AS ("
-     ,(implode ", "
-       (loop for x in args
-         collect (cons-to-sql-name-strings x)))
-     ")"))
+                    " AS ("
+                    ,(implode ", "
+                              (loop for x in args
+                                    collect (cons-to-sql-name-strings x)))
+                    ")"))
 
 (def-sql-op :create-table (name (&rest columns) &rest options)
   (let ((typed-table (and (listp name) (eq (car name) :of))))
     (when (and (null columns) (not typed-table))
       (sql-error "No columns defined for table ~A." name))
-  `("CREATE " ,@(list (expand-table-name name)) " ("
-                    ,@(loop :for ((column-name . args) . rest) :on columns
-                         :append (expand-table-column column-name args)
-                         :if rest :collect ", ")
-                    ,@(when (and columns options) '(", "))
-                    ,@(loop :for ((option . args) . rest) :on options
-                         :append (expand-table-constraint option args)
-                         :if rest :collect ", ")
-                    ")")))
+    `("CREATE " ,@(list (expand-table-name name)) " ("
+                ,@(loop :for ((column-name . args) . rest) :on columns
+                        :append (expand-table-column column-name args)
+                        :if rest :collect ", ")
+                ,@(when (and columns options) '(", "))
+                ,@(loop :for ((option . args) . rest) :on options
+                        :append (expand-table-constraint option args)
+                        :if rest :collect ", ")
+                ")")))
 
 (def-sql-op :create-extended-table (name (&rest columns) &optional
                                          table-constraints
                                          extended-table-constraints)
-  "Create a table with more complete syntax where table-constraints and extended-table-constraints are lists.
-Note that with extended tables you can have tables without columns that are inherited or partitioned."
+  "Create a table with more complete syntax where table-constraints and
+extended-table-constraints are lists. Note that with extended tables you can
+have tables without columns that are inherited or partitioned."
   `("CREATE " ,@(list (expand-table-name name)) " ("
-                    ,@(loop :for ((column-name . args) . rest) :on columns
-                         :append (expand-table-column column-name args)
-                         :if rest :collect ", ")
-                    ,@(loop for constraint in table-constraints
-                         :for i from (length table-constraints) downto 0
-                         :append (expand-table-constraint-sok constraint)
-                           ;if (> i 0) collect ", "
-                           )
-                     ")"
-                    ,@(loop :for ((constraint . args)) :on extended-table-constraints
-                         :append (expand-extended-table-constraint constraint args))))
+              ,@(loop :for ((column-name . args) . rest) :on columns
+                      :append (expand-table-column column-name args)
+                      :if rest :collect ", ")
+              ,@(loop for constraint in table-constraints
+                      :for i from (length table-constraints) downto 0
+                      :append (expand-table-constraint-sok constraint)
+                                        ;if (> i 0) collect ", "
+                      )
+              ")"
+              ,@(loop :for ((constraint . args)) :on extended-table-constraints
+                      :append (expand-extended-table-constraint constraint args))))
 
 (defun alter-table-column (column-name args)
   "Generates the sql string for the portion of altering a column."
   `(,(to-sql-name column-name *escape-sql-names-p* t) " "
-     ,@(loop :for (option value) :on args :by #'cddr
-          :append (case option
-                    (:default `(" DEFAULT " ,@(sql-expand value)))
-                    (:add-identity-by-default (cond  ((stringp value) `(" ADD GENERATED BY DEFAULT AS IDENTITY (" ,value ")"))
-                                                     (t '(" ADD GENERATED BY DEFAULT AS IDENTITY "))))
-                    (:add-identity-always (cond  ((stringp value) `(" ADD GENERATED ALWAYS AS IDENTITY (" ,value ")"))
-                                                 (t '(" ADD GENERATED ALWAYS AS IDENTITY "))))
-                    (:set-identity-by-default (cond  ((stringp value)  `(" SET GENERATED BY DEFAULT (" ,value ")"))
-                                                     (t '(" SET GENERATED BY DEFAULT "))))
-                    (:set-identity-always (cond  ((stringp value) `(" SET GENERATED ALWAYS (" ,value ")"))
-                                                 (t '(" SET GENERATED ALWAYS "))))
-                    (:set-statistics (when (integerp value) `("SET STATISTICS " ,(write-to-string value) " ")))
-                    (:collate (when (and value (stringp value))
-                                `(" COLLATE \"" ,value "\"")))
-                    (:type (multiple-value-bind (type null) (dissect-type value)
-                             `(" TYPE " ,(to-type-name type) ,@(when (not null) '(" NOT NULL")))))
-                    (:primary-key (cond ((and value (stringp value)) `(" PRIMARY KEY " ,value))
-                                        ((and value (keywordp value)) `(" PRIMARY KEY " ,@(expand-identity value)))
-                                        (t '(" PRIMARY KEY "))))
-                    (:unique (cond ((and value (stringp value))
-                                    `(" UNIQUE " ,@(sql-expand value)))
-                                   (value '(" UNIQUE "))
-                                   (t nil)))
-                    (:references
-                     (destructuring-bind (target &optional (on-delete :restrict)
-                                                 (on-update :restrict) (match :match-simple))
-                         value
-                       (%build-foreign-reference target on-delete on-update match)))
-                    (:drop-default `(" DROP DEFAULT "))
-                    (:drop-not-null '(" DROP NOT NULL "))
-                    (:set-default `(" SET DEFAULT " ,@ (sql-expand value)))
-                    (:set-not-null '(" SET NOT NULL "))
-                    (:drop-identity (when value `(" DROP IDENTITY " ,@(sql-expand value))))
-                    (:check `(" CHECK " ,@(sql-expand value)))
-                    (t (sql-error "Unknown alter column option: ~A." option))))))
+    ,@(loop :for (option value) :on args :by #'cddr
+            :append (case option
+                      (:default `(" DEFAULT " ,@(sql-expand value)))
+                      (:add-identity-by-default
+                       (cond  ((stringp value)
+                               `(" ADD GENERATED BY DEFAULT AS IDENTITY ("
+                                 ,value ")"))
+                              (t '(" ADD GENERATED BY DEFAULT AS IDENTITY "))))
+                      (:add-identity-always
+                       (cond ((stringp value)
+                              `(" ADD GENERATED ALWAYS AS IDENTITY ("
+                                ,value ")"))
+                              (t '(" ADD GENERATED ALWAYS AS IDENTITY "))))
+                      (:set-identity-by-default
+                       (cond  ((stringp value)  `(" SET GENERATED BY DEFAULT ("
+                                                  ,value ")"))
+                              (t '(" SET GENERATED BY DEFAULT "))))
+                      (:set-identity-always
+                       (cond  ((stringp value)
+                               `(" SET GENERATED ALWAYS (" ,value ")"))
+                              (t '(" SET GENERATED ALWAYS "))))
+                      (:set-statistics
+                       (when (integerp value)
+                         `("SET STATISTICS " ,(write-to-string value)
+                                             " ")))
+                      (:collate (when (and value (stringp value))
+                                  `(" COLLATE \"" ,value "\"")))
+                      (:type (multiple-value-bind (type null)
+                                 (dissect-type value)
+                               `(" TYPE " ,(to-type-name type)
+                                          ,@(when (not null)
+                                              '(" NOT NULL")))))
+                      (:primary-key
+                       (cond ((and value (stringp value))
+                              `(" PRIMARY KEY " ,value))
+                             ((and value (keywordp value))
+                              `(" PRIMARY KEY "
+                                ,@(expand-identity value)))
+                             (t '(" PRIMARY KEY "))))
+                      (:unique (cond ((and value (stringp value))
+                                      `(" UNIQUE " ,@(sql-expand value)))
+                                     (value '(" UNIQUE "))
+                                     (t nil)))
+                      (:references
+                       (destructuring-bind (target
+                                            &optional (on-delete :restrict)
+                                              (on-update :restrict)
+                                              (match :match-simple))
+                           value
+                         (%build-foreign-reference target on-delete
+                                                   on-update match)))
+                      (:drop-default `(" DROP DEFAULT "))
+                      (:drop-not-null '(" DROP NOT NULL "))
+                      (:set-default `(" SET DEFAULT " ,@ (sql-expand value)))
+                      (:set-not-null '(" SET NOT NULL "))
+                      (:drop-identity (when value `(" DROP IDENTITY "
+                                                    ,@(sql-expand value))))
+                      (:check `(" CHECK " ,@(sql-expand value)))
+                      (t (sql-error "Unknown alter column option: ~A."
+                                    option))))))
 
 (def-sql-op :alter-table (name action &rest args)
   (labels
@@ -1586,18 +1934,21 @@ Note that with extended tables you can have tables without columns that are inhe
            (t (sql-error "Unknown DROP action ~A." action))))
        (base-action (action args)
          (case action
-           (:add (cons "ADD " (expand-table-constraint (first args) (rest args))))
+           (:add (cons "ADD " (expand-table-constraint (first args)
+                                                       (rest args))))
            (:add-column (cons "ADD COLUMN "
                               (expand-table-column (first args) (rest args))))
            (:alter-column (cons "ALTER COLUMN "
-                              (alter-table-column (first args) (rest args))))
+                                (alter-table-column (first args) (rest args))))
            (:drop-column (list "DROP COLUMN "
                                (to-sql-name (first args) *escape-sql-names-p* t)
                                (if (rest args)
-                                       (drop-action (second args))
-                                       "")))
+                                   (drop-action (second args))
+                                   "")))
            (:add-constraint (append (list "ADD CONSTRAINT ")
-                                    (list (to-sql-name (first args) *escape-sql-names-p* t) " ")
+                                    (list (to-sql-name (first args)
+                                                       *escape-sql-names-p* t)
+                                          " ")
                                     (expand-table-constraint (second args)
                                                              (cddr args))))
            (:drop-constraint (list "DROP CONSTRAINT "
@@ -1606,16 +1957,20 @@ Note that with extended tables you can have tables without columns that are inhe
                                        (drop-action (second args))
                                        "")))
            (:rename (list "RENAME TO " (to-sql-name (first args))))
-           (:rename-column (list "RENAME COLUMN " (to-sql-name (first args)) " TO " (to-sql-name (second args))))
-           (:rename-constraint (list "RENAME CONSTRAINT " (to-sql-name (first args)) " TO " (to-sql-name (second args))))
+           (:rename-column (list "RENAME COLUMN "
+                                 (to-sql-name (first args)) " TO "
+                                 (to-sql-name (second args))))
+           (:rename-constraint (list "RENAME CONSTRAINT "
+                                     (to-sql-name (first args)) " TO "
+                                     (to-sql-name (second args))))
            (t (sql-error "Unknown ALTER TABLE action ~A" action)))))
     `("ALTER TABLE "
       ,(to-sql-name name) " "
       ,@(if (listp action)
             (loop :for (item . rest) on action
-               :append (base-action (car item) (cdr item))
-               :if rest :collect ", ")
-          (base-action action args)))))
+                  :append (base-action (car item) (cdr item))
+                  :if rest :collect ", ")
+            (base-action action args)))))
 
 
 (def-sql-op :alter-sequence (name action &optional argument)
@@ -1636,24 +1991,27 @@ Note that with extended tables you can have tables without columns that are inhe
         (t (sql-error "Unknown ALTER SEQUENCE action ~A" action)))))
 
 (defun expand-create-index (name args)
-  "Available parameters - in order after name - are :concurrently, :on, :using, :fields
-and :where.The advantage to using the keyword :concurrently is that writes to the table
-from other sessions are not locked out while the index is is built. The disadvantage is
-that the table will need to be scanned twice. Everything is a trade-off."
-  (split-on-keywords ((unique ? -) (concurrently ? -)  (on) (using ?) (fields *) (where ?)) args
+  "Available parameters - in order after name - are :concurrently, :on, :using,
+ :fields and :where.The advantage to using the keyword :concurrently is that
+writes to the table from other sessions are not locked out while the index is is
+built. The disadvantage is that the table will need to be scanned twice.
+Everything is a trade-off."
+  (split-on-keywords ((unique ? -) (concurrently ? -)  (on) (using ?) (fields *)
+                      (where ?))
+      args
     `(,@(when unique '("UNIQUE "))
-        "INDEX "
-        ,@(when concurrently '("CONCURRENTLY "))
-        ,@(if (and (listp name) (eq (car name) :if-not-exists))
-              (list "IF NOT EXISTS " (car (sql-expand (cadr name))))
-              (sql-expand name))
-        " ON "
-        ,(to-sql-name (cond ((stringp (car on))
-                             (car on))
-                            ((consp (car on))
-                             (cadar on))
-                            (t (car on)))
-                      *escape-sql-names-p* t)
+      "INDEX "
+      ,@(when concurrently '("CONCURRENTLY "))
+      ,@(if (and (listp name) (eq (car name) :if-not-exists))
+            (list "IF NOT EXISTS " (car (sql-expand (cadr name))))
+            (sql-expand name))
+      " ON "
+      ,(to-sql-name (cond ((stringp (car on))
+                           (car on))
+                          ((consp (car on))
+                           (cadar on))
+                          (t (car on)))
+                    *escape-sql-names-p* t)
       ,@(when using `(" USING " ,(cond ((stringp (car using))
                                         (to-sql-name (car using)))
                                        ((consp (car using))
@@ -1707,7 +2065,8 @@ that the table will need to be scanned twice. Everything is a trade-off."
     :restart-identity will restart any sequences owned by the table.
     :continue-identity will continue sequences owned by the table.
     :cascade will cascade the truncation through tables using foreign keys."
-  (split-on-keywords ((vars *) (only - ?) (restart-identity - ?) (continue-identity - ?)(cascade - ? ))
+  (split-on-keywords ((vars *) (only - ?) (restart-identity - ?)
+                      (continue-identity - ?)(cascade - ? ))
       (cons :vars args)
     `("TRUNCATE "
       ,@(when only '(" ONLY "))
@@ -1721,7 +2080,8 @@ that the table will need to be scanned twice. Everything is a trade-off."
   "Helper function which may be useful for certain macros.
 Takes what might be a string, a symbol or a quoted-name in the form
  '(quote name) and returns the string version of the name."
-  (cond ((and (consp name) (eq (car name) 'quote) (equal (length name) 2))
+  (cond ((and (consp name) (eq (car name) 'quote) (equal (length name)
+                                                         2))
          (string (cadr name)))
         ((symbolp name)
          (string name))
@@ -1744,32 +2104,45 @@ has been converted to (quote something)."
                     (sql-escape-string (to-sql-name (dequote name)))
                     `(sql-escape-string (to-sql-name ,name))) ")"))
 
-(def-sql-op :create-sequence (name &key increment min-value max-value start cache cycle)
+(def-sql-op :create-sequence (name &key increment min-value max-value start
+                                   cache cycle)
   `("CREATE SEQUENCE " ,@(sql-expand name)
-    ,@(when increment  `(" INCREMENT " ,@(sql-expand increment)))
-    ,@(when min-value `(" MINVALUE " ,@(sql-expand min-value)))
-    ,@(when max-value `(" MAXVALUE " ,@(sql-expand max-value)))
-    ,@(when start `(" START " ,@(sql-expand start)))
-    ,@(when cache `(" CACHE " ,@(sql-expand cache)))
-    ,@(when cycle `(" CYCLE"))))
+                       ,@(when increment  `(" INCREMENT "
+                                            ,@(sql-expand increment)))
+                       ,@(when min-value `(" MINVALUE "
+                                           ,@(sql-expand min-value)))
+                       ,@(when max-value `(" MAXVALUE "
+                                           ,@(sql-expand max-value)))
+                       ,@(when start `(" START " ,@(sql-expand start)))
+                       ,@(when cache `(" CACHE " ,@(sql-expand cache)))
+                       ,@(when cycle `(" CYCLE"))))
 
 (def-sql-op :create-view (name query)
   ;; does not allow to specify the columns of the view yet
   `("CREATE VIEW " ,(to-sql-name name) " AS " ,@(sql-expand query)))
 
 (def-sql-op :create-enum (name members)
-  (let ((strings (loop :for m :in members :collect (etypecase m (symbol (string-downcase m)) (string m)))))
-    `("CREATE TYPE " ,@(sql-expand name) " AS ENUM (" ,@(sql-expand-list strings) ")")))
+  (let ((strings (loop :for m :in members
+                       :collect (etypecase m (symbol
+                                              (string-downcase m))
+                                           (string m)))))
+    `("CREATE TYPE " ,@(sql-expand name) " AS ENUM ("
+                     ,@(sql-expand-list strings)
+                     ")")))
 
 ;;; https://www.postgresql.org/docs/current/static/sql-createdomain.html
 (def-sql-op :create-domain (name &rest args)
   (split-on-keywords ((type) (default ?) (constraint-name ?) (check ?)) args
     (multiple-value-bind (type may-be-null) (dissect-type (car type))
       `("CREATE DOMAIN " ,@(sql-expand name) " AS " ,(to-type-name type)
-                         ,@(when default `(" DEFAULT " ,@(sql-expand (car default))))
-                         ,@(when constraint-name `(" CONSTRAINT " ,@(sql-expand (car constraint-name))))
+                         ,@(when default `(" DEFAULT "
+                                           ,@(sql-expand (car default))))
+                         ,@(when constraint-name
+                             `(" CONSTRAINT "
+                               ,@(sql-expand (car constraint-name))))
                          ,@(unless may-be-null '(" NOT NULL"))
-                         ,@(when check `(" CHECK" ,@(sql-expand (car check))))))))
+                         ,@(when check `(" CHECK"
+                                         ,@(sql-expand (car check))))))))
 
 (def-sql-op :drop-domain (name)
   `("DROP DOMAIN " ,@(sql-expand name)))
@@ -1779,19 +2152,22 @@ has been converted to (quote something)."
   (split-on-keywords ((on) (to) (where ?) (instead ? -) (do ? *)) rest
     (check-type (car on) (member :select :insert :update :delete))
     `("CREATE RULE " ,@(sql-expand name)
-      " AS ON " ,(symbol-name (car on)) " TO " ,@(sql-expand (car to))
-      ,@(when where `(" WHERE " ,@(sql-expand (car where))))
-      " DO" ,@(when instead '(" INSTEAD"))
-      ,@(if (or (null do) (eq do :nothing))
-            '(" NOTHING")
-            `("(" ,@(sql-expand-list do "; ") ")")))))
+                     " AS ON " ,(symbol-name (car on)) " TO "
+                     ,@(sql-expand (car to))
+                     ,@(when where `(" WHERE " ,@(sql-expand (car where))))
+                     " DO" ,@(when instead '(" INSTEAD"))
+                     ,@(if (or (null do) (eq do :nothing))
+                           '(" NOTHING")
+                           `("(" ,@(sql-expand-list do "; ") ")")))))
 
 ;;; https://www.postgresql.org/docs/current/static/sql-createdatabase.html
 (def-sql-op :create-database (name &rest args)
   "Create a database.
    If the database exists an error is raised."
-  (split-on-keywords ((owner ?) (template ?) (encoding ?) (lc-collate ?) (lc-ctype ?) (tablespace ?)
-		      (allow-connections ?) (connection-limit ?) (is-template ?))
+  (split-on-keywords ((owner ?) (template ?) (encoding ?) (lc-collate ?)
+                      (lc-ctype ?) (tablespace ?)
+                                (allow-connections ?) (connection-limit ?)
+                                (is-template ?))
       args
     `("CREATE DATABASE "
       ,@(sql-expand name)
@@ -1802,9 +2178,15 @@ has been converted to (quote something)."
       ,@(when lc-collate `(" LC_COLLATE " ,@(sql-expand (car lc-collate))))
       ,@(when lc-ctype `(" LC_CTYPE " ,@(sql-expand (car lc-ctype))))
       ,@(when tablespace `(" TABLESPACE " ,@(sql-expand (car tablespace))))
-      ,@(when allow-connections `(" ALLOW_CONNECTIONS ",@(if (car allow-connections) `("TRUE") `("FALSE"))))
-      ,@(when connection-limit `(" CONNECTION LIMIT " ,@(sql-expand (car connection-limit))))
-      ,@(when is-template `(" IS_TEMPLATE " ,@(if (car is-template) `("TRUE") `("FALSE")))))))
+      ,@(when allow-connections `(" ALLOW_CONNECTIONS "
+                                  ,@(if (car allow-connections)
+                                        `("TRUE")
+                                        `("FALSE"))))
+      ,@(when connection-limit `(" CONNECTION LIMIT "
+                                 ,@(sql-expand (car connection-limit))))
+      ,@(when is-template `(" IS_TEMPLATE " ,@(if (car is-template)
+                                                  `("TRUE")
+                                                  `("FALSE")))))))
 
 (def-drop-op :drop-database "DATABASE")
 
@@ -1817,18 +2199,23 @@ and have database privileges; a role can be considered a “user”, a
 :options to create role do not require values, e.g. (:create-role
 'foo :options 'SUPERUSER 'NOINHERIT).
 
-connection-limit, valid-until, role, in-role, admin are keyword options that accept values."
-  (split-on-keywords ((options ? *) (password ?) (connection-limit ?) (valid-until ?) (role * ?) (in-role * ?) (admin * ?)) args
-		     `("CREATE ROLE "
-		       ,@(sql-expand name)
-		       ,@(when args `(" WITH "))
-		       ,@(when options `(,@(sql-expand-list options " ")))
-		       ,@(when password    `(" PASSWORD "    ,@(sql-expand (car password))))
-		       ,@(when connection-limit `(" CONNECTION LIMIT " ,@(sql-expand (car connection-limit))))
-		       ,@(when valid-until `(" VALID UNTIL " ,@(sql-expand (car valid-until))))
-		       ,@(when role        `(" ROLE "        ,@(sql-expand-list role) " "))
-		       ,@(when in-role     `(" IN ROLE "     ,@(sql-expand-list in-role) " "))
-		       ,@(when admin       `(" ADMIN "       ,@(sql-expand-list admin) " ")))))
+connection-limit, valid-until, role, in-role, admin are keyword options that
+accept values."
+  (split-on-keywords ((options ? *) (password ?) (connection-limit ?)
+                      (valid-until ?) (role * ?) (in-role * ?) (admin * ?))
+      args
+    `("CREATE ROLE "
+      ,@(sql-expand name)
+      ,@(when args `(" WITH "))
+      ,@(when options `(,@(sql-expand-list options " ")))
+      ,@(when password    `(" PASSWORD "    ,@(sql-expand (car password))))
+      ,@(when connection-limit
+          `(" CONNECTION LIMIT " ,@(sql-expand
+                                    (car connection-limit))))
+      ,@(when valid-until `(" VALID UNTIL " ,@(sql-expand (car valid-until))))
+      ,@(when role        `(" ROLE "        ,@(sql-expand-list role) " "))
+      ,@(when in-role     `(" IN ROLE "     ,@(sql-expand-list in-role) " "))
+      ,@(when admin       `(" ADMIN "       ,@(sql-expand-list admin) " ")))))
 
 (def-drop-op :drop-role "ROLE")
 
@@ -1836,10 +2223,14 @@ connection-limit, valid-until, role, in-role, admin are keyword options that acc
 ;;; https://www.postgresql.org/docs/current/static/sql-copy.html
 (def-sql-op :copy (table &rest args)
   "Move data between Postgres tables and filesystem files."
-  (split-on-keywords ((columns ? *) (from ?) (to ?) (on-segment ?) (binary ?) (oids ?) (header ?) (delimiter ?) (null ?)
-		      (escape ?) (newline ?) (csv ?) (quote ?) (force-not-null ? *) (fill-missing-fields ?)
-		      (log-errors ?) (segment-reject-limit ? *)) args
-  `("COPY "
+  (split-on-keywords ((columns ? *) (from ?) (to ?) (on-segment ?) (binary ?)
+                      (oids ?) (header ?) (delimiter ?) (null ?)
+                                    (escape ?) (newline ?) (csv ?) (quote ?)
+                                    (force-not-null ? *)
+                                    (fill-missing-fields ?)
+                                    (log-errors ?) (segment-reject-limit ? *))
+                     args
+    `("COPY "
       ,@(sql-expand table) " "
       ,@(when columns `("(" ,@(sql-expand-list columns) ") "))
       ,@(when from    `("FROM " ,@(sql-expand (car from)) " "))
@@ -1854,8 +2245,14 @@ connection-limit, valid-until, role, in-role, admin are keyword options that acc
       ,@(when newline    `("NEWLINE "   ,@(sql-expand (car newline)) " "))
       ,@(when csv        `("CSV "))
       ,@(when quote      `("QUOTE "     ,@(sql-expand (car quote))))
-      ,@(when force-not-null       `("FORCE NOT NULL " ,@(sql-expand-list force-not-null) " "))
+      ,@(when force-not-null       `("FORCE NOT NULL "
+                                     ,@(sql-expand-list force-not-null)
+                                     " "))
       ,@(when fill-missing-fields  `("FILL MISSING FIELDS "))
       ,@(when log-errors           `("LOG ERRORS "))
-      ,@(when segment-reject-limit `("SEGMENT REJECT LIMIT " ,@(sql-expand (car segment-reject-limit)) " "
-							     ,@(if (second segment-reject-limit) `(,@(sql-expand (second segment-reject-limit)))))))))
+      ,@(when segment-reject-limit
+          `("SEGMENT REJECT LIMIT "
+            ,@(sql-expand (car segment-reject-limit))
+            " "
+            ,@(if (second segment-reject-limit)
+                  `(,@(sql-expand (second segment-reject-limit)))))))))

@@ -9,7 +9,7 @@ Postmodern is a Common Lisp library for interacting with [PostgreSQL](http://www
 - Convenient support for prepared statements and stored procedures
 - A metaclass for simple database-access objects
 
-The biggest differences between this library and CLSQL/CommonSQL or cl-dbi are that Postmodern has no intention of being portable across different SQL implementations (it embraces non-standard PostgreSQL features), and approaches extensions like lispy SQL and database access objects in a quite different way. This library was written because the CLSQL approach did not really work for me, your mileage may vary.
+The biggest differences between this library and CLSQL/CommonSQL or cl-dbi are that Postmodern has no intention of being portable across different SQL implementations (it embraces non-standard PostgreSQL features), and approaches extensions like lispy SQL and database access objects in a quite different way. This library was written because the CLSQL approach did not really work for me. Your mileage may vary.
 
 ## Contents
 ---
@@ -28,17 +28,20 @@ The library depends on usocket (except on SBCL and ACL, where the built-in socke
 
 Postmodern itself is split into four different packages, some of which can be used independently.
 
-Simple-date is a very basic implementation of date and time objects, used to support storing and retrieving time-related SQL types. It is not loaded by default and you can use local-time instead.
+Simple-date is a very basic implementation of date and time objects, used to support storing and retrieving time-related SQL types. It is not loaded by default and you can use local-time (which has support for timezones) instead.
 
 CL-postgres is the low-level library used for interfacing with a PostgreSQL server over a socket.
 
 S-SQL is used to compile s-expressions to strings of SQL code, escaping any Lisp values inside, and doing as much as possible of the work at compile time.
 
-Finally, Postmodern itself is the library that tries to put all these things together into a convenient programming interface.
+Finally, Postmodern itself is a wrapper around these packages and provides higher level functions, a very simple data access object that can be mapped directly to database tables and some convient utilities. It then tries to put all these things together into a convenient programming interface.
 
 ## License
 ---
 Postmodern is released under a zlib-style license. Which approximately means you can use the code in whatever way you like, except for passing it off as your own or releasing a modified version without indication that it is not the original.
+
+The functions execute-file.lisp were ported from [[https://github.com/dimitri/pgloader][pgloader]] with grateful thanks to
+Dimitri Fontaine and are released under a BSD-3 license.
 
 ## Download and installation
 ---
@@ -64,7 +67,9 @@ If you have a PostgreSQL server running on localhost, with a database called 'te
     (connect-toplevel "testdb" "foucault" "surveiller" "localhost")
 
 
-Which will establish a connection to be used by all code, except for that wrapped in a with-connection form, which takes the same arguments but only establishes the connection locally. If the Postgresql server is running on a port other than 5432, you would also pass the appropriate keyword port parameter. E.g.:
+Which will establish a connection to be used by all code, except for that wrapped in a with-connection form, which takes the same arguments but only establishes the connection locally. Connect-toplevel will maintain a single connection for the life of the session.
+
+If the Postgresql server is running on a port other than 5432, you would also pass the appropriate keyword port parameter. E.g.:
 
 
     (connect-toplevel "testdb" "foucault" "surveiller" "localhost" :port 5434)
@@ -102,8 +107,8 @@ You do not have to pull in the whole result of a query at once, you can also ite
     (doquery (:select 'x 'y :from 'some-imaginary-table) (x y)
       (format t "On this row, x = ~A and y = ~A.~%" x y))
 
-You can work directly with the database or you can use a simple database-access-class (aka dao) which would cover all the fields in a row.
-This is what a database-access class looks like:
+
+You can work directly with the database or you can use a simple database-access-class (aka dao) which would cover all the columns in a row. This is what a database-access class looks like:
 
 
     (defclass country ()
@@ -113,25 +118,40 @@ This is what a database-access class looks like:
                     :accessor country-inhabitants)
        (sovereign :col-type (or db-null string) :initarg :sovereign
                   :accessor country-sovereign))
+       (region-id :col-type integer :initarg :region-id :accessor region-id)
       (:metaclass dao-class)
       (:keys name))
 
 
-The above defines a class that can be used to handle records in a table with three columns: name, inhabitants, and sovereign. In simple cases, the information above is enough to define the table as well:
+The above defines a class that can be used to handle records in a table with three columns: name, inhabitants, and sovereign. The :keys parameter specifies which column(s) are used for the primary key. Once you have created the class, you can return an instance of the country class by calling
 
 
-    (dao-table-definition 'country)
-    ;; => "CREATE TABLE country (
-    ;;      name TEXT NOT NULL,
-    ;;      inhabitants INTEGER NOT NULL,
-    ;;      sovereign TEXT,
-    ;;      PRIMARY KEY (name))"
-    (execute (dao-table-definition 'country))
+    (get-dao 'country "Croatia")
 
 
-This defines our table in the database. execute works like query, but does not expect any results back.
+You can also define classes that use multiple columns in the primary key:
 
-You can create tables directly without the need to define a class, and in more complicated cases, you will need to use the create-table operator. One example using s-sql rather than plain vanilla sql would be the following:
+
+    (defclass points ()
+      ((x :col-type integer :initarg :x
+          :reader point-x)
+       (y :col-type integer :initarg :y
+          :reader point-y)
+       (value :col-type integer :initarg :value
+              :accessor value))
+      (:metaclass dao-class)
+      (:keys x y))
+
+
+In this case, retrieving a points record would look like the following where 12 and 34 would be the values you are looking to find in the x column and y column respectively.:
+
+
+    (get-dao 'points 12 34)
+
+
+### Table Creation
+
+You can create tables directly without the need to define a class, and in more complicated cases, you will need to use the s-sql :create-table operator or plain vanilla sql. One example using s-sql rather than plain vanilla sql would be the following:
 
 
     (query (:create-table so-items
@@ -152,14 +172,67 @@ Restated using vanilla sql:
                  product_id INTEGER,
                  qty INTEGER,
                  net_price NUMERIC,
-                 PRIMARY KEY (item_id, so_id)
-                 );"
-    )
+                 PRIMARY KEY (item_id, so_id));")
 
 
-In the above case, the new table's name will be so-items (actually in the database it will be so_items because sql does not allow hyphens. The column item-id is an integer and cannot be null. The column so-id is also an integer, but is allowed to be null and is a foreign key to the id field in the so-headers table so-headers. The primary key is actually a composite of item-id and so-id. (If we wanted the primary key to be just item-id, we could have specified that in the form defining item-id.)
+In the above case, the new table's name will be so_items because sql does not allow hyphens and plain vanilla sql will require that. Ppostmodern will generally allow you to use the quoted symbol 'so-items. This is also true for all the column names. The column item-id is an integer and cannot be null. The column so-id is also an integer, but is allowed to be null and is a foreign key to the id field in the so-headers table so-headers. The primary key is actually a composite of item-id and so-id. (If we wanted the primary key to be just item-id, we could have specified that in the form defining item-id.)
 
-Let us go back to our approach using a dao class and add a few countries:
+In simple cases you can also use a previously defined dao to create a table as well using the dao-table-definition function which generates the plain vanilla sql for creating a table described above.
+
+
+    (dao-table-definition 'country)
+    ;; => "CREATE TABLE country (
+    ;;      name TEXT NOT NULL,
+    ;;      inhabitants INTEGER NOT NULL,
+    ;;      sovereign TEXT,
+    ;;      PRIMARY KEY (name))"
+
+    (execute (dao-table-definition 'country))
+
+This defines our table in the database. execute works like query, but does not expect any results back.
+
+In cases involving more than one table, you should use the deftable macro. See [Introduction to Multi-table dao class objects](doc/postmodern.html) in the postmodern.org or postmodern.html manual.
+
+
+### Inserting Data
+Similarly to table creation, you can insert data using the s-sql wrapper, plain vanilla sql or daos.
+
+The s-sql approach would be:
+
+
+    (query (:insert-into 'country :set 'name "The Netherlands"
+                                       'inhabitants 16800000
+                                       'sovereign "Willem-Alexander"))
+
+    (query (:insert-into 'country :set 'name "Croatia"
+                                       'inhabitants 4400000))
+
+You could also insert multiple rows at a time but that requires the same columns for each row:
+
+
+    (query (:insert-rows-into 'country :columns 'name 'inhabitants 'sovereign
+                                       :values '(("The Netherlands" 16800000 "Willem-Alexander")
+                                                 ("Croatia" 4400000 :null))))
+
+
+The sql approach would be:
+
+
+    (query "insert into country (name, inhabitants, sovereign)
+                                values ('The Netherlands', 16800000, 'Willem-Alexander')")
+
+    (query "insert into country (name, inhabitants)
+                                values ('Croatia', 4400000)")
+
+The multiple row sql approach would be:
+
+
+    (query "insert into country (name, inhabitants, sovereign)
+                                values
+                                  ('The Netherlands', 16800000, 'Willem-Alexander'),
+                                  ('Croatia', 4400000, NULL)")
+
+Using dao classes would look like:
 
 
     (insert-dao (make-instance 'country :name "The Netherlands"
@@ -168,8 +241,7 @@ Let us go back to our approach using a dao class and add a few countries:
     (insert-dao (make-instance 'country :name "Croatia"
                                         :inhabitants 4400000))
 
-
-Then, to update Croatia's population, we could do this:
+Staying with the dao class approach, to update Croatia's population, we could do this:
 
 
     (let ((croatia (get-dao 'country "Croatia")))
@@ -287,39 +359,174 @@ provided using environment variables:
 ---
 The reference manuals for the different components of Postmodern are kept in separate files. For using the library in the most straightforward way, you only really need to read the Postmodern reference and glance over the S-SQL reference. The simple-date reference explains the time-related data types included in Postmodern, and the CL-postgres reference might be useful if you just want a low-level library for talking to a PostgreSQL server.
 
-- [Postmodern](/doc/postmodern.html)
-- [S-SQL](/doc/s-sql.html)
-- [Simple-date](/doc/simple-date.html)
-- [CL-postgres](/doc/cl-postgres.html)
+- [Postmodern](https://marijnhaverbeke.nl/postmodern/postmodern.html)
+- [S-SQL](https://marijnhaverbeke.nl/postmodern/s-sql.html)
+- [Simple-date](https://marijnhaverbeke.nl/postmodern/simple-date.html)
+- [CL-postgres](https://marijnhaverbeke.nl/postmodern/cl-postgres.html)
 
-## Caveats and to-dos
+## Data Types, Caveats and to-dos
+---
+### Data Types
+
+For a short comparison of lisp and Postgresql data types (date and time datatypes are described in the next section)
+
+| Lisp type     | SQL type         | Description                                                |
+| ------------- | ---------------- | ---------------------------------------------------------- |
+| integer       | smallint         | -32,768 to +32,768 2-byte storage                          |
+| integer       | integer          | -2147483648 to +2147483647 integer, 4-byte storage         |
+| integer       | bigint           | -9223372036854775808 to 9223372036854775807 8-byte storage |
+| (numeric X Y) | numeric(X, Y)    | user specified. See below                                  |
+| float, real   | real             | float, 6 decimal digit precision 4-byte storage            |
+| double-float  | double-precision | double float 15 decimal digit precision 8-byte storage     |
+| string, text  | text             | variable length string, no limit specified                 |
+| string        | char(X)          | char(length), blank-padded string, fixed storage length    |
+| string        | varchar(X)       | varchar(length), non-blank-padded string, variable storage |
+| boolean       | boolean          | boolean, 'true'/'false', 1 byte                            |
+| bytea         | bytea            | binary strings allowing non-printable octets               |
+| date          | date             | date range: 4713 BC to 5874897 AD                          |
+| interval      | interval         | time intervals                                             |
+| array         | array            | See discussion at  [Array-Notes.html](doc/array-notes.html)|
+
+Numeric and decimal are variable storage size numbers with user specified precision.
+Up to 131072 digits before the decimal point; up to 16383 digits after the decimal point.
+The syntax is numeric(precision, scale). Numeric columns with a specified scale will coerce input
+values to that scale. For more detail, see https://www.postgresql.org/docs/current/datatype-numeric.html
+
+| PG Type          | Sample Postmodern Return Value                                              | Lisp Type (per sbcl)                 |
+| ---------------  | --------------------------------------------------------------------------- | ------------------------------------ |
+| boolean          | T                                                                           | BOOLEAN                              |
+| boolean          | NIL  (Note: within Postgresql this will show 'f')                           | BOOLEAN                              |
+| int2             | 273                                                                         | (INTEGER 0 4611686018427387903)      |
+| int4             | 2                                                                           | (INTEGER 0 4611686018427387903)      |
+| char             | A                                                                           | (VECTOR CHARACTER 64)                |
+| varchar          | id&wl;19                                                                    | (VECTOR CHARACTER 64)                |
+| numeric          | 78239/100                                                                   | RATIO                                |
+| json             | { "customer": "John Doe", "items": {"product": "Beer","qty": 6}}            | (VECTOR CHARACTER 64)                |
+| jsonb            | {"title": "Sleeping Beauties", "genres": ["Fiction", "Thriller", "Horror"]} | (VECTOR CHARACTER 128)               |
+| float            | 782.31                                                                      | SINGLE-FLOAT                         |
+| point            | (0.0d0 0.0d0)                                                               | CONS                                 |
+| lseg             | ((-1.0d0 0.0d0) (2.0d0 4.0d0))                                              | CONS                                 |
+| path             | ((1,0),(2,4))                                                               | (VECTOR CHARACTER 64)                |
+| box              | ((1.0d0 1.0d0) (0.0d0 0.0d0))                                               | CONS                                 |
+| polygon          | ((21,0),(2,4))                                                              | (VECTOR CHARACTER 64)                |
+| line             | {2,-1,0}                                                                    | (VECTOR CHARACTER 64)                |
+| double\_precision | 2.38921379231d8                                                             | DOUBLE-FLOAT                         |
+| double\_float     | 2.3892137923231d8                                                           | DOUBLE-FLOAT                         |
+| circle           | <(0,0),2>                                                                   | (VECTOR CHARACTER 64)                |
+| cidr             | 100.24.10.0/24                                                              | (VECTOR CHARACTER 64)                |
+| inet             | 100.24.10.0/24                                                              | (VECTOR CHARACTER 64)                |
+| interval         | #<INTERVAL P1Y3H20m>                                                        | INTERVAL                             |
+| bit              | #*1                                                                         | (SIMPLE-BIT-VECTOR 1)                |
+| int4range        | [11,24)                                                                     | (VECTOR CHARACTER 64)                |
+| uuid             | 40e6215d-b5c6-4896-987c-f30f3678f608                                        | (VECTOR CHARACTER 64)                |
+| text\_array       | #(text one text two text three)                                             | (SIMPLE-VECTOR 3)                    |
+| integer\_array    | #(3 5 7 8)                                                                  | (SIMPLE-VECTOR 4)                    |
+| bytea            | #(222 173 190 239)                                                          | (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (4)) |
+| text             | Lorem ipsum dolor sit amet, consectetur adipiscing elit                     | (VECTOR CHARACTER 64)                |
+| enum\_mood        | happy (Note: enum_mood was defined as 'sad','ok' or 'happy')                | (VECTOR CHARACTER 64)                |
+
+---
+### Arrays
+See [array-notes.html](https://marijnhaverbeke.nl/postmodern/array-notes.html)
+
 ---
 ### Timezones
 It is important to understand how postgresql (not postmodern) handles timestamps and timestamps with time zones. Postgresql keeps everything in UTC, it does not store a timezone even in a timezone aware column. If you use a timestamp with timezone column, postgresql will calculate the UTC time and will normalize the timestamp data to UTC. When you later select the record, postgresql will look at the timezone for the postgresql session, retrieve the data and then provide the data recalculated from UTC to the timezone for that postgresql session. There is a good writeup of timezones at [http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html](http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html) and [http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/](http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/).
 
-Keeping that in mind, [Simple-date](http://marijnhaverbeke.nl/postmodern/simple-date.html) has no concept of time zones. If you really need your time-keeping to be reliable and/or universal you might consider using [local-time](https://github.com/dlowe-net/local-time), which solves the same problem as simple-date, but does understand time zones. We are considering the best ways to make life easier for users of the two libraries.
+Without simple-date or local-time properly loaded, sample date and time data
+from postgresql will look like:
+
+| PG Type                       | Return Value                         | Lisp Type             |
+| ----------------------------- | --------------------------------     | --------------------  |
+| date                          | #<DATE 16-05-2020>                   | DATE                  |
+| time\_without\_timezone       | #<TIME-OF-DAY 09:47:09.926531>       | TIME-OF-DAY           |
+| time\_with\_timezone          | 09:47:16.510459-04                   | (VECTOR CHARACTER 64) |
+| timestamp\_without\_timezone  | #<TIMESTAMP 16-05-2020T09:47:33,315> | TIMESTAMP             |
+| timestamp\_with\_timezone     | #<TIMESTAMP 16-05-2020T13:47:27,855> | TIMESTAMP             |
+
+
+The Simple-date add-on library (not enabled by default)
+provides types (CLOS classes) for dates, timestamps, and intervals
+similar to the ones SQL databases use, in order to be able to store and read
+these to and from a database in a straighforward way. A few obvious operations
+are defined on these types.
+
+To use simple-date with cl-postgres or postmodern,
+load simple-date-cl-postgres-glue and register suitable SQL
+readers and writers for the associated database types.
+
+    (ql:quickload :simple-date/postgres-glue)
+
+    (setf cl-postgres:*sql-readtable*
+            (cl-postgres:copy-sql-readtable
+             simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
+
+With simple date loaded, the same data will look like this:
+
+| PG Type                    | Return Value                         | Lisp Type             |
+| -------------------------- | --------------------------------     | --------------------  |
+| date                       | #<DATE 16-05-2020>                   | DATE                  |
+| time\_without\_timezone      | #<TIME-OF-DAY 09:47:09.926531>       | TIME-OF-DAY           |
+| time\_with\_timezone         | 09:47:16.510459-04                   | (VECTOR CHARACTER 64) |
+| timestamp\_without\_timezone | #<TIMESTAMP 16-05-2020T09:47:33,315> | TIMESTAMP             |
+| timestamp\_with\_timezone    | #<TIMESTAMP 16-05-2020T13:47:27,855> | TIMESTAMP             |
+
+To get back to the default cl-postgres reader:
+
+    (setf cl-postgres:*sql-readtable*
+            (cl-postgres:copy-sql-readtable
+             cl-postgres::*default-sql-readtable*))
+
+However [Simple-date](http://marijnhaverbeke.nl/postmodern/simple-date.html) has no concept of time zones. Many users use another library, [local-time](https://github.com/dlowe-net/local-time), which solves the same problem as simple-date, but does understand time zones.
+
+For those who want to use local-time, to enable the local-time reader:
+
+    (ql:quickload :cl-postgres+local-time)
+    (local-time:set-local-time-cl-postgres-readers)
+
+With that set postgresql time datatype returns look like:
+With local-time loaded and local-time:set-local-time-cl-postgres-readers run,
+the same sample data looks like:
+
+| PG Type                      | Return Value                     | Lisp Type             |
+| ---------------------------- | -------------------------------- | --------------------  |
+| date                         | 2020-05-15T20:00:00.000000-04:00 | TIMESTAMP             |
+| time\_without\_timezone      | 2000-03-01T04:47:09.926531-05:00 | TIMESTAMP             |
+| time\_with\_timezone         | 09:47:16.510459-04               | (VECTOR CHARACTER 64) |
+| timestamp\_without\_timezone | 2020-05-16T05:47:33.315622-04:00 | TIMESTAMP             |
+| timestamp\_with\_timezone    | 2020-05-16T09:47:27.855146-04:00 | TIMESTAMP             |
 
 ### Portability
-The Lisp code in Postmodern is theoretically portable across implementations, and testing is normally done on sbcl, ccl and ecl. ABCL currently has issues with utf-8 and :null. Clisp has its normal issues with an outdated asdf. Please let us know if it does not work on the implementation that you normally use. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).
+The Lisp code in Postmodern is theoretically portable across implementations,
+and seems to work on all major ones as well as some minor ones such as Genera.
+It is regularly tested on ccl, sbcl, ecl and cmucl. ABCL currently has issues with utf-8 and :null.
+
+Please let us know if it does not work on the implementation that you normally use. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).
 
 The library is not likely to work for PostgreSQL versions older than 8.4. Other features only work in newer Postgresql versions as the features were only introduced in those newer versions.
 
-### Things that should be implemented
+### Reserved Words
+It is highly suggested that you do not use words that are reserved by Postgresql as identifiers (e.g. table names, columns). The reserved words are:
+
+"all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric"
+"authorization" "between" "binary" "both" "case" "cast" "check" "collate"
+"column" "concurrently" "constraint" "create" "cross" "current-catalog"
+"current-date" "current-role" "current-schema" "current-time"
+"current-timestamp" "current-user" "default" "deferrable" "desc" "distinct" "do"
+"else" "end" "except" "false" "fetch" "filter" "for" "foreign" "freeze" "from"
+"full" "grant" "group" "having" "ilike" "in" "initially" "inner" "intersect"
+"into" "is" "isnull" "join" "lateral" "leading" "left" "like" "limit"
+"localtime" "localtimestamp" "natural" "new" "not" "notnull"  "nowait" "null"
+"off" "offset" "old" "on" "only" "or" "order" "outer" "overlaps" "placing"
+"primary" "references" "returning" "right" "select" "session-user" "share"
+"similar" "some" "symmetric" "table" "then" "to" "trailing" "true" "union"
+"unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"
+
+### Things that could be implemented
 Postmodern is under active development so issues and feature requests should
-be flagged on [[https://github.com/marijnh/Postmodern][Postmodern's site on github]].
+be flagged on [[https://github.com/marijnh/Postmodern](Postmodern's site on github).
 
-It would be a nice feature if Postmodern could help you with defining your
-database schemas and, more importantly, updating your databases when your code
-changes. It would theoretically not be hard to build a function that compares
-a schema on the Lisp side with the state of the database, and helps you to
-interactively update your database. PostgreSQL has a quite complete
-introspection system. Unfortunately it would be a lot of work to implement
-this, since databases can contain so many different types of entities
-(tables, views, indices, procedures, constraints, sequences, etc.) which are
-all created, changed, and dropped in different ways.
-
-Some areas that are currently under consideration can be found in the ROADMAP.md
-file.
+Some areas that are currently under consideration can be found in the ROADMAP.md file.
 
 ## Resources
 ---

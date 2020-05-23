@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<!-- 2018-10-06 Sat 12:57 -->
-<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- 2020-05-23 Sat 07:24 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Creating Tables</title>
-<meta name="generator" content="Org mode" />
+<meta name="generator" content="Org mode">
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
   .title  { text-align: center;
@@ -180,6 +178,7 @@
   /*]]>*/-->
 </style>
 <link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -229,43 +228,44 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
+<header>
 <h1 class="title">Creating Tables</h1>
-<div id="table-of-contents">
+</header><nav id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org56ec0cf">Introduction to Table Creation in Postmodern</a></li>
-<li><a href="#orge74b562">Basic Postgresql Database Tables</a></li>
-<li><a href="#orgc20416b">Postmodern Create-Table</a></li>
-<li><a href="#orga2cb9af">S-SQL Create-Table</a>
+<li><a href="#org95dbc63">Introduction to Table Creation in Postmodern</a></li>
+<li><a href="#org8c7b907">Basic Postgresql Database Tables</a></li>
+<li><a href="#org22a9d89">Postmodern Create-Table</a></li>
+<li><a href="#org5b36a44">S-SQL Create-Table</a>
 <ul>
-<li><a href="#org638f105">Table Names Parameter</a>
+<li><a href="#org1f1d7a7">Table Names Parameter</a>
 <ul>
-<li><a href="#orgf8286fd">Temporary and Unlogged Tables</a></li>
+<li><a href="#org9ca0c92">Temporary and Unlogged Tables</a></li>
 </ul>
 </li>
-<li><a href="#org6164657">Using Identity Columns</a></li>
-<li><a href="#orga2a99ab">Array Columns</a></li>
-<li><a href="#org3dcf865">Check Constraints</a></li>
-<li><a href="#org3894272">Unique Constraints</a></li>
-<li><a href="#orge8158a8">Timestamps with and without timezones</a></li>
-<li><a href="#orga07d313">Adding Foreign Keys</a>
+<li><a href="#org7a77198">Using Identity Columns</a></li>
+<li><a href="#orgda6a1e1">Array Columns</a></li>
+<li><a href="#org8639930">Check Constraints</a></li>
+<li><a href="#org524b24e">Unique Constraints</a></li>
+<li><a href="#org4bb5353">Timestamps with and without timezones</a></li>
+<li><a href="#org3365257">Adding Foreign Keys</a>
 <ul>
-<li><a href="#orga407e01">Defining Foreign Keys at the Column Level</a></li>
-<li><a href="#org762d860">Defining Foreign Keys at the Table Level</a></li>
+<li><a href="#orga48b65b">Defining Foreign Keys at the Column Level</a></li>
+<li><a href="#org03dd287">Defining Foreign Keys at the Table Level</a></li>
 </ul>
 </li>
-<li><a href="#orgd57adbe">Using Tablespaces</a></li>
-<li><a href="#org48802d6">Partitions (not fully implemented)</a></li>
+<li><a href="#org8837fe0">Using Tablespaces</a></li>
+<li><a href="#org156b522">Partitions (not fully implemented)</a></li>
 </ul>
 </li>
 </ul>
 </div>
-</div>
+</nav>
 
-<div id="outline-container-org56ec0cf" class="outline-2">
-<h2 id="org56ec0cf">Introduction to Table Creation in Postmodern</h2>
-<div class="outline-text-2" id="text-org56ec0cf">
+<div id="outline-container-org95dbc63" class="outline-2">
+<h2 id="org95dbc63"><a id="ID-70d15d79-199f-45cf-beaf-c5cad9fca3cf"></a>Introduction to Table Creation in Postmodern</h2>
+<div class="outline-text-2" id="text-org95dbc63">
 <p>
 Postmodern offers two ways to create postgresql database tables. Which one
 you choose depends on two things:
@@ -300,9 +300,9 @@ and why do we care about different options.
 </div>
 </div>
 
-<div id="outline-container-orge74b562" class="outline-2">
-<h2 id="orge74b562">Basic Postgresql Database Tables</h2>
-<div class="outline-text-2" id="text-orge74b562">
+<div id="outline-container-org8c7b907" class="outline-2">
+<h2 id="org8c7b907"><a id="ID-61d21d1c-ad6c-4318-b7b9-efb99c5bcde9"></a>Basic Postgresql Database Tables</h2>
+<div class="outline-text-2" id="text-org8c7b907">
 <p>
 The full postgresql sql specification can be found <a href="https://www.postgresql.org/docs/current/static/sql-createtable.html">here</a>.
 </p>
@@ -329,26 +329,28 @@ required to create a postgresql database table.
 </div>
 </div>
 
-<div id="outline-container-orgc20416b" class="outline-2">
-<h2 id="orgc20416b">Postmodern Create-Table</h2>
+<div id="outline-container-org22a9d89" class="outline-2">
+<h2 id="org22a9d89"><a id="ID-f64d29c1-32d0-45bf-9331-a62436b2cc73"></a>Postmodern Create-Table</h2>
+<div class="outline-text-2" id="text-org22a9d89">
+</div>
 </div>
 
-<div id="outline-container-orga2cb9af" class="outline-2">
-<h2 id="orga2cb9af">S-SQL Create-Table</h2>
-<div class="outline-text-2" id="text-orga2cb9af">
+<div id="outline-container-org5b36a44" class="outline-2">
+<h2 id="org5b36a44"><a id="ID-7fa25539-cb93-4244-83af-330feb94d990"></a>S-SQL Create-Table</h2>
+<div class="outline-text-2" id="text-org5b36a44">
 <p>
 At this minimum level, the :create-table and :create-extended-table calls are
 exactly the same. Let's walk through a simple example:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table 'films-at-eleven
-          ((code :type (or (string 5) db-null) :constraint 'firstkey :primary-key t)
-           (title :type (varchar 40))
-           (did :type integer)
-           (date-prod :type (or date db-null))
-           (kind :type (or (varchar 10) db-null))
-           (len :type (or interval db-null) :interval :hour-to-minute))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'films-at-eleven
+          ((code <span style="color: #98fb98; font-weight: bold;">:type</span> (or (string 5) db-null) <span style="color: #98fb98; font-weight: bold;">:constraint</span> 'firstkey <span style="color: #98fb98; font-weight: bold;">:primary-key</span> t)
+           (title <span style="color: #98fb98; font-weight: bold;">:type</span> (varchar 40))
+           (did <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
+           (date-prod <span style="color: #98fb98; font-weight: bold;">:type</span> (or date db-null))
+           (kind <span style="color: #98fb98; font-weight: bold;">:type</span> (or (varchar 10) db-null))
+           (len <span style="color: #98fb98; font-weight: bold;">:type</span> (or interval db-null) <span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #98fb98; font-weight: bold;">:hour-to-minute</span>))))
 
 </pre>
 </div>
@@ -412,9 +414,9 @@ of the potential time interval.
 </p>
 </div>
 
-<div id="outline-container-org638f105" class="outline-3">
-<h3 id="org638f105">Table Names Parameter</h3>
-<div class="outline-text-3" id="text-org638f105">
+<div id="outline-container-org1f1d7a7" class="outline-3">
+<h3 id="org1f1d7a7"><a id="ID-a33bcc61-0866-4de5-85c5-63c48550ec5f"></a>Table Names Parameter</h3>
+<div class="outline-text-3" id="text-org1f1d7a7">
 <p>
 The following discussion on table names is the same for both :create-table
 or :create-extended table.
@@ -430,17 +432,17 @@ by the desired schema name. e.g. 'public.tablename1.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table 'distributors-in-hell
-         ((did :type (or integer db-null)))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'distributors-in-hell
+         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
 
-(query (:create-table (distributors-in-hell)
-         ((did :type (or integer db-null)))))
+(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (distributors-in-hell)
+         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
 
-(query (:create-table ("distributors-in-hell")
-         ((did :type (or integer db-null)))))
+(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #cd8162;">"distributors-in-hell"</span>)
+         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
 
-(query (:create-table 'public.distributors-in-hell
-         ((did :type (or integer db-null)))))
+(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'public.distributors-in-hell
+         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
 </pre>
 </div>
 
@@ -450,15 +452,15 @@ qualifiers - if-not-exists, temp, and unlogged.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table (:if-not-exists 'distributors-in-hell)
-          ((did :type (or integer db-null)))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #98fb98; font-weight: bold;">:if-not-exists</span> 'distributors-in-hell)
+          ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
 </pre>
 </div>
 </div>
 
-<div id="outline-container-orgf8286fd" class="outline-4">
-<h4 id="orgf8286fd">Temporary and Unlogged Tables</h4>
-<div class="outline-text-4" id="text-orgf8286fd">
+<div id="outline-container-org9ca0c92" class="outline-4">
+<h4 id="org9ca0c92"><a id="ID-01951f3c-0e2b-4567-8545-44e0584d0fa7"></a>Temporary and Unlogged Tables</h4>
+<div class="outline-text-4" id="text-org9ca0c92">
 <p>
 Temporary tables exists only for the duration of the session. To create them
 using s-sql in postmodern, the first parameter to :create-table should be a
@@ -467,11 +469,11 @@ use the :if-not-exists keyword, and then the name of the temporary table. E.g.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table (:temp 'distributors-in-hell)
-         ((did :type (or integer db-null)))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #98fb98; font-weight: bold;">:temp</span> 'distributors-in-hell)
+         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
 
-(query (:create-table (:temp :if-not-exists 'distributors-in-hell)
-         ((did :type (or integer db-null)))))
+(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #98fb98; font-weight: bold;">:temp</span> <span style="color: #98fb98; font-weight: bold;">:if-not-exists</span> 'distributors-in-hell)
+         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
 
 </pre>
 </div>
@@ -484,17 +486,17 @@ table. E.g.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table (:unlogged 'distributors-in-hell)
-         ((did :type (or integer db-null)))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #98fb98; font-weight: bold;">:unlogged</span> 'distributors-in-hell)
+         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org6164657" class="outline-3">
-<h3 id="org6164657">Using Identity Columns</h3>
-<div class="outline-text-3" id="text-org6164657">
+<div id="outline-container-org7a77198" class="outline-3">
+<h3 id="org7a77198"><a id="ID-675aaa13-4be0-458f-b004-789fac521dc4"></a>Using Identity Columns</h3>
+<div class="outline-text-3" id="text-org7a77198">
 <p>
 Postgresql version 10 added identity columns. These are auto-incrementing
 columns that use the standard SQL syntax instead of the serial and bigserial
@@ -525,43 +527,43 @@ Note: The data type used for identity columns must be one of smallint, int or bi
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table 'color
-         ((color-id :type int :generated-as-identity-always)
-          (color-name :type varchar))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'color
+         ((color-id <span style="color: #98fb98; font-weight: bold;">:type</span> int <span style="color: #98fb98; font-weight: bold;">:generated-as-identity-always</span>)
+          (color-name <span style="color: #98fb98; font-weight: bold;">:type</span> varchar))))
 
-(query (:create-table 'color
-         ((color-id :type int :generated-as-identity-by-default)
-          (color-name :type varchar))))
+(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'color
+         ((color-id <span style="color: #98fb98; font-weight: bold;">:type</span> int <span style="color: #98fb98; font-weight: bold;">:generated-as-identity-by-default</span>)
+          (color-name <span style="color: #98fb98; font-weight: bold;">:type</span> varchar))))
 
-(query (:create-table 'color
-         ((color-id :type int :identity-always)
-          (color-name :type varchar))))
+(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'color
+         ((color-id <span style="color: #98fb98; font-weight: bold;">:type</span> int <span style="color: #98fb98; font-weight: bold;">:identity-always</span>)
+          (color-name <span style="color: #98fb98; font-weight: bold;">:type</span> varchar))))
 
-(query (:create-table 'color
-         ((color-id :type int :identity-by-default)
-          (color-name :type varchar))))
+(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'color
+         ((color-id <span style="color: #98fb98; font-weight: bold;">:type</span> int <span style="color: #98fb98; font-weight: bold;">:identity-by-default</span>)
+          (color-name <span style="color: #98fb98; font-weight: bold;">:type</span> varchar))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orga2a99ab" class="outline-3">
-<h3 id="orga2a99ab">Array Columns</h3>
-<div class="outline-text-3" id="text-orga2a99ab">
+<div id="outline-container-orgda6a1e1" class="outline-3">
+<h3 id="orgda6a1e1"><a id="ID-04eff0b7-ac42-40f9-887c-f4fcff7cc4d5"></a>Array Columns</h3>
+<div class="outline-text-3" id="text-orgda6a1e1">
 <p>
 The following shows the creation of a table with a two dimensional array
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table 'array-int
-       ((vector :type (or int[][] db-null)))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'array-int
+       ((vector <span style="color: #98fb98; font-weight: bold;">:type</span> (or int[][] db-null)))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org3dcf865" class="outline-3">
-<h3 id="org3dcf865">Check Constraints</h3>
-<div class="outline-text-3" id="text-org3dcf865">
+<div id="outline-container-org8639930" class="outline-3">
+<h3 id="org8639930"><a id="ID-a62455db-395a-4757-b573-f7cd2a267bd0"></a>Check Constraints</h3>
+<div class="outline-text-3" id="text-org8639930">
 <p>
 You can put a contraint on a table row that specifies values must meet
 certain requirements. In the following examples, the first puts a check
@@ -570,22 +572,22 @@ level.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table 'distributors
-         ((did :type (or integer db-null) :check (:&gt; 'did 100))
-          (name :type (or (varchar 40) db-null)))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'distributors
+         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null) <span style="color: #98fb98; font-weight: bold;">:check</span> (<span style="color: #98fb98; font-weight: bold;">:&gt;</span> 'did 100))
+          (name <span style="color: #98fb98; font-weight: bold;">:type</span> (or (varchar 40) db-null)))))
 
-(query (:create-table 'distributors
-         ((did :type (or integer db-null))
-          (name :type (or (varchar 40) db-null)))
-         (:constraint con1 :check (:and (:&gt; 'did 100) (:&lt;&gt; 'name "")))))
+(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'distributors
+         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
+          (name <span style="color: #98fb98; font-weight: bold;">:type</span> (or (varchar 40) db-null)))
+         (<span style="color: #98fb98; font-weight: bold;">:constraint</span> con1 <span style="color: #98fb98; font-weight: bold;">:check</span> (<span style="color: #98fb98; font-weight: bold;">:and</span> (<span style="color: #98fb98; font-weight: bold;">:&gt;</span> 'did 100) (<span style="color: #98fb98; font-weight: bold;">:&lt;&gt;</span> 'name <span style="color: #cd8162;">""</span>)))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org3894272" class="outline-3">
-<h3 id="org3894272">Unique Constraints</h3>
-<div class="outline-text-3" id="text-org3894272">
+<div id="outline-container-org524b24e" class="outline-3">
+<h3 id="org524b24e"><a id="ID-87783379-e1bf-485a-865e-05aa539ec871"></a>Unique Constraints</h3>
+<div class="outline-text-3" id="text-org524b24e">
 <p>
 You can ensure that a column or a combination of columns is unique
 without making that column or columns the primary key for the table.
@@ -602,20 +604,20 @@ version.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table 'person
-       ((id :type serial :primary-key t)
-        (first-name :type (varchar 50))
-        (last-name :type (varchar 50))
-        (email :type (varchar 50) :unique t))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'person
+       ((id <span style="color: #98fb98; font-weight: bold;">:type</span> serial <span style="color: #98fb98; font-weight: bold;">:primary-key</span> t)
+        (first-name <span style="color: #98fb98; font-weight: bold;">:type</span> (varchar 50))
+        (last-name <span style="color: #98fb98; font-weight: bold;">:type</span> (varchar 50))
+        (email <span style="color: #98fb98; font-weight: bold;">:type</span> (varchar 50) <span style="color: #98fb98; font-weight: bold;">:unique</span> t))))
 
-(query (:create-table 'films
-         ((code :type (or (string 5) db-null))
-          (title :type (or (varchar 40) db-null))
-          (did :type (or integer db-null))
-          (date-prod :type (or date db-null))
-          (kind :type (or (varchar 10) db-null))
-          (len :type (or interval db-null) :interval :hour-to-minute))
-         (:constraint production :unique 'date-prod)))
+(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'films
+         ((code <span style="color: #98fb98; font-weight: bold;">:type</span> (or (string 5) db-null))
+          (title <span style="color: #98fb98; font-weight: bold;">:type</span> (or (varchar 40) db-null))
+          (did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
+          (date-prod <span style="color: #98fb98; font-weight: bold;">:type</span> (or date db-null))
+          (kind <span style="color: #98fb98; font-weight: bold;">:type</span> (or (varchar 10) db-null))
+          (len <span style="color: #98fb98; font-weight: bold;">:type</span> (or interval db-null) <span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #98fb98; font-weight: bold;">:hour-to-minute</span>))
+         (<span style="color: #98fb98; font-weight: bold;">:constraint</span> production <span style="color: #98fb98; font-weight: bold;">:unique</span> 'date-prod)))
 </pre>
 </div>
 
@@ -626,10 +628,10 @@ complexity, however, requires the :create-extended-table method.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-extended-table 'distributors
-         ((did :type (or integer db-null))
-          (name :type (or (varchar 40) db-null)))
-         ((:unique did :with (:= 'fillfactor 70)))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-extended-table</span> 'distributors
+         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
+          (name <span style="color: #98fb98; font-weight: bold;">:type</span> (or (varchar 40) db-null)))
+         ((<span style="color: #98fb98; font-weight: bold;">:unique</span> did <span style="color: #98fb98; font-weight: bold;">:with</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'fillfactor 70)))))
 </pre>
 </div>
 <p>
@@ -652,9 +654,9 @@ parameter cannot be set for TOAST tables."
 </div>
 
 
-<div id="outline-container-orge8158a8" class="outline-3">
-<h3 id="orge8158a8">Timestamps with and without timezones</h3>
-<div class="outline-text-3" id="text-orge8158a8">
+<div id="outline-container-org4bb5353" class="outline-3">
+<h3 id="org4bb5353"><a id="ID-08e399fb-51d0-425a-9349-c1400fed8f76"></a>Timestamps with and without timezones</h3>
+<div class="outline-text-3" id="text-org4bb5353">
 <p>
 Ah, the bane of many programmers' existence - dates and times.
 At least the table creation is fairly straightforward.
@@ -693,31 +695,31 @@ The following examples are fairly self explanatory.
 </div>
 
 
-<div id="outline-container-orga07d313" class="outline-3">
-<h3 id="orga07d313">Adding Foreign Keys</h3>
-<div class="outline-text-3" id="text-orga07d313">
+<div id="outline-container-org3365257" class="outline-3">
+<h3 id="org3365257"><a id="ID-e65bef5a-bae8-4b47-a66f-37f6e71d9fdb"></a>Adding Foreign Keys</h3>
+<div class="outline-text-3" id="text-org3365257">
 <p>
 There are a few different ways to add foreign keys in postgresql when defining
 a table.
 </p>
 </div>
 
-<div id="outline-container-orga407e01" class="outline-4">
-<h4 id="orga407e01">Defining Foreign Keys at the Column Level</h4>
-<div class="outline-text-4" id="text-orga407e01">
+<div id="outline-container-orga48b65b" class="outline-4">
+<h4 id="orga48b65b"><a id="ID-02e06fce-1b41-4edd-aa1d-f9b3cc665d00"></a>Defining Foreign Keys at the Column Level</h4>
+<div class="outline-text-4" id="text-orga48b65b">
 <p>
 First with foreign key on the column. Use the keyword :references and specify
 the table name  and the relevant column within the subform. You will see why
 the subform in a minute.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table 'so-items
-          ((item-id :type integer)
-           (so-id :type (or integer db-null) :references ((so-headers id)))
-           (product-id :type (or integer db-null))
-           (qty :type (or integer db-null))
-           (net-price :type (or numeric db-null)))
-          (:primary-key item-id so-id)))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'so-items
+          ((item-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
+           (so-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null) <span style="color: #98fb98; font-weight: bold;">:references</span> ((so-headers id)))
+           (product-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
+           (qty <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
+           (net-price <span style="color: #98fb98; font-weight: bold;">:type</span> (or numeric db-null)))
+          (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> item-id so-id)))
 </pre>
 </div>
 
@@ -727,13 +729,13 @@ fit into that same subform.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table 'so-items
-          ((item-id :type integer)
-           (so-id :type (or integer db-null) :references ((so-headers id p1 p2)))
-           (product-id :type (or integer db-null))
-           (qty :type (or integer db-null))
-           (net-price :type (or numeric db-null)))
-          (:primary-key item-id so-id)))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'so-items
+          ((item-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
+           (so-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null) <span style="color: #98fb98; font-weight: bold;">:references</span> ((so-headers id p1 p2)))
+           (product-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
+           (qty <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
+           (net-price <span style="color: #98fb98; font-weight: bold;">:type</span> (or numeric db-null)))
+          (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> item-id so-id)))
 </pre>
 </div>
 
@@ -808,22 +810,22 @@ the foreign key constraint can be performed more efficiently."
 So now examples with specifying the on-delete and on-update actions.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table 'so-items
-         ((item-id :type integer)
-          (so-id :type (or integer db-null)
-                 :references ((so-headers id) :no-action :no-action))
-          (product-id :type (or integer db-null))
-          (qty :type (or integer db-null))
-          (net-price :type (or numeric db-null)))
-         (:primary-key item-id so-id)))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'so-items
+         ((item-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
+          (so-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)
+                 <span style="color: #98fb98; font-weight: bold;">:references</span> ((so-headers id) <span style="color: #98fb98; font-weight: bold;">:no-action</span> <span style="color: #98fb98; font-weight: bold;">:no-action</span>))
+          (product-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
+          (qty <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
+          (net-price <span style="color: #98fb98; font-weight: bold;">:type</span> (or numeric db-null)))
+         (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> item-id so-id)))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org762d860" class="outline-4">
-<h4 id="org762d860">Defining Foreign Keys at the Table Level</h4>
-<div class="outline-text-4" id="text-org762d860">
+<div id="outline-container-org03dd287" class="outline-4">
+<h4 id="org03dd287"><a id="ID-43ffc1bf-5497-41f2-af15-2c3128745b55"></a>Defining Foreign Keys at the Table Level</h4>
+<div class="outline-text-4" id="text-org03dd287">
 <p>
 Instead of specifying the foreign keys at the column level, you can specify
 them at the table level, but of course that means you have to additionally
@@ -838,45 +840,45 @@ non-default actions specified.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table 'account-role
-         ((user-id :type integer)
-          (role-id :type integer)
-          (grant-date :type (or timestamp-without-time-zone db-null)))
-         (:primary-key user-id role-id)
-         (:constraint account-role-role-id-fkey
-                      :foreign-key (role-id) (role role-id))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'account-role
+         ((user-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
+          (role-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
+          (grant-date <span style="color: #98fb98; font-weight: bold;">:type</span> (or timestamp-without-time-zone db-null)))
+         (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> user-id role-id)
+         (<span style="color: #98fb98; font-weight: bold;">:constraint</span> account-role-role-id-fkey
+                      <span style="color: #98fb98; font-weight: bold;">:foreign-key</span> (role-id) (role role-id))))
 
 
-(query (:create-table 'account-role
-         ((user-id :type integer)
-          (role-id :type integer)
-          (grant-date :type (or timestamp-without-time-zone db-null)))
-         (:primary-key user-id role-id)
-         (:constraint account-role-role-id-fkey
-                      :foreign-key (role-id) (role role-id) :no-action :no-action)))
+(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'account-role
+         ((user-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
+          (role-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
+          (grant-date <span style="color: #98fb98; font-weight: bold;">:type</span> (or timestamp-without-time-zone db-null)))
+         (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> user-id role-id)
+         (<span style="color: #98fb98; font-weight: bold;">:constraint</span> account-role-role-id-fkey
+                      <span style="color: #98fb98; font-weight: bold;">:foreign-key</span> (role-id) (role role-id) <span style="color: #98fb98; font-weight: bold;">:no-action</span> <span style="color: #98fb98; font-weight: bold;">:no-action</span>)))
 </pre>
 </div>
 <p>
 Additional foreign keys can easily be added:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-table 'account-role
-         ((user-id :type integer)
-          (role-id :type integer)
-          (grant-date :type (or timestamp-without-time-zone db-null)))
-         (:primary-key user-id role-id)
-         (:constraint account-role-role-id-fkey
-                      :foreign-key (role-id) (role role-id))
-         (:constraint account-role-user-id-fkey
-                      :foreign-key (user-id) (users user-id))))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'account-role
+         ((user-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
+          (role-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
+          (grant-date <span style="color: #98fb98; font-weight: bold;">:type</span> (or timestamp-without-time-zone db-null)))
+         (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> user-id role-id)
+         (<span style="color: #98fb98; font-weight: bold;">:constraint</span> account-role-role-id-fkey
+                      <span style="color: #98fb98; font-weight: bold;">:foreign-key</span> (role-id) (role role-id))
+         (<span style="color: #98fb98; font-weight: bold;">:constraint</span> account-role-user-id-fkey
+                      <span style="color: #98fb98; font-weight: bold;">:foreign-key</span> (user-id) (users user-id))))
 </pre>
 </div>
 </div>
 </div>
 </div>
-<div id="outline-container-orgd57adbe" class="outline-3">
-<h3 id="orgd57adbe">Using Tablespaces</h3>
-<div class="outline-text-3" id="text-orgd57adbe">
+<div id="outline-container-org8837fe0" class="outline-3">
+<h3 id="org8837fe0"><a id="ID-a9eb931c-2b9f-4bd1-a17d-e46d891d667d"></a>Using Tablespaces</h3>
+<div class="outline-text-3" id="text-org8837fe0">
 <p>
 Tablespaces require use of the create-extended-table method. Note that the
 create-extended-table method has a slightly different signature. It expects
@@ -890,19 +892,19 @@ partitions and storage parameters. This is only partially implemented.
 Tablespaces are documented at <a href="https://www.postgresql.org/docs/10/static/manage-ag-tablespaces.html">https://www.postgresql.org/docs/10/static/manage-ag-tablespaces.html</a>
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-extended-table 'cinemas
-       ((id :type serial) (name :type (or text db-null))
-        (location :type (or text db-null)))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-extended-table</span> 'cinemas
+       ((id <span style="color: #98fb98; font-weight: bold;">:type</span> serial) (name <span style="color: #98fb98; font-weight: bold;">:type</span> (or text db-null))
+        (location <span style="color: #98fb98; font-weight: bold;">:type</span> (or text db-null)))
        ()
-       ((:tablespace diskvol1))))
+       ((<span style="color: #98fb98; font-weight: bold;">:tablespace</span> diskvol1))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org48802d6" class="outline-3">
-<h3 id="org48802d6">Partitions (not fully implemented)</h3>
-<div class="outline-text-3" id="text-org48802d6">
+<div id="outline-container-org156b522" class="outline-3">
+<h3 id="org156b522"><a id="ID-2bc90e7a-1a03-4d15-a2fd-cb11d83de8a1"></a>Partitions (not fully implemented)</h3>
+<div class="outline-text-3" id="text-org156b522">
 <p>
 The following are two very simple examples of use of partitions. You should
 not consider partition functionality to be fully implemented past these
@@ -910,30 +912,26 @@ examples.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (:create-extended-table 'measurement
-         ((logdate :type date)
-          (peaktemp :type (or integer db-null))
-          (unitsales :type (or integer db-null)))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-extended-table</span> 'measurement
+         ((logdate <span style="color: #98fb98; font-weight: bold;">:type</span> date)
+          (peaktemp <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
+          (unitsales <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))
          ()
-         ((:partition-by-range 'logdate))))
+         ((<span style="color: #98fb98; font-weight: bold;">:partition-by-range</span> 'logdate))))
 
-;; Create a range partitioned table with multiple columns in the partition key:
+<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">Create a range partitioned table with multiple columns in the partition key:</span>
 
-(query (:create-extended-table 'measurement-year-month
-         ((logdate :type date)
-          (peaktemp :type (or integer db-null))
-          (unitsales :type (or integer db-null)))
+(query (<span style="color: #98fb98; font-weight: bold;">:create-extended-table</span> 'measurement-year-month
+         ((logdate <span style="color: #98fb98; font-weight: bold;">:type</span> date)
+          (peaktemp <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
+          (unitsales <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))
          ()
-         ((:partition-by-range (:extract 'year 'logdate)(:extract 'month 'logdate)))))
+         ((<span style="color: #98fb98; font-weight: bold;">:partition-by-range</span> (<span style="color: #98fb98; font-weight: bold;">:extract</span> 'year 'logdate)(<span style="color: #98fb98; font-weight: bold;">:extract</span> 'month 'logdate)))))
 </pre>
 </div>
 </div>
 </div>
 </div>
-</div>
-<div id="postamble" class="status">
-<p class="date">Created: 2018-10-06 Sat 12:57</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

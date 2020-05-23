@@ -1,6 +1,11 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; -*-
 
 (defsystem "simple-date"
+  :description "Simple date library that can be used with postmodern"
+  :author "Marijn Haverbeke <marijnh@gmail.com>"
+  :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
+  :license "zlib"
+  :version "1.31"
   :components
   ((:module "simple-date"
             :components ((:file "package")

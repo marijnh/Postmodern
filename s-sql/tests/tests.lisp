@@ -225,7 +225,9 @@ escape-p is :auto and the name contains reserved words."
   (is (equal (s-sql::to-sql-name "George-Harrison" :literal)
              "\"George-Harrison\""))
   (is (equal (s-sql:to-sql-name "george-gracie!@~#$%^&*()_+=-0987654321`QWERTGFDSAZXCVBNM<>?:LKJHYIUOP{}|/.,mnhjkl;']\[poiuy")
-             "george_gracie________*______0987654321_qwertgfdsazxcvbnm____lkjhyiuop____._mnhjkl____poiuy")))
+             "george_gracie________*______0987654321_qwertgfdsazxcvbnm____lkjhyiuop____._mnhjkl____poiuy"))
+  (is (equal (s-sql:to-sql-name "Seyðisfjörður")  ;checking unicode names
+             "seyðisfjörður")))
 
 (test from-sql-name
   "Testing from-sql-name. Convert a string to something that might have been its original
@@ -234,7 +236,9 @@ characters other than #\-)"
   (is (equal (s-sql::from-sql-name "create_all")
              :CREATE-ALL))
   (is (equal (s-sql::from-sql-name "region/los_angeles")
-             :REGION/LOS-ANGELES)))
+             :REGION/LOS-ANGELES))
+  (is (equal (from-sql-name "Seyðisfjörður") ;checking unicode names
+             :SEYÐISFJÖRÐUR)))
 
 (test sql-type-name
       "Testing sql-type-name. Transform a lisp type into a string containing
@@ -270,9 +274,11 @@ name."
 (test sql-escape
   "Testing sql-escape. Get the representation of a Lisp value so that it
 can be used in a query."
-    (is (equal (sql-escape (/ 1 13))
+  (is (equal (sql-escape "tr'-x")
+             "E'tr''-x'"))
+  (is (equal (sql-escape (/ 1 13))
                "0.0769230769230769230769230769230769230"))
-    (is (equal (sql-escape #("Baden-Wurttemberg" "Bavaria" "Berlin" "Brandenburg"))
+  (is (equal (sql-escape #("Baden-Wurttemberg" "Bavaria" "Berlin" "Brandenburg"))
                "ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']")))
 
 (test sql-expand
@@ -1517,3 +1523,51 @@ that the table will need to be scanned twice. Everything is a trade-off."
                2))
     (execute (:drop-table 'from-test-data1 :cascade))
     (execute (:drop-table 'iceland-cities :cascade))))
+
+(test posix-regex
+  (with-test-connection
+    (is (equalp (query (:select (:regexp_match "foobarbequebaz" "bar.*que")) :single)
+               #("barbeque")))
+    (is (equal (query (:select (:regexp_match "foobarbequebaz" "bar.~que")) :single)
+               :NULL))
+    (is (equal (query (:select (:~ "foobarbequebaz" "bar.*que") ) :single)
+               t))
+    (is (equal (query (:select (:!~ "foobarbequebaz" "bar.*que") ) :single)
+               nil))
+    (is (equal (query (:select (:~ "foobarbequebaz" "barque") ) :single)
+               nil))
+    (is (equal (query (:select (:~ "foobarbequebaz" "barbeque") ) :single)
+               t))
+    (is (equal (query (:select (:~ "foobarBequebaz" "barbeque") ) :single)
+               nil))
+    (is (equal (query (:select (:~* "foobarBequebaz" "barbeque") ) :single)
+               t))))
+
+(test text-search
+  (with-test-connection
+    (when (pomo:table-exists-p 'text-search)
+      (execute (:drop-table 'text-search :cascade)))
+    (query (:create-table 'text-search ((id :type serial)
+                                        (text :type text))))
+    (query (:insert-rows-into
+            'text-search
+            :columns 'text
+            :values '(("Each person who knows you has a different perception of who you are.")
+                      ("Nothing is as cautiously cuddly as a pet porcupine.")
+                      ("Courage and stupidity were all that he had.")
+                      ("Hit me with your pet shark!")
+                      ("He swore he just saw his sushi move."))))
+
+    (is (equalp (query (:select 'id (:regexp-matches 'text "(s[A-z]+)") :from 'text-search))
+                '((1 #("son")) (2 #("sly")) (3 #("stupidity")) (4 #("shark")) (5 #("swore")))))
+    (is (equalp (query (:select 'id (:regexp-matches 'text "(s[A-z]+)" "g") :from 'text-search))
+                '((1 #("son")) (2 #("sly")) (3 #("stupidity")) (4 #("shark")) (5 #("swore"))
+                  (5 #("st")) (5 #("saw")) (5 #("sushi")))))
+    (is (equalp (query (:select 'id (:regexp-replace 'text "(s[A-z]+)" "g") :from 'text-search))
+                '((1 "Each perg who knows you has a different perception of who you are.")
+                  (2 "Nothing is as cautioug cuddly as a pet porcupine.")
+                  (3 "Courage and g were all that he had.") (4 "Hit me with your pet g!")
+                  (5 "He g he just saw his sushi move."))))
+    (is (equalp (query (:select 'id 'text :from 'text-search :where (:~ 'text "sushi")))
+                '((5 "He swore he just saw his sushi move."))))
+    ))

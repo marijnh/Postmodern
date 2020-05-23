@@ -64,6 +64,10 @@
            #:*ssl-key-file*
            #:*retry-connect-times*
            #:*retry-connect-delay*
+           #:string-mapped-to-nothing
+           #:string-mapped-to-space
+           #:saslprep-normalize
+           #:string-printable-ascii-p
            #+(and sbcl unix) #:*unix-socket-dir*))
 
 (defpackage :cl-postgres-error
@@ -240,6 +244,7 @@
 
 (defpackage :cl-postgres-trivial-utf-8
   (:use :common-lisp)
+  (:nicknames :clp-utf8)
   (:export #:utf-8-byte-length
            #:string-to-utf-8-bytes
            #:write-utf-8-bytes
@@ -250,6 +255,7 @@
 
 (defpackage :cl-postgres-ieee-floats
   (:use :common-lisp)
+  (:nicknames :clp-ieee-floats)
   (:export :make-float-converters
 	   :encode-float32
 	   :decode-float32

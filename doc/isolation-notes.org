@@ -1,9 +1,13 @@
 #+TITLE: Transaction and Isolation Notes
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
 * Postmodern transaction calls with transaction names and isolation levels
+  :PROPERTIES:
+  :ID:       0e957d25-fa0c-4045-9bea-7ae14ca9a9d2
+  :END:
 Transactions are one or more statements wrapped together which either all
 succeed and are "committed" or none of them succeed, in which case any state
 changes are rolled back to the beginning of the transaction. In the case of
@@ -66,6 +70,9 @@ and "george" is used as the name of the transaction (not quoted or as a string):
 #+END_SRC
 
 * Introduction to ACID, Transactions and Isolation Levels
+  :PROPERTIES:
+  :ID:       137be1d0-de95-4291-ab36-dc2ceabfbc0d
+  :END:
 
 Databases like Postgresql are not simply data storage, they are
 transaction management systems. In the context of transactions with multiple
@@ -107,6 +114,9 @@ Durability means that committed transactions must stay committed, even in
 the event of a crash, power loss, etc.
 
 * Transactions
+  :PROPERTIES:
+  :ID:       231f87c9-b5f4-46bb-884c-2dd3cb7d9e8f
+  :END:
 
 It is easy show the impact of transactions in action. Consider the following:
 
@@ -167,6 +177,9 @@ As expected, the insertion was never committed due to the call to
 abort-transaction.
 
 *** What happens if we nest transactions?
+    :PROPERTIES:
+    :ID:       122dd6f3-321a-4a3c-b0f8-7942c1b69913
+    :END:
 Postgresql does not fully support nested transactions. Full support of
 nested transactions would mean that a succesful sub-transaction does not get
 rolled back if a parent transaction (direct or indirect) gets rolled back.
@@ -195,7 +208,13 @@ Now lets talk about concurrency issues and the trade-offs between different
 isolation levels.
 
 * The Concurrency Problem
+  :PROPERTIES:
+  :ID:       7bb2c71b-8372-4d89-80c6-d99f8aa74ef6
+  :END:
 ** Summary
+   :PROPERTIES:
+   :ID:       69a27208-6951-4bdf-9792-f78a9c0784b1
+   :END:
 Consider when you have multiple concurrent transactions or multiple concurrent
 database events. These create potential race conditions as well as potential
 overwrite issues, creating hard to find bugs. The base problem is easy to
@@ -254,7 +273,13 @@ We explain this table just below:
 | Serializable     | Not Possible | Not Possible       | Not Possible                                       | Not Possible          |
 
 ** Problem Explanation
+   :PROPERTIES:
+   :ID:       260dd433-6395-4823-8e4a-0c1c93758b4d
+   :END:
 *** Dirty Read
+    :PROPERTIES:
+    :ID:       c58c2764-eb19-4b3d-882c-ffc610ee0dbd
+    :END:
 A Dirty Read is a transaction reads data written by a concurrent uncommitted
 transaction. You can specify a transaction as having a “Read Uncommitted”
 level, but Postgresql will internally just give you a “Read Committed”
@@ -272,6 +297,9 @@ The second select will read sales as 2200 even though Transaction 2 did not
 fully commit.
 
 *** Nonrepeatable Read
+    :PROPERTIES:
+    :ID:       89ec9112-ea1b-4e53-a2c4-252189ac074a
+    :END:
 A Nonrepeatable read is a transaction re-reads data it has previously read and
 finds the data has been modified by another transaction that committed since
 the initial read.
@@ -303,6 +331,9 @@ s-sql, you can include :for-share or :for-update in the select statement. E.g.
 See [[file:s-sql.html]] for further details.
 
 *** Phantom Read
+    :PROPERTIES:
+    :ID:       535800ca-446a-44ed-bcc3-e45d4f12acf3
+    :END:
 A Phantom Read is where a transaction re-executes a query returning a set of
 rows and finds that the set of rows has changed (not necessarily row 215,
 but some one or more of the rows in the query set). Phantom Reads are
@@ -325,6 +356,9 @@ the number of rows at the end may cause calculations to be inconsistent
 internally to the transaction.
 
 *** For More Fun
+    :PROPERTIES:
+    :ID:       163779d6-8746-4aca-b192-86afe757dda8
+    :END:
 Now consider you have banking application A which runs in multiple sessions and
 does not use transactions and the user withdraws 100 from each of two sessions
 and the balance started at 300.
@@ -355,9 +389,15 @@ more possibilities for concurrent transactions to generate conflicting,
 leading to solutions such as "row level locking" and "isolation levels".
 
 ** Isolation Levels
+   :PROPERTIES:
+   :ID:       9f177e51-2c41-40a6-b4ef-a11728acee50
+   :END:
 The official postgresql documentation can be found [[https://www.postgresql.org/docs/current/static/transaction-iso.html][here]].
 
 *** Read Committed Isolation Level
+    :PROPERTIES:
+    :ID:       78bb8e9e-63cd-4564-aa87-1e31c398ed67
+    :END:
 Read Committed is the default isolation level in Postgresql. In general
 it has the best balance between locking and performance. This isolation level
 means that the existing row is read after the transaction is completed but not
@@ -400,6 +440,9 @@ balance (now 200), tells the application, and the application subtracts 100
 and tells the database to update the balance to 100.
 
 *** Repeatable Read Isolation Level
+    :PROPERTIES:
+    :ID:       0a28ea38-6eaa-4c66-af5d-518f7f4184fb
+    :END:
 In Postgresql, a “Repeatable Read” isolation level takes a snapshot of the
 current state of the database and all queries in the transaction will use
 that snapshot. So if another transaction modifies a row, a second select
@@ -434,6 +477,9 @@ Repeatable read addresses a different problem than our banking problem
 above, so the result in this case is the same as "read committed".
 
 *** Serializable Isolation Level
+    :PROPERTIES:
+    :ID:       65dc3b10-c1d0-41e6-96b1-322b61f99f79
+    :END:
 The Serializable Isolation level tells postgresql to effectively serialize all
 transactions. That ensures validity at the cost of a hit to performance.
 
@@ -447,6 +493,9 @@ two errors can be expected:
 - “ERROR: could not serialize access due to read/write dependencies among transactions. (Under “serializable”).
 
 * For Futher Reading
+  :PROPERTIES:
+  :ID:       da884a49-4295-486f-b7b5-3c30929d0529
+  :END:
 
 - https://www.postgresql.org/docs/current/static/transaction-iso.html
 - https://www.postgresql.org/docs/current/static/sql-set-transaction.html

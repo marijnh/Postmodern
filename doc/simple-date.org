@@ -1,6 +1,7 @@
 #+TITLE: Simple-Date
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
 Simple-date provides types (CLOS classes) for dates, timestamps, and intervals
@@ -46,55 +47,88 @@ reader:
 
 
 * Date type
+  :PROPERTIES:
+  :ID:       6cefa703-d55b-464d-bad9-7c7ceae0c90d
+  :END:
 ** class date
+   :PROPERTIES:
+   :ID:       203d5d98-5ce7-4bcb-81d9-1aeb4fe2796d
+   :END:
 
 Represents a date, with no time-of-day information.
 
 ** function encode-date (year month day)
+   :PROPERTIES:
+   :ID:       dbf2a874-80e1-4a43-86be-7febb1573b8d
+   :END:
 → date
 
 Creates a date object.
 
 ** function decode-date (date)
+   :PROPERTIES:
+   :ID:       35da4a62-ea64-4053-aa30-4496d56a0f95
+   :END:
 → (values year month day)
 
 Extract the elements from a date object.
 
 ** function day-of-week (date)
+   :PROPERTIES:
+   :ID:       b1590639-fd02-458d-86e4-6e1bd3c1c003
+   :END:
 → integer
 
 Determine the day of the week that the given date falls on. Value ranges from
 0 to 6, with 0 being Sunday and 6 being Saturday.
 
 ** Timestamp type
+   :PROPERTIES:
+   :ID:       6efdaace-0c1c-45ba-8376-9b91e18a0b38
+   :END:
 class timestamp
 
 Represents an absolute timestamp, with a millisecond precision.
 
 ** function encode-timestamp (year month day &optional (hour 0) (minute 0) (second 0) (millisecond 0))
+   :PROPERTIES:
+   :ID:       f6817a2a-92e2-44aa-9060-d9ab459f6207
+   :END:
 → timestamp
 
 Create a timestamp. No negative values or values outside of an arguments normal
 range (i.e. 60 for minutes, 1000 for milliseconds) should be passed.
 
 ** function decode-timestamp (timestamp)
+   :PROPERTIES:
+   :ID:       5cb5f677-4fc4-4ab3-b2af-65579e660baf
+   :END:
 → (values year month day hour minute second millisecond)
 
 Decode a timestamp into its components.
 
 ** function timestamp-to-universal-time (timestamp)
+   :PROPERTIES:
+   :ID:       477dd9e6-3e72-4eaa-b1fd-cf5d06bdfd1b
+   :END:
 → universal-time
 
 Convert a timestamp to the corresponding universal-time, rounding to seconds.
 Note that this will treat the timestamp as if it were in UTC.
 
 ** function universal-time-to-timestamp (universal-time)
+   :PROPERTIES:
+   :ID:       ba44156f-a860-4601-a5fe-6465d6ad8353
+   :END:
 → timestamp
 
 Create a timestamp from a universal time. Again, the resulting timestamp should
 be treated as if it were in UTC.
 
 ** Interval type
+   :PROPERTIES:
+   :ID:       316f3287-fd76-46ce-8c2b-c07ad381fc38
+   :END:
 class interval
 
 An interval represents a period of time. It contains both an absolute part in
@@ -103,11 +137,17 @@ relative part for months and years ― the amount of time that a month or year
 represents is not always the same.
 
 ** function encode-interval (&key (year 0) (month 0) (week 0) (day 0) (hour 0) (minute 0) (second 0) (millisecond 0))
+   :PROPERTIES:
+   :ID:       77212a01-b23f-40c7-aeec-fc93d4834f53
+   :END:
 → interval
 
 Create an interval. Arguments may be negative and of any size.
 
 ** function decode-interval (interval)
+   :PROPERTIES:
+   :ID:       cfd906be-cc00-437e-b250-b7d294131aa0
+   :END:
 → (values year month day hour minute second millisecond)
 
 Decompose an interval into parts. Note that these may be different from the
@@ -115,11 +155,17 @@ parameters that created it ― an interval of 3600 seconds is the same as one
 of 1 hour.
 
 * Operations
+  :PROPERTIES:
+  :ID:       d2616cd8-622b-464f-994e-e1f9d6309706
+  :END:
 To prevent a proliferation of different function names, generic functions
 are used for operations on time values. The semantics of these differ for
 the type of the operands.
 
 ** method time-add (a b)
+   :PROPERTIES:
+   :ID:       6846ba8b-a59f-475e-bc25-0c18e4fa5548
+   :END:
 → value
 
 Adds two time-related objects. Adding an interval to a date or timestamp
@@ -129,6 +175,9 @@ arguments. Integers can be used in place of intervals, and will be
 interpreted as an amount of milliseconds.
 
 ** method time-subtract (a b)
+   :PROPERTIES:
+   :ID:       98dee89f-7178-4487-8d85-3036149f2def
+   :END:
 → value
 
 Subtracts time-related objects from each other. Subtracting two dates or
@@ -136,29 +185,44 @@ timestamps results in an interval that represents the difference between
 them. Similarly, subtracting two intervals also gives their difference.
 
 ** method time= (a b)
+   :PROPERTIES:
+   :ID:       74acb8a0-5438-4a56-8d08-3316a7792108
+   :END:
 → boolean
 
 Compare two time-related values, returns a boolean indicating whether
 they denote the same time or period.
 
 ** method time< (a b)
+   :PROPERTIES:
+   :ID:       02b06b96-bbd7-482a-aa3c-f9080f97c3fa
+   :END:
 → boolean
 
 Compare two time-related values, returns a boolean indicating whether the
 first is less than the second.
 
 ** method time> (a b)
+   :PROPERTIES:
+   :ID:       6901c062-4b1c-4cb1-a9f6-6935141d5fdd
+   :END:
 → boolean
 
 Compare two time-related values, returns a boolean indicating whether the
 first is greater than the second.
 
 ** function time<= (a b)
+   :PROPERTIES:
+   :ID:       450e4d9e-2f31-4278-817a-bb42eaf0ea04
+   :END:
 → boolean
 
 The inverse of time>.
 
 ** function time>= (a b)
+   :PROPERTIES:
+   :ID:       d77174da-9511-41c6-bc46-95d62842435c
+   :END:
 → boolean
 
 The inverse of time<.
