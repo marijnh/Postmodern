@@ -149,7 +149,9 @@ In this case, retrieving a points record would look like the following where 12 
     (get-dao 'points 12 34)
 
 
-You can create tables directly without the need to define a class, and in more complicated cases, you will need to use the create-table operator or plain vanilla sql. One example using s-sql rather than plain vanilla sql would be the following:
+### Table Creation
+
+You can create tables directly without the need to define a class, and in more complicated cases, you will need to use the s-sql :create-table operator or plain vanilla sql. One example using s-sql rather than plain vanilla sql would be the following:
 
 
     (query (:create-table so-items
@@ -175,7 +177,6 @@ Restated using vanilla sql:
 
 In the above case, the new table's name will be so_items because sql does not allow hyphens and plain vanilla sql will require that. Ppostmodern will generally allow you to use the quoted symbol 'so-items. This is also true for all the column names. The column item-id is an integer and cannot be null. The column so-id is also an integer, but is allowed to be null and is a foreign key to the id field in the so-headers table so-headers. The primary key is actually a composite of item-id and so-id. (If we wanted the primary key to be just item-id, we could have specified that in the form defining item-id.)
 
-
 In simple cases you can also use a previously defined dao to create a table as well using the dao-table-definition function which generates the plain vanilla sql for creating a table described above.
 
 
@@ -192,7 +193,46 @@ This defines our table in the database. execute works like query, but does not e
 
 In cases involving more than one table, you should use the deftable macro. See [Introduction to Multi-table dao class objects](doc/postmodern.html) in the postmodern.org or postmodern.html manual.
 
-Let us stay with the approach of using a dao class and add a few countries:
+
+### Inserting Data
+Similarly to table creation, you can insert data using the s-sql wrapper, plain vanilla sql or daos.
+
+The s-sql approach would be:
+
+
+    (query (:insert-into 'country :set 'name "The Netherlands"
+                                       'inhabitants 16800000
+                                       'sovereign "Willem-Alexander"))
+
+    (query (:insert-into 'country :set 'name "Croatia"
+                                       'inhabitants 4400000))
+
+You could also insert multiple rows at a time but that requires the same columns for each row:
+
+
+    (query (:insert-rows-into 'country :columns 'name 'inhabitants 'sovereign
+                                       :values '(("The Netherlands" 16800000 "Willem-Alexander")
+                                                 ("Croatia" 4400000 :null))))
+
+
+The sql approach would be:
+
+
+    (query "insert into country (name, inhabitants, sovereign)
+                                values ('The Netherlands', 16800000, 'Willem-Alexander')")
+
+    (query "insert into country (name, inhabitants)
+                                values ('Croatia', 4400000)")
+
+The multiple row sql approach would be:
+
+
+    (query "insert into country (name, inhabitants, sovereign)
+                                values
+                                  ('The Netherlands', 16800000, 'Willem-Alexander'),
+                                  ('Croatia', 4400000, NULL)")
+
+Using dao classes would look like:
 
 
     (insert-dao (make-instance 'country :name "The Netherlands"
@@ -201,7 +241,7 @@ Let us stay with the approach of using a dao class and add a few countries:
     (insert-dao (make-instance 'country :name "Croatia"
                                         :inhabitants 4400000))
 
-Then, to update Croatia's population, we could do this:
+Staying with the dao class approach, to update Croatia's population, we could do this:
 
 
     (let ((croatia (get-dao 'country "Croatia")))
@@ -330,23 +370,27 @@ The reference manuals for the different components of Postmodern are kept in sep
 
 For a short comparison of lisp and Postgresql data types (date and time datatypes are described in the next section)
 
-| Lisp type     | SQL type         | Description                                                                       |
-| ------------- | ---------------- | --------------------------------------------------------------------------------- |
-| integer       | smallint         | -32,768 to +32,768 2-byte storage                                                 |
-| integer       | integer          | -2147483648 to +2147483647 integer, 4-byte storage                                |
-| integer       | bigint           | -9223372036854775808 to 9223372036854775807 integer 8-byte storage                |
-| (numeric X Y) | numeric(X, Y)    |                                                                                   |
-| float, real   | real             | single-precision floating point number, 6 decimal digit precision 4-byte storage  |
-| double-float  | double-precision | double-precision floating point number, 15 decimal digit precision 8-byte storage |
-| string, text  | text             | variable length string, no limit specified                                        |
-| string        | char(X)          | char(length), blank-padded string, fixed storage length                           |
-| string        | varchar(X)       | varchar(length), non-blank-padded string, variable storage length                 |
-| boolean       | boolean          | boolean, 'true'/'false', 1 byte                                                   |
-| bytea         | bytea            |                                                                                   |
-| date          | date             | date range: 4713 BC to 5874897 AD                                                 |
-| interval      | interval         |                                                                                   |
-| array         | array            |                                                                                   |
+| Lisp type     | SQL type         | Description                                                |
+| ------------- | ---------------- | ---------------------------------------------------------- |
+| integer       | smallint         | -32,768 to +32,768 2-byte storage                          |
+| integer       | integer          | -2147483648 to +2147483647 integer, 4-byte storage         |
+| integer       | bigint           | -9223372036854775808 to 9223372036854775807 8-byte storage |
+| (numeric X Y) | numeric(X, Y)    | user specified. See below                                  |
+| float, real   | real             | float, 6 decimal digit precision 4-byte storage            |
+| double-float  | double-precision | double float 15 decimal digit precision 8-byte storage     |
+| string, text  | text             | variable length string, no limit specified                 |
+| string        | char(X)          | char(length), blank-padded string, fixed storage length    |
+| string        | varchar(X)       | varchar(length), non-blank-padded string, variable storage |
+| boolean       | boolean          | boolean, 'true'/'false', 1 byte                            |
+| bytea         | bytea            | binary strings allowing non-printable octets               |
+| date          | date             | date range: 4713 BC to 5874897 AD                          |
+| interval      | interval         | time intervals                                             |
+| array         | array            | See discussion at  [Array-Notes.html](doc/array-notes.html)|
 
+Numeric and decimal are variable storage size numbers with user specified precision.
+Up to 131072 digits before the decimal point; up to 16383 digits after the decimal point.
+The syntax is numeric(precision, scale). Numeric columns with a specified scale will coerce input
+values to that scale. For more detail, see https://www.postgresql.org/docs/current/datatype-numeric.html
 
 | PG Type          | Sample Postmodern Return Value                                              | Lisp Type (per sbcl)                 |
 | ---------------  | --------------------------------------------------------------------------- | ------------------------------------ |

@@ -1,11 +1,15 @@
 #+TITLE: S-SQL and Postgresql Arrays
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
 [[file:s-sql.html][Return to s-sql.html]]
 * Summary
-Postmodern/s-sql can be used to insert ommon lisp arrays into postgresql databases,
+  :PROPERTIES:
+  :ID:       25ed4f42-9f8d-43e0-93df-593e8af1d200
+  :END:
+Postmodern/s-sql can be used to insert common lisp arrays into postgresql databases,
 pull postgresql database arrays out of databases into a common lisp array,
 and generally engage in all the ways that sql can use postgresql arrays.
 Postgresql arrays are documented at https://www.postgresql.org/docs/current/static/arrays.html
@@ -15,8 +19,14 @@ This page will go into more detail on how to use the available operators and fun
 in s-sql.
 
 * Use cases for arrays in a database
+  :PROPERTIES:
+  :ID:       9d616ea8-b581-4d78-b83f-2a1bb550c5a7
+  :END:
 
 ** General Usage
+   :PROPERTIES:
+   :ID:       e5fa6a9b-8773-473a-aa9c-7bdaf3aa203e
+   :END:
 Arrays are a first class datatype within postgresql. The contents can only be of a single
 datatype and postgresql will enforce that typing. You can either use arrays as a datatype
 stored in the database or there may be reasons why you want to use them as an intermediate
@@ -68,7 +78,6 @@ one-dimensional array and the schedule is a two dimensional array.
      schedule        text[][]
  );
 #+END_SRC
-
 
 I have seen suggestions that arrays can replace separate many-to-many tables in
 relationships, e.g.
@@ -170,6 +179,9 @@ which are not in the database version you are programming to.
 See also [[https://www.compose.com/articles/take-a-dip-into-postgresql-arrays/]]
 
 ** Rules of Thumb - Do Not Use Arrays If:
+   :PROPERTIES:
+   :ID:       1022eae8-7780-44e5-874e-207df82a4bea
+   :END:
 
 - Do not use arrays where you need to maintain integrity for foreign relationships. That is what
 foreign keys are for.
@@ -182,6 +194,9 @@ that the ORM can utilize arrays.
 
 
 ** Data Type Enforcement
+   :PROPERTIES:
+   :ID:       58701df2-c03f-4326-9cc9-efa7f2fa4f5b
+   :END:
 Compared to jsonb, postgresql arrays allow you to enforce
 the data type. This can be critical in both maintaining
 the integrity of your data as well as optimization
@@ -190,12 +205,18 @@ safety does not, however, enforce the dimensionality
 of the array.
 
 ** Indices on Arrays
+   :PROPERTIES:
+   :ID:       b8b2a4c0-60c7-429b-9bcd-f98763438b7d
+   :END:
 It is highly recommended that you use GIN or GIST indexes to search
 for items in array column. You should remember that GIST indices are
 lossy while GIN indices are lossless.
 
 
 * S-SQL Array Support
+  :PROPERTIES:
+  :ID:       aa6cb2e2-fc06-4948-92e7-3f378aca5ee3
+  :END:
 S-sql can feel a little messy with respect to arrays but that
 is in large part because (a) sql dealing with arrays is messy and
 (b) postgresql has both an array[] constructor and an array function.
@@ -208,6 +229,9 @@ Generally speaking, there are three base s-sql array operators
 to know:
 
 ** :array (used inside a query calling a subquery, selecting into an array)
+   :PROPERTIES:
+   :ID:       3b8392a6-bf06-4196-938c-af0b4a457d7a
+   :END:
 The format of the call is:
 #+BEGIN_SRC lisp
 (:array (query))
@@ -228,6 +252,9 @@ Example:
 #+END_SRC
 
 ** :array[] (declares an array and returns an array
+   :PROPERTIES:
+   :ID:       3dcc071b-ee57-44d0-a35c-a275615564ab
+   :END:
 
 The format of the call is:
 #+BEGIN_SRC lisp
@@ -248,6 +275,9 @@ Note that in the second example, the value of 6 is returned as a
 float because the entire array must be the same type.
 
 ** :[] (used when you want a slice of an array
+   :PROPERTIES:
+   :ID:       0a722d0e-eecc-4e0f-91a7-84b296ff520f
+   :END:
 The format of the call is:
 #+BEGIN_SRC lisp
 (:[] (form start &optional end))
@@ -261,6 +291,9 @@ Example:
 #(6 7)
 #+END_SRC
 ** General Usage Examples
+   :PROPERTIES:
+   :ID:       1b396eff-19d5-4653-be90-8c6406dffa60
+   :END:
 Just to make these usage examples really simple, we will use the
 simplest use case version discussed above, with a tags array in a table
 with the name of the item. In this case the name is the name of a
@@ -634,7 +667,13 @@ nil
 nil
 #+END_SRC
 * Array Operators
+  :PROPERTIES:
+  :ID:       0b311d6a-57e5-44b3-aa03-321274cd4800
+  :END:
 ** Array Comparison Operators
+   :PROPERTIES:
+   :ID:       cbdab925-dd3b-4531-8844-29f5f5e61b01
+   :END:
 
 Per postgresql [[https://www.postgresql.org/docs/current/static/functions-array.html][documentation]] array comparisons compare the array contents
 element-by-element,  using the default B-tree comparison function for the
@@ -645,6 +684,9 @@ difference in the dimensionality information determines the sort order.
 
 Form is (:operator array1 array2)
 *** := Equality Comparison (Are two arrays equal on an element by element basis)
+    :PROPERTIES:
+    :ID:       910e5102-1caf-4500-a058-5ea73d4195fb
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:= (:array[] 1 2 3) (:array[] 1 2 3)))
        :single)
@@ -674,6 +716,9 @@ T
 #+END_SRC
 
 *** :<> Not Equal Comparison
+    :PROPERTIES:
+    :ID:       8c06e52c-51c1-458c-9c98-f3cf78bfb607
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:<> (:array[] 1 2 3) (:array[] 1 2 4)))
        :single)
@@ -681,6 +726,9 @@ T
 #+END_SRC
 
 *** :< Less Than Comparison
+    :PROPERTIES:
+    :ID:       8a4aa8ad-19e0-49a7-b663-64c9a1ff774c
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:< (:array[] 1 2 3) (:array[] 1 2 4)))
        :single)
@@ -688,6 +736,9 @@ T
 #+END_SRC
 
 *** :> Greater Than Comparison
+    :PROPERTIES:
+    :ID:       cbda93e7-0808-45de-bccb-00b0fc7ea4de
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:> (:array[] 1 4 3) (:array[] 1 2 4)))
        :single)
@@ -695,6 +746,9 @@ T
 #+END_SRC
 
 *** :>= Greater Than or Equal to Comparison
+    :PROPERTIES:
+    :ID:       a99f6cf1-a223-40f6-9754-bf1752d7ee20
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:>= (:array[] 1 4 3) (:array[] 1 4 3)))
        :single)
@@ -702,6 +756,9 @@ T
 #+END_SRC
 
 *** :<= Less Than or Equal To Comparison
+    :PROPERTIES:
+    :ID:       fe0f92a9-46c8-4cce-b0ad-ebd8a40dd263
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:<= (:array[] 1 2 3) (:array[] 1 2 3)))
        :single)
@@ -709,6 +766,9 @@ T
 #+END_SRC
 
 *** :@> Contains Comparison
+    :PROPERTIES:
+    :ID:       dd3157d0-102c-4081-9010-41e6e5ccfa8c
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:@> (:array[] 1 4 3) (:array[] 3 1)))
        :single)
@@ -719,6 +779,9 @@ T
 nil
 #+END_SRC
 *** :<@ Is Contained By Comparison
+    :PROPERTIES:
+    :ID:       baff641b-062f-44c1-9c33-7893d5aa2d21
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:<@ (:array[] 2 7) (:array[] 1 7 4 2 6)))
         :single)
@@ -729,6 +792,9 @@ T
 nil
 #+END_SRC
 *** :&& Has Elements in Common Comparison
+    :PROPERTIES:
+    :ID:       8ad2296d-d7cd-4c09-be8d-06c733d8da86
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:&& (:array[] 1 4 3) (:array[] 3 1)))
        :single)
@@ -736,8 +802,14 @@ T
 #+END_SRC
 
 ** Array Concatenation Operators
+   :PROPERTIES:
+   :ID:       71720f76-3818-4944-b888-ef02066b56cd
+   :END:
 Form (:|| item1 item2 ...)
 *** :|| Concatentation Arrays and Elements
+    :PROPERTIES:
+    :ID:       758384d1-31b8-497b-becb-45bccdd9af5d
+    :END:
 #+BEGIN_SRC lisp
 (query (:select (:|| 3 (:array[] 4 5 6)))
        :single)
@@ -765,6 +837,9 @@ Form (:|| item1 item2 ...)
 #+END_SRC
 
 *** :|| Concatenation with Multi-Dimensional Arrays
+    :PROPERTIES:
+    :ID:       4951181f-0265-4a05-aea4-e4209329cdaa
+    :END:
 
 #+BEGIN_SRC lisp
 (query (:select (:|| (:array[] 1 2 3) (:array[] (:array[] 4 5 6) (:array[] 7 8 9))))
@@ -774,8 +849,14 @@ Form (:|| item1 item2 ...)
 #+END_SRC
 
 * Array functions
+  :PROPERTIES:
+  :ID:       d996285a-d3ef-4939-8545-f18ca5297a7d
+  :END:
 
 *** Array-prepend
+    :PROPERTIES:
+    :ID:       b5658fbf-ff9b-4814-bb74-673726943403
+    :END:
 Form: (:array-prepend (array1 element))
 Appends an element to the beginning of an array
 #+BEGIN_SRC lisp
@@ -786,6 +867,9 @@ Appends an element to the beginning of an array
 #+END_SRC
 
 *** array-append
+    :PROPERTIES:
+    :ID:       29d053f7-0758-4665-a06e-70c6c1b13bd3
+    :END:
 Form: (:array-append (array1 element))
 Appends an element to the end of an array.
 #+BEGIN_SRC lisp
@@ -796,6 +880,9 @@ Appends an element to the end of an array.
 #+END_SRC
 
 *** array-cat
+    :PROPERTIES:
+    :ID:       97260c82-8771-4d22-8b68-108d833ea562
+    :END:
 Form: (:array-cat (array1 array2))
 Concatenates two arrays. No more, no less. Both arrays need to have the same
 data type. They do not need to be the same length.
@@ -817,6 +904,9 @@ data type. They do not need to be the same length.
 #+END_SRC
 
 *** array-ndims
+    :PROPERTIES:
+    :ID:       e09f0fe0-a195-4850-9c33-45468f8b2161
+    :END:
 Form: (:array-ndims (array))
 Array-ndims returns the number of dimensions of an array.
 #+BEGIN_SRC lisp
@@ -826,6 +916,9 @@ Array-ndims returns the number of dimensions of an array.
 #+END_SRC
 
 *** array-dims
+    :PROPERTIES:
+    :ID:       5c5d76f9-a8be-4755-bc80-c11df01ab527
+    :END:
 Form: (:array-dims (array1))
 Array-dims returns a text representation of an array's dimensions.
 #+BEGIN_SRC lisp
@@ -835,6 +928,9 @@ Array-dims returns a text representation of an array's dimensions.
 #+END_SRC
 
 *** array-fill
+    :PROPERTIES:
+    :ID:       3251b989-6701-481c-a364-b004a56240d1
+    :END:
 Form: (:array-fill (value array-dimension))
 Array-fill returns an array initialized with supplied value and length.
 This only works with one dimensional arrays
@@ -846,6 +942,9 @@ This only works with one dimensional arrays
 
 #(7 7 7)
 *** array-length
+    :PROPERTIES:
+    :ID:       884184ec-f9d0-470f-8f86-de9a41cb1691
+    :END:
 Form: (:array-length (array1 array-dimension))
 Returns the length of the requested array dimension.
 In the following example, we request the first array
@@ -865,6 +964,9 @@ dimension.
 #+END_SRC
 
 *** array-lower
+    :PROPERTIES:
+    :ID:       2d3bd579-9108-4ffe-8a43-b7788f4e2111
+    :END:
 Form: (:array-lower (&rest args))
 Array-lower returns the lower bound of the requested array dimension.
 #+BEGIN_SRC lisp
@@ -874,6 +976,9 @@ Array-lower returns the lower bound of the requested array dimension.
 #+END_SRC
 
 *** array-position
+    :PROPERTIES:
+    :ID:       f96bd213-ebda-4977-920a-b30cb166b48f
+    :END:
 Form: (:array-position (array element starting-point-if-not-one))
 Array-position returns the subscript of the first occurrence of the
 second argument in the array, starting at the element indicated by the third
@@ -887,6 +992,9 @@ Requires postgresql version 9.5 or newer.
 
 
 *** array-positions
+    :PROPERTIES:
+    :ID:       c4ead3ae-978b-43bb-88f0-f2aa07b717ff
+    :END:
 Form: (:array-positions (array element))
 Array-positions (note the plural) returns an array of subscripts
 of all occurrences of the second argument in the array given as
@@ -900,6 +1008,9 @@ Requires postgresql version 9.5 or newer.
 #+END_SRC
 
 *** array-remove
+    :PROPERTIES:
+    :ID:       169edd98-0d73-476a-bb45-33095e42c75e
+    :END:
 Form: (:array-remove (array element))
 Array-remove removes all elements equal to the given value
 from the array (array must be one-dimensional).
@@ -914,6 +1025,9 @@ Obviously inside a selection query array-remove only removes the elements
 from the returning set and does not change the underlying data..
 
 *** array-replace
+    :PROPERTIES:
+    :ID:       e3c67116-89c4-4b4a-ae07-778dfbd31277
+    :END:
 Form: (:array-replace (array element-to-be-replaced element-used-as-replacement))
 Array-replaces replaces each array element equal to the given value
 with a new value. Requires postgresql 9.3 or newer.
@@ -925,6 +1039,9 @@ with a new value. Requires postgresql 9.3 or newer.
 #+END_SRC
 
 *** array-to-string
+    :PROPERTIES:
+    :ID:       1d234967-cff1-42df-82ab-207347f9a716
+    :END:
 Form: (:array-to-string (array delimiter optional-null-string))
 Array-to-string concatenates array elements using supplied
 delimiter and optional null string.
@@ -937,6 +1054,9 @@ delimiter and optional null string.
 
 
 *** array-upper
+    :PROPERTIES:
+    :ID:       282b5cb0-a689-469b-872a-a6db2027090e
+    :END:
 Form: (:array-upper (array int))
 Array-upper returns upper bound of the requested array dimension.
 #+BEGIN_SRC lisp
@@ -946,6 +1066,9 @@ Array-upper returns upper bound of the requested array dimension.
 #+END_SRC
 
 *** cardinality
+    :PROPERTIES:
+    :ID:       b9848825-3091-4d25-bb56-99591b44cc53
+    :END:
 Form: (:cardinality (array))
 Returns the total number of elements in the array or 0 if
 the array is empty. Requires postgresql 9.4 or newer.
@@ -956,6 +1079,9 @@ the array is empty. Requires postgresql 9.4 or newer.
 #+END_SRC
 
 *** string-to-array
+    :PROPERTIES:
+    :ID:       222953ff-ed90-41c4-be62-f3c3cbd1d872
+    :END:
 Form: (:string-to-array (text delimiter optional-null-string))
 String-to-array splits a string into array elements using
 the supplied delimiter and optional null string.
@@ -967,6 +1093,9 @@ the supplied delimiter and optional null string.
 #+END_SRC
 
 *** unnest
+    :PROPERTIES:
+    :ID:       303a7cb0-991a-4e1f-90bb-b2b1959429cf
+    :END:
 Form: (:unnest (array))
 Unnest expands an array to a set of rows.
 #+BEGIN_SRC lisp
@@ -979,6 +1108,9 @@ allowed in the from clause of the query. See
 [[https://www.postgresql.org/docs/current/static/queries-table-expressions.html#QUERIES-TABLEFUNCTIONS]]
 
 *** array-agg
+    :PROPERTIES:
+    :ID:       34bffa57-8d73-44ea-a2b3-a50b3f8af2ff
+    :END:
 Form: (:array-agg (expression))
 Array-agg returns the result in an array (both sql and, in postmodern, a lisp array).
 
@@ -1015,6 +1147,9 @@ Like all the aggregate functions, you can pass :filter, :distinct or :order-by
 
 
 ** NULL and nil
+   :PROPERTIES:
+   :ID:       c40b6ef9-737b-4341-9ec0-73fddc7eea55
+   :END:
 An empty array will be returned by postmodern as nil.
 
 [[file:s-sql.html][Return to s-sql.html]]

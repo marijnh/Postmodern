@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-05-17 Sun 14:09 -->
+<!-- 2020-05-23 Sat 08:54 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern</title>
@@ -178,6 +178,7 @@
   /*]]>*/-->
 </style>
 <link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -233,27 +234,32 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgb42f71a">Dependencies</a></li>
-<li><a href="#org60d5454">License</a></li>
-<li><a href="#orgeb33b8b">Download and installation</a></li>
-<li><a href="#org4574250">Quickstart</a></li>
-<li><a href="#org66080e3">Authentication</a></li>
-<li><a href="#org6064fcd">Running tests</a></li>
-<li><a href="#org3da0672">Reference</a></li>
-<li><a href="#org85c8068">Data Types</a>
+<li><a href="#org9707f48">Dependencies</a></li>
+<li><a href="#orga2a97d2">License</a></li>
+<li><a href="#org15d204a">Download and installation</a></li>
+<li><a href="#orgeab44c7">Quickstart</a>
 <ul>
-<li><a href="#orga72bb2e">Data Types</a></li>
+<li><a href="#org4c5f753">Table Creation</a></li>
+<li><a href="#orgbaa4685">Inserting Data</a></li>
 </ul>
 </li>
-<li><a href="#org59edc1b">Caveats and to-dos</a>
+<li><a href="#orgb2e213f">Authentication</a></li>
+<li><a href="#org7ffb621">Running tests</a></li>
+<li><a href="#org1da090a">Reference</a></li>
+<li><a href="#org42ed3b1">Data Types</a>
 <ul>
-<li><a href="#org57eeb04">Timezones and Simple-Date and Local-Time</a></li>
-<li><a href="#org12f3c94">Portability</a></li>
-<li><a href="#orgcde2ab2">Reserved Words</a></li>
-<li><a href="#org112f920">Things that should be implemented</a></li>
+<li><a href="#orgac20d74">Data Types</a></li>
 </ul>
 </li>
-<li><a href="#org1e5d65d">Resources</a></li>
+<li><a href="#org5592358">Caveats and to-dos</a>
+<ul>
+<li><a href="#org07cb814">Timezones and Simple-Date and Local-Time</a></li>
+<li><a href="#org18222a9">Portability</a></li>
+<li><a href="#orgae2193c">Reserved Words</a></li>
+<li><a href="#org534a447">Things that should be implemented</a></li>
+</ul>
+</li>
+<li><a href="#org64882d6">Resources</a></li>
 </ul>
 </div>
 </nav>
@@ -280,9 +286,9 @@ me. Your mileage may vary.
 </p>
 
 
-<div id="outline-container-orgb42f71a" class="outline-2">
-<h2 id="orgb42f71a"><a id="ID-216c43d0-57ff-4ae3-a302-6d04a3d79665"></a>Dependencies</h2>
-<div class="outline-text-2" id="text-orgb42f71a">
+<div id="outline-container-org9707f48" class="outline-2">
+<h2 id="org9707f48"><a id="ID-216c43d0-57ff-4ae3-a302-6d04a3d79665"></a>Dependencies</h2>
+<div class="outline-text-2" id="text-org9707f48">
 <p>
 The library depends on <a href="http://quickdocs.org/usocket/">usocket</a> (except on <a href="http://sbcl.org/">SBCL</a> and <a href="https://franz.com/products/allegrocl/">ACL</a>, where the built-in socket library is used), <a href="https://github.com/pmai/md5.git">md5</a>, <a href="https://github.com/pcostanza/closer-mop.git">closer-mop</a>, <a href="https://github.com/sionescu/bordeaux-threads.git">bordeaux-threads</a> if you want
 thread-safe connection pools, and <a href="https://github.com/cl-plus-ssl/cl-plus-ssl.git">CL+SSL</a> when SSL connections are needed.
@@ -318,9 +324,9 @@ possible of the work at compile time. Finally,
 </div>
 </div>
 
-<div id="outline-container-org60d5454" class="outline-2">
-<h2 id="org60d5454"><a id="ID-8ba6488f-4b3c-47f7-8a50-844363c5f484"></a>License</h2>
-<div class="outline-text-2" id="text-org60d5454">
+<div id="outline-container-orga2a97d2" class="outline-2">
+<h2 id="orga2a97d2"><a id="ID-8ba6488f-4b3c-47f7-8a50-844363c5f484"></a>License</h2>
+<div class="outline-text-2" id="text-orga2a97d2">
 <p>
 Postmodern is released under a zlib-style license. Which approximately
 means you can use the code in whatever way you like, except for passing
@@ -335,9 +341,9 @@ Dimitri Fontaine and are released under a BSD-3 license.
 </div>
 </div>
 
-<div id="outline-container-orgeb33b8b" class="outline-2">
-<h2 id="orgeb33b8b"><a id="ID-d4cca0ee-ff7f-4530-9be7-e9b3de62bdb4"></a>Download and installation</h2>
-<div class="outline-text-2" id="text-orgeb33b8b">
+<div id="outline-container-org15d204a" class="outline-2">
+<h2 id="org15d204a"><a id="ID-d4cca0ee-ff7f-4530-9be7-e9b3de62bdb4"></a>Download and installation</h2>
+<div class="outline-text-2" id="text-org15d204a">
 <p>
 We suggest using <a href="https://quicklisp.org">quicklisp.org</a> for installation.
 </p>
@@ -352,9 +358,9 @@ A git repository with the most recent changes can be viewed or checked out at:
 </div>
 </div>
 
-<div id="outline-container-org4574250" class="outline-2">
-<h2 id="org4574250"><a id="ID-f55510fb-3715-4cdd-9e37-4ab0e968e72d"></a>Quickstart</h2>
-<div class="outline-text-2" id="text-org4574250">
+<div id="outline-container-orgeab44c7" class="outline-2">
+<h2 id="orgeab44c7"><a id="ID-f55510fb-3715-4cdd-9e37-4ab0e968e72d"></a>Quickstart</h2>
+<div class="outline-text-2" id="text-orgeab44c7">
 <p>
 This quickstart is intended to give you a feel of the way coding with
 Postmodern works. Further details about the workings of the library
@@ -510,7 +516,10 @@ column respectively.:
 <pre class="src src-lisp">(get-dao 'points 12 34)
 </pre>
 </div>
-
+</div>
+<div id="outline-container-org4c5f753" class="outline-3">
+<h3 id="org4c5f753"><a id="ID-6ac2dcab-bd3b-48de-9ea0-fec010d76879"></a>Table Creation</h3>
+<div class="outline-text-3" id="text-org4c5f753">
 <p>
 You can create tables directly without the need to define a class, and in more
 complicated cases, you will need to use the create-table operator or plain
@@ -585,8 +594,66 @@ sql for creating a table described above.
 This defines our table in the database. execute works like query, but does
 not expect any results back.
 </p>
+</div>
+</div>
+
+<div id="outline-container-orgbaa4685" class="outline-3">
+<h3 id="orgbaa4685"><a id="ID-980103dd-9593-4047-9954-92e80f3785a9"></a>Inserting Data</h3>
+<div class="outline-text-3" id="text-orgbaa4685">
+<p>
+Similarly to table creation, you can insert data using the s-sql wrapper, plain vanilla sql or daos.
+</p>
 
 <p>
+The s-sql approach would be:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'country <span style="color: #98fb98; font-weight: bold;">:set</span> 'name <span style="color: #cd8162;">"The Netherlands"</span>
+                                   'inhabitants 16800000
+                                   'sovereign <span style="color: #cd8162;">"Willem-Alexander"</span>))
+
+(query (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'country <span style="color: #98fb98; font-weight: bold;">:set</span> 'name <span style="color: #cd8162;">"Croatia"</span>
+                                   'inhabitants 4400000))
+</pre>
+</div>
+
+<p>
+You could also insert multiple rows at a time but that requires the same columns for each row:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:insert-rows-into</span> 'country <span style="color: #98fb98; font-weight: bold;">:columns</span> 'name 'inhabitants 'sovereign
+                                   <span style="color: #98fb98; font-weight: bold;">:values</span> '((<span style="color: #cd8162;">"The Netherlands"</span> 16800000 <span style="color: #cd8162;">"Willem-Alexander"</span>)
+                                             (<span style="color: #cd8162;">"Croatia"</span> 4400000 <span style="color: #98fb98; font-weight: bold;">:null</span>))))
+</pre>
+</div>
+
+<p>
+The sql approach would be:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #cd8162;">"insert into country (name, inhabitants, sovereign)</span>
+<span style="color: #cd8162;">                            values ('The Netherlands', 16800000, 'Willem-Alexander')"</span>)
+
+(query <span style="color: #cd8162;">"insert into country (name, inhabitants)</span>
+<span style="color: #cd8162;">                            values ('Croatia', 4400000)"</span>)
+</pre>
+</div>
+
+<p>
+The multiple row sql approach would be:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #cd8162;">"insert into country (name, inhabitants, sovereign)</span>
+<span style="color: #cd8162;">                            values</span>
+<span style="color: #cd8162;">                              ('The Netherlands', 16800000, 'Willem-Alexander'),</span>
+<span style="color: #cd8162;">                              ('Croatia', 4400000, NULL)"</span>)
+</pre>
+</div>
+
+<p>
+Using dao classes would look like:
 Let us go back to our approach using a dao class and add a few countries:
 </p>
 <div class="org-src-container">
@@ -599,7 +666,7 @@ Let us go back to our approach using a dao class and add a few countries:
 </div>
 
 <p>
-Then, to update Croatia's population, we could do this:
+Staying with the dao class approach, to update Croatia's population, we could do this:
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(<span style="color: #00ffff;">let</span> ((croatia (get-dao 'country <span style="color: #cd8162;">"Croatia"</span>)))
@@ -611,6 +678,9 @@ Then, to update Croatia's population, we could do this:
 <span style="color: #cd4f39;">;;     </span><span style="color: #cd4f39;">("Croatia" 4500000 :NULL))</span>
 </pre>
 </div>
+<p>
+Please see the documentation for s-sql for more examples of using s-sql rather than daos.
+</p>
 
 <p>
 Next, to demonstrate a bit more of the S-SQL syntax, here is the query the
@@ -669,10 +739,11 @@ faster, especially for complex queries.
 </div>
 </div>
 </div>
+</div>
 
-<div id="outline-container-org66080e3" class="outline-2">
-<h2 id="org66080e3"><a id="ID-5ad46584-6887-4866-9c40-633768c0d39a"></a>Authentication</h2>
-<div class="outline-text-2" id="text-org66080e3">
+<div id="outline-container-orgb2e213f" class="outline-2">
+<h2 id="orgb2e213f"><a id="ID-5ad46584-6887-4866-9c40-633768c0d39a"></a>Authentication</h2>
+<div class="outline-text-2" id="text-orgb2e213f">
 <p>
 Postmodern can use either md5 or scram-sha-256 authentication. Scram-sha-256
 authentication is obviously more secure, but slower than md5, so take that into
@@ -687,9 +758,9 @@ is a authentication method that you believe should be considered.
 </div>
 </div>
 
-<div id="outline-container-org6064fcd" class="outline-2">
-<h2 id="org6064fcd"><a id="ID-bd354217-9828-444b-afbf-41e9f0d522ca"></a>Running tests</h2>
-<div class="outline-text-2" id="text-org6064fcd">
+<div id="outline-container-org7ffb621" class="outline-2">
+<h2 id="org7ffb621"><a id="ID-bd354217-9828-444b-afbf-41e9f0d522ca"></a>Running tests</h2>
+<div class="outline-text-2" id="text-org7ffb621">
 <p>
 Postmodern uses <a href="https://github.com/sionescu/fiveam">FiveAM</a> for
 testing.  The different component systems of Postmodern have tests
@@ -783,9 +854,9 @@ provided using environment variables:
 </div>
 </div>
 
-<div id="outline-container-org3da0672" class="outline-2">
-<h2 id="org3da0672"><a id="ID-27b39236-15ee-42c3-958a-3c9c903c4567"></a>Reference</h2>
-<div class="outline-text-2" id="text-org3da0672">
+<div id="outline-container-org1da090a" class="outline-2">
+<h2 id="org1da090a"><a id="ID-27b39236-15ee-42c3-958a-3c9c903c4567"></a>Reference</h2>
+<div class="outline-text-2" id="text-org1da090a">
 <p>
 The reference manuals for the different components of Postmodern are kept
 in separate files. For using the library in the most straightforward way,
@@ -810,13 +881,13 @@ if you just want a low-level library for talking to a PostgreSQL server.
 </div>
 
 
-<div id="outline-container-org85c8068" class="outline-2">
-<h2 id="org85c8068"><a id="ID-d089d05b-4485-4fb5-9097-5a66492bc470"></a>Data Types</h2>
-<div class="outline-text-2" id="text-org85c8068">
+<div id="outline-container-org42ed3b1" class="outline-2">
+<h2 id="org42ed3b1"><a id="ID-d089d05b-4485-4fb5-9097-5a66492bc470"></a>Data Types</h2>
+<div class="outline-text-2" id="text-org42ed3b1">
 </div>
-<div id="outline-container-orga72bb2e" class="outline-3">
-<h3 id="orga72bb2e"><a id="ID-deae4656-1b87-4518-9718-3b3e8c35f6c5"></a>Data Types</h3>
-<div class="outline-text-3" id="text-orga72bb2e">
+<div id="outline-container-orgac20d74" class="outline-3">
+<h3 id="orgac20d74"><a id="ID-deae4656-1b87-4518-9718-3b3e8c35f6c5"></a>Data Types</h3>
+<div class="outline-text-3" id="text-orgac20d74">
 <p>
 For a short comparison of lisp and Postgresql data types (date and time datatypes are described in the next section)
 </p>
@@ -848,22 +919,22 @@ For a short comparison of lisp and Postgresql data types (date and time datatype
 
 <tr>
 <td class="org-left">bigint</td>
-<td class="org-left">-9223372036854775808 to 9223372036854775807 integer 8-byte storage</td>
+<td class="org-left">-9223372036854775808 to 9223372036854775807 8-byte storage</td>
 </tr>
 
 <tr>
 <td class="org-left">numeric(X, Y)</td>
-<td class="org-left">&#xa0;</td>
+<td class="org-left">User specified, see notes below</td>
 </tr>
 
 <tr>
 <td class="org-left">real</td>
-<td class="org-left">single-precision floating point number, 6 decimal digit precision 4-byte storage</td>
+<td class="org-left">float, 6 decimal digit precision 4-byte storage</td>
 </tr>
 
 <tr>
 <td class="org-left">double-precision</td>
-<td class="org-left">double-precision floating point number, 15 decimal digit precision 8-byte storage</td>
+<td class="org-left">floating, 15 decimal digit precision 8-byte storage</td>
 </tr>
 
 <tr>
@@ -888,7 +959,7 @@ For a short comparison of lisp and Postgresql data types (date and time datatype
 
 <tr>
 <td class="org-left">bytea</td>
-<td class="org-left">&#xa0;</td>
+<td class="org-left">binary string allowing non-printable octets</td>
 </tr>
 
 <tr>
@@ -903,11 +974,17 @@ For a short comparison of lisp and Postgresql data types (date and time datatype
 
 <tr>
 <td class="org-left">array</td>
-<td class="org-left">&#xa0;</td>
+<td class="org-left">See discussion at <a href="array-notes.html">array-notes.html</a></td>
 </tr>
 </tbody>
 </table>
 
+<p>
+Numeric and decimal are variable storage size numbers with user specified precision.
+Up to 131072 digits before the decimal point; up to 16383 digits after the decimal point.
+The syntax is numeric(precision, scale). Numeric columns with a specified scale will coerce input
+values to that scale. For more detail, see <a href="https://www.postgresql.org/docs/current/datatype-numeric.html">https://www.postgresql.org/docs/current/datatype-numeric.html</a>
+</p>
 
 <table>
 
@@ -1112,13 +1189,13 @@ For a short comparison of lisp and Postgresql data types (date and time datatype
 </div>
 </div>
 
-<div id="outline-container-org59edc1b" class="outline-2">
-<h2 id="org59edc1b"><a id="ID-157ea05f-4c49-4e49-8cf9-a3df4bf16b09"></a>Caveats and to-dos</h2>
-<div class="outline-text-2" id="text-org59edc1b">
+<div id="outline-container-org5592358" class="outline-2">
+<h2 id="org5592358"><a id="ID-157ea05f-4c49-4e49-8cf9-a3df4bf16b09"></a>Caveats and to-dos</h2>
+<div class="outline-text-2" id="text-org5592358">
 </div>
-<div id="outline-container-org57eeb04" class="outline-3">
-<h3 id="org57eeb04"><a id="ID-8ff631c8-994f-4658-bbc4-779afc80bdf2"></a>Timezones and Simple-Date and Local-Time</h3>
-<div class="outline-text-3" id="text-org57eeb04">
+<div id="outline-container-org07cb814" class="outline-3">
+<h3 id="org07cb814"><a id="ID-8ff631c8-994f-4658-bbc4-779afc80bdf2"></a>Timezones and Simple-Date and Local-Time</h3>
+<div class="outline-text-3" id="text-org07cb814">
 <p>
 It is important to understand how postgresql (not postmodern) handles
 timestamps and timestamps with time zones. Postgresql keeps everything
@@ -1350,9 +1427,9 @@ the same sample data looks like:
 </div>
 
 
-<div id="outline-container-org12f3c94" class="outline-3">
-<h3 id="org12f3c94"><a id="ID-769a0e88-de54-4356-a474-72708accbafb"></a>Portability</h3>
-<div class="outline-text-3" id="text-org12f3c94">
+<div id="outline-container-org18222a9" class="outline-3">
+<h3 id="org18222a9"><a id="ID-769a0e88-de54-4356-a474-72708accbafb"></a>Portability</h3>
+<div class="outline-text-3" id="text-org18222a9">
 <p>
 The Lisp code in Postmodern is theoretically portable across implementations,
 and seems to work on all major ones as well as some minor ones such as Genera.
@@ -1377,9 +1454,9 @@ were only introduced in those newer versions.
 </div>
 </div>
 
-<div id="outline-container-orgcde2ab2" class="outline-3">
-<h3 id="orgcde2ab2"><a id="ID-671c5e6a-f548-4791-86a5-575b3fcc0aa5"></a>Reserved Words</h3>
-<div class="outline-text-3" id="text-orgcde2ab2">
+<div id="outline-container-orgae2193c" class="outline-3">
+<h3 id="orgae2193c"><a id="ID-671c5e6a-f548-4791-86a5-575b3fcc0aa5"></a>Reserved Words</h3>
+<div class="outline-text-3" id="text-orgae2193c">
 <p>
 It is highly suggested that you do not use words that are reserved by Postgresql
 and the sql standard as identifiers (e.g. table names, columns). The reserved
@@ -1404,9 +1481,9 @@ words are:
 </div>
 </div>
 
-<div id="outline-container-org112f920" class="outline-3">
-<h3 id="org112f920"><a id="ID-50d91126-93f1-4f50-96ad-bd63a7278866"></a>Things that should be implemented</h3>
-<div class="outline-text-3" id="text-org112f920">
+<div id="outline-container-org534a447" class="outline-3">
+<h3 id="org534a447"><a id="ID-50d91126-93f1-4f50-96ad-bd63a7278866"></a>Things that should be implemented</h3>
+<div class="outline-text-3" id="text-org534a447">
 <p>
 Postmodern is under active development so Issues and feature requests should
 be flagged on <a href="https://github.com/marijnh/Postmodern">Postmodern's site on github</a>.
@@ -1420,9 +1497,9 @@ file.
 </div>
 </div>
 
-<div id="outline-container-org1e5d65d" class="outline-2">
-<h2 id="org1e5d65d"><a id="ID-eb969965-5221-48f8-bb79-5a93fe451454"></a>Resources</h2>
-<div class="outline-text-2" id="text-org1e5d65d">
+<div id="outline-container-org64882d6" class="outline-2">
+<h2 id="org64882d6"><a id="ID-eb969965-5221-48f8-bb79-5a93fe451454"></a>Resources</h2>
+<div class="outline-text-2" id="text-org64882d6">
 <ul class="org-ul">
 <li><a href="https://mailman.common-lisp.net/listinfo/postmodern-devel">Mailing List</a></li>
 <li><a href="https://sites.google.com/site/sabraonthehill/postmodern-examples">A collection of Postmodern examples</a></li>

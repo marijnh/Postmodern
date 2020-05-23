@@ -207,8 +207,10 @@ hyphens."
 
 ;; Aliases for some types that can be expressed in SQL.
 (deftype smallint ()
+  "Also known as int2"
   '(signed-byte 16))
 (deftype bigint ()
+  "Also know as int8"
   `(signed-byte 64))
 (deftype numeric (&optional precision/scale scale)
   (declare (ignore precision/scale scale))
@@ -561,6 +563,15 @@ string."
 ;;; doesn't work.
 
 (def-sql-op :|| (&rest args)
+  "The concatenation operator combines two or more columns into a single column
+return. E.g:
+
+(query (:select 'countries.id (:|| 'countries.name \"-\" 'regions.name)
+                :from 'countries 'regions
+                :where (:and (:= 'regions.id 'countries.region-id)
+                             (:= 'countries.name \"US\"))))
+
+((21 \"US-North America\"))"
   `("(" ,@(sql-expand-list args " || ") ")"))
 
 (def-sql-op :asc (arg)
@@ -597,9 +608,11 @@ string."
   `("DISTINCT(" ,@(sql-expand-list forms) ")"))
 
 (def-sql-op :any* (query)
+  "Any needs to be considered as a special case. Postgres has both a function-call-style any and an infix any, and S-SQL's syntax doesn't allow them to be distinguished. As a result, postmodern has a regular :any sql-op and a :any* sql-op, which expand slightly differently."
   `("ANY(" ,@(sql-expand query) ")"))
 
 (def-sql-op :any (query)
+    "Any needs to be considered as a special case. Postgres has both a function-call-style any and an infix any, and S-SQL's syntax doesn't allow them to be distinguished. As a result, postmodern has a regular :any sql-op and a :any* sql-op, which expand slightly differently."
   `("ANY " ,@(sql-expand query)))
 
 (def-sql-op :all (query)

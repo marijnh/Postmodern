@@ -1,6 +1,7 @@
 #+TITLE: S-SQL Reference Manual
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
 This is the reference manual for the S-SQL component of the postmodern library.
@@ -9,7 +10,6 @@ S-SQL provides a lispy syntax for SQL queries, and knows how to convert various
 lisp types to their textual SQL representation. It takes care to do as much of
 the work as possible at compile-time, so that at runtime a string concatenation
 is all that is needed to produce the final SQL query.
-
 
 * Interface
   :PROPERTIES:
@@ -184,7 +184,6 @@ Convert a symbol or string into a name that can be a sql table, column, or opera
 
 Ignore-reserved-words is only used internally for column names which are allowed to be reserved words, but it is not recommended.
 
-
 ** function from-sql-name (string)
    :PROPERTIES:
    :ID:       5a8737c8-f850-4807-974c-8f711cc9ae1c
@@ -214,24 +213,29 @@ list containing a keyword and a name string.
   :END:
 S-SQL knows the SQL equivalents to a number of Lisp types, and defines some
 extra types that can be used to denote other SQL types. The following
-table shows the correspondence:
+table (yes, I know this table is duplicated on other pages) shows the correspondence:
 
-| Lisp type           | SQL type         | Description                                                                       |
-|---------------------+------------------+-----------------------------------------------------------------------------------|
-| integer             | smallint         | -32,768 to +32,768 2-byte storage                                                 |
-| integer             | integer          | -2147483648 to +2147483647 integer, 4-byte storage                                |
-| integer             | bigint           | -9223372036854775808 to 9223372036854775807 integer 8-byte storage                |
-| (numeric X Y)       | numeric(X, Y)    |                                                                                   |
-| float, real         | real             | single-precision floating point number, 6 decimal digit precision 4-byte storage  |
-| double-float        | double-precision | double-precision floating point number, 15 decimal digit precision 8-byte storage |
-| string, text        | text             | variable length string, no limit specified                                        |
-| string              | char(X)          | char(length), blank-padded string, fixed storage length                           |
-| string              | varchar(X)       | varchar(length), non-blank-padded string, variable storage length                 |
-| boolean             | boolean          | boolean, 'true'/'false', 1 byte                                                   |
-| bytea               | bytea            |                                                                                   |
-| date                | date             | date range: 4713 BC to 5874897 AD                                                 |
-| [[file:interval-notes.html][interval]]            | interval         |                                                                                   |
-| array               | array            |                                                                                   |
+| Lisp type     | SQL type         | Description                                                |
+|---------------+------------------+------------------------------------------------------------|
+| integer       | smallint         | -32,768 to +32,768 2-byte storage                          |
+| integer       | integer          | -2147483648 to +2147483647 integer, 4-byte storage         |
+| integer       | bigint           | -9223372036854775808 to 9223372036854775807 8-byte storage |
+| (numeric X Y) | numeric(X, Y)    | see discussion below                                       |
+| float, real   | real             | float, 6 decimal digit precision 4-byte storage            |
+| double-float  | double-precision | float, 15 decimal digit precision 8-byte storage           |
+| string, text  | text             | variable length string, no limit specified                 |
+| string        | char(X)          | char(length), blank-padded string, fixed storage length    |
+| string        | varchar(X)       | varchar(length), non-blank-padded string, variable storage |
+| boolean       | boolean          | boolean, 'true'/'false', 1 byte                            |
+| bytea         | bytea            | binary string which allows non-printable octets            |
+| date          | date             | date range: 4713 BC to 5874897 AD                          |
+| [[file:interval-notes.html][interval]]      | interval         | time intervals                                             |
+| array         | array            | See [[file:array-notes.html][Array-Notes]]                                            |
+
+Numeric and decimal are variable storage size numbers with user specified precision.
+Up to 131072 digits before the decimal point; up to 16383 digits after the decimal point.
+The syntax is numeric(precision, scale). Numeric columns with a specified scale will coerce input
+values to that scale. For more detail, see https://www.postgresql.org/docs/current/datatype-numeric.html
 
 ** type db-null
    :PROPERTIES:
@@ -398,8 +402,9 @@ Used to determine where :null values appear in an :order-by clause.
    :ID:       ca6fe6aa-07ad-4931-afe5-9d9087059dca
    :END:
 
-Assigns a name to a column or table in a :select form. When fields are given,
-they are added after the name, in parentheses. For example, (:as 'table1 't1 'foo 'bar)
+Also known in some explanations as "alias". This assigns a name to a column or
+table in a :select form. When fields are given, they are added after the name,
+in parentheses. For example, (:as 'table1 't1 'foo 'bar)
 becomes table1 AS t1(foo, bar). When you need to specify types for the fields,
 you can do something like (:as 'table2 't2 ('foo integer)). Note that names are
 quoted, types are not (when using sql-compile or sql-template, you can leave

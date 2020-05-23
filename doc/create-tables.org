@@ -1,9 +1,13 @@
 #+TITLE: Creating Tables
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
 * Introduction to Table Creation in Postmodern
+  :PROPERTIES:
+  :ID:       70d15d79-199f-45cf-beaf-c5cad9fca3cf
+  :END:
 Postmodern offers two ways to create postgresql database tables. Which one
 you choose depends on two things:
 
@@ -27,6 +31,9 @@ But first, we should talk about basic database table creation
 and why do we care about different options.
 
 * Basic Postgresql Database Tables
+  :PROPERTIES:
+  :ID:       61d21d1c-ad6c-4318-b7b9-efb99c5bcde9
+  :END:
 The full postgresql sql specification can be found [[https://www.postgresql.org/docs/current/static/sql-createtable.html][here]].
 
 At a bare minimum, a database table needs a name. If you actually want to store
@@ -44,8 +51,14 @@ connection pooling mechanism. This page will just be dealing with the queries
 required to create a postgresql database table.
 
 * Postmodern Create-Table
+  :PROPERTIES:
+  :ID:       f64d29c1-32d0-45bf-9331-a62436b2cc73
+  :END:
 
 * S-SQL Create-Table
+  :PROPERTIES:
+  :ID:       7fa25539-cb93-4244-83af-330feb94d990
+  :END:
 
 At this minimum level, the :create-table and :create-extended-table calls are
 exactly the same. Let's walk through a simple example:
@@ -100,6 +113,9 @@ could encompass years as well as seconds. The specification given here,
 of the potential time interval.
 
 ** Table Names Parameter
+   :PROPERTIES:
+   :ID:       a33bcc61-0866-4de5-85c5-63c48550ec5f
+   :END:
 The following discussion on table names is the same for both :create-table
 or :create-extended table.
 
@@ -133,6 +149,9 @@ qualifiers - if-not-exists, temp, and unlogged.
 #+END_SRC
 
 *** Temporary and Unlogged Tables
+    :PROPERTIES:
+    :ID:       01951f3c-0e2b-4567-8545-44e0584d0fa7
+    :END:
 Temporary tables exists only for the duration of the session. To create them
 using s-sql in postmodern, the first parameter to :create-table should be a
 form where the first atom in the form is the keyword :temp. You can optionally
@@ -158,6 +177,9 @@ table. E.g.
 #+END_SRC
 
 ** Using Identity Columns
+   :PROPERTIES:
+   :ID:       675aaa13-4be0-458f-b004-789fac521dc4
+   :END:
 Postgresql version 10 added identity columns. These are auto-incrementing
 columns that use the standard SQL syntax instead of the serial and bigserial
 datatypes which are still available, but are not SQL standard syntax. The
@@ -196,6 +218,9 @@ Note: The data type used for identity columns must be one of smallint, int or bi
 #+END_SRC
 
 ** Array Columns
+   :PROPERTIES:
+   :ID:       04eff0b7-ac42-40f9-887c-f4fcff7cc4d5
+   :END:
 The following shows the creation of a table with a two dimensional array
 #+BEGIN_SRC lisp
 (query (:create-table 'array-int
@@ -203,6 +228,9 @@ The following shows the creation of a table with a two dimensional array
 #+END_SRC
 
 ** Check Constraints
+   :PROPERTIES:
+   :ID:       a62455db-395a-4757-b573-f7cd2a267bd0
+   :END:
 You can put a contraint on a table row that specifies values must meet
 certain requirements. In the following examples, the first puts a check
 constraint on a row, the second places at check constraint at the table
@@ -220,6 +248,9 @@ level.
 #+END_SRC
 
 ** Unique Constraints
+   :PROPERTIES:
+   :ID:       87783379-e1bf-485a-865e-05aa539ec871
+   :END:
 You can ensure that a column or a combination of columns is unique
 without making that column or columns the primary key for the table.
 
@@ -271,6 +302,9 @@ parameter cannot be set for TOAST tables."
 
 
 ** Timestamps with and without timezones
+   :PROPERTIES:
+   :ID:       08e399fb-51d0-425a-9349-c1400fed8f76
+   :END:
 Ah, the bane of many programmers' existence - dates and times.
 At least the table creation is fairly straightforward.
 
@@ -304,10 +338,16 @@ The following examples are fairly self explanatory.
 
 
 ** Adding Foreign Keys
+   :PROPERTIES:
+   :ID:       e65bef5a-bae8-4b47-a66f-37f6e71d9fdb
+   :END:
 There are a few different ways to add foreign keys in postgresql when defining
 a table.
 
 *** Defining Foreign Keys at the Column Level
+    :PROPERTIES:
+    :ID:       02e06fce-1b41-4edd-aa1d-f9b3cc665d00
+    :END:
 
 First with foreign key on the column. Use the keyword :references and specify
 the table name  and the relevant column within the subform. You will see why
@@ -389,6 +429,9 @@ So now examples with specifying the on-delete and on-update actions.
 #+END_SRC
 
 *** Defining Foreign Keys at the Table Level
+    :PROPERTIES:
+    :ID:       43ffc1bf-5497-41f2-af15-2c3128745b55
+    :END:
 Instead of specifying the foreign keys at the column level, you can specify
 them at the table level, but of course that means you have to additionally
 specify which column in the current table is a foreign key.
@@ -429,6 +472,9 @@ Additional foreign keys can easily be added:
                       :foreign-key (user-id) (users user-id))))
 #+END_SRC
 ** Using Tablespaces
+   :PROPERTIES:
+   :ID:       a9eb931c-2b9f-4bd1-a17d-e46d891d667d
+   :END:
 Tablespaces require use of the create-extended-table method. Note that the
 create-extended-table method has a slightly different signature. It expects
 a table name and two or three forms. The first form relates to the columns,
@@ -446,6 +492,9 @@ Tablespaces are documented at [[https://www.postgresql.org/docs/10/static/manage
 #+END_SRC
 
 ** Partitions (not fully implemented)
+   :PROPERTIES:
+   :ID:       2bc90e7a-1a03-4d15-a2fd-cb11d83de8a1
+   :END:
 The following are two very simple examples of use of partitions. You should
 not consider partition functionality to be fully implemented past these
 examples.

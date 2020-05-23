@@ -1,6 +1,7 @@
 #+TITLE: Postmodern
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
 Postmodern is a Common Lisp library for interacting with [[https://postgresql.org][PostgreSQL databases]].
@@ -181,7 +182,10 @@ column respectively.:
 #+BEGIN_SRC lisp
 (get-dao 'points 12 34)
 #+END_SRC
-
+** Table Creation
+   :PROPERTIES:
+   :ID:       6ac2dcab-bd3b-48de-9ea0-fec010d76879
+   :END:
 You can create tables directly without the need to define a class, and in more
 complicated cases, you will need to use the create-table operator or plain
 vanilla sql. One example using s-sql rather than plain vanilla sql would be the
@@ -242,6 +246,49 @@ sql for creating a table described above.
 This defines our table in the database. execute works like query, but does
 not expect any results back.
 
+** Inserting Data
+   :PROPERTIES:
+   :ID:       980103dd-9593-4047-9954-92e80f3785a9
+   :END:
+Similarly to table creation, you can insert data using the s-sql wrapper, plain vanilla sql or daos.
+
+The s-sql approach would be:
+
+#+BEGIN_SRC lisp
+(query (:insert-into 'country :set 'name "The Netherlands"
+                                   'inhabitants 16800000
+                                   'sovereign "Willem-Alexander"))
+
+(query (:insert-into 'country :set 'name "Croatia"
+                                   'inhabitants 4400000))
+#+END_SRC
+
+You could also insert multiple rows at a time but that requires the same columns for each row:
+
+#+BEGIN_SRC lisp
+(query (:insert-rows-into 'country :columns 'name 'inhabitants 'sovereign
+                                   :values '(("The Netherlands" 16800000 "Willem-Alexander")
+                                             ("Croatia" 4400000 :null))))
+#+END_SRC
+
+The sql approach would be:
+#+BEGIN_SRC lisp
+(query "insert into country (name, inhabitants, sovereign)
+                            values ('The Netherlands', 16800000, 'Willem-Alexander')")
+
+(query "insert into country (name, inhabitants)
+                            values ('Croatia', 4400000)")
+#+END_SRC
+
+The multiple row sql approach would be:
+#+BEGIN_SRC lisp
+(query "insert into country (name, inhabitants, sovereign)
+                            values
+                              ('The Netherlands', 16800000, 'Willem-Alexander'),
+                              ('Croatia', 4400000, NULL)")
+#+END_SRC
+
+Using dao classes would look like:
 Let us go back to our approach using a dao class and add a few countries:
 #+BEGIN_SRC lisp
 (insert-dao (make-instance 'country :name "The Netherlands"
@@ -251,7 +298,7 @@ Let us go back to our approach using a dao class and add a few countries:
                                     :inhabitants 4400000))
 #+END_SRC
 
-Then, to update Croatia's population, we could do this:
+Staying with the dao class approach, to update Croatia's population, we could do this:
 #+BEGIN_SRC lisp
 (let ((croatia (get-dao 'country "Croatia")))
   (setf (country-inhabitants croatia) 4500000)
@@ -261,6 +308,7 @@ Then, to update Croatia's population, we could do this:
 ;; => (("The Netherlands" 16800000 "Willem-Alexander")
 ;;     ("Croatia" 4500000 :NULL))
 #+END_SRC
+Please see the documentation for s-sql for more examples of using s-sql rather than daos.
 
 Next, to demonstrate a bit more of the S-SQL syntax, here is the query the
 utility function list-tables uses to get a list of the tables in a database:
@@ -421,23 +469,27 @@ if you just want a low-level library for talking to a PostgreSQL server.
    :END:
 For a short comparison of lisp and Postgresql data types (date and time datatypes are described in the next section)
 
-| SQL type         | Description                                                                       |
-|------------------+-----------------------------------------------------------------------------------|
-| smallint         | -32,768 to +32,768 2-byte storage                                                 |
-| integer          | -2147483648 to +2147483647 integer, 4-byte storage                                |
-| bigint           | -9223372036854775808 to 9223372036854775807 integer 8-byte storage                |
-| numeric(X, Y)    |                                                                                   |
-| real             | single-precision floating point number, 6 decimal digit precision 4-byte storage  |
-| double-precision | double-precision floating point number, 15 decimal digit precision 8-byte storage |
-| text             | variable length string, no limit specified                                        |
-| char(X)          | char(length), blank-padded string, fixed storage length                           |
-| varchar(X)       | varchar(length), non-blank-padded string, variable storage length                 |
-| boolean          | boolean, 'true'/'false', 1 byte                                                   |
-| bytea            |                                                                                   |
-| date             | date range: 4713 BC to 5874897 AD                                                 |
-| interval         | See [[file:interval-notes.html][interval]]                                                                      |
-| array            |                                                                                   |
+| SQL type         | Description                                                       |
+|------------------+-------------------------------------------------------------------|
+| smallint         | -32,768 to +32,768 2-byte storage                                 |
+| integer          | -2147483648 to +2147483647 integer, 4-byte storage                |
+| bigint           | -9223372036854775808 to 9223372036854775807 8-byte storage        |
+| numeric(X, Y)    | User specified, see notes below                                   |
+| real             | float, 6 decimal digit precision 4-byte storage                   |
+| double-precision | floating, 15 decimal digit precision 8-byte storage               |
+| text             | variable length string, no limit specified                        |
+| char(X)          | char(length), blank-padded string, fixed storage length           |
+| varchar(X)       | varchar(length), non-blank-padded string, variable storage length |
+| boolean          | boolean, 'true'/'false', 1 byte                                   |
+| bytea            | binary string allowing non-printable octets                       |
+| date             | date range: 4713 BC to 5874897 AD                                 |
+| interval         | See [[file:interval-notes.html][interval]]                                                      |
+| array            | See discussion at [[file:array-notes.html][array-notes.html]]                                |
 
+Numeric and decimal are variable storage size numbers with user specified precision.
+Up to 131072 digits before the decimal point; up to 16383 digits after the decimal point.
+The syntax is numeric(precision, scale). Numeric columns with a specified scale will coerce input
+values to that scale. For more detail, see https://www.postgresql.org/docs/current/datatype-numeric.html
 
 | PG Type          | Sample Postmodern Return Value                                              | Lisp Type (per sbcl)                 |
 |------------------+-----------------------------------------------------------------------------+--------------------------------------|

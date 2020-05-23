@@ -1,6 +1,7 @@
 #+TITLE: Postmodern Reference Manual
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
 This is the reference manual for the component named postmodern, which is part
@@ -946,7 +947,128 @@ An example of using this is to add some non-column slots to a DAO class, and use
 query-dao within a with-column-writers form to pull in extra information about
 the objects, and immediately store it in the new instances.
 
-* Introduction to Multi-table dao class objects
+* Table definition and creation
+  :PROPERTIES:
+  :ID:       1c0a254a-4a0e-4012-b519-8fe8cbf9ae02
+  :END:
+It can be useful to have the SQL statements needed to build an application's
+tables available from the source code, to do things like automatically deploying
+a database. The following macro and functions allow you to group sets of SQL
+statements under symbols, with some shortcuts for common elements
+in table definitions.
+
+** macro deftable (name &body definition)
+   :PROPERTIES:
+   :ID:       39e40910-e25a-4db4-bd0a-b4b6d1a75630
+   :END:
+
+Define a table. name can be either a symbol or a (symbol string) list. In the
+first case, the table name is derived from the symbol's name by S-SQL's rules.
+In the second case, the name is given explicitly. The body of definitions can
+contain anything that evaluates to a string, as well as S-SQL expressions. The
+variables *table-name* and *table-symbol* are bound to the relevant values in
+the body. Note that the evaluation of the definition is ordered, so you'll
+generally want to create your table first and then define indices on it.
+
+** variable *table-name*
+   :PROPERTIES:
+   :ID:       3e565b16-153c-4281-8f17-3653e7a9dc5d
+   :END:
+
+Used inside deftable to find the name of the table being defined.
+
+** variable **table-symbol*
+   :PROPERTIES:
+   :ID:       551359a0-8d5b-4d4f-932d-df8759105ee1
+   :END:
+
+Used inside deftable to find the symbol naming the table being defined.
+
+** function !dao-def ()
+   :PROPERTIES:
+   :ID:       eb1680a7-2a82-4e6a-b31b-aeea22bf7362
+   :END:
+
+Should only be used inside a deftable form. Define this table using the
+corresponding DAO class' slots. Adds the result of calling dao-table-definition
+on *table-symbol* to the definition.
+
+** function !index (&rest columns), !unique-index (&rest columns)
+   :PROPERTIES:
+   :ID:       5ceae010-3712-400a-9c8c-0616b8406390
+   :END:
+
+Used inside a deftable form. Define an index on the table being defined. The
+columns can be given as symbols or strings.
+
+** function !foreign (target fields &rest target-fields/on-delete/on-update/deferrable/initially-deferred)
+   :PROPERTIES:
+   :ID:       1378528c-3e7a-452b-8775-b3d84d897ebd
+   :END:
+
+Used insde a deftable form. Add a foreign key to the table being defined.
+target-table is the referenced table. columns is a list of column names or
+single name in this table, and, if the columns have different names in the
+referenced table, target-columns must be another list of column names or single
+column name of the target-table, or :primary-key to denote the column(s) of the
+target-table's primary key as referenced column(s).
+
+The on-delete and on-update arguments can be used to specify ON DELETE and ON
+UPDATE actions, as per the keywords allowed in create-table. In addition, the
+deferrable and initially-deferred arguments can be used to indicate whether
+constraint checking can be deferred until the current transaction completed, and
+whether this should be done by default. Note that none of these are
+really &key arguments, but rather are picked out of a &rest arg at runtime, so
+that they can be specified even when target-columns is not given.
+
+** function !unique (target-fields &key deferrable initially-deferred)
+   :PROPERTIES:
+   :ID:       c4631db6-9994-40df-97b7-150df71bb121
+   :END:
+
+Constrains one or more columns to only contain unique (combinations of) values,
+with deferrable and initially-deferred defined as in !foreign
+
+** function create-table (symbol)
+   :PROPERTIES:
+   :ID:       333d4860-6cfe-4009-80f8-a480174d64e1
+   :END:
+
+Takes the name of a dao-class and creates the table identified by symbol by
+executing all forms in its definition as found in the *tables* list.
+
+** function create-all-tables ()
+   :PROPERTIES:
+   :ID:       7477cdc4-59bf-47fb-9b60-25ee9c38eb66
+   :END:
+
+Creates all defined tables.
+
+** function create-package-tables (package)
+   :PROPERTIES:
+   :ID:       8e36190a-a3a4-4e66-8df4-0a6b6b74f617
+   :END:
+
+Creates all tables identified by symbols interned in the given package.
+
+** variables *table-name*, *table-symbol*
+   :PROPERTIES:
+   :ID:       25924943-75d9-4612-b2a3-dc94f292c2a5
+   :END:
+
+Used inside deftable to find the name of the table being defined.
+
+Used inside deftable to find the symbol naming the table being defined.
+
+** function drop-table (table-name &key if-exists cascade)
+   :PROPERTIES:
+   :ID:       0427ecce-416e-4266-a5c7-90e58e22e0b7
+   :END:
+
+If a table exists, drop a table. Available additional key parameters
+are :if-exists and :cascade.
+
+** Introduction to Multi-table dao class objects
   :PROPERTIES:
   :ID:       e76fc507-bfa6-481b-b429-128ed0ede9e3
   :END:
@@ -1292,126 +1414,6 @@ You could, by creating and enforcing rules on how tables and columns are named,
 create readers and writers that would automagically handle the joins. Postmodern
 is not going to define what those rules are going to be.
 
-* Table definition and creation
-  :PROPERTIES:
-  :ID:       1c0a254a-4a0e-4012-b519-8fe8cbf9ae02
-  :END:
-It can be useful to have the SQL statements needed to build an application's
-tables available from the source code, to do things like automatically deploying
-a database. The following macro and functions allow you to group sets of SQL
-statements under symbols, with some shortcuts for common elements
-in table definitions.
-
-** macro deftable (name &body definition)
-   :PROPERTIES:
-   :ID:       39e40910-e25a-4db4-bd0a-b4b6d1a75630
-   :END:
-
-Define a table. name can be either a symbol or a (symbol string) list. In the
-first case, the table name is derived from the symbol's name by S-SQL's rules.
-In the second case, the name is given explicitly. The body of definitions can
-contain anything that evaluates to a string, as well as S-SQL expressions. The
-variables *table-name* and *table-symbol* are bound to the relevant values in
-the body. Note that the evaluation of the definition is ordered, so you'll
-generally want to create your table first and then define indices on it.
-
-** variable *table-name*
-   :PROPERTIES:
-   :ID:       3e565b16-153c-4281-8f17-3653e7a9dc5d
-   :END:
-
-Used inside deftable to find the name of the table being defined.
-
-** variable **table-symbol*
-   :PROPERTIES:
-   :ID:       551359a0-8d5b-4d4f-932d-df8759105ee1
-   :END:
-
-Used inside deftable to find the symbol naming the table being defined.
-
-** function !dao-def ()
-   :PROPERTIES:
-   :ID:       eb1680a7-2a82-4e6a-b31b-aeea22bf7362
-   :END:
-
-Should only be used inside a deftable form. Define this table using the
-corresponding DAO class' slots. Adds the result of calling dao-table-definition
-on *table-symbol* to the definition.
-
-** function !index (&rest columns), !unique-index (&rest columns)
-   :PROPERTIES:
-   :ID:       5ceae010-3712-400a-9c8c-0616b8406390
-   :END:
-
-Used inside a deftable form. Define an index on the table being defined. The
-columns can be given as symbols or strings.
-
-** function !foreign (target fields &rest target-fields/on-delete/on-update/deferrable/initially-deferred)
-   :PROPERTIES:
-   :ID:       1378528c-3e7a-452b-8775-b3d84d897ebd
-   :END:
-
-Used insde a deftable form. Add a foreign key to the table being defined.
-target-table is the referenced table. columns is a list of column names or
-single name in this table, and, if the columns have different names in the
-referenced table, target-columns must be another list of column names or single
-column name of the target-table, or :primary-key to denote the column(s) of the
-target-table's primary key as referenced column(s).
-
-The on-delete and on-update arguments can be used to specify ON DELETE and ON
-UPDATE actions, as per the keywords allowed in create-table. In addition, the
-deferrable and initially-deferred arguments can be used to indicate whether
-constraint checking can be deferred until the current transaction completed, and
-whether this should be done by default. Note that none of these are
-really &key arguments, but rather are picked out of a &rest arg at runtime, so
-that they can be specified even when target-columns is not given.
-
-** function !unique (target-fields &key deferrable initially-deferred)
-   :PROPERTIES:
-   :ID:       c4631db6-9994-40df-97b7-150df71bb121
-   :END:
-
-Constrains one or more columns to only contain unique (combinations of) values,
-with deferrable and initially-deferred defined as in !foreign
-
-** function create-table (symbol)
-   :PROPERTIES:
-   :ID:       333d4860-6cfe-4009-80f8-a480174d64e1
-   :END:
-
-Takes the name of a dao-class and creates the table identified by symbol by
-executing all forms in its definition as found in the *tables* list.
-
-** function create-all-tables ()
-   :PROPERTIES:
-   :ID:       7477cdc4-59bf-47fb-9b60-25ee9c38eb66
-   :END:
-
-Creates all defined tables.
-
-** function create-package-tables (package)
-   :PROPERTIES:
-   :ID:       8e36190a-a3a4-4e66-8df4-0a6b6b74f617
-   :END:
-
-Creates all tables identified by symbols interned in the given package.
-
-** variables *table-name*, *table-symbol*
-   :PROPERTIES:
-   :ID:       25924943-75d9-4612-b2a3-dc94f292c2a5
-   :END:
-
-Used inside deftable to find the name of the table being defined.
-
-Used inside deftable to find the symbol naming the table being defined.
-
-** function drop-table (table-name &key if-exists cascade)
-   :PROPERTIES:
-   :ID:       0427ecce-416e-4266-a5c7-90e58e22e0b7
-   :END:
-
-If a table exists, drop a table. Available additional key parameters
-are :if-exists and :cascade.
 
 * Database Information
   :PROPERTIES:

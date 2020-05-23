@@ -1,6 +1,7 @@
 #+TITLE: Interval Notes
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 * Setting the Baseline Default Reader
   :PROPERTIES:

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-05-16 Sat 15:31 -->
+<!-- 2020-05-23 Sat 07:24 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Interval Notes</title>
@@ -178,6 +178,7 @@
   /*]]>*/-->
 </style>
 <link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -233,31 +234,31 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org017b1da">Setting the Baseline Default Reader</a></li>
-<li><a href="#org2893c88">Universal Time and Timestamp Libraries</a></li>
-<li><a href="#org99836b1">Intervals - Introduction and Use Cases</a>
+<li><a href="#orgcc9f769">Setting the Baseline Default Reader</a></li>
+<li><a href="#orgb8cbed0">Universal Time and Timestamp Libraries</a></li>
+<li><a href="#org0334c03">Intervals - Introduction and Use Cases</a>
 <ul>
-<li><a href="#org7567fe1">Sample Interval</a></li>
-<li><a href="#org88b03f9">Allowable Formats of the parameter to Interval</a>
+<li><a href="#org369a5b2">Sample Interval</a></li>
+<li><a href="#org4de82ba">Allowable Formats of the parameter to Interval</a>
 <ul>
-<li><a href="#orgdd958cf">SQL Standard Format</a></li>
-<li><a href="#orgb1264f7">Traditional Postgresql Format</a></li>
-<li><a href="#orgd9eb727">ISO 8601 Format with Designators</a></li>
-<li><a href="#org402326b">ISO 8601 Alternative Format</a></li>
+<li><a href="#org82d3839">SQL Standard Format</a></li>
+<li><a href="#org38d3291">Traditional Postgresql Format</a></li>
+<li><a href="#org69bf820">ISO 8601 Format with Designators</a></li>
+<li><a href="#orgd31c519">ISO 8601 Alternative Format</a></li>
 </ul>
 </li>
-<li><a href="#org2076f46">Formatting Intervals to String</a></li>
-<li><a href="#orge03178d">Math with Intervals</a></li>
-<li><a href="#orga1a4e40">Extracting Subparts</a></li>
-<li><a href="#org36d288f">Justify Days and Hours</a></li>
+<li><a href="#org1b037a5">Formatting Intervals to String</a></li>
+<li><a href="#orgf0d6e72">Math with Intervals</a></li>
+<li><a href="#orgaa0d216">Extracting Subparts</a></li>
+<li><a href="#orgf3f8ad0">Justify Days and Hours</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </nav>
-<div id="outline-container-org017b1da" class="outline-2">
-<h2 id="org017b1da"><a id="ID-c6baef62-f431-451c-b297-00db0e48b69f"></a>Setting the Baseline Default Reader</h2>
-<div class="outline-text-2" id="text-org017b1da">
+<div id="outline-container-orgcc9f769" class="outline-2">
+<h2 id="orgcc9f769"><a id="ID-c6baef62-f431-451c-b297-00db0e48b69f"></a>Setting the Baseline Default Reader</h2>
+<div class="outline-text-2" id="text-orgcc9f769">
 <p>
 Just to ensure that we have the same baseline readtable, we are going
 to make sure that the cl-postgres:*sql-readtable* is set to the default.
@@ -270,9 +271,9 @@ to make sure that the cl-postgres:*sql-readtable* is set to the default.
 </div>
 </div>
 </div>
-<div id="outline-container-org2893c88" class="outline-2">
-<h2 id="org2893c88"><a id="ID-49a51426-a091-44f0-8248-bb1169e1f12a"></a>Universal Time and Timestamp Libraries</h2>
-<div class="outline-text-2" id="text-org2893c88">
+<div id="outline-container-orgb8cbed0" class="outline-2">
+<h2 id="orgb8cbed0"><a id="ID-49a51426-a091-44f0-8248-bb1169e1f12a"></a>Universal Time and Timestamp Libraries</h2>
+<div class="outline-text-2" id="text-orgb8cbed0">
 <p>
 Absent anything else, a query to postgresql through postmodern will return a
 universal time. E.g.
@@ -323,9 +324,9 @@ clients are and what do you want to be tracking or calculating to.
 </div>
 </div>
 
-<div id="outline-container-org99836b1" class="outline-2">
-<h2 id="org99836b1"><a id="ID-7b52f41e-83c3-4f27-859f-b2bb80a53c88"></a>Intervals - Introduction and Use Cases</h2>
-<div class="outline-text-2" id="text-org99836b1">
+<div id="outline-container-org0334c03" class="outline-2">
+<h2 id="org0334c03"><a id="ID-7b52f41e-83c3-4f27-859f-b2bb80a53c88"></a>Intervals - Introduction and Use Cases</h2>
+<div class="outline-text-2" id="text-org0334c03">
 <p>
 For a simple tutorial on the Postgresql interval data type, there are
 several online articles, see, e.g. the official documentation at
@@ -339,9 +340,9 @@ Intervals are a way of adding, subtracting, etc a time period with a date.
 </p>
 </div>
 
-<div id="outline-container-org7567fe1" class="outline-3">
-<h3 id="org7567fe1"><a id="ID-630b0d70-4ca3-41d5-848f-01cda8231d95"></a>Sample Interval</h3>
-<div class="outline-text-3" id="text-org7567fe1">
+<div id="outline-container-org369a5b2" class="outline-3">
+<h3 id="org369a5b2"><a id="ID-630b0d70-4ca3-41d5-848f-01cda8231d95"></a>Sample Interval</h3>
+<div class="outline-text-3" id="text-org369a5b2">
 <p>
 Just to see what an interval looks like returned from a query using s-sql. Note
 that the interval parameter is a string within a form provided to the :interval sql-op.
@@ -356,17 +357,17 @@ that the interval parameter is a string within a form provided to the :interval 
 </div>
 </div>
 
-<div id="outline-container-org88b03f9" class="outline-3">
-<h3 id="org88b03f9"><a id="ID-48cca061-c649-44e3-8312-e349de885b3f"></a>Allowable Formats of the parameter to Interval</h3>
-<div class="outline-text-3" id="text-org88b03f9">
+<div id="outline-container-org4de82ba" class="outline-3">
+<h3 id="org4de82ba"><a id="ID-48cca061-c649-44e3-8312-e349de885b3f"></a>Allowable Formats of the parameter to Interval</h3>
+<div class="outline-text-3" id="text-org4de82ba">
 <p>
 There are four different formats available for providing the interval parameter.
 Choose whichever one you like:
 </p>
 </div>
-<div id="outline-container-orgdd958cf" class="outline-4">
-<h4 id="orgdd958cf"><a id="ID-b435a518-a906-4314-800c-3d18f47f8f06"></a>SQL Standard Format</h4>
-<div class="outline-text-4" id="text-orgdd958cf">
+<div id="outline-container-org82d3839" class="outline-4">
+<h4 id="org82d3839"><a id="ID-b435a518-a906-4314-800c-3d18f47f8f06"></a>SQL Standard Format</h4>
+<div class="outline-text-4" id="text-org82d3839">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"1-2"</span>))
   <span style="color: #98fb98; font-weight: bold;">:single</span>)
@@ -376,9 +377,9 @@ Choose whichever one you like:
 </div>
 </div>
 </div>
-<div id="outline-container-orgb1264f7" class="outline-4">
-<h4 id="orgb1264f7"><a id="ID-b7058c5b-d0d9-40b6-8d07-2b02123068b3"></a>Traditional Postgresql Format</h4>
-<div class="outline-text-4" id="text-orgb1264f7">
+<div id="outline-container-org38d3291" class="outline-4">
+<h4 id="org38d3291"><a id="ID-b7058c5b-d0d9-40b6-8d07-2b02123068b3"></a>Traditional Postgresql Format</h4>
+<div class="outline-text-4" id="text-org38d3291">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"3 4:05:06"</span>))
   <span style="color: #98fb98; font-weight: bold;">:single</span>)
@@ -388,9 +389,9 @@ Choose whichever one you like:
 </div>
 </div>
 </div>
-<div id="outline-container-orgd9eb727" class="outline-4">
-<h4 id="orgd9eb727"><a id="ID-43a72f38-6744-48cb-9fdd-6806cea409de"></a>ISO 8601 Format with Designators</h4>
-<div class="outline-text-4" id="text-orgd9eb727">
+<div id="outline-container-org69bf820" class="outline-4">
+<h4 id="org69bf820"><a id="ID-43a72f38-6744-48cb-9fdd-6806cea409de"></a>ISO 8601 Format with Designators</h4>
+<div class="outline-text-4" id="text-org69bf820">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"1 year 2 months 3 days 4 hours 5 minutes 6 seconds"</span>))
   <span style="color: #98fb98; font-weight: bold;">:single</span>)
@@ -400,9 +401,9 @@ Choose whichever one you like:
 </div>
 </div>
 </div>
-<div id="outline-container-org402326b" class="outline-4">
-<h4 id="org402326b"><a id="ID-14de15c4-68d8-4107-95e2-c2976344eafd"></a>ISO 8601 Alternative Format</h4>
-<div class="outline-text-4" id="text-org402326b">
+<div id="outline-container-orgd31c519" class="outline-4">
+<h4 id="orgd31c519"><a id="ID-14de15c4-68d8-4107-95e2-c2976344eafd"></a>ISO 8601 Alternative Format</h4>
+<div class="outline-text-4" id="text-orgd31c519">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #cd8162;">"P0001-02-03T04:05:06"</span>))
   <span style="color: #98fb98; font-weight: bold;">:single</span>)
@@ -414,9 +415,9 @@ Choose whichever one you like:
 </div>
 </div>
 
-<div id="outline-container-org2076f46" class="outline-3">
-<h3 id="org2076f46"><a id="ID-09172b69-1881-4608-bea6-bc51dbd8c3f2"></a>Formatting Intervals to String</h3>
-<div class="outline-text-3" id="text-org2076f46">
+<div id="outline-container-org1b037a5" class="outline-3">
+<h3 id="org1b037a5"><a id="ID-09172b69-1881-4608-bea6-bc51dbd8c3f2"></a>Formatting Intervals to String</h3>
+<div class="outline-text-3" id="text-org1b037a5">
 <p>
 You can use the :to-char sql-op with a format string to provide a single
 string version of the date/time. The ISO 8601 interval format allows
@@ -508,9 +509,9 @@ Just to be different, we can add weeks and days instead of years and months. E.g
 </div>
 </div>
 
-<div id="outline-container-orge03178d" class="outline-3">
-<h3 id="orge03178d"><a id="ID-ce85ec08-d1b8-49b8-9a2a-eb0a6a496ed5"></a>Math with Intervals</h3>
-<div class="outline-text-3" id="text-orge03178d">
+<div id="outline-container-orgf0d6e72" class="outline-3">
+<h3 id="orgf0d6e72"><a id="ID-ce85ec08-d1b8-49b8-9a2a-eb0a6a496ed5"></a>Math with Intervals</h3>
+<div class="outline-text-3" id="text-orgf0d6e72">
 <p>
 Adding or subtracting intervals from each other will result in an interval.
 </p>
@@ -625,9 +626,9 @@ employees with more than 1 year of service.
 </div>
 </div>
 
-<div id="outline-container-orga1a4e40" class="outline-3">
-<h3 id="orga1a4e40"><a id="ID-38666c25-b699-4a8a-8db7-88472b13bc0c"></a>Extracting Subparts</h3>
-<div class="outline-text-3" id="text-orga1a4e40">
+<div id="outline-container-orgaa0d216" class="outline-3">
+<h3 id="orgaa0d216"><a id="ID-38666c25-b699-4a8a-8db7-88472b13bc0c"></a>Extracting Subparts</h3>
+<div class="outline-text-3" id="text-orgaa0d216">
 <p>
 You can extract a part of an interval using :extract.
 </p>
@@ -665,9 +666,9 @@ You can extract a part of an interval using :extract.
 </div>
 </div>
 </div>
-<div id="outline-container-org36d288f" class="outline-3">
-<h3 id="org36d288f"><a id="ID-2ad994c7-2167-41f9-8c5e-6cbc9695e912"></a>Justify Days and Hours</h3>
-<div class="outline-text-3" id="text-org36d288f">
+<div id="outline-container-orgf3f8ad0" class="outline-3">
+<h3 id="orgf3f8ad0"><a id="ID-2ad994c7-2167-41f9-8c5e-6cbc9695e912"></a>Justify Days and Hours</h3>
+<div class="outline-text-3" id="text-orgf3f8ad0">
 <p>
 You can adjust a period of days to be 30 day months and adjust a period
 of hours to be 24 hour days. For example:
