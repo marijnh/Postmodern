@@ -264,6 +264,7 @@ NIL if no such row exists. Objects created by this function will have
 initialize-instance called on them (after loading in the values from the
 database) without any arguments ― even :default-initargs are skipped.
 The same goes for select-dao and query-dao."))
+
 (defgeneric make-dao (type &rest args &key &allow-other-keys)
   (:method ((class-name symbol) &rest args &key &allow-other-keys)
     (let ((class (find-class class-name)))

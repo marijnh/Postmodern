@@ -607,7 +607,8 @@ fully qualified table name e.g. schema-name.table-name."
   "Returns a list of sublists of foreign key info in the form of
    '((constraint-name local-table local-table-column
      foreign-table-name foreign-column-name))"
-  (setf table (s-sql:to-sql-name table))
+  (setf table (to-sql-name table))
+  (setf schema (to-sql-name schema))
   (query
    (:select
     (:as 'conname 'constraint-name)

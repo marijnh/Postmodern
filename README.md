@@ -119,6 +119,7 @@ This is what a database-access class looks like:
                     :accessor country-inhabitants)
        (sovereign :col-type (or db-null string) :initarg :sovereign
                   :accessor country-sovereign))
+       (region-id :col-type integer :initarg :region-id :accessor region-id)
       (:metaclass dao-class)
       (:keys name))
 
@@ -188,18 +189,9 @@ In simple cases you can also use a previously defined dao to create a table as w
 
     (execute (dao-table-definition 'country))
 
-
 This defines our table in the database. execute works like query, but does not expect any results back.
 
-Let us go back to our approach using a dao class and add a few countries:
-
-
-    (insert-dao (make-instance 'country :name "The Netherlands"
-                                        :inhabitants 16800000
-                                        :sovereign "Willem-Alexander"))
-    (insert-dao (make-instance 'country :name "Croatia"
-                                        :inhabitants 4400000))
-
+In cases involving more than one table, you should use the deftable macro. See [Dao_notes](doc/dao-notes.html).
 
 Then, to update Croatia's population, we could do this:
 

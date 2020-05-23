@@ -107,7 +107,7 @@ returned.")
   "Used for supporting both plain string queries and S-SQL constructs.
 Looks at the argument at compile-time and wraps it in (sql ...) if it
 looks like an S-SQL query."
-  (if (and (consp (quote query)) (keywordp (first (quote query))))
+  (if (and (consp query) (keywordp (first query)))
       `(sql ,query)
       query))
 

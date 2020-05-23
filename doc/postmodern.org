@@ -764,6 +764,352 @@ Provides control over the way get-dao, select-dao, and query-dao read values fro
 
 An example of using this is to add some non-column slots to a DAO class, and use query-dao within a with-column-writers form to pull in extra information about the objects, and immediately store it in the new instances.
 
+* Introduction to Multi-table dao class objects
+  :PROPERTIES:
+  :ID:       e76fc507-bfa6-481b-b429-128ed0ede9e3
+  :END:
+
+Postmodern's dao-class objects are not required to be tied down to a specific
+table. They can be used simply as classes to hold data for whatever purpose your
+application may use.
+
+For this introduction, we will use two sets of tables: (1) country-d and
+region-d and (2) country-n and region-n. In each case the country table will
+have a foreign key tied to a region.
+
+A foreign key is a "constraint" referencing a primary key in another table. The
+table containing the foreign key is the referencing or child table and the table
+referenced by the foreign key is the referenced or parent table. The foreign key
+enforces a requirement that the child table column refering to another table
+must refer to a row that exists in the other table. In other words, you cannot
+create a row in table country-d that references a region-d name "Transylvania"
+if the region-d name "Transylvania" does not yet exist in the region-d table. At
+the same time, you could not later delete the region-d row with "Transylvania"
+if the country-d row referencing it still exists.
+
+In our first set of tables, country-d will have a region column that references
+the name column in a region-d table (so the name column in region-d must be the
+primary key for region-d).
+
+This looks relatively straight forward and it is in this simple case. Things
+start getting more complicated if you start having to reference a table where
+there are many items with the same name. An example would be tracking library
+books. There may be multiple copies of a book title, but you need to know which
+book was checked out to which library patron. In these types of situations, the
+primary key cannot be the name of the region, it needs to reference some
+particular id.
+
+In our second set of tables, country-n will have a region-id column that
+references an id column in a region-d table (so the id column in region-d must
+be the primary key for region-d).
+
+*** Denormalized Tables and Daos
+   :PROPERTIES:
+   :ID:       2758d7e8-ae00-4d01-8c8b-c7ff3a827047
+   :END:
+Lets start by declaring our classes and we will use the deftable make to create
+a definition for out tables that gets stored in the *tables* special variable.
+We can then use the (create-table 'class-name) function to create the table in
+the database.
+#+BEGIN_SRC lisp
+(defclass region-d ()
+  ((id :col-type serial :initarg :id :reader region-id)
+   (name :col-type string :initarg :name :accessor region-name))
+  (:metaclass pomo:dao-class)
+  (:keys name))
+
+(deftable region-d
+  (!dao-def)
+  (!unique 'name))
+
+(create-table 'region-d)
+
+(defclass country-d ()
+  ((id :col-type serial :initarg :id :reader country-id)
+   (name :col-type string :initarg :name
+         :reader country-name)
+   (region-name :col-type string :initarg :region-name :accessor region-name))
+   (:metaclass pomo:dao-class)
+   (:keys name))
+
+(deftable country-d
+  (!dao-def)
+  (!foreign 'region-d 'region-name 'name))
+
+(create-table 'country-d)
+#+END_SRC
+By the way, because of the foreign key constraint, postgresql will require that
+the region-d table be created before the country-d table.
+
+Look at *tables* for a moment:
+#+BEGIN_SRC lisp
+*tables*
+((REGION-D . #<FUNCTION (LAMBDA ()) {534D126B}>)
+ (COUNTRY-D . #<FUNCTION (LAMBDA ()) {52A1484B}>))
+#+END_SRC
+The region-d lambda looks like this:
+#+BEGIN_SRC lisp
+  (LAMBDA ()
+    (LET ((*TABLE-NAME* "region_d") (*TABLE-SYMBOL* 'REGION-D))
+      (DOLIST (STAT (LIST (!DAO-DEF) (!UNIQUE 'NAME))) (EXECUTE STAT))))
+#+END_SRC
+The country-d lambda looks like this:
+#+BEGIN_SRC lisp
+  (LAMBDA ()
+    (LET ((*TABLE-NAME* "country_d") (*TABLE-SYMBOL* 'COUNTRY-D))
+      (DOLIST
+          (STAT
+           (LIST (!DAO-DEF) (!FOREIGN 'REGION-D 'REGION-NAME 'NAME)))
+        (EXECUTE STAT))))
+#+END_SRC
+*** Normalized Tables and Daos
+   :PROPERTIES:
+   :ID:       933f58e1-a4da-4e7f-a227-0fac621e14b0
+   :END:
+#+BEGIN_SRC lisp
+(defclass region-n ()
+  ((id :col-type serial :initarg :id :reader region-id)
+   (name :col-type string :initarg :name :accessor region-name))
+  (:metaclass pomo:dao-class)
+  (:keys id))
+
+(deftable region-n
+  (!dao-def)
+  (!unique 'id))
+
+(create-table 'region-n)
+
+(defclass country-n ()
+  ((id :col-type serial :initarg :id :reader country-id)
+   (name :col-type string :initarg :name
+         :reader country-name)
+   (region-id :col-type integer :initarg :region-id :accessor region-id))
+   (:metaclass dao-class)
+   (:keys name))
+
+(deftable country-n
+  (!dao-def)
+  (!foreign 'region-n 'region-id 'id))
+
+(create-table 'country-n)
+#+END_SRC
+
+The new function !foreign insde the deftable adds a foreign key which requires
+that a region with that id already exist before you can insert a country.
+
+Question - is region-id nullable? We did not set it up that way. How do you find
+the region-id? Remember we set the primary key as name for both country and
+region? Lets start by inserting a couple of regions and we will stick with the
+dao method for the moment:
+#+BEGIN_SRC lisp
+(insert-dao (make-instance 'region-d :name "Western Europe"))
+(insert-dao (make-instance 'region-n :name "Western Europe"))
+(insert-dao (make-instance 'region-d :name "Southern Europe"))
+(insert-dao (make-instance 'region-n :name "Southern Europe"))
+#+END_SRC
+
+Now we can add a few countries to country-d:
+#+BEGIN_SRC lisp
+(insert-dao (make-instance 'country-d :name "The Netherlands"
+                                      :region-name "Western Europe"))
+
+(insert-dao (make-instance 'country-d :name "Croatia"
+                                      :region-name "Southern Europe"))
+#+END_SRC
+Now we can add a few countries to country-n:
+#+BEGIN_SRC lisp
+(insert-dao
+  (make-instance 'country-n
+                 :name "The Netherlands"
+                 :region-id (region-id
+                              (get-dao 'region "Western Europe"))))
+
+(insert-dao
+  (make-instance 'country-n
+                 :name "Croatia"
+                 :region-id (region-id
+                              (get-dao 'region "Southern Europe"))))
+#+END_SRC
+
+Now, how to get back the region dao with the name "Western Europe"? For region-d
+it is easy because the name is the primary key. So
+#+BEGIN_SRC lisp
+(get-dao 'region-d "Western Europe")
+#<REGION-D {100A322D43}>
+#+END_SRC
+For region-n it is a little more complicated because the primary key is the id
+column, not the name column. So there are a couple of ways to do it. First is
+select-dao which will return a list of daos meeting a test criteria, in a sorted
+order if that third parameter is also provided. Eg.
+#+BEGIN_SRC lisp
+(select-dao 'region-n (:= 'id 1))
+(#<REGION-N {100AAC6E13}>)
+
+(select-dao 'region-n (:= 'name "Western Europe"))
+(#<REGION-N {100A813CF3}>)
+
+(select-dao 'region-n t 'name)
+(#<REGION-N {100AC90FA3}> #<REGION-N {100AC911B3}>)
+#+END_SRC
+
+Another method with is query-dao, which takes a row and inserts it into a dao.
+That gets us a list of daos meeting the select criteria.
+#+BEGIN_SRC lisp
+(query-dao 'region-n "select * from region_n where name = 'Western Europe'")
+(#<REGION {1009E75E63}>)
+#+END_SRC
+or, using s-sql expression
+#+BEGIN_SRC lisp
+(query-dao 'region-n (:select '*
+                      :from 'region-n
+                      :where (:= 'name "Western Europe")))
+(#<REGION-D {100A50DA13}>)
+#+END_SRC
+But the returned row need not be the result from a single table. Suppose we
+create a third table that has population by year and inserted a couple of rows.
+This time we will do it with s-sql.
+#+BEGIN_SRC lisp
+(query (:create-table 'country-population ((id :type bigserial)
+                                          (country-id :type integer)
+                                          (year :type integer)
+                                          (population :type integer))))
+
+(let ((country-id (query (:select 'id
+                          :from 'country-d
+                          :where (:= 'name "The Netherlands"))
+                         :single)))
+  (query (:insert-rows-into 'country-population
+          :columns 'country-id 'year 'population
+          :values `((,country-id 2014 16830000)
+                    (,country-id 2015 16900000)
+                    (,country-id 2016 16980000)
+                    (,country-id 2017 17080000)))))
+
+(let ((country-id (query (:select 'id
+                          :from 'country-d
+                          :where (:= 'name "Croatia"))
+                         :single)))
+  (query (:insert-rows-into 'country-population
+          :columns 'country-id 'year 'population
+          :values `((,country-id 2014 4255518)
+                    (,country-id 2015 4232873)
+                    (,country-id 2016 4208611)
+                    (,country-id 2017 4182846)))))
+#+END_SRC
+Now we create a class that pulls from all three tables (country, region and
+country-population).
+#+BEGIN_SRC lisp
+(defclass country-with-population ()
+  ((country-name :col-type string :initarg :country-name
+           :reader country-name)
+     (region-name :col-type string :initarg :region-name :accessor region-name)
+     (year :col-type integer :initarg :year :reader year)
+     (population :col-type integer :initarg :population :reader population))
+     (:metaclass dao-class)
+     (:keys country-name))
+#+END_SRC
+Can we use query-dao to get a list of country-with-population daos with the most
+recent population data? The answer is yes. That would give us a class that maybe
+our application can use without having to worry about constantly going back to
+the database to look for the region's name or whatever.
+
+Of course you still need to get the data into the class instances. You could
+write the following one time as a function to generate your list of countries
+with the most recent population data. Note that you need to rename the columns
+to the appropriate initarg name (e.g. 'country-n.name is selected as
+'country-name). You do not need to worry about the order of the selected rows.
+So long as the selections are renamed properly, the slots will be populated
+properly.
+
+In the data that we have in the system, we happen to know that the years
+available are the same for every country. In that case, we just want the
+information for the maximum year. One way to do that would be:
+#+BEGIN_SRC lisp
+(query-dao 'country-with-population
+                 (:select (:as 'country-n.name 'country-name)
+                          'year
+                          (:as 'region-n.name 'region-name)
+                          'population
+                      :from 'country-n
+                      :inner-join 'region-n
+                      :on (:= 'country-n.region-id 'region-n.id)
+                      :inner-join 'country-population
+                      :on (:= 'country-n.id 'country-population.country-id)
+                      :where (:= 'year (:select (:max 'year)
+                                        :from 'country-population))))
+#+END_SRC
+But what happens if the data is not the same for both countries? Lets drop the
+2017 population data row for Croatia and make sure it still returns the most
+current year that we have for both countries.
+#+BEGIN_SRC lisp
+(query (:delete-from 'country-population
+        :where (:and (:= 'country-id 2)
+                     (:= 'year 2017))))
+#+END_SRC
+If we run the same query from above, we only get an instance for The Netherlands
+because that was the only data available for the maximum year (2017). We need to
+approach the data slightly differently.Because this is postmodern and we only
+care about the Postgresql database, we can use its DISTINCT ON extension to the
+SQL standard.
+
+See https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT
+for more documentation.
+
+The following query will pull the most recent year for both countries. How did
+that happen? We limited the select clause to distinct country names so we would
+only pull one of each country, then ordered the result by country-name, but most
+importantly by year descending.
+#+BEGIN_SRC lisp
+(query-dao 'country-with-population
+                 (:order-by (:select  (:as 'country-n.name 'country-name)
+                                      'year
+                                      (:as 'region-n.name 'region-name)
+                                      'population
+                             :distinct-on 'country-n.name
+                             :from 'country-n
+                             :inner-join 'region-n
+                             :on (:= 'country-n.region-id 'region-n.id)
+                             :inner-join 'country-population
+                             :on (:= 'country-n.id
+                                     'country-population.country-id))
+                     'country-name
+                     (:desc 'year)))
+(#<COUNTRY-WITH-POPULATION {1009AFAEC3}>
+ #<COUNTRY-WITH-POPULATION {1009AFC963}>)
+#+END_SRC
+At this point you could write a function that gets a country-with-population dao
+pulling the most recent population year from the database:
+#+BEGIN_SRC lisp
+(defun get-country-with-most-recent-population (country)
+  (car (query-dao 'country-with-population
+                  (:order-by (:select  (:as 'country-n.name 'country-name)
+                                       'year
+                                       (:as 'region-n.name 'region-name)
+                                       'population
+                                       :distinct-on 'country-n.name
+                                       :from 'country-n
+                                       :inner-join 'region-n
+                                       :on (:= 'country-n.region-id
+                                               'region-n.id)
+                                       :inner-join 'country-population
+                                       :on (:= 'country-n.id
+                                               'country-population.country-id)
+                                       :where (:= 'country-n.name '$1))
+                             'country-name
+                             (:desc 'year))
+                  country)))
+#+END_SRC
+Obviously it is not get-dao, which is simpler but just pulls everything in a
+single row from a table and this pulls just the data you want from three
+different tables and it is bespoken for that class. Because get-dao is a generic
+function, with the normal method being applied when passing a symbol, you could
+write a new method for get-dao that would apply if you passed it an actual
+country-with-population class instance.
+
+You could, by creating and enforcing rules on how tables and columns are named,
+create readers and writers that would automagically handle the joins. Postmodern
+is not going to define what those rules are going to be.
+
 * Table definition and creation
   :PROPERTIES:
   :ID:       1c0a254a-4a0e-4012-b519-8fe8cbf9ae02
