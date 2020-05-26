@@ -328,8 +328,10 @@ by a list of three elements: the field name, the type, and a boolean indicating
 whether the field may be NULL. Optionally, schema-name can be specified to
 restrict the result to fields of a table from the named schema. The table and
 schema names can be either strings or quoted."
-  (setf table-name (to-sql-name table-name))
-  (when schema-name (setf schema-name (to-sql-name schema-name)))
+  (let ((split-name (split-fully-qualified-tablename table-name)))
+    (setf table-name (first split-name))
+    (if schema-name (setf schema-name (to-sql-name schema-name))
+        (setf schema-name (second split-name))))
   (let ((schema-test (if (and schema-name
                               (schema-exists-p schema-name)
                               (table-exists-p table-name))
@@ -338,38 +340,51 @@ schema names can be either strings or quoted."
     (mapcar #'butlast
             (query (:order-by
                     (:select 'attname 'typname (:not 'attnotnull) 'attnum :distinct
-                     :from 'pg-catalog.pg-attribute
-                     :inner-join 'pg-catalog.pg-type
+                     :from 'pg-attribute
+                     :inner-join 'pg-type
                      :on (:= 'pg-type.oid 'atttypid)
-                     :inner-join 'pg-catalog.pg-class
+                     :inner-join 'pg-class
                      :on (:and (:= 'pg-class.oid 'attrelid)
                                (:= 'pg-class.relname (to-identifier table-name)))
-                     :inner-join 'pg-catalog.pg-namespace
+                     :inner-join 'pg-namespace
                      :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
                      :where (:and (:> 'attnum 0) (:raw schema-test)))
                     'attnum)))))
 
-(defun table-description-plus (table-name)
+(defun table-description-plus (table-name &optional schema-name)
   "Returns more table info than table-description. Table can be either a string
 or quoted. Specifically returns ordinal-position, column-name, data-type,
 character-maximum-length, modifier, whether it is not-null and the default value."
-  (query (:order-by (:select (:as 'a.attnum 'ordinal-position)
-                             (:as 'a.attname 'column-name)
-                             (:as 'tn.typname 'data-type)
-                             (:as 'a.attlen  'character-maximum-length)
-                             (:as 'a.atttypmod 'modifier)
-                             (:as 'a.attnotnull 'notnull)
-                             (:as 'a.atthasdef 'hasdefault)
-                             :from (:as 'pg_class 'c)
-                             (:as 'pg_attribute 'a)
-                             (:as 'pg_type 'tn)
-                             :where (:and
-                                     (:= 'c.relname '$1)
-                                     (:> 'a.attnum 0)
-                                     (:= 'a.attrelid 'c.oid)
-                                     (:= 'a.atttypid 'tn.oid)))
-                    'a.attnum)
-         (to-sql-name table-name)))
+  (let ((split-name (split-fully-qualified-tablename table-name)))
+    (setf table-name (first split-name))
+    (if schema-name (setf schema-name (to-sql-name schema-name))
+        (setf schema-name (second split-name))))
+  (let ((schema-test (if (and schema-name
+                              (schema-exists-p schema-name)
+                              (table-exists-p table-name))
+                         (sql (:= 'pg-namespace.nspname schema-name))
+                         "true")))
+    (mapcar #'butlast
+            (query (:order-by
+                    (:select
+                     (:as 'a.attnum 'ordinal-position)
+                     (:as 'a.attname 'column-name)
+                     (:as 'tn.typname 'data-type)
+                     (:as 'a.attlen  'character-maximum-length)
+                     (:as 'a.atttypmod 'modifier)
+                     (:as 'a.attnotnull 'notnull)
+                     (:as 'a.atthasdef 'hasdefault)
+                     :distinct
+                     :from (:as 'pg-attribute 'a)
+                     :inner-join (:as 'pg-type 'tn)
+                     :on (:= 'tn.oid 'a.atttypid)
+                     :inner-join 'pg-class
+                     :on (:and (:= 'pg-class.oid 'attrelid)
+                               (:= 'pg-class.relname (to-identifier table-name)))
+                     :inner-join 'pg-namespace
+                     :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+                     :where (:and (:> 'attnum 0) (:raw schema-test)))
+                    'ordinal-position)))))
 
 ;; Columns
 (defun list-columns (table-name)
