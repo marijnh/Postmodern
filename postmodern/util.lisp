@@ -54,7 +54,130 @@ fully qualified, it will assume that the schema should be \"public\"."
     (when (not schema) (setf schema "public"))
     (list table schema database)))
 
+(defun postgresql-version ()
+  "Returns the version of the current postgresql instance from postgresql itself instead of from the connection."
+  (query (:select (:version)) :single))
+
+;; COMMENT ON TRANSFORM FOR hstore LANGUAGE plpythonu IS 'Transform between hstore and Python dict';
+
+(defun add-comment (type name comment &optional (second-name ""))
+  "Attempts to add a comment to a particular database object. The first parameter is a keyword for the type of database object. The second parameter is the name of the object. The third parameter is the comment itself. Some objects require an additional identifier. The names can be strings or symbols.
+
+Example usage would be:
+ (add-comment :column 'country-locations.name \"Is what it looks like - the name of a country\".)
+
+ (add-comment :column \"country_locations.name\" \"Is what it looks like - the name of a country\".)
+
+Example usage where two identifiers are required would be constraints:
+
+ (add-comment :constraint 'constraint1  \"Some kind of constraint descriptions here\". 'country-locations)"
+
+  (setf name (to-sql-name name))
+  (setf second-name (to-sql-name second-name))
+  (case type
+    (:access-method (query (format nil "comment on ACCESS METHOD ~a is '~a'" name comment)))
+    (:aggregate (query (format nil "comment on AGGREGATE ~a is '~a'"  name comment)))
+    (:cast (query (format nil "comment on CAST (~a as ~a) is '~a'"  name second-name comment)))
+    (:column (query (format nil "comment on COLUMN ~a is '~a'"  name comment)))
+    (:conversion (query (format nil "comment on CONVERSION m~a is '~a'" name comment)))
+    (:constraint (query (format nil "comment on CONSTRAINT ~a on ~a is '~a'"  name second-name comment)))
+    (:domain-constraint (query (format nil "comment on CONSTRAINT ~a on DOMAIN ~a is '~a'"  name second-name comment)))
+    (:database (query (format nil "comment on DATABASE ~a is '~a'"  name comment)))
+    (:domain (query (format nil "comment on DOMAIN ~a is '~a'"  name comment)))
+    (:extension (query (format nil "comment on EXTENSION ~a is '~a'"  name comment)))
+    (:foreign-data-wrapper (query (format nil "comment on FOREIGN DATA WRAPPER ~a is '~a'"  name comment)))
+    (:foreign-table (query (format nil "comment on FOREIGN TABLE ~a is '~a'"  name comment)))
+    (:function (query (format nil "comment on FUNCTION ~a is '~a'"  name comment)))
+    (:index (query (format nil "comment on INDEX ~a is '~a'"  name comment)))
+    (:language (query (format nil "comment on LANGUAGE ~a is '~a'"  name comment)))
+    (:large-object (query (format nil "comment on LARGE OBJECT ~a is '~a'"  name comment)))
+    (:materialized-view (query (format nil "comment on MATERIALIZED VIEW ~a is '~a'"  name comment)))
+    (:operator (query (format nil "comment on OPERATOR ~a is '~a'"  name  comment)))
+    (:operator-class (query (format nil "comment on OPERATOR CLASS ~a USING ~a is '~a'"  name second-name comment)))
+    (:operator-family (query (format nil "comment on OPERATOR FAMILY ~a USING ~a is '~a'"  name second-name comment)))
+    (:policy (query (format nil "comment on POLICY ~a on ~a is '~a'"  name second-name comment)))
+    (:procedure (query (format nil "comment on PROCEDURE ~a is '~a'"  name comment)))
+    (:role (query (format nil "comment on ROLE ~a is '~a'"  name comment)))
+    (:rule (query (format nil "comment on RULE ~a on ~a is '~a'"  name second-name comment)))
+    (:schema (query (format nil "comment on SCHEMA ~a is '~a'"  name comment)))
+    (:sequence (query (format nil "comment on SEQUENCE ~a is '~a'"  name comment)))
+    (:server (query (format nil "comment on SERVER ~a is '~a'"  name comment)))
+    (:statistics (query (format nil "comment on STATisTICS ~a is '~a'"  name comment)))
+    (:table (query (format nil "comment on TABLE ~a is '~a'"  name comment)))
+    (:tablespace (query (format nil "comment on TABLESPACE ~a is '~a'"  name comment)))
+    (:text-search-configuration (query (format nil "comment on TEXT SEARCH CONFIGURATIon ~a is '~a'"  name comment)))
+    (:text-search-dictionary (query (format nil "comment on TEXT SEARCH DICTIONARY ~a is '~a'"  name comment)))
+    (:text-search-parser (query (format nil "comment on TEXT SEARCH PARSER ~a is '~a'"  name comment)))
+    (:text-search-template (query (format nil "comment on TEXT SEARCH TEMPLATE ~a is '~a'"  name comment)))
+    (:trigger (query (format nil "comment on TRIGGER ~a on ~a is '~a'"  name second-name comment)))
+    (:type (query (format nil "comment on TYPE ~a is '~a'"  name comment)))
+    (:view (query (format nil "comment on VIEW ~a is '~a'"  name comment)))))
+
 ;;; Databases
+(define-condition invalid-database-name (error)
+  ((text :initarg :text :reader text))
+  (:documentation "Invalid-database-name indicates that this database does not
+exist in this cluster or the user does not have the permissions necessary to
+access this database."))
+
+(defun database-exists-p (database)
+  "Returns database name string if the database parameter is actually an
+available database"
+  (if (member (to-sql-name database) (list-databases) :test 'equal :key #'first)
+      database
+      (cerror "invalid database name provided" 'invalid-database-name)))
+
+(defparameter *character-sets*
+  '("EUC_CN" "EUC_JP" "EUC_JIS_2004" "EUC_KR" "EUC_TW" "ISO_8859_5" "ISO_8859_6"
+    "ISO_8859_7" "ISO_8859_8" "KOI8R" "KOI8U" "LATIN1" "LATIN2" "LATIN3" "LATIN4"
+    "LATIN5" "LATIN6" "LATIN7" "LATIN8" "LATIN9" "LATIN10" "MULE_INTERNAL"
+    "SQL_ASCII" "UTF8" "WIN866" "WIN874" "WIN1250" "WIN1251" "WIN1252" "WIN1253"
+    "WIN1254" "WIN1255" "WIN1256" "WIN1257" "WIN1258"))
+
+(defparameter *collations* nil)
+
+(defun list-available-collations ()
+  "Get a list of the collations available from the current database cluster."
+  (setf *collation-support* (query "select collname from pg_collation")))
+
+(defun collation-exists-p (collation)
+  (member collation (query "select collname from pg_collation")  :test 'equal))
+
+(defun character-set-exists-p (char-support)
+  (member char-support *character-sets* :test 'equalp))
+
+(defun create-database (database-name &key (encoding "UTF8") (owner "")
+                                        (connection-limit -1)
+                                        (limit-public-access nil)
+                                        (comment nil))
+  "Creates a basic database. Besides the obvious database-name parameter, you
+can also use key parameters to set encoding (defaults to UTF8), owner,
+connection-limit (defaults to no limit)). If limit-public-access is set to t,
+then only superuser roles or roles with explicit access to this database will
+be able to access it."
+  (setf database-name (to-sql-name database-name))
+  (cond ((equal owner "")
+         (setf owner (cl-postgres::connection-user *database*)))
+        ((stringp owner)
+         nil)
+        (t (setf owner (cl-postgres::connection-user *database*))))
+  (when (and (character-set-exists-p encoding)
+             (integerp connection-limit))
+    (query (format nil "create database ~a owner ~a encoding ~a connection limit = ~a"
+                   database-name owner encoding connection-limit))
+    (when limit-public-access
+      (query (format nil "revoke all privileges on database ~a from public;"
+                     database-name)))
+    (when comment (query (format nil "comment on database ~a is '~a'"
+                                 database-name comment)))))
+
+(defun drop-database (database)
+  "Drop the specified database. Note: This cannot be the database you are
+already connected to."
+  (setf database (to-sql-name database))
+  (if (database-exists-p database)
+      (query (format nil "drop database ~a" database))
+      (cerror "invalid database name provided" 'invalid-database-name)))
 
 (defun num-records-in-database ()
   "Returns a list of lists with schema, table name and approximate number of
@@ -66,11 +189,6 @@ records in the currently connected database."
 (defun current-database ()
   "Returns the string name of the current database."
   (query (:select (:current-database)) :single))
-
-(defun database-exists-p (database-name)
-  "Checks to see if a particular database exists. Returns T if true, nil if not."
-  (setf database-name (to-sql-name database-name))
-  (if (member database-name (list-databases :size nil) :test 'equal) t nil))
 
 (defun database-size (&optional (name nil))
   "Given the name of a database, will return the name, a pretty-print string of
@@ -87,33 +205,53 @@ provided, it will return the result for the currently connected database."
                    :where (:= 'datname '$1))
           (to-sql-name name))))
 
-(defun list-databases (&key (order-by-size nil) (size t))
+(defun get-database-comment (database-name)
+  "Returns the comment, if any, attached to a database"
+  (setf database-name (to-sql-name database-name))
+  (when (database-exists-p database-name)
+    (query "SELECT pg_catalog.shobj_description(d.oid, 'pg_database')
+                      FROM   pg_catalog.pg_database d
+                      WHERE  datname = $1" database-name
+                  :single)))
+
+(defun list-databases (&key (order-by-size nil) (size t) (names-only nil))
   "Returns a list of lists where each sub-list contains the name of the
 database, a pretty-print string of the size of that database and the size in bytes.
-The default order is by database name. Pass t as a parameter to :order-by-size
-for order by size. Setting size to nil will return just the database names in a
-single list ordered by name. This function excludes the template databases."
+The default order is by database name. Pass t as a parameter to :order-by-size for order by size.
+Setting size to nil will return just the database names in a single list
+ordered by name. This function excludes the template databases."
   (if order-by-size
       (setf order-by-size (sql (:desc (:pg-database-size 'pg-database.oid))))
       (setf order-by-size " datname"))
-  (cond (size
-         (query
-          (:order-by
-           (:select 'datname
-                    (:pg-size-pretty
-                     (:pg-database-size 'pg-database.oid))
-                    (:pg-database-size 'pg-database.oid)
-            :from 'pg-database
-            :where (:not (:like 'datname "template%")))
-           (:raw order-by-size))))
-        (t
-         (loop for x in (query
-                         (:order-by
-                          (:select 'datname
-                           :from 'pg-database
-                           :where (:not (:like 'datname "template%")))
-                          (:raw order-by-size)))
-               collect (first x)))))
+  (cond
+    (names-only
+     (alexandria:flatten
+      (query
+       (:order-by
+        (:select 'datname
+         :from 'pg-database
+         :where (:not (:like 'datname "template%")))
+        'datname))))
+    (size
+     (query
+      (:order-by
+       (:select 'datname
+                (:pg-size-pretty
+                 (:pg-database-size 'pg-database.oid))
+                (:pg-database-size 'pg-database.oid)
+        :from 'pg-database
+        :where (:not (:like 'datname "template%")))
+       (:raw order-by-size))))
+
+    (t
+     (loop for x in (query
+                     (:order-by
+                      (:select 'datname
+                       :from 'pg-database
+                       :where (:not (:like 'datname "template%")))
+                      (:raw order-by-size)))
+           collect (first x)))))
+
 
 ;;;; Schemas
 ;;;; See namespace.lisp
@@ -155,8 +293,7 @@ for details on usage."
 :if-exists and :cascade"
   (let ((query-string
           (concatenate 'string
-                       "DROP "
-                       "SEQUENCE "
+                       "DROP SEQUENCE "
                        (if if-exists "IF EXISTS " "")
                        (to-sql-name name)
                        (if cascade " CASCADE" ""))))
@@ -199,17 +336,165 @@ be stored on a less expensive, slower disk system."
                                    'spcname))
         collect (first x)))
 
+;;;; Types
 (defun list-available-types ()
   "List the available data types in the connected postgresql version, It returns
 a list of lists, each sublist containing the oid (object identifier number) and
-the name of the data types. E.g. (21 "smallint")"
+the name of the data types. E.g. (21 \"smallint\")"
   (query (:select 'oid (:as (:format-type :oid :NULL) 'typename)
                   :from 'pg-type
                   :where (:= 'typtype "b"))))
 
-
 ;;; Tables
 ;;; create table can only be done either using a deftable approach or s-sql
+(defun get-table-comment (table-name &optional schema-name)
+  "Get table comment retrieves the comment attached to a table, if any."
+  (let ((split-name (split-fully-qualified-tablename table-name)))
+    (setf table-name (first split-name))
+    (if schema-name (setf schema-name (to-sql-name schema-name))
+        (setf schema-name (second split-name))))
+  (query (:select 'description
+          :from 'pg_description
+          :inner-join 'pg_class
+          :on (:= 'pg_description.objoid 'pg_class.oid)
+          :inner-join 'pg-namespace
+          :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+          :where (:and (:= 'pg-class.relname '$1)
+                       (:= 'pg-namespace.nspname '$2)))
+         table-name schema-name :single))
+
+(defun get-all-table-comments ()
+  "Returns a list of lists, each list showing the schema, table and comment
+of all tables with comments."
+  (query "select pg_namespace.nspname as schema,
+                 relname as table,
+                 description
+          from pg_description
+          inner join pg_class
+          on objoid = oid
+          inner join pg_namespace
+          on pg_namespace.oid = pg_class.relnamespace
+          where relkind = 'r'"))
+
+(defun get-table-oid (table-name &optional schema-name)
+  "Retrieves the oid identifier for a particular table from postgresql. Works
+for tables in all schemas."
+  (let ((split-name (split-fully-qualified-tablename table-name)))
+    (setf table-name (first split-name))
+    (if schema-name (setf schema-name (to-sql-name schema-name))
+        (setf schema-name (second split-name))))
+  (query (:select 'pg-class.oid
+          :from 'pg-class
+          :inner-join 'pg-namespace
+          :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+          :where (:and (:= 'pg-class.relname '$1)
+                       (:= 'pg-namespace.nspname '$2)))
+         table-name schema-name :single))
+
+(defun get-table-comment (table-name &optional schema-name)
+  "Retrieves the comment, if any attached to the table"
+  (let ((split-name (split-fully-qualified-tablename table-name)))
+    (setf table-name (first split-name))
+    (if schema-name (setf schema-name (to-sql-name schema-name))
+        (setf schema-name (second split-name))))
+  (query (:select 'description
+          :from 'pg-description
+          :inner-join 'pg-class
+          :on (:= 'objoid 'oid)
+          :inner-join 'pg-namespace
+          :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+          :where (:and (:= 'pg-class.relname '$1)
+                       (:= 'pg-namespace.nspname '$2)))
+         table-name schema-name :single))
+
+(defun table-description (table-name &optional schema-name)
+  "Returns a list of the fields in the named table. Each field is represented
+by a list of three elements: the field name, the type, and a boolean indicating
+whether the field may be NULL.
+
+Table can be either a string or quoted. Table-names can be fully qualified with
+the schema or not. If the table-name is not fully qualified and a schema name
+is not provided, the table will be assumed to be in the public schema."
+  (let ((split-name (split-fully-qualified-tablename table-name)))
+    (setf table-name (first split-name))
+    (if schema-name (setf schema-name (to-sql-name schema-name))
+        (setf schema-name (second split-name))))
+  (mapcar #'butlast
+          (query (:order-by
+                  (:select 'attname 'typname (:not 'attnotnull) 'attnum :distinct
+                   :from 'pg-attribute
+                   :inner-join 'pg-type
+                   :on (:= 'pg-type.oid 'atttypid)
+                   :inner-join 'pg-class
+                   :on (:and (:= 'pg-class.oid 'attrelid)
+                             (:= 'pg-class.relname '$1))
+                   :inner-join 'pg-namespace
+                   :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+                   :where (:and (:> 'attnum 0)
+                                (:= 'pg-namespace.nspname '$2)))
+                  'attnum)
+                 table-name schema-name)))
+
+
+#|
+column_name data_type column_default is_nullable collation_name is_identity |  character_maximum_length | character_octet_length | numeric_precision | numeric_precision_radix | numeric_scale | datetime_precision | interval_type | interval_precision | character_set_catalog | character_set_schema | character_set_name | collation_catalog | collation_schema |  | domain_catalog | domain_schema | domain_name | udt_catalog | udt_schema | udt_name | scope_catalog | scope_schema | scope_name | maximum_cardinality | dtd_identifier | is_self_referencing | | identity_generation | identity_start | identity_increment | identity_maximum | identity_minimum | identity_cycle | is_generated | generation_expression | is_updatable
+|#
+
+
+(defun table-description-plus (table-name &optional schema-name)
+  "Returns more table info than table-description. Specifically returns
+column-name, data-type, character-maximum-length, modifier,
+whether it is not-null and the default value.
+
+Table can be either a string or quoted. Table-names can be fully qualified with
+the schema or not. If the table-name is not fully qualified and a schema name
+is not provided, the table will be assumed to be in the public schema."
+  (let ((split-name (split-fully-qualified-tablename table-name)))
+    (setf table-name (first split-name))
+    (if schema-name (setf schema-name (to-sql-name schema-name))
+        (setf schema-name (second split-name))))
+  (mapcar #'butlast
+          (query (:order-by
+                  (:select
+                   (:as 'a.attname 'column-name)
+                   (:as 'tn.typname 'data-type)
+                   (:as 'a.attlen  'character-maximum-length)
+                   (:as 'a.atttypmod 'modifier)
+                   (:as 'a.attnotnull 'notnull)
+                   (:as 'a.atthasdef 'hasdefault)
+                   (:as 'a.attnum 'ordinal-position)
+                   :distinct
+                   :from (:as 'pg-attribute 'a)
+                   :inner-join (:as 'pg-type 'tn)
+                   :on (:= 'tn.oid 'a.atttypid)
+                   :inner-join 'pg-class
+                   :on (:and (:= 'pg-class.oid 'attrelid)
+                             (:= 'pg-class.relname (to-identifier table-name)))
+                   :inner-join 'pg-namespace
+                   :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+                   :where (:and (:> 'attnum 0)
+                                (:= 'pg-namespace.nspname '$1)))
+                  'ordinal-position)
+                 schema-name)))
+
+(defun list-all-tables (&optional (fully-qualified-names-only nil))
+  "If fully-qualified-names-only is set to t, returns all schema.table names other
+than pg_catalog or the information_schema. Otherwise returns the following info:
+
+schema-name, table-name, table-owner, tablespace, hasindexes, hasrules, hastriggers
+and rowsecurity"
+  (if fully-qualified-names-only
+      (alexandria:flatten
+       (query "select schemaname ||'.'|| tablename as name
+               from pg_catalog.pg_tables
+               where schemaname != 'pg_catalog'
+               and schemaname != 'information_schema'
+               order by name"))
+       (query "select *
+               from pg_catalog.pg_tables
+               where schemaname != 'pg_catalog'
+               and schemaname != 'information_schema'
+               order by schemaname, tablename")))
 
 (defun list-tables-in-schema (&optional (schema-name "public") (strings-p nil))
   "Returns a list of tables in a particular schema, defaulting to public.
@@ -233,13 +518,13 @@ will be returned as strings with underscores converted to hyphens."
     (if strings-p (mapcar 'from-sql-name result) result )))
 
 (defun list-tables (&optional (strings-p nil))
-  "Return a list of the tables in the public schema of a database. By default
-the table names are returned as keywords. They will be returned as lowercase
-strings if strings-p is true."
+  "DEPRECATED FOR LIST-ALL-TABLES. Return a list of the tables in the public
+schema of a database. By default the table names are returned as keywords.
+They will be returned as lowercase strings if strings-p is true."
   (let ((result (query (make-list-query "r") :column)))
     (if strings-p result (mapcar 'from-sql-name result))))
 
-(defun table-exists-p (table-name &optional (schema-name nil))
+(defun table-exists-p (table-name &optional schema-name)
   "Check whether a table exists in a particular schema. Defaults to the search
 path. Takes either a string or a symbol for the table name. The table-name can
 be fully qualified in the form of schema.table-name or database.schema.table-name.
@@ -248,7 +533,7 @@ schema-name parameter, we look directly to the information schema tables.
 Otherwise we use the search path which can be controlled by being within a
 with-schema form."
   (let* ((destructured-table-name (split-fully-qualified-tablename table-name))
-         (schema (if schema-name schema-name (second destructured-table-name)))
+         (schema (if schema-name (to-sql-name schema-name) (second destructured-table-name)))
          (table (or (first destructured-table-name) table-name))
          (result (if schema
                      (member (to-sql-name table)
@@ -258,7 +543,7 @@ with-schema form."
                                        :from 'information-schema.tables
                                        :where (:= 'table-schema '$1))
                                       'table-name)
-                                     (to-sql-name schema)))
+                                     schema))
                              :test 'equal)
                      (query (make-exists-query "r" table) :single))))
     (if result t nil)))
@@ -322,113 +607,72 @@ either a string or quoted."
          :single
          (to-sql-name table-name)))
 
-(defun table-description (table-name &optional schema-name)
-  "Returns a list of the fields in the named table. Each field is represented
-by a list of three elements: the field name, the type, and a boolean indicating
-whether the field may be NULL. Optionally, schema-name can be specified to
-restrict the result to fields of a table from the named schema. The table and
-schema names can be either strings or quoted."
-  (let ((split-name (split-fully-qualified-tablename table-name)))
-    (setf table-name (first split-name))
-    (if schema-name (setf schema-name (to-sql-name schema-name))
-        (setf schema-name (second split-name))))
-  (let ((schema-test (if (and schema-name
-                              (schema-exists-p schema-name)
-                              (table-exists-p table-name))
-                         (sql (:= 'pg-namespace.nspname schema-name))
-                         "true")))
-    (mapcar #'butlast
-            (query (:order-by
-                    (:select 'attname 'typname (:not 'attnotnull) 'attnum :distinct
-                     :from 'pg-attribute
-                     :inner-join 'pg-type
-                     :on (:= 'pg-type.oid 'atttypid)
-                     :inner-join 'pg-class
-                     :on (:and (:= 'pg-class.oid 'attrelid)
-                               (:= 'pg-class.relname (to-identifier table-name)))
-                     :inner-join 'pg-namespace
-                     :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
-                     :where (:and (:> 'attnum 0) (:raw schema-test)))
-                    'attnum)))))
-
-(defun table-description-plus (table-name &optional schema-name)
-  "Returns more table info than table-description. Table can be either a string
-or quoted. Specifically returns ordinal-position, column-name, data-type,
-character-maximum-length, modifier, whether it is not-null and the default value."
-  (let ((split-name (split-fully-qualified-tablename table-name)))
-    (setf table-name (first split-name))
-    (if schema-name (setf schema-name (to-sql-name schema-name))
-        (setf schema-name (second split-name))))
-  (let ((schema-test (if (and schema-name
-                              (schema-exists-p schema-name)
-                              (table-exists-p table-name))
-                         (sql (:= 'pg-namespace.nspname schema-name))
-                         "true")))
-    (mapcar #'butlast
-            (query (:order-by
-                    (:select
-                     (:as 'a.attnum 'ordinal-position)
-                     (:as 'a.attname 'column-name)
-                     (:as 'tn.typname 'data-type)
-                     (:as 'a.attlen  'character-maximum-length)
-                     (:as 'a.atttypmod 'modifier)
-                     (:as 'a.attnotnull 'notnull)
-                     (:as 'a.atthasdef 'hasdefault)
-                     :distinct
-                     :from (:as 'pg-attribute 'a)
-                     :inner-join (:as 'pg-type 'tn)
-                     :on (:= 'tn.oid 'a.atttypid)
-                     :inner-join 'pg-class
-                     :on (:and (:= 'pg-class.oid 'attrelid)
-                               (:= 'pg-class.relname (to-identifier table-name)))
-                     :inner-join 'pg-namespace
-                     :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
-                     :where (:and (:> 'attnum 0) (:raw schema-test)))
-                    'ordinal-position)))))
-
 ;; Columns
+(defun get-column-comments (database schema table)
+ "Retrieves a list of lists of column names and comments, if any, from a table "
+  (query (format nil "SELECT
+    cols.column_name,
+    (
+        SELECT
+            pg_catalog.col_description(c.oid, cols.ordinal_position::int)
+        FROM pg_catalog.pg_class c
+        WHERE
+            c.oid     = (SELECT cols.table_name::regclass::oid) AND
+            c.relname = cols.table_name
+    ) as column_comment
+
+    FROM information_schema.columns cols
+    WHERE
+    cols.table_catalog = '~a' AND
+    cols.table_schema  = '~a' AND
+    cols.table_name    = '~a';" database schema table)))
+
 (defun list-columns (table-name)
   "Returns a list of strings of just the column names in a table.
-Pulls info from the postmodern table-description function
-rather than directly."
+Pulls info from the postmodern table-description function rather than directly.
+The table-name can be a string or quoted. Any table-name that is not fully
+qualified with the schema will be assumed to be in the public schema."
   (when (table-exists-p table-name)
     (loop for x in (table-description table-name)
           collect (first x))))
 
 (defun list-columns-with-types (table-name)
-  "Return a list of (name type) lists for the fields of a table. Goes
-directly to the pg-catalog tables."
-  (setf table-name (to-sql-name table-name))
+  "Returns a list of (name type) lists for the fields of a table. Returns a list
+of strings of just the column names and their sql data types in a table. Pulls
+info from the postmodern table-description function rather than directly. The
+table-name can be a string or quoted. Any table-name that is not fully qualified
+with the schema will be assumed to be in the public schema."
   (when (table-exists-p table-name)
-    (query
-     (:select (:as 'a.attname 'column)
-              (:as (:pg-catalog.format_type 'a.atttypid  'a.atttypmod)
-                   'datatype)
-              :from (:as 'pg-catalog.pg-attribute 'a)
-              :where (:and
-                      (:> 'a.attnum 0)
-                      (:not 'a.attisdropped)
-                      (:= 'a.attrelid
-                          (:select
-                           'c.oid
-                           :from (:as 'pg-catalog.pg-class 'c)
-                           :left-join (:as 'pg-catalog.pg-namespace 'n)
-                           :on (:= 'n.oid 'c.relnamespace)
-                           :where (:and
-                                   (:= 'c.relname '$1)
-                                   (:pg-catalog.pg-table-is-visible 'c.oid))))))
-     table-name)))
+    (loop for x in (table-description table-name)
+          collect (list (first x) (second x)))))
 
-(defun column-exists-p (table-name column-name)
+(defun column-exists-p (table-name column-name &optional schema-name)
   "Determine if a particular column exists. Table name and column-name can be
-either strings or symbols."
-  (query (:select 'attname :from 'pg_attribute
-          :where (:= 'attrelid
-                     (:select 'oid :from 'pg-class
-                      :where (:and (:= 'relname '$1)
-                                   (:= 'attname '$2)))))
-         (to-sql-name table-name) (to-sql-name column-name)
-         :single))
+either strings or symbols. If the optional schema name is not given or the
+table-name is not fully qualified with a schema name, the schema will be assumed
+to be the public schema."
+    (let ((split-name (split-fully-qualified-tablename table-name)))
+    (setf table-name (first split-name))
+    (if schema-name (setf schema-name (to-sql-name schema-name))
+        (setf schema-name (second split-name))))
+  (let ((schema-test (if (and schema-name
+                              (schema-exists-p schema-name)
+                              (table-exists-p table-name))
+                         (sql (:= 'pg-namespace.nspname schema-name))
+                         "true")))
+    (query (:select
+            (:as 'a.attname 'column-name)
+            :distinct
+            :from (:as 'pg-attribute 'a)
+            :inner-join 'pg-class
+            :on (:and (:= 'pg-class.oid 'attrelid)
+                      (:= 'pg-class.relname (to-identifier table-name)))
+            :inner-join 'pg-namespace
+            :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+            :where (:and (:> 'attnum 0) (:raw schema-test)
+                         (:= '$1 'a.attname)))
+           (to-sql-name column-name)
+           :single)))
 
 ;;; Views
 (defun list-views (&optional strings-p)
@@ -1089,3 +1333,48 @@ percentage."
                   ORDER BY ~a DESC
                     LIMIT ~a;" num-calls ob limit)))
     (query sql-statement)))
+
+;;; Document Database Functions
+(defun document-schema (schema out)
+  "Outputs some schema description info to out"
+  (format out "~%* Schema ~a~%" schema)
+  (format out "~%** Table Sizes~%")
+  (format out "Pretty size is bytes, KB, MB, etc. ~% Table+Toast is the size of the table not counting indexes plus TOAST (parts of a table stored out of line due to physical rows crossing block boundaries.~% Table+Indices is total size in bytes~% Table Alone is just the size of the main table without the TOAST parts stored outside the main table.~% Index size is the size of the associated indices in bytes. ~% Num 8k pages are the number of pages used assuming postgresql was compiled normally with 8k pages.~% More information is available at [[https://www.postgresql.org/docs/current/disk-usage.html]]~%")
+  (format out "~%| Schema | Name | Rows | Type | Owner | Pretty Size | Table+Toast Size | Table+Indices | Table Alone | Index Size | Num 8K Pages | Description |~%")
+  (loop for y in (list-table-sizes schema) do
+    (format out "|~{ ~a |~}~%" y))
+  (format out "~%"))
+
+(defun document-table (schema table out)
+  "Outputs some table description info to out"
+  (format out "~%** ~a.~a~%" schema table)
+  ;; Table Description
+  (format out "~%The following information for this table is shown in the following table: (column-name, data type, substring, whether it is not nullable, whether it has a default value, collation, whether it is an identity column, whether it is a generated column, the storage type, attstattarget and a column description/comment if any. attstattarget controls the level of detail of statistics accumulated for this column by ANALYZE. A zero value indicates that no statistics should be collected. A negative value says to use the system default statistics target. The exact meaning of positive values is data type-dependent. For scalar data types, attstattarget is both the target number of most common values to collect, and the target number of histogram bins to create. Attstorage is normally a copy of pg_type.typstorage of this column's type. For TOAST-able data types, this can be altered after column creation to control storage policy. ~%")
+  (format out "~%~%| Col. Name | Data Type | Substring | Not Null? | Has Default? | Collation | Attstattarget | Attstorage | Identity Col? | Generated Col? |Col-Description |~%")
+  (loop for z in (table-description (format nil "~a.~a" (to-sql-name schema) (to-sql-name table))) do
+          (format out "|~{ ~a |~}~%" z)))
+
+(defun document-database (output-file)
+  "Writes a description of the currently connected database to a file"
+  (with-open-file (out output-file :direction :output :if-exists :supersede)
+    (format out "#+TITLE:    Documentation for ~a~%
+#+DESCRIPTION:~a%~%"
+            (current-database) "Insert current description here")
+    (format out "#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"css/htmlize.css\"/>
+#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"css/readtheorg.css\"/>
+#+HTML_HEAD: <script type=\"text/javascript\" src=\"js/jquery.min.js\"></script>
+#+HTML_HEAD: <script type=\"text/javascript\" src=\"js/bootstrap.min.js\"></script>
+#+HTML_HEAD: <script type=\"text/javascript\" src=\"js/jquery.stickytableheaders.min.js\"></script>
+#+HTML_HEAD: <script type=\"text/javascript\" src=\"js/readtheorg.js\"></script>
+# Change the background of source block.
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+LANGUAGE:  en
+#+OPTIONS:   H:4
+#+OPTIONS:   num:nil
+#+OPTIONS:   toc:2
+#+OPTIONS:   p:t
+#+OPTIONS: ^:nil")
+    (loop for x in (list-schemas) do
+      (document-schema x out)
+      (loop for y in (list-tables-in-schema x) do
+        (document-table x y out)))))
