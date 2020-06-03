@@ -881,3 +881,17 @@ and second the string name for the datatype."
     (is (eq (sequence-exists-p 'knobo-seq)
             nil))
     (query (:drop-table 'seq-test))))
+
+(test schema-comments
+  (with-test-connection
+    (create-schema "schema_1")
+    (query (:create-table "p1" ((id :type integer :generated-as-identity-always t) (text :type text))))
+    (query (:create-table "schema_1.s1" ((id :type integer :generated-as-identity-always t) (text :type text))))
+    (add-comment :table 'receipes "a comment on receipes")
+    (add-comment :table 'schema-1.s1 "a comment on schema-1 s1")
+    (is (equal (get-table-comment 'p1)
+               "a comment on receipes"))
+    (is (equal (integerp (get-table-oid 'schema-1.s1) t)))
+    (is (equal (integerp (get-table-oid 'information-schema.columns)) t))
+    (is (equal (get-table-comment 'schema-1.s1)
+               "a comment on schema-1 s1"))))

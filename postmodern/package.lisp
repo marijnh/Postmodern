@@ -115,6 +115,7 @@
    #:describe-constraint
    #:describe-foreign-key-constraints
    ;; database-management
+   #:create-database
    #:database-version
    #:postgresql-version
    #:current-database
@@ -177,8 +178,10 @@
    #:list-triggers
    #:list-detailed-triggers
    ;; util
+   #:add-comment
    #:list-available-types
    #:change-toplevel-database
+   #:num-records-in-database
    #:cache-hit-ratio
    #:bloat-measurement
    #:unused-indexes

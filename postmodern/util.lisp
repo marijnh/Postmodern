@@ -137,34 +137,47 @@ available database"
 (defparameter *collations* nil)
 
 (defun list-available-collations ()
-  "Get a list of the collations available from the current database cluster."
+  "Get a list of the collations available from the current database cluster.
+Collations are a mess as different operating systems provide different collations.
+We might get some sanity if Postgresql can use ICU as the default. See
+https://wiki.postgresql.org/wiki/Collations."
   (setf *collation-support* (query "select collname from pg_collation")))
 
 (defun collation-exists-p (collation)
-  (member collation (query "select collname from pg_collation")  :test 'equal))
+  "This function does require the parameter to be a string and properly upper and
+lower cased."
+  (query "select collname from pg_collation where collname = $1" collation :single))
 
 (defun character-set-exists-p (char-support)
+  "There is no good way that I know to determine the availble character sets
+on a remote server so we just assume any postgresql usable set is available."
   (member char-support *character-sets* :test 'equalp))
 
 (defun create-database (database-name &key (encoding "UTF8") (owner "")
                                         (connection-limit -1)
                                         (limit-public-access nil)
-                                        (comment nil))
+                                        (comment nil)
+                                        (collation nil)
+                                        (template "template1"))
   "Creates a basic database. Besides the obvious database-name parameter, you
 can also use key parameters to set encoding (defaults to UTF8), owner,
 connection-limit (defaults to no limit)). If limit-public-access is set to t,
 then only superuser roles or roles with explicit access to this database will
-be able to access it."
+be able to access it. If collation is set, the assumption is that template0
+needs to be used rather than template1 which may contain encoding specific or
+locale specific data."
   (setf database-name (to-sql-name database-name))
   (cond ((equal owner "")
          (setf owner (cl-postgres::connection-user *database*)))
         ((stringp owner)
          nil)
         (t (setf owner (cl-postgres::connection-user *database*))))
+  (if collation (progn (setf template "template template0")
+                       (setf collation (format nil " lc_collate '~a' lc_ctype '~a'" collation collation) "")))
   (when (and (character-set-exists-p encoding)
              (integerp connection-limit))
-    (query (format nil "create database ~a owner ~a encoding ~a connection limit = ~a"
-                   database-name owner encoding connection-limit))
+    (query (format nil "create database ~a owner ~a ~a encoding ~a ~a connection limit = ~a"
+                   database-name owner template encoding collation connection-limit))
     (when limit-public-access
       (query (format nil "revoke all privileges on database ~a from public;"
                      database-name)))
@@ -534,9 +547,9 @@ Otherwise we use the search path which can be controlled by being within a
 with-schema form."
   (let* ((destructured-table-name (split-fully-qualified-tablename table-name))
          (schema (if schema-name (to-sql-name schema-name) (second destructured-table-name)))
-         (table (or (first destructured-table-name) table-name))
+         (table (or (first destructured-table-name) (to-sql-name table-name)))
          (result (if schema
-                     (member (to-sql-name table)
+                     (member table
                              (alexandria:flatten
                               (query (:order-by
                                       (:select 'table-name

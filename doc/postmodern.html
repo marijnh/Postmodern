@@ -3105,11 +3105,13 @@ controlled by being within a with-schema form.
 </p>
 
 <p>
-Returns a list of the fields in the named table. Each field is represented by a
-list of three elements: the field name, the type, and a boolean indicating
-whether the field may be NULL. Optionally, schema-name can be specified to
-restrict the result to fields of a table from the named schema. The table and
-schema names can be either strings or quoted.
+Returns a list of the fields in the named table. Each field is represented
+by a list of three elements: the field name, the type, and a boolean indicating
+whether the field may be NULL.</p>
+<p>
+Table can be either a string or quoted. Table-names can be fully qualified with
+the schema or not. If the table-name is not fully qualified and a schema name
+is not provided, the table will be assumed to be in the public schema.
 </p>
 </div>
 </div>
@@ -3156,9 +3158,13 @@ a string or quoted.
 </p>
 
 <p>
-Returns more table info than table-description. Table can be either a string
-or quoted. Specifically returns ordinal-position, column-name, data-type,
-character-maximum-length, modifier, whether it is not-null and the default value.
+Returns more table info than table-description. Specifically returns
+ordinal-position, column-name, data-type, character-maximum-length, modifier,
+whether it is not-null and the default value.</p>
+<p>
+Table can be either a string or quoted. Table-names can be fully qualified with
+the schema or not. If the table-name is not fully qualified and a schema name
+is not provided, the table will be assumed to be in the public schema.
 </p>
 </div>
 </div>
@@ -3171,8 +3177,10 @@ character-maximum-length, modifier, whether it is not-null and the default value
 </p>
 
 <p>
-Returns a list of strings of just the column names in a table. Pulls info
-from the postmodern table-description function rather than directly.
+Returns a list of strings of just the column names in a table.
+Pulls info from the postmodern table-description function rather than directly.
+The table-name can be a string or quoted. Any table-name that is not fully
+qualified with the schema will be assumed to be in the public schema.
 </p>
 </div>
 </div>
@@ -3185,8 +3193,11 @@ from the postmodern table-description function rather than directly.
 </p>
 
 <p>
-Return a list of (name type) lists for the fields of a table. Goes directly
-to the pg-catalog tables.
+Returns a list of (name type) lists for the fields of a table. Returns a list
+of strings of just the column names and their sql data types in a table. Pulls
+info from the postmodern table-description function rather than directly. The
+table-name can be a string or quoted. Any table-name that is not fully qualified
+with the schema will be assumed to be in the public schema.
 </p>
 </div>
 </div>
@@ -3200,7 +3211,9 @@ to the pg-catalog tables.
 
 <p>
 Determine if a particular column exists. Table name and column-name can be
-either strings or symbols.
+either strings or symbols. If the optional schema name is not given or the
+table-name is not fully qualified with a schema name, the schema will be assumed
+to be the public schema.
 </p>
 </div>
 </div>
