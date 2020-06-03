@@ -202,7 +202,7 @@ be stored on a less expensive, slower disk system."
 (defun list-available-types ()
   "List the available data types in the connected postgresql version, It returns
 a list of lists, each sublist containing the oid (object identifier number) and
-the name of the data types. E.g. (21 "smallint")"
+the name of the data types. E.g. (21 \"smallint\")"
   (query (:select 'oid (:as (:format-type :oid :NULL) 'typename)
                   :from 'pg-type
                   :where (:= 'typtype "b"))))
