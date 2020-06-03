@@ -456,6 +456,12 @@ SELECT DISTINCT ON ( expression [, ...] ) keeps only the first row of each set o
                                  'location  (:desc 'time)))
                  "((SELECT DISTINCT ON (location) location, time, report FROM weather_reports) ORDER BY location, time DESC)")))
 
+(test select-fetch
+  "Testing the fetch sql-op"
+  (is (equal
+       (sql "select id from historical_events order by id asc offset 5 rows fetch next 10 rows only")
+       "E'select id from historical_events order by id asc offset 5 rows fetch next 10 rows only'")))
+
 (test select-join-1
       "Testing basic join. Note full use of as. https://www.postgresql.org/docs/current/static/sql-select.html
 To join the table films with the table distributors:"

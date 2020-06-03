@@ -1359,7 +1359,28 @@ Example:
   (split-on-keywords ((vars *)) (cons :vars args)
     `("VAR_SAMP(",@(sql-expand-list vars) ")")))
 
+(def-sql-op :fetch (form amount &optional offset)
+  "Fetch is a more efficient way to do pagination instead of using limit and
+offset. Fetch allows you to retrieve a limited set of rows, optionally offset
+by a specified number of rows. In order to ensure this works correctly, you
+should use the order-by clause. If the amount is not provided, it assumes
+you only want to return 1 row.
+https://www.postgresql.org/docs/current/sql-select.html
 
+Examples:
+
+    (query (:fetch (:order-by (:select 'id :from 'historical-events) 'id) 5))
+
+    ((1) (2) (3) (4) (5))
+
+    (query (:fetch (:order-by (:select 'id :from 'historical-events) 'id) 5 10))
+
+    ((11) (12) (13) (14) (15))"
+  `("(" ,@(sql-expand form)
+        ,@(if offset (cons " OFFSET " (sql-expand offset)) ())
+        " FETCH FIRST " ,@(if amount (sql-expand amount)
+                                            (list ""))
+        " ROWS ONLY)"))
 
 (def-sql-op :limit (form amount &optional offset)
   `("(" ,@(sql-expand form) " LIMIT " ,@(if amount (sql-expand amount)

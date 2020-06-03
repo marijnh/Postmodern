@@ -310,6 +310,7 @@ for the JavaScript code in this tag.
 <li><a href="#org19bbaf8">sql-op :dot (&amp;rest names)</a></li>
 <li><a href="#org055e676">sql-op :type (form type)</a></li>
 <li><a href="#org9a12424">sql-op :raw (string)</a></li>
+<li><a href="#orgecb36c5a">sql-op :fetch (query amount &amp;optional offset)</a></li>
 <li><a href="#orgecb36c5">sql-op :limit (query amount &amp;optional offset)</a></li>
 <li><a href="#org87bbce6">sql-op :order-by (query &amp;rest exprs)</a></li>
 <li><a href="#org6be1ca8">sql-op :values</a></li>
@@ -1262,6 +1263,29 @@ multiple queries:
   (<span style="color: #00ffff;">do-stuff</span> rows))
 </pre>
 </div>
+</div>
+</div>
+
+<div id="outline-container-orgecb36c5a" class="outline-3">
+<h3 id="orgecb36c5a"><a id="ID-0be0c31e-5246-42f3-a091-ccc8808e5d90"></a>sql-op :fetch (query amount &amp;optional offset)</h3>
+<div class="outline-text-3" id="text-orgecb36c5a">
+  <p>
+    Fetch is a more efficient way to do pagination instead of using limit and
+offset. Fetch allows you to retrieve a limited set of rows, optionally offset
+by a specified number of rows. In order to ensure this works correctly, you
+should use the order-by clause. If the amount is not provided, it assumes
+you only want to return 1 row. https://www.postgresql.org/docs/current/sql-select.html
+Examples: </p>
+<pre class="src src-lisp">
+(query (:fetch (:order-by (:select 'id :from 'historical-events) 'id) 5))
+
+((1) (2) (3) (4) (5))
+
+(query (:fetch (:order-by (:select 'id :from 'historical-events) 'id) 5 10))
+
+((11) (12) (13) (14) (15))
+</pre>
+
 </div>
 </div>
 
