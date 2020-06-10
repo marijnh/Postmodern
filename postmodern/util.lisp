@@ -235,7 +235,6 @@ connection limit = ~a"
                    database-name owner template encoding collation
                    connection-limit))
     (when limit-public-access
-      (format t "Limiting Public Access ~a~%" database-name)
       (query (format nil "revoke all privileges on database ~a from public;"
                      database-name)))
     (when comment (query (format nil "comment on database ~a is '~a'"
