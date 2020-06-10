@@ -54,7 +54,7 @@
                          (:file "tests")
                          (:file "test-dao" :depends-on ("test-package")
                           :if-feature :postmodern-use-mop)
-                         (:file "test-roles" :depends-on "test-package")
+                         (:file "test-roles" :depends-on ("test-package"))
                          (:file "test-execute-file" :depends-on ("test-package")))))
   :perform (test-op (o c)
              (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)

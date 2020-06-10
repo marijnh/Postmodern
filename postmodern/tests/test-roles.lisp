@@ -3,7 +3,7 @@
 
 (fiveam:def-suite :postmodern-roles
     :description "Dao suite for postmodern"
-    :in :postmodern-utilities)
+    :in :postmodern)
 
 (fiveam:in-suite :postmodern-roles)
 
@@ -53,29 +53,31 @@
   (loop for name in roles do
     (loop for database in dbs do
       (loop for schema in '("public" "s2") do
-        (loop for table in '("c1" "c2")  do
-          (generate-test-table-row database name schema table))))))
+        (loop for table in '("t1" "t2" "t3")  do
+          (generate-test-table-row database name schema table t))))))
 
 (defun test-create-role-names ()
   (let ((names nil))
-    (loop for database in '("t1" "t2" "all") do
+    (loop for database in '("d1" "d2" "all") do
       (loop for schema in '("public" "s2") do
-        (loop for table in '("c1" "all")  do
+        (loop for table in '("t1" "all")  do
           (let ((name (format nil "readonly_d_~a_s_~a_t_~a" database schema table)))
             (push name names)))))
+    (push "standard" names)
     names))
 
 (defun test-create-roles ()
-  (loop for database in '("t1" "t2" "all") do
+  (loop for database in '("d1" "d2" "all") do
     (loop for schema in '("public" "s2") do
-      (loop for table in '("c1" "all") do
+      (loop for table in '("t1" "all") do
         (let ((name (format nil "readonly_d_~a_s_~a_t_~a" database schema table)))
-          (create-role name name :tables (list table) :schema (list schema) :databases (if (string= "all" database) :all database)))))))
+          (create-role name name :tables (list table) :schema (list schema) :databases (if (string= "all" database) :all database))))))
+  (create-role "standard" "standard" :base-role :standard))
 
-(defparameter *test-dbs* '("t1" "t1_al" "t2" "t2_al" "t3" "t3_al"))
-(defparameter *first-test-dbs* '("t1" "t1_al" "t2" "t2_al"))
-(defparameter *subsequent-test-dbs* '("t3"))
-(defparameter *public-limited-test-dbs* '("t1_al""t2_al" "t3_al"))
+(defparameter *test-dbs* '("d1" "d1_al" "d2" "d2_al" "d3" "d3_al"))
+(defparameter *first-test-dbs* '("d1" "d1_al" "d2" "d2_al"))
+(defparameter *subsequent-test-dbs* '("d3"))
+(defparameter *public-limited-test-dbs* '("d1_al""d2_al" "d3_al"))
 (defparameter *test-roles* (test-create-role-names))
 
 (defun clean-test ()
@@ -98,35 +100,35 @@
 
 (defun test-db-creation-helper ()
   "These tables get created for every db created"
-  (query (:create-table 'c1
+  (query (:create-table 't1
                         ((id :type bigint :generated-as-identity-always t)
                          (name :type (varchar 40) :check (:<> 'name "")))))
-  (query (:create-table 'c2
+  (query (:create-table 't2
                         ((id :type bigint :generated-as-identity-always t)
                          (name :type (varchar 40) :check (:<> 'name "")))))
-  (query (:insert-into 'c1 :set 'name "Oz"))
-  (query (:insert-into 'c2 :set 'name "Wonderland"))
+  (query (:insert-into 't1 :set 'name "Oz"))
+  (query (:insert-into 't2 :set 'name "Wonderland"))
   (create-schema "s2")
-  (query (:create-table 's2.c1
+  (query (:create-table 's2.t1
                         ((id :type bigint :generated-as-identity-always t)
                          (name :type (varchar 40) :check (:<> 'name "")))))
-  (query (:create-table 's2.c2
+  (query (:create-table 's2.t2
                         ((id :type bigint :generated-as-identity-always t)
                          (name :type (varchar 40) :check (:<> 'name "")))))
-  (query (:insert-into 's2.c1 :set 'name "Moria"))
-  (query (:insert-into 's2.c2 :set 'name "Minas Morgul")))
+  (query (:insert-into 's2.t1 :set 'name "Moria"))
+  (query (:insert-into 's2.t2 :set 'name "Minas Morgul")))
 
 (test create-db-role-0-1
   (clean-test)
   (with-test-connection
     (let ((dbs *first-test-dbs*))
       (loop for x in dbs do
-        (create-database x
-                         :limit-public-access
-                         (if (or (equal x "t1")
-                                 (equal x "t2"))
-                             nil
-                             t)))
+        (let ((lpa (if (or (equal x "d1")
+                           (equal x "d2"))
+                       nil
+                       t)))
+          (format t "DB ~a lpa ~a~%" x lpa)
+          (create-database x :limit-public-access lpa)))
       (let ((superuser-password (cl-postgres::connection-password *database*))
             (superuser-name (cl-postgres::connection-user *database*))
             (host (cl-postgres::connection-host *database*)))
@@ -137,165 +139,175 @@
 
             (when (= y 1) (test-create-roles))
             ;; Create table in same database, but subsequent to creation of the roles
-            (query (:create-table 'c3
+            (query (:create-table 't3
                                   ((id :type bigint :generated-as-identity-always t)
                                    (name :type (varchar 40) :check (:<> 'name ""))
                                    (population :type integer))))
-            (query (:insert-into 'c3 :set 'name "Crystal Pines" 'population 52))
-            (query (:insert-into 'c3 :set 'name "Fog Harbour" 'population 57))
-            (is (table-exists-p "c1"))))
-        (create-database "t3" :limit-public-access nil) ;after creation of users
-        (create-database "t3_al" :limit-public-access t)
-        (loop for x in '("t3" "t3_al") do
+            (query (:insert-into 't3 :set 'name "Crystal Pines" 'population 52))
+            (query (:insert-into 't3 :set 'name "Fog Harbour" 'population 57))
+            (query (:create-table 's2.t3
+                                  ((id :type bigint :generated-as-identity-always t)
+                                   (name :type (varchar 40) :check (:<> 'name ""))
+                                   (population :type integer))))
+            (query (:insert-into 's2.t3 :set 'name "Crystal Pines" 'population 52))
+            (query (:insert-into 's2.t3 :set 'name "Fog Harbour" 'population 57))
+            (is (table-exists-p "t1"))))
+        (create-database "d3" :limit-public-access nil) ;after creation of users
+        (create-database "d3_al" :limit-public-access t)
+        (loop for x in '("d3" "d3_al") do
           (with-connection (list x superuser-name superuser-password host)
             (test-db-creation-helper))))))) ;after creation of users
 
+(test readonly_d_all_s_s2_t_all-t3
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_public_t_all" "public" "t3")
+           '(("Crystal Pines") ("Fog Harbour")))))
+
 (test readonly_d_all_s_s2_t_all-1
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_s2_t_all" "public" "c1")
-             "permission denied for table c1")))
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_s2_t_all" "public" "t1")
+             "permission denied for table t1")))
 (test readonly_d_all_s_s2_t_all-2
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_s2_t_all" "public" "c2")
-             "permission denied for table c2")))
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_s2_t_all" "public" "t2")
+             "permission denied for table t2")))
 (test readonly_d_all_s_s2_t_all-3
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_s2_t_all" "s2" "c1")
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_s2_t_all" "s2" "t1")
              '(("Moria")))))
 (test readonly_d_all_s_s2_t_all-4
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_s2_t_all" "s2" "c2")
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_s2_t_all" "s2" "t2")
              '(("Minas Morgul")))))
-(test readonly_d_all_s_s2_t_c1-5
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_s2_t_c1" "public" "c1")
-             "permission denied for table c1")))
-(test readonly_d_all_s_s2_t_c1-6
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_s2_t_c1" "public" "c2")
-             "permission denied for table c2")))
-(test readonly_d_all_s_s2_t_c1-7
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_s2_t_c1" "s2" "c1")
+(test readonly_d_all_s_s2_t_t1-5
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_s2_t_t1" "public" "t1")
+             "permission denied for table t1")))
+(test readonly_d_all_s_s2_t_t1-6
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_s2_t_t1" "public" "t2")
+             "permission denied for table t2")))
+(test readonly_d_all_s_s2_t_t1-7
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_s2_t_t1" "s2" "t1")
              '(("Moria")))))
-(test readonly_d_all_s_s2_t_c1-8
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_s2_t_c1" "s2" "c2")
-             "permission denied for table c2")))
+(test readonly_d_all_s_s2_t_t1-8
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_s2_t_t1" "s2" "t2")
+             "permission denied for table t2")))
 (test readonly_d_all_s_public_t_all-9
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_public_t_all" "public" "c1")
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_public_t_all" "public" "t1")
              '(("Oz")))))
 (test readonly_d_all_s_public_t_all-10
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_public_t_all" "public" "c2")
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_public_t_all" "public" "t2")
              '(("Wonderland")))))
 (test readonly_d_all_s_public_t_all-11
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_public_t_all" "s2" "c1")
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_public_t_all" "s2" "t1")
              "permission denied for schema s2")))
 (test readonly_d_all_s_public_t_all-12
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_public_t_all" "s2" "c2")
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_public_t_all" "s2" "t2")
              "permission denied for schema s2")))
-(test readonly_d_all_s_public_t_c1-13
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_public_t_c1" "public" "c1")
+(test readonly_d_all_s_public_t_t1-13
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_public_t_t1" "public" "t1")
              '(("Oz")))))
-(test readonly_d_all_s_public_t_c1-14
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_public_t_c1" "public" "c2")
-             "permission denied for table c2")))
-(test readonly_d_all_s_public_t_c1-15
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_public_t_c1" "s2" "c1")
+(test readonly_d_all_s_public_t_t1-14
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_public_t_t1" "public" "t2")
+             "permission denied for table t2")))
+(test readonly_d_all_s_public_t_t1-15
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_public_t_t1" "s2" "t1")
              "permission denied for schema s2")))
-(test readonly_d_all_s_public_t_c1-16
-  (is (equal (generate-test-table-row "t1" "readonly_d_all_s_public_t_c1" "s2" "c2")
+(test readonly_d_all_s_public_t_t1-16
+  (is (equal (generate-test-table-row "d1" "readonly_d_all_s_public_t_t1" "s2" "t2")
              "permission denied for schema s2")))
-(test readonly_d_t1_s_s2_t_all-17
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_s2_t_all" "public" "c1")
-             "permission denied for table c1")))
-(test readonly_d_t1_s_s2_t_all-18
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_s2_t_all" "public" "c2")
-             "permission denied for table c2")))
-(test readonly_d_t1_s_s2_t_all-19
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_s2_t_all" "s2" "c1")
+(test readonly_d_d1_s_s2_t_all-17
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_s2_t_all" "public" "t1")
+             "permission denied for table t1")))
+(test readonly_d_d1_s_s2_t_all-18
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_s2_t_all" "public" "t2")
+             "permission denied for table t2")))
+(test readonly_d_d1_s_s2_t_all-19
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_s2_t_all" "s2" "t1")
              '(("Moria")))))
-(test readonly_d_t1_s_s2_t_all-20
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_s2_t_all" "s2" "c2")
+(test readonly_d_d1_s_s2_t_all-20
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_s2_t_all" "s2" "t2")
              '(("Minas Morgul")))))
-(test readonly_d_t1_s_s2_t_c1-21
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_s2_t_c1" "public" "c1")
-             "permission denied for table c1")))
-(test readonly_d_t1_s_s2_t_c1-22
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_s2_t_c1" "public" "c2")
-             "permission denied for table c2")))
-(test readonly_d_t1_s_s2_t_c1-23
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_s2_t_c1" "s2" "c1")
+(test readonly_d_d1_s_s2_t_t1-21
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_s2_t_t1" "public" "t1")
+             "permission denied for table t1")))
+(test readonly_d_d1_s_s2_t_t1-22
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_s2_t_t1" "public" "t2")
+             "permission denied for table t2")))
+(test readonly_d_d1_s_s2_t_t1-23
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_s2_t_t1" "s2" "t1")
              '(("Moria")))))
-(test readonly_d_t1_s_s2_t_c1-24
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_s2_t_c1" "s2" "c2")
-             "permission denied for table c2")))
-(test readonly_d_t1_s_public_t_all-25
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_public_t_all" "public" "c1")
+(test readonly_d_d1_s_s2_t_t1-24
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_s2_t_t1" "s2" "t2")
+             "permission denied for table t2")))
+(test readonly_d_d1_s_public_t_all-25
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_public_t_all" "public" "t1")
              '(("Oz")))))
-(test readonly_d_t1_s_public_t_all-26
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_public_t_all" "public" "c2")
+(test readonly_d_d1_s_public_t_all-26
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_public_t_all" "public" "t2")
              '(("Wonderland")))))
-(test readonly_d_t1_s_public_t_all-27
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_public_t_all" "s2" "c1")
+(test readonly_d_d1_s_public_t_all-27
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_public_t_all" "s2" "t1")
              "permission denied for schema s2")))
-(test readonly_d_t1_s_public_t_all-28
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_public_t_all" "s2" "c2")
+(test readonly_d_d1_s_public_t_all-28
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_public_t_all" "s2" "t2")
              "permission denied for schema s2")))
-(test readonly_d_t1_s_public_t_c1-29
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_public_t_c1" "public" "c1")
+(test readonly_d_d1_s_public_t_t1-29
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_public_t_t1" "public" "t1")
              '(("Oz")))))
-(test readonly_d_t1_s_public_t_c1-30
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_public_t_c1" "public" "c2")
-             "permission denied for table c2")))
-(test readonly_d_t1_s_public_t_c1-31
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_public_t_c1" "s2" "c1")
+(test readonly_d_d1_s_public_t_t1-30
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_public_t_t1" "public" "t2")
+             "permission denied for table t2")))
+(test readonly_d_d1_s_public_t_t1-31
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_public_t_t1" "s2" "t1")
              "permission denied for schema s2")))
-(test readonly_d_t1_s_public_t_c1-32
-  (is (equal (generate-test-table-row "t1" "readonly_d_t1_s_public_t_c1" "s2" "c2")
+(test readonly_d_d1_s_public_t_t1-32
+  (is (equal (generate-test-table-row "d1" "readonly_d_d1_s_public_t_t1" "s2" "t2")
              "permission denied for schema s2")))
-(test readonly_d_t2_s_s2_t_all-33
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_s2_t_all" "public" "c1")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_s2_t_all-34
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_s2_t_all" "public" "c2")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_s2_t_all-35
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_s2_t_all" "s2" "c1")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_s2_t_all-36
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_s2_t_all" "s2" "c2")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_s2_t_c1-37
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_s2_t_c1" "public" "c1")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_s2_t_c1-38
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_s2_t_c1" "public" "c2")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_s2_t_c1-39
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_s2_t_c1" "s2" "c1")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_s2_t_c1-40
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_s2_t_c1" "s2" "c2")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_public_t_all-41
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_public_t_all" "public" "c1")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_public_t_all-42
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_public_t_all" "public" "c2")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_public_t_all-43
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_public_t_all" "s2" "c1")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_public_t_all-44
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_public_t_all" "s2" "c2")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_public_t_c1-45
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_public_t_c1" "public" "c1")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_public_t_c1-46
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_public_t_c1" "public" "c2")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_public_t_c1-47
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_public_t_c1" "s2" "c1")
-             "User does not have CONNECT privilege.")))
-(test readonly_d_t2_s_public_t_c1-48
-  (is (equal (generate-test-table-row "t1" "readonly_d_t2_s_public_t_c1" "s2" "c2")
-             "User does not have CONNECT privilege.")))
+(test readonly_d_d2_s_s2_t_all-33
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_s2_t_all" "public" "t1")
+             "permission denied for table t1")))
+(test readonly_d_d2_s_s2_t_all-34
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_s2_t_all" "public" "t2")
+             "permission denied for table t2")))
+(test readonly_d_d2_s_s2_t_all-35
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_s2_t_all" "s2" "t1")
+             "permission denied for schema s2")))
+(test readonly_d_d2_s_s2_t_all-36
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_s2_t_all" "s2" "t2")
+             "permission denied for schema s2")))
+(test readonly_d_d2_s_s2_t_t1-37
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_s2_t_t1" "public" "t1")
+             "permission denied for table t1")))
+(test readonly_d_d2_s_s2_t_t1-38
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_s2_t_t1" "public" "t2")
+             "permission denied for table t2")))
+(test readonly_d_d2_s_s2_t_t1-39
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_s2_t_t1" "s2" "t1")
+             "permission denied for schema s2")))
+(test readonly_d_d2_s_s2_t_t1-40
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_s2_t_t1" "s2" "t2")
+             "permission denied for schema s2")))
+(test readonly_d_d2_s_public_t_all-41
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_public_t_all" "public" "t1")
+             "permission denied for table t1")))
+(test readonly_d_d2_s_public_t_all-42
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_public_t_all" "public" "t2")
+             "permission denied for table t2")))
+(test readonly_d_d2_s_public_t_all-43
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_public_t_all" "s2" "t1")
+             "permission denied for schema s2")))
+(test readonly_d_d2_s_public_t_all-44
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_public_t_all" "s2" "t2")
+             "permission denied for schema s2")))
+(test readonly_d_d2_s_public_t_t1-45
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_public_t_t1" "public" "t1")
+             "permission denied for table t1")))
+(test readonly_d_d2_s_public_t_t1-46
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_public_t_t1" "public" "t2")
+             "permission denied for table t2")))
+(test readonly_d_d2_s_public_t_t1-47
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_public_t_t1" "s2" "t1")
+             "permission denied for schema s2")))
+(test readonly_d_d2_s_public_t_t1-48
+  (is (equal (generate-test-table-row "d1" "readonly_d_d2_s_public_t_t1" "s2" "t2")
+             "permission denied for schema s2")))
 
 (test create-db-row-0-2
   (with-test-connection
     (clean-test)
-    (is (not (database-exists-p 't1)))))
+    (is (not (database-exists-p 'd1)))))

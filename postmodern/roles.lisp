@@ -152,17 +152,20 @@ requires database owner privilege.
 |#
 (defparameter *alter-all-default-select-privileges*
   '("grant usage on schema ~a to ~a"
-    "grant select on all tables in schema ~a to ~a"))
+    "grant select on all tables in schema ~a to ~a"
+    "grant select on all sequences in schema ~a to ~a"
+    "alter default privileges in schema ~a grant select on tables to ~a"))
 
 (defparameter *alter-all-default-editor-privileges*
   '("grant usage on schema ~a to ~a"
-    "grant select, insert, update, delete on all tables in schema ~a to ~a"))
+    "grant select, insert, update, delete on all tables in schema ~a to ~a"
+    "alter default privileges in schema ~a grant select, insert, update, delete on tables to ~a"    ))
 
 (defparameter *execute-privileges-list*
   '("grant execute on all functions in schema ~a to ~a"))
 
 (defun list-database-users ()
-  "List database users."
+  "List database users (actually 'roles' in Postgresql terminology)."
   (alexandria:flatten (query (:order-by
                               (:select 'usename :from 'pg_user)
                               'usename))))
@@ -179,9 +182,9 @@ to :alists or :plists."
             ARRAY(SELECT b.rolname
                   FROM pg_catalog.pg_auth_members m
                   JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)
-                  WHERE m.member = r.oid) as memberof
-            , r.rolreplication
-            , r.rolbypassrls
+                  WHERE m.member = r.oid) as memberof,
+            r.rolreplication,
+            r.rolbypassrls
             FROM pg_catalog.pg_roles r
             WHERE r.rolname !~ '^pg_'
             ORDER BY 1;"))
@@ -191,9 +194,12 @@ to :alists or :plists."
            (query  sql-query :plists))
           (t (query sql-query)))))
 
-(defun role-exists-p (rol)
-  "Does the named role exist in this database cluster?"
-  (member rol (list-database-users) :test #'equal))
+(defun role-exists-p (role-name)
+  "Does the named role exist in this database cluster? Returns t or nil"
+  (query "select exists (SELECT r.rolname
+            FROM pg_catalog.pg_roles r
+            WHERE r.rolname = $1)"
+       role-name :single))
 
 (defun remove-whitespace (str)
   "Removes whitespace from strings. "
@@ -288,29 +294,56 @@ whitespace in either user names or passwords."
   "A set of words that maybe should be disallowed from user names. Edit as you
 please.")
 
+(defun revoke-all-on-table (table-name role-name)
+  "Takes a table-name which could be a string, symbol or list of strings or
+symbols of tables names, a role name and revokes all privileges that
+role-name may have with that/those tables. This is limited to the currently
+connected database and can only revoke the privileges granted by the caller
+of the function."
+  (cond ((stringp table-name)
+         (query (format nil "revoke all privileges on ~a from ~a"
+                        (to-sql-name table-name) (to-sql-name role-name))))
+        ((symbolp table-name)
+         (query (format nil "revoke all privileges on ~a from ~a"
+                        (to-sql-name table-name) (to-sql-name role-name))))
+        ((listp table-name)
+         (loop for x in table-name do
+                        (query (format nil "revoke all privileges on ~a from ~a"
+                                       (to-sql-name x) (to-sql-name role-name)))))))
+
 (defun schema-parameters-to-list (&optional (schema :public))
+  "Returns a list of schemas in the current for which a role will be granted
+privileges."
   (cond ((eq schema :public)
          (list "public"))
         ((or (eq schema :all)
              (equalp schema "all"))
          (list-schemas))
         ((listp schema)
-         schema)
+         (intersection (mapcar #'to-sql-name schema)
+                       (list-schemas)
+                       :test #'equal))
         ((stringp schema)
-         (list (s-sql:to-sql-name schema)))
+         (list (to-sql-name schema)))
         (t (list "public"))))
 
 (defun database-parameters-to-list (databases)
+  "Returns a list of databases where the parameter may be a list of databases,
+a single string name or :current, :all or \"all\"."
   (cond ((eq databases :current)
          (list (current-database)))
         ((or (eq databases :all)
              (equalp databases "all"))
          (list-databases :names-only t))
         ((listp databases)
-         (mapcar #'s-sql:to-sql-name databases))
+         (intersection (mapcar #'to-sql-name databases)
+                       (list-databases :names-only t)
+                       :test #'equal))
         ((stringp databases)
-         (list (s-sql:to-sql-name databases)))
-        (t (list (s-sql:to-sql-name databases)))))
+         (if (database-exists-p databases)
+             (list (to-sql-name databases))
+             nil))
+        (t (list (to-sql-name databases)))))
 
 (defun admin-permissions (schema-name user-name &optional (table-name nil))
   "Note that we are giving some function execute permissions if table-name is
@@ -319,6 +352,12 @@ may vary on how many privileges you want to provide to a editor role with access
 to only a limited number of tables."
   (cond ((not table-name)
          (query (format nil "grant all on all tables in schema ~a to ~a"
+                        schema-name user-name))
+         (query (format nil "grant all on all sequences in schema ~a to ~a"
+                        schema-name user-name))
+         (query (format nil "alter default privileges in schema ~a grant all on tables to ~a"
+                        schema-name user-name))
+         (query (format nil "alter default privileges in schema ~a grant all on sequences to ~a"
                         schema-name user-name))
          (loop for x in *execute-privileges-list* do
            (query (format nil x schema-name user-name))))
@@ -356,18 +395,58 @@ access to only a limited number of tables."
          (query (format nil "grant select on table ~a.~a to ~a"
                         schema-name table-name user-name)))))
 
-(defun grant-role-permissions (role-type name password &key (schema :public)
-                                                         (tables :all)
-                                                         (databases :all))
+(defun grant-role-permissions-helper (role-type name &key (schema :public)
+                                                (tables :all))
+  (let ((existing-schemas (list-schemas)))
+      (loop for schema-x in (mapcar #'to-sql-name schema) do
+        (when (member schema-x existing-schemas :test #'equal)
+          (query (format nil "revoke all on all tables in schema ~a from ~a"
+                         schema-x name))
+          (query (format nil "grant usage on schema ~a to ~a" schema-x name))
+          (query (format nil "grant select on all sequences in schema ~a to ~a"
+                         schema-x name))
+          (cond ((or (eq tables :all)
+                     (and (listp tables)
+                          (equalp (first tables) "all"))) ; Grant access to existing tables
+                 (case role-type
+                   (:admin
+                    (admin-permissions schema-x name))
+                   (:editor
+                    (editor-permissions schema-x name))
+                   (:readonly
+                    (readonly-permissions schema-x name))
+                   (t (query (readonly-permissions schema-x name)))))
+                ((listp tables)
+                 (let ((existing-tables (list-tables t))) ;  Grant access to existing tables
+                   (when (or (eq (first tables) :all)
+                             (equalp (first tables) "all"))
+                     (setf tables existing-tables))
+                   (loop for table-y in (mapcar #'to-sql-name tables) do
+                     (when (or (eq tables :all)
+                               (member table-y existing-tables :test #'equal))
+                       (case role-type
+                         (:admin
+                          (admin-permissions schema-x name table-y))
+                         (:editor
+                          (editor-permissions schema-x name table-y))
+                         (:readonly
+                          (readonly-permissions schema-x name table-y))
+                         (t (readonly-permissions schema-x name table-y)))))))
+                (t nil))))))
+
+(defun grant-role-permissions (role-type name &key (schema :public)
+                                                (tables :all)
+                                                (databases :all))
   "Grant-role-permissions assumes that a role has already been created, but
 permissions need to be granted or revoked on a particular database.
 
-   A  :superuser can create databases, roles, replication, etc.
+   A  :superuser can create databases, roles, replication, etc. Returns nil.
+   A  :standard user has no particular privileges or restrictions. Returns nil.
    An :admin user can edit existing data, insert new data and create new tables
 in the specified databases/schemas/tables.
    An :editor user can update fields or insert new records but cannot create new
 tables in the specified tables or databases.
-   A  :readonly user can only read existing data in the specified schemas,
+   A  :readonly role can only read existing data in the specified schemas,
 tables or databases. Schema, tables or databases can be :all or a list of
 schemas, tables or databases to be granted permission.
 
@@ -375,58 +454,29 @@ schemas, tables or databases to be granted permission.
 
   Note that the schema and table rights and revocations granted are limited to
 the connected database at the time of execution of this function."
-  (setf schema (schema-parameters-to-list schema))
-  (setf databases (database-parameters-to-list databases))
-  (let* ((existing-databases (list-databases :names-only t))
-         (intersec (intersection existing-databases databases :test #'equal)))
-    (loop for x in existing-databases do
-      (cond ((member x intersec :test #'equal)
-             (query (format nil "grant connect on database ~a to ~a"
-                            x name)))
-            (t (query (format nil "revoke connect on database ~a from ~a"
-                              x name))
-               (query (format nil "revoke connect on database ~a from public"
-                              x))
-               (query (format nil "revoke all privileges on database ~a from ~a"
-                              x name))))))
-  (let ((existing-schemas (list-schemas))) ; This applies only to the schemas in the database currently connected
-    (loop for schema-x in (mapcar #'to-sql-name schema) do
-      (when (member schema-x existing-schemas :test #'equal)
-        (query (format nil "revoke all on all tables in schema ~a from ~a"
-                       schema-x name))
-        (query (format nil "grant usage on schema ~a to ~a" schema-x name))
-        (query (format nil "grant select on all sequences in schema ~a to ~a"
-                       schema-x name))
-        (cond ((or (eq tables :all)
-                   (equalp tables "all")
-                   (and (listp tables)
-                        (equalp (first tables) "all"))) ; Grant access to existing tables
-               (case role-type
-                 (:admin
-                  (admin-permissions schema-x name))
-                 (:editor
-                  (editor-permissions schema-x name))
-                 (:readonly
-                  (readonly-permissions schema-x name))
-                 (t (query (readonly-permissions schema-x name)))))
-              ((listp tables)
-               (let ((existing-tables (list-tables t))) ;  Grant access to existing tables
-                 (when (or (eq (first tables) :all)
-                           (equalp (first tables) "all"))
-                   (setf tables existing-tables))
-                 (loop for table-y in (mapcar #'s-sql:to-sql-name tables) do
-                   (when (or (eq tables :all)
-                             (equalp tables "all")
-                             (member table-y existing-tables :test #'equal))
-                     (case role-type
-                       (:admin
-                        (admin-permissions schema-x name table-y))
-                       (:editor
-                        (editor-permissions schema-x name table-y))
-                       (:readonly
-                        (readonly-permissions schema-x name table-y))
-                       (t (readonly-permissions schema-x name table-y)))))))
-              (t nil))))))
+  (when (not (member role-type '(:superuser :standard)))
+    (when (equalp tables "all") (setf tables :all))
+    (setf schema (schema-parameters-to-list schema))
+    (setf databases (database-parameters-to-list databases))
+    (when (not databases)
+      (cerror "invalid database name provided" 'invalid-database-name))
+    (loop for x in databases do
+      (query (format nil "grant connect on database ~a to ~a"
+                     x name)))
+    (restart-case
+        (loop for x in databases do
+              (with-connection (list x (cl-postgres::connection-user *database*)
+                             (cl-postgres::connection-password *database*)
+                             (cl-postgres::connection-host *database*)
+                             :port (cl-postgres::connection-port *database*)
+                             :use-ssl (cl-postgres::connection-use-ssl *database*))
+                (grant-role-permissions-helper role-type name :schema schema
+                                                              :tables tables)))
+      (apply-just-to-current (role-type name schema tables databases)
+        :report "Use currently connected database only"
+        (when (member (current-database) databases :test #'equal)
+            (grant-role-permissions-helper role-type name :schema schema
+                                                       :tables tables))))))
 
 (defun create-role-helper (role-type name password &key (schema :public)
                                                      (tables :all)
@@ -446,15 +496,17 @@ schemas, tables or databases to be granted permission.
 
   Note that the schema and table rights and revocations granted are limited to
 the connected database at the time of execution of this function."
-  (if (eq role-type :superuser)
-      (query (format nil "create role ~a with login password '~a' superuser
+  (case role-type
+    (:superuser
+     (query (format nil "create role ~a with login password '~a' superuser
 inherit createdb createrole replication"
-                     name password))
-      (query (format nil "create role ~a with login password '~a' nosuperuser
+                    name password)))
+    (t
+     (query (format nil "create role ~a with login password '~a' nosuperuser
 inherit nocreatedb nocreaterole noreplication"
-                     name password)))
-  (grant-role-permissions role-type name password :schema schema :tables tables
-                                                  :databases databases))
+                    name password))))
+  (grant-role-permissions role-type name :schema schema :tables tables
+                                         :databases databases))
 
 (defun create-role (name password &key (base-role :readonly) (schema :public)
                                     (tables :all) (databases :current)
@@ -462,10 +514,11 @@ inherit nocreatedb nocreaterole noreplication"
                                     (allow-utf8 nil)
                                     (allow-disallowed-names nil) (comment nil))
   "Keyword parameters: Base-role. Base-role should be one of :readonly, :editor,
-:admin or :superuser. A readonly user can only select existing data in the
+:admin, :standard or :superuser. A readonly user can only select existing data in the
 specified tables or databases. An editor has the ability to insert, update,
 delete or select data. An admin has all privileges on a database, but cannot
-create new databases, roles, or replicate the system.
+create new databases, roles, or replicate the system. A standard user has no
+particular privileges or restrictions.
 
  :schema defaults to :public but can be a list of schemas. User will not have
 access to any schemas not in the list.
@@ -507,7 +560,7 @@ as culturally insensitive to change the display of the name."
 names. Sorry"))
         (t (setf name (cl-postgres:saslprep-normalize name))
            (setf password (cl-postgres:saslprep-normalize password))))
-  (if (member name (list-database-users) :test #'equal)
+  (if (role-exists-p name)
       (return-from create-role "Role name already in use.")
       (case base-role
         (:readonly
@@ -522,6 +575,8 @@ names. Sorry"))
          (create-role-helper :admin name password :schema schema
                                                   :tables tables
                                                   :databases databases))
+        (:standard
+         (create-role-helper :standard name password))
         (t (create-role-helper :readonly name password :schema schema
                                                        :tables tables
                                                        :databases databases))))
@@ -529,10 +584,10 @@ names. Sorry"))
                                name comment))))
 
 (defun find-objects-by-owner (owner)
-  "Returns a list of lists in the form of (schema, object) for each object owned
-by the owner. Procedures owned by the owner will have an additional result of
-the procedure number e.g. (schema, procedure-name, object number). A procedure
-could be sequences."
+  "Returns a list of lists in the form of (schema, object) for each object in
+the current database owned by the owner. Procedures owned by the owner will
+have an additional result of the procedure number e.g.
+ (schema, procedure-name, object number). A procedure could be sequences."
   (query "SELECT
               n.nspname AS schema_name,
               c.relname AS rel_name,
@@ -550,7 +605,7 @@ could be sequences."
             JOIN pg_namespace n ON n.oid = p.pronamespace
             where pg_get_userbyid(p.proowner) = $2;" owner owner))
 
-(defun drop-role (name &optional (new-owner "postgres"))
+(defun drop-role (name &optional (new-owner "postgres") (database :all))
   "Before dropping the role, you must drop all the objects it owns (or reassign
 their ownership) and revoke any privileges the role has been granted on other
 objects. Drop-role will drop objects owned by a role in the current database.
@@ -559,24 +614,50 @@ dropping objects will only apply to the currently connected database.
 Question 2. We will reassign ownership of the objects to the postgres role
 unless otherwise specified in the optional second parameter. Returns t if
 successful. Will not drop the postgres role."
-  (when (and (not (string= name "postgres"))
-             (member name (list-database-users) :test #'equal))
-    (query (format nil "reassign owned by ~a to ~a" name new-owner))
-    (query (format nil "drop owned by ~a" name))
-    (query (format nil "drop role if exists ~a" name)))
-  (not (role-exists-p name)))
+  (if (eq database :all)
+      (loop for x in (list-databases :names-only t) do
+        (with-connection (list x (cl-postgres::connection-user *database*)
+                               (cl-postgres::connection-password *database*)
+                               (cl-postgres::connection-host *database*)
+                               :port (cl-postgres::connection-port *database*)
+                               :use-ssl (cl-postgres::connection-use-ssl *database*))
+          (when (and (not (string= name "postgres"))
+                     (member name (list-database-users) :test #'equal))
+            (query (format nil "reassign owned by ~a to ~a" name new-owner))
+            (query (format nil "drop owned by ~a" name)))))
+      (with-connection (list database (cl-postgres::connection-user *database*)
+                             (cl-postgres::connection-password *database*)
+                             (cl-postgres::connection-host *database*)
+                             :port (cl-postgres::connection-port *database*)
+                             :use-ssl (cl-postgres::connection-use-ssl *database*))
+        (when (and (not (string= name "postgres"))
+                   (member name (list-database-users) :test #'equal))
+          (query (format nil "reassign owned by ~a to ~a" name new-owner))
+          (query (format nil "drop owned by ~a" name)))))
+      (query (format nil "drop role if exists ~a" name))
+      (not (role-exists-p name)))
 
-(defun list-role-permissions (role)
-  "This checks the permissions granted to a particular role within the currently
-connected database. "
-  (query "SELECT grantee
-      ,table_catalog
-      ,table_schema
-      ,table_name
-      ,string_agg(privilege_type, ', ' ORDER BY privilege_type) AS privileges
-      FROM information_schema.role_table_grants
-      WHERE grantee = $1
-      GROUP BY grantee, table_catalog, table_schema, table_name;" role))
+(defun list-role-permissions (&optional role)
+  "This checks the permissions granted  within the currently connected database.
+If an optional role is provided, the result is limited to that role."
+  (if role
+    (query "SELECT grantee,
+            table_schema,
+            table_name,
+            string_agg(privilege_type, ', ' ORDER BY privilege_type) AS privileges
+          FROM information_schema.role_table_grants
+          WHERE grantee = $1
+          GROUP BY grantee, table_catalog, table_schema, table_name;" role)
+    (query "SELECT grantee,
+                   table_schema,
+                   table_name,
+                   string_agg(privilege_type, ', ' ORDER BY privilege_type) AS privileges
+            FROM information_schema.role_table_grants
+            where grantee != 'postgres'
+            and grantee != 'PUBLIC'
+            and table_name not like 'pg_%'
+            and grantor != grantee;")))
+
 
 #|
 Notes:

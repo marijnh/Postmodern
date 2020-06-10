@@ -183,7 +183,7 @@ available database"
 Collations are a mess as different operating systems provide different
 collations. We might get some sanity if Postgresql can use ICU as the default.
 See https://wiki.postgresql.org/wiki/Collations."
-  (setf *collation-support* (query "select collname from pg_collation")))
+  (setf *collations* (query "select collname from pg_collation")))
 
 (defun collation-exists-p (collation)
   "This function does require the parameter to be a string and properly upper
@@ -196,12 +196,17 @@ and lower cased."
 on a remote server so we just assume any postgresql usable set is available."
   (member char-support *character-sets* :test 'equalp))
 
-(defun create-database (database-name &key (encoding "UTF8") (owner "")
+(defun list-templates ()
+  "Returns a list of existing database template names"
+  (query "select datname from pg_database where datistemplate is true"))
+
+(defun create-database (database-name &key (encoding "UTF8")
                                         (connection-limit -1)
-                                        (limit-public-access nil)
-                                        (comment nil)
-                                        (collation nil)
-                                        (template "template1"))
+                                        owner
+                                        limit-public-access
+                                        comment
+                                        collation
+                                        template)
   "Creates a basic database. Besides the obvious database-name parameter, you
 can also use key parameters to set encoding (defaults to UTF8), owner,
 connection-limit (defaults to no limit)). If limit-public-access is set to t,
@@ -215,9 +220,14 @@ locale specific data."
         ((stringp owner)
          nil)
         (t (setf owner (cl-postgres::connection-user *database*))))
-  (if collation (progn (setf template "template template0")
-                       (setf collation (format nil " lc_collate '~a' lc_ctype
-'~a'" collation collation) "")))
+  (if template (setf template
+                     (format nil "template ~a " template))
+      (setf template ""))
+  (if collation
+      (progn (setf template "template template0")
+             (setf collation (format nil " lc_collate '~a' lc_ctype '~a'"
+                                     collation collation)))
+      (setf collation ""))
   (when (and (character-set-exists-p encoding)
              (integerp connection-limit))
     (query (format nil "create database ~a owner ~a ~a encoding ~a ~a
@@ -225,14 +235,15 @@ connection limit = ~a"
                    database-name owner template encoding collation
                    connection-limit))
     (when limit-public-access
+      (format t "Limiting Public Access ~a~%" database-name)
       (query (format nil "revoke all privileges on database ~a from public;"
                      database-name)))
     (when comment (query (format nil "comment on database ~a is '~a'"
                                  database-name comment)))))
 
 (defun drop-database (database)
-  "Drop the specified database. Note: This cannot be the database you are
-already connected to."
+  "Drop the specified database. Note: Only the owner of a database can drop
+a database and there cannot be any current connections to the database."
   (setf database (to-sql-name database))
   (if (database-exists-p database)
       (query (format nil "drop database ~a" database))
@@ -304,14 +315,20 @@ template databases."
        (:raw order-by-size))))
 
     (t
-     (loop for x in (query
-                     (:order-by
-                      (:select 'datname
-                       :from 'pg-database
-                       :where (:not (:like 'datname "template%")))
-                      (:raw order-by-size)))
-           collect (first x)))))
+     (alexandria:flatten
+      (query
+       (:order-by
+        (:select 'datname
+         :from 'pg-database
+         :where (:not (:like 'datname "template%")))
+        (:raw order-by-size)))))))
 
+(defun list-access (database-name)
+  "Returns an array of roles with access rights"
+  (query "SELECT d.datacl
+          FROM pg_catalog.pg_database d
+          WHERE d.datname OPERATOR(pg_catalog.~) $1 COLLATE pg_catalog.default"
+         database-name :single))
 
 ;;;; Schemas
 ;;;; See namespace.lisp
@@ -396,10 +413,10 @@ which is very heavily used can be placed on a very fast, highly available
 disk, such as an expensive solid state device. At the same time a table
 storing archived data which is rarely used or not performance critical could
 be stored on a less expensive, slower disk system."
-  (loop for x in (query (:order-by (:select (:as 'spcname 'name)
-                                    :from 'pg_tablespace)
-                                   'spcname))
-        collect (first x)))
+  (alexandria:flatten
+   (query (:order-by (:select (:as 'spcname 'name)
+                      :from 'pg_tablespace)
+                     'spcname))))
 
 ;;;; Types
 (defun list-available-types ()
@@ -412,26 +429,31 @@ the name of the data types. E.g. (21 \"smallint\")"
 
 ;;; Tables
 (defun table-schema-names (table-name schema-name)
+  "Helper function to allow for fully qualified table names and non-qualified
+tables names that just exist in public schema or in a separately stated
+schema in the second parameter."
   (let ((split-name (split-fully-qualified-tablename table-name)))
     (setf table-name (first split-name))
     (if schema-name (setf schema-name (to-sql-name schema-name))
         (setf schema-name (second split-name))))
   (values table-name schema-name))
 
+
 ;;; create table can only be done either using a deftable approach or s-sql
+
 (defun get-table-comment (table-name &optional schema-name)
-  "Get table comment retrieves the comment attached to a table, if any."
+  "Retrieves the comment, if any attached to the table"
   (multiple-value-bind (tn sn)
       (table-schema-names table-name schema-name)
     (query (:select 'description
-          :from 'pg_description
-          :inner-join 'pg_class
-          :on (:= 'pg_description.objoid 'pg_class.oid)
-          :inner-join 'pg-namespace
-          :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
-          :where (:and (:= 'pg-class.relname '$1)
-                       (:= 'pg-namespace.nspname '$2)))
-         tn sn :single)))
+            :from 'pg-description
+            :inner-join 'pg-class
+            :on (:= 'objoid 'oid)
+            :inner-join 'pg-namespace
+            :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+            :where (:and (:= 'pg-class.relname '$1)
+                         (:= 'pg-namespace.nspname '$2)))
+           tn sn :single)))
 
 (defun get-all-table-comments ()
   "Returns a list of lists, each list showing the schema, table and comment
@@ -453,20 +475,6 @@ for tables in all schemas."
       (table-schema-names table-name schema-name)
     (query (:select 'pg-class.oid
             :from 'pg-class
-            :inner-join 'pg-namespace
-            :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
-            :where (:and (:= 'pg-class.relname '$1)
-                         (:= 'pg-namespace.nspname '$2)))
-           tn sn :single)))
-
-(defun get-table-comment (table-name &optional schema-name)
-  "Retrieves the comment, if any attached to the table"
-  (multiple-value-bind (tn sn)
-      (table-schema-names table-name schema-name)
-    (query (:select 'description
-            :from 'pg-description
-            :inner-join 'pg-class
-            :on (:= 'objoid 'oid)
             :inner-join 'pg-namespace
             :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
             :where (:and (:= 'pg-class.relname '$1)
@@ -504,7 +512,6 @@ is not provided, the table will be assumed to be in the public schema."
 #|
 column_name data_type column_default is_nullable collation_name is_identity |  character_maximum_length | character_octet_length | numeric_precision | numeric_precision_radix | numeric_scale | datetime_precision | interval_type | interval_precision | character_set_catalog | character_set_schema | character_set_name | collation_catalog | collation_schema |  | domain_catalog | domain_schema | domain_name | udt_catalog | udt_schema | udt_name | scope_catalog | scope_schema | scope_name | maximum_cardinality | dtd_identifier | is_self_referencing | | identity_generation | identity_start | identity_increment | identity_maximum | identity_minimum | identity_cycle | is_generated | generation_expression | is_updatable
 |#
-
 
 (defun table-description-plus (table-name &optional schema-name)
   "Returns more table info than table-description. Specifically returns
@@ -580,7 +587,9 @@ the names will be returned as strings with underscores converted to hyphens."
                                  WHERE (table_schema = $1))
                                  ORDER BY table_name)"
                     (to-sql-name schema-name))))))
-    (if strings-p (mapcar 'from-sql-name result) result )))
+    (if strings-p
+        (mapcar 'from-sql-name result)
+        result )))
 
 (defun list-tables (&optional (strings-p nil))
   "DEPRECATED FOR LIST-ALL-TABLES. Return a list of the tables in the public
@@ -652,10 +661,9 @@ the result in order of size instead of by table name."
                                             :where (:= 'table-schema '$1)))))
                         'relname)
                        schema))
-        (t (loop for x in (query (:order-by (:select 'relname
+        (t (alexandria:flatten (query (:order-by (:select 'relname
                                              :from 'pg_class)
-                                            'relname))
-                 collect (first x)))))
+                                            'relname))))))
 
 (defun table-size (table-name)
   "Return the size of a given postgresql table in k or m. Table-name can be
@@ -663,6 +671,7 @@ either a string or quoted."
   (query (:select (:pg_size_pretty (:pg_total_relation_size '$1)))
          :single
          (to-sql-name table-name)))
+
 
 ;; Columns
 (defun get-column-comments (database schema table)
@@ -707,29 +716,26 @@ with the schema will be assumed to be in the public schema."
   "Determine if a particular column exists. Table name and column-name can be
 either strings or symbols. If the optional schema name is not given or the
 table-name is not fully qualified with a schema name, the schema will be assumed
-to be the public schema."
-    (let ((split-name (split-fully-qualified-tablename table-name)))
-    (setf table-name (first split-name))
-    (if schema-name (setf schema-name (to-sql-name schema-name))
-        (setf schema-name (second split-name))))
-  (let ((schema-test (if (and schema-name
-                              (schema-exists-p schema-name)
-                              (table-exists-p table-name))
-                         (sql (:= 'pg-namespace.nspname schema-name))
-                         "true")))
-    (query (:select
-            (:as 'a.attname 'column-name)
-            :distinct
-            :from (:as 'pg-attribute 'a)
-            :inner-join 'pg-class
-            :on (:and (:= 'pg-class.oid 'attrelid)
-                      (:= 'pg-class.relname (to-identifier table-name)))
-            :inner-join 'pg-namespace
-            :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
-            :where (:and (:> 'attnum 0) (:raw schema-test)
-                         (:= '$1 'a.attname)))
-           (to-sql-name column-name)
-           :single)))
+to be the public schema. Returns t or nil."
+  (multiple-value-bind (tn sn)
+      (table-schema-names table-name schema-name)
+    (query
+     (:select
+      (:exists
+               (:select
+                (:as 'a.attname 'column-name)
+                :distinct
+                :from (:as 'pg-attribute 'a)
+                :inner-join 'pg-class
+                :on (:and (:= 'pg-class.oid 'attrelid)
+                          (:= 'pg-class.relname tn))
+                :inner-join 'pg-namespace
+                :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+                :where (:and (:> 'attnum 0)
+                             (:= 'pg-namespace.nspname '$1)
+                             (:= '$2 'a.attname)))))
+           :single sn (to-sql-name column-name))))
+
 
 ;;; Views
 (defun list-views (&optional strings-p)
@@ -785,6 +791,7 @@ name but defaults to public schema."
                     (:set "pg_catalog" "information-schema"))
            (:!= 'type-udt-name "trigger")))))
 
+
 ;;;; Indices
 (defun index-exists-p (index-name)
   "Tests whether an index with the given name exists. The name can be either a
@@ -808,8 +815,7 @@ it does not have a where clause capability."
                        (if using (to-sql-name using) "")
                        " ("
                        (format nil "~{ ~a~^, ~}" (mapcar #'to-sql-name fields))
-                       ") "
-                       )))
+                       ") ")))
     (query query-string)))
 
 (defun drop-index (name &key concurrently if-exists cascade)
@@ -1102,21 +1108,24 @@ See https://www.postgresql.org/docs/current/trigger-definition.html)"
       (progn
         (setf table-name (to-sql-name table-name))
         (when (table-exists-p table-name)
-          (loop for x in (query
-                          (:select (:as 'trg.tgname 'trigger-name)
-                           :from (:as 'pg-trigger 'trg) (:as 'pg-class 'tbl)
-                           :where (:and (:= 'trg.tgrelid 'tbl.oid)
-                                        (:= 'tbl.relname '$1)))
-                          table-name)
-                collect (first x))))
-      (loop for x in (query
-                      (:select 'trigger-name :distinct
-                               :from 'information-schema.triggers
-                               :where
-                               (:not-in 'trigger-schema
-                                        (:set "pg-catalog"
-                                              "information-schema"))))
-            collect (first x))))
+          (alexandria:flatten
+           (query
+            (:order-by (:select (:as 'trg.tgname 'trigger-name)
+              :from (:as 'pg-trigger 'trg) (:as 'pg-class 'tbl)
+              :where (:and (:= 'trg.tgrelid 'tbl.oid)
+                           (:= 'tbl.relname '$1)))
+                       'trigger-name)
+            table-name))))
+      (alexandria:flatten
+       (query
+        (:order-by
+         (:select 'trigger-name :distinct
+                  :from 'information-schema.triggers
+                  :where
+                  (:not-in 'trigger-schema
+                           (:set "pg-catalog"
+                                 "information-schema")))
+         'trigger-name)))))
 
 (defun list-detailed-triggers ()
   "DEPRECATED FOR DESCRIBE-TRIGGERS.List detailed information on the triggers
@@ -1127,40 +1136,6 @@ from the information_schema table."
     :where
     (:not-in 'trigger-schema
              (:set "pg_catalog" "information_schema")))))
-
-;;; Roles
-(defun list-database-users ()
-  "List database users (actually 'roles' in Postgresql terminology)."
-  (loop for x in (query (:order-by
-                         (:select 'usename :from 'pg_user)
-                         'usename))
-        collect (first x)))
-
-(defun list-roles (&optional (lt nil))
-  "Returns a list of alists of rolenames, role attributes and membership in
-roles. See https://www.postgresql.org/docs/current/role-membership.html
-for an explanation.
-
-The optional parameter can be used to set the return list types
-to :alists or :plists."
-  (let ((sql-query "SELECT r.rolname, r.rolsuper, r.rolinherit,
-  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,
-  r.rolconnlimit, r.rolvaliduntil,
-  ARRAY(SELECT b.rolname
-        FROM pg_catalog.pg_auth_members m
-        JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)
-        WHERE m.member = r.oid) as memberof
-  , r.rolreplication
-  , r.rolbypassrls
-  FROM pg_catalog.pg_roles r
-  WHERE r.rolname !~ '^pg_'
-  ORDER BY 1;"))
-    (cond ((equal lt :alists)
-           (query  sql-query :alists))
-          ((equal lt :plists)
-           (query  sql-query :plists))
-          (t (query sql-query)))))
-
 
 ;;;; Misc that need to be reorganized
 
@@ -1180,16 +1155,16 @@ It does this by returningo info from pg_stat_activity on open connections."
 (defun list-available-extensions ()
   "List the postgresql extensions which are available in the system to the
 currently connected database. The extensions may or may not be installed."
-  (loop for x in (query (:order-by (:select 'name :from 'pg-available-extensions)
-                                   'name))
-        collect (first x)))
+  (alexandria:flatten
+   (query (:order-by (:select 'name :from 'pg-available-extensions)
+                     'name))))
 
 (defun list-installed-extensions ()
   "List the postgresql extensions which are installed in the currently
 connected database."
-  (loop for x in (query (:order-by (:select 'extname :from 'pg-extension)
-                                   'extname))
-        collect (first x)))
+  (alexandria:flatten
+   (query (:order-by (:select 'extname :from 'pg-extension)
+                     'extname))))
 
 (defun replace-non-alphanumeric-chars (str &optional (replacement #\_))
   "Takes a string and a replacement char and replaces any character which is
@@ -1202,240 +1177,3 @@ underscore and returns the modified string."
                         (alphanumericp ch))
                     (write-char ch)
                     (write-char replacement))))))
-
-(defun cache-hit-ratio ()
-  "The cache hit ratio shows data on serving the data from memory compared to
-how often you have to go to disk.
-
-This function returns a list of heapblocks read from disk, heapblocks hit from
-memory and the ratio of heapblocks hit from memory / total heapblocks hit.
-Borrowed from:
-https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/"
-  (query "SELECT sum(heap_blks_read) as heap_read,
-                sum(heap_blks_hit) as heap_hit,
-                sum(heap_blks_hit) / (sum(heap_blks_hit) + sum(heap_blks_read))
-                as ratio
-         FROM pg_statio_user_tables;"))
-
-(defun bloat-measurement ()
-  "Bloat measurement of unvacuumed dead tuples. Borrowed from:
-https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/
-who borrowed it from:
- https://github.com/heroku/heroku-pg-extras/tree/master/commands."
-  (query "WITH constants AS
-            (SELECT current_setting('block_size')::numeric AS bs,
-                    23 AS hdr,
-                    4 AS ma),
-               bloat_info AS
-            (SELECT ma,
-                    bs,
-                    schemaname,
-                    tablename,
-                    (datawidth+(hdr+ma-(case
-                                            when hdr%ma=0 THEN ma
-                                            ELSE hdr%ma
-                                        END)))::numeric AS datahdr,
-                    (maxfracsum*(nullhdr+ma-(case
-                                                 when nullhdr%ma=0 THEN ma
-                                                 ELSE nullhdr%ma
-                                             END))) AS nullhdr2
-             FROM
-               (SELECT schemaname,
-                       tablename,
-                       hdr,
-                       ma,
-                       bs,
-                       SUM((1-null_frac)*avg_width) AS datawidth,
-                       MAX(null_frac) AS maxfracsum,
-                       hdr+
-                  (SELECT 1+count(*)/8
-                   FROM pg_stats s2
-                   WHERE null_frac<>0
-                     AND s2.schemaname = s.schemaname
-                     AND s2.tablename = s.tablename ) AS nullhdr
-                FROM pg_stats s,
-                     constants
-                GROUP BY 1,
-                         2,
-                         3,
-                         4,
-                         5) AS foo),
-               table_bloat AS
-            (SELECT schemaname,
-                    tablename,
-                    cc.relpages,
-                    bs,
-                    CEIL((cc.reltuples*((datahdr+ma- (CASE
-                                                          WHEN datahdr%ma=0 THEN ma
-                                                          ELSE datahdr%ma
-                                                      END))+nullhdr2+4))/(bs-20::float))
-                    AS otta
-             FROM bloat_info
-             JOIN pg_class cc ON cc.relname = bloat_info.tablename
-             JOIN pg_namespace nn ON cc.relnamespace = nn.oid
-             AND nn.nspname = bloat_info.schemaname
-             AND nn.nspname <> 'information_schema'),
-               index_bloat AS
-            (SELECT schemaname,
-                    tablename,
-                    bs,
-                    COALESCE(c2.relname, '?') AS iname,
-                    COALESCE(c2.reltuples, 0) AS ituples,
-                    COALESCE(c2.relpages, 0) AS ipages,
-                    COALESCE(CEIL((c2.reltuples*(datahdr-12))/(bs-20::float)), 0)
-                    AS iotta -- very rough approximation, assumes all cols
-
-             FROM bloat_info
-             JOIN pg_class cc ON cc.relname = bloat_info.tablename
-             JOIN pg_namespace nn ON cc.relnamespace = nn.oid
-             AND nn.nspname = bloat_info.schemaname
-             AND nn.nspname <> 'information_schema'
-             JOIN pg_index i ON indrelid = cc.oid
-             JOIN pg_class c2 ON c2.oid = i.indexrelid)
-          SELECT type,
-                 schemaname,
-                 object_name,
-                 bloat,
-                 pg_size_pretty(raw_waste) as waste
-          FROM
-            (SELECT 'table' as type,
-                    schemaname,
-                    tablename as object_name,
-                    ROUND(CASE
-                              WHEN otta=0 THEN 0.0
-                              ELSE table_bloat.relpages/otta::numeric
-                          END, 1) AS bloat,
-                    CASE
-                        WHEN relpages < otta THEN '0'
-                        ELSE (bs*(table_bloat.relpages-otta)::bigint)::bigint
-                    END AS raw_waste
-             FROM table_bloat
-             UNION SELECT 'index' as type,
-                          schemaname,
-                          tablename || '::' || iname as object_name,
-                          ROUND(CASE
-                                    WHEN iotta=0
-                                         OR ipages=0 THEN 0.0
-                                    ELSE ipages/iotta::numeric
-                                END, 1) AS bloat,
-                          CASE
-                              WHEN ipages < iotta THEN '0'
-                              ELSE (bs*(ipages-iotta))::bigint
-                          END AS raw_waste
-             FROM index_bloat) bloat_summary
-          ORDER BY raw_waste DESC,
-                   bloat DESC
-
-          SELECT schemaname || '.' || relname AS table,
-                 indexrelname AS index,
-                 pg_size_pretty(pg_relation_size(i.indexrelid)) AS index_size,
-                 idx_scan as index_scans
-          FROM pg_stat_user_indexes ui
-          JOIN pg_index i ON ui.indexrelid = i.indexrelid
-          WHERE NOT indisunique
-            AND idx_scan < 50
-            AND pg_relation_size(relid) > 5 * 8192
-          ORDER BY pg_relation_size(i.indexrelid) / nullif(idx_scan, 0)
-                   DESC NULLS FIRST, pg_relation_size(i.indexrelid) DESC;"))
-
-(defun unused-indexes ()
-  "Returns a list of lists showing schema.table, indexname, index_size and
-number of scans. The code was borrowed from:
-https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/"
-  (query "SELECT schemaname || '.' || relname AS table,
-                 indexrelname AS index,
-                 pg_size_pretty(pg_relation_size(i.indexrelid)) AS index_size,
-                 idx_scan as index_scans
-          FROM pg_stat_user_indexes ui
-          JOIN pg_index i ON ui.indexrelid = i.indexrelid
-          WHERE NOT indisunique
-            AND idx_scan < 50
-            AND pg_relation_size(relid) > 5 * 8192
-          ORDER BY pg_relation_size(i.indexrelid) / nullif(idx_scan, 0)
-                   DESC NULLS FIRST, pg_relation_size(i.indexrelid) DESC;"))
-
-(defun check-query-performance (&optional (ob nil) (num-calls 100) (limit 20))
-  "This function requires that postgresql extension pg_stat_statements must be
-loaded via shared_preload_libraries. It is borrowed from:
- https://www.citusdata.com/blog/2019/03/29/health-checks-for-your-postgres-database/.
-
-Optional parameters OB allow order-by to be 'calls', 'total-time', 'rows-per'
-or 'time-per', defaulting to time-per.num-calls to require that the number of calls
-exceeds a certain threshold, and limit to limit the number of rows returned.
-It returns a list of lists, each row containing the query, number of calls,
-total_time, total_time/calls, stddev_time, rows, rows/calls and the cache hit
-percentage."
-  (unless (or (eql ob "calls")
-              (eql ob "total-time")
-              (eql ob "rows-per")
-              (eql ob "time-per"))
-    (setf ob "time-per"))
-  (setf ob (with-output-to-string (*standard-output*)
-             (loop :for ch :of-type character :across ob
-                   :do (if (or (eq ch #\*)
-                               (alphanumericp ch))
-                           (write-char ch)
-                           (write-char #\_)))))
-  (let ((sql-statement
-          (format nil
-                  "SELECT query,
-                         calls,
-                         total_time,
-                         total_time / calls as time_per,
-                         stddev_time,
-                         rows,
-                         rows / calls as rows_per,
-                                100.0 * shared_blks_hit / nullif(shared_blks_hit
-                                + shared_blks_read, 0)
-                         AS hit_percent
-                  FROM pg_stat_statements
-                  WHERE query not similar to '%pg_%'
-                    and calls > ~a
-                  ORDER BY ~a DESC
-                    LIMIT ~a;" num-calls ob limit)))
-    (query sql-statement)))
-
-;;; Document Database Functions
-(defun document-schema (schema out)
-  "Outputs some schema description info to out"
-  (format out "~%* Schema ~a~%" schema)
-  (format out "~%** Table Sizes~%")
-  (format out "Pretty size is bytes, KB, MB, etc. ~% Table+Toast is the size of the table not counting indexes plus TOAST (parts of a table stored out of line due to physical rows crossing block boundaries.~% Table+Indices is total size in bytes~% Table Alone is just the size of the main table without the TOAST parts stored outside the main table.~% Index size is the size of the associated indices in bytes. ~% Num 8k pages are the number of pages used assuming postgresql was compiled normally with 8k pages.~% More information is available at [[https://www.postgresql.org/docs/current/disk-usage.html]]~%")
-  (format out "~%| Schema | Name | Rows | Type | Owner | Pretty Size | Table+Toast Size | Table+Indices | Table Alone | Index Size | Num 8K Pages | Description |~%")
-  (loop for y in (list-table-sizes schema) do
-    (format out "|~{ ~a |~}~%" y))
-  (format out "~%"))
-
-(defun document-table (schema table out)
-  "Outputs some table description info to out"
-  (format out "~%** ~a.~a~%" schema table)
-  ;; Table Description
-  (format out "~%The following information for this table is shown in the following table: (column-name, data type, substring, whether it is not nullable, whether it has a default value, collation, whether it is an identity column, whether it is a generated column, the storage type, attstattarget and a column description/comment if any. attstattarget controls the level of detail of statistics accumulated for this column by ANALYZE. A zero value indicates that no statistics should be collected. A negative value says to use the system default statistics target. The exact meaning of positive values is data type-dependent. For scalar data types, attstattarget is both the target number of most common values to collect, and the target number of histogram bins to create. Attstorage is normally a copy of pg_type.typstorage of this column's type. For TOAST-able data types, this can be altered after column creation to control storage policy. ~%")
-  (format out "~%~%| Col. Name | Data Type | Substring | Not Null? | Has Default? | Collation | Attstattarget | Attstorage | Identity Col? | Generated Col? |Col-Description |~%")
-  (loop for z in (table-description (format nil "~a.~a" (to-sql-name schema) (to-sql-name table))) do
-          (format out "|~{ ~a |~}~%" z)))
-
-(defun document-database (output-file)
-  "Writes a description of the currently connected database to a file"
-  (with-open-file (out output-file :direction :output :if-exists :supersede)
-    (format out "#+TITLE:    Documentation for ~a~%
-#+DESCRIPTION:~a%~%"
-            (current-database) "Insert current description here")
-    (format out "#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"css/htmlize.css\"/>
-#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"css/readtheorg.css\"/>
-#+HTML_HEAD: <script type=\"text/javascript\" src=\"js/jquery.min.js\"></script>
-#+HTML_HEAD: <script type=\"text/javascript\" src=\"js/bootstrap.min.js\"></script>
-#+HTML_HEAD: <script type=\"text/javascript\" src=\"js/jquery.stickytableheaders.min.js\"></script>
-#+HTML_HEAD: <script type=\"text/javascript\" src=\"js/readtheorg.js\"></script>
-# Change the background of source block.
-#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
-#+LANGUAGE:  en
-#+OPTIONS:   H:4
-#+OPTIONS:   num:nil
-#+OPTIONS:   toc:2
-#+OPTIONS:   p:t
-#+OPTIONS: ^:nil")
-    (loop for x in (list-schemas) do
-      (document-schema x out)
-      (loop for y in (list-tables-in-schema x) do
-        (document-table x y out)))))

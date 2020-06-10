@@ -125,6 +125,8 @@
    #:drop-database
    #:document-database
    #:list-databases
+   #:list-templates
+   #:list-available-collations
 
    ;; extensions
    #:list-available-extensions
@@ -145,9 +147,13 @@
    #:find-primary-key-info
    ;; roles
    #:list-roles
+   #:list-role-permissions
    #:role-exists-p
+   #:create-role
    #:drop-role
-   #:list-database-users
+
+   #:list-database-users ;deprecated
+
    ;; schemas
    #:list-schemata ;
    #:list-schemas
@@ -170,6 +176,8 @@
    #:table-size
    #:list-tables-in-schema
    #:drop-table
+   #:get-table-oid
+   #:get-table-comment
    ;; tablespaces
    #:create-tablespace
    #:list-tablespaces

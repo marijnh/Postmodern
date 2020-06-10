@@ -650,16 +650,24 @@
 ;; namespaces.
 (test namespace
   (with-test-connection
+    (let ((excess-schemas
+            (set-difference (list-schemas)
+                            '("public" "information_schema" "uniq")
+                            :test #'equal)))
+      (when excess-schemas (loop for x in excess-schemas do
+                                 (drop-schema x :cascade 't))))
     (when (table-exists-p 'test-uniq)
       (execute (:drop-table 'test-uniq)))
-    (when (schema-exists-p 'uniq)
-      (drop-schema 'uniq :cascade 't))
     (is (schema-exists-p :public))
     (is (not (table-exists-p 'test-uniq)))
     (unless (table-exists-p 'test-uniq)
       (execute (:create-table test-uniq ((value :type integer)))))
     (is (table-exists-p 'test-uniq))
     (is (not (schema-exists-p 'uniq)))
+    (is (eq (column-exists-p 'public.test-uniq 'value) t))
+    (is (not (eq (column-exists-p 'public.test-uniq 'valuea) t)))
+    (is (eq (column-exists-p 'test-uniq 'value 'public) t))
+    (is (not (eq (column-exists-p 'test-uniq 'valuea 'public) t)))
     (with-schema ('uniq :if-not-exist :create) ;; changing the search path
       (is (schema-exists-p 'uniq))
       (is (schema-exists-p "uniq"))
@@ -884,14 +892,24 @@ and second the string name for the datatype."
 
 (test schema-comments
   (with-test-connection
+    (when (schema-exists-p "schema_1")
+      (drop-schema "schema_1" :cascade t))
     (create-schema "schema_1")
-    (query (:create-table "p1" ((id :type integer :generated-as-identity-always t) (text :type text))))
-    (query (:create-table "schema_1.s1" ((id :type integer :generated-as-identity-always t) (text :type text))))
-    (add-comment :table 'receipes "a comment on receipes")
+    (when (table-exists-p "p1")
+      (drop-table "p1" :cascade t))
+    (query (:create-table "p1"
+                          ((id :type integer :generated-as-identity-always t)
+                           (text :type text))))
+    (query (:create-table "schema_1.s1"
+                          ((id :type integer :generated-as-identity-always t)
+                           (text :type text))))
+    (add-comment :table 'p1 "a comment on receipes")
     (add-comment :table 'schema-1.s1 "a comment on schema-1 s1")
     (is (equal (get-table-comment 'p1)
                "a comment on receipes"))
-    (is (equal (integerp (get-table-oid 'schema-1.s1) t)))
+    (is (equal (integerp (get-table-oid 'schema-1.s1)) t))
     (is (equal (integerp (get-table-oid 'information-schema.columns)) t))
     (is (equal (get-table-comment 'schema-1.s1)
-               "a comment on schema-1 s1"))))
+               "a comment on schema-1 s1"))
+    (drop-schema "schema_1" :cascade t)
+    (drop-table "p1" :cascade t)))
