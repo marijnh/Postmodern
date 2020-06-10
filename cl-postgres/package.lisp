@@ -80,6 +80,7 @@
            #:data-exception
            #:db-division-by-zero
            #:undefined-column
+           #:undefined-table
            #:duplicate-column
            #:duplicate-cursor
            #:duplicate-database
