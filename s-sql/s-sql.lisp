@@ -1814,14 +1814,14 @@ definition."
         ((and name (listp name))
          (case (car name)
            (quote (concatenate 'string (unless tableset  "TABLE ")
-                               (to-sql-name (cadr name))))
+                               (to-sql-name (cdr name))))
            (:temp (concatenate 'string "TEMP TABLE "
-                               (expand-table-name (cadr name) t)))
+                               (expand-table-name (cdr name) t)))
            (:unlogged (concatenate 'string "UNLOGGED TABLE "
-                                   (expand-table-name (cadr name) t)))
+                                   (expand-table-name (cdr name) t)))
            (:if-not-exists (concatenate 'string (unless tableset  "TABLE ")
                                         "IF NOT EXISTS "
-                                        (expand-table-name (cadr name) t)))
+                                        (expand-table-name (cdr name) t)))
            (:of (concatenate 'string (unless tableset  "TABLE ")
                              (expand-composite-table-name name)))
            (t (concatenate 'string (unless tableset  "TABLE ")
