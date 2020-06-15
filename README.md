@@ -1,6 +1,8 @@
 # Postmodern
 A Common Lisp PostgreSQL programming interface
 ---
+Version 1.32
+
 Postmodern is a Common Lisp library for interacting with [PostgreSQL](http://www.postgresql.org) databases. It is under active development. Features are:
 
 - Efficient communication with the database server without need for foreign libraries.
@@ -61,13 +63,17 @@ Assuming you have already installed it, first load and use the system:
     (use-package :postmodern)
 
 
-If you have a PostgreSQL server running on localhost, with a database called 'testdb' on it, which is accessible for user 'foucault' with password 'surveiller', you can connect like this:
+If you have a PostgreSQL server running on localhost, with a database called 'testdb' on it, which is accessible for user 'foucault' with password 'surveiller', there are two basic ways to connect
+to a database. If your role/application/database(s) looks like a 1:1 relationship, you can connect like this:
 
 
     (connect-toplevel "testdb" "foucault" "surveiller" "localhost")
 
 
-Which will establish a connection to be used by all code, except for that wrapped in a with-connection form, which takes the same arguments but only establishes the connection locally. Connect-toplevel will maintain a single connection for the life of the session.
+Which will establish a connection to be used by all code, except for that wrapped in a with-connection form, which takes the same arguments but only establishes the connection within
+that lexical scope.
+
+Connect-toplevel will maintain a single connection for the life of the session.
 
 If the Postgresql server is running on a port other than 5432, you would also pass the appropriate keyword port parameter. E.g.:
 
@@ -76,7 +82,52 @@ If the Postgresql server is running on a port other than 5432, you would also pa
 
 Ssl connections would similarly use the keyword parameter :use-ssl and pass :yes, :no or :try
 
-Now for a basic sanity test:
+If you have multiple roles connecting to one or more databases, i.e. 1:many or
+many:1, (in other words, changing connections) then with-connection form which establishes a connection with a lexical scope is more appropriate.
+
+
+    (with-connection '("testdb" "foucault" "surveiller" "localhost")
+      ...)
+
+For example, if you are creating a database, you need to have established a connection
+to a currently existing database (typically "postgres"). Assuming the foucault role
+is a superuser and you want to stay in a development connection with your new database
+afterwards, you would first use with-connection to connect to postgres, create the
+database and then switch to connect-toplevel for development ease.
+
+
+    (with-connection '("postgres" "foucault" "surveiller" "localhost")
+      (create-database 'testdb :limit-public-access t
+                         :comment "This database is for testing silly theories"))
+
+    (connect-toplevel "testdb" "foucault" "surveiller" "localhost")
+
+
+Note: (create-database) functionality is new to postmodern v. 1.32. Setting the
+:limit-public-access parameter to t will block connections to that database from
+anyone who you have not explicitly given permission (except other superusers).
+
+A word about Postgresql connections. Postgresql connections are not lightweight
+threads. They actually consume about 10 MB of memory per connection and Postgresql
+can be tuned to limit the number of connections allowed at any one time. In
+addition, any connections which require security (ssl or scram authentication)
+will take additiona time and create more overhead.
+
+If you have an application like a web app which will make many connections, you also
+generally do not want to create and drop connections for every query. The usual solution
+is to use connection pools so that the application is grabbing an already existing connection
+and returning it to the pool when finished, saving connection time and memory.
+
+To use postmodern's simple connection pooler, the with-connection call would look like:
+
+
+    (with-connection '("testdb" "foucault" "surveiller" "localhost" :pooled-p t)
+      ...)
+
+The maximum number of connections in the pool is set in the special variable
+\*max-pool-size\*, which defaults to nil (no maximum).
+
+Now for a basic sanity test which does not need a database connection at all:
 
 
     (query "select 22, 'Folie et déraison', 4.5")
@@ -118,12 +169,11 @@ You can work directly with the database or you can use a simple database-access-
                     :accessor country-inhabitants)
        (sovereign :col-type (or db-null string) :initarg :sovereign
                   :accessor country-sovereign))
-       (region-id :col-type integer :initarg :region-id :accessor region-id)
       (:metaclass dao-class)
       (:keys name))
 
 
-The above defines a class that can be used to handle records in a table with three columns: name, inhabitants, and sovereign. The :keys parameter specifies which column(s) are used for the primary key. Once you have created the class, you can return an instance of the country class by calling
+The above defines a class that can be used to handle records in a table with three columns: name, inhabitants and sovereign. The :keys parameter specifies which column(s) are used for the primary key. Once you have created the class, you can return an instance of the country class by calling
 
 
     (get-dao 'country "Croatia")
@@ -148,11 +198,72 @@ In this case, retrieving a points record would look like the following where 12 
 
     (get-dao 'points 12 34)
 
+Consider a slightly more complicated version of country:
+
+
+    (defclass country ()
+      ((id :col-type integer :col-identity t :accessor id)
+       (name :col-type string :col-unique t :check (:<> 'name "")
+             :initarg :name :reader country-name)
+       (inhabitants :col-type integer :initarg :inhabitants
+                    :accessor country-inhabitants)
+       (sovereign :col-type (or db-null string) :initarg :sovereign
+                  :accessor country-sovereign)
+       (region-id :col-type integer :col-references ((regions id))
+                  :initarg :region-id :accessor region-id))
+      (:metaclass dao-class)
+      (:table-name countries))
+
+In this example we have an id column which is specified to be an identity column.
+Postgresql will automatically generate a sequence of of integers and this will
+be the primary key.
+
+We have a name column which is specified as unique and is not null and the
+check will ensure that the database refuses to accept an empty string as the name.
+
+We have a region-id column which references the id column in the regions table.
+This is a foreign key constraint and Postgresql will not accept inserting a country
+into the database unless there is an existing region with an id that matches this
+number. Postgresql will also not allow deleting a region if there are countries
+that reference that region's id. If we wanted Postgresql to delete countries when
+regions are deleted, that column would be specified as:
+
+    (region-id :col-type integer :col-references ((regions id) :cascade)
+      :initarg :region-id :accessor region-id)
+
+Now you can see why the double parens.
+
+We also specify that the table name is not "country" but "countries". (Some style guides
+recommend that table names be plural and references to rows be singular.)
+
 
 ### Table Creation
 
-You can create tables directly without the need to define a class, and in more complicated cases, you will need to use the s-sql :create-table operator or plain vanilla sql. One example using s-sql rather than plain vanilla sql would be the following:
+You can create tables directly without the need to define a class, and in more
+complicated cases, you may need to use the s-sql :create-table operator or plain
+vanilla sql. Staying with examples that will match our slightly more complicated
+dao-class above (but ignoring the fact that the references parameter would
+actually require us to create the regions table first) and using s-sql rather
+than plain vanilla sql would be the following:
 
+    (query (:create-table 'countries
+          ((id :type integer  :primary-key t :identity-always t)
+           (name :type string :unique t :check (:<> 'name ""))
+           (inhabitants :type integer)
+           (sovereign :type (or db-null string))
+           (region-id :type integer :references ((regions id))))))
+
+Restated using vanilla sql:
+
+    (query "CREATE TABLE countries (
+             id INTEGER NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+             name TEXT NOT NULL UNIQUE CHECK (NAME <> E''),
+             inhabitants INTEGER NOT NULL,
+             sovereign TEXT,
+             region_id INTEGER NOT NULL REFERENCES regions(id)
+               MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)")
+
+Let's look at a slightly different example:
 
     (query (:create-table so-items
              ((item-id :type integer)
@@ -162,40 +273,46 @@ You can create tables directly without the need to define a class, and in more c
               (net-price :type (or numeric db-null)))
              (:primary-key item-id so-id)))
 
-
-Restated using vanilla sql:
-
+Restated using plain  sql:
 
     (query "CREATE TABLE so_items (
-                 item_id INTEGER NOT NULL,
-                 so_id INTEGER REFERENCES so_headers(id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT,
-                 product_id INTEGER,
-                 qty INTEGER,
-                 net_price NUMERIC,
-                 PRIMARY KEY (item_id, so_id));")
+     item_id INTEGER NOT NULL,
+     so_id INTEGER REFERENCES so_headers(id)
+                   MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT,
+     product_id INTEGER,
+     qty INTEGER,
+     net_price NUMERIC,
+     PRIMARY KEY (item_id, so_id)
+     );"
+    )
 
+In the above case, the new table's name will be so_items because sql does not allow hyphens and plain vanilla sql will require that. Postmodern will generally allow you to use the quoted symbol 'so-items. This is also true for all the column names. The column item-id is an integer and cannot be null. The column so-id is also an integer, but is allowed to be null and is a foreign key to the id field in the so-headers table so-headers. The primary key is actually a composite of item-id and so-id. (If we wanted the primary key to be just item-id, we could have specified that in the form defining item-id.)
 
-In the above case, the new table's name will be so_items because sql does not allow hyphens and plain vanilla sql will require that. Ppostmodern will generally allow you to use the quoted symbol 'so-items. This is also true for all the column names. The column item-id is an integer and cannot be null. The column so-id is also an integer, but is allowed to be null and is a foreign key to the id field in the so-headers table so-headers. The primary key is actually a composite of item-id and so-id. (If we wanted the primary key to be just item-id, we could have specified that in the form defining item-id.)
-
-In simple cases you can also use a previously defined dao to create a table as well using the dao-table-definition function which generates the plain vanilla sql for creating a table described above.
-
+You can also use a previously defined dao to create a table as well using the dao-table-definition function which generates the plain vanilla sql for creating plain vanilla sql for creating a table
+described above. Using the slightly more complicated version of the country dao above:
 
     (dao-table-definition 'country)
-    ;; => "CREATE TABLE country (
-    ;;      name TEXT NOT NULL,
-    ;;      inhabitants INTEGER NOT NULL,
-    ;;      sovereign TEXT,
-    ;;      PRIMARY KEY (name))"
+
+
+    ;; => "CREATE TABLE countries (
+    ;;       id INTEGER NOT NULL PRIMARY KEY generated always as identity,
+    ;;       name TEXT NOT NULL UNIQUE,
+    ;;       inhabitants INTEGER NOT NULL,
+    ;;       sovereign TEXT DEFAULT NULL,
+    ;;       region_id INTEGER NOT NULL REFERENCES regions(id)
+    ;;         MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)
 
     (execute (dao-table-definition 'country))
 
 This defines our table in the database. execute works like query, but does not expect any results back.
 
-In cases involving more than one table, you should use the deftable macro. See [Introduction to Multi-table dao class objects](doc/postmodern.html) in the postmodern.org or postmodern.html manual.
+See [Introduction to Multi-table dao class objects](doc/postmodern.html) in the postmodern.org or postmodern.html manual for a further discussion of multi-table use of daos.
 
 
 ### Inserting Data
-Similarly to table creation, you can insert data using the s-sql wrapper, plain vanilla sql or daos.
+Similarly to table creation, you can insert data using the s-sql wrapper, plain
+vanilla sql or daos. Because we have not created a regions table, we are just
+going to use the simple version of country without the region-id.
 
 The s-sql approach would be:
 
@@ -241,6 +358,8 @@ Using dao classes would look like:
     (insert-dao (make-instance 'country :name "Croatia"
                                         :inhabitants 4400000))
 
+Postmodern does not yet have an insert-daos (plural) function.
+
 Staying with the dao class approach, to update Croatia's population, we could do this:
 
 
@@ -260,6 +379,7 @@ Next, to demonstrate a bit more of the S-SQL syntax, here is the query the utili
           :where (:and (:= 'relkind "r")
                        (:not-in 'nspname (:set "pg_catalog" "pg_toast"))
                        (:pg-catalog.pg-table-is-visible 'pg-class.oid))))
+
     ;; => "(SELECT relname FROM pg_catalog.pg_class
     ;;      INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
     ;;      WHERE ((relkind = 'r') and (nspname NOT IN ('pg_catalog', 'pg_toast'))
@@ -289,71 +409,6 @@ The defprepared macro creates a function that takes the same amount of arguments
 Postmodern can use either md5 or scram-sha-256 authentication. Scram-sha-256 authentication is obviously more secure, but slower than md5, so take that into account if you are planning on opening and closing many connections without using a connection pooling setup..
 
 Other authentication methods have not been tested. Please let us know if there is a authentication method that you believe should be considered.
-
-## Running tests
----
-
-Postmodern uses [FiveAM](https://github.com/sionescu/fiveam) for
-testing.  The different component systems of Postmodern have tests
-defined in corresponding test systems, each defining a test suite.
-The test systems and corresponding top-level test suites are:
-
-- `:postmodern` in `postmodern/tests`,
-- `:cl-postgres` in `cl-postgres/tests`,
-- `:s-sql` in `s-sql/tests`, and
-- `:simple-date` in `simple-date/tests`.
-
-Before running the tests make sure PostgreSQL is running and a test
-database is created.  By default tests use the following connection
-parameters to run the tests:
-
-- Database name: test
-- User: test
-- Password: <empty>
-- Hostname: localhost
-- Port: 5432
-- Use-SSL :NO
-
-If connection with these parameters fails then you will be asked to
-provide the connection parameters interactively.  The parameters will
-be stored in `cl-postgres-tests:*test-connection*` variable and
-automatically used on successive test runs.  This variable can also be
-set manually before running the tests.
-
-To test a particular component one would first load the corresponding
-test system, and then run the test suite.  For example, to test the
-`postmodern` system in the REPL one would do the following:
-
-    (ql:quickload "postmodern/tests")
-    (5am:run! :postmodern)
-    ;; ... test output ...
-
-It is also possible to test multiple components at once by first
-loading test systems and then running all tests:
-
-    (ql:quickload '("cl-postgres/tests" "s-sql/tests"))
-    (5am:run-all-tests)
-    ;; ... test output ...
-
-To run the tests from command-line specify the same forms using your
-implementation's command-line syntax.  For instance, to test all
-Postmodern components on SBCL, use the following command:
-
-    env DB_USER=$USER sbcl --noinform \
-        --eval '(ql:quickload "postmodern/tests")' \
-        --eval '(ql:quickload "cl-postgres/tests")' \
-        --eval '(ql:quickload "s-sql/tests")' \
-        --eval '(ql:quickload "simple-date/tests")' \
-        --eval '(progn (setq 5am:*print-names* nil) (5am:run-all-tests))' \
-        --eval '(sb-ext:exit)'
-
-As you can see from above, database connection parameters can be
-provided using environment variables:
-
-- `DB_NAME`: database name,
-- `DB_USER`: user,
-- `DB_PASS`: password,
-- `DB_HOST`: hostname.
 
 ## Reference
 ---
@@ -536,3 +591,68 @@ Some areas that are currently under consideration can be found in the ROADMAP.md
 - [The wire protocol Postmodern uses](http://www.postgresql.org/docs/current/static/protocol.html)
 - [Common Lisp Postgis library](https://github.com/filonenko-mikhail/cl-ewkb)
 - [Local-time](http://common-lisp.net/project/local-time/)
+
+## Running tests
+---
+
+Postmodern uses [FiveAM](https://github.com/sionescu/fiveam) for
+testing.  The different component systems of Postmodern have tests
+defined in corresponding test systems, each defining a test suite.
+The test systems and corresponding top-level test suites are:
+
+- `:postmodern` in `postmodern/tests`,
+- `:cl-postgres` in `cl-postgres/tests`,
+- `:s-sql` in `s-sql/tests`, and
+- `:simple-date` in `simple-date/tests`.
+
+Before running the tests make sure PostgreSQL is running and a test
+database is created.  By default tests use the following connection
+parameters to run the tests:
+
+- Database name: test
+- User: test
+- Password: <empty>
+- Hostname: localhost
+- Port: 5432
+- Use-SSL :NO
+
+If connection with these parameters fails then you will be asked to
+provide the connection parameters interactively.  The parameters will
+be stored in `cl-postgres-tests:*test-connection*` variable and
+automatically used on successive test runs.  This variable can also be
+set manually before running the tests.
+
+To test a particular component one would first load the corresponding
+test system, and then run the test suite.  For example, to test the
+`postmodern` system in the REPL one would do the following:
+
+    (ql:quickload "postmodern/tests")
+    (5am:run! :postmodern)
+    ;; ... test output ...
+
+It is also possible to test multiple components at once by first
+loading test systems and then running all tests:
+
+    (ql:quickload '("cl-postgres/tests" "s-sql/tests"))
+    (5am:run-all-tests)
+    ;; ... test output ...
+
+To run the tests from command-line specify the same forms using your
+implementation's command-line syntax.  For instance, to test all
+Postmodern components on SBCL, use the following command:
+
+    env DB_USER=$USER sbcl --noinform \
+        --eval '(ql:quickload "postmodern/tests")' \
+        --eval '(ql:quickload "cl-postgres/tests")' \
+        --eval '(ql:quickload "s-sql/tests")' \
+        --eval '(ql:quickload "simple-date/tests")' \
+        --eval '(progn (setq 5am:*print-names* nil) (5am:run-all-tests))' \
+        --eval '(sb-ext:exit)'
+
+As you can see from above, database connection parameters can be
+provided using environment variables:
+
+- `DB_NAME`: database name,
+- `DB_USER`: user,
+- `DB_PASS`: password,
+- `DB_HOST`: hostname.

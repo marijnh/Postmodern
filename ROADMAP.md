@@ -20,7 +20,6 @@ No guarantee is given with respect to resolution or timing on any item.
         A uuid can then be generated in postmodern by calling (query (:select (:uuid-generate-v1)))
 - [ ]   Generate-Series needs testing and interval work
 - [ ]   Lateral Join (postgresql 9.3)
-- [X]   Identity columns (postgresql 10) Needs to be documented better as default instead of serial
 - [ ]   Transition tables for triggers (postgresql 10)
 - [ ]   Hash Indexes (postgresql 10, See https://blog.2ndquadrant.com/postgresql-10-identity-columns/,
         https://www.depesz.com/2017/04/10/waiting-for-postgresql-10-identity-columns/)
@@ -48,7 +47,6 @@ No guarantee is given with respect to resolution or timing on any item.
 ## DAO Support
 - [ ]   Review errors with *ignore-unknown-columns*. Sometimes hangs without raising an error.
 - [ ]   Type validation - make it easier to use col-type to ensure that a slot value is what the database expects
-- [ ]   Add foreign key support to dao, both columns and as a whole, similar to s-sql support
 
 ## Other Support
 - [ ]   Migration Support (compare with https://pypi.org/project/alembic/)
@@ -67,7 +65,6 @@ No guarantee is given with respect to resolution or timing on any item.
 
 ## Documentation
 - [ ]   Setup
-- [ ]   Creating databases and users
 - [ ]   Usage examples for sql users
 - [ ]   Usage examples for non-sql users
 - [ ]   Creation of new datatypes

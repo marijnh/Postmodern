@@ -27,31 +27,37 @@
   ;; Note the syntax is temporary or unlogged qualifiers first, then if-not-exists, then table name
   ;; You can use temp or temporary.
 
-      ;; version with :temp and table name in form
-      (is (equal (sql (:create-table (:temp 'distributors-in-hell)
-                                          ((did :type (or integer db-null)))))
-                 "CREATE TEMP TABLE distributors_in_hell (did INTEGER)"))
+  ;; version with :temp and table name in form
+  (is (equal (sql (:create-table (:temp 'distributors-in-hell)
+                                 ((did :type (or integer db-null)))))
+             "CREATE TEMP TABLE distributors_in_hell (did INTEGER)"))
 
-      ;; version with if-not-exists
-      (is (equal (sql (:create-table (:if-not-exists 'distributors-in-hell)
-                                          ((did :type (or integer db-null)))))
-                 "CREATE TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
+  ;; version with if-not-exists
+  (is (equal (sql (:create-table (:if-not-exists 'distributors-in-hell)
+                                 ((did :type (or integer db-null)))))
+             "CREATE TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
 
-      ;; version with temp, if-not-exists and tablename in form
-      (is (equal (sql (:create-table (:temp (:if-not-exists 'distributors-in-hell))
-                                          ((did :type (or integer db-null)))))
-                 "CREATE TEMP TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
-      ;; version with if-not-exists and table name in form
-      (is (equal (sql (:create-table (:if-not-exists 'distributors-in-hell)
-                                          ((did :type (or integer db-null)))))
-                "CREATE TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
+  ;; version with temp, if-not-exists and tablename in form
+  (is (equal (sql (:create-table (:temp (:if-not-exists 'distributors-in-hell))
+                                 ((did :type (or integer db-null)))))
+             "CREATE TEMP TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
+  ;; version with if-not-exists and table name in form
+  (is (equal (sql (:create-table (:if-not-exists 'distributors-in-hell)
+                                 ((did :type (or integer db-null)))))
+             "CREATE TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
+#|
+  ;; version with both :temp and :if-not-exists
+  (is (equal (sql (:create-table (:temp :if-not-exists 'distributors-in-hell)
+                                 ((did :type (or integer db-null)))))
+             "CREATE TEMP TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
+|#
 
       ;;;; unlogged tables do not have their data written to the write-ahead log. As a result they are faster,
       ;;; but not crash safe. Any indexes created on an unlogged table are unlogged as well.
 
-      (is (equal (sql (:create-table (:unlogged 'distributors-in-hell)
-                                          ((did :type (or integer db-null)))))
-                 "CREATE UNLOGGED TABLE distributors_in_hell (did INTEGER)")))
+  (is (equal (sql (:create-table (:unlogged 'distributors-in-hell)
+                                 ((did :type (or integer db-null)))))
+             "CREATE UNLOGGED TABLE distributors_in_hell (did INTEGER)")))
 
 (test create-table-basic
   "Testing Create Table. Replicating from https://www.postgresql.org/docs/10/static/sql-createtable.html"

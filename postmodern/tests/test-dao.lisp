@@ -41,6 +41,15 @@
   (:table-name dao-test)
   (:keys id))
 
+(defclass test-data-3 ()
+  ((id :col-type integer :col-identity t :accessor id)
+   (username :col-type text :unique t :initarg :username :accessor username)
+   (department-id :col-type integer :references ((departments id))
+                  :initarg :department-id :accessor department-id)
+   (len :col-type (or interval db-null) :col-interval :hour-to-minute))
+  (:metaclass dao-class)
+  (:table-name users1))
+
 (test dao-class
   (with-test-connection
       (when (table-exists-p 'dao-test)

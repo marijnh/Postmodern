@@ -63,7 +63,8 @@
     (query (:drop-table :if-exists 'recipes :cascade))
     (query (:drop-table :if-exists 'recipe-tags-array :cascade))
     (query (:create-table recipes
-                          ((recipe-id :type serial :constraint 'recipekey-id :primary-key 't :unique)
+                          ((recipe-id :type serial :constraint 'recipekey-id
+                                      :primary-key 't :unique)
                            (name :type text)
                            (text :type text))))
 
@@ -73,13 +74,15 @@
     (query (:create-unique-index 'recipe-tags-id-recipe-id :on "recipe-tags-array"  :fields 'recipe-id))
     (query (:create-index 'recipe-tags-id-tags :on "recipe-tags-array" :using gin :fields 'tags))
 
-
-    (loop for x in '(("Fattoush" #("greens" "pita bread" "olive oil" "garlic" "lemon" "salt" "spices"))
+    (loop for x in '(("Fattoush" #("greens" "pita bread" "olive oil" "garlic"
+                                   "lemon" "salt" "spices"))
                      ("Shawarma" #("meat" "tahini sauce" "pita bread"))
                      ("Baba Ghanoush" #("pita bread" "olive oil" "eggplant" "tahini sauce"))
-                     ("Shish Taouk" #("chicken" "lemon juice" "garlic" "paprika" "yogurt" "tomato paste" "pita bread"))
+                     ("Shish Taouk" #("chicken" "lemon juice" "garlic" "paprika"
+                                      "yogurt" "tomato paste" "pita bread"))
                      ("Kibbe nayeh" #("raw meat" "bulgur" "onion" "spices" "pita bread"))
-                     ("Manakeesh" #("meat" "cheese" "zaatar" "kishik" "tomatoes" "cucumbers" "mint leaves" "olives"))
+                     ("Manakeesh" #("meat" "cheese" "zaatar" "kishik" "tomatoes"
+                                    "cucumbers" "mint leaves" "olives"))
                      ("Fakafek" #("chickpeas" "pita bread" "tahini sauce"))
                      ("Tabbouleh" #("bulgur" "tomatoes" "onions" "parsley"))
                      ("Kofta" #("minced meat" "parsley" "spices" "onions"))
@@ -425,9 +428,11 @@ to strings \(which will form an SQL query when concatenated)."
              "(SELECT E'2018-01-01'::DATE)"))
   (is (equal (sql (:select (:type "1 minute" interval)))
              "(SELECT E'1 minute'::INTERVAL)"))
-  (is (equal (sql (:select (:as (:cast (:as (:* 50 (:random)) 'int)) 'x) :from (:generate-series 1 3)))
+  (is (equal (sql (:select (:as (:cast (:as (:* 50 (:random)) 'int)) 'x)
+                   :from (:generate-series 1 3)))
              "(SELECT CAST((50 * random()) AS int) AS x FROM generate_series(1, 3))"))
-  (is (equal (sql (:select (:as (:- (:type (:now) date) 'x) 'some-date) :from (:as (:generate-series 1 10) 'x)))
+  (is (equal (sql (:select (:as (:- (:type (:now) date) 'x) 'some-date)
+                   :from (:as (:generate-series 1 10) 'x)))
              "(SELECT (now()::DATE - x) AS some_date FROM generate_series(1, 10) AS x)")))
 
 (test values
@@ -459,8 +464,8 @@ SELECT DISTINCT ON ( expression [, ...] ) keeps only the first row of each set o
 (test select-fetch
   "Testing the fetch sql-op"
   (is (equal
-       (sql "select id from historical_events order by id asc offset 5 rows fetch next 10 rows only")
-       "E'select id from historical_events order by id asc offset 5 rows fetch next 10 rows only'")))
+       (sql (:fetch (:order-by (:select 'id :from 'historical-events) 'id) 5))
+       "(((SELECT id FROM historical_events) ORDER BY id) FETCH FIRST 5 ROWS ONLY)")))
 
 (test select-join-1
       "Testing basic join. Note full use of as. https://www.postgresql.org/docs/current/static/sql-select.html
@@ -1575,5 +1580,4 @@ that the table will need to be scanned twice. Everything is a trade-off."
                   (3 "Courage and g were all that he had.") (4 "Hit me with your pet g!")
                   (5 "He g he just saw his sushi move."))))
     (is (equalp (query (:select 'id 'text :from 'text-search :where (:~ 'text "sushi")))
-                '((5 "He swore he just saw his sushi move."))))
-    ))
+                '((5 "He swore he just saw his sushi move."))))))

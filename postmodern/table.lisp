@@ -29,6 +29,9 @@ thread lock. However, any time you are using threads and a class that
 inherits from other classes, you should ensure that classes are finalized
 before you start generating threads that create new instances of that class.
 
+The (or db-null integer) form is used to indicate a column can have NULL values
+otherwise the column will be treated as NOT NULL.
+
 Simple example:
 
     (defclass users ()
@@ -38,7 +41,39 @@ Simple example:
       (:metaclass dao-class)
       (:keys name))
 
-The (or db-null integer) form is used to indicate a column can have NULL values.
+In this case the name of the users will be treated as the primary key and the
+database table is assume to be users.
+
+Now look at a slightly more complex example.
+
+    (defclass country ()
+      ((id :col-type integer :col-identity t :accessor id)
+       (name :col-type text :col-unique t :initarg :country :accessor country)
+       (region-id :col-type integer :col-references ((regions id)) :initarg :region-id
+          :accessor region-id))
+        (:metaclass dao-class)
+      (:table-name countries))
+
+In this example we have an id column which is specified to be an identity column.
+Postgresql will automatically generate a sequence of of integers and this will
+be the primary key.
+
+We have a name column which is specified as unique and is not null.
+
+We have a region-id column which references the id column in the regions table.
+This is a foreign key constraint and Postgresql will not accept inserting a country
+into the database unless there is an existing region with an id that matches this
+number. Postgresql will also not allow deleting a region if there are countries
+that reference that region's id. If we wanted Postgresql to delete countries when
+regions are deleted, that column would be specified as:
+
+   (region-id :col-type integer :col-references ((regions id) :cascade)
+     :initarg :region-id :accessor region-id)
+
+Now you can see why the double parens.
+
+We also specify that the table name is not "country" but "countries". (Some style guides
+recommend that table names be plural and references to rows be singular.)
 
 When inheriting from DAO classes, a subclass' set of columns also contains
 all the columns of its superclasses. The primary key for such a class is the
@@ -81,6 +116,22 @@ The class must be quoted.
           (finalize-inheritance class))))
     #-postmodern-thread-safe
     (finalize-inheritance class)))
+
+(defgeneric find-primary-key-column (class)
+  (:documentation "Loops through a class's column definitions and returns
+the first column name that has bound either col-identity or col-primary-key"))
+
+(defmethod find-primary-key-column ((class dao-class))
+  (loop for x in (dao-column-slots class) do
+            (if (or (slot-boundp x 'col-identity)
+                  (slot-boundp x 'col-primary-key))
+                (return (slot-definition-name x)))))
+
+(defmethod find-primary-key-column ((class symbol))
+  (loop for x in (dao-column-slots (find-class class)) do
+            (if (or (slot-boundp x 'col-identity)
+                  (slot-boundp x 'col-primary-key))
+                (return (slot-definition-name x)))))
 
 (defmethod validate-superclass ((class dao-class) (super-class standard-class))
   t)
@@ -132,6 +183,7 @@ such a class)."
       (explore class)
       found)))
 
+
 (defmethod finalize-inheritance :after ((class dao-class))
   "Building a row reader and a set of methods can only be done after
   inheritance has been finalised."
@@ -141,12 +193,21 @@ such a class)."
         (reduce 'union (mapcar 'direct-keys (dao-superclasses class))))
   (unless (every (lambda (x) (member x (dao-column-fields class))) (dao-keys class))
     (error "Class ~A has a key that is not also a slot." (class-name class)))
+  (when (not (dao-keys class))
+    (setf (slot-value class 'effective-keys)
+          (list (find-primary-key-column class))))
   (build-dao-methods class))
-
 
 (defclass direct-column-slot (standard-direct-slot-definition)
   ((col-type :initarg :col-type :reader column-type)
    (col-default :initarg :col-default :reader column-default)
+   (col-identity :initarg :col-identity :reader column-identity)
+   (col-unique :initarg :col-unique :reader column-unique)
+   (col-collate :initarg :col-collate :reader column-collate)
+   (col-primary-key :initarg :col-primary-key :reader column-primary-key)
+   (col-interval :initarg :col-interval :reader column-interval)
+   (col-check :initarg :col-check :reader column-check)
+   (col-references :initarg :col-references :reader column-references)
    (ghost :initform nil :initarg :ghost :reader ghost)
    (sql-name :reader slot-sql-name))
   (:documentation "Type of slots that refer to database columns."))
@@ -259,8 +320,7 @@ was inserted, NIL if it was updated)."))
                                           (class-name class)))
       (apply 'get-dao class-name args)))
   (:documentation "Select the DAO object from the row that has the given primary
-key values, or
-NIL if no such row exists. Objects created by this function will have
+key values, or NIL if no such row exists. Objects created by this function will have
 initialize-instance called on them (after loading in the values from the
 database) without any arguments ― even :default-initargs are skipped.
 The same goes for select-dao and query-dao."))
@@ -664,7 +724,21 @@ own queries to add them, in which case look to s-sql's create-table function."
                           :unless (ghost slot)
                             :collect `(,(slot-definition-name slot)
                                        :type ,(column-type slot)
+                                       ,@(cond ((slot-boundp slot 'col-identity)
+                                                `(:primary-key "generated always as identity"))
+                                               ((slot-boundp slot 'col-primary-key)
+                                                `(:primary-key t)))
+                                       ,@(when (slot-boundp slot 'col-unique)
+                                           `(:unique t))
+                                       ,@(when (slot-boundp slot 'col-collate)
+                                           `(:collate ,(column-collate slot)))
+                                       ,@(when (slot-boundp slot 'col-interval)
+                                           `(:interval ,(column-interval slot)))
+                                       ,@(when (slot-boundp slot 'col-check)
+                                           `(:check ,(column-check slot)))
+                                       ,@(when (slot-boundp slot 'col-references)
+                                           `(:references ,(column-references slot)))
                                        ,@(when (slot-boundp slot 'col-default)
                                            `(:default ,(column-default slot)))))
-                   ,@(when (dao-keys table)
+                   ,@(when (and (dao-keys table) (not (find-primary-key-column table)))
                        `((:primary-key ,@(dao-keys table)))))))

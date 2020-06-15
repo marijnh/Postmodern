@@ -67,10 +67,12 @@ session. This function is used by with-schema."
   "List schemas in the current database, excluding the pg_* system schemas.
 Should have the same result as list-schemata even though it uses different
 system tables."
-  (loop for x in (query (:select 'nspname
-                         :from 'pg_namespace
-                         :where (:!~* 'nspname "^pg_.*|information_schema")))
-        collect (first x)))
+  (alexandria:flatten
+   (query (:order-by
+           (:select 'nspname
+            :from 'pg_namespace
+            :where (:!~* 'nspname "^pg_.*|information_schema"))
+           'nspname))))
 
 (defun schema-exists-p (name)
   "Tests for the existence of a given schema. Returns T if the schema exists or
@@ -81,13 +83,18 @@ nil otherwise. The name provided can be either a string or quoted symbol."
          (to-sql-name name)
          :single))
 
-(defun create-schema (schema)
-  "Create a new schema. Raises an error if the schema already exists."
-  (execute (format nil "CREATE SCHEMA ~a" (s-sql:to-sql-name schema t))))
+(defun create-schema (schema &optional authorization)
+  "Create a new schema. Raises an error if the schema already exists. If the
+optional authorization parameter is provided, the schema will be owned by that
+role."
+  (if authorization
+      (execute (format nil "create schema ~a authorization ~a"
+                       (to-sql-name schema t) authorization))
+      (execute (format nil "create schema ~a" (to-sql-name schema t)))))
 
 (defun drop-schema (schema &key (if-exists nil) (cascade nil))
   "Drops an existing database schema 'schema' Accepts :if-exists and/or :cascade
 arguments like :drop-table. A notice instead of an error is raised with the
 is-exists parameter."
   (execute (format nil "DROP SCHEMA ~:[~;IF EXISTS~] ~a ~:[~;CASCADE~]"
-                   if-exists (s-sql:to-sql-name schema t) cascade)))
+                   if-exists (to-sql-name schema t) cascade)))

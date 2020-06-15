@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-05-23 Sat 08:54 -->
+<!-- 2020-06-15 Mon 07:23 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern</title>
@@ -234,35 +234,44 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org9707f48">Dependencies</a></li>
-<li><a href="#orga2a97d2">License</a></li>
-<li><a href="#org15d204a">Download and installation</a></li>
-<li><a href="#orgeab44c7">Quickstart</a>
+<li><a href="#6887e7c3-c818-469a-b5f1-10a4b578b90b">Dependencies</a></li>
+<li><a href="#554e0dee-93b3-47b1-b808-3bd6c366b784">License</a></li>
+<li><a href="#6f05b344-12c2-42b0-b231-3aaced30afb8">Download and installation</a></li>
+<li><a href="#b5bb7222-8134-4dcb-83b7-f764b7f2bb33">Quickstart</a>
 <ul>
-<li><a href="#org4c5f753">Table Creation</a></li>
-<li><a href="#orgbaa4685">Inserting Data</a></li>
+<li><a href="#eccad49e-8df8-4451-89ff-4987b103c9dd">Table Creation</a>
+<ul>
+<li><a href="#7629810d-8ccb-4236-b540-6aff596a042f">With SQL or S-SQL</a></li>
+<li><a href="#5129ed89-2ff3-45b4-ae70-41c2c286eacc">With a Previously Created DAO</a></li>
 </ul>
 </li>
-<li><a href="#orgb2e213f">Authentication</a></li>
-<li><a href="#org7ffb621">Running tests</a></li>
-<li><a href="#org1da090a">Reference</a></li>
-<li><a href="#org42ed3b1">Data Types</a>
-<ul>
-<li><a href="#orgac20d74">Data Types</a></li>
+<li><a href="#0b22f6d2-20e4-49cd-a311-083aade58cbf">Inserting Data</a></li>
 </ul>
 </li>
-<li><a href="#org5592358">Caveats and to-dos</a>
+<li><a href="#b15533d8-efa3-43a9-b632-a3256cea261f">Authentication</a></li>
+<li><a href="#8993c7bd-4ba2-4080-8c5a-ff90de45eca5">Reference</a></li>
+<li><a href="#e2475974-6131-40ef-9ca3-54bf111a5dd0">Data Types</a>
 <ul>
-<li><a href="#org07cb814">Timezones and Simple-Date and Local-Time</a></li>
-<li><a href="#org18222a9">Portability</a></li>
-<li><a href="#orgae2193c">Reserved Words</a></li>
-<li><a href="#org534a447">Things that should be implemented</a></li>
+<li><a href="#b850ea6c-b61e-4601-8423-65a8a626cb58">Data Types</a></li>
 </ul>
 </li>
-<li><a href="#org64882d6">Resources</a></li>
+<li><a href="#fc095960-ba9d-4a98-ac89-0db7a56777f1">Caveats and to-dos</a>
+<ul>
+<li><a href="#e5c68251-0ca6-4f96-8d36-175cec626eeb">Timezones and Simple-Date and Local-Time</a></li>
+<li><a href="#bdf9ddb0-5f95-4807-8862-8970b35bd142">Portability</a></li>
+<li><a href="#565fad0b-aef4-497c-92d8-096a0a78c804">Reserved Words</a></li>
+<li><a href="#4ac8f5f4-d3b0-41c5-a222-fe3086049279">Things that should be implemented</a></li>
+</ul>
+</li>
+<li><a href="#773ee4ef-a685-484e-bc6a-6daa849a7d04">Resources</a></li>
+<li><a href="#844add79-070b-4e89-8797-3bc21ea3173b">Running tests</a></li>
 </ul>
 </div>
 </nav>
+<p>
+Version 1.32
+</p>
+
 <p>
 Postmodern is a Common Lisp library for interacting with <a href="https://postgresql.org">PostgreSQL databases</a>.
 Features are:
@@ -286,9 +295,9 @@ me. Your mileage may vary.
 </p>
 
 
-<div id="outline-container-org9707f48" class="outline-2">
-<h2 id="org9707f48"><a id="ID-216c43d0-57ff-4ae3-a302-6d04a3d79665"></a>Dependencies</h2>
-<div class="outline-text-2" id="text-org9707f48">
+<div id="outline-container-org3c784a3" class="outline-2">
+<h2 id="6887e7c3-c818-469a-b5f1-10a4b578b90b"><a id="org3c784a3"></a><a id="ID-216c43d0-57ff-4ae3-a302-6d04a3d79665"></a>Dependencies</h2>
+<div class="outline-text-2" id="text-6887e7c3-c818-469a-b5f1-10a4b578b90b">
 <p>
 The library depends on <a href="http://quickdocs.org/usocket/">usocket</a> (except on <a href="http://sbcl.org/">SBCL</a> and <a href="https://franz.com/products/allegrocl/">ACL</a>, where the built-in socket library is used), <a href="https://github.com/pmai/md5.git">md5</a>, <a href="https://github.com/pcostanza/closer-mop.git">closer-mop</a>, <a href="https://github.com/sionescu/bordeaux-threads.git">bordeaux-threads</a> if you want
 thread-safe connection pools, and <a href="https://github.com/cl-plus-ssl/cl-plus-ssl.git">CL+SSL</a> when SSL connections are needed.
@@ -324,9 +333,9 @@ possible of the work at compile time. Finally,
 </div>
 </div>
 
-<div id="outline-container-orga2a97d2" class="outline-2">
-<h2 id="orga2a97d2"><a id="ID-8ba6488f-4b3c-47f7-8a50-844363c5f484"></a>License</h2>
-<div class="outline-text-2" id="text-orga2a97d2">
+<div id="outline-container-orgf22a91f" class="outline-2">
+<h2 id="554e0dee-93b3-47b1-b808-3bd6c366b784"><a id="orgf22a91f"></a><a id="ID-8ba6488f-4b3c-47f7-8a50-844363c5f484"></a>License</h2>
+<div class="outline-text-2" id="text-554e0dee-93b3-47b1-b808-3bd6c366b784">
 <p>
 Postmodern is released under a zlib-style license. Which approximately
 means you can use the code in whatever way you like, except for passing
@@ -341,9 +350,9 @@ Dimitri Fontaine and are released under a BSD-3 license.
 </div>
 </div>
 
-<div id="outline-container-org15d204a" class="outline-2">
-<h2 id="org15d204a"><a id="ID-d4cca0ee-ff7f-4530-9be7-e9b3de62bdb4"></a>Download and installation</h2>
-<div class="outline-text-2" id="text-org15d204a">
+<div id="outline-container-org392dff3" class="outline-2">
+<h2 id="6f05b344-12c2-42b0-b231-3aaced30afb8"><a id="org392dff3"></a><a id="ID-d4cca0ee-ff7f-4530-9be7-e9b3de62bdb4"></a>Download and installation</h2>
+<div class="outline-text-2" id="text-6f05b344-12c2-42b0-b231-3aaced30afb8">
 <p>
 We suggest using <a href="https://quicklisp.org">quicklisp.org</a> for installation.
 </p>
@@ -358,9 +367,9 @@ A git repository with the most recent changes can be viewed or checked out at:
 </div>
 </div>
 
-<div id="outline-container-orgeab44c7" class="outline-2">
-<h2 id="orgeab44c7"><a id="ID-f55510fb-3715-4cdd-9e37-4ab0e968e72d"></a>Quickstart</h2>
-<div class="outline-text-2" id="text-orgeab44c7">
+<div id="outline-container-org9f88f81" class="outline-2">
+<h2 id="b5bb7222-8134-4dcb-83b7-f764b7f2bb33"><a id="org9f88f81"></a><a id="ID-f55510fb-3715-4cdd-9e37-4ab0e968e72d"></a>Quickstart</h2>
+<div class="outline-text-2" id="text-b5bb7222-8134-4dcb-83b7-f764b7f2bb33">
 <p>
 This quickstart is intended to give you a feel of the way coding with
 Postmodern works. Further details about the workings of the library
@@ -377,9 +386,10 @@ Assuming you have already installed quicklisp, load postmodern.
 </div>
 
 <p>
-If you have a PostgreSQL server running on localhost, with a database
-called 'testdb' on it, which is accessible for user 'foucault' with
-password 'surveiller', you can connect like this:
+If you have a PostgreSQL server running on localhost, with a database called 'testdb'
+on it, which is accessible for user 'foucault' with password 'surveiller', there are
+two basic ways to connect to a database. If your role/application/database(s) looks
+like a 1:1 relationship, you can connect like this:
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(connect-toplevel <span style="color: #cd8162;">"testdb"</span> <span style="color: #cd8162;">"foucault"</span> <span style="color: #cd8162;">"surveiller"</span> <span style="color: #cd8162;">"localhost"</span>)
@@ -387,10 +397,13 @@ password 'surveiller', you can connect like this:
 </div>
 
 <p>
-Which will establish a connection to be used by all code, except for that
-wrapped in a with-connection form, which takes the same arguments but only
-establishes the connection locally. Connect-toplevel will maintain a single
-connection for the life of the session.
+This will establish a connection to be used by all code, except for that wrapped
+in a with-connection form, which takes the same arguments but only establishes
+the connection within that lexical scope.
+</p>
+
+<p>
+Connect-toplevel will maintain a single connection for the life of the session.
 </p>
 
 <p>
@@ -409,14 +422,73 @@ pass :yes, :no or :try
 </p>
 
 <p>
-Now for a basic sanity test:
+If you have multiple roles connecting to one or more databases, i.e. 1:many or
+many:1, (in other words, changing connections) then with-connection form which establishes a connection with a lexical scope is more appropriate.
 </p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #00ffff;">with-connection</span> '(<span style="color: #cd8162;">"testdb"</span> <span style="color: #cd8162;">"foucault"</span> <span style="color: #cd8162;">"surveiller"</span> <span style="color: #cd8162;">"localhost"</span>)
+  ...)
+</pre>
+</div>
+<p>
+For example, if you are creating a database, you need to have established a connection
+to a currently existing database (typically "postgres"). Assuming the foucault role
+is a superuser and you want to stay in a development connection with your new database
+afterwards, you would first use with-connection to connect to postgres, create the
+database and then switch to connect-toplevel for development ease.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #00ffff;">with-connection</span> '(<span style="color: #cd8162;">"postgres"</span> <span style="color: #cd8162;">"foucault"</span> <span style="color: #cd8162;">"surveiller"</span> <span style="color: #cd8162;">"localhost"</span>)
+  (create-database 'testdb <span style="color: #98fb98; font-weight: bold;">:limit-public-access</span> t
+                     <span style="color: #98fb98; font-weight: bold;">:comment</span> <span style="color: #cd8162;">"This database is for testing silly theories"</span>))
+
+(connect-toplevel <span style="color: #cd8162;">"testdb"</span> <span style="color: #cd8162;">"foucault"</span> <span style="color: #cd8162;">"surveiller"</span> <span style="color: #cd8162;">"localhost"</span>)
+</pre>
+</div>
+<p>
+Note: (create-database) functionality is new to postmodern v. 1.32. Setting the
+:limit-public-access parameter to t will block connections to that database from
+anyone who you have not explicitly given permission (except other superusers).
+</p>
+
+<p>
+A word about Postgresql connections. Postgresql connections are not lightweight
+threads. They actually consume about 10 MB of memory per connection and Postgresql can be tuned
+to limit the number of connections allowed at any one time. In addition, any connections
+which require security (ssl or scram authentication) will take additiona time and create
+more overhead.
+</p>
+
+<p>
+If you have an application like a web app which will make many connections, you also
+generally do not want to create and drop connections for every query. The usual solution
+is to use connection pools so that the application is grabbing an already existing connection
+and returning it to the pool when finished, saving connection time and memory.
+</p>
+
+<p>
+To use postmodern's simple connection pooler, the with-connection call would look like:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #00ffff;">with-connection</span> '(<span style="color: #cd8162;">"testdb"</span> <span style="color: #cd8162;">"foucault"</span> <span style="color: #cd8162;">"surveiller"</span> <span style="color: #cd8162;">"localhost"</span> <span style="color: #98fb98; font-weight: bold;">:pooled-p</span> t)
+      ...)
+</pre>
+</div>
+
+<p>
+The maximum number of connections in the pool is set in the special variable
+<b>max-pool-size</b>, which defaults to nil (no maximum).
+</p>
+
+<p>
+Now for a basic sanity test which does not need a database connection at all:
+</p>
+
 <div class="org-src-container">
 <pre class="src src-lisp">(query <span style="color: #cd8162;">"select 22, 'Folie et d&#233;raison', 4.5"</span>)
 <span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">=&gt; ((22 "Folie et d&#233;raison" 9/2))</span>
 </pre>
 </div>
-
 <p>
 That should work. query is the basic way to send queries to the database.
 The same query can be expressed like this:
@@ -447,7 +519,7 @@ it is possible to transparently use run-time values as well:
 That last argument, :single, indicates that we want the result not as a list
 of lists (for the result rows), but as a single value, since we know that we
 are only selecting one value. Some other options are :rows, :row, :column, :alists,
-and :none. Their precise effect is documented in the reference manual.
+:dao and :none. Their precise effect is documented in the reference manual.
 </p>
 
 <p>
@@ -478,10 +550,10 @@ This is what a database-access class looks like:
 </pre>
 </div>
 <p>
-The above defines a class that can be used to handle records in a table with
-three columns: name, inhabitants, and sovereign. The :keys parameter specifies
-which column(s) are used for the primary key. Once you have created the class,
-you can return an instance of the country class by calling
+The above defines a class that can be used to handle records in a table named
+'country' with three columns: name, inhabitants, and sovereign. The :keys
+parameter specifies which column(s) are used for the primary key. Once you have
+created the class, you can return an instance of the country class by calling
 </p>
 
 <div class="org-src-container">
@@ -516,15 +588,101 @@ column respectively.:
 <pre class="src src-lisp">(get-dao 'points 12 34)
 </pre>
 </div>
+
+<p>
+Consider a slightly more complicated version of country:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #00ffff;">defclass</span> <span style="color: #7ccd7c;">country-c</span> ()
+  ((id <span style="color: #98fb98; font-weight: bold;">:col-type</span> integer <span style="color: #98fb98; font-weight: bold;">:col-identity</span> t <span style="color: #98fb98; font-weight: bold;">:accessor</span> id)
+   (name <span style="color: #98fb98; font-weight: bold;">:col-type</span> string <span style="color: #98fb98; font-weight: bold;">:col-unique</span> t <span style="color: #98fb98; font-weight: bold;">:check</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;&gt;</span> 'name <span style="color: #cd8162;">""</span>)
+         <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:name</span> <span style="color: #98fb98; font-weight: bold;">:reader</span> country-name)
+   (inhabitants <span style="color: #98fb98; font-weight: bold;">:col-type</span> integer <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:inhabitants</span>
+                <span style="color: #98fb98; font-weight: bold;">:accessor</span> country-inhabitants)
+   (sovereign <span style="color: #98fb98; font-weight: bold;">:col-type</span> (or db-null string) <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:sovereign</span>
+              <span style="color: #98fb98; font-weight: bold;">:accessor</span> country-sovereign)
+   (region-id <span style="color: #98fb98; font-weight: bold;">:col-type</span> integer <span style="color: #98fb98; font-weight: bold;">:col-references</span> ((regions id))
+              <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:region-id</span> <span style="color: #98fb98; font-weight: bold;">:accessor</span> region-id))
+  (<span style="color: #98fb98; font-weight: bold;">:metaclass</span> dao-class)
+  (<span style="color: #98fb98; font-weight: bold;">:table-name</span> countries))
+</pre>
 </div>
-<div id="outline-container-org4c5f753" class="outline-3">
-<h3 id="org4c5f753"><a id="ID-6ac2dcab-bd3b-48de-9ea0-fec010d76879"></a>Table Creation</h3>
-<div class="outline-text-3" id="text-org4c5f753">
+
+<p>
+In this example we have an id column which is specified to be an identity column.
+Postgresql will automatically generate a sequence of of integers and this will
+be the primary key.
+</p>
+
+<p>
+We have a name column which is specified as unique and is not null and the
+check will ensure that the database refuses to accept an empty string as the name.
+</p>
+
+<p>
+We have a region-id column which references the id column in the regions table.
+This is a foreign key constraint and Postgresql will not accept inserting a country
+into the database unless there is an existing region with an id that matches this
+number. Postgresql will also not allow deleting a region if there are countries
+that reference that region's id. If we wanted Postgresql to delete countries when
+regions are deleted, that column would be specified as:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(region-id <span style="color: #98fb98; font-weight: bold;">:col-type</span> integer <span style="color: #98fb98; font-weight: bold;">:col-references</span> ((regions id) <span style="color: #98fb98; font-weight: bold;">:cascade</span>)
+  <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:region-id</span> <span style="color: #98fb98; font-weight: bold;">:accessor</span> region-id)
+</pre>
+</div>
+
+<p>
+Now you can see why the double parens.
+</p>
+
+<p>
+We also specify that the table name is not "country" but "countries". (Some style guides
+recommend that table names be plural and references to rows be singular.)
+</p>
+</div>
+
+<div id="outline-container-org0772b76" class="outline-3">
+<h3 id="eccad49e-8df8-4451-89ff-4987b103c9dd"><a id="org0772b76"></a><a id="ID-6ac2dcab-bd3b-48de-9ea0-fec010d76879"></a>Table Creation</h3>
+<div class="outline-text-3" id="text-eccad49e-8df8-4451-89ff-4987b103c9dd">
+</div>
+<div id="outline-container-orgc4dde0b" class="outline-4">
+<h4 id="7629810d-8ccb-4236-b540-6aff596a042f"><a id="orgc4dde0b"></a>With SQL or S-SQL</h4>
+<div class="outline-text-4" id="text-7629810d-8ccb-4236-b540-6aff596a042f">
 <p>
 You can create tables directly without the need to define a class, and in more
-complicated cases, you will need to use the create-table operator or plain
-vanilla sql. One example using s-sql rather than plain vanilla sql would be the
-following:
+complicated cases, you may need to use the s-sql :create-table operator or plain
+vanilla sql. Staying with examples that will match our slightly more complicated
+dao-class above (but ignoring the fact that the references parameter would
+actually require us to create the regions table first) and using s-sql rather
+than plain vanilla sql would be the following:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'countries
+      ((id <span style="color: #98fb98; font-weight: bold;">:type</span> integer  <span style="color: #98fb98; font-weight: bold;">:primary-key</span> t <span style="color: #98fb98; font-weight: bold;">:identity-always</span> t)
+       (name <span style="color: #98fb98; font-weight: bold;">:type</span> string <span style="color: #98fb98; font-weight: bold;">:unique</span> t <span style="color: #98fb98; font-weight: bold;">:check</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;&gt;</span> 'name <span style="color: #cd8162;">""</span>))
+       (inhabitants <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
+       (sovereign <span style="color: #98fb98; font-weight: bold;">:type</span> (or db-null string))
+       (region-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer <span style="color: #98fb98; font-weight: bold;">:references</span> ((regions id))))))
+</pre>
+</div>
+
+<p>
+Restated using vanilla sql:
+</p>
+<div class="org-src-container">
+<pre class="src src-sql">(query "<span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> countries (
+           id <span style="color: #7ccd7c;">INTEGER</span> <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span> <span style="color: #00ffff;">PRIMARY</span> <span style="color: #00ffff;">KEY</span> <span style="color: #00ffff;">GENERATED</span> ALWAYS <span style="color: #00ffff;">AS</span> <span style="color: #00ffff;">IDENTITY</span>,
+           <span style="color: #00ffff;">name</span> TEXT <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span> <span style="color: #00ffff;">UNIQUE</span> <span style="color: #00ffff;">CHECK</span> (<span style="color: #00ffff;">NAME</span> &lt;&gt; E<span style="color: #cd8162;">''</span>),
+           inhabitants <span style="color: #7ccd7c;">INTEGER</span> <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span>,
+           sovereign TEXT,
+           region_id <span style="color: #7ccd7c;">INTEGER</span> <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span> <span style="color: #00ffff;">REFERENCES</span> regions(id)
+             <span style="color: #00ffff;">MATCH</span> <span style="color: #00ffff;">SIMPLE</span> <span style="color: #00ffff;">ON</span> <span style="color: #00ffff;">DELETE</span> <span style="color: #00ffff;">RESTRICT</span> <span style="color: #00ffff;">ON</span> <span style="color: #00ffff;">UPDATE</span> <span style="color: #00ffff;">RESTRICT</span>)")
+</pre>
+</div>
+<p>
+Let's look at a slightly different example:
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> so-items
@@ -534,30 +692,27 @@ following:
           (qty <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
           (net-price <span style="color: #98fb98; font-weight: bold;">:type</span> (or numeric db-null)))
          (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> item-id so-id)))
-
 </pre>
 </div>
 
 <p>
-Restated using vanilla sql:
+Restated using plain sql:
 </p>
 <div class="org-src-container">
 <pre class="src src-sql">(query "<span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> so_items (
- item_id <span style="color: #7ccd7c;">INTEGER</span> <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span>,
- so_id <span style="color: #7ccd7c;">INTEGER</span> <span style="color: #00ffff;">REFERENCES</span> so_headers(id)
-               <span style="color: #00ffff;">MATCH</span> <span style="color: #00ffff;">SIMPLE</span> <span style="color: #00ffff;">ON</span> <span style="color: #00ffff;">DELETE</span> <span style="color: #00ffff;">RESTRICT</span> <span style="color: #00ffff;">ON</span> <span style="color: #00ffff;">UPDATE</span> <span style="color: #00ffff;">RESTRICT</span>,
- product_id <span style="color: #7ccd7c;">INTEGER</span>,
- qty <span style="color: #7ccd7c;">INTEGER</span>,
- net_price <span style="color: #7ccd7c;">NUMERIC</span>,
- <span style="color: #00ffff;">PRIMARY</span> <span style="color: #00ffff;">KEY</span> (item_id, so_id)
- );"
-)
+           item_id <span style="color: #7ccd7c;">INTEGER</span> <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span>,
+           so_id <span style="color: #7ccd7c;">INTEGER</span> <span style="color: #00ffff;">REFERENCES</span> so_headers(id)
+                 <span style="color: #00ffff;">MATCH</span> <span style="color: #00ffff;">SIMPLE</span> <span style="color: #00ffff;">ON</span> <span style="color: #00ffff;">DELETE</span> <span style="color: #00ffff;">RESTRICT</span> <span style="color: #00ffff;">ON</span> <span style="color: #00ffff;">UPDATE</span> <span style="color: #00ffff;">RESTRICT</span>,
+           product_id <span style="color: #7ccd7c;">INTEGER</span>,
+           qty <span style="color: #7ccd7c;">INTEGER</span>,
+           net_price <span style="color: #7ccd7c;">NUMERIC</span>,
+           <span style="color: #00ffff;">PRIMARY</span> <span style="color: #00ffff;">KEY</span> (item_id, so_id)
+     );")
 </pre>
 </div>
-
 <p>
 In the above case, the new table's name will be so_items because sql does not
-allow hyphens and plain vanilla sql will require that. Ppostmodern will
+allow hyphens and plain vanilla sql will require that. Postmodern will
 generally allow you to use the quoted symbol 'so-items. This is also true for
 all the column names. The column item-id is an integer and cannot be null. The
 column so-id is also an integer, but is allowed to be null and is a foreign key
@@ -570,38 +725,65 @@ item-id, we could have specified that in the form defining item-id.)
 For more detail and examples on building tables using the s-sql approach,
 see <a href="create-tables.html">create-tables.html</a>
 </p>
+</div>
+</div>
 
+<div id="outline-container-org84cb999" class="outline-4">
+<h4 id="5129ed89-2ff3-45b4-ae70-41c2c286eacc"><a id="org84cb999"></a>With a Previously Created DAO</h4>
+<div class="outline-text-4" id="text-5129ed89-2ff3-45b4-ae70-41c2c286eacc">
 <p>
-In simple cases you can also use a previously defined dao to create a table as
-well using the dao-table-definition function which generates the plain vanilla
-sql for creating a table described above.
+You can also use a previously defined dao to create a table as well. The
+dao-table-definition function examines a dao class and generates the plain vanilla
+sql for creating a table. That can be passed on to the execute function to create
+a table. For example the simple country dao would generate:
 </p>
-
 <div class="org-src-container">
 <pre class="src src-lisp">(dao-table-definition 'country)
 
-<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">=&gt; "CREATE TABLE country (</span>
-<span style="color: #cd4f39;">;;      </span><span style="color: #cd4f39;">name TEXT NOT NULL,</span>
-<span style="color: #cd4f39;">;;      </span><span style="color: #cd4f39;">inhabitants INTEGER NOT NULL,</span>
-<span style="color: #cd4f39;">;;      </span><span style="color: #cd4f39;">sovereign TEXT,</span>
-<span style="color: #cd4f39;">;;      </span><span style="color: #cd4f39;">PRIMARY KEY (name))"</span>
+<span style="color: #cd8162;">"CREATE TABLE country</span>
+<span style="color: #cd8162;">  (name TEXT NOT NULL,</span>
+<span style="color: #cd8162;">   inhabitants INTEGER NOT NULL,</span>
+<span style="color: #cd8162;">   sovereign TEXT DEFAULT NULL,</span>
+<span style="color: #cd8162;">  PRIMARY KEY (name))"</span>
 
 (execute (dao-table-definition 'country))
 </pre>
 </div>
+<p>
+(Execute works like query, but does not expect any results back.)
+</p>
 
 <p>
-This defines our table in the database. execute works like query, but does
-not expect any results back.
+The slightly more complicated country-c version would generate:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(dao-table-definition 'country-c)
+
+<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">=&gt; "CREATE TABLE countries (</span>
+<span style="color: #cd4f39;">;;       </span><span style="color: #cd4f39;">id INTEGER NOT NULL PRIMARY KEY generated always as identity,</span>
+<span style="color: #cd4f39;">;;       </span><span style="color: #cd4f39;">name TEXT NOT NULL UNIQUE,</span>
+<span style="color: #cd4f39;">;;       </span><span style="color: #cd4f39;">inhabitants INTEGER NOT NULL,</span>
+<span style="color: #cd4f39;">;;       </span><span style="color: #cd4f39;">sovereign TEXT DEFAULT NULL,</span>
+<span style="color: #cd4f39;">;;       </span><span style="color: #cd4f39;">region_id INTEGER NOT NULL REFERENCES regions(id)</span>
+<span style="color: #cd4f39;">;;         </span><span style="color: #cd4f39;">MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)</span>
+
+(execute (dao-table-definition 'country-c))
+</pre>
+</div>
+<p>
+For the rest of the discussion on this page, we will use the simpler version
+and save the more complicated version for the <a href="postmodern.html">postmodern</a> manuals.
 </p>
 </div>
 </div>
+</div>
 
-<div id="outline-container-orgbaa4685" class="outline-3">
-<h3 id="orgbaa4685"><a id="ID-980103dd-9593-4047-9954-92e80f3785a9"></a>Inserting Data</h3>
-<div class="outline-text-3" id="text-orgbaa4685">
+<div id="outline-container-orga167cbf" class="outline-3">
+<h3 id="0b22f6d2-20e4-49cd-a311-083aade58cbf"><a id="orga167cbf"></a><a id="ID-980103dd-9593-4047-9954-92e80f3785a9"></a>Inserting Data</h3>
+<div class="outline-text-3" id="text-0b22f6d2-20e4-49cd-a311-083aade58cbf">
 <p>
-Similarly to table creation, you can insert data using the s-sql wrapper, plain vanilla sql or daos.
+Similarly to table creation, you can insert data using the s-sql wrapper, plain
+vanilla sql or daos.
 </p>
 
 <p>
@@ -664,6 +846,9 @@ Let us go back to our approach using a dao class and add a few countries:
                                     <span style="color: #98fb98; font-weight: bold;">:inhabitants</span> 4400000))
 </pre>
 </div>
+<p>
+Postmodern does not yet have an insert-daos (plural) function.
+</p>
 
 <p>
 Staying with the dao class approach, to update Croatia's population, we could do this:
@@ -693,6 +878,7 @@ utility function list-tables uses to get a list of the tables in a database:
       <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:and</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'relkind <span style="color: #cd8162;">"r"</span>)
                    (<span style="color: #98fb98; font-weight: bold;">:not-in</span> 'nspname (<span style="color: #98fb98; font-weight: bold;">:set</span> <span style="color: #cd8162;">"pg_catalog"</span> <span style="color: #cd8162;">"pg_toast"</span>))
                    (<span style="color: #98fb98; font-weight: bold;">:pg-catalog.pg-table-is-visible</span> 'pg-class.oid))))
+
 <span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">=&gt; "(SELECT relname FROM pg_catalog.pg_class</span>
 <span style="color: #cd4f39;">;;      </span><span style="color: #cd4f39;">INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)</span>
 <span style="color: #cd4f39;">;;      </span><span style="color: #cd4f39;">WHERE ((relkind = 'r') and (nspname NOT IN ('pg_catalog', 'pg_toast'))</span>
@@ -741,9 +927,9 @@ faster, especially for complex queries.
 </div>
 </div>
 
-<div id="outline-container-orgb2e213f" class="outline-2">
-<h2 id="orgb2e213f"><a id="ID-5ad46584-6887-4866-9c40-633768c0d39a"></a>Authentication</h2>
-<div class="outline-text-2" id="text-orgb2e213f">
+<div id="outline-container-org6e17079" class="outline-2">
+<h2 id="b15533d8-efa3-43a9-b632-a3256cea261f"><a id="org6e17079"></a><a id="ID-5ad46584-6887-4866-9c40-633768c0d39a"></a>Authentication</h2>
+<div class="outline-text-2" id="text-b15533d8-efa3-43a9-b632-a3256cea261f">
 <p>
 Postmodern can use either md5 or scram-sha-256 authentication. Scram-sha-256
 authentication is obviously more secure, but slower than md5, so take that into
@@ -758,105 +944,9 @@ is a authentication method that you believe should be considered.
 </div>
 </div>
 
-<div id="outline-container-org7ffb621" class="outline-2">
-<h2 id="org7ffb621"><a id="ID-bd354217-9828-444b-afbf-41e9f0d522ca"></a>Running tests</h2>
-<div class="outline-text-2" id="text-org7ffb621">
-<p>
-Postmodern uses <a href="https://github.com/sionescu/fiveam">FiveAM</a> for
-testing.  The different component systems of Postmodern have tests
-defined in corresponding test systems, each defining a test suite.
-The test systems and corresponding top-level test suites are:
-</p>
-
-<ul class="org-ul">
-<li>`:postmodern` in `postmodern/tests`,</li>
-<li>`:cl-postgres` in `cl-postgres/tests`,</li>
-<li>`:s-sql` in `s-sql/tests`, and</li>
-<li>`:simple-date` in `simple-date/tests`.</li>
-</ul>
-
-<p>
-Before running the tests make sure PostgreSQL is running and a test
-database is created.  By default tests use the following connection
-parameters to run the tests:
-</p>
-
-<ul class="org-ul">
-<li>Database name: test</li>
-<li>User: test</li>
-<li>Password: &lt;empty&gt;</li>
-<li>Hostname: localhost</li>
-<li>Port: 5432</li>
-<li>Use-SSL :NO</li>
-</ul>
-
-<p>
-If connection with these parameters fails then you will be asked to
-provide the connection parameters interactively.  The parameters will
-be stored in `cl-postgres-tests:*test-connection*` variable and
-automatically used on successive test runs.  This variable can also be
-set manually before running the tests.
-</p>
-
-<p>
-To test a particular component one would first load the corresponding
-test system, and then run the test suite.  For example, to test the
-`postmodern` system in the REPL one would do the following:
-</p>
-<div class="org-src-container">
-<pre class="src src-lisp">(ql:quickload <span style="color: #cd8162;">"postmodern/tests"</span>)
-(5am:run! <span style="color: #98fb98; font-weight: bold;">:postmodern</span>)
-
-    <span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">... test output ...</span>
-</pre>
-</div>
-
-
-<p>
-It is also possible to test multiple components at once by first
-loading test systems and then running all tests:
-</p>
-<div class="org-src-container">
-<pre class="src src-lisp">(ql:quickload '(<span style="color: #cd8162;">"cl-postgres/tests"</span> <span style="color: #cd8162;">"s-sql/tests"</span>))
-(5am:run-all-tests)
-
-    <span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">... test output ...</span>
-</pre>
-</div>
-
-<p>
-To run the tests from command-line specify the same forms using your
-implementation's command-line syntax.  For instance, to test all
-Postmodern components on SBCL, use the following command:
-</p>
-
-<p>
-env DB_USER=$USER sbcl &#x2013;noinform \
-    &#x2013;eval '(ql:quickload "postmodern/tests")' \
-    &#x2013;eval '(ql:quickload "cl-postgres/tests")' \
-    &#x2013;eval '(ql:quickload "s-sql/tests")' \
-    &#x2013;eval '(ql:quickload "simple-date/tests")' \
-    &#x2013;eval '(progn (setq 5am:*print-names* nil) (5am:run-all-tests))' \
-    &#x2013;eval '(sb-ext:exit)'
-</p>
-
-<p>
-As you can see from above, database connection parameters can be
-provided using environment variables:
-</p>
-
-<ul class="org-ul">
-<li>`DB_NAME`: database name,</li>
-<li>`DB_USER`: user,</li>
-<li>`DB_PASS`: password,</li>
-<li>`DB_HOST`: hostname.</li>
-</ul>
-</div>
-</div>
-
-<div id="outline-container-org1da090a" class="outline-2">
-<h2 id="org1da090a"><a id="ID-27b39236-15ee-42c3-958a-3c9c903c4567"></a>Reference</h2>
-<div class="outline-text-2" id="text-org1da090a">
+<div id="outline-container-orgd0c416a" class="outline-2">
+<h2 id="8993c7bd-4ba2-4080-8c5a-ff90de45eca5"><a id="orgd0c416a"></a><a id="ID-27b39236-15ee-42c3-958a-3c9c903c4567"></a>Reference</h2>
+<div class="outline-text-2" id="text-8993c7bd-4ba2-4080-8c5a-ff90de45eca5">
 <p>
 The reference manuals for the different components of Postmodern are kept
 in separate files. For using the library in the most straightforward way,
@@ -880,14 +970,13 @@ if you just want a low-level library for talking to a PostgreSQL server.
 </div>
 </div>
 
-
-<div id="outline-container-org42ed3b1" class="outline-2">
-<h2 id="org42ed3b1"><a id="ID-d089d05b-4485-4fb5-9097-5a66492bc470"></a>Data Types</h2>
-<div class="outline-text-2" id="text-org42ed3b1">
+<div id="outline-container-org780594e" class="outline-2">
+<h2 id="e2475974-6131-40ef-9ca3-54bf111a5dd0"><a id="org780594e"></a><a id="ID-d089d05b-4485-4fb5-9097-5a66492bc470"></a>Data Types</h2>
+<div class="outline-text-2" id="text-e2475974-6131-40ef-9ca3-54bf111a5dd0">
 </div>
-<div id="outline-container-orgac20d74" class="outline-3">
-<h3 id="orgac20d74"><a id="ID-deae4656-1b87-4518-9718-3b3e8c35f6c5"></a>Data Types</h3>
-<div class="outline-text-3" id="text-orgac20d74">
+<div id="outline-container-orgdc51478" class="outline-3">
+<h3 id="b850ea6c-b61e-4601-8423-65a8a626cb58"><a id="orgdc51478"></a><a id="ID-deae4656-1b87-4518-9718-3b3e8c35f6c5"></a>Data Types</h3>
+<div class="outline-text-3" id="text-b850ea6c-b61e-4601-8423-65a8a626cb58">
 <p>
 For a short comparison of lisp and Postgresql data types (date and time datatypes are described in the next section)
 </p>
@@ -1189,13 +1278,13 @@ values to that scale. For more detail, see <a href="https://www.postgresql.org/d
 </div>
 </div>
 
-<div id="outline-container-org5592358" class="outline-2">
-<h2 id="org5592358"><a id="ID-157ea05f-4c49-4e49-8cf9-a3df4bf16b09"></a>Caveats and to-dos</h2>
-<div class="outline-text-2" id="text-org5592358">
+<div id="outline-container-orgcaaa1f2" class="outline-2">
+<h2 id="fc095960-ba9d-4a98-ac89-0db7a56777f1"><a id="orgcaaa1f2"></a><a id="ID-157ea05f-4c49-4e49-8cf9-a3df4bf16b09"></a>Caveats and to-dos</h2>
+<div class="outline-text-2" id="text-fc095960-ba9d-4a98-ac89-0db7a56777f1">
 </div>
-<div id="outline-container-org07cb814" class="outline-3">
-<h3 id="org07cb814"><a id="ID-8ff631c8-994f-4658-bbc4-779afc80bdf2"></a>Timezones and Simple-Date and Local-Time</h3>
-<div class="outline-text-3" id="text-org07cb814">
+<div id="outline-container-orga463520" class="outline-3">
+<h3 id="e5c68251-0ca6-4f96-8d36-175cec626eeb"><a id="orga463520"></a><a id="ID-8ff631c8-994f-4658-bbc4-779afc80bdf2"></a>Timezones and Simple-Date and Local-Time</h3>
+<div class="outline-text-3" id="text-e5c68251-0ca6-4f96-8d36-175cec626eeb">
 <p>
 It is important to understand how postgresql (not postmodern) handles
 timestamps and timestamps with time zones. Postgresql keeps everything
@@ -1427,9 +1516,9 @@ the same sample data looks like:
 </div>
 
 
-<div id="outline-container-org18222a9" class="outline-3">
-<h3 id="org18222a9"><a id="ID-769a0e88-de54-4356-a474-72708accbafb"></a>Portability</h3>
-<div class="outline-text-3" id="text-org18222a9">
+<div id="outline-container-orgc35e03d" class="outline-3">
+<h3 id="bdf9ddb0-5f95-4807-8862-8970b35bd142"><a id="orgc35e03d"></a><a id="ID-769a0e88-de54-4356-a474-72708accbafb"></a>Portability</h3>
+<div class="outline-text-3" id="text-bdf9ddb0-5f95-4807-8862-8970b35bd142">
 <p>
 The Lisp code in Postmodern is theoretically portable across implementations,
 and seems to work on all major ones as well as some minor ones such as Genera.
@@ -1454,9 +1543,9 @@ were only introduced in those newer versions.
 </div>
 </div>
 
-<div id="outline-container-orgae2193c" class="outline-3">
-<h3 id="orgae2193c"><a id="ID-671c5e6a-f548-4791-86a5-575b3fcc0aa5"></a>Reserved Words</h3>
-<div class="outline-text-3" id="text-orgae2193c">
+<div id="outline-container-org85a4f04" class="outline-3">
+<h3 id="565fad0b-aef4-497c-92d8-096a0a78c804"><a id="org85a4f04"></a><a id="ID-671c5e6a-f548-4791-86a5-575b3fcc0aa5"></a>Reserved Words</h3>
+<div class="outline-text-3" id="text-565fad0b-aef4-497c-92d8-096a0a78c804">
 <p>
 It is highly suggested that you do not use words that are reserved by Postgresql
 and the sql standard as identifiers (e.g. table names, columns). The reserved
@@ -1481,9 +1570,9 @@ words are:
 </div>
 </div>
 
-<div id="outline-container-org534a447" class="outline-3">
-<h3 id="org534a447"><a id="ID-50d91126-93f1-4f50-96ad-bd63a7278866"></a>Things that should be implemented</h3>
-<div class="outline-text-3" id="text-org534a447">
+<div id="outline-container-orgea23172" class="outline-3">
+<h3 id="4ac8f5f4-d3b0-41c5-a222-fe3086049279"><a id="orgea23172"></a><a id="ID-50d91126-93f1-4f50-96ad-bd63a7278866"></a>Things that should be implemented</h3>
+<div class="outline-text-3" id="text-4ac8f5f4-d3b0-41c5-a222-fe3086049279">
 <p>
 Postmodern is under active development so Issues and feature requests should
 be flagged on <a href="https://github.com/marijnh/Postmodern">Postmodern's site on github</a>.
@@ -1497,9 +1586,9 @@ file.
 </div>
 </div>
 
-<div id="outline-container-org64882d6" class="outline-2">
-<h2 id="org64882d6"><a id="ID-eb969965-5221-48f8-bb79-5a93fe451454"></a>Resources</h2>
-<div class="outline-text-2" id="text-org64882d6">
+<div id="outline-container-orgcf11cbb" class="outline-2">
+<h2 id="773ee4ef-a685-484e-bc6a-6daa849a7d04"><a id="orgcf11cbb"></a><a id="ID-eb969965-5221-48f8-bb79-5a93fe451454"></a>Resources</h2>
+<div class="outline-text-2" id="text-773ee4ef-a685-484e-bc6a-6daa849a7d04">
 <ul class="org-ul">
 <li><a href="https://mailman.common-lisp.net/listinfo/postmodern-devel">Mailing List</a></li>
 <li><a href="https://sites.google.com/site/sabraonthehill/postmodern-examples">A collection of Postmodern examples</a></li>
@@ -1508,6 +1597,102 @@ file.
 <li><a href="http://clsql.b9.com/">CLSQL</a></li>
 <li><a href="https://github.com/filonenko-mikhail/cl-ewkb">Common Lisp Postgis library</a></li>
 <li><a href="http://common-lisp.net/project/local-time/">Local-time</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgd10dd5a" class="outline-2">
+<h2 id="844add79-070b-4e89-8797-3bc21ea3173b"><a id="orgd10dd5a"></a><a id="ID-bd354217-9828-444b-afbf-41e9f0d522ca"></a>Running tests</h2>
+<div class="outline-text-2" id="text-844add79-070b-4e89-8797-3bc21ea3173b">
+<p>
+Postmodern uses <a href="https://github.com/sionescu/fiveam">FiveAM</a> for
+testing.  The different component systems of Postmodern have tests
+defined in corresponding test systems, each defining a test suite.
+The test systems and corresponding top-level test suites are:
+</p>
+
+<ul class="org-ul">
+<li>`:postmodern` in `postmodern/tests`,</li>
+<li>`:cl-postgres` in `cl-postgres/tests`,</li>
+<li>`:s-sql` in `s-sql/tests`, and</li>
+<li>`:simple-date` in `simple-date/tests`.</li>
+</ul>
+
+<p>
+Before running the tests make sure PostgreSQL is running and a test
+database is created.  By default tests use the following connection
+parameters to run the tests:
+</p>
+
+<ul class="org-ul">
+<li>Database name: test</li>
+<li>User: test</li>
+<li>Password: &lt;empty&gt;</li>
+<li>Hostname: localhost</li>
+<li>Port: 5432</li>
+<li>Use-SSL :NO</li>
+</ul>
+
+<p>
+If connection with these parameters fails then you will be asked to
+provide the connection parameters interactively.  The parameters will
+be stored in `cl-postgres-tests:*test-connection*` variable and
+automatically used on successive test runs.  This variable can also be
+set manually before running the tests.
+</p>
+
+<p>
+To test a particular component one would first load the corresponding
+test system, and then run the test suite.  For example, to test the
+`postmodern` system in the REPL one would do the following:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(ql:quickload <span style="color: #cd8162;">"postmodern/tests"</span>)
+(5am:run! <span style="color: #98fb98; font-weight: bold;">:postmodern</span>)
+
+    <span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">... test output ...</span>
+</pre>
+</div>
+
+
+<p>
+It is also possible to test multiple components at once by first
+loading test systems and then running all tests:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(ql:quickload '(<span style="color: #cd8162;">"cl-postgres/tests"</span> <span style="color: #cd8162;">"s-sql/tests"</span>))
+(5am:run-all-tests)
+
+    <span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">... test output ...</span>
+</pre>
+</div>
+
+<p>
+To run the tests from command-line specify the same forms using your
+implementation's command-line syntax.  For instance, to test all
+Postmodern components on SBCL, use the following command:
+</p>
+
+<p>
+env DB_USER=$USER sbcl &#x2013;noinform \
+    &#x2013;eval '(ql:quickload "postmodern/tests")' \
+    &#x2013;eval '(ql:quickload "cl-postgres/tests")' \
+    &#x2013;eval '(ql:quickload "s-sql/tests")' \
+    &#x2013;eval '(ql:quickload "simple-date/tests")' \
+    &#x2013;eval '(progn (setq 5am:*print-names* nil) (5am:run-all-tests))' \
+    &#x2013;eval '(sb-ext:exit)'
+</p>
+
+<p>
+As you can see from above, database connection parameters can be
+provided using environment variables:
+</p>
+
+<ul class="org-ul">
+<li>`DB_NAME`: database name,</li>
+<li>`DB_USER`: user,</li>
+<li>`DB_PASS`: password,</li>
+<li>`DB_HOST`: hostname.</li>
 </ul>
 </div>
 </div>

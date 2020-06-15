@@ -27,6 +27,7 @@
    #:database-connection
    #:connect-toplevel
    #:disconnect-toplevel
+   #:change-toplevel-database
    #:clear-connection-pool
    #:*max-pool-size*
    #:*default-use-ssl*
@@ -44,6 +45,7 @@
    #:*isolation-level*
    #:with-transaction
    #:commit-transaction
+   #:commit-logical-transaction
    #:abort-transaction
    #:with-savepoint
    #:rollback-savepoint
@@ -67,6 +69,7 @@
    #:\!unique
    #:set-search-path
    #:get-search-path
+   #:get-database-comment
 
    ;; Prepared Statement Functions
    #:*allow-overwriting-prepared-statements*
@@ -115,6 +118,7 @@
    #:describe-constraint
    #:describe-foreign-key-constraints
    ;; database-management
+   #:create-database
    #:database-version
    #:postgresql-version
    #:current-database
@@ -124,6 +128,9 @@
    #:drop-database
    #:document-database
    #:list-databases
+   #:list-templates
+   #:list-available-collations
+   #:list-database-access-rights
 
    ;; extensions
    #:list-available-extensions
@@ -144,9 +151,21 @@
    #:find-primary-key-info
    ;; roles
    #:list-roles
+   #:list-role-permissions
    #:role-exists-p
+   #:create-role
    #:drop-role
-   #:list-database-users
+   #:alter-role-search-path
+   #:change-password
+   #:grant-role-permissions
+   #:grant-readonly-permissions
+   #:grant-editor-permissions
+   #:grant-admin-permissions
+   #:revoke-all-on-table
+   #:list-role-accessible-databases
+
+   #:list-database-users ;deprecated
+
    ;; schemas
    #:list-schemata ;
    #:list-schemas
@@ -169,6 +188,8 @@
    #:table-size
    #:list-tables-in-schema
    #:drop-table
+   #:get-table-oid
+   #:get-table-comment
    ;; tablespaces
    #:create-tablespace
    #:list-tablespaces
@@ -177,8 +198,8 @@
    #:list-triggers
    #:list-detailed-triggers
    ;; util
+   #:add-comment
    #:list-available-types
-   #:change-toplevel-database
    #:cache-hit-ratio
    #:bloat-measurement
    #:unused-indexes
@@ -186,6 +207,8 @@
    #:coalesce
    #:split-fully-qualified-tablename
    #:list-text-search-config
+   #:postgres-array-string-to-list
+   #:postgres-array-string-to-array
    ;; views
    #:list-views #:view-exists-p
    #:describe-views))
