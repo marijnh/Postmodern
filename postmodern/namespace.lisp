@@ -83,9 +83,14 @@ nil otherwise. The name provided can be either a string or quoted symbol."
          (to-sql-name name)
          :single))
 
-(defun create-schema (schema)
-  "Create a new schema. Raises an error if the schema already exists."
-  (execute (format nil "CREATE SCHEMA ~a" (to-sql-name schema t))))
+(defun create-schema (schema &optional authorization)
+  "Create a new schema. Raises an error if the schema already exists. If the
+optional authorization parameter is provided, the schema will be owned by that
+role."
+  (if authorization
+      (execute (format nil "create schema ~a authorization ~a"
+                       (to-sql-name schema t) authorization))
+      (execute (format nil "create schema ~a" (to-sql-name schema t)))))
 
 (defun drop-schema (schema &key (if-exists nil) (cascade nil))
   "Drops an existing database schema 'schema' Accepts :if-exists and/or :cascade

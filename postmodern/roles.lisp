@@ -1,155 +1,44 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
-
-;; Per the Postgresql Documentation, CREATE ROLE adds a new role to a PostgreSQL
-;; database cluster. A role is an entity that can own database objects and have
-;; database privileges; a role can be considered a “user”, a “group”, or both
-;; depending on how it is used.
-;; https://www.postgresql.org/docs/current/sql-createrole.html. The only real
-;; difference between "create role" and "create user" is that create user
-;; defaults to having a login attribute and create role defaults to not having
-;;a login attribute.
-
-;; Pre-Postgresql version 8.1, groups and users were distinct kinds of entities.
-;; Roles have replaced that and can operate as either. Often applications will
-;; have their own concept of users and the application will itself have one or
-;; more types of roles to which the application user is assigned. So, for
-;; example, the application may have two roles - reader and editor with which
-;; it interacts with postgresql and then there are many application users
-;; registered with the application and probably listed in some type of user
-;; table in postgresql that the application manages. When users 1,2 or 3 log in
-;; to the application, the application might connect to the postgresql cluster
-;; using a role that only has read (select) permissions. When users 4 or 5 log
-;; in to the application, the applicatin might connect to the postgresql cluster
-;; using a role that has read, insert, update and delete permission. Postmodern
-;; provides a simplified create-role system allowing easy creation of roles that
-;; have readonly, editor or superuser type permissions. Further, those
-;; permissions can be limited to individual databases, schemas or tables.
-
-;; You really want to separate application users from roles. Make it easy to
-;; drop application users. Dropping roles requires going through every database,
-;; reassigning ownership of any objects that role might own or have privileges
-;; on, then dropping ownership of objects, then dropping the role itself.
-
 #|
-CREATE ROLE myapp_readonly;
-GRANT CONNECT ON DATABASE defaultdb TO myapp_readonly;
-GRANT USAGE ON SCHEMA myapp TO myapp_readonly;
-GRANT SELECT ON TABLE "myapp"."employees" TO myapp_readonly;
-GRANT SELECT ON TABLE "myapp"."jobs" TO myapp_readonly;
-GRANT SELECT (id, name) ON TABLE myapp.customers TO myapp_readonly;
-CREATE USER redash WITH PASSWORD 'secret';
-GRANT myapp_readonly TO redash;
+Every connection is specific to a particular database. However, creating roles
+or users is global to the entire cluster (the running postgresql server). You
+can create policies for any individual database, schema or table, but you need
+to ensure that those policies also apply to any subsequently created database,
+schema or table. Note that each user is automatically a member of the public
+group, so you need to change those policies for public as well.
 
-Variation?
-CREATE ROLE xxx LOGIN PASSWORD 'yyy';
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO xxx;
+Per the Postgresql Documentation, CREATE ROLE adds a new role to a PostgreSQL
+database cluster. A role is an entity that can own database objects and have
+database privileges; a role can be considered a “user”, a “group”, or both
+depending on how it is used.
+https://www.postgresql.org/docs/current/sql-createrole.html. The only real
+difference between "create role" and "create user" is that create user
+defaults to having a login attribute and create role defaults to not having
+a login attribute.
 
-This only affects tables that have already been created. More powerfully, you
-can automatically have default roles assigned to new objects in future:
+Often applications will have their own concept of users and the application
+will itself have one or more types of roles to which the application user is
+assigned. So, for example, the application may have two roles - reader and
+editor with which it interacts with postgresql and then there are many
+application users registered with the application and probably listed in some
+type of user table in postgresql that the application manages. When users 1,2
+or 3 log in to the application, the application might connect to the postgresql
+cluster using a role that only has read (select) permissions. When users 4 or 5
+log in to the application, the applicatin might connect to the postgresql cluster
+using a role that has read, insert, update and delete permission. Postmodern
+provides a simplified create-role system allowing easy creation of roles that
+have readonly, editor or superuser type permissions. Further, those
+permissions can be limited to individual databases, schemas or tables.
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA public
-  GRANT SELECT ON TABLES TO xxx;
+We suggest that you separate application users from roles. Make it easy to
+drop application users. Dropping roles requires going through every database,
+reassigning ownership of any objects that role might own or have privileges
+on, then dropping ownership of objects, then dropping the role itself.
 
-Variation?
--- Create a group
-CREATE ROLE readaccess;
-
--- Grant access to existing tables
-GRANT USAGE ON SCHEMA public TO readaccess;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO readaccess;
-
--- Grant access to future tables
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readaccess;
-
--- Create a final user with password
-CREATE USER tomek WITH PASSWORD 'secret';
-GRANT readaccess TO tomek;
-
--- Revoke ability to create tables
-
-    REVOKE ALL ON SCHEMA public FROM public
-    GRANT ALL ON SCHEMA public TO writeuser
-
-Hi there are four databases present in this server. When i create this user,
-that user can create tables in different databases. I want to restrict that too.
-
-Variation?
-CREATE USER readonly  WITH ENCRYPTED PASSWORD 'readonly';
-GRANT USAGE ON SCHEMA public to readonly;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readonly;
-
--- repeat code below for each database:
-
-GRANT CONNECT ON DATABASE foo to readonly;
-\c foo
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readonly;
---- this grants privileges on new tables generated in new database "foo"
-GRANT USAGE ON SCHEMA public to readonly;
-GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO readonly;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly;
-
-Notes:
-In PostgreSQL, every connection is to a particular database, and nearly
-everything you run has effect only within that one database. (One exception is
-that creation of users/roles themselves is global to the entire "cluster",
-i.e. running Postgres server.)
-
-In the psql commands you show, you are connecting the first time without
-specifying a database (psql), which connects you to a database named after the
-current system user, which is postgres. This is shown at the beginning of the
-psql prompt: postgres=# (the # shows that you are connected as a supersuser).
-
-
------------------------
-n PostgreSQL*, you cannot drop a database while clients are connected to it.
-
-At least, not with the dropdb utility - which is only a simple wrapper around
-DROP DATABASE server query.
-
-Quite robust workaround follows:
-
-Connect to your server as superuser, using psql or other client. Do not use the
-database you want to drop.
-
-psql -h localhost postgres postgres
-
-Now using plain database client you can force drop database using three simple
-steps:
-
-    Make sure no one can connect to this database. You can use one of following
-methods (the second seems safer, but does not prevent connections from
-superusers).
-
-    /* Method 1: update system catalog */
-    UPDATE pg_database SET datallowconn = 'false' WHERE datname = 'mydb';
-
-    /* Method 2: use ALTER DATABASE. Superusers still can connect!
-    ALTER DATABASE mydb CONNECTION LIMIT 0; */
-
-    Force disconnection of all clients connected to this database, using
-pg_terminate_backend.
-
-    SELECT pg_terminate_backend(pid)
-    FROM pg_stat_activity
-    WHERE datname = 'mydb';
-
-    /* For old versions of PostgreSQL (up to 9.1), change pid to procpid:
-
-    SELECT pg_terminate_backend(procpid)
-    FROM pg_stat_activity
-    WHERE datname = 'mydb'; */
-
-    Drop the database.
-
-    DROP DATABASE mydb;
-
-Step 1 requires superuser privileges for the 1st method, and database owner
-privileges for the 2nd one. Step 2 requires superuser privileges. Step 3
-requires database owner privilege.
-------------------------------
-
+In PostgreSQL*, you cannot drop a database while clients are connected to it.
 |#
+
 (defparameter *alter-all-default-select-privileges*
   '("grant usage on schema ~a to ~a"
     "grant select on all tables in schema ~a to ~a"
@@ -212,7 +101,7 @@ whitespace in either user names or passwords."
   (let ((scanner-w (cl-ppcre:create-scanner :whitespace-char-class)))
     (cl-ppcre:scan scanner-w str)))
 
-(defparameter *disallowed-user-names*
+(defparameter *disallowed-role-names*
   (let ((words (make-hash-table :test 'equal)))
     (dolist (word '(".htaccess" ".htpasswd" ".json" ".rss" ".well-known" ".xml"
                     "about" "abuse" "access" "account" "accounts" "activate"
@@ -345,55 +234,57 @@ a single string name or :current, :all or \"all\"."
              nil))
         (t (list (to-sql-name databases)))))
 
-(defun admin-permissions (schema-name user-name &optional (table-name nil))
-  "Note that we are giving some function execute permissions if table-name is
-nil, but if the table-name is specified, those are not provided. Your mileage
-may vary on how many privileges you want to provide to a editor role with access
-to only a limited number of tables."
+(defun grant-admin-permissions (schema-name role-name &optional (table-name nil))
+  "Grants all privileges to a role for the named schema. If the optional table-name
+parameter is provided, the privileges are only granted with respect to that table."
   (cond ((not table-name)
          (query (format nil "grant all on all tables in schema ~a to ~a"
-                        schema-name user-name))
+                        schema-name role-name))
          (query (format nil "grant all on all sequences in schema ~a to ~a"
-                        schema-name user-name))
+                        schema-name role-name))
          (query (format nil "alter default privileges in schema ~a grant all on tables to ~a"
-                        schema-name user-name))
+                        schema-name role-name))
          (query (format nil "alter default privileges in schema ~a grant all on sequences to ~a"
-                        schema-name user-name))
+                        schema-name role-name))
          (loop for x in *execute-privileges-list* do
-           (query (format nil x schema-name user-name))))
+           (query (format nil x schema-name role-name))))
         (t
          (query (format nil "grant all on table ~a.~a to ~a"
-                        schema-name table-name user-name)))))
+                        schema-name table-name role-name)))))
 
-(defun editor-permissions (schema-name user-name &optional (table-name nil))
-  "Note that we are giving some function execute permissions if table-name is
-nil, but if the table-name is specified, those are not provided. Your mileage
-may vary on how many privileges you want to provide to a editor role with access
-to only a limited number of tables."
+(defun grant-editor-permissions (schema-name role-name &optional (table-name nil))
+  "Grants select, insert, update and delete privileges to a role for the named
+schema. If the optional table-name parameter is provided, the privileges are only
+granted with respect to that table. Note that we are giving some function execute
+permissions if table-name is nil, but if the table-name is specified, those are
+not provided. Your mileage may vary on how many privileges you want to provide
+to a editor role with access to only a limited number of tables."
   (cond ((not table-name)
          (loop for x in *alter-all-default-editor-privileges* do
-           (query (format nil x schema-name user-name)))
+           (query (format nil x schema-name role-name)))
          (loop for x in *execute-privileges-list* do
-           (query (format nil x schema-name user-name))))
+           (query (format nil x schema-name role-name))))
         (t
-         (format nil "grant select, insert, update, delete on table ~a.~a to ~a"
-                 schema-name table-name user-name))))
+         (query (format nil "grant select, insert, update, delete on table ~a.~a to ~a"
+                        schema-name table-name role-name)))))
 
-(defun readonly-permissions (schema-name user-name &optional (table-name nil))
-  "Note that we are giving some function execute permissions if table-name is
-nil, but if the table-name is specified, those are not provided. Your mileage
-may vary on how many privileges you want to provide to a read-only role with
-access to only a limited number of tables."
+(defun grant-readonly-permissions (schema-name role-name &optional (table-name nil))
+  "Grants select privileges to a role for the named schema. If the optional
+table-name parameter is provided, the privileges are only granted with respect
+to that table. Note that we are giving some function execute permissions if
+table-name is nil, but if the table-name is specified, those are not provided.
+Your mileage may vary on how many privileges you want to provide to a
+read-only role with access to only a limited number of tables."
   (cond ((not table-name)
          (loop for x in *alter-all-default-select-privileges* do
-           (let ((query-string (format nil x schema-name user-name)))
+           (let ((query-string (format nil x schema-name role-name)))
              (query query-string)))
          (loop for x in *execute-privileges-list* do
-           (let ((query-string (format nil x schema-name user-name)))
+           (let ((query-string (format nil x schema-name role-name)))
              (query query-string))))
         (t
          (query (format nil "grant select on table ~a.~a to ~a"
-                        schema-name table-name user-name)))))
+                        schema-name table-name role-name)))))
 
 (defun grant-role-permissions-helper (role-type name &key (schema :public)
                                                 (tables :all))
@@ -410,11 +301,11 @@ access to only a limited number of tables."
                           (equalp (first tables) "all"))) ; Grant access to existing tables
                  (case role-type
                    (:admin
-                    (admin-permissions schema-x name))
+                    (grant-admin-permissions schema-x name))
                    (:editor
-                    (editor-permissions schema-x name))
+                    (grant-editor-permissions schema-x name))
                    (:readonly
-                    (readonly-permissions schema-x name))
+                    (grant-readonly-permissions schema-x name))
                    (t (query (readonly-permissions schema-x name)))))
                 ((listp tables)
                  (let ((existing-tables (list-tables t))) ;  Grant access to existing tables
@@ -426,12 +317,12 @@ access to only a limited number of tables."
                                (member table-y existing-tables :test #'equal))
                        (case role-type
                          (:admin
-                          (admin-permissions schema-x name table-y))
+                          (grant-admin-permissions schema-x name table-y))
                          (:editor
-                          (editor-permissions schema-x name table-y))
+                          (grant-editor-permissions schema-x name table-y))
                          (:readonly
-                          (readonly-permissions schema-x name table-y))
-                         (t (readonly-permissions schema-x name table-y)))))))
+                          (grant-readonly-permissions schema-x name table-y))
+                         (t (grant-readonly-permissions schema-x name table-y)))))))
                 (t nil))))))
 
 (defun grant-role-permissions (role-type name &key (schema :public)
@@ -518,7 +409,7 @@ inherit nocreatedb nocreaterole noreplication"
 specified tables or databases. An editor has the ability to insert, update,
 delete or select data. An admin has all privileges on a database, but cannot
 create new databases, roles, or replicate the system. A standard user has no
-particular privileges or restrictions.
+particular privileges other than connecting to databases.
 
  :schema defaults to :public but can be a list of schemas. User will not have
 access to any schemas not in the list.
@@ -540,7 +431,7 @@ is https://github.com/flurdy/bad_usernames and https://github.com/dsignr/disallo
 and https://www.b-list.org/weblog/2018/feb/11/usernames/
 
  :allow-disallowed-names defaults to nil. If nil, the user name will be checked
-against *disallowed-user-names*.
+against *disallowed-role-names*.
 
  As an aside, if allowing utf8 in names, you might want to think about whether
 you should second copy of the username in the original casing and normalized as
@@ -551,7 +442,7 @@ as culturally insensitive to change the display of the name."
                   (whitespace-in-string password)))
          (return-from create-role "Illegal whitespace in name or password"))
         ((and (not allow-disallowed-names)
-              (gethash name *disallowed-user-names*))
+              (gethash name *disallowed-role-names*))
          (return-from create-role "Disallowed user name"))
         ((and (not allow-utf8)
               (not (cl-postgres:string-printable-ascii-p name))
@@ -583,37 +474,34 @@ names. Sorry"))
   (when comment (query (format nil "comment on role ~a is '~a'"
                                name comment))))
 
-(defun find-objects-by-owner (owner)
-  "Returns a list of lists in the form of (schema, object) for each object in
-the current database owned by the owner. Procedures owned by the owner will
-have an additional result of the procedure number e.g.
- (schema, procedure-name, object number). A procedure could be sequences."
-  (query "SELECT
-              n.nspname AS schema_name,
-              c.relname AS rel_name,
-              c.relkind AS rel_kind
-            FROM pg_class c
-            JOIN pg_namespace n ON n.oid = c.relnamespace
-            where pg_get_userbyid(c.relowner) = $1
-            UNION ALL
-            -- functions (or procedures)
-            SELECT
-              n.nspname AS schema_name,
-              p.proname,
-              'p'
-            FROM pg_proc p
-            JOIN pg_namespace n ON n.oid = p.pronamespace
-            where pg_get_userbyid(p.proowner) = $2;" owner owner))
+(defun alter-role-search-path (role search-path)
+  "Changes the priority of where a role looks for tables (which schema first,
+second, etc. Role should be a string or symbol. Search-path could be a list of schema
+names either as strings or symbols."
+  (when (listp search-path) (setf search-path (format nil "~{~a~^, ~}" (mapcar 'to-sql-name search-path))))
+  (when (symbolp role) (setf role (to-sql-name role)))
+  (query (format nil "alter role ~a set search_path = ~a" role search-path)))
 
-(defun drop-role (name &optional (new-owner "postgres") (database :all))
-  "Before dropping the role, you must drop all the objects it owns (or reassign
+(defun drop-role (role-name &optional (new-owner "postgres") (database :all))
+  "The role-name and optional new-owner name should be strings. If they are
+symbols, they will be converted to string and hyphens will be converted to
+underscores.
+
+Before dropping the role, you must drop all the objects it owns (or reassign
 their ownership) and revoke any privileges the role has been granted on other
-objects. Drop-role will drop objects owned by a role in the current database.
-Question 1. Is the role attached to other databases? The reassignment and
-dropping objects will only apply to the currently connected database.
-Question 2. We will reassign ownership of the objects to the postgres role
+objects. If database is :all, drop-role will loop through all databases in
+the cluster ensuring that the role has no privileges or owned objects in
+every database. Otherwise drop-role will drop objects owned by a role in the
+current database.
+
+We will reassign ownership of the objects to the postgres role
 unless otherwise specified in the optional second parameter. Returns t if
-successful. Will not drop the postgres role."
+successful. Will not drop the postgres role.
+
+As a minor matter of note, a role can own objects in databases it is not
+granted connection rights."
+  (when (symbolp role-name) (setf role-name (to-sql-name role-name)))
+  (when (symbolp new-owner) (setf new-owner (to-sql-name new-owner)))
   (if (eq database :all)
       (loop for x in (list-databases :names-only t) do
         (with-connection (list x (cl-postgres::connection-user *database*)
@@ -621,25 +509,28 @@ successful. Will not drop the postgres role."
                                (cl-postgres::connection-host *database*)
                                :port (cl-postgres::connection-port *database*)
                                :use-ssl (cl-postgres::connection-use-ssl *database*))
-          (when (and (not (string= name "postgres"))
-                     (member name (list-database-users) :test #'equal))
-            (query (format nil "reassign owned by ~a to ~a" name new-owner))
-            (query (format nil "drop owned by ~a" name)))))
+          (when (and (not (string= role-name "postgres"))
+                     (member role-name (list-database-users) :test #'equal))
+            (query (format nil "reassign owned by ~a to ~a" role-name new-owner))
+            (query (format nil "drop owned by ~a" role-name)))))
       (with-connection (list database (cl-postgres::connection-user *database*)
                              (cl-postgres::connection-password *database*)
                              (cl-postgres::connection-host *database*)
                              :port (cl-postgres::connection-port *database*)
                              :use-ssl (cl-postgres::connection-use-ssl *database*))
-        (when (and (not (string= name "postgres"))
-                   (member name (list-database-users) :test #'equal))
-          (query (format nil "reassign owned by ~a to ~a" name new-owner))
-          (query (format nil "drop owned by ~a" name)))))
-      (query (format nil "drop role if exists ~a" name))
-      (not (role-exists-p name)))
+        (when (and (not (string= role-name "postgres"))
+                   (member role-name (list-database-users) :test #'equal))
+          (query (format nil "reassign owned by ~a to ~a" role-name new-owner))
+          (query (format nil "drop owned by ~a" role-name)))))
+      (query (format nil "drop role if exists ~a" role-name))
+      (not (role-exists-p role-name)))
 
 (defun list-role-permissions (&optional role)
-  "This checks the permissions granted  within the currently connected database.
-If an optional role is provided, the result is limited to that role."
+  "This returns a list of sublists of the permissions granted  within the
+currently connected database. If an optional role is provided, the result is
+limited to that role. The sublist returned will be in the form of role-name,
+schema-name, table-name and then a string containing all the rights of that role
+on that table in that schema."
   (if role
     (query "SELECT grantee,
             table_schema,
@@ -658,50 +549,13 @@ If an optional role is provided, the result is limited to that role."
             and table_name not like 'pg_%'
             and grantor != grantee;")))
 
-
-#|
-Notes:
-Every connection is specific to a particular database. However, creating roles
-or users is global to the entire cluster (the running postgresql server). You
-can create policies for any individual database, schema or table, but you need
-to ensure that those policies also apply to any subsequently created database,
-schema or table. Note that each user is automatically a member of the public
-group, so you need to change those policies for public as well.
-
-Option for limiting user name and password to ascii, otherwise normalize both.
-
-Do we need to implement confusables? See http://www.unicode.org/reports/tr39/
-
-Do we want to throw an error if whitespace in user name or password?
-Do we want to throw an error if role already exists (after normalizing and with
-equalp?
-
-How to handle confusables?
-https://confusable-homoglyphs.readthedocs.io/en/latest/index.html
-
-
-CREATE ROLE xxx LOGIN PASSWORD 'yyy';
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO xxx;
-
-This only affects tables that have already been created. More powerfully, you
-can automatically have default roles assigned to new objects in future:
-
-* alter default privileges in schema public grant select on tables to xxx;
-
-
-Variation?
-
-
--- repeat code below for each database:
-
-GRANT CONNECT ON DATABASE foo to readonly;
-\c foo
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readonly;
---- this grants privileges on new tables generated in new database "foo"
-GRANT USAGE ON SCHEMA public to readonly;
-GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO readonly;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly;
-
--- Find objects with owner X
-
-|#
+(defun change-password (role password &optional expiration-date)
+  "Alters a role's password. If the optional expiration-date parameter is provided,
+the password will expire at the stated date. A sample expiration date would be
+'December 31, 2020'. If the expiration date is 'infinity', it will never expire.
+The password will be encrypted in the system catalogs. This is
+automatic with postgresql versions 10 and above."
+  (when (role-exists-p role)
+    (if expiration-date
+        (query (format nil "alter role ~a with encrypted password '~a' valide until '~a'" role password expiration-date)))
+    (query (format nil "alter role ~a with encrypted password '~a'" role password))))

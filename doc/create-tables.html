@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-05-23 Sat 07:24 -->
+<!-- 2020-06-14 Sun 18:09 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Creating Tables</title>
@@ -234,38 +234,38 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org95dbc63">Introduction to Table Creation in Postmodern</a></li>
-<li><a href="#org8c7b907">Basic Postgresql Database Tables</a></li>
-<li><a href="#org22a9d89">Postmodern Create-Table</a></li>
-<li><a href="#org5b36a44">S-SQL Create-Table</a>
+<li><a href="#54ddf54b-c26b-4242-a996-0e803aeb9801">Introduction to Table Creation in Postmodern</a></li>
+<li><a href="#14330eed-440e-4f07-ab6f-5e2711ef4002">Basic Postgresql Database Tables</a></li>
+<li><a href="#1d23daae-8768-40c7-80ce-61c95b9d4aea">Postmodern Create-Table</a></li>
+<li><a href="#c390e5db-0539-4bfa-b7b6-9b38dcdd9ae2">S-SQL Create-Table</a>
 <ul>
-<li><a href="#org1f1d7a7">Table Names Parameter</a>
+<li><a href="#efb71d2a-2318-47d3-8f04-b5fe2172178d">Table Names Parameter</a>
 <ul>
-<li><a href="#org9ca0c92">Temporary and Unlogged Tables</a></li>
+<li><a href="#034f548e-0318-40fc-90c5-63fb310936e4">Temporary and Unlogged Tables</a></li>
 </ul>
 </li>
-<li><a href="#org7a77198">Using Identity Columns</a></li>
-<li><a href="#orgda6a1e1">Array Columns</a></li>
-<li><a href="#org8639930">Check Constraints</a></li>
-<li><a href="#org524b24e">Unique Constraints</a></li>
-<li><a href="#org4bb5353">Timestamps with and without timezones</a></li>
-<li><a href="#org3365257">Adding Foreign Keys</a>
+<li><a href="#df4fd2b0-1928-4fa9-9c70-c2060cdec5ff">Using Identity Columns</a></li>
+<li><a href="#3b09fa31-255b-4769-9d8f-085201e66a02">Array Columns</a></li>
+<li><a href="#205f09d2-9357-4512-949a-3dcaaae6808f">Check Constraints</a></li>
+<li><a href="#e2ed3fbc-6193-4db8-b2ea-cf29d0fe849e">Unique Constraints</a></li>
+<li><a href="#7d0b525b-827f-41db-8523-e62da8fbe52b">Timestamps with and without timezones</a></li>
+<li><a href="#05423b5d-c101-4244-bc7e-5b05e257d03a">Adding Foreign Keys</a>
 <ul>
-<li><a href="#orga48b65b">Defining Foreign Keys at the Column Level</a></li>
-<li><a href="#org03dd287">Defining Foreign Keys at the Table Level</a></li>
+<li><a href="#5bc3ebb3-b34c-4490-b4d4-a3d404b636a7">Defining Foreign Keys at the Column Level</a></li>
+<li><a href="#7d033701-5e20-43b7-9142-2cf5c1e50317">Defining Foreign Keys at the Table Level</a></li>
 </ul>
 </li>
-<li><a href="#org8837fe0">Using Tablespaces</a></li>
-<li><a href="#org156b522">Partitions (not fully implemented)</a></li>
+<li><a href="#1aff79ef-749e-4229-82e4-81dceabb72b5">Using Tablespaces</a></li>
+<li><a href="#015c6b92-dd5f-400b-bd8d-d2d08e76a166">Partitions (not fully implemented)</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </nav>
 
-<div id="outline-container-org95dbc63" class="outline-2">
-<h2 id="org95dbc63"><a id="ID-70d15d79-199f-45cf-beaf-c5cad9fca3cf"></a>Introduction to Table Creation in Postmodern</h2>
-<div class="outline-text-2" id="text-org95dbc63">
+<div id="outline-container-org9015b5b" class="outline-2">
+<h2 id="54ddf54b-c26b-4242-a996-0e803aeb9801"><a id="org9015b5b"></a><a id="ID-70d15d79-199f-45cf-beaf-c5cad9fca3cf"></a>Introduction to Table Creation in Postmodern</h2>
+<div class="outline-text-2" id="text-54ddf54b-c26b-4242-a996-0e803aeb9801">
 <p>
 Postmodern offers two ways to create postgresql database tables. Which one
 you choose depends on two things:
@@ -300,9 +300,9 @@ and why do we care about different options.
 </div>
 </div>
 
-<div id="outline-container-org8c7b907" class="outline-2">
-<h2 id="org8c7b907"><a id="ID-61d21d1c-ad6c-4318-b7b9-efb99c5bcde9"></a>Basic Postgresql Database Tables</h2>
-<div class="outline-text-2" id="text-org8c7b907">
+<div id="outline-container-org6c983ce" class="outline-2">
+<h2 id="14330eed-440e-4f07-ab6f-5e2711ef4002"><a id="org6c983ce"></a><a id="ID-61d21d1c-ad6c-4318-b7b9-efb99c5bcde9"></a>Basic Postgresql Database Tables</h2>
+<div class="outline-text-2" id="text-14330eed-440e-4f07-ab6f-5e2711ef4002">
 <p>
 The full postgresql sql specification can be found <a href="https://www.postgresql.org/docs/current/static/sql-createtable.html">here</a>.
 </p>
@@ -329,15 +329,15 @@ required to create a postgresql database table.
 </div>
 </div>
 
-<div id="outline-container-org22a9d89" class="outline-2">
-<h2 id="org22a9d89"><a id="ID-f64d29c1-32d0-45bf-9331-a62436b2cc73"></a>Postmodern Create-Table</h2>
-<div class="outline-text-2" id="text-org22a9d89">
+<div id="outline-container-org9dde122" class="outline-2">
+<h2 id="1d23daae-8768-40c7-80ce-61c95b9d4aea"><a id="org9dde122"></a><a id="ID-f64d29c1-32d0-45bf-9331-a62436b2cc73"></a>Postmodern Create-Table</h2>
+<div class="outline-text-2" id="text-1d23daae-8768-40c7-80ce-61c95b9d4aea">
 </div>
 </div>
 
-<div id="outline-container-org5b36a44" class="outline-2">
-<h2 id="org5b36a44"><a id="ID-7fa25539-cb93-4244-83af-330feb94d990"></a>S-SQL Create-Table</h2>
-<div class="outline-text-2" id="text-org5b36a44">
+<div id="outline-container-org3b717ef" class="outline-2">
+<h2 id="c390e5db-0539-4bfa-b7b6-9b38dcdd9ae2"><a id="org3b717ef"></a><a id="ID-7fa25539-cb93-4244-83af-330feb94d990"></a>S-SQL Create-Table</h2>
+<div class="outline-text-2" id="text-c390e5db-0539-4bfa-b7b6-9b38dcdd9ae2">
 <p>
 At this minimum level, the :create-table and :create-extended-table calls are
 exactly the same. Let's walk through a simple example:
@@ -414,9 +414,9 @@ of the potential time interval.
 </p>
 </div>
 
-<div id="outline-container-org1f1d7a7" class="outline-3">
-<h3 id="org1f1d7a7"><a id="ID-a33bcc61-0866-4de5-85c5-63c48550ec5f"></a>Table Names Parameter</h3>
-<div class="outline-text-3" id="text-org1f1d7a7">
+<div id="outline-container-org98979f0" class="outline-3">
+<h3 id="efb71d2a-2318-47d3-8f04-b5fe2172178d"><a id="org98979f0"></a><a id="ID-a33bcc61-0866-4de5-85c5-63c48550ec5f"></a>Table Names Parameter</h3>
+<div class="outline-text-3" id="text-efb71d2a-2318-47d3-8f04-b5fe2172178d">
 <p>
 The following discussion on table names is the same for both :create-table
 or :create-extended table.
@@ -458,21 +458,22 @@ qualifiers - if-not-exists, temp, and unlogged.
 </div>
 </div>
 
-<div id="outline-container-org9ca0c92" class="outline-4">
-<h4 id="org9ca0c92"><a id="ID-01951f3c-0e2b-4567-8545-44e0584d0fa7"></a>Temporary and Unlogged Tables</h4>
-<div class="outline-text-4" id="text-org9ca0c92">
+<div id="outline-container-orge9db20b" class="outline-4">
+<h4 id="034f548e-0318-40fc-90c5-63fb310936e4"><a id="orge9db20b"></a><a id="ID-01951f3c-0e2b-4567-8545-44e0584d0fa7"></a>Temporary and Unlogged Tables</h4>
+<div class="outline-text-4" id="text-034f548e-0318-40fc-90c5-63fb310936e4">
 <p>
 Temporary tables exists only for the duration of the session. To create them
 using s-sql in postmodern, the first parameter to :create-table should be a
-form where the first atom in the form is the keyword :temp. You can optionally
-use the :if-not-exists keyword, and then the name of the temporary table. E.g.
+form where the first atom in the form is the keyword :temp., then the name of
+the table. You can optionally use the :if-not-exists keyword in a subform
+wrapping the name of the temporary table. E.g.
 </p>
 
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #98fb98; font-weight: bold;">:temp</span> 'distributors-in-hell)
          ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #98fb98; font-weight: bold;">:temp</span> <span style="color: #98fb98; font-weight: bold;">:if-not-exists</span> 'distributors-in-hell)
+(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #98fb98; font-weight: bold;">:temp</span> (<span style="color: #98fb98; font-weight: bold;">:if-not-exists</span> 'distributors-in-hell))
          ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
 
 </pre>
@@ -494,9 +495,9 @@ table. E.g.
 </div>
 </div>
 
-<div id="outline-container-org7a77198" class="outline-3">
-<h3 id="org7a77198"><a id="ID-675aaa13-4be0-458f-b004-789fac521dc4"></a>Using Identity Columns</h3>
-<div class="outline-text-3" id="text-org7a77198">
+<div id="outline-container-org123bf82" class="outline-3">
+<h3 id="df4fd2b0-1928-4fa9-9c70-c2060cdec5ff"><a id="org123bf82"></a><a id="ID-675aaa13-4be0-458f-b004-789fac521dc4"></a>Using Identity Columns</h3>
+<div class="outline-text-3" id="text-df4fd2b0-1928-4fa9-9c70-c2060cdec5ff">
 <p>
 Postgresql version 10 added identity columns. These are auto-incrementing
 columns that use the standard SQL syntax instead of the serial and bigserial
@@ -547,9 +548,9 @@ Note: The data type used for identity columns must be one of smallint, int or bi
 </div>
 </div>
 
-<div id="outline-container-orgda6a1e1" class="outline-3">
-<h3 id="orgda6a1e1"><a id="ID-04eff0b7-ac42-40f9-887c-f4fcff7cc4d5"></a>Array Columns</h3>
-<div class="outline-text-3" id="text-orgda6a1e1">
+<div id="outline-container-org243c858" class="outline-3">
+<h3 id="3b09fa31-255b-4769-9d8f-085201e66a02"><a id="org243c858"></a><a id="ID-04eff0b7-ac42-40f9-887c-f4fcff7cc4d5"></a>Array Columns</h3>
+<div class="outline-text-3" id="text-3b09fa31-255b-4769-9d8f-085201e66a02">
 <p>
 The following shows the creation of a table with a two dimensional array
 </p>
@@ -561,9 +562,9 @@ The following shows the creation of a table with a two dimensional array
 </div>
 </div>
 
-<div id="outline-container-org8639930" class="outline-3">
-<h3 id="org8639930"><a id="ID-a62455db-395a-4757-b573-f7cd2a267bd0"></a>Check Constraints</h3>
-<div class="outline-text-3" id="text-org8639930">
+<div id="outline-container-org48ffe75" class="outline-3">
+<h3 id="205f09d2-9357-4512-949a-3dcaaae6808f"><a id="org48ffe75"></a><a id="ID-a62455db-395a-4757-b573-f7cd2a267bd0"></a>Check Constraints</h3>
+<div class="outline-text-3" id="text-205f09d2-9357-4512-949a-3dcaaae6808f">
 <p>
 You can put a contraint on a table row that specifies values must meet
 certain requirements. In the following examples, the first puts a check
@@ -585,9 +586,9 @@ level.
 </div>
 </div>
 
-<div id="outline-container-org524b24e" class="outline-3">
-<h3 id="org524b24e"><a id="ID-87783379-e1bf-485a-865e-05aa539ec871"></a>Unique Constraints</h3>
-<div class="outline-text-3" id="text-org524b24e">
+<div id="outline-container-org420fdce" class="outline-3">
+<h3 id="e2ed3fbc-6193-4db8-b2ea-cf29d0fe849e"><a id="org420fdce"></a><a id="ID-87783379-e1bf-485a-865e-05aa539ec871"></a>Unique Constraints</h3>
+<div class="outline-text-3" id="text-e2ed3fbc-6193-4db8-b2ea-cf29d0fe849e">
 <p>
 You can ensure that a column or a combination of columns is unique
 without making that column or columns the primary key for the table.
@@ -654,9 +655,9 @@ parameter cannot be set for TOAST tables."
 </div>
 
 
-<div id="outline-container-org4bb5353" class="outline-3">
-<h3 id="org4bb5353"><a id="ID-08e399fb-51d0-425a-9349-c1400fed8f76"></a>Timestamps with and without timezones</h3>
-<div class="outline-text-3" id="text-org4bb5353">
+<div id="outline-container-org6ce3b86" class="outline-3">
+<h3 id="7d0b525b-827f-41db-8523-e62da8fbe52b"><a id="org6ce3b86"></a><a id="ID-08e399fb-51d0-425a-9349-c1400fed8f76"></a>Timestamps with and without timezones</h3>
+<div class="outline-text-3" id="text-7d0b525b-827f-41db-8523-e62da8fbe52b">
 <p>
 Ah, the bane of many programmers' existence - dates and times.
 At least the table creation is fairly straightforward.
@@ -695,18 +696,18 @@ The following examples are fairly self explanatory.
 </div>
 
 
-<div id="outline-container-org3365257" class="outline-3">
-<h3 id="org3365257"><a id="ID-e65bef5a-bae8-4b47-a66f-37f6e71d9fdb"></a>Adding Foreign Keys</h3>
-<div class="outline-text-3" id="text-org3365257">
+<div id="outline-container-org3ac92f4" class="outline-3">
+<h3 id="05423b5d-c101-4244-bc7e-5b05e257d03a"><a id="org3ac92f4"></a><a id="ID-e65bef5a-bae8-4b47-a66f-37f6e71d9fdb"></a>Adding Foreign Keys</h3>
+<div class="outline-text-3" id="text-05423b5d-c101-4244-bc7e-5b05e257d03a">
 <p>
 There are a few different ways to add foreign keys in postgresql when defining
 a table.
 </p>
 </div>
 
-<div id="outline-container-orga48b65b" class="outline-4">
-<h4 id="orga48b65b"><a id="ID-02e06fce-1b41-4edd-aa1d-f9b3cc665d00"></a>Defining Foreign Keys at the Column Level</h4>
-<div class="outline-text-4" id="text-orga48b65b">
+<div id="outline-container-orgda84879" class="outline-4">
+<h4 id="5bc3ebb3-b34c-4490-b4d4-a3d404b636a7"><a id="orgda84879"></a><a id="ID-02e06fce-1b41-4edd-aa1d-f9b3cc665d00"></a>Defining Foreign Keys at the Column Level</h4>
+<div class="outline-text-4" id="text-5bc3ebb3-b34c-4490-b4d4-a3d404b636a7">
 <p>
 First with foreign key on the column. Use the keyword :references and specify
 the table name  and the relevant column within the subform. You will see why
@@ -823,9 +824,9 @@ So now examples with specifying the on-delete and on-update actions.
 </div>
 </div>
 
-<div id="outline-container-org03dd287" class="outline-4">
-<h4 id="org03dd287"><a id="ID-43ffc1bf-5497-41f2-af15-2c3128745b55"></a>Defining Foreign Keys at the Table Level</h4>
-<div class="outline-text-4" id="text-org03dd287">
+<div id="outline-container-orgd50a1de" class="outline-4">
+<h4 id="7d033701-5e20-43b7-9142-2cf5c1e50317"><a id="orgd50a1de"></a><a id="ID-43ffc1bf-5497-41f2-af15-2c3128745b55"></a>Defining Foreign Keys at the Table Level</h4>
+<div class="outline-text-4" id="text-7d033701-5e20-43b7-9142-2cf5c1e50317">
 <p>
 Instead of specifying the foreign keys at the column level, you can specify
 them at the table level, but of course that means you have to additionally
@@ -876,9 +877,9 @@ Additional foreign keys can easily be added:
 </div>
 </div>
 </div>
-<div id="outline-container-org8837fe0" class="outline-3">
-<h3 id="org8837fe0"><a id="ID-a9eb931c-2b9f-4bd1-a17d-e46d891d667d"></a>Using Tablespaces</h3>
-<div class="outline-text-3" id="text-org8837fe0">
+<div id="outline-container-org16386a2" class="outline-3">
+<h3 id="1aff79ef-749e-4229-82e4-81dceabb72b5"><a id="org16386a2"></a><a id="ID-a9eb931c-2b9f-4bd1-a17d-e46d891d667d"></a>Using Tablespaces</h3>
+<div class="outline-text-3" id="text-1aff79ef-749e-4229-82e4-81dceabb72b5">
 <p>
 Tablespaces require use of the create-extended-table method. Note that the
 create-extended-table method has a slightly different signature. It expects
@@ -902,9 +903,9 @@ Tablespaces are documented at <a href="https://www.postgresql.org/docs/10/static
 </div>
 </div>
 
-<div id="outline-container-org156b522" class="outline-3">
-<h3 id="org156b522"><a id="ID-2bc90e7a-1a03-4d15-a2fd-cb11d83de8a1"></a>Partitions (not fully implemented)</h3>
-<div class="outline-text-3" id="text-org156b522">
+<div id="outline-container-org295877f" class="outline-3">
+<h3 id="015c6b92-dd5f-400b-bd8d-d2d08e76a166"><a id="org295877f"></a><a id="ID-2bc90e7a-1a03-4d15-a2fd-cb11d83de8a1"></a>Partitions (not fully implemented)</h3>
+<div class="outline-text-3" id="text-015c6b92-dd5f-400b-bd8d-d2d08e76a166">
 <p>
 The following are two very simple examples of use of partitions. You should
 not consider partition functionality to be fully implemented past these

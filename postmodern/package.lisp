@@ -27,6 +27,7 @@
    #:database-connection
    #:connect-toplevel
    #:disconnect-toplevel
+   #:change-toplevel-database
    #:clear-connection-pool
    #:*max-pool-size*
    #:*default-use-ssl*
@@ -44,6 +45,7 @@
    #:*isolation-level*
    #:with-transaction
    #:commit-transaction
+   #:commit-logical-transaction
    #:abort-transaction
    #:with-savepoint
    #:rollback-savepoint
@@ -67,6 +69,7 @@
    #:\!unique
    #:set-search-path
    #:get-search-path
+   #:get-database-comment
 
    ;; Prepared Statement Functions
    #:*allow-overwriting-prepared-statements*
@@ -127,6 +130,7 @@
    #:list-databases
    #:list-templates
    #:list-available-collations
+   #:list-database-access-rights
 
    ;; extensions
    #:list-available-extensions
@@ -151,6 +155,14 @@
    #:role-exists-p
    #:create-role
    #:drop-role
+   #:alter-role-search-path
+   #:change-password
+   #:grant-role-permissions
+   #:grant-readonly-permissions
+   #:grant-editor-permissions
+   #:grant-admin-permissions
+   #:revoke-all-on-table
+   #:list-role-accessible-databases
 
    #:list-database-users ;deprecated
 
@@ -188,8 +200,6 @@
    ;; util
    #:add-comment
    #:list-available-types
-   #:change-toplevel-database
-   #:num-records-in-database
    #:cache-hit-ratio
    #:bloat-measurement
    #:unused-indexes
@@ -197,6 +207,8 @@
    #:coalesce
    #:split-fully-qualified-tablename
    #:list-text-search-config
+   #:postgres-array-string-to-list
+   #:postgres-array-string-to-array
    ;; views
    #:list-views #:view-exists-p
    #:describe-views))

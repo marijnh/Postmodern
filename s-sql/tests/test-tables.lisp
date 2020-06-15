@@ -45,19 +45,19 @@
   (is (equal (sql (:create-table (:if-not-exists 'distributors-in-hell)
                                  ((did :type (or integer db-null)))))
              "CREATE TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
+#|
   ;; version with both :temp and :if-not-exists
   (is (equal (sql (:create-table (:temp :if-not-exists 'distributors-in-hell)
                                  ((did :type (or integer db-null)))))
              "CREATE TEMP TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
+|#
+
       ;;;; unlogged tables do not have their data written to the write-ahead log. As a result they are faster,
       ;;; but not crash safe. Any indexes created on an unlogged table are unlogged as well.
 
   (is (equal (sql (:create-table (:unlogged 'distributors-in-hell)
                                  ((did :type (or integer db-null)))))
-             "CREATE UNLOGGED TABLE distributors_in_hell (did INTEGER)"))
-  (sql (:create-table (:unlogged :if-not-exists 'distributors-in-hell)
-                                 ((did :type (or integer db-null)))))
-  "CREATE UNLOGGED TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)")
+             "CREATE UNLOGGED TABLE distributors_in_hell (did INTEGER)")))
 
 (test create-table-basic
   "Testing Create Table. Replicating from https://www.postgresql.org/docs/10/static/sql-createtable.html"

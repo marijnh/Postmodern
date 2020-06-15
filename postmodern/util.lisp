@@ -15,9 +15,20 @@ or, when given only one argument, for transforming :nulls to NIL."
   (some (lambda (x) (if (eq x :null) nil x)) args))
 
 (defun database-version ()
+  "DEPRECATED BECAUSE IT IS CONFUSING. IT IS REALLY THE POSTGRESQL SERVER VERSION
+NOT A DATABASE VERSION. USE POSTGRESQL-VERSION INSTEAD.
+
+Returns the version string provided by postgresql of the
+current postgresql server E.g. 'PostgreSQL 12.2 on x86_64-pc-linux-gnu, compiled
+by gcc (Arch Linux 9.3.0-1) 9.3.0, 64-bit'. If you want just the postgresql
+version number, use cl-postgres:get-postgresql-version."
+  (query (:select (:version)) :single))
+
+(defun postgresql-version ()
   "Returns the version string provided by postgresql of the current postgresql
-server. E.g. 'PostgreSQL 12.2 on x86_64-pc-linux-gnu, compiled by
-gcc (Arch Linux 9.3.0-1) 9.3.0, 64-bit'"
+server E.g. 'PostgreSQL 12.2 on x86_64-pc-linux-gnu, compiled
+by gcc (Arch Linux 9.3.0-1) 9.3.0, 64-bit'. If you want just the postgresql
+version number, use cl-postgres:get-postgresql-version."
   (query (:select (:version)) :single))
 
 (defmacro make-list-query (relkind)
@@ -56,10 +67,19 @@ fully qualified, it will assume that the schema should be \"public\"."
     (when (not schema) (setf schema "public"))
     (list table schema database)))
 
-(defun postgresql-version ()
-  "Returns the version of the current postgresql instance from postgresql itself
-instead of from the connection."
-  (query (:select (:version)) :single))
+(defun postgres-array-string-to-list (str)
+  "Takes a postgresql array in the form of a string like
+\"{wol=CTc/wol,a=c/wol,b=c/wol}\" and returns a lisp list like
+  (\"wol=CTc/wol\" \"a=c/wol\" \"b=c/wol\")."
+  (split-sequence:split-sequence #\, (subseq str 1 (- (length str) 1))))
+
+(defun postgres-array-string-to-array (str)
+  "Takes a postgresql array in the form of a string like
+\"{wol=CTc/wol,a=c/wol,b=c/wol}\" and returns a lisp list like
+  (\"wol=CTc/wol\" \"a=c/wol\" \"b=c/wol\")."
+  (let* ((lst (postgres-array-string-to-list str))
+         (len (length lst)))
+    (make-array len :initial-contents lst)))
 
 (defun add-comment (type name comment &optional (second-name ""))
   "Attempts to add a comment to a particular database object. The first
@@ -192,12 +212,12 @@ and lower cased."
          collation :single))
 
 (defun character-set-exists-p (char-support)
-  "There is no good way that I know to determine the availble character sets
+  "There is no good way that I know to determine the available character sets
 on a remote server so we just assume any postgresql usable set is available."
   (member char-support *character-sets* :test 'equalp))
 
 (defun list-templates ()
-  "Returns a list of existing database template names"
+  "Returns a list of existing database template names."
   (query "select datname from pg_database where datistemplate is true"))
 
 (defun create-database (database-name &key (encoding "UTF8")
@@ -241,8 +261,9 @@ connection limit = ~a"
                                  database-name comment)))))
 
 (defun drop-database (database)
-  "Drop the specified database. Note: Only the owner of a database can drop
-a database and there cannot be any current connections to the database."
+  "Drop the specified database. The database parameter can be a string or a
+symbol.  Note: Only the owner of a database can drop a database and there
+cannot be any current connections to the database."
   (setf database (to-sql-name database))
   (if (database-exists-p database)
       (query (format nil "drop database ~a" database))
@@ -322,12 +343,45 @@ template databases."
          :where (:not (:like 'datname "template%")))
         (:raw order-by-size)))))))
 
-(defun list-access (database-name)
-  "Returns an array of roles with access rights"
-  (query "SELECT d.datacl
-          FROM pg_catalog.pg_database d
-          WHERE d.datname OPERATOR(pg_catalog.~) $1 COLLATE pg_catalog.default"
-         database-name :single))
+(defun list-database-access-rights (&optional database-name)
+  "If the database parameter is specifed, this returns an list of lists where
+each sublist is a role name and whether they have access rights (T or NIL) to that
+particular database. If the database-name is not provided, the sublist is
+a database name, a role name and whether they have access rights (T or NIL)."
+  (if database-name
+      (progn
+        (when (symbolp database-name)
+          (setf database-name (to-sql-name database-name)))
+        (query (:order-by
+                (:select 'r.rolname
+                         (:has-database-privilege 'r.rolname 'db.datname
+                                                  "connect")
+                         :from (:as 'pg-roles 'r)
+                     :cross-join (:as 'pg-database 'db)
+                     :where (:and 'r.rolcanlogin 'db.datallowconn
+                                  (:= 'db.datname '$1)))
+                      'r.rolname)
+               database-name))
+      (query (:order-by
+              (:select 'db.datname 'r.rolname
+                       (:has-database-privilege 'r.rolname 'db.datname
+                                                "connect")
+               :from (:as 'pg-roles 'r)
+                     :cross-join (:as 'pg-database 'db)
+               :where (:and 'r.rolcanlogin 'db.datallowconn
+                            (:not 'datistemplate)))
+                      'db.datname 'r.rolname))))
+
+(defun list-role-accessible-databases (role-name)
+  "Returns a list of the databases to which the specified role can connect."
+  (when (symbolp role-name) (setf role-name (to-sql-name role-name)))
+  (when (role-exists-p role-name)
+    (alexandria:flatten
+     (query (:select 'datname
+                     :from 'pg-database
+             :where (:and (:has-database-privilege '$1 'datname "CONNECT")
+                          (:not (:like 'datname "template%"))))
+            role-name))))
 
 ;;;; Schemas
 ;;;; See namespace.lisp
@@ -441,7 +495,7 @@ schema in the second parameter."
 ;;; create table can only be done either using a deftable approach or s-sql
 
 (defun get-table-comment (table-name &optional schema-name)
-  "Retrieves the comment, if any attached to the table"
+  "Retrieves the comment, if any attached to the table."
   (multiple-value-bind (tn sn)
       (table-schema-names table-name schema-name)
     (query (:select 'description
