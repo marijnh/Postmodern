@@ -55,7 +55,17 @@
     (disconnect *database*)
     (is (not (connected-p *database*)))
     (reconnect *database*)
-    (is (connected-p *database*))))
+    (is (connected-p *database*))
+    (is (equal (get-search-path)
+               "\"$user\", public"))
+    (is (equal
+         (with-schema ("a")
+           (disconnect *database*)
+           (reconnect *database*)
+           (get-search-path))
+         "a"))
+    (is (equal (get-search-path)
+               "\"$user\", public"))))
 
 (test simple-query
   (with-test-connection

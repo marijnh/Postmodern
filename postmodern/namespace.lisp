@@ -48,8 +48,10 @@ namespace is just first schema on the search path upon the the body execution.
                                 (concatenate 'string (to-sql-name schema t)
                                              ","
                                              old-search-path)))
+           (setf *schema-path* (get-search-path))
            (funcall thunk))
       (set-search-path old-search-path)
+      (setf *schema-path* old-search-path)
       (when drop-after (drop-schema schema :cascade 't)))))
 
 (defun get-search-path ()

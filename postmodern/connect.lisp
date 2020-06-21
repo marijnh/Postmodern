@@ -15,6 +15,9 @@ on a database assume this contains a connected database.")
 This starts at :no. If you set it to anything else, be sure to also load the
 CL+SSL library.")
 
+(defparameter *schema-path* nil "If the default path is reset, it will also reset
+this parameter which will get read by reconnect.")
+
 (defun connect (database-name user-name password host &key (port 5432) pooled-p
                                                         (use-ssl *default-use-ssl*)
                                                         (service "postgres"))
@@ -65,7 +68,10 @@ connection into the pool."))
 
 (defgeneric reconnect (database)
   (:method ((database database-connection))
-    (reopen-database database))
+    (reopen-database database)
+    (when *schema-path*
+      (let ((path *schema-path*))
+        (set-search-path path))))
   (:method ((connection pooled-database-connection))
     (error "Can not reconnect a pooled database."))
   (:documentation "Reconnect a disconnected database connection. This is not
