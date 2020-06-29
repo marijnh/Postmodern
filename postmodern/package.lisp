@@ -56,7 +56,6 @@
    #:abort-hooks
    #:commit-hooks
    #:db-null
-   #:database-version
    #:deftable
    #:*table-name*
    #:*table-symbol*

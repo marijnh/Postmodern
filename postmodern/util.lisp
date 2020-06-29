@@ -258,7 +258,13 @@ connection limit = ~a"
       (query (format nil "revoke all privileges on database ~a from public;"
                      database-name)))
     (when comment (query (format nil "comment on database ~a is '~a'"
-                                 database-name comment)))))
+                                 database-name comment))))
+  (with-connection (list x (cl-postgres::connection-user *database*)
+                             (cl-postgres::connection-password *database*)
+                             (cl-postgres::connection-host *database*)
+                             :port (cl-postgres::connection-port *database*)
+                             :use-ssl (cl-postgres::connection-use-ssl *database*))
+                (query "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;")))
 
 (defun drop-database (database)
   "Drop the specified database. The database parameter can be a string or a
@@ -614,7 +620,7 @@ hastriggers and rowsecurity"
                where schemaname != 'pg_catalog'
                and schemaname != 'information_schema'
                order by name"))
-       (query "select *
+      (query "select *
                from pg_catalog.pg_tables
                where schemaname != 'pg_catalog'
                and schemaname != 'information_schema'
