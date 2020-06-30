@@ -350,15 +350,19 @@ Symbols will be converted to SQL names. Examples:
 (defun sql-expand (arg)
   "Compile-time expansion of forms into lists of stuff that evaluate
 to strings (which will form a SQL query when concatenated)."
+
   (cond ((and (consp arg) (keywordp (first arg)))
          (expand-sql-op (car arg) (cdr arg)))
         ((and (consp arg) (eq (first arg) 'quote))
          (list (sql-escape (second arg))))
         ((and (consp arg) *expand-runtime*)
          (expand-sql-op (intern (symbol-name (car arg)) :keyword) (cdr arg)))
-        ((and (eq arg '$$) *expand-runtime*) '($$))
+        ((and (eq arg '$$) *expand-runtime*)
+         '($$))
         (*expand-runtime*
          (list (sql-escape arg)))
+        ((consp arg)
+         (list `(sql-escape ,arg)))
         ((or (consp arg)
              (and (symbolp arg)
                   (not (or (keywordp arg) (eq arg t) (eq arg nil)))))
@@ -2049,7 +2053,7 @@ Everything is a trade-off."
 
 (def-sql-op :cascade (op)
   `(,@(sql-expand op) " CASCADE"))
-
+#|
 (defmacro def-drop-op (op-name word)
   `(def-sql-op ,op-name (&rest args)
      (let* ((concurrently (if (eq (car args) :concurrently)
@@ -2070,7 +2074,35 @@ Everything is a trade-off."
                        `("IF EXISTS " ,(to-sql-name (cadr name) :escape-p t))
                        (list (to-sql-name name :escape-p t)))
                  ,@(when cascade '(" CASCADE"))))))
-
+|#
+;;; New Attempt
+(defmacro def-drop-op (op-name word)
+  `(def-sql-op ,op-name (&rest args)
+     (let* ((concurrently (if (eq (car args) :concurrently)
+                              (pop args)
+                              nil))
+            (if-exists (if (eq (car args) :if-exists)
+                           (pop args)
+                           nil))
+            (name (pop args))
+            (cascade (if (or (eq (car args) :cascade)
+                             (eq (cadr args) :cascade))
+                         t
+                         nil)))
+       `("DROP " ,,word " "
+                 ,@(when concurrently '("CONCURRENTLY "))
+                 ,@(when if-exists '("IF EXISTS "))
+                 ,@(if (and (consp name) (eq :if-exists (car name)))
+                       `("IF EXISTS " ,(car (sql-expand (cadr name))))
+                     (cond ((stringp name)
+                            (list name))
+                           ((and (symbolp name)
+                                (not (or (keywordp name) (eq name t)
+                                         (eq name nil))))
+                            (list `(to-sql-name ,name)))
+                           (t (sql-expand name))))
+                 ,@(when cascade '(" CASCADE"))))))
+;;; End new attempt
 (def-drop-op :drop-table "TABLE")
 (def-drop-op :drop-index "INDEX")
 (def-drop-op :drop-sequence "SEQUENCE")
