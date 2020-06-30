@@ -54,7 +54,7 @@
     (loop for database in dbs do
       (loop for schema in '("public" "s2") do
         (loop for table in '("t1" "t2" "t3")  do
-          (generate-test-table-row database name schema table t))))))
+          (generate-test-table-row database name schema table nil))))))
 
 (defun test-create-role-names ()
   (let ((names nil))

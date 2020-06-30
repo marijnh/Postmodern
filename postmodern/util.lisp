@@ -259,7 +259,7 @@ connection limit = ~a"
                      database-name)))
     (when comment (query (format nil "comment on database ~a is '~a'"
                                  database-name comment))))
-  (with-connection (list x (cl-postgres::connection-user *database*)
+  (with-connection (list database-name (cl-postgres::connection-user *database*)
                              (cl-postgres::connection-password *database*)
                              (cl-postgres::connection-host *database*)
                              :port (cl-postgres::connection-port *database*)
