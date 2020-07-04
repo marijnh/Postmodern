@@ -208,6 +208,7 @@
    #:list-text-search-config
    #:postgres-array-string-to-list
    #:postgres-array-string-to-array
+   #:valid-sql-identifier-p
    ;; views
    #:list-views #:view-exists-p
    #:describe-views))

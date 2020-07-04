@@ -1,6 +1,32 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
+(defun valid-sql-character-p (chr)
+  "Returns t if chr is letter, underscore, digits or dollar sign"
+  (or (cl-unicode:has-property chr "Letter")
+      (digit-char-p chr)
+      (eq chr #\_)
+      (eq chr #\$)))
+
+(defun code-char-0-p (chr)
+  "Returns t if character has char-code 0 (generally #\Nul)"
+  (eq chr (code-char 0)))
+
+(defun valid-sql-identifier-p (str)
+        "Takes a string and returns it if it is a valid sql identifier. See
+https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS.
+First test is for a quoted string, which has less restrictions. "
+  (cond ((and (stringp str)
+              (eq (char str 0) #\")
+              (eq (char str (- (length str) 1)) #\")
+              (notany #'code-char-0-p str))
+        str)
+        ((and (stringp str)
+              (or (cl-unicode:has-property (char str 0) "Letter")
+                  (eq (char str 0) #\_))
+              (every #'valid-sql-character-p str)))
+        (t nil)))
+
 (defun to-identifier (name)
   "Used to allow both strings and symbols as identifier - converts
 symbols to string with the S-SQL rules."

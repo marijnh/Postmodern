@@ -1,3 +1,150 @@
+# Changelog v. 1.32.1
+
+## Fix S-SQL issue 239 (:drop-table ...) expanded incorrectly
+
+(:drop-table ...) can again use variable input
+Allowable permutations are:
+
+    (let ((table-var1 "table-1")
+          (table-var2 'table-1))
+      (query (:drop-table :if-exists "table_1"))
+
+      (query (:drop-table :if-exists table-var1 :cascade))
+
+      (query (:drop-table :if-exists "table-1" :cascade))
+
+      (query (:drop-table :if-exists 'table-1 :cascade))
+
+      (query (:drop-table :if-exists table-var2 :cascade))
+
+      (query (:drop-table (:if-exists "table-1") :cascade))
+
+      (query (:drop-table :if-exists table-var1))
+
+      (query (:drop-table :if-exists "table-1"))
+
+      (query (:drop-table :if-exists 'table-1))
+
+      (query (:drop-table :if-exists table-var2))
+
+      (query (:drop-table (:if-exists "table-1")))
+
+      (query (:drop-table table-var1 :cascade))
+
+      (query (:drop-table "table-1" :cascade))
+
+      (query (:drop-table 'table-1 :cascade))
+
+      (query (:drop-table table-var2 :cascade))
+
+      (query (:drop-table  "table-1" :cascade))
+
+      (query (:drop-table table-var1))
+
+      (query (:drop-table "table-1"))
+
+      (query (:drop-table 'table-1))
+
+      (query (:drop-table table-var2))
+
+      (query (:drop-table 'table-1))
+
+      (query (:drop-table "table-1")))
+
+## Fix S-SQL issue 236 (:create-table ...) error on multiple attributes
+
+The s-sql version of (:create-table ...) will now accept:
+
+Basic table name permutations with :temp, :if-not-exists and :unlogged
+
+    (query (:create-table 'distributors-in-hell)
+
+    (query (:create-table "distributors-in_hell")
+
+    (query (:create-table (:temp 'distributors-in_hell))
+
+    (query (:create-table (:temp "distributors-in_hell"))
+
+    (query (:create-table (:temp :if-not-exists "distributors-in_hell"))
+
+    (query (:create-table (:temp :if-not-exists 'distributors-in-hell))
+
+    (query (:create-table (:temporary 'distributors-in-hell))
+
+    (query (:create-table (:temporary "distributors-in_hell"))
+
+    (query (:create-table (:temporary :if-not-exists 'distributors-in_hell))
+
+    (query (:create-table (:temporary :if-not-exists "distributors-in_hell"))
+
+    (query (:create-table (:unlogged 'distributors-in_hell))
+
+    (query (:create-table (:unlogged "distributors-in_hell"))
+
+    (query (:create-table (:unlogged :if-not-exists 'distributors-in_hell))
+
+    (query (:create-table (:unlogged :if-not-exists "distributors-in_hell"))
+
+    (query (:create-table (:temp :unlogged 'distributors-in_hell))
+
+    (query (:create-table (:temp :unlogged "distributors-in_hell"))
+
+    (query (:create-table (:temp :unlogged :if-not-exists "distributors-in_hell"))
+
+    (query (:create-table (:temp :unlogged :if-not-exists 'distributors-in-hell))
+
+
+Expanding table names with composite types
+
+    (query (:create-table (:of distributors-in-hell 'employee-type))
+
+    (query (:create-table (:of distributors-in-hell "employee-type"))
+
+    (query (:create-table (:temp :of distributors-in-hell 'employee-type))
+
+    (query (:create-table (:temp :of distributors-in-hell "employee-type"))
+
+    (query (:create-table (:temp :unlogged :of distributors-in-hell 'employee-type))
+
+    (query (:create-table (:temp :unlogged :of distributors-in-hell "employee_type"))
+
+    (query (:create-table (:temp :if-not-exists :of distributors-in-hell 'employee-type))
+
+    (query (:create-table (:temp :if-not-exists :of distributors-in-hell "employee-type"))
+
+    (query (:create-table (:temp :unlogged :if-not-exists :of distributors-in-hell 'employee-type))
+
+    (query (:create-table (:temp :unlogged :if-not-exists :of distributors-in-hell "employee_type"))
+
+    (query (:create-table (:unlogged :of distributors-in-hell 'employee-type))
+
+    (query (:create-table (:unlogged :of distributors-in-hell "employee_type"))
+
+
+Expanding table names with wrapping the table name in a sublist with :if-not-exists
+
+    (query (:create-table (:temp (:if-not-exists "distributors-in_hell")))
+
+    (query (:create-table (:temp (:if-not-exists 'distributors-in-hell)))
+
+    (query (:create-table (:temporary (:if-not-exists 'distributors-in_hell)))
+
+    (query (:create-table (:temporary (:if-not-exists "distributors-in_hell")))
+
+    (query (:create-table (:unlogged (:if-not-exists 'distributors-in_hell)))
+
+    (query (:create-table (:unlogged (:if-not-exists "distributors-in_hell")))
+
+    (query (:create-table (:temp :unlogged (:if-not-exists "distributors-in_hell")))
+
+    (query (:create-table (:temp :unlogged (:if-not-exists 'distributors-in-hell)))
+
+
+Note: (:create-table ...) does not accept variables as the table name
+
+### Some additional tests, and small formatting and documentation changes
+
+
 # Changelog v. 1.32
 
 ## Highlights

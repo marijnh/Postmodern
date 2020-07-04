@@ -2237,6 +2237,22 @@ server. E.g. "PostgreSQL 12.2 on x86_64-pc-linux-gnu, compiled by gcc
 (Arch Linux 9.3.0-1) 9.3.0, 64-bit". If you want just the postgresql version
 number, use (cl-postgres:get-postgresql-version).
 
+** function database-version ()
+   :PROPERTIES:
+   :ID:       9243f0ff-2001-4427-8cf9-33f9a9b6fd5c
+   :CUSTOM_ID: 29d56bfd-15a0-40bb-b7f1-a1683b392695
+   :END:
+→ string
+
+DEPRECATED. This returns the postgresql server version number, not a version
+number from the currently connected database. The format of the return string
+is determined by the current postgresql server.
+E.g. "PostgreSQL 12.2 on x86_64-pc-linux-gnu, compiled by gcc
+(Arch Linux 9.3.0-1) 9.3.0, 64-bit".
+
+If you want just the postgresql version
+number, use (cl-postgres:get-postgresql-version).
+
 ** function current-database ()
    :PROPERTIES:
    :ID:       4928edd1-e74c-4e90-92d8-bd9b98ab0894

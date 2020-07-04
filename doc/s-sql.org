@@ -92,12 +92,12 @@ The character to use can be overridden by passing an argument.
    :END:
 → string
 
-[[http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS][Escapes]] a string for inclusion in a PostgreSQL query. Example:
+[[http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS][Escapes]] a string for inclusion in a PostgreSQL query. A quoted symbol will generate an error.
+Example:
 #+BEGIN_SRC lisp
  (sql-escape-string \"Puss in 'Boots'\")
 
  \"E'Puss in ''Boots'''\"
-
 #+END_SRC
 
 ** method sql-escape (value)
@@ -348,7 +348,8 @@ From the postgresql documentation: "For every possible combination of rows from 
 
 An inner join looks at two tables and creates a new result consisting of the selected elements in the rows from the two tables that match the specified conditions. You can simplistically think of it as the intersection of the two sets. In reality, it is creating a new set consisting of certain elements of the intersecting rows. An inner join is the default and need not be specified.
 
-A sample of standard sql on an inner join could look like this:
+A sample of standard sql using two inner joins to collect information from three
+tables could look like this:
 #+BEGIN_SRC sql
 (SELECT foo, bar, baz FROM (SELECT foo FROM x WHERE some-condition-here) AS tmp1
 
@@ -464,6 +465,16 @@ so that it can be written without escapes. With :\|, this doesn't work.
                         (:or (:= 'regions.name "North America")
                              (:= 'regions.name "Central America"))
                         (:= 'regions.id 'countries.region-id))))
+#+END_SRC
+or using parameterized queries
+#+BEGIN_SRC lisp
+(query (:select 'countries.name
+                :from 'countries 'regions
+                :where (:and
+                        (:or (:= 'regions.name '$1)
+                             (:= 'regions.name '$2))
+                        (:= 'regions.id 'countries.region-id)))
+  "North America" "Central America")
 #+END_SRC
 ** sql-op :intersect
    :PROPERTIES:
@@ -787,10 +798,21 @@ without using :raw
    :END:
 
 The CAST operator. Takes a query as an argument, and returns the result
-explicitly cast by postgresql to a specific type.
+explicitly cast by postgresql to a specific type. Unlike :type, :cast can
+pass the type as a variable.
 #+BEGIN_SRC lisp
 (query (:select (:cast (:as "20" 'integer)))
         :single)
+20
+
+(let ((type 'text))
+   (query (:select (:cast (:as "20" type)))
+     :single))
+"20"
+
+(let ((type 'integer))
+   (query (:select (:cast (:as "20" type)))
+     :single))
 20
 
 (query (:union (:select (:as 1 'real))
@@ -802,9 +824,12 @@ explicitly cast by postgresql to a specific type.
    :ID:       249f05e6-b7c7-4b53-a215-73673f9aa2b0
    :CUSTOM_ID: a90093e3-2e1f-4694-825b-eb800103d64e
    :END:
-Is similar to cast but uses the postgresql :: formating. E.g.
+Is similar to cast but uses the postgresql :: formating. Unlike cast it will not
+accept a variable as the type.
+
+E.g.
 #+BEGIN_SRC lisp
-(sql (:select (:as (:- (:type (:now) date) 'x) 'some-date) :from (:as (:generate-series 1 10) 'x)))
+(sql (:select (:as (:- (:type (:now) 'date) 'x) 'some-date) :from (:as (:generate-series 1 10) 'x)))
 
 "(SELECT (now()::DATE - x) AS some_date FROM generate_series(1, 10) AS x)"
 #+END_SRC
@@ -2197,14 +2222,21 @@ Here is an example using the table defined above:
    :END:
 
 Drops the named table. You may optionally pass :if-exists before the name
-to suppress the error message. You can also optionally pass :cascade after
-the name to indicate that it should also drop any other tables, indices,
-etc which depend on that table.
+to suppress the error message if the table does not exist. You can also
+optionally pass :cascade after the name to indicate that it should also
+drop any other tables, indices, etc which depend on that table.
+Accepts strings, variable or symbol as the identifier.
 #+BEGIN_SRC lisp
 (query (:drop-table 'table1))
 (query (:drop-table :if-exists 'table1))
 (query (:drop-table :if-exists 'table1 :cascade))
 (query (:drop-table (:if-exists 'table1-with-longer-name) :cascade))
+(let ((table-var1 "table1"))
+    (is (equal (sql (:drop-table :if-exists table-var1 :cascade))
+               "DROP TABLE IF EXISTS table1 CASCADE"))
+(let ((table-var1 'table-1))
+    (is (equal (sql (:drop-table :if-exists table-var1 :cascade))
+               "DROP TABLE IF EXISTS table_1 CASCADE"))
 #+END_SRC
 
 ** sql-op :truncate (&rest args)
@@ -2270,10 +2302,14 @@ Works like :create-index, except that the index created is unique.
    :END:
 
 Drop an index. Takes :if-exists and/or :cascade arguments like :drop-table.
+Accepts strings, variable or symbol as the identifier.
 #+BEGIN_SRC lisp
 (query (:drop-index 'index1))
 (query (:drop-index :if-exists 'index1))
 (query (:drop-index :if-exists 'index1 :cascade))
+(let ((table-var1 "table1"))
+    (is (equal (sql (:drop-index :if-exists table-var1 :cascade))
+               "DROP INDEX IF EXISTS table1 CASCADE"))
 #+END_SRC
 
 ** sql-op :create-sequence (name &key increment min-value max-value start cache cycle)
@@ -2326,6 +2362,7 @@ Sets the amount by which each subsequent increment will be increased.
    :END:
 
 Drop a sequence. Takes :if-exists and/or :cascade arguments like :drop-table.
+Accepts strings, variable or symbol as the identifier.
 #+BEGIN_SRC lisp
 (query (:drop-sequence 'sequence1))
 (query (:drop-sequence :if-exists 'sequence1))
@@ -2347,7 +2384,7 @@ Create a view from an S-SQL-style query.
    :END:
 
 Drop a view. Takes optional :if-exists argument.
-
+Accepts strings, variable or symbol as the identifier.
 ** sql-op :set-constraints (state &rest constraints)
    :PROPERTIES:
    :ID:       4e0e615b-cdb2-4576-a46d-20c25daf414a
@@ -2456,6 +2493,7 @@ name to suppress the error message. Examples:
 #+BEGIN_SRC lisp
 (query (:drop-database 'database-name))
 (query (:drop-database :if-exists 'database-name))
+(let ((var 'my-database)) (query (:drop-database var)))
 #+END_SRC
 
 ** sql-op :copy (table &rest args)

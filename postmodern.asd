@@ -20,12 +20,13 @@
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :homepage  "https://github.com/marijnh/Postmodern"
   :license "zlib"
-  :version "1.32"
+  :version "1.32.1"
   :depends-on ("alexandria"
                "cl-postgres"
                "s-sql"
                "global-vars"
                "split-sequence"
+               "cl-unicode"
                (:feature :postmodern-use-mop "closer-mop")
                (:feature :postmodern-thread-safe "bordeaux-threads"))
   :components

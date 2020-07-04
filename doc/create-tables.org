@@ -129,7 +129,8 @@ name can be wrapped in a form. There are a few acceptable ways to pass the
 table-name parameters. We recommend a single quote as in the first example
 below, but for backwards compatibility, you can also provide the table-name
 with no quotes at all. The last example below shows the table name preceded
-by the desired schema name. e.g. 'public.tablename1.
+by the desired schema name. e.g. 'public.tablename1. :create-table does not
+accept the table-name as a variable.
 
 #+BEGIN_SRC lisp
 (query (:create-table 'distributors-in-hell
@@ -158,11 +159,12 @@ qualifiers - if-not-exists, temp, and unlogged.
     :ID:       01951f3c-0e2b-4567-8545-44e0584d0fa7
     :CUSTOM_ID: 034f548e-0318-40fc-90c5-63fb310936e4
     :END:
-Temporary tables exists only for the duration of the session. To create them
-using s-sql in postmodern, the first parameter to :create-table should be a
-form where the first atom in the form is the keyword :temp., then the name of
-the table. You can optionally use the :if-not-exists keyword in a subform
-wrapping the name of the temporary table. E.g.
+Temporary tables exists only for the duration of the session and are unlogged.
+To create them using s-sql in postmodern, the first parameter to :create-table
+should be a form where the first atom in the form is the keyword :temp., then
+the name of the table. You can optionally use the :if-not-exists keyword in a
+either sequentially or in a subform wrapping the name of the temporary table.
+E.g.
 
 #+BEGIN_SRC lisp
 (query (:create-table (:temp 'distributors-in-hell)
@@ -171,6 +173,8 @@ wrapping the name of the temporary table. E.g.
 (query (:create-table (:temp (:if-not-exists 'distributors-in-hell))
          ((did :type (or integer db-null)))))
 
+(query (:create-table (:temp :if-not-exists 'distributors-in-hell)
+         ((did :type (or integer db-null)))))
 #+END_SRC
 
 Unlogged tables do not have their data written to the write-ahead log. As a
@@ -354,6 +358,14 @@ The following examples are fairly self explanatory.
    :ID:       e65bef5a-bae8-4b47-a66f-37f6e71d9fdb
    :CUSTOM_ID: 05423b5d-c101-4244-bc7e-5b05e257d03a
    :END:
+Foreign keys are a constraint. If a column is set with a foreign key referencing
+another table, Postgresql will prevent you from inserting any value in that row
+unless there is a corresponding value in the foreign table. In other words, if
+you have a countries table with a region-id foreign key referencing a regions
+table, you cannot insert a country with a reference to a region-id or region-name
+unless that region-id or region-name already exists in the regions table. This
+is part of maintaining data integrity.
+
 There are a few different ways to add foreign keys in postgresql when defining
 a table.
 
@@ -498,7 +510,7 @@ the second form relates to table level constraints. The third form, if present,
 refers to specific postgresql storage options such as tablespaces and
 partitions and storage parameters. This is only partially implemented.
 
-Tablespaces are documented at [[https://www.postgresql.org/docs/10/static/manage-ag-tablespaces.html]]
+Tablespaces are documented at https://www.postgresql.org/docs/current/manage-ag-tablespaces.html
 #+BEGIN_SRC lisp
 (query (:create-extended-table 'cinemas
        ((id :type serial) (name :type (or text db-null))
