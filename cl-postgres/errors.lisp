@@ -60,8 +60,7 @@ problem.")
             :documentation "Where: an indication of the context in which the
 error occurred. Presently this includes a call stack traceback of active
 procedural language functions and internally-generated queries. The trace is
-one entry per line, most recent first."
-)
+one entry per line, most recent first.")
    (query :initform *current-query* :reader database-error-query
           :documentation "Query that led to the error, or NIL if no query was
 involved.")
