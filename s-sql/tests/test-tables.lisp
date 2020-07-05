@@ -18,6 +18,93 @@
       (is (equal (s-sql::expand-table-column 'code '(:type (or (varchar 64) db-null) :collate "en_US.utf8"))
                  '("code" " " "VARCHAR(64)" " COLLATE \"" "en_US.utf8" "\""))))
 
+(test expand-table-names-1
+  "Testing expand-table-names basic"
+  (is (equal (s-sql::expand-table-name 'distributors-in-hell)
+             "TABLE distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name "distributors-in_hell")
+             "TABLE distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temp 'distributors-in_hell))
+             "TEMP TABLE distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temp "distributors-in_hell"))
+             "TEMP TABLE distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temp :if-not-exists "distributors-in_hell"))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temp :if-not-exists 'distributors-in-hell))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temporary 'distributors-in-hell))
+             "TEMP TABLE distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temporary "distributors-in_hell"))
+             "TEMP TABLE distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temporary :if-not-exists 'distributors-in_hell))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temporary :if-not-exists "distributors-in_hell"))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:unlogged 'distributors-in_hell))
+             "UNLOGGED TABLE distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:unlogged "distributors-in_hell"))
+             "UNLOGGED TABLE distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:unlogged :if-not-exists 'distributors-in_hell))
+             "UNLOGGED TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:unlogged :if-not-exists "distributors-in_hell"))
+             "UNLOGGED TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temp :unlogged 'distributors-in_hell))
+             "TEMP TABLE distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temp :unlogged "distributors-in_hell"))
+             "TEMP TABLE distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temp :unlogged :if-not-exists "distributors-in_hell"))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temp :unlogged :if-not-exists 'distributors-in-hell))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell")))
+
+(test expand-table-names-2
+  "Expanding table names with composite types"
+  (is (equal (s-sql::expand-table-name '(:of distributors-in-hell 'employee-type))
+             "TABLE distributors_in_hell OF employee_type"))
+  (is (equal (s-sql::expand-table-name '(:of distributors-in-hell "employee-type"))
+             "TABLE distributors_in_hell OF employee_type"))
+  (is (equal (s-sql::expand-table-name '(:temp :of distributors-in-hell 'employee-type))
+             "TEMP TABLE distributors_in_hell OF employee_type"))
+  (is (equal (s-sql::expand-table-name '(:temp :of distributors-in-hell "employee-type"))
+             "TEMP TABLE distributors_in_hell OF employee_type"))
+  (is (equal (s-sql::expand-table-name '(:temp :unlogged :of distributors-in-hell 'employee-type))
+             "TEMP TABLE distributors_in_hell OF employee_type"))
+  (is (equal (s-sql::expand-table-name '(:temp :unlogged :of distributors-in-hell "employee_type"))
+             "TEMP TABLE distributors_in_hell OF employee_type"))
+  (is (equal (s-sql::expand-table-name '(:temp :if-not-exists :of distributors-in-hell 'employee-type))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell OF employee_type"))
+  (is (equal (s-sql::expand-table-name '(:temp :if-not-exists :of distributors-in-hell "employee-type"))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell OF employee_type"))
+  (is (equal (s-sql::expand-table-name '(:temp :unlogged :if-not-exists :of distributors-in-hell 'employee-type))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell OF employee_type"))
+  (is (equal (s-sql::expand-table-name '(:temp :unlogged :if-not-exists :of distributors-in-hell "employee_type"))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell OF employee_type"))
+  (is (equal (s-sql::expand-table-name '(:unlogged :of distributors-in-hell 'employee-type))
+             "UNLOGGED TABLE distributors_in_hell OF employee_type"))
+  (is (equal (s-sql::expand-table-name '(:unlogged :of distributors-in-hell "employee_type"))
+             "UNLOGGED TABLE distributors_in_hell OF employee_type")))
+
+(test expand-table-names-3
+  "Expanding table names with sublists"
+  (is (equal (s-sql::expand-table-name '(:temp (:if-not-exists "distributors-in_hell")))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temp (:if-not-exists 'distributors-in-hell)))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temporary (:if-not-exists 'distributors-in_hell)))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temporary (:if-not-exists "distributors-in_hell")))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:unlogged (:if-not-exists 'distributors-in_hell)))
+             "UNLOGGED TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:unlogged (:if-not-exists "distributors-in_hell")))
+             "UNLOGGED TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temp :unlogged (:if-not-exists "distributors-in_hell")))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell"))
+  (is (equal (s-sql::expand-table-name '(:temp :unlogged (:if-not-exists 'distributors-in-hell)))
+             "TEMP TABLE IF NOT EXISTS distributors_in_hell")))
+
+
+
 ;;; CREATE TABLE TESTS
 (test create-temp-tables
   "Testing create table with temp, unlogged or normal"
@@ -731,28 +818,7 @@
                2))
     (execute (:drop-table 'color))))
 
-(test drop-table
-  "Testing drop-table method."
-  (is (equal (sql (:drop-table 'george))
-             "DROP TABLE george"))
-  (is (equal (sql (:drop-table 'george-and-john))
-             "DROP TABLE george_and_john"))
-  (is (equal (sql (:drop-table :if-exists 'george))
-             "DROP TABLE IF EXISTS george"))
-  (is (equal (sql (:drop-table :if-exists 'george :cascade))
-             "DROP TABLE IF EXISTS george CASCADE"))
-  (is (equal (sql (:drop-table  (:if-exists 'george) :cascade))
-             "DROP TABLE IF EXISTS george CASCADE"))
-  (is (equal (sql (:drop-table "george"))
-             "DROP TABLE george"))
-  (is (equal (sql (:drop-table "george-and-john"))
-             "DROP TABLE george_and_john"))
-  (is (equal (sql (:drop-table :if-exists "george"))
-             "DROP TABLE IF EXISTS george"))
-  (is (equal (sql (:drop-table :if-exists "george" :cascade))
-             "DROP TABLE IF EXISTS george CASCADE"))
-  (is (equal (sql (:drop-table  (:if-exists "george") :cascade))
-             "DROP TABLE IF EXISTS george CASCADE")))
+;; drop-tables test moved to tests because the macro functionality is used in all drop-*
 
 (test alter-table
   "Testing the alter-table sql-op"

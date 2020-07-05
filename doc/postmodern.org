@@ -440,7 +440,7 @@ executed when a transaction is aborted or a savepoint rolled back (whether via a
 non-local transfer of control or explicitly by either abort-transaction or
 rollback-savepoint).
 
-** *isolation-level*
+** variable *isolation-level*
    :PROPERTIES:
    :ID:       01275b50-0fa5-4b2f-968f-c360bc3efde0
    :CUSTOM_ID: 44dac415-f1b2-4f01-bb05-a31c6c977b4c
@@ -572,7 +572,7 @@ different than the query statement provided to ensure-prepared.
 This returns t if the prepared statement exists in the current postgresql
 session, otherwise nil.
 
-** function list-prepared-statements(&optional (names-only nil))
+** function list-prepared-statements (&optional (names-only nil))
    :PROPERTIES:
    :ID:       0028b494-ebd0-40ca-ac31-a4ae7b598609
    :CUSTOM_ID: 3788ef72-d6a7-4e3b-acad-3f2608914dfb
@@ -1431,7 +1431,7 @@ generally want to create your table first and then define indices on it.
 
 Used inside deftable to find the name of the table being defined.
 
-** variable **table-symbol*
+** variable *table-symbol*
    :PROPERTIES:
    :ID:       551359a0-8d5b-4d4f-932d-df8759105ee1
    :CUSTOM_ID: 00432de6-10f6-4e52-85d9-6c622e6c37ec
@@ -2237,6 +2237,22 @@ server. E.g. "PostgreSQL 12.2 on x86_64-pc-linux-gnu, compiled by gcc
 (Arch Linux 9.3.0-1) 9.3.0, 64-bit". If you want just the postgresql version
 number, use (cl-postgres:get-postgresql-version).
 
+** function database-version ()
+   :PROPERTIES:
+   :ID:       9243f0ff-2001-4427-8cf9-33f9a9b6fd5c
+   :CUSTOM_ID: 29d56bfd-15a0-40bb-b7f1-a1683b392695
+   :END:
+→ string
+
+DEPRECATED. This returns the postgresql server version number, not a version
+number from the currently connected database. The format of the return string
+is determined by the current postgresql server.
+E.g. "PostgreSQL 12.2 on x86_64-pc-linux-gnu, compiled by gcc
+(Arch Linux 9.3.0-1) 9.3.0, 64-bit".
+
+If you want just the postgresql version
+number, use (cl-postgres:get-postgresql-version).
+
 ** function current-database ()
    :PROPERTIES:
    :ID:       4928edd1-e74c-4e90-92d8-bd9b98ab0894
@@ -2698,7 +2714,7 @@ This changes the postgresql runtime parameter controlling what order schemas are
 searched. You can always use fully qualified names [schema.table]. By default,
 this function only changes the search path for the current session. This
 function is used by with-schema.
-** function split-fully-qualified-table-name (name)
+** function split-fully-qualified-tablename (name)
    :PROPERTIES:
    :ID:       1aa410f7-b60b-4c95-bc4e-dacefe8cc04c
    :CUSTOM_ID: cfacd9fe-b640-4aee-985b-149f4b9ce930
@@ -2920,6 +2936,21 @@ either strings or symbols. If the optional schema name is not given or the
 table-name is not fully qualified with a schema name, the schema will be assumed
 to be the public schema.
 
+** function get-table-oid (table-name &optional schema-name)
+   :PROPERTIES:
+   :CUSTOM_ID: 8ab55683-e44b-44df-bb11-67909d402383
+   :END:
+→ integer
+
+Retrieves the oid identifier for a particular table from postgresql. Works
+for tables in all schemas.
+** function get-table-comment (table-name &optional schema-name)
+   :PROPERTIES:
+   :CUSTOM_ID: e8d6e402-5c76-4533-9b5c-a823b9582c26
+   :END:
+→ string
+
+Retrieves the comment, if any attached to the table.
 * Tablespaces
   :PROPERTIES:
   :ID:       1772a1eb-bc79-4c5f-90d5-2fc10ae49569
@@ -3072,11 +3103,18 @@ records in the currently connected database.
    :PROPERTIES:
    :CUSTOM_ID: 1870a515-3f02-45c6-b42c-97659580f257
    :END:
-→ list
+→ array
 
 Takes a postgresql array in the form of a string like
-"{wol=CTc/wol,a=c/wol,b=c/wol}" and returns a lisp list like
-  ("wol=CTc/wol" "a=c/wol" "b=c/wol").
+"{wol=CTc/wol,a=c/wol,b=c/wol}" and returns a lisp array like
+    #("wol=CTc/wol" "a=c/wol" "b=c/wol")
+** function postgres-array-string-to-array (str)
+   :PROPERTIES:
+   :CUSTOM_ID: 6fa88adf-cd17-40a8-beb2-0ecea529f6db
+   :END:
+  "Takes a postgresql array in the form of a string like
+\"{wol=CTc/wol,a=c/wol,b=c/wol}\" and returns a lisp list like
+  (\"wol=CTc/wol\" \"a=c/wol\" \"b=c/wol\")."
 * Imported From s-sql
   :PROPERTIES:
   :ID:       cd3d88e6-1e81-4675-bd17-409efdc39730
@@ -3147,6 +3185,13 @@ would throw an error. For the later case you need to use sql.
 
   (declare (ignore precision/scale scale))
   'number
+** deftype real ()
+   :PROPERTIES:
+   :ID:       b4ec051b-d257-47c6-9876-25aec64f967a
+   :CUSTOM_ID: 8e094b66-fcc0-4f6e-91dd-5f3c63a7e8a0
+   :END:
+
+  'float
 ** deftype double-precision ()
    :PROPERTIES:
    :ID:       b4ec051b-d257-47c6-9876-25aec64f967a
@@ -3261,6 +3306,20 @@ converted to SQL names. Examples:
 
 "ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']"
 #+END_SRC
+** macro register-sql-operators (arity &rest names)
+   :PROPERTIES:
+   :CUSTOM_ID: 1723409d-0013-459a-a89c-236d1c7f2fb5
+   :END:
+
+Define simple operators. Arity is one of :unary (like
+'not'), :unary-postfix (the operator comes after the operand),
+:n-ary (like \+ : the operator falls away when there is only one
+operand), :2+-ary (like '=', which is meaningless for one operand),
+or :n-or-unary (like '-', where the operator is kept in the unary
+case). After the arity follow any number of operators, either just a
+keyword, in which case the downcased symbol name is used as the
+operator, or a two-element list containing a keyword and a name
+string.
 ** variable *escape-sql-names-p*
    :PROPERTIES:
    :ID:       fc3763af-74e4-44ed-903e-7c32be128bd3
@@ -3331,6 +3390,43 @@ connection socket. They offer a :reconnect restart.
 This is the condition type that will be used to signal virtually all
 database-related errors (though in some cases socket errors may be raised when
 a connection fails on the IP level).
+*** reader database-error-code
+    :PROPERTIES:
+    :CUSTOM_ID: 15654c72-6edc-4fec-8526-d15dbfda6e44
+    :END:
+
+Code: the Postgresql SQLSTATE code for the error
+ (see the Postgresql Manual Appendix A for their meaning). Not localizable.
+ Always present.
+
+*** accessor database-error-message
+    :PROPERTIES:
+    :CUSTOM_ID: 94776637-29c8-4966-9105-c00e13c1ec1d
+    :END:
+
+Message: the primary human-readable error message. This should be accurate
+but terse (typically one line). Always present.
+
+*** reader database-error-detail
+    :PROPERTIES:
+    :CUSTOM_ID: b01df60b-76be-43a3-9d80-13722658bb55
+    :END:
+
+Detail: an optional secondary error message carrying
+more detail about the problem. Might run to multiple lines or NIL if none is
+available.
+
+*** reader database-error-query
+    :PROPERTIES:
+    :CUSTOM_ID: 91ab0c67-4276-4eb1-8de9-4028f7f778f7
+    :END:
+Query that led to the error, or NIL if no query was involved.
+
+*** reader database-error-cause
+    :PROPERTIES:
+    :CUSTOM_ID: 3262d3c4-53a7-4f81-9d09-ccee5bf59b66
+    :END:
+The condition that caused this error, or NIL when it was not caused by another condition.
 
 ** function database-error-constraint-name (err)
    :PROPERTIES:

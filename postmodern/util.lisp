@@ -1,6 +1,32 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
+(defun valid-sql-character-p (chr)
+  "Returns t if chr is letter, underscore, digits or dollar sign"
+  (or (cl-unicode:has-property chr "Letter")
+      (digit-char-p chr)
+      (eq chr #\_)
+      (eq chr #\$)))
+
+(defun code-char-0-p (chr)
+  "Returns t if character has char-code 0 (generally #\Nul)"
+  (eq chr (code-char 0)))
+
+(defun valid-sql-identifier-p (str)
+        "Takes a string and returns it if it is a valid sql identifier. See
+https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS.
+First test is for a quoted string, which has less restrictions. "
+  (cond ((and (stringp str)
+              (eq (char str 0) #\")
+              (eq (char str (- (length str) 1)) #\")
+              (notany #'code-char-0-p str))
+        str)
+        ((and (stringp str)
+              (or (cl-unicode:has-property (char str 0) "Letter")
+                  (eq (char str 0) #\_))
+              (every #'valid-sql-character-p str)))
+        (t nil)))
+
 (defun to-identifier (name)
   "Used to allow both strings and symbols as identifier - converts
 symbols to string with the S-SQL rules."
@@ -75,8 +101,8 @@ fully qualified, it will assume that the schema should be \"public\"."
 
 (defun postgres-array-string-to-array (str)
   "Takes a postgresql array in the form of a string like
-\"{wol=CTc/wol,a=c/wol,b=c/wol}\" and returns a lisp list like
-  (\"wol=CTc/wol\" \"a=c/wol\" \"b=c/wol\")."
+\"{wol=CTc/wol,a=c/wol,b=c/wol}\" and returns a lisp array like
+  #("wol=CTc/wol" "a=c/wol" "b=c/wol")"
   (let* ((lst (postgres-array-string-to-list str))
          (len (length lst)))
     (make-array len :initial-contents lst)))
@@ -258,7 +284,13 @@ connection limit = ~a"
       (query (format nil "revoke all privileges on database ~a from public;"
                      database-name)))
     (when comment (query (format nil "comment on database ~a is '~a'"
-                                 database-name comment)))))
+                                 database-name comment))))
+  (with-connection (list database-name (cl-postgres::connection-user *database*)
+                             (cl-postgres::connection-password *database*)
+                             (cl-postgres::connection-host *database*)
+                             :port (cl-postgres::connection-port *database*)
+                             :use-ssl (cl-postgres::connection-use-ssl *database*))
+                (query "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;")))
 
 (defun drop-database (database)
   "Drop the specified database. The database parameter can be a string or a
@@ -561,11 +593,6 @@ is not provided, the table will be assumed to be in the public schema."
                     'attnum)
                    tn sn))))
 
-
-#|
-column_name data_type column_default is_nullable collation_name is_identity |  character_maximum_length | character_octet_length | numeric_precision | numeric_precision_radix | numeric_scale | datetime_precision | interval_type | interval_precision | character_set_catalog | character_set_schema | character_set_name | collation_catalog | collation_schema |  | domain_catalog | domain_schema | domain_name | udt_catalog | udt_schema | udt_name | scope_catalog | scope_schema | scope_name | maximum_cardinality | dtd_identifier | is_self_referencing | | identity_generation | identity_start | identity_increment | identity_maximum | identity_minimum | identity_cycle | is_generated | generation_expression | is_updatable
-|#
-
 (defun table-description-plus (table-name &optional schema-name)
   "Returns more table info than table-description. Specifically returns
 column-name, data-type, character-maximum-length, modifier,
@@ -614,7 +641,7 @@ hastriggers and rowsecurity"
                where schemaname != 'pg_catalog'
                and schemaname != 'information_schema'
                order by name"))
-       (query "select *
+      (query "select *
                from pg_catalog.pg_tables
                where schemaname != 'pg_catalog'
                and schemaname != 'information_schema'
