@@ -47,6 +47,7 @@
    #:commit-transaction
    #:commit-logical-transaction
    #:abort-transaction
+   #:abort-logical-transaction
    #:with-savepoint
    #:rollback-savepoint
    #:release-savepoint
@@ -87,6 +88,7 @@
    ;; Reduced S-SQL interface
    #:sql #:sql-compile
    #:smallint #:bigint #:numeric #:real #:double-precision
+   #:serial #:serial8
    #:bytea #:text #:varchar
    #:*escape-sql-names-p*
    #:sql-escape-string
@@ -125,7 +127,6 @@
    #:database-exists-p
    #:database-size
    #:drop-database
-   #:document-database
    #:list-databases
    #:list-templates
    #:list-available-collations
@@ -183,6 +184,7 @@
    #:list-all-tables
    #:table-exists-p
    #:table-description
+   #:table-description-plus
    #:list-table-sizes
    #:table-size
    #:list-tables-in-schema
@@ -190,7 +192,6 @@
    #:get-table-oid
    #:get-table-comment
    ;; tablespaces
-   #:create-tablespace
    #:list-tablespaces
    ;; triggers
    #:describe-triggers
@@ -205,7 +206,6 @@
    #:check-query-performance
    #:coalesce
    #:split-fully-qualified-tablename
-   #:list-text-search-config
    #:postgres-array-string-to-list
    #:postgres-array-string-to-array
    #:valid-sql-identifier-p

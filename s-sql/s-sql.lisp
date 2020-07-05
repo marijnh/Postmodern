@@ -217,6 +217,8 @@ hyphens."
   'number)
 (deftype double-precision ()
   'double-float)
+(deftype real ()
+  'float)
 (deftype bytea ()
   '(array (unsigned-byte 8)))
 (deftype text ()

@@ -101,8 +101,8 @@ fully qualified, it will assume that the schema should be \"public\"."
 
 (defun postgres-array-string-to-array (str)
   "Takes a postgresql array in the form of a string like
-\"{wol=CTc/wol,a=c/wol,b=c/wol}\" and returns a lisp list like
-  (\"wol=CTc/wol\" \"a=c/wol\" \"b=c/wol\")."
+\"{wol=CTc/wol,a=c/wol,b=c/wol}\" and returns a lisp array like
+  #("wol=CTc/wol" "a=c/wol" "b=c/wol")"
   (let* ((lst (postgres-array-string-to-list str))
          (len (length lst)))
     (make-array len :initial-contents lst)))
@@ -592,11 +592,6 @@ is not provided, the table will be assumed to be in the public schema."
                                   (:= 'pg-namespace.nspname '$2)))
                     'attnum)
                    tn sn))))
-
-
-#|
-column_name data_type column_default is_nullable collation_name is_identity |  character_maximum_length | character_octet_length | numeric_precision | numeric_precision_radix | numeric_scale | datetime_precision | interval_type | interval_precision | character_set_catalog | character_set_schema | character_set_name | collation_catalog | collation_schema |  | domain_catalog | domain_schema | domain_name | udt_catalog | udt_schema | udt_name | scope_catalog | scope_schema | scope_name | maximum_cardinality | dtd_identifier | is_self_referencing | | identity_generation | identity_start | identity_increment | identity_maximum | identity_minimum | identity_cycle | is_generated | generation_expression | is_updatable
-|#
 
 (defun table-description-plus (table-name &optional schema-name)
   "Returns more table info than table-description. Specifically returns
