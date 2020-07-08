@@ -2555,8 +2555,9 @@ string
 (query (format nil "select ~a from ~a where ~a"  "carrots" "garden" "length > 3"))
 #+END_SRC
 
-With s-sql, there are generally two approaches to building dynamic or
-composible queries: either use sql-compile or use :raw.
+With s-sql, there are generally three approaches to building dynamic or
+composible queries: either use sql-compile or use :raw or you can pass
+symbols as variables.
 
 For purposes of this example, we will use the following employee table:
 
@@ -2582,7 +2583,10 @@ For purposes of this example, we will use the following employee table:
                                     (9 "Mary" 60020 "06/08/02" "Toronto" "W" 34))))
 #+END_SRC
 
-1. Approach #1 Use sql-compile
+**** Approach #1 Use sql-compile
+     :PROPERTIES:
+     :CUSTOM_ID: 523172f6-bc0b-4402-aa40-989025e0d12f
+     :END:
 
 Sql-compile does a run-time compilation of an s-sql expression. In the
 following example, we create a function that accepts a where-clause, a
@@ -2716,7 +2720,10 @@ postgresql server versionr:
                  (to-sql-name table-name))))
 #+END_SRC
 
-2. Approach #2 Use :raw
+**** Approach #2 Use :raw
+     :PROPERTIES:
+     :CUSTOM_ID: f0c37b97-4907-4153-bdfb-3381ae4a08d7
+     :END:
 
 To quote Marijn, the :raw keyword takes a string and inserts it straight
 into the query. I try to stay away from :raw if possible, but
@@ -2726,6 +2733,29 @@ sometimes...
 (query (:select (:raw "tmp1.name") :from (:as 'baz (:raw "tmp1"))))
 #+END_SRC
 
+**** Approach #3 Using symbols in variables
+     :PROPERTIES:
+     :CUSTOM_ID: 13c9d0df-7b08-4788-bca9-be650e42809a
+     :END:
+Consider the following two toy examples where we determine the table and columns
+to be selected using symbols (either keyword or quoted) inside variables.
+#+BEGIN_SRC lisp
+(let ((table 'quotations) (col1 'id) (col2 'text))
+  (with-connection (list "personal_stuff" "sabra" "mypassword" "localhost")
+    (query (:fetch (:select col1 col2 :from table) 1 6))))
+
+((543 "I may have settled in shipping."))
+
+(let ((table :quotations) (col1 :id) (col2 :text))
+  (with-connection (list "personal_stuff" "sabra" "mypassword" "localhost")
+    (query (:fetch (:select col1 col2 :from table) 1 6))))
+
+((543 "I may have settled in shipping."))
+#+END_SRC
+This will not work if you use strings instead of symbols because sql-expand
+will wrap the strings in the variables in escape format as if they were string
+constants and Postgresql will throw an error because it is not expecting
+string constants in the middle of a select statement.
 *** Queries with User Input
     :PROPERTIES:
     :CUSTOM_ID: queries-with-user-input
