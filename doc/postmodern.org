@@ -3185,13 +3185,6 @@ would throw an error. For the later case you need to use sql.
 
   (declare (ignore precision/scale scale))
   'number
-** deftype real ()
-   :PROPERTIES:
-   :ID:       b4ec051b-d257-47c6-9876-25aec64f967a
-   :CUSTOM_ID: 8e094b66-fcc0-4f6e-91dd-5f3c63a7e8a0
-   :END:
-
-  'float
 ** deftype double-precision ()
    :PROPERTIES:
    :ID:       b4ec051b-d257-47c6-9876-25aec64f967a
