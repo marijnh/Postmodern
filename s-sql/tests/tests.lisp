@@ -1490,7 +1490,7 @@ that the table will need to be scanned twice. Everything is a trade-off."
              "CREATE VIEW quagmire_hollow AS (SELECT id, name FROM employee)"))
   (with-test-connection
     (unless (table-exists-p 'employee) (build-employee-table))
-    (when (view-exists-p 'quagmire)
+    (when (view-exists-p 'quagmire) ; this avoids a warning compared to (query (:drop-view :if-exists 'quagmire))
       (query (:drop-view 'quagmire)))
     (query (:create-view 'quagmire (:select 'id 'name :from 'employee)))
     (is (member :QUAGMIRE (list-views) :test 'eq))
