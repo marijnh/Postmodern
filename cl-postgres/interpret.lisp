@@ -403,27 +403,33 @@ account.
 (defconstant +start-of-2000+ (encode-universal-time 0 0 0 1 1 2000 0))
 (defconstant +seconds-in-day+ (* 60 60 24))
 
+(defun default-date-reader (days-since-2000)
+  (+ +start-of-2000+ (* days-since-2000 +seconds-in-day+)))
+
+(defun default-timestamp-reader (useconds-since-2000)
+  (+ +start-of-2000+ (floor useconds-since-2000 1000000)))
+
+(defun default-interval-reader (months days useconds)
+  (multiple-value-bind (sec us) (floor useconds 1000000)
+    `((:months ,months) (:days ,days) (:seconds ,sec)
+      (:useconds ,us))))
+
+(defun default-time-reader (usecs)
+   (multiple-value-bind (seconds usecs)
+       (floor usecs 1000000)
+     (multiple-value-bind (minutes seconds)
+         (floor seconds 60)
+       (multiple-value-bind (hours minutes)
+           (floor minutes 60)
+         `((:hours ,hours) (:minutes ,minutes) (:seconds ,seconds)
+           (:microseconds ,usecs))))))
+
 (set-sql-datetime-readers
- :date (lambda (days-since-2000)
-         (+ +start-of-2000+ (* days-since-2000 +seconds-in-day+)))
- :timestamp (lambda (useconds-since-2000)
-              (+ +start-of-2000+ (floor useconds-since-2000 1000000)))
- :timestamp-with-timezone (lambda (useconds-since-2000)
-                            (+ +start-of-2000+
-                               (floor useconds-since-2000 1000000)))
- :interval (lambda (months days useconds)
-             (multiple-value-bind (sec us) (floor useconds 1000000)
-               `((:months ,months) (:days ,days) (:seconds ,sec)
-                 (:useconds ,us))))
- :time (lambda (usecs)
-         (multiple-value-bind (seconds usecs)
-             (floor usecs 1000000)
-           (multiple-value-bind (minutes seconds)
-               (floor seconds 60)
-             (multiple-value-bind (hours minutes)
-                 (floor minutes 60)
-               `((:hours ,hours) (:minutes ,minutes) (:seconds ,seconds)
-                 (:microseconds ,usecs)))))))
+  :date #'default-date-reader
+  :timestamp #'default-timestamp-reader
+  :timestamp-with-timezone #'default-timestamp-reader
+  :interval #'default-interval-reader
+  :time #'default-time-reader)
 
 ;; Readers for a few of the array types
 
