@@ -389,6 +389,26 @@ Refers to a time of day, counting from midnight.
 An interval is represented as several separate components. The reason that days
 and microseconds are separated is that you might want to take leap seconds into
 account.
+
+
+
+Defaults are provided as follows:
+  #'default-date-reader
+  #'default-timestamp-reader
+  #'default-interval-reader
+  #'default-time-reader
+
+e.g.
+(defun make-temp-postgres-query-requiring-unix-timestamps ()
+  (flet ((temp-timestamp-reader (useconds-since-2000)
+            (- (+ +start-of-2000+ (floor useconds-since-2000 1000000))
+              (encode-universal-time 0 0 0 1 1 1970 0))))
+    (set-sql-datetime-readers
+      :date #'temp-timestamp-reader)
+    (let ((query (make-postgres-query-requiring-unix-timestamps))
+      (set-sql-datetime-readers
+        :date #'default-timestamp-reader)
+      query))))
 "
   (when date (set-date-reader date table))
   (when timestamp (set-usec-reader oid:+timestamp+ timestamp table))
