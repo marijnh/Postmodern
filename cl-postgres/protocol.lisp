@@ -118,8 +118,8 @@ signal a condition for it."
           :pid pid
           :channel channel
           :payload payload
-          :format-control "Asynchronous notification ~S~@[ (payload: ~S)~]
-                           received from ~ server process with PID ~D."
+          :format-control "Asynchronous notification ~S~@[ (payload: ~S)~] ~
+                           received from server process with PID ~D."
           :format-arguments (list channel payload pid))))
 
 (defun get-error (socket)
