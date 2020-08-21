@@ -100,12 +100,12 @@ fully qualified, it will assume that the schema should be \"public\"."
   (split-sequence:split-sequence #\, (subseq str 1 (- (length str) 1))))
 
 (defun postgres-array-string-to-array (str)
-  "Takes a postgresql array in the form of a string like
-\"{wol=CTc/wol,a=c/wol,b=c/wol}\" and returns a lisp array like
-  #("wol=CTc/wol" "a=c/wol" "b=c/wol")"
-  (let* ((lst (postgres-array-string-to-list str))
-         (len (length lst)))
-    (make-array len :initial-contents lst)))
+   "Takes a postgresql array in the form of a string like
+   \"{wol=CTc/wol,a=c/wol,b=c/wol}\" and returns a lisp array like
+   #(\"wol=CTc/wol\" \"a=c/wol\" \"b=c/wol\")"
+   (let* ((lst (postgres-array-string-to-list str))
+          (len (length lst)))
+     (make-array len :initial-contents lst)))
 
 (defun add-comment (type name comment &optional (second-name ""))
   "Attempts to add a comment to a particular database object. The first
