@@ -533,19 +533,27 @@ Note: The data type used for identity columns must be one of smallint, int or bi
 
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'color
-         ((color-id <span style="color: #98fb98; font-weight: bold;">:type</span> int <span style="color: #98fb98; font-weight: bold;">:generated-as-identity-always</span>)
+         ((color-id <span style="color: #98fb98; font-weight:
+         bold;">:type</span> int <span style="color: #98fb98;
+         font-weight: bold;">:generated-as-identity-always t</span>)
           (color-name <span style="color: #98fb98; font-weight: bold;">:type</span> varchar))))
 
 (query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'color
-         ((color-id <span style="color: #98fb98; font-weight: bold;">:type</span> int <span style="color: #98fb98; font-weight: bold;">:generated-as-identity-by-default</span>)
+         ((color-id <span style="color: #98fb98; font-weight:
+         bold;">:type</span> int <span style="color: #98fb98;
+         font-weight: bold;">:generated-as-identity-by-default t</span>)
           (color-name <span style="color: #98fb98; font-weight: bold;">:type</span> varchar))))
 
 (query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'color
-         ((color-id <span style="color: #98fb98; font-weight: bold;">:type</span> int <span style="color: #98fb98; font-weight: bold;">:identity-always</span>)
+         ((color-id <span style="color: #98fb98; font-weight:
+         bold;">:type</span> int <span style="color: #98fb98;
+         font-weight: bold;">:identity-always t</span>)
           (color-name <span style="color: #98fb98; font-weight: bold;">:type</span> varchar))))
 
 (query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'color
-         ((color-id <span style="color: #98fb98; font-weight: bold;">:type</span> int <span style="color: #98fb98; font-weight: bold;">:identity-by-default</span>)
+         ((color-id <span style="color: #98fb98; font-weight:
+         bold;">:type</span> int <span style="color: #98fb98;
+         font-weight: bold;">:identity-by-default t</span>)
           (color-name <span style="color: #98fb98; font-weight: bold;">:type</span> varchar))))
 </pre>
 </div>

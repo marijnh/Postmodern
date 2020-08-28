@@ -213,19 +213,19 @@ Note: The data type used for identity columns must be one of smallint, int or bi
 
 #+BEGIN_SRC lisp
 (query (:create-table 'color
-         ((color-id :type int :generated-as-identity-always)
+         ((color-id :type int :generated-as-identity-always t)
           (color-name :type varchar))))
 
 (query (:create-table 'color
-         ((color-id :type int :generated-as-identity-by-default)
+         ((color-id :type int :generated-as-identity-by-default t)
           (color-name :type varchar))))
 
 (query (:create-table 'color
-         ((color-id :type int :identity-always)
+         ((color-id :type int :identity-always t)
           (color-name :type varchar))))
 
 (query (:create-table 'color
-         ((color-id :type int :identity-by-default)
+         ((color-id :type int :identity-by-default t)
           (color-name :type varchar))))
 #+END_SRC
 
