@@ -504,19 +504,33 @@ results."
                          ;; ReadyForQuery, skipping transaction status
                          (#\Z (read-uint1 socket))))))))
 
-(defun send-parse (socket name query)
+(defun send-parse (socket name query parameters)
   "Send a parse command to the server, giving it a name."
   (declare (type stream socket)
            (type string name query)
            #.*optimize*)
-  (with-syncing
-      (with-query (query)
-        (parse-message socket name query)
-        (flush-message socket)
-        (force-output socket)
-        (message-case socket
-                      ;; ParseComplete
-                      (#\1)))))
+  (let ((len (length parameters)))
+    (with-syncing
+            (with-query (query)
+              (if (or (= 0 len)
+                      (> len 10))
+                  (parse-message socket name query)
+                  (ecase len
+                    (1 (parse-message-1 socket name query parameters))
+                    (2 (parse-message-2 socket name query parameters))
+                    (3 (parse-message-3 socket name query parameters))
+                    (4 (parse-message-4 socket name query parameters))
+                    (5 (parse-message-5 socket name query parameters))
+                    (6 (parse-message-6 socket name query parameters))
+                    (7 (parse-message-7 socket name query parameters))
+                    (8 (parse-message-8 socket name query parameters))
+                    (9 (parse-message-9 socket name query parameters))
+                    (10 (parse-message-10 socket name query parameters))))
+              (flush-message socket)
+              (force-output socket)
+              (message-case socket
+                ;; ParseComplete
+                (#\1))))))
 
 (defun send-close (socket name)
   "Send a close command to the server, giving it a name."
@@ -546,9 +560,9 @@ to the result."
         (flush-message socket)
         (force-output socket)
         (message-case socket
-                      ;; ParameterDescription
-                      (#\t (setf n-parameters (read-uint2 socket))
-                           (skip-bytes socket (* 4 n-parameters))))
+          ;; ParameterDescription
+          (#\t (setf n-parameters (read-uint2 socket))
+               (skip-bytes socket (* 4 n-parameters))))
         (message-case socket
                       ;; RowDescription
                       (#\T (setf row-description

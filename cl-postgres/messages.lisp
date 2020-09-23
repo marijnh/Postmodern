@@ -114,10 +114,121 @@ message definitions themselves stay readable."
   (uint 2 0)) ;; Parameter types
 
 ;; Parse a query, giving it a name.
+;; https://www.postgresql.org/docs/current/protocol-message-formats.html
+;; Current Bugs: Handles up to 10 parameters
+;; handles parameters which are integers, single or double floats or booleans
+;; must call the appropriate version for the number of parameters
 (define-message parse-message #\P (name query)
   (string name)
   (string query)
   (uint 2 0))
+
+(define-message parse-message-1 #\P (name query parameters)
+  (string name)
+  (string query)
+  (uint 2 (length parameters))
+  (uint 4 (param-to-oid (pop parameters))))
+
+(define-message parse-message-2 #\P (name query parameters)
+  (string name)
+  (string query)
+  (uint 2 (length parameters))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters))))
+
+(define-message parse-message-3 #\P (name query parameters)
+  (string name)
+  (string query)
+  (uint 2 (length parameters))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters))))
+
+(define-message parse-message-4 #\P (name query parameters)
+  (string name)
+  (string query)
+  (uint 2 (length parameters))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters))))
+
+(define-message parse-message-5 #\P (name query parameters)
+  (string name)
+  (string query)
+  (uint 2 (length parameters))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters))))
+
+(define-message parse-message-6 #\P (name query parameters)
+  (string name)
+  (string query)
+  (uint 2 (length parameters))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters))))
+
+(define-message parse-message-7 #\P (name query parameters)
+  (string name)
+  (string query)
+  (uint 2 (length parameters))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters))))
+
+(define-message parse-message-8 #\P (name query parameters)
+  (string name)
+  (string query)
+  (uint 2 (length parameters))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters))))
+
+(define-message parse-message-9 #\P (name query parameters)
+  (string name)
+  (string query)
+  (uint 2 (length parameters))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters))))
+
+(define-message parse-message-10 #\P (name query parameters)
+  (string name)
+  (string query)
+  (uint 2 (length parameters))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters)))
+  (uint 4 (param-to-oid (pop parameters))))
+
+
 
 ;; Close a named parsed query, freeing the name.
 (define-message close-prepared-message #\C (name)
@@ -184,7 +295,7 @@ for binding data for binary long object columns."
                           (set-param 0 (enc-byte-length param) param))
                          ((vector (unsigned-byte 8))
                           (set-param 1 (length param) param)))))))
-    (write-uint1 socket #.(char-code #\B))
+    (write-uint1 socket #.(char-code #\B)) ; identifies message as bind command
     (write-uint4 socket (+ 12
                            (enc-byte-length name)
                            (* 6 n-params)   ;; Input formats and sizes
@@ -193,19 +304,19 @@ for binding data for binary long object columns."
                                  :sum size)))
     (write-uint1 socket 0)                  ;; Name of the portal
     (write-str socket name)                 ;; Name of the prepared statement
-    (write-uint2 socket n-params)           ;; Number of parameter format specs
-    (loop :for format :across param-formats ;; Param formats (text/binary)
+    (write-uint2 socket n-params)           ;; Number of parameters
+    (loop :for format :across param-formats ;; Param formats (text/binary) must be 0 or 1
           :do (write-uint2 socket format))
-    (write-uint2 socket n-params)           ;; Number of parameter specifications
+    (write-uint2 socket n-params)           ;; Number of parameter values
     (loop :for param :across param-values
           :for size :across param-sizes
-          :do (write-int4 socket (if param size -1))
+          :do (write-int4 socket (if param size -1)) ;; length of parameter values
           :do (when param
                 (if (typep param '(vector (unsigned-byte 8)))
-                    (write-sequence param socket)
-                    (enc-write-string param socket))))
+                    (write-sequence param socket) ;; value of the parameter if binary
+                    (enc-write-string param socket)))) ;; value of the parameter if text
     (write-uint2 socket n-result-formats)   ;; Number of result formats
-    (loop :for format :across result-formats ;; Result formats (text/binary)
+    (loop :for format :across result-formats ;; Result formats (text/binary) must be 0 or 1
           :do (write-uint2 socket (if format 1 0)))))
 
 ;; Describe the anonymous portal, so we can find out what kind of

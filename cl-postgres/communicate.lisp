@@ -88,6 +88,7 @@
 (integer-writer 1)
 (integer-writer 2)
 (integer-writer 4)
+(integer-writer 8)
 
 (defun write-bytes (socket bytes)
   "Write a byte-array to a stream."

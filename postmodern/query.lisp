@@ -153,7 +153,7 @@ such as with updating or deleting queries, this is returned as a second value."
       (let ((base (if args
 		                  (let ((vars (loop :for x :in args :collect (gensym))))
 			                  `(let ,(loop :for v :in vars :for a :in args :collect `(,v ,a))
-			                     (prepare-query *database* "" ,(real-query query))
+			                     (prepare-query *database* "" ,(real-query query) (list ,@vars))
 			                     (exec-prepared *database* "" (list ,@vars) ,reader)))
 		                  `(exec-query *database* ,(real-query query) ,reader))))
         `(,result-form ,base)))))

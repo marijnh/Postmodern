@@ -208,5 +208,107 @@ used by S-SQL.)")
   (:documentation "Conversion function used to turn a lisp value into a value
 that PostgreSQL understands when sent through its socket connection. May return
 a string or a (vector (unsigned-byte 8)).")
+  (:method ((arg integer))
+    (int-to-vector arg))
+  (:method ((arg single-float))
+    (int32-to-vector (cl-postgres-ieee-floats:encode-float32 arg)))
+  #-clisp   (:method ((arg double-float)) ;; CLISP doesn't allow methods on double-float
+              (int64-to-vector (cl-postgres-ieee-floats:encode-float64 arg)))
   (:method (arg)
-    (to-sql-string arg)))
+    (cond ((typep arg 'boolean)
+           (if arg (int8-to-vector 1)
+               (int8-to-vector 0)))
+          (t (to-sql-string arg)))))
+
+(defun int64-to-vector (int)
+  "Takes a 64 byte integer and returns a vector of unsigned bytes with a length of 8"
+  (declare (type (signed-byte 64) int))
+  (let ((intv (make-array '(8) :element-type '(unsigned-byte 8))))
+    (setf (aref intv 0) (ldb (byte 8 56) int))
+    (setf (aref intv 1) (ldb (byte 8 48) int))
+    (setf (aref intv 2) (ldb (byte 8 40) int))
+    (setf (aref intv 3) (ldb (byte 8 32) int))
+    (setf (aref intv 4) (ldb (byte 8 24) int))
+    (setf (aref intv 5) (ldb (byte 8 16) int))
+    (setf (aref intv 6) (ldb (byte 8 8) int))
+    (setf (aref intv 7) (ldb (byte 8 0) int))
+    intv))
+
+(defun int32-to-vector (int)
+  "Takes a 32 byte integer and returns a vector of unsigned bytes with a length of 4"
+  (declare (type (signed-byte 32) int))
+  (let ((intv (make-array '(4) :element-type '(unsigned-byte 8))))
+    (setf (aref intv 0) (ldb (byte 8 24) int))
+    (setf (aref intv 1) (ldb (byte 8 16) int))
+    (setf (aref intv 2) (ldb (byte 8 8) int))
+    (setf (aref intv 3) (ldb (byte 8 0) int))
+    intv))
+
+(defun int16-to-vector (int)
+    "Takes a 16 byte positive integer and returns a vector of unsigned bytes
+with a length of 2. How should it work with negative numbers?"
+  (declare (type (signed-byte 16) int))
+  (let ((intv (make-array '(2) :element-type '(unsigned-byte 8))))
+    (setf (aref intv 0) (ldb (byte 8 8) int))
+    (setf (aref intv 1) (ldb (byte 8 0) int))
+    intv))
+
+(defun int8-to-vector (int)
+    "Takes a 16 byte positive integer and returns a vector of unsigned bytes
+with a length of 2. How should it work with negative numbers?"
+  (declare (type (signed-byte 8) int))
+  (let ((intv (make-array '(1) :element-type '(unsigned-byte 8))))
+    (setf (aref intv 0) (ldb (byte 8 0) int))
+    intv))
+
+
+(defun int-to-vector (int)
+  "Takes an integer and returns the size of the integer for postgresql
+purposes (int2, int4, int8). What to do with negative numbers"
+  (when (integerp int)
+    (cond ((and (> int -32769)
+                (< int 32768))
+           (int16-to-vector int))
+          ((and (> int -2147483649)
+                (< int 2147483648))
+           (int32-to-vector int))
+          ((and (> int -9223372036854775809)
+                (< int 9223372036854775808))
+           (int64-to-vector int))
+          (t nil))))
+
+(defun get-int-size (int)
+  "Takes an integer and returns the size of the integer for postgresql
+purposes (int2, int4, int8)"
+  (when (integerp int)
+    (cond ((and (> int -32769)
+                (< int 32768))
+           'int2)
+          ((and (> int -2147483649)
+                (< int 2147483648))
+           'int4)
+          ((and (> int -9223372036854775809)
+                (< int 9223372036854775808))
+           'int8)
+          (t nil))))
+
+(defun param-to-oid (param)
+  (cond ((and (integerp param)
+              (> param -32760)
+              (< param 32768))
+         cl-postgres-oid:+int2+)
+        ((and (integerp param)
+              (> param -2147483649)
+              (< param 2147483648))
+         cl-postgres-oid:+int4+)
+        ((and (integerp param)
+              (> param -9223372036854775809)
+              (< param 9223372036854775808))
+         cl-postgres-oid:+int8+)
+        ((typep param 'single-float)
+         cl-postgres-oid:+float4+)
+        ((typep param 'double-float)
+         cl-postgres-oid:+float8+)
+        ((typep param 'boolean)
+         cl-postgres-oid:+bool+)
+        (t 0)))

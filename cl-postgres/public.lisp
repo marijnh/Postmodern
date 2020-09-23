@@ -379,7 +379,7 @@ value."
     (using-connection connection
                       (send-query (connection-socket connection) query row-reader))))
 
-(defun prepare-query (connection name query)
+(defun prepare-query (connection name query &optional parameters)
   "Parse and plan the given query, and store it under the given name. Note that
 prepared statements are per-connection, so they can only be executed through
 the same connection that prepared them."
@@ -387,7 +387,7 @@ the same connection that prepared them."
   (check-type name string)
   (with-reconnect-restart connection
     (using-connection connection
-                      (send-parse (connection-socket connection) name query)
+                      (send-parse (connection-socket connection) name query parameters)
                       (values))))
 
 (defun unprepare-query (connection name)
