@@ -468,6 +468,7 @@ results."
   (declare (type stream socket)
            (type string query)
            #.*optimize*)
+  (log:info "send-query:protocol.lisp query ~a" query)
   (with-syncing
       (with-query (query)
         (let ((row-description nil))
@@ -510,13 +511,18 @@ results."
            (type string name query)
            #.*optimize*)
   (let ((len (length parameters)))
+    (log:info "send-parse:protocol.lisp name ~a query ~a parameters ~a type-of parameters ~a~%" name query parameters (type-of parameters))
     (with-syncing
             (with-query (query)
-              (if (or (= 0 len)
+              (if (or (not parameters)
+                      (= 0 len)
                       (> len 10))
-                  (parse-message socket name query)
+                  (progn
+                    (log:info "send-parse:protocol.lisp if~%")
+                    (parse-message socket name query))
                   (ecase len
-                    (1 (parse-message-1 socket name query parameters))
+                    (1 (progn (log:info "send-parse:protocol.lisp  len 1~%")
+                         (parse-message-1 socket name query parameters)))
                     (2 (parse-message-2 socket name query parameters))
                     (3 (parse-message-3 socket name query parameters))
                     (4 (parse-message-4 socket name query parameters))
@@ -552,6 +558,7 @@ to the result."
            (type string name)
            (type list parameters)
            #.*optimize*)
+  (log:info "send-execute:protocol.lisp: name ~a parameters ~a type ~a~%" name parameters (type-of (first parameters)))
   (with-syncing
       (let ((row-description nil)
             (n-parameters 0))

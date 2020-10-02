@@ -73,6 +73,7 @@
 
    ;; Prepared Statement Functions
    #:*allow-overwriting-prepared-statements*
+   #:*enforce-parameter-types*
    #:prepared-statement-exists-p
    #:list-prepared-statements
    #:drop-prepared-statement
@@ -84,6 +85,7 @@
    #:cancel-backend
    #:terminate-backend
    #:get-pid-from-postmodern
+
 
    ;; Reduced S-SQL interface
    #:sql #:sql-compile

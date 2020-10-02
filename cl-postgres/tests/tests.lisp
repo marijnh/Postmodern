@@ -156,13 +156,21 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
           (is (equal (exec-query connection "select 42 as foo, 99 as bar" 'alist-row-reader)
                      '((("foo" . 42) ("bar" . 99)))))))
 
-(test prepared-statement
-      (with-test-connection
-          (prepare-query connection "test" "select $1::integer, $2::boolean, $3::text")
-        (is (equal (exec-prepared connection "test" '(42 nil "foo") 'list-row-reader)
-                   '((42 nil "foo"))))))
+(test prepare-and-exec-query
+  (with-test-connection
+    (prepare-query connection "test1" "select $1::integer")
+    (is (equal (exec-prepared connection "test1" '(42) 'list-row-reader)
+               '((42))))
+    (prepare-query connection "test2" "select $1::integer, $2::boolean")
+    (is (equal (exec-prepared connection "test2" '(42 nil) 'list-row-reader)
+               '((42 nil))))
+    (prepare-query connection "test3" "select $1::integer, $2::boolean, $3::text")
+    (is (equal (exec-prepared connection "test3" '(42 t "foo") 'list-row-reader)
+               '((42 t "foo"))))
+    (is (equal (exec-prepared connection "test3" '(42 nil "foo") 'list-row-reader)
+               '((42 nil "foo"))))))
 
-(test unprepare-statement
+(test unprepare-query
       (with-test-connection
           (prepare-query connection "test" "select true")
         (unprepare-query connection "test")
@@ -741,16 +749,18 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
         (setf cl-postgres:*silently-truncate-ratios* old-silently-truncate)))
 
 (test binary-parameters
-      (with-test-connection
-        (exec-query connection
-                    "create table countries (id serial not null, iso2 text not null,
+  (with-test-connection
+    (when (pomo:table-exists-p 'countries)
+      (pomo:drop-table 'countries))
+    (exec-query connection
+                "create table countries (id serial not null, iso2 text not null,
                                             latitude numeric(9, 6) not null,
                                             longitude numeric(9, 6) not null,
                                             name text not null,
                                             population integer not null)"
-                    'list-row-reader)
-        (exec-query connection
-                    "insert into countries (iso2, latitude, longitude, name, population)
+                'list-row-reader)
+    (exec-query connection
+                "insert into countries (iso2, latitude, longitude, name, population)
                      values   ('AD', 	42.546245, 	1.601554, 	'Andorra', 77142),
                               ('AE', 	23.424076, 	53.847818, 	'UAE', 9770529),
                               ('AF', 	33.93911, 	67.709953, 	'Afghanistan', 38041754),
@@ -764,27 +774,37 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
                               ('AS', 	-14.270972, 	-170.132217, 	'American Samoa', 55312),
                               ('AT', 	47.516231, 	14.550072, 	'Austria', 8955102),
                               ('AU', 	-25.274398, 	133.775136, 	'Australia', 25203198)"
-                    'list-row-reader)
-       (is (equal (pomo:query "select $1" 132 :single)
-                  132))
-        (is (equal (pomo:query "select $1, $2" "10" 20)
-                   '(("10" 20))))
-       (is (equal (pomo:query "select name from countries where population = $1" 97118 :single)
-                  "Antigua and Barbuda"))
-       (is equal (pomo:query
-                  "select name from countries where population < $1 and population > $2"
-                  3000000 100000)
-           '(("Albania") ("Armenia") ("Aruba")))
-       (is (equal (pomo:query
-                   "select name from countries where latitude < $1 and latitude > $2"
-                   30 10)
-                  '(("UAE") ("Antigua and Barbuda") ("Anguilla") ("Aruba"))))
-        (is (equal (pomo:query "select $1, $2" "10" (/ 1 3.0))
-                   '(("10" 0.33333334))))
-        (is (equal (pomo:query "select $1, $2" "10" (/ 1 3.0d0))
-                   '(("10" 0.3333333333333333d0))))
-        (is (equal (pomo:query "select $1, $2" "10" t)
-                   '(("10" T))))
-        (is (equal (pomo:query "select $1, $2" "10" nil)
-                   '(("10" NIL))))
-        (is (equal ))))
+                'list-row-reader)
+    (is (equal (pomo:query "select $1" 132 :single)
+               132))
+    (is (equal (pomo:query "select $1, $2" "10" 20)
+               '(("10" 20))))
+    (is (equal (pomo:query "select name from countries where population = $1" 97118 :single)
+               "Antigua and Barbuda"))
+    (is (equal (pomo:query
+                "select name from countries where population < $1 and population > $2"
+                3000000 100000)
+               '(("Albania") ("Armenia") ("Aruba"))))
+    (is (equal (pomo:query
+                "select name from countries where latitude < $1 and latitude > $2"
+                30 10)
+               '(("UAE") ("Antigua and Barbuda") ("Anguilla") ("Aruba"))))
+    (is (equal (pomo:query "select $1, $2" "10" (/ 1 3.0))
+               '(("10" 0.33333334))))
+    (is (equal (pomo:query "select $1, $2" "10" (/ 1 3.0d0))
+               '(("10" 0.3333333333333333d0))))
+    (is (equal (pomo:query "select $1, $2" "10" t)
+               '(("10" T))))
+    (is (equal (pomo:query "select $1, $2" "10" nil)
+               '(("10" NIL))))
+    (pomo:drop-table 'countries)))
+
+(test param-to-oid
+  (is (equal (cl-postgres:param-to-oid 32)
+             23))
+  (is (equal (cl-postgres:param-to-oid "abba")
+             25))
+  (is (equal (cl-postgres:param-to-oid :NULL)
+             25))
+  (is (equal (cl-postgres:param-to-oid nil)
+             16)))

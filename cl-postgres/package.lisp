@@ -68,6 +68,13 @@
            #:string-mapped-to-space
            #:saslprep-normalize
            #:string-printable-ascii-p
+           #:int4
+           #:int8
+           #:types-match-p
+           #:oid-types-match-p
+           #:parameter-lists-match-oid-types-p
+           #:parameter-list-types
+           #:param-to-oid
            #+(and sbcl unix) #:*unix-socket-dir*))
 
 (defpackage :cl-postgres-error

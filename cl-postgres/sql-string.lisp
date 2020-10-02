@@ -209,12 +209,16 @@ used by S-SQL.)")
 that PostgreSQL understands when sent through its socket connection. May return
 a string or a (vector (unsigned-byte 8)).")
   (:method ((arg integer))
+    (log:info "serialize-for-postgres:sql-string.lisp: integer arg ~a~%" arg)
     (int-to-vector arg))
   (:method ((arg single-float))
+    (log:info "serialize-for-postgres:sql-string.lisp: single-float arg ~a~%" arg)
     (int32-to-vector (cl-postgres-ieee-floats:encode-float32 arg)))
   #-clisp   (:method ((arg double-float)) ;; CLISP doesn't allow methods on double-float
+              (log:info "serialize-for-postgres:sql-string.lisp: double-float arg ~a~%" arg)
               (int64-to-vector (cl-postgres-ieee-floats:encode-float64 arg)))
   (:method (arg)
+    (log:info "serialize-for-postgres:sql-string.lisp: arg ~a~%" arg)
     (cond ((typep arg 'boolean)
            (if arg (int8-to-vector 1)
                (int8-to-vector 0)))
@@ -246,69 +250,106 @@ a string or a (vector (unsigned-byte 8)).")
 
 (defun int16-to-vector (int)
     "Takes a 16 byte positive integer and returns a vector of unsigned bytes
-with a length of 2. How should it work with negative numbers?"
+with a length of 2."
   (declare (type (signed-byte 16) int))
+  (log:info "int16-to-vector:sql-string.lisp: int ~a~%" int)
   (let ((intv (make-array '(2) :element-type '(unsigned-byte 8))))
     (setf (aref intv 0) (ldb (byte 8 8) int))
     (setf (aref intv 1) (ldb (byte 8 0) int))
     intv))
 
 (defun int8-to-vector (int)
-    "Takes a 16 byte positive integer and returns a vector of unsigned bytes
-with a length of 2. How should it work with negative numbers?"
+    "Takes a 8 byte positive integer and returns a vector of unsigned bytes
+with a length of 1 byte."
   (declare (type (signed-byte 8) int))
   (let ((intv (make-array '(1) :element-type '(unsigned-byte 8))))
     (setf (aref intv 0) (ldb (byte 8 0) int))
     intv))
 
-
 (defun int-to-vector (int)
-  "Takes an integer and returns the size of the integer for postgresql
-purposes (int2, int4, int8). What to do with negative numbers"
-  (when (integerp int)
-    (cond ((and (> int -32769)
-                (< int 32768))
-           (int16-to-vector int))
-          ((and (> int -2147483649)
-                (< int 2147483648))
-           (int32-to-vector int))
-          ((and (> int -9223372036854775809)
-                (< int 9223372036854775808))
-           (int64-to-vector int))
-          (t nil))))
+  "Takes a signed integer and returns a vector of unsigned bytes."
+  (if (integerp int)
+   (case (get-int-size int)
+     (int2 (int16-to-vector int))
+     (int4 (int32-to-vector int))
+     (int8 (int64-to-vector int)))
+   nil))
 
 (defun get-int-size (int)
   "Takes an integer and returns the size of the integer for postgresql
 purposes (int2, int4, int8)"
-  (when (integerp int)
-    (cond ((and (> int -32769)
-                (< int 32768))
-           'int2)
-          ((and (> int -2147483649)
-                (< int 2147483648))
-           'int4)
-          ((and (> int -9223372036854775809)
-                (< int 9223372036854775808))
-           'int8)
-          (t nil))))
+  (declare (integer int))
+  (cond #|((and (> int -32769)
+              (< int 32768))
+         'int2)
+|#
+        ((and (> int -2147483649)
+              (< int 2147483648))
+         'int4)
+        ((and (> int -9223372036854775809)
+              (< int 9223372036854775808))
+         'int8)
+        (t nil)))
 
 (defun param-to-oid (param)
+  "Returns the postgresql oid for parameters which are going to be passed
+from postmodern to postgresql in binary. Currently that only includes integers,
+single-floats, double-floats and boolean. Everything else will be passed as
+text for postgresql to interpret."
+  (log:info "param-to-oid:sql-string.lisp: param ~a~%" param)
+  (typecase param
+    (int4 cl-postgres-oid:+int4+)
+    (int8 cl-postgres-oid:+int8+)
+    (single-float cl-postgres-oid:+float4+)
+    (double-float cl-postgres-oid:+float8+)
+    (boolean cl-postgres-oid:+bool+)
+    (t 25))
+
+#|
   (cond ((and (integerp param)
-              (> param -32760)
-              (< param 32768))
+              (eq 'int2 (get-int-size param)))
          cl-postgres-oid:+int2+)
         ((and (integerp param)
-              (> param -2147483649)
-              (< param 2147483648))
+              (eq 'int4 (get-int-size param)))
          cl-postgres-oid:+int4+)
         ((and (integerp param)
-              (> param -9223372036854775809)
-              (< param 9223372036854775808))
+              (eq 'int8 (get-int-size param)))
          cl-postgres-oid:+int8+)
         ((typep param 'single-float)
-         cl-postgres-oid:+float4+)
+         )
         ((typep param 'double-float)
          cl-postgres-oid:+float8+)
         ((typep param 'boolean)
-         cl-postgres-oid:+bool+)
-        (t 0)))
+         ((typep param '(simple-array double-float)
+                cl-postgres-oid:+float8-array+))
+        ((typep param '(simple-array single-float)
+                cl-postgres-oid:+float4-array+))
+        ((typep param '(simple-array single-float)
+                cl-postgres-oid:+float4-array+)))
+        (t 0))
+|#
+        )
+
+
+(deftype int4 ()
+  '(integer -2147483648 2147483647))
+
+(deftype int8 ()
+  '(integer -9223372036854775808 9223372036854775808))
+
+(defun types-match-p (x y)
+  (eq (type-of x) (type-of y)))
+
+(defun oid-types-match-p (x y)
+  "Returns t if the two parameters have matching types"
+  (eq (param-to-oid x) (param-to-oid y)))
+
+(defun parameter-list-types (lst)
+  "Takes a list of parameters and returns the matching postgresql oid types"
+  (mapcar #'param-to-oid lst))
+
+(defun parameter-lists-match-oid-types-p (x y)
+  "Takes two lists and validates that the lists have matching postgresql oid types."
+  (let ((lst1 (mapcar #'param-to-oid x))
+        (lst2 (mapcar #'param-to-oid y)))
+    (equal lst1 lst2)))
