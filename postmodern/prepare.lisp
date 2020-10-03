@@ -1,7 +1,7 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
-(defparameter *allow-overwriting-prepared-statements* t
+(defparameter *allow-overwriting-prepared-statements* nil
   "When set to t, ensured-prepared will overwrite prepared statements having the
 same name if the query statement itself in the postmodern meta connection is
 different than the query statement provided to ensure-prepared.")
@@ -86,7 +86,7 @@ Note that it will attempt to automatically reconnect if database-connection-erro
 or admin-shutdown. It will reset prepared statements triggering an
 invalid-sql-statement-name error. It will overwrite old prepared statements
 triggering a duplicate-prepared-statement error."
-  `(let ((overwrite t))
+  `(let ((overwrite ,*allow-overwriting-prepared-statements*))
      ,(generate-prepared '(lambda) (next-statement-id) query format)))
 
 (defmacro defprepared (name query &optional (format :rows))
@@ -94,7 +94,7 @@ triggering a duplicate-prepared-statement error."
 function a name which now becomes a top-level function for the prepared
 statement. The name should not be a string but may be quoted."
   (when (consp name) (setf name (s-sql::dequote name)))
-  `(let ((overwrite t))
+  `(let ((overwrite ,*allow-overwriting-prepared-statements*))
      ,(generate-prepared `(defun ,name) name query format)))
 
 (defmacro defprepared-with-names (name (&rest args)

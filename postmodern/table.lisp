@@ -443,6 +443,7 @@ or accessor or reader.)"
               (car (exec-query *database* (apply tmpl keys)
                                (dao-row-reader ,class))))))
 
+
         (defmethod insert-dao ((object ,class))
           (let (bound unbound)
             (loop :for field :in fields
@@ -461,16 +462,15 @@ or accessor or reader.)"
                                         (slot-value object x))
                                 fields))
                    (returned
-                     (apply
-                      (prepare
-                          (sql-compile
-                           `(:insert-into ,table-name
-                             :set ,@places
-                             ,@(when unbound (cons :returning
+                     (query (sql-compile
+                               `(:insert-into ,table-name
+                                 :set ,@(loop for field in fields
+                                              collect (field-sql-name field)
+                                              collect (slot-value object field))
+                                 ,@(when unbound (cons :returning
                                                    (mapcar #'field-sql-name
                                                            unbound)))))
-                          :row)
-                      values)))
+                            :row)))
               (when unbound
                 (loop :for value :in returned
                       :for field :in unbound

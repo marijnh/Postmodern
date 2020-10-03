@@ -10,6 +10,12 @@
 
 (fiveam:in-suite :s-sql)
 
+(fiveam:def-suite :s-sql-base
+    :description "Base suite for s-sql"
+    :in :s-sql)
+
+(in-suite :s-sql-base)
+
 (defun prompt-connection-to-s-sql-db-spec (param-lst)
   "Takes the 6 item parameter list from prompt-connection and restates it for pomo:with-connection. Note that cl-postgres does not provide the pooled connection - that is only in postmodern - so that parameter is not passed."
   (when (and (listp param-lst)
