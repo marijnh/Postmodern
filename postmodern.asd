@@ -53,7 +53,6 @@
   ((:module "postmodern/tests"
             :components ((:file "test-package")
                          (:file "tests")
-                         (:file "test-prepare" :depends-on ("test-package"))
                          (:file "test-dao" :depends-on ("test-package")
                           :if-feature :postmodern-use-mop)
                          (:file "test-roles" :depends-on ("test-package"))

@@ -98,14 +98,14 @@ slot like this:
 
 (defgeneric dao-keys (class)
   (:documentation "Returns list of slot names that are the primary key of DAO
-class. This is likely interesting if you have primary keys which are composed of
+class. Explicit keys takes priority over col-identity which takes priority
+over col-primary-key.
+
+This is likely interesting if you have primary keys which are composed of
 more than one slot. Pay careful attention to situations where the primary key
 not only has more than one column, but they are actually in a different order
-than they are in the database table itself. You can check this with the internal
-find-primary-key-info function. Obviously the table needs to have been defined.
-The class must be quoted.
-
-    (pomo:find-primary-key-info 'country1)"))
+than they are in the database table itself. Obviously the table needs to have
+been defined. You can provide a quoted class-name or an instance of a dao."))
 
 (defmethod dao-keys :before ((class dao-class))
   (unless (class-finalized-p class)
@@ -119,7 +119,8 @@ The class must be quoted.
 
 (defgeneric find-primary-key-column (class)
   (:documentation "Loops through a class's column definitions and returns
-the first column name that has bound either col-identity or col-primary-key"))
+the first column name that has bound either col-identity or col-primary-key.
+Returns a symbol."))
 
 (defmethod find-primary-key-column ((class dao-class))
   (loop for x in (dao-column-slots class) do
@@ -129,6 +130,12 @@ the first column name that has bound either col-identity or col-primary-key"))
 
 (defmethod find-primary-key-column ((class symbol))
   (loop for x in (dao-column-slots (find-class class)) do
+            (if (or (slot-boundp x 'col-identity)
+                  (slot-boundp x 'col-primary-key))
+                (return (slot-definition-name x)))))
+
+(defmethod find-primary-key-column (dao)
+  (loop for x in (dao-column-slots (class-of dao)) do
             (if (or (slot-boundp x 'col-identity)
                   (slot-boundp x 'col-primary-key))
                 (return (slot-definition-name x)))))
@@ -182,7 +189,6 @@ such a class)."
                (mapc #'explore (class-direct-superclasses class))))
       (explore class)
       found)))
-
 
 (defmethod finalize-inheritance :after ((class dao-class))
   "Building a row reader and a set of methods can only be done after
@@ -303,7 +309,13 @@ rows returned by PostgreSQL, so zero or non-zero number of affected rows may
 not actually indicate the existence of record in the database.
 
 This method returns two values: the DAO object and a boolean (T if the object
-was inserted, NIL if it was updated)."))
+was inserted, NIL if it was updated).
+
+IMPORTANT: This is not the same as insert on conflict (sometimes called an upsert)
+in Postgresq. An upsert in Postgresql terms is an insert with a fallback of updating
+the row if the insert key conflicts with an already existing row. An upsert-dao
+in Postmodern terms is the reverse. First you try updating an existing object. If
+there is no existing object to oupdate, then you insert a new object."))
 
 (defgeneric get-dao (type &rest args)
   (:method ((class-name symbol) &rest args)
@@ -412,19 +424,23 @@ or accessor or reader.)"
 
           ;; When all values are primary keys, updating makes no sense.
           (when value-fields
-            (let ((tmpl (sql-template `(:update ,table-name
+            (let ((update-tmpl (sql-template `(:update ,table-name
                                         :set ,@(set-fields value-fields)
                                         :where ,(test-fields key-fields)))))
               (defmethod update-dao ((object ,class))
-                (when (zerop (execute (apply tmpl
+                (when (zerop (execute (apply update-tmpl
                                              (slot-values object value-fields
                                                           key-fields))))
                   (error "Updated row does not exist."))
                 object)
-
+              ;; upsert in Postgresql terms is an insert with a fallback of updating
+              ;; the row if the insert key conflicts with an already existing row
+              ;; Historically an upsert-dao in Postmodern terms is the reverse
+              ;; updating an existing object and inserting a new object if there
+              ;; is no existing object to update.
               (defmethod upsert-dao ((object ,class))
                 (handler-case
-                    (if (zerop (execute (apply tmpl
+                    (if (zerop (execute (apply update-tmpl
                                                (slot-values object value-fields
                                                             key-fields))))
                         (values (insert-dao object) t)
@@ -432,17 +448,16 @@ or accessor or reader.)"
                   (unbound-slot ()
                     (values (insert-dao object) t))))))
 
-          (let ((tmpl (sql-template `(:delete-from ,table-name
+          (let ((del-tmpl (sql-template `(:delete-from ,table-name
                                       :where ,(test-fields key-fields)))))
             (defmethod delete-dao ((object ,class))
-              (execute (apply tmpl (slot-values object key-fields)))))
+              (execute (apply del-tmpl (slot-values object key-fields)))))
 
-          (let ((tmpl (sql-template `(:select * :from ,table-name
+          (let ((get-tmpl (sql-template `(:select * :from ,table-name
                                       :where ,(test-fields key-fields)))))
             (defmethod get-dao ((type (eql (class-name ,class))) &rest keys)
-              (car (exec-query *database* (apply tmpl keys)
+              (car (exec-query *database* (apply get-tmpl keys)
                                (dao-row-reader ,class))))))
-
 
         (defmethod insert-dao ((object ,class))
           (let (bound unbound)
@@ -453,24 +468,16 @@ or accessor or reader.)"
             (let* ((counter 0)
                    (fields (remove-if (lambda (x) (member x ghost-fields))
                                       bound))
-                   (places (mapcan (lambda (x)
-                                     (incf counter)
-                                     (list (field-sql-name x)
-                                           (intern (format nil "$~a" counter))))
-                                   fields))
-                   (values (map 'list (lambda (x)
-                                        (slot-value object x))
-                                fields))
-                   (returned
-                     (query (sql-compile
+                   (query (sql-compile
                                `(:insert-into ,table-name
                                  :set ,@(loop for field in fields
                                               collect (field-sql-name field)
                                               collect (slot-value object field))
                                  ,@(when unbound (cons :returning
                                                    (mapcar #'field-sql-name
-                                                           unbound)))))
-                            :row)))
+                                                           unbound))))))
+                   (returned
+                     (query query :row)))
               (when unbound
                 (loop :for value :in returned
                       :for field :in unbound
@@ -539,9 +546,10 @@ about the objects, and immediately store it in the new instances."
      ,@body))
 
 (defparameter *ignore-unknown-columns* nil "Normally, when get-dao, select-dao,
-or query-dao finds a column in the database that's not in the DAO class, it will
-raise an error. Setting this variable to a non-NIL will cause it to simply
-ignore the unknown column.")
+save-dao or query-dao finds a column in the database that's not in the DAO class,
+it should raise an error. THIS IS NOT ALWAYS THROWING AN ERROR AND IT IS NOT
+OBVIOUS WHY. Setting this variable to a non-NIL will cause it to
+simply ignore the unknown column.")
 
 (defun dao-from-fields (class column-map query-fields
                         result-next-field-generator-fn)
@@ -570,18 +578,23 @@ ignore the unknown column.")
             :collect (dao-from-fields class column-map query-fields #'next-field)))))
 
 (defun save-dao (dao)
-  "Tries to insert the given dao using insert-dao. If this raises a unique key
-violation error, it tries to update it by using update-dao instead. Be aware
-that there is a possible race condition here ― if some other process deletes
-the row at just the right moment, the update fails as well. Returns a boolean
-telling you whether a new row was inserted.
+  "Tries to insert the given dao using insert-dao. If the dao has unbound slots,
+those slots will be updated and bound by default data triggered by the
+database. If this raises a unique key violation error, it tries to update it by
+using update-dao instead. In this case, if the dao has unbound slots, updating
+will fail with an unbound slots error.
+
+Be aware that there is a possible race condition here ― if some other process
+deletes the row at just the right moment, the update fails as well. Returns a
+boolean telling you whether a new row was inserted.
 
 This function is unsafe to use inside of a transaction ― when a row with the
 given keys already exists, the transaction will be aborted. Use
 save-dao/transaction instead in such a situation.
 
 See also: upsert-dao."
-  (handler-case (progn (insert-dao dao) t)
+  (handler-case
+      (progn (insert-dao dao) t)
     (cl-postgres-error:unique-violation ()
       (update-dao dao)
       nil)
@@ -592,15 +605,16 @@ See also: upsert-dao."
 (defun save-dao/transaction (dao)
   "The transaction safe version of save-dao. Tries to insert the given dao using
 insert-dao. If this raises a unique key violation error, it tries to update it
-by using update-dao instead. Be aware that there is a possible race condition
-here ― if some other process deletes the row at just the right moment, the update
-fails as well. Returns a boolean telling you whether a new row was inserted.
+by using update-dao instead. If the dao has unbound slots, updating will fail
+with an unbound slots error. If the dao has unbound slots, those slots will be
+updated and bound by default data triggered by the database.
 
 Acts exactly like save-dao, except that it protects its attempt to insert the
 object with a rollback point, so that a failure will not abort the transaction.
 
 See also: upsert-dao."
-  (handler-case (with-savepoint save-dao/transaction (insert-dao dao) t)
+  (handler-case
+      (with-savepoint save-dao/transaction (insert-dao dao) t)
     (cl-postgres-error:unique-violation ()
       (update-dao dao)
       nil)

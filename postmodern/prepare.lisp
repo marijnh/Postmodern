@@ -1,7 +1,7 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
-(defparameter *allow-overwriting-prepared-statements* nil
+(defparameter *allow-overwriting-prepared-statements* t
   "When set to t, ensured-prepared will overwrite prepared statements having the
 same name if the query statement itself in the postmodern meta connection is
 different than the query statement provided to ensure-prepared.")

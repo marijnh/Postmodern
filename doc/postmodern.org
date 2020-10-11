@@ -385,7 +385,13 @@ Immediately commit an open transaction.
    :CUSTOM_ID: 58a7459f-a1f4-4797-83b5-8b5257ca2cf7
    :END:
 
-Roll back the given transaction.
+Roll back the given transaction, but the transaction
+block is still active. Thus calling abort-transaction in the middle of a
+transaction does not end the transaction. Any subsequent statements will still
+be executed. Per the Postgresql documentation: ABORT rolls back the current
+transaction and causes all the updates made by the transaction to be discarded.
+This command is identical in behavior to the standard SQL command ROLLBACK, and
+is present only for historical reasons..
 
 ** macro with-savepoint (name &body body)
    :PROPERTIES:
@@ -1091,7 +1097,20 @@ The class must be quoted.
    :END:
 → list
 
-Returns list of values that are the primary key of dao.
+Returns list of values that are the primary key of dao. Explicit keys takes
+priority over col-identity which takes priority over col-primary-key.
+
+This is likely interesting if you have primary keys which are composed of
+more than one slot. Pay careful attention to situations where the primary key
+not only has more than one column, but they are actually in a different order
+than they are in the database table itself.  Obviously the table needs to have
+been defined. You can provide a quoted class-name or an instance of a dao.
+
+** method find-primary-key-column
+→ symbol
+
+Loops through a class's column definitions and returns the first column name
+that has bound either col-identity or col-primary-key.
 
 ** method dao-exists-p (dao)
    :PROPERTIES:
@@ -1283,11 +1302,15 @@ columns. Raises an error when no row matching the dao exists.
    :END:
 → boolean
 
-Tries to insert the given dao using insert-dao. If this raises a unique key
-violation error, it tries to update it by using update-dao instead. Be aware
-that there is a possible race condition here ― if some other process deletes the
-row at just the right moment, the update fails as well. Returns a boolean
-telling you whether a new row was inserted.
+Tries to insert the given dao using insert-dao. If the dao has unbound slots,
+those slots will be updated and bound by default data triggered by the
+database. If this raises a unique key violation error, it tries to update it by
+using update-dao instead. In this case, if the dao has unbound slots, updating
+will fail with an unbound slots error.
+
+Be aware that there is a possible race condition here ― if some other process
+deletes the row at just the right moment, the update fails as well. Returns a
+boolean telling you whether a new row was inserted.
 
 This function is unsafe to use inside of a transaction ― when a row with the
 given keys already exists, the transaction will be aborted. Use
@@ -1304,10 +1327,13 @@ See also: upsert-dao.
 
 The transaction safe version of save-dao. Tries to insert the given dao using
 insert-dao. If this raises a unique key violation error, it tries to update it
-by using update-dao instead. Be aware that there is a possible race condition
-here ― if some other process deletes the row at just the right moment, the
-update fails as well. Returns a boolean telling you whether a new row was
-inserted.
+by using update-dao instead. If the dao has unbound slots, updating will fail
+with an unbound slots error. If the dao has unbound slots, those slots will be
+updated and bound by default data triggered by the database.
+
+Be aware that there is a possible race condition here ― if some other process
+deletes the row at just the right moment, the update fails as well. Returns a
+boolean telling you whether a new row was inserted.
 
 Acts exactly like save-dao, except that it protects its attempt to insert the
 object with a rollback point, so that a failure will not abort the transaction.
@@ -1346,6 +1372,12 @@ actually indicate the existence of record in the database.
 
 This method returns two values: the DAO object and a boolean (T if the object
 was inserted, NIL if it was updated).
+
+IMPORTANT: This is not the same as insert on conflict (sometimes called an upsert)
+in Postgresq. An upsert in Postgresql terms is an insert with a fallback of updating
+the row if the insert key conflicts with an already existing row. An upsert-dao
+in Postmodern terms is the reverse. First you try updating an existing object. If
+there is no existing object to oupdate, then you insert a new object.
 
 ** method delete-dao (dao)
    :PROPERTIES:
