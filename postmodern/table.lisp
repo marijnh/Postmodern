@@ -72,7 +72,7 @@ regions are deleted, that column would be specified as:
 
 Now you can see why the double parens.
 
-We also specify that the table name is not "country" but "countries". (Some style guides
+We also specify that the table name is not 'country' but 'countries'. (Some style guides
 recommend that table names be plural and references to rows be singular.)
 
 When inheriting from DAO classes, a subclass' set of columns also contains
@@ -372,7 +372,14 @@ type serial, which are unknown before insert-dao."
 
 (defgeneric fetch-defaults (object)
   (:documentation "Used to fetch the default values of an object on
-  creation."))
+  creation. An example would be creating a dao object with unbounded slots.
+Fetch-defaults could then be used to fetch the default values from the database
+and bind the unbound slots which have default values. E.g.
+
+  (let ((dao (make-instance 'test-data :a 23)))
+      (pomo:fetch-defaults dao))
+
+Returns dao if there were unbound slots with default values, nil otherwise."))
 
 (defun %eval (code)
   (funcall (compile nil `(lambda () ,code))))
@@ -465,15 +472,14 @@ or accessor or reader.)"
                   :do (if (slot-boundp object field)
                           (push field bound)
                           (push field unbound)))
-            (let* ((counter 0)
-                   (fields (remove-if (lambda (x) (member x ghost-fields))
+            (let* ((fields (remove-if (lambda (x) (member x ghost-fields))
                                       bound))
                    (query (sql-compile
-                               `(:insert-into ,table-name
-                                 :set ,@(loop for field in fields
-                                              collect (field-sql-name field)
-                                              collect (slot-value object field))
-                                 ,@(when unbound (cons :returning
+                           `(:insert-into ,table-name
+                             :set ,@(loop for field in fields
+                                          collect (field-sql-name field)
+                                          collect (slot-value object field))
+                             ,@(when unbound (cons :returning
                                                    (mapcar #'field-sql-name
                                                            unbound))))))
                    (returned
@@ -506,7 +512,8 @@ or accessor or reader.)"
                                           (sql-compile (cons :select defaults))
                                           :list)
                           :for slot-name :in names
-                          :do (setf (slot-value object slot-name) value)))))
+                          :do (setf (slot-value object slot-name) value))))
+                object)
               (defmethod fetch-defaults ((object ,class))
                 nil)))
 

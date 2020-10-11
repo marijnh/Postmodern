@@ -987,7 +987,6 @@ fully qualified table name e.g. schema-name.table-name."
                        'a.attname
                        (:format-type 'a.atttypid 'a.atttypmod)
                        :from
-
                        (:as 'pg-attribute 'a)
                        :inner-join (:as
                                     (:select '*

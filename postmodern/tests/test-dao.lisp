@@ -103,6 +103,16 @@
   (:metaclass dao-class)
   (:table-name departments))
 
+(defclass from-test-data ()
+        ((id :col-type serial :initarg :id :accessor id)
+         (flight :col-type (or integer db-null) :initarg :flight :accessor flight)
+         (from :col-type (or (varchar 100) db-null) :initarg :from :accessor from)
+         (to-destination :col-type (or (varchar 100) db-null)
+                         :initarg :to-destination :accessor to-destination))
+        (:metaclass dao-class)
+        (:table-name from-test)
+        (:keys id from))
+
 (defun dao-test-table-fixture ()
   "Drops and recreates the dao-test table"
   (when (table-exists-p 'dao-test)
@@ -609,15 +619,6 @@ so there is a single source of type truth."
 
 (test reserved-column-names-defclass
   (with-test-connection
-      (defclass from-test-data ()
-        ((id :col-type serial :initarg :id :accessor id)
-         (flight :col-type (or integer db-null) :initarg :flight :accessor flight)
-         (from :col-type (or (varchar 100) db-null) :initarg :from :accessor from)
-         (to-destination :col-type (or (varchar 100) db-null)
-                         :initarg :to-destination :accessor to-destination))
-        (:metaclass dao-class)
-        (:table-name from-test)
-        (:keys id from))
     (when (pomo:table-exists-p "from-test")
       (execute (:drop-table "from-test" :cascade)))
     (when (pomo:table-exists-p 'from-test-data1)
@@ -671,13 +672,13 @@ so there is a single source of type truth."
       (let ((dao (make-instance 'test-data :a "something"))
             (short-dao (make-instance 'test-data-short)))
         (signals error (test-b  dao))    ; unbound slot b
-        (pomo::fetch-defaults dao)
+        (pomo:fetch-defaults dao)
         (is (equal (test-b dao)
                    nil))
         (is (equal (test-c dao)
                   0))
         (signals error (test-id short-dao))
-        (pomo::fetch-defaults short-dao)
+        (pomo:fetch-defaults short-dao)
         (signals error (test-id short-dao)))
       (execute (:drop-table 'dao-test :cascade)))))
 

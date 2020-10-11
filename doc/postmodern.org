@@ -1133,6 +1133,26 @@ unbound.
 Combines make-instance with insert-dao. Make the instance of the given class and
 insert it into the database, returning the created dao.
 
+** method fetch-defaults (dao)
+
+→ dao if there were unbound slots with default values, otherwise nil
+
+Used to fetch the default values of an object on creation.
+An example would be creating a dao object with unbounded slots.
+Fetch-defaults could then be used to fetch the default values from the database
+and bind the unbound slots which have default values. E.g.
+#+BEGIN_SRC lisp
+  (let ((dao (make-instance 'test-data :a 23)))
+      (pomo:fetch-defaults dao))
+#+END_SRC
+** method find-primary-key-column (class)
+
+→ symbol
+
+Loops through a class's column definitions and returns
+the first column name that has bound either col-identity or col-primary-key.
+Returns a symbol.
+
 ** macro define-dao-finalization (((dao-name class) &rest keyword-args) &body body)
    :PROPERTIES:
    :ID:       645a03ec-739a-4ee5-b83d-dcbe43ef009a
