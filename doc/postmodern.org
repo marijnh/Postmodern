@@ -393,6 +393,14 @@ transaction and causes all the updates made by the transaction to be discarded.
 This command is identical in behavior to the standard SQL command ROLLBACK, and
 is present only for historical reasons..
 
+** function rollback-transaction (transaction)
+
+Roll back the given transaction, but the transaction
+block is still active. Thus calling abort-transaction in the middle of a
+transaction does not end the transaction. Any subsequent statements will still
+be executed. Per the Postgresql documentation: this rolls back the current
+transaction and causes all the updates made by the transaction to be discarded.
+
 ** macro with-savepoint (name &body body)
    :PROPERTIES:
    :ID:       2b3980a2-969c-4376-92aa-ce9ee5867b6c
@@ -407,6 +415,47 @@ Execute the body within a savepoint, releasing savepoint when the body exits
 normally, and rolling back otherwise. NAME is both the variable that can be
 used to release or rolled back before the body unwinds, and the SQL name of the
 savepoint.
+
+The following example demonstrates with-savepoint, rollback-savepoint and
+release-savepoint.
+
+#+BEGIN_SRC lisp
+(execute (:create-table test-data ((value :type integer))))
+
+(defun test12 (x &optional (y nil))
+  (with-logical-transaction (lt1 :read-committed-rw)
+    (execute (:insert-into 'test-data :set 'value 0))
+    (with-savepoint sp1
+      (execute (:insert-into 'test-data :set 'value 1))
+      (format t "1-1. ~a Savepoint-name ~a~%" (query "select * from test_data")
+              (pomo::savepoint-name sp1))
+      (if (< x 0)
+          (rollback-savepoint sp1)
+          (release-savepoint sp1))
+      (format t "1-2. ~a~%" (query "select * from test_data")))
+    (with-savepoint sp2
+      (execute (:insert-into 'test-data :set 'value 2))
+      (format t "2-1. ~a Savepoint-name ~a~%" (query "select * from test_data")
+              (pomo::savepoint-name sp2))
+      (with-savepoint sp3
+        (execute (:insert-into 'test-data :set 'value 3))
+        (format t "3-1. ~a Savepoint-name ~a~%" (query "select * from test_data")
+                (pomo::savepoint-name sp3))
+        (if (> x 0)
+            (rollback-savepoint sp3)
+            (release-savepoint sp3))
+        (format t "3-2. ~a~%" (query "select * from test_data"))
+        (when y (rollback-savepoint sp2))
+        (format t "3-3. ~a~%" (query "select * from test_data")))
+      (if (= x 0)
+          (rollback-savepoint sp2)
+          (release-savepoint sp2))
+      (format t "2-2. ~a~%" (query "select * from test_data")))
+    (format t "4. ~a~%" (query "select * from test_data"))
+    (when (string= y "abrt")
+      (abort-transaction lt1))
+    (format t "5. ~a~%" (query "select * from test_data"))))
+#+END_SRC
 
 ** function release-savepoint (savepoint)
    :PROPERTIES:

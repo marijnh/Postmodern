@@ -48,6 +48,7 @@
    #:commit-transaction
    #:commit-logical-transaction
    #:abort-transaction
+   #:rollback-transaction
    #:abort-logical-transaction
    #:with-savepoint
    #:rollback-savepoint
