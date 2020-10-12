@@ -8,6 +8,7 @@
   #+postmodern-use-mop
   (:export
    #:dao-class #:dao-exists-p #:dao-keys #:query-dao #:select-dao #:get-dao
+   #:fetch-defaults
    #:do-query-dao #:do-select-dao
    #:with-column-writers
    #:insert-dao #:update-dao #:save-dao #:save-dao/transaction #:upsert-dao
@@ -149,6 +150,7 @@
    #:list-foreign-keys
    #:list-unique-or-primary-constraints
    #:find-primary-key-info
+   #:find-primary-key-column
    ;; roles
    #:list-roles
    #:list-role-permissions

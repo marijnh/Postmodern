@@ -126,7 +126,13 @@ isolation notes file in the doc folder."
                             ,isolation-level)))
 
 (defun abort-transaction (transaction)
-  "Roll back the given transaction."
+  "Roll back the given transaction to the beginning, but the transaction
+block is still active. Thus calling abort-transaction in the middle of a
+transaction does not end the transaction. Any subsequent statements will still
+be executed. Per the Postgresql documentation: ABORT rolls back the current
+transaction and causes all the updates made by the transaction to be discarded.
+This command is identical in behavior to the standard SQL command ROLLBACK, and
+is present only for historical reasons."
   (when (transaction-open-p transaction)
     (let ((*database* (transaction-connection transaction)))
       (execute "ABORT"))

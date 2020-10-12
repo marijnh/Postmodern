@@ -11,6 +11,12 @@
 
 (fiveam:in-suite :postmodern)
 
+(fiveam:def-suite :postmodern-base
+    :description "Base test suite for postmodern"
+    :in :postmodern)
+
+(fiveam:in-suite :postmodern-base)
+
 (defun prompt-connection-to-postmodern-db-spec (param-lst)
   "Takes the 6 item parameter list from prompt-connection and restates it for pomo:with-connection. Note that cl-postgres does not provide the pooled connection - that is only in postmodern - so that parameter is not passed."
   (when (and (listp param-lst)
@@ -114,7 +120,7 @@
       (execute (:drop-table 'test-data)))
     (is (not (table-exists-p 'test-data)))))
 
-(test prepare
+(test base-prepare
   (with-test-connection
     (drop-prepared-statement "all")
     (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
@@ -182,7 +188,9 @@
       (is (equal "select a from test_data where c = $1" (find-postgresql-prepared-statement "select1")))
       (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
       ;; funcall now creates the new version
-      (is (eq :null (funcall 'select1 2)))
+      (if *allow-overwriting-prepared-statements*
+          (is (eq :null (funcall 'select1 2)))
+          (is (eq nil (funcall 'select1 2))))
       ;; Test to ensure that we do not recreate the statement each time it is funcalled
       (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single)))
         (format t "Sleep 1 to allow prepare_time comparison~%")
@@ -192,7 +200,9 @@
       (drop-prepared-statement "select1")
       (signals error (funcall 'select1 2))
       (defprepared select1 "select c from test_data where a = $1" :single)
-      (is (eq :null (funcall 'select1 2)))
+      (if *allow-overwriting-prepared-statements*
+          (is (eq :null (funcall 'select1 2)))
+          (is (eq :null (funcall 'select1 2))))
       (drop-prepared-statement "all")
       (is (equal 0 (length (list-prepared-statements t))))
       (is (equal 0 (length (list-postmodern-prepared-statements t))))
@@ -203,7 +213,7 @@
       (is (eq :null (funcall 'select1 2)))
       (execute (:drop-table 'test-data)))))
 
-(test prepare-reserved-words
+(test base-prepare-reserved-words
   (with-test-connection
     (drop-prepared-statement "all")
     (when (table-exists-p 'from-test) (execute (:drop-table 'from-test)))
@@ -216,7 +226,7 @@
     (is (equal "Reykjavík" (funcall 'select1 "Seyðisfjörður")))
       (execute (:drop-table 'from-test))))
 
-(test prepare-pooled
+(test base-prepare-pooled
   (with-pooled-test-connection
         (drop-prepared-statement "all")
     (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
@@ -281,20 +291,30 @@
       ;; Defprepared does not change the prepared statements logged in the postmodern connection or
       ;; in the postgresql connection. That happens at funcall.
       ;; Test still the original in both postgresql and postmodern
-      (is (equal "select a from test_data where c = $1" (find-postgresql-prepared-statement "select1")))
-      (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
+      (is (equal "select a from test_data where c = $1"
+                 (find-postgresql-prepared-statement "select1")))
+      (is (equal "select a from test_data where c = $1"
+                 (find-postmodern-prepared-statement "select1")))
       ;; funcall now creates the new version
-      (is (eq :null (funcall 'select1 2)))
+      (if *allow-overwriting-prepared-statements*
+          (is (eq :null (funcall 'select1 2)))
+          (is (eq nil (funcall 'select1 2))))
+
       ;; Test to ensure that we do not recreate the statement each time it is funcalled
-      (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single)))
+      (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'"
+                          :single)))
         (format t "Sleep 1 to allow prepare_time comparison~%")
         (sleep 1)
         (funcall 'select1 2)
-        (is (equal time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single))))
+        (is (equal time1
+                   (query "select prepare_time from pg_prepared_statements where name = 'select1'"
+                          :single))))
       (drop-prepared-statement "select1")
       (signals error (funcall 'select1 2))
       (defprepared select1 "select c from test_data where a = $1" :single)
-      (is (eq :null (funcall 'select1 2)))
+      (if *allow-overwriting-prepared-statements*
+          (is (eq :null (funcall 'select1 2)))
+          (is (eq :null (funcall 'select1 2))))
       (drop-prepared-statement "all")
       (is (equal 0 (length (list-prepared-statements t))))
       (is (equal 0 (length (list-postmodern-prepared-statements t))))
@@ -304,7 +324,7 @@
       (is (eq :null (funcall 'select1 2)))
       (execute (:drop-table 'test-data)))))
 
-(test prepared-statement-over-reconnect
+(test base-prepared-statement-over-reconnect
   (let ((terminate-backend
           (prepare
               "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
@@ -379,7 +399,7 @@
           (is (null rows))
           (is (zerop count)))))))
 
-(test prepared-statement-over-reconnect-pooled-1
+(test base-prepared-statement-over-reconnect-pooled-1
   (with-pooled-test-connection
     (drop-prepared-statement "all")
        (let ((terminate-backend
@@ -560,8 +580,10 @@
       (with-logical-transaction (transaction-1)
         (execute (:insert-into 'test-data :set 'value 1))
         (with-logical-transaction (transaction-2)
-          (push (lambda () (execute (:insert-into 'test-data :set 'value 3))) (commit-hooks transaction-2))
-          (push (lambda () (execute (:insert-into 'test-data :set 'value 4))) (commit-hooks transaction-1))
+          (push (lambda () (execute (:insert-into 'test-data :set 'value 3)))
+                (commit-hooks transaction-2))
+          (push (lambda () (execute (:insert-into 'test-data :set 'value 4)))
+                (commit-hooks transaction-1))
           (execute (:insert-into 'test-data :set 'value 2))))
       (is (= 4 (length (query (:select '* :from 'test-data)))))
       (execute (:drop-table 'test-data)))))
@@ -575,8 +597,10 @@
         (execute (:insert-into 'test-data :set 'value 1))
         (ignore-errors
           (with-logical-transaction (transaction-2)
-            (push (lambda () (execute (:insert-into 'test-data :set 'value 3))) (abort-hooks transaction-2))
-            (push (lambda () (execute (:insert-into 'test-data :set 'value 4))) (abort-hooks transaction-1))
+            (push (lambda () (execute (:insert-into 'test-data :set 'value 3)))
+                  (abort-hooks transaction-2))
+            (push (lambda () (execute (:insert-into 'test-data :set 'value 4)))
+                  (abort-hooks transaction-1))
             (error "no wait")
             (execute (:insert-into 'test-data :set 'value 2)))))
       (is (= 2 (length (query (:select '* :from 'test-data)))))
@@ -615,29 +639,32 @@
     (execute (:drop-table 'test-data))))
 
 (test cursor
-  (is (equal (with-test-connection
-                    (query (:create-table (:temp 'test-data1) ((value :type integer))))
-                    (loop for x from 1 to 100 do (execute (:insert-into 'test-data1 :set 'value x)))
-                    (with-transaction ()
-                      (execute "declare test_data1_values cursor with hold for select * from test_data1")
-                      (query "fetch forward 2 from test_data1_values")))
+  (is (equal
+       (with-test-connection
+         (query (:create-table (:temp 'test-data1) ((value :type integer))))
+         (loop for x from 1 to 100 do (execute (:insert-into 'test-data1 :set 'value x)))
+         (with-transaction ()
+           (execute "declare test_data1_values cursor with hold for select * from test_data1")
+           (query "fetch forward 2 from test_data1_values")))
              '((1) (2))))
-  (is (equal (with-test-connection
-                    (query (:create-table (:temp 'test-data1) ((value :type integer))))
-                    (loop for x from 1 to 100 do (execute (:insert-into 'test-data1 :set 'value x)))
-                    (with-transaction ()
-                      (execute "declare test_data1_values cursor with hold for select * from test_data1")
-                      (query "fetch forward 2 from test_data1_values"))
-                    (query "fetch next from test_data1_values"))
-             '((3))))
-  (is (equal (with-test-connection
-                    (query (:create-table (:temp 'test-data1) ((value :type integer))))
-                    (loop for x from 1 to 100 do (execute (:insert-into 'test-data1 :set 'value x)))
-                    (with-transaction ()
-                      (execute "declare test_data1_values cursor with hold for select * from test_data1")
-                      (query "fetch forward 2 from test_data1_values"))
-                    (query "fetch forward 5 from test_data1_values"))
-             '((3) (4) (5) (6) (7)))))
+  (is (equal
+       (with-test-connection
+         (query (:create-table (:temp 'test-data1) ((value :type integer))))
+         (loop for x from 1 to 100 do (execute (:insert-into 'test-data1 :set 'value x)))
+         (with-transaction ()
+           (execute "declare test_data1_values cursor with hold for select * from test_data1")
+           (query "fetch forward 2 from test_data1_values"))
+         (query "fetch next from test_data1_values"))
+       '((3))))
+  (is (equal
+       (with-test-connection
+         (query (:create-table (:temp 'test-data1) ((value :type integer))))
+         (loop for x from 1 to 100 do (execute (:insert-into 'test-data1 :set 'value x)))
+         (with-transaction ()
+           (execute "declare test_data1_values cursor with hold for select * from test_data1")
+           (query "fetch forward 2 from test_data1_values"))
+         (query "fetch forward 5 from test_data1_values"))
+       '((3) (4) (5) (6) (7)))))
 
 (test notification
   (with-test-connection
@@ -748,17 +775,21 @@ and second the string name for the datatype."
   "Test various index functions"
   (with-test-connection
     (pomo:drop-table 'people :if-exists t :cascade t)
-    (query (:create-table 'people ((id :type (or integer db-null) :primary-key :identity-by-default) (first-name :type (or (varchar 50) db-null))
+    (query (:create-table 'people ((id :type (or integer db-null) :primary-key :identity-by-default)
+                                   (first-name :type (or (varchar 50) db-null))
                                    (last-name :type (or (varchar 50) db-null)))))
     (query (:create-index 'idx-people-names :on 'people :fields 'last-name 'first-name))
     (query (:create-index 'idx-people-first-names :on 'people :fields 'first-name))
     (query (:insert-rows-into 'people
                           :columns 'first-name 'last-name
-                          :values '(("Eliza" "Gregory")  ("Dean" "Rodgers")  ("Christine" "Alvarez")  ("Dennis" "Peterson")
-                          ("Ernest" "Roberts")  ("Jorge" "Wood")  ("Harvey" "Strickland")  ("Eugene" "Rivera")
-                          ("Tillie" "Bell")  ("Marie" "Lloyd")  ("John" "Lyons")  ("Lucas" "Gray")  ("Edward" "May")
-                          ("Randy" "Fields")  ("Nell" "Malone")  ("Jacob" "Maxwell")  ("Vincent" "Adams")
-                          ("Henrietta" "Schneider")  ("Ernest" "Mendez")  ("Jean" "Adams")  ("Olivia" "Adams"))))
+                          :values '(("Eliza" "Gregory")  ("Dean" "Rodgers")  ("Christine" "Alvarez")
+                                    ("Dennis" "Peterson") ("Ernest" "Roberts") ("Jorge" "Wood")
+                                    ("Harvey" "Strickland") ("Eugene" "Rivera")
+                                    ("Tillie" "Bell")  ("Marie" "Lloyd")  ("John" "Lyons")
+                                    ("Lucas" "Gray")  ("Edward" "May")
+                                    ("Randy" "Fields")  ("Nell" "Malone")  ("Jacob" "Maxwell")
+                                    ("Vincent" "Adams") ("Henrietta" "Schneider")
+                                    ("Ernest" "Mendez")  ("Jean" "Adams")  ("Olivia" "Adams"))))
     (let ((idx-symbol (first (list-indices)))
           (idx-string (first (list-indices t))))
       (is (pomo:index-exists-p idx-symbol))
