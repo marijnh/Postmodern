@@ -139,6 +139,18 @@ is present only for historical reasons."
     (setf (transaction-open-p transaction) nil)
     (mapc #'funcall (abort-hooks transaction))))
 
+(defun rollback-transaction (transaction)
+  "Roll back the given transaction to the beginning, but the transaction
+block is still active. Thus calling abort-transaction in the middle of a
+transaction does not end the transaction. Any subsequent statements will still
+be executed. Per the Postgresql documentation: this rolls back the current
+transaction and causes all the updates made by the transaction to be discarded."
+  (when (transaction-open-p transaction)
+    (let ((*database* (transaction-connection transaction)))
+      (execute "ABORT"))
+    (setf (transaction-open-p transaction) nil)
+    (mapc #'funcall (abort-hooks transaction))))
+
 (defun commit-transaction (transaction)
   "Immediately commit an open transaction."
   (when (transaction-open-p transaction)
@@ -173,7 +185,32 @@ The body is executed and, at the end of body, the savepoint is released, unless 
 condition is thrown, in which case it is rolled back. Execute the body within a
 savepoint, releasing savepoint when the body exits normally, and rolling back
 otherwise. NAME is both the variable that can be used to release or rolled back
-before the body unwinds, and the SQL name of the savepoint."
+before the body unwinds, and the SQL name of the savepoint.
+
+An example might look like this:
+
+(defun test12 (x &optional (y nil))
+  (with-logical-transaction (lt1 :read-committed-rw)
+    (execute (:insert-into 'test-data :set 'value 0))
+    (with-savepoint sp1
+      (execute (:insert-into 'test-data :set 'value 1))
+      (if (< x 0)
+          (rollback-savepoint sp1)
+          (release-savepoint sp1)))
+    (with-savepoint sp2
+      (execute (:insert-into 'test-data :set 'value 2))
+      (with-savepoint sp3
+        (execute (:insert-into 'test-data :set 'value 3))
+        (if (> x 0)
+            (rollback-savepoint sp3)
+            (release-savepoint sp3))
+        (when y (rollback-savepoint sp2)))
+      (if (= x 0)
+          (rollback-savepoint sp2)
+          (release-savepoint sp2)))
+    (when (string= y \"abrt\")
+      (abort-transaction lt1))))"
+
   `(call-with-savepoint ',name (lambda (,name)
                                  (declare (ignorable ,name)) ,@body)))
 
