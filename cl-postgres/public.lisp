@@ -387,7 +387,6 @@ prepared statements are per-connection, so they can only be executed through
 the same connection that prepared them."
   (check-type query string)
   (check-type name string)
-  (log:info "prepare-query:public.lisp: query ~a parameters ~a~%" query parameters)
   (with-reconnect-restart connection
     (using-connection connection
                       (send-parse (connection-socket connection) name query parameters)
@@ -413,7 +412,6 @@ affected rows is optionally returned as a second value.
 row-reader to the result."
   (check-type name string)
   (check-type parameters list)
-  (log:info "exec-prepared:public.lisp: name ~a parameters ~atype ~a~%" name parameters (type-of (first parameters)))
   (with-reconnect-restart connection
     (using-connection connection
                       (send-execute (connection-socket connection)

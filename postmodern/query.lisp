@@ -193,7 +193,6 @@ cdr contains the arguments. For example:
                           ,@body)))))
     (when (and (consp query) (not (keywordp (first query))))
       (setf args (cdr query) query (car query)))
-        (log:info "query.lisp:doquery args ~a~%" args)
     (if args
         `(let ((,query-name ,(real-query query)))
            (prepare-query *database* "" ,query-name (list ,@args))

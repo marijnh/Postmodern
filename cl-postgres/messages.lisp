@@ -270,7 +270,6 @@ for binding data for binary long object columns."
            (type vector result-formats)
            (type list parameters)
            #.*optimize*)
-  (log:info "bind-message:messages.lisp: 1. result-formats ~a parameters ~a type ~a~%" result-formats parameters (type-of (first parameters)))
   (let* ((n-params (length parameters))
          (param-formats (make-array n-params :element-type 'fixnum))
          (param-sizes (make-array n-params :element-type 'fixnum))

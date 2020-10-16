@@ -28,8 +28,6 @@ different than the query statement provided to ensure-prepared.")
 set to t (not the default), it will overwrite the existing query of the same
 name. Reminder that the meta info is a list of query, params."
   (let ((meta (connection-meta connection)))
-    (log:info "ensure-prepared:prepare.lisp: id ~a query ~a params ~a type ~a~%"
-              id query params (type-of (first params)))
     (unless (and (gethash id meta)
                  (if overwrite
                      (equal (first (gethash id meta)) query)
@@ -54,7 +52,6 @@ prepared statement of the same name the first time generate-prepared is called
 for this function name. Subsequent calls to the generated function will not
 overwrite unless postgresql throws a duplicate-prepared-statement error."
   (destructuring-bind (reader result-form) (reader-for-format format)
-      (log:info "generate-prepared:prepare.lisp: 1. name ~a query ~a ~%" name query)
     (let ((base `(exec-prepared *database* statement-id params ,reader)))
       `(let ((statement-id ,(string name))
              (query ,(real-query query)))
@@ -80,18 +77,12 @@ overwrite unless postgresql throws a duplicate-prepared-statement error."
                                       (progn
                                         (setf overwrite nil)
                                         (drop-prepared-statement statement-id :remove-function nil)
-                                        (log:info "generate-prepared:prepare.lisp: 2. query ~a params ~a~%" query params)
                                         (ensure-prepared *database* statement-id
                                                          query t params))
                                       (let ((prepared-statement-param-types
                                               (cl-postgres::parameter-list-types (second
                                                                      (find-postmodern-prepared-statement statement-id))))
                                             (param-types (cl-postgres::parameter-list-types params)))
-                                        (log:info "generate-prepared:prepare.lisp: 3. query ~a
-params ~a ~%
-type ~a~% prepared-statement ~a~%"
-                                                  query params (type-of (first params))
-                                                  (find-postmodern-prepared-statement statement-id))
                                         (if (equal prepared-statement-param-types
                                                param-types)
                                             (ensure-prepared *database* statement-id
@@ -228,7 +219,6 @@ This behavior is controlled by the remove-function key parameter."
   (setf name (string-upcase name))
   (when database
     (cond ((eq location :both)
-           (log:info "drop-prepared-statement 1 both name ~a location ~a remove-function ~a~%" name location remove-function)
            (cond ((equal name "ALL")
                   (maphash #'(lambda (x y)
                                (declare (ignore y))
@@ -250,7 +240,6 @@ This behavior is controlled by the remove-function key parameter."
           ((eq location :postmodern)
            (if (equal name "ALL")
                (progn
-                 (log:info "drop-prepared-statement 2 postmodern~%")
                  (maphash #'(lambda (x y)
                              (declare (ignore y))
                              (remhash x (connection-meta database))
@@ -259,17 +248,14 @@ This behavior is controlled by the remove-function key parameter."
                                (fmakunbound (find-symbol (string-upcase x)))))
                          (connection-meta database)))
                (progn
-                 (log:info "drop-prepared-statement 3 postmodern~%")
                  (remhash (string-upcase name)
                           (connection-meta database))
                  (when (and remove-function (find-symbol (string-upcase name)))
                    (fmakunbound (find-symbol (string-upcase name)))))))
           ((eq location :postgresql)
            (cond ((equal name "ALL")
-                  (log:info "drop-prepared-statement 4 postgresql~%")
                   (query "deallocate ALL"))
                  (t
-                  (log:info "drop-prepared-statement 5 postgresql~%")
                   (handler-case
                         (query (format nil "deallocate ~:@(~S~)" name))
                       (cl-postgres-error:invalid-sql-statement-name ()
@@ -284,7 +270,6 @@ prepared statement at the database connection level and restart the connection."
          (statement (find-postmodern-prepared-statement name))
          (pid (write-to-string (first (cl-postgres::connection-pid *database*)))))
     (setf (cl-postgres::connection-available *database*) t)
-    (log:info "reset-prepared-statement:prepare.lisp: params ~a" params)
     (when statement
       (cl-postgres::with-reconnect-restart *database*
         (terminate-backend pid))

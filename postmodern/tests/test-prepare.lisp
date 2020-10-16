@@ -187,11 +187,8 @@
                                        (c :type (or text db-null)))))
     (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
     (defprepared select1 "select a from test_data where c = $1" :single)
-    (log:info "~%1. ~a~%~a~%" (list-prepared-statements)(list-postmodern-prepared-statements))
     (is (equal 1 (funcall 'select1 "foobar")))
-    (log:info "~%2. ~a~%~a~%" (list-prepared-statements) (list-postmodern-prepared-statements))
     (defprepared select1 "select c from test_data where a = $1" :single)
-    (log:info "~%3. ~a ~%~a~%~%" (list-prepared-statements) (list-postmodern-prepared-statements))
     (funcall 'select1 1)))
 
 (test prepare-4
@@ -217,10 +214,9 @@
               10))
    ;; Test to ensure that we do not recreate the statement each time it is funcalled
    (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single)))
-        (log:info "Sleep 1 to allow prepare_time comparison~%")
-        (sleep 1)
-        (funcall 'select1 2)
-        (is (equal time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single))))))
+     (sleep 1)
+     (funcall 'select1 2)
+     (is (equal time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single))))))
 
 (test prepare-change-param-no-table-txt
   (with-test-connection
@@ -424,9 +420,6 @@
       (is (equal 1 (length (list-prepared-statements t))))
       (is (equal 2 (length (list-postmodern-prepared-statements t))))
 ;;; A2
-      (log:info "~%~%AAAA postmodern ~a~% postgresql ~a~%~%"
-              (list-postmodern-prepared-statements)
-              (list-prepared-statements))
 
       ;; recreate the defprepared statement into postgresql
       (is (equal 1 (funcall 'select1 "foobar")))
@@ -440,7 +433,6 @@
       (is (equal 3 (length (list-prepared-statements t))))
       (is (member '("SELECT1" . ("select a from test_data where c = $1" ("foobar")))
                   (list-postmodern-prepared-statements) :test 'equal))
-      (log:info "~%A3   ~a~%~%" (list-postmodern-prepared-statements t))
       (is (member "SELECT1" (list-postmodern-prepared-statements t) :test 'equal))
       (is (equal '("select a from test_data where c = $1" ("foobar"))
                  (find-postmodern-prepared-statement "select1")))
@@ -467,7 +459,6 @@
       (let ((time1
               (query "select prepare_time from pg_prepared_statements where name = 'select1'"
                      :single)))
-        (log:info "Sleep 1 to allow prepare_time comparison~%")
         (sleep 1)
         (funcall 'select1 2)
         (is (equal time1

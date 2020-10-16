@@ -108,7 +108,6 @@ than they are in the database table itself. Obviously the table needs to have
 been defined. You can provide a quoted class-name or an instance of a dao."))
 
 (defmethod dao-keys :before ((class dao-class))
-  (log:info "dao-keys before 1~%")
   (unless (class-finalized-p class)
     #+postmodern-thread-safe
     (unless (class-finalized-p class)
@@ -145,11 +144,9 @@ Returns a symbol."))
   t)
 
 (defmethod dao-keys ((class-name symbol))
-  (log:info "dao-keys class-name 1~%")
   (dao-keys (find-class class-name)))
 
 (defmethod dao-keys (dao)
-  (log:info "dao-keys dao~%")
   (mapcar #'(lambda (slot)
               (slot-value dao slot))
           (dao-keys (the dao-class (class-of dao)))))
@@ -198,7 +195,6 @@ such a class)."
   inheritance has been finalised."
   ;; The effective set of keys of a class is the union of its keys and
   ;; the keys of all its superclasses.
-  (log:info "finalize-inheritance 1 already finalized? ~a~%" (class-finalized-p class))
   (setf (slot-value class 'effective-keys)
         (reduce 'union (mapcar 'direct-keys (dao-superclasses class))))
   (unless (every (lambda (x) (member x (dao-column-fields class))) (dao-keys class))
@@ -323,7 +319,6 @@ there is no existing object to oupdate, then you insert a new object."))
 
 (defgeneric get-dao (type &rest args)
   (:method ((class-name symbol) &rest args)
-    (log:info "get-dao 1~%")
     (let ((class (find-class class-name)))
       (unless (class-finalized-p class)
         #+postmodern-thread-safe
@@ -344,11 +339,9 @@ The same goes for select-dao and query-dao."))
 
 (defgeneric make-dao (type &rest args &key &allow-other-keys)
   (:method ((class-name symbol) &rest args &key &allow-other-keys)
-    (log:info "make-dao 1~%")
     (let ((class (find-class class-name)))
       (apply 'make-dao class args)))
   (:method ((class dao-class) &rest args &key &allow-other-keys)
-    (log:info "make-dao 1~%")
     (unless (class-finalized-p class)
       #+postmodern-thread-safe
       (unless (class-finalized-p class)
@@ -368,7 +361,6 @@ environment where dao-name is bound to a freshly created and inserted DAO. The
 representation of the DAO in the database is then updated to reflect changes
 that body might have introduced. Useful for processing values of slots with the
 type serial, which are unknown before insert-dao."
-  (log:info "define-dao-finalization 1~%")
   (let ((args-name (gensym)))
     `(defmethod make-dao :around ((class (eql ',class))
                                   &rest ,args-name
@@ -401,7 +393,6 @@ in a dao class. Field-sql-name returns the col-name for the
 postgresql table, which may or may not be the same as the slot
 names in the class and also may have no relation to the initarg
 or accessor or reader.)"
-  (log:info "build-dao-methods 1 ~a ~%" class)
   (setf (slot-value class 'column-map)
         (mapcar (lambda (s) (cons (slot-sql-name s) (slot-definition-name s)))
                 (dao-column-slots class)))
@@ -427,10 +418,8 @@ or accessor or reader.)"
                (slot-values (object &rest slots)
                  (loop :for slot :in (apply 'append slots)
                        :collect (slot-value object slot))))
-  (log:info "build-dao-methods 2 ~%")
         ;; When there is no primary key, a lot of methods make no sense.
         (when key-fields
-            (log:info "build-dao-methods 3 ~%")
           (let ((tmpl (sql-template `(:select (:exists (:select t :from ,table-name
                                                         :where ,(test-fields
                                                                  key-fields)))))))
@@ -440,7 +429,6 @@ or accessor or reader.)"
 
           ;; When all values are primary keys, updating makes no sense.
           (when value-fields
-              (log:info "build-dao-methods 4 ~%")
             (let ((update-tmpl (sql-template `(:update ,table-name
                                         :set ,@(set-fields value-fields)
                                         :where ,(test-fields key-fields)))))
@@ -639,7 +627,6 @@ See also: upsert-dao."
       nil)))
 
 (defun query-dao% (type query row-reader &rest args)
-  (log:info "table.lisp:query-dao% 1 query ~a ~%" query)
   (let ((class (find-class type)))
     (unless (class-finalized-p class)
       #+postmodern-thread-safe
@@ -649,7 +636,6 @@ See also: upsert-dao."
             (finalize-inheritance class))))
       #-postmodern-thread-safe
       (finalize-inheritance class))
-    (log:info "table.lisp:query-dao% query ~a 2~%" query)
     (if args
         (progn
           (prepare-query *database* "" query)
@@ -740,7 +726,6 @@ Example:
 string with a definition of the table. This is just the bare simple definition,
 so if you need any extra indices or or constraints, you'll have to write your
 own queries to add them, in which case look to s-sql's create-table function."
-  (log:info "dao-table-definition 1 finalized? ~%" )
   (unless (typep table 'dao-class)
     (setf table (find-class table)))
   (unless (class-finalized-p table)
@@ -751,7 +736,6 @@ own queries to add them, in which case look to s-sql's create-table function."
           (finalize-inheritance table))))
     #-postmodern-thread-safe
     (finalize-inheritance table))
-  (log:info "dao-table-definition 2 finalized? ~a ~%" (class-finalized-p table))
   (sql-compile
    `(:create-table ,(dao-table-name table)
                    ,(loop :for slot :in (dao-column-slots table)

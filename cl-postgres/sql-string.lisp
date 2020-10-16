@@ -209,16 +209,12 @@ used by S-SQL.)")
 that PostgreSQL understands when sent through its socket connection. May return
 a string or a (vector (unsigned-byte 8)).")
   (:method ((arg integer))
-    (log:info "serialize-for-postgres:sql-string.lisp: integer arg ~a~%" arg)
     (int-to-vector arg))
   (:method ((arg single-float))
-    (log:info "serialize-for-postgres:sql-string.lisp: single-float arg ~a~%" arg)
     (int32-to-vector (cl-postgres-ieee-floats:encode-float32 arg)))
   #-clisp   (:method ((arg double-float)) ;; CLISP doesn't allow methods on double-float
-              (log:info "serialize-for-postgres:sql-string.lisp: double-float arg ~a~%" arg)
               (int64-to-vector (cl-postgres-ieee-floats:encode-float64 arg)))
   (:method (arg)
-    (log:info "serialize-for-postgres:sql-string.lisp: arg ~a~%" arg)
     (cond ((typep arg 'boolean)
            (if arg (int8-to-vector 1)
                (int8-to-vector 0)))
@@ -252,7 +248,6 @@ a string or a (vector (unsigned-byte 8)).")
     "Takes a 16 byte positive integer and returns a vector of unsigned bytes
 with a length of 2."
   (declare (type (signed-byte 16) int))
-  (log:info "int16-to-vector:sql-string.lisp: int ~a~%" int)
   (let ((intv (make-array '(2) :element-type '(unsigned-byte 8))))
     (setf (aref intv 0) (ldb (byte 8 8) int))
     (setf (aref intv 1) (ldb (byte 8 0) int))
@@ -296,7 +291,6 @@ purposes (int2, int4, int8)"
 from postmodern to postgresql in binary. Currently that only includes integers,
 single-floats, double-floats and boolean. Everything else will be passed as
 text for postgresql to interpret."
-  (log:info "param-to-oid:sql-string.lisp: param ~a~%" param)
   (typecase param
     (int4 cl-postgres-oid:+int4+)
     (int8 cl-postgres-oid:+int8+)
