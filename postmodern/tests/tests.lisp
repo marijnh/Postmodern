@@ -801,3 +801,62 @@ and second the string name for the datatype."
   (is (equal (valid-sql-identifier-p "住所") T))
   (is (equal (valid-sql-identifier-p "会议") T))
   (is (equal (valid-sql-identifier-p "kusipää") T)))
+
+(test return-types
+  (is (equal (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)))
+             '((1 2147483645 "text one") (2 0 "text two"))))
+
+ (is (equal (query (:select 'text :from 'short-data-type-tests :where (:= 'id 3)) :single)
+            "text three"))
+
+ (is (equal (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :list)
+            '(3 3 "text three")))
+
+ (is (equal (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :lists)
+            '((1 2147483645 "text one") (2 0 "text two"))))
+
+ (is (equal (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :alist)
+            '((:ID . 3) (:INT4 . 3) (:TEXT . "text three"))))
+
+ (is (equal (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :str-alist)
+            '(("id" . 3) ("int4" . 3) ("text" . "text three"))))
+
+ (is (equal (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :alists)
+            '(((:ID . 1) (:INT4 . 2147483645) (:TEXT . "text one"))
+              ((:ID . 2) (:INT4 . 0) (:TEXT . "text two")))))
+
+ (is (equal (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :str-alists)
+            '((("id" . 1) ("int4" . 2147483645) ("text" . "text one"))
+              (("id" . 2) ("int4" . 0) ("text" . "text two")))))
+
+ (is (equal (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :plist)
+            '(:ID 3 :INT4 3 :TEXT "text three")))
+
+ (is (equal (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :plists)
+            '((:ID 1 :INT4 2147483645 :TEXT "text one") (:ID 2 :INT4 0 :TEXT "text two"))))
+
+ (is (typep (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :array-hash) 'vector))
+
+ (is (typep (aref (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :array-hash) 1) 'hash-table))
+
+ (is (equal (alexandria:hash-table-alist
+             (aref
+              (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :array-hash)
+              1))
+            '(("text" . "text two") ("int4" . 0) ("id" . 2))))
+
+  (is (equal (query (:select 'id :from 'short-data-type-tests :where (:< 'id 3)) :column)
+             '(1 2)))
+
+ (is (equal (query (:select 'id :from 'short-data-type-tests :where (:= 'id 3)) :column)
+            '(3)))
+
+ (is (equal (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :json-strs)
+            '("{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}"
+              "{\"id\":2,\"int4\":0,\"text\":\"text two\"}")))
+
+ (is (equal (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :json-str)
+            "{\"id\":3,\"int4\":3,\"text\":\"text three\"}"))
+
+ (is (equal (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :json-array-str)
+            "[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]")))

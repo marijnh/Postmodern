@@ -33,7 +33,8 @@
   ((:module "postmodern"
             :components ((:file "package")
                          (:file "connect" :depends-on ("package"))
-                         (:file "query" :depends-on ("connect"))
+                         (:file "json-encoder" :depends-on ("package"))
+                         (:file "query" :depends-on ("connect" "json-encoder"))
                          (:file "prepare" :depends-on ("query"))
                          (:file "roles" :depends-on ("query"))
                          (:file "util" :depends-on ("query" "roles"))

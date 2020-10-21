@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-10-12 Mon 13:38 -->
+<!-- 2020-10-20 Tue 20:51 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern Reference Manual</title>
@@ -256,7 +256,7 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#d6471bf2-e471-4607-8979-1b811cabada0">Connecting</a>
+<li><a href="#connecting">Connecting</a>
 <ul>
 <li><a href="#dfc95b36-94d7-42ab-827b-8622f593e7f6">class database-connection</a></li>
 <li><a href="#d4aa3e04-ab90-4271-b3e7-60a48e4f2e49">function connect (database user-name password host &amp;key (port 5432) pooled-p use-ssl)</a></li>
@@ -274,9 +274,29 @@ for the JavaScript code in this tag.
 <li><a href="#09583f9a-388a-400a-bb3c-d118242508c8">function list-connections ()</a></li>
 </ul>
 </li>
-<li><a href="#197e3028-ddf0-4897-b6cf-5cabc643757f">Querying</a>
+<li><a href="#querying">Querying</a>
 <ul>
-<li><a href="#5a8c24fb-6d7b-4952-8520-b5e8ea98dd77">macro query (query &amp;rest args/format)</a></li>
+<li><a href="#5a8c24fb-6d7b-4952-8520-b5e8ea98dd77">macro query (query &amp;rest args/format)</a>
+<ul>
+<li><a href="#orgbdb7f95">Default</a></li>
+<li><a href="#orgf3ddb5f">Single</a></li>
+<li><a href="#org49b94ab">List</a></li>
+<li><a href="#org7cce963">Lists</a></li>
+<li><a href="#orgef539de">Alist</a></li>
+<li><a href="#org16eabf7">Str-alist</a></li>
+<li><a href="#org8e106dc">Alists</a></li>
+<li><a href="#org41ec1cd">Str-alists</a></li>
+<li><a href="#org5feedee">Plist</a></li>
+<li><a href="#org638c9ad">Plists</a></li>
+<li><a href="#org877a23d">Array-hash</a></li>
+<li><a href="#org7ec378a">Dao</a></li>
+<li><a href="#orgd627179">Column</a></li>
+<li><a href="#org0558771">Json-strs</a></li>
+<li><a href="#org1bae5e9">Json-str</a></li>
+<li><a href="#org0144c2f">Json-array-str</a></li>
+<li><a href="#orga3d3b55">Second value returned</a></li>
+</ul>
+</li>
 <li><a href="#71106869-4169-49c8-ba7d-ce6b9fc7d780">macro execute (query &amp;rest args)</a></li>
 <li><a href="#66aa9f57-ac8a-4457-9891-3453682518e0">macro doquery (query (&amp;rest names) &amp;body body)</a></li>
 <li><a href="#625b6ade-7b09-49dc-b288-78c550b25d83">macro prepare (query &amp;optional (format :rows))</a></li>
@@ -285,7 +305,7 @@ for the JavaScript code in this tag.
 <li><a href="#453612e6-2835-41b2-8305-01b6b5473138">macro with-transaction ((&amp;optional name isolation-level) &amp;body body)</a></li>
 <li><a href="#10b5d3e9-b174-4f02-8c47-6eb3430e60fe">function commit-transaction (transaction)</a></li>
 <li><a href="#58a7459f-a1f4-4797-83b5-8b5257ca2cf7">function abort-transaction (transaction)</a></li>
-<li><a href="#org1171715">function rollback-transaction (transaction)</a></li>
+<li><a href="#org693c207">function rollback-transaction (transaction)</a></li>
 <li><a href="#5899097b-a5fb-4b7a-961b-3c65a95f81d4">macro with-savepoint (name &amp;body body)</a></li>
 <li><a href="#a6d99838-ed98-4839-ac13-c03ecbfd6f96">function release-savepoint (savepoint)</a></li>
 <li><a href="#1f84633f-e567-42c6-bcfc-2167dad89165">function rollback-savepoint (savepoint)</a></li>
@@ -300,7 +320,7 @@ for the JavaScript code in this tag.
 <li><a href="#9ca2ed2b-60ea-4e34-b370-a4f54c1f1dcd">macro ensure-transaction-with-isolation-level (isolation-level &amp;body body)</a></li>
 </ul>
 </li>
-<li><a href="#6869a7d5-eac4-40c1-8bf6-d14925c7da55">Helper functions for Prepared Statements</a>
+<li><a href="#prepared-statement-helper-functions">Helper functions for Prepared Statements</a>
 <ul>
 <li><a href="#533331a5-6780-41bd-9ae8-2efac3a3c2c2">defparameter <b>allow-overwriting-prepared-statements</b></a></li>
 <li><a href="#7ca58f04-2ad5-4896-b8c2-b13b276b4f5b">function prepared-statement-exists-p (name)</a></li>
@@ -316,23 +336,23 @@ for the JavaScript code in this tag.
 <li><a href="#203185f5-030c-48e7-8767-e765ac96f8cb">function terminate-backend (pid)</a></li>
 </ul>
 </li>
-<li><a href="#14e37c88-0e4b-48d6-aa31-5686e6456190">Database Management</a>
+<li><a href="#database-management">Database Management</a>
 <ul>
 <li><a href="#c3da07c5-73e2-407c-a4cf-155b3ae416b2">function create-database (database-name &amp;key (encoding "UTF8") (connection-limit -1) owner limit-public-access comment collation template)</a></li>
-<li><a href="#b52e172a-2af0-4c19-a28c-db55b543964a">function drop-database (database)</a></li>
+<li><a href="#database-management">function drop-database (database)</a></li>
 </ul>
 </li>
-<li><a href="#da21e1d9-5b86-42dc-a819-3de4ea2597dc">Database access objects</a>
+<li><a href="#daos">Database access objects</a>
 <ul>
 <li><a href="#d1d4b5c3-8c21-478e-8ac1-404e4ffdbec5">metaclass dao-class</a></li>
 <li><a href="#9027b960-0a1a-4b64-a621-d1d4ab2906f0">Out of Sync Dao Objects</a></li>
 <li><a href="#b12ed2b8-fc3f-4d3a-ba2a-3c9484d770dc">method dao-keys (class)</a></li>
 <li><a href="#34196ad8-c657-4fd0-a475-e2f0b81ff86c">method dao-keys (dao)</a></li>
-<li><a href="#orgf986e70">method find-primary-key-column</a></li>
+<li><a href="#org9df6c5f">method find-primary-key-column</a></li>
 <li><a href="#d5835157-a4ba-4bf0-abbd-214b5a90bc80">method dao-exists-p (dao)</a></li>
 <li><a href="#24bce212-b7c3-4526-a869-92c0218f187d">method make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)</a></li>
-<li><a href="#org94fe626">method fetch-defaults (dao)</a></li>
-<li><a href="#org320d474">method find-primary-key-column (class)</a></li>
+<li><a href="#org8b0d427">method fetch-defaults (dao)</a></li>
+<li><a href="#org59d8639">method find-primary-key-column (class)</a></li>
 <li><a href="#f7351c36-cb79-43a2-8a5b-5f8aac8ea2d9">macro define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)</a></li>
 <li><a href="#73e62fab-5bfa-4986-b8c4-992e4d0a134b">method get-dao (type &amp;rest keys)</a></li>
 <li><a href="#cd11fa85-5019-4b94-a24c-d0857d633bd2">macro select-dao (type &amp;optional (test t) &amp;rest sort)</a></li>
@@ -351,7 +371,7 @@ for the JavaScript code in this tag.
 <li><a href="#d8aa15a1-7dfc-47b3-ae14-70626c33bcc3">macro with-column-writers ((&amp;rest writers) &amp;body body)</a></li>
 </ul>
 </li>
-<li><a href="#26cf8623-bc7a-419b-831c-e83f6621f950">Table definition and creation</a>
+<li><a href="#table-definition">Table definition and creation</a>
 <ul>
 <li><a href="#16d26863-ae01-49f3-9350-8ea2d5ca363c">macro deftable (name &amp;body definition)</a></li>
 <li><a href="#d7e145ff-9666-43eb-813d-78a87116532e">variable <b>table-name</b></a></li>
@@ -373,7 +393,7 @@ for the JavaScript code in this tag.
 </li>
 </ul>
 </li>
-<li><a href="#f2e31575-047f-4629-9ffc-52b792726fd1">Roles</a>
+<li><a href="#roles">Roles</a>
 <ul>
 <li><a href="#694123c8-957f-4b11-a344-094525d35e7f">function role-exists-p (role-name)</a></li>
 <li><a href="#07a9f936-c1b7-4a7d-b5a5-57cd6a24870a">function create-role</a></li>
@@ -390,7 +410,7 @@ for the JavaScript code in this tag.
 <li><a href="#fd161f71-a334-4959-8b42-dda5271ef6d5">function list-role-permissions (&amp;optional role)</a></li>
 </ul>
 </li>
-<li><a href="#c6f7f5b5-8721-41b4-bf00-85811e189037">Database Information</a>
+<li><a href="#database-information">Database Information</a>
 <ul>
 <li><a href="#22c6eb1c-c0ca-44fc-a8f1-590fda047866">function add-comment (type name comment &amp;optional (second-name ""))</a></li>
 <li><a href="#d993f27b-95d6-4a5b-bdf3-3e06beed0213">function get-database-comment (database-name)</a></li>
@@ -416,7 +436,7 @@ for the JavaScript code in this tag.
 <li><a href="#c532268f-61d7-4613-85cc-460d7d92aab0">function check-query-performance (&amp;optional (ob nil) (num-calls 100) (limit 20))</a></li>
 </ul>
 </li>
-<li><a href="#5042445e-d459-4768-877f-a044c19da7bd">Constraints</a>
+<li><a href="#constraints">Constraints</a>
 <ul>
 <li><a href="#e20d9e5c-b0a7-44a6-8907-ad205ec1e0b8">function list-unique-or-primary-constraints (table-name)</a></li>
 <li><a href="#4b8a62cb-647b-4c3b-b2a7-58476fff58d1">function list-all-constraints (table-name)</a></li>
@@ -424,7 +444,7 @@ for the JavaScript code in this tag.
 <li><a href="#dfe5a61e-7450-47b7-a17b-0d9bd83e1706">function describe-foreign-key-constraints ()</a></li>
 </ul>
 </li>
-<li><a href="#96fac10c-b466-437d-8652-8576de48ce5e">Indexes/Indices</a>
+<li><a href="#indexes">Indexes/Indices</a>
 <ul>
 <li><a href="#21392a30-a33c-4330-9a96-abaebcc0af66">function create-index (name  &amp;key unique if-not-exists concurrently on using fields)</a></li>
 <li><a href="#6bfcf7a6-6c14-4fad-82f4-5be599f1466b">function drop-index (name &amp;key concurrently if-exists cascade)</a></li>
@@ -435,13 +455,13 @@ for the JavaScript code in this tag.
 <li><a href="#56922f26-5ab4-4c1a-98a2-a0ab56eff9bb">function list-index-definitions (table-name)</a></li>
 </ul>
 </li>
-<li><a href="#d9f479ec-2b7e-47a6-bd38-847822efd073">Keys</a>
+<li><a href="#keys">Keys</a>
 <ul>
 <li><a href="#5bf78e17-6506-4f49-b103-9900978f8344">function find-primary-key-info (table-name &amp;optional (just-key nil))</a></li>
 <li><a href="#68d136c2-a216-4def-87f9-726f72dda631">function list-foreign-keys (table-name)</a></li>
 </ul>
 </li>
-<li><a href="#6dc6d668-aab8-47f7-a8ea-ee2a1133219b">Schema/Schemata</a>
+<li><a href="#schema">Schema/Schemata</a>
 <ul>
 <li><a href="#9b1b791c-5e04-4512-91cb-9b44fac7b76e">macro with-schema ((namespace &amp;key :strict t :if-not-exist :create :drop-after) &amp;body body)</a></li>
 <li><a href="#cb98d8fa-8750-4d3c-b7c2-a060205609d6">function list-schemata ()</a></li>
@@ -454,7 +474,7 @@ for the JavaScript code in this tag.
 <li><a href="#cfacd9fe-b640-4aee-985b-149f4b9ce930">function split-fully-qualified-tablename (name)</a></li>
 </ul>
 </li>
-<li><a href="#16b948b1-12c3-447f-bad3-a536aab9a246">Sequences</a>
+<li><a href="#sequences">Sequences</a>
 <ul>
 <li><a href="#4d295beb-7a6d-402e-a831-00db88584cb4">function create-sequence (name &amp;key temp if-not-exists increment min-value max-value start cache)</a></li>
 <li><a href="#47336489-34f5-401b-be21-2d7cb0b47e85">function sequence-next (sequence)</a></li>
@@ -463,7 +483,7 @@ for the JavaScript code in this tag.
 <li><a href="#da78ff64-0fb8-41a7-b17e-1f24ec8abe63">function sequence-exists-p (name)</a></li>
 </ul>
 </li>
-<li><a href="#93ca2906-0494-4148-8c25-8663d1ea192e">Tables</a>
+<li><a href="#tables">Tables</a>
 <ul>
 <li><a href="#ba11f8df-3297-4720-a267-02896b49575a">function list-tables (&amp;optional strings-p)</a></li>
 <li><a href="#ad67dcb1-7123-47dc-9402-e5adcecc7e6a">function list-all-tables (&amp;optional (fully-qualified-names-only nil))</a></li>
@@ -480,26 +500,26 @@ for the JavaScript code in this tag.
 <li><a href="#e8d6e402-5c76-4533-9b5c-a823b9582c26">function get-table-comment (table-name &amp;optional schema-name)</a></li>
 </ul>
 </li>
-<li><a href="#3a5fa498-32d0-47fd-91ee-75d807e79087">Tablespaces</a>
+<li><a href="#tablespaces">Tablespaces</a>
 <ul>
 <li><a href="#70537823-781b-47dd-8c38-9936756c666c">function list-tablespaces ()</a></li>
 </ul>
 </li>
-<li><a href="#afa6058b-40a7-42ba-b23b-f6021834440b">Triggers</a>
+<li><a href="#triggers">Triggers</a>
 <ul>
 <li><a href="#7327ab9a-b79e-4180-8165-434fd4c8d383">function describe-triggers ()</a></li>
 <li><a href="#3bcdabed-dd01-4457-bc18-284598aee0a4">function list-triggers (&amp;optional table-name)</a></li>
 <li><a href="#fc3761c2-fc2e-42e4-86f2-0e918c891b5e">function list-detailed-triggers ()</a></li>
 </ul>
 </li>
-<li><a href="#8b94eb55-6a1a-4316-8bdc-c0ce4533bdff">Views</a>
+<li><a href="#views">Views</a>
 <ul>
 <li><a href="#4fd820d9-857e-48fa-a62b-e2d72313a10c">function list-views (&amp;optional strings-p)</a></li>
 <li><a href="#f9ba3cce-95e0-45a0-9ede-5654bb71e98e">function view-exists-p (name)</a></li>
 <li><a href="#bbf87da5-981c-42ad-b97e-38c7fafbf8ca">function describe-views (&amp;optional (schema "public")</a></li>
 </ul>
 </li>
-<li><a href="#f2bcb42d-d328-46b6-ac70-fbe05e6d0798">Miscellaneous Utility Functions</a>
+<li><a href="#misc-utility-functions">Miscellaneous Utility Functions</a>
 <ul>
 <li><a href="#9e576b29-c33d-425d-8759-e8e5e8367593">function coalesce (&amp;rest arguments)</a></li>
 <li><a href="#441f2929-9c04-4b01-8b85-7c474e200755">function execute-file (filename &amp;optional (print nil))</a></li>
@@ -571,12 +591,12 @@ database-connection-error, providing a :reconnect restart to re-try the
 operation that encountered to the error.
 </p>
 
-<div id="outline-container-org4cfbbea" class="outline-2">
-<h2 id="d6471bf2-e471-4607-8979-1b811cabada0"><a id="org4cfbbea"></a><a id="ID-75c23b08-3840-4d28-8ced-978d10a629d5"></a>Connecting</h2>
-<div class="outline-text-2" id="text-d6471bf2-e471-4607-8979-1b811cabada0">
+<div id="outline-container-org9799521" class="outline-2">
+<h2 id="connecting"><a id="org9799521"></a><a id="ID-75c23b08-3840-4d28-8ced-978d10a629d5"></a>Connecting</h2>
+<div class="outline-text-2" id="text-connecting">
 </div>
-<div id="outline-container-orgff626ee" class="outline-3">
-<h3 id="dfc95b36-94d7-42ab-827b-8622f593e7f6"><a id="orgff626ee"></a><a id="ID-821e500c-5206-4f8b-a505-266d18faf8cb"></a>class database-connection</h3>
+<div id="outline-container-orgc988e60" class="outline-3">
+<h3 id="dfc95b36-94d7-42ab-827b-8622f593e7f6"><a id="orgc988e60"></a><a id="ID-821e500c-5206-4f8b-a505-266d18faf8cb"></a>class database-connection</h3>
 <div class="outline-text-3" id="text-dfc95b36-94d7-42ab-827b-8622f593e7f6">
 <p>
 Representation of a database connection. Contains login information in order to
@@ -585,8 +605,8 @@ be able to automatically re-establish a connection when it is somehow closed.
 </div>
 </div>
 
-<div id="outline-container-org9562c4f" class="outline-3">
-<h3 id="d4aa3e04-ab90-4271-b3e7-60a48e4f2e49"><a id="org9562c4f"></a><a id="ID-66e24327-bae9-4378-987c-ccdacc312ddf"></a>function connect (database user-name password host &amp;key (port 5432) pooled-p use-ssl)</h3>
+<div id="outline-container-org355b664" class="outline-3">
+<h3 id="d4aa3e04-ab90-4271-b3e7-60a48e4f2e49"><a id="org355b664"></a><a id="ID-66e24327-bae9-4378-987c-ccdacc312ddf"></a>function connect (database user-name password host &amp;key (port 5432) pooled-p use-ssl)</h3>
 <div class="outline-text-3" id="text-d4aa3e04-ab90-4271-b3e7-60a48e4f2e49">
 <p>
 → database-connection
@@ -603,8 +623,8 @@ open-database, and defaults to the value of <b>default-use-ssl</b>.
 </div>
 </div>
 
-<div id="outline-container-org2ffba4d" class="outline-3">
-<h3 id="e140fab3-b6fe-4e88-b9ca-241bbb64fce4"><a id="org2ffba4d"></a><a id="ID-106f14f7-270e-4e27-a238-34c50b14e44b"></a>variable <b>default-use-ssl</b></h3>
+<div id="outline-container-org13a3260" class="outline-3">
+<h3 id="e140fab3-b6fe-4e88-b9ca-241bbb64fce4"><a id="org13a3260"></a><a id="ID-106f14f7-270e-4e27-a238-34c50b14e44b"></a>variable <b>default-use-ssl</b></h3>
 <div class="outline-text-3" id="text-e140fab3-b6fe-4e88-b9ca-241bbb64fce4">
 <p>
 The default for connect's use-ssl argument. This starts at :no. If you set it to
@@ -613,8 +633,8 @@ anything else, be sure to also load the CL+SSL library.
 </div>
 </div>
 
-<div id="outline-container-org6d9b4b4" class="outline-3">
-<h3 id="9a1a03af-a67e-4419-9066-d79a81885f81"><a id="org6d9b4b4"></a><a id="ID-4c9746be-27ce-485c-b35e-d739e7def9c4"></a>method disconnect (database-connection)</h3>
+<div id="outline-container-orgfa35785" class="outline-3">
+<h3 id="9a1a03af-a67e-4419-9066-d79a81885f81"><a id="orgfa35785"></a><a id="ID-4c9746be-27ce-485c-b35e-d739e7def9c4"></a>method disconnect (database-connection)</h3>
 <div class="outline-text-3" id="text-9a1a03af-a67e-4419-9066-d79a81885f81">
 <p>
 Disconnects a normal database connection, or moves a pooled connection into the
@@ -623,8 +643,8 @@ pool.
 </div>
 </div>
 
-<div id="outline-container-orgf37f25d" class="outline-3">
-<h3 id="a660d0cc-4795-41df-b183-0ea31f6b6584"><a id="orgf37f25d"></a><a id="ID-d9f11a8d-3676-42e9-aee9-a544ef67df28"></a>function connected-p (database-connection)</h3>
+<div id="outline-container-org9cb757d" class="outline-3">
+<h3 id="a660d0cc-4795-41df-b183-0ea31f6b6584"><a id="org9cb757d"></a><a id="ID-d9f11a8d-3676-42e9-aee9-a544ef67df28"></a>function connected-p (database-connection)</h3>
 <div class="outline-text-3" id="text-a660d0cc-4795-41df-b183-0ea31f6b6584">
 <p>
 → boolean
@@ -637,8 +657,8 @@ the server.
 </div>
 </div>
 
-<div id="outline-container-org8950aff" class="outline-3">
-<h3 id="426a8f5d-5dc7-4973-a1fc-11b488afcd82"><a id="org8950aff"></a><a id="ID-6e117ba4-b3f7-48f3-9616-67e3c3e2b7e4"></a>method reconnect (database-connection)</h3>
+<div id="outline-container-org5861400" class="outline-3">
+<h3 id="426a8f5d-5dc7-4973-a1fc-11b488afcd82"><a id="org5861400"></a><a id="ID-6e117ba4-b3f7-48f3-9616-67e3c3e2b7e4"></a>method reconnect (database-connection)</h3>
 <div class="outline-text-3" id="text-426a8f5d-5dc7-4973-a1fc-11b488afcd82">
 <p>
 Reconnect a disconnected database connection. This is not allowed for pooled
@@ -648,8 +668,8 @@ process, and should no longer be used.
 </div>
 </div>
 
-<div id="outline-container-org6b158be" class="outline-3">
-<h3 id="9b9cf868-214b-4026-8f80-25b23f445c91"><a id="org6b158be"></a><a id="ID-73c9e729-4db7-4ef3-a095-7b91a9db6238"></a>variable <b>database</b></h3>
+<div id="outline-container-orgc1484b1" class="outline-3">
+<h3 id="9b9cf868-214b-4026-8f80-25b23f445c91"><a id="orgc1484b1"></a><a id="ID-73c9e729-4db7-4ef3-a095-7b91a9db6238"></a>variable <b>database</b></h3>
 <div class="outline-text-3" id="text-9b9cf868-214b-4026-8f80-25b23f445c91">
 <p>
 Special variable holding the current database connection information. Most
@@ -659,8 +679,8 @@ database.
 </div>
 </div>
 
-<div id="outline-container-orgdb71938" class="outline-3">
-<h3 id="056d4921-c834-4655-a487-83314f22da42"><a id="orgdb71938"></a><a id="ID-c5d5b7f9-9555-4a0e-b691-1b10742e482d"></a>macro with-connection (spec &amp;body body)</h3>
+<div id="outline-container-org24194d1" class="outline-3">
+<h3 id="056d4921-c834-4655-a487-83314f22da42"><a id="org24194d1"></a><a id="ID-c5d5b7f9-9555-4a0e-b691-1b10742e482d"></a>macro with-connection (spec &amp;body body)</h3>
 <div class="outline-text-3" id="text-056d4921-c834-4655-a487-83314f22da42">
 <p>
 Evaluates the body with <b>database</b> bound to a connection as specified by spec,
@@ -669,8 +689,8 @@ which should be list that connect can be applied to.
 </div>
 </div>
 
-<div id="outline-container-org314e733" class="outline-3">
-<h3 id="0e0c03e9-7681-433f-ae75-8f06c9685221"><a id="org314e733"></a><a id="ID-476f90d8-15ac-49fb-ac19-1dc3dfdfcef7"></a>macro call-with-connection (spec thunk)</h3>
+<div id="outline-container-orge77a44d" class="outline-3">
+<h3 id="0e0c03e9-7681-433f-ae75-8f06c9685221"><a id="orge77a44d"></a><a id="ID-476f90d8-15ac-49fb-ac19-1dc3dfdfcef7"></a>macro call-with-connection (spec thunk)</h3>
 <div class="outline-text-3" id="text-0e0c03e9-7681-433f-ae75-8f06c9685221">
 <p>
 The functional backend to with-connection. Binds <b>database</b> to a new connection
@@ -681,8 +701,8 @@ When the function returns or throws, the new connection is disconnected.
 </div>
 </div>
 
-<div id="outline-container-org90cfbaa" class="outline-3">
-<h3 id="a74be5d0-9b86-4c15-b738-76cd92908d25"><a id="org90cfbaa"></a><a id="ID-ffab8aae-0ed7-4466-a68d-fc90d2e36dbe"></a>function connect-toplevel (database user-name password host &amp;key (port 5432))</h3>
+<div id="outline-container-org04d4606" class="outline-3">
+<h3 id="a74be5d0-9b86-4c15-b738-76cd92908d25"><a id="org04d4606"></a><a id="ID-ffab8aae-0ed7-4466-a68d-fc90d2e36dbe"></a>function connect-toplevel (database user-name password host &amp;key (port 5432))</h3>
 <div class="outline-text-3" id="text-a74be5d0-9b86-4c15-b738-76cd92908d25">
 <p>
 Bind the <b>database</b> to a new connection. Use this if you only need one
@@ -691,8 +711,8 @@ connection, or if you want a connection for debugging from the REPL.
 </div>
 </div>
 
-<div id="outline-container-orgbacadcc" class="outline-3">
-<h3 id="a63f929c-805d-42d5-8fbe-f1c01e62b50a"><a id="orgbacadcc"></a><a id="ID-f5819286-2754-468d-bfdd-e4ee06b877e3"></a>function disconnect-toplevel ()</h3>
+<div id="outline-container-org53b234e" class="outline-3">
+<h3 id="a63f929c-805d-42d5-8fbe-f1c01e62b50a"><a id="org53b234e"></a><a id="ID-f5819286-2754-468d-bfdd-e4ee06b877e3"></a>function disconnect-toplevel ()</h3>
 <div class="outline-text-3" id="text-a63f929c-805d-42d5-8fbe-f1c01e62b50a">
 <p>
 Disconnect the <b>database</b>.
@@ -700,8 +720,8 @@ Disconnect the <b>database</b>.
 </div>
 </div>
 
-<div id="outline-container-org4b95bb2" class="outline-3">
-<h3 id="56c370e4-8f4e-414a-82b6-ae4408fc0b61"><a id="org4b95bb2"></a><a id="ID-04d09496-6a7b-4794-a204-8667f3b69011"></a>function clear-connection-pool ()</h3>
+<div id="outline-container-org0d4b9a8" class="outline-3">
+<h3 id="56c370e4-8f4e-414a-82b6-ae4408fc0b61"><a id="org0d4b9a8"></a><a id="ID-04d09496-6a7b-4794-a204-8667f3b69011"></a>function clear-connection-pool ()</h3>
 <div class="outline-text-3" id="text-56c370e4-8f4e-414a-82b6-ae4408fc0b61">
 <p>
 Disconnect and remove all connections from the connection pools.
@@ -709,8 +729,8 @@ Disconnect and remove all connections from the connection pools.
 </div>
 </div>
 
-<div id="outline-container-org6603c2f" class="outline-3">
-<h3 id="97aa1ebb-ef91-4254-a6b7-bfcd8128ad96"><a id="org6603c2f"></a><a id="ID-92ab48e3-bf8f-4327-8d9c-69b6c168f94e"></a>variable <b>max-pool-size</b></h3>
+<div id="outline-container-org9abe651" class="outline-3">
+<h3 id="97aa1ebb-ef91-4254-a6b7-bfcd8128ad96"><a id="org9abe651"></a><a id="ID-92ab48e3-bf8f-4327-8d9c-69b6c168f94e"></a>variable <b>max-pool-size</b></h3>
 <div class="outline-text-3" id="text-97aa1ebb-ef91-4254-a6b7-bfcd8128ad96">
 <p>
 Set the maximum amount of connections kept in a single connection pool, where a
@@ -720,8 +740,8 @@ arguments. Defaults to NIL, which means there is no maximum.
 </div>
 </div>
 
-<div id="outline-container-org3c4380c" class="outline-3">
-<h3 id="09583f9a-388a-400a-bb3c-d118242508c8"><a id="org3c4380c"></a><a id="ID-1410d2f2-3f68-4e3d-947b-46167ecf1d37"></a>function list-connections ()</h3>
+<div id="outline-container-orga1ddef3" class="outline-3">
+<h3 id="09583f9a-388a-400a-bb3c-d118242508c8"><a id="orga1ddef3"></a><a id="ID-1410d2f2-3f68-4e3d-947b-46167ecf1d37"></a>function list-connections ()</h3>
 <div class="outline-text-3" id="text-09583f9a-388a-400a-bb3c-d118242508c8">
 <p>
 → list
@@ -734,12 +754,12 @@ does this by returningo info from pg_stat_activity on open connections.
 </div>
 </div>
 </div>
-<div id="outline-container-org6e781f7" class="outline-2">
-<h2 id="197e3028-ddf0-4897-b6cf-5cabc643757f"><a id="org6e781f7"></a><a id="ID-e5e99216-0a15-4de8-b1d9-21bdcdf378fa"></a>Querying</h2>
-<div class="outline-text-2" id="text-197e3028-ddf0-4897-b6cf-5cabc643757f">
+<div id="outline-container-orgb8fdaca" class="outline-2">
+<h2 id="querying"><a id="orgb8fdaca"></a><a id="ID-e5e99216-0a15-4de8-b1d9-21bdcdf378fa"></a>Querying</h2>
+<div class="outline-text-2" id="text-querying">
 </div>
-<div id="outline-container-orgdd1e981" class="outline-3">
-<h3 id="5a8c24fb-6d7b-4952-8520-b5e8ea98dd77"><a id="orgdd1e981"></a><a id="ID-0f8ab85f-b592-4648-8936-d16abce50faa"></a>macro query (query &amp;rest args/format)</h3>
+<div id="outline-container-org5d18eb0" class="outline-3">
+<h3 id="5a8c24fb-6d7b-4952-8520-b5e8ea98dd77"><a id="org5d18eb0"></a><a id="ID-0f8ab85f-b592-4648-8936-d16abce50faa"></a>macro query (query &amp;rest args/format)</h3>
 <div class="outline-text-3" id="text-5a8c24fb-6d7b-4952-8520-b5e8ea98dd77">
 <p>
 → result
@@ -789,11 +809,6 @@ instead. Any of the following formats can be used, with the default being :rows:
 </tr>
 
 <tr>
-<td class="org-left">:array-hash</td>
-<td class="org-left">Return an array of hashtables which map column names to hash table keys</td>
-</tr>
-
-<tr>
 <td class="org-left">:str-alists</td>
 <td class="org-left">Like :alists, but use the original column names.</td>
 </tr>
@@ -820,12 +835,32 @@ instead. Any of the following formats can be used, with the default being :rows:
 
 <tr>
 <td class="org-left">:single</td>
-<td class="org-left">Return a single value.</td>
+<td class="org-left">Return a single value. Will raise an error if the query returns more than one field. If the query returns more than one row, it returns the first row.</td>
 </tr>
 
 <tr>
 <td class="org-left">:single!</td>
-<td class="org-left">Like :single, but raise an error when the number of selected rows is not equal to 1.</td>
+<td class="org-left">Like :single except that it will throw an error when the number of selected rows is not equal to 1.</td>
+</tr>
+
+<tr>
+<td class="org-left">:array-hash</td>
+<td class="org-left">Return an array of hashtables which map column names to hash table keys</td>
+</tr>
+
+<tr>
+<td class="org-left">:json-strs</td>
+<td class="org-left">Return a list of strings where each row is a json object expressed as a string</td>
+</tr>
+
+<tr>
+<td class="org-left">:json-strs</td>
+<td class="org-left">Return a single string where the row returned is a json object expressed as a string</td>
+</tr>
+
+<tr>
+<td class="org-left">:json-array-str</td>
+<td class="org-left">Return a string containing a json array, each element in the array is a selected row expressed as a json object</td>
 </tr>
 
 <tr>
@@ -843,60 +878,245 @@ instead. Any of the following formats can be used, with the default being :rows:
 <p>
 Some Examples:
 </p>
+</div>
+<div id="outline-container-orgbdb7f95" class="outline-4">
+<h4 id="orgbdb7f95">Default</h4>
+<div class="outline-text-4" id="text-orgbdb7f95">
+<p>
+The default is :lists
+</p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'name <span style="color: #cd8162;">"Croatia"</span>)))
-((<span style="color: #cd8162;">"Croatia"</span> 4400000 <span style="color: #98fb98; font-weight: bold;">:NULL</span>))
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3)))
+((1 2147483645 <span style="color: #cd8162;">"text one"</span>) (2 0 <span style="color: #cd8162;">"text two"</span>))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgf3ddb5f" class="outline-4">
+<h4 id="orgf3ddb5f">Single</h4>
+<div class="outline-text-4" id="text-orgf3ddb5f">
+<p>
+Returns a single field. Will throw an error if the queries returns more than one field or more than one row
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:single</span>)
+<span style="color: #cd8162;">"text three"</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org49b94ab" class="outline-4">
+<h4 id="org49b94ab">List</h4>
+<div class="outline-text-4" id="text-org49b94ab">
+<p>
+Returns a list containing the selected fields. Will throw an error if the query returns more than one row
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:list</span>)
+(3 3 <span style="color: #cd8162;">"text three"</span>)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org7cce963" class="outline-4">
+<h4 id="org7cce963">Lists</h4>
+<div class="outline-text-4" id="text-org7cce963">
+<p>
+This is the default
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:lists</span>)
+((1 2147483645 <span style="color: #cd8162;">"text one"</span>) (2 0 <span style="color: #cd8162;">"text two"</span>))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgef539de" class="outline-4">
+<h4 id="orgef539de">Alist</h4>
+<div class="outline-text-4" id="text-orgef539de">
+<p>
+Returns an alist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:alist</span>)
+((<span style="color: #98fb98; font-weight: bold;">:ID</span> . 3) (<span style="color: #98fb98; font-weight: bold;">:INT4</span> . 3) (<span style="color: #98fb98; font-weight: bold;">:TEXT</span> . <span style="color: #cd8162;">"text three"</span>))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org16eabf7" class="outline-4">
+<h4 id="org16eabf7">Str-alist</h4>
+<div class="outline-text-4" id="text-org16eabf7">
+<p>
+Returns an alist containing the field name as a lower case string and the selected fields. Will throw an error if the query returns more than one row.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:str-alist</span>)
+((<span style="color: #cd8162;">"id"</span> . 3) (<span style="color: #cd8162;">"int4"</span> . 3) (<span style="color: #cd8162;">"text"</span> . <span style="color: #cd8162;">"text three"</span>))
+</pre>
+</div>
+</div>
+</div>
 
-(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'inhabitants <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'name <span style="color: #cd8162;">"Croatia"</span>)) <span style="color: #98fb98; font-weight: bold;">:single</span>)
-4400000
+<div id="outline-container-org8e106dc" class="outline-4">
+<h4 id="org8e106dc">Alists</h4>
+<div class="outline-text-4" id="text-org8e106dc">
+<p>
+Returns a list of alists containing the field name as a keyword and the selected fields.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:alists</span>)
+(((<span style="color: #98fb98; font-weight: bold;">:ID</span> . 1) (<span style="color: #98fb98; font-weight: bold;">:INT4</span> . 2147483645) (<span style="color: #98fb98; font-weight: bold;">:TEXT</span> . <span style="color: #cd8162;">"text one"</span>))
+ ((<span style="color: #98fb98; font-weight: bold;">:ID</span> . 2) (<span style="color: #98fb98; font-weight: bold;">:INT4</span> . 0) (<span style="color: #98fb98; font-weight: bold;">:TEXT</span> . <span style="color: #cd8162;">"text two"</span>)))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org41ec1cd" class="outline-4">
+<h4 id="org41ec1cd">Str-alists</h4>
+<div class="outline-text-4" id="text-org41ec1cd">
+<p>
+Returns a list of alists containing the field name as a lower case string and the selected fields.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:str-alists</span>)
+(((<span style="color: #cd8162;">"id"</span> . 1) (<span style="color: #cd8162;">"int4"</span> . 2147483645) (<span style="color: #cd8162;">"text"</span> . <span style="color: #cd8162;">"text one"</span>))
+ ((<span style="color: #cd8162;">"id"</span> . 2) (<span style="color: #cd8162;">"int4"</span> . 0) (<span style="color: #cd8162;">"text"</span> . <span style="color: #cd8162;">"text two"</span>)))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org5feedee" class="outline-4">
+<h4 id="org5feedee">Plist</h4>
+<div class="outline-text-4" id="text-org5feedee">
+<p>
+Returns a plist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:plist</span>)
+(<span style="color: #98fb98; font-weight: bold;">:ID</span> 3 <span style="color: #98fb98; font-weight: bold;">:INT4</span> 3 <span style="color: #98fb98; font-weight: bold;">:TEXT</span> <span style="color: #cd8162;">"text three"</span>)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org638c9ad" class="outline-4">
+<h4 id="org638c9ad">Plists</h4>
+<div class="outline-text-4" id="text-org638c9ad">
+<p>
+Returns a list of plists containing the field name as a keyword and the selected fields.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:plists</span>)
+((<span style="color: #98fb98; font-weight: bold;">:ID</span> 1 <span style="color: #98fb98; font-weight: bold;">:INT4</span> 2147483645 <span style="color: #98fb98; font-weight: bold;">:TEXT</span> <span style="color: #cd8162;">"text one"</span>) (<span style="color: #98fb98; font-weight: bold;">:ID</span> 2 <span style="color: #98fb98; font-weight: bold;">:INT4</span> 0 <span style="color: #98fb98; font-weight: bold;">:TEXT</span> <span style="color: #cd8162;">"text two"</span>))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org877a23d" class="outline-4">
+<h4 id="org877a23d">Array-hash</h4>
+<div class="outline-text-4" id="text-org877a23d">
+<p>
+Returns a vector of hashtables where each hash table is a returned row from the query with field name as the key expressed as a lower case string.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:array-hash</span>)
+#(#&lt;HASH-TABLE <span style="color: #98fb98; font-weight: bold;">:TEST</span> EQUAL <span style="color: #98fb98; font-weight: bold;">:COUNT</span> 3 {100D982B53}&gt;
+  #&lt;HASH-TABLE <span style="color: #98fb98; font-weight: bold;">:TEST</span> EQUAL <span style="color: #98fb98; font-weight: bold;">:COUNT</span> 3 {100D982ED3}&gt;)
 
-(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'name <span style="color: #cd8162;">"Croatia"</span>)) <span style="color: #98fb98; font-weight: bold;">:alist</span>)
-((<span style="color: #98fb98; font-weight: bold;">:NAME</span> . <span style="color: #cd8162;">"Croatia"</span>) (<span style="color: #98fb98; font-weight: bold;">:INHABITANTS</span> . 4400000) (<span style="color: #98fb98; font-weight: bold;">:SOVEREIGN</span> . <span style="color: #98fb98; font-weight: bold;">:NULL</span>))
-
-(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'name <span style="color: #cd8162;">"Croatia"</span>)) <span style="color: #98fb98; font-weight: bold;">:str-alist</span>)
-((<span style="color: #cd8162;">"name"</span> . <span style="color: #cd8162;">"Croatia"</span>) (<span style="color: #cd8162;">"inhabitants"</span> . 4400000) (<span style="color: #cd8162;">"sovereign"</span> . <span style="color: #98fb98; font-weight: bold;">:NULL</span>))
-
-(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'name <span style="color: #cd8162;">"Croatia"</span>)) <span style="color: #98fb98; font-weight: bold;">:plist</span>)
-(<span style="color: #98fb98; font-weight: bold;">:NAME</span> <span style="color: #cd8162;">"Croatia"</span> <span style="color: #98fb98; font-weight: bold;">:INHABITANTS</span> 4400000 <span style="color: #98fb98; font-weight: bold;">:SOVEREIGN</span> <span style="color: #98fb98; font-weight: bold;">:NULL</span>)
-
-(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'name <span style="color: #cd8162;">"Croatia"</span>)) <span style="color: #98fb98; font-weight: bold;">:list</span>)
-(<span style="color: #cd8162;">"Croatia"</span> 4400000 <span style="color: #98fb98; font-weight: bold;">:NULL</span>)
-
-(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'name <span style="color: #cd8162;">"Croatia"</span>)) <span style="color: #98fb98; font-weight: bold;">:lists</span>)
-((<span style="color: #cd8162;">"Croatia"</span> 4400000 <span style="color: #98fb98; font-weight: bold;">:NULL</span>))
-
-(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country) <span style="color: #98fb98; font-weight: bold;">:lists</span>)
-((<span style="color: #cd8162;">"The Netherlands"</span> 16800000 <span style="color: #cd8162;">"Willem-Alexander"</span>) (<span style="color: #cd8162;">"Croatia"</span> 4400000 <span style="color: #98fb98; font-weight: bold;">:NULL</span>))
-
-(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country) <span style="color: #98fb98; font-weight: bold;">:alists</span>)
-(((<span style="color: #98fb98; font-weight: bold;">:NAME</span> . <span style="color: #cd8162;">"The Netherlands"</span>) (<span style="color: #98fb98; font-weight: bold;">:INHABITANTS</span> . 16800000)
-  (<span style="color: #98fb98; font-weight: bold;">:SOVEREIGN</span> . <span style="color: #cd8162;">"Willem-Alexander"</span>))
- ((<span style="color: #98fb98; font-weight: bold;">:NAME</span> . <span style="color: #cd8162;">"Croatia"</span>) (<span style="color: #98fb98; font-weight: bold;">:INHABITANTS</span> . 4400000) (<span style="color: #98fb98; font-weight: bold;">:SOVEREIGN</span> . <span style="color: #98fb98; font-weight: bold;">:NULL</span>)))
-
-(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'name <span style="color: #cd8162;">"Croatia"</span>)) <span style="color: #98fb98; font-weight: bold;">:array-hash</span>)
-#(#&lt;HASH-TABLE <span style="color: #98fb98; font-weight: bold;">:TEST</span> EQUAL <span style="color: #98fb98; font-weight: bold;">:COUNT</span> 3 {10106CA323}&gt;)
+(alexandria:hash-table-alist
+  (aref
+    (query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:array-hash</span>)
+    1))
+((<span style="color: #cd8162;">"text"</span> . <span style="color: #cd8162;">"text two"</span>) (<span style="color: #cd8162;">"int4"</span> . 0) (<span style="color: #cd8162;">"id"</span> . 2))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org7ec378a" class="outline-4">
+<h4 id="org7ec378a">Dao</h4>
+<div class="outline-text-4" id="text-org7ec378a">
+<p>
+Returns a list of daos of the type specified
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country) (<span style="color: #98fb98; font-weight: bold;">:dao</span> country))
+(#&lt;COUNTRY {1010464023}&gt; #&lt;COUNTRY {1010465CB3}&gt;)
 
 (query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'name <span style="color: #cd8162;">"Croatia"</span>)) (<span style="color: #98fb98; font-weight: bold;">:dao</span> country))
 (#&lt;COUNTRY {1010688943}&gt;)
-
-(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country) (<span style="color: #98fb98; font-weight: bold;">:dao</span> country))
-(#&lt;COUNTRY {1010464023}&gt; #&lt;COUNTRY {1010465CB3}&gt;)
-
-(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'inhabitants <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'name <span style="color: #cd8162;">"Croatia"</span>)) <span style="color: #98fb98; font-weight: bold;">:column</span>)
-(4400000)
 </pre>
 </div>
+</div>
+</div>
+<div id="outline-container-orgd627179" class="outline-4">
+<h4 id="orgd627179">Column</h4>
+<div class="outline-text-4" id="text-orgd627179">
+<p>
+Returns a list of field values of a single field. Will throw an error if more than one field is selected
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:column</span>)
+(1 2)
 
-
+(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:column</span>)
+(3)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org0558771" class="outline-4">
+<h4 id="org0558771">Json-strs</h4>
+<div class="outline-text-4" id="text-org0558771">
+<p>
+Return a list of strings where the row returned is a json object expressed as a string
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:json-strs</span>)
+(<span style="color: #cd8162;">"{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}"</span>
+ <span style="color: #cd8162;">"{\"id\":2,\"int4\":0,\"text\":\"text two\"}"</span>)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org1bae5e9" class="outline-4">
+<h4 id="org1bae5e9">Json-str</h4>
+<div class="outline-text-4" id="text-org1bae5e9">
+<p>
+Return a single string where the row returned is a json object expressed as a string
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:json-str</span>)
+<span style="color: #cd8162;">"{\"id\":3,\"int4\":3,\"text\":\"text three\"}"</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org0144c2f" class="outline-4">
+<h4 id="org0144c2f">Json-array-str</h4>
+<div class="outline-text-4" id="text-org0144c2f">
+<p>
+Return a string containing a json array, each element in the array is a selected row expressed as a json object
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'id 'int4 'text <span style="color: #98fb98; font-weight: bold;">:from</span> 'data-type-tests <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3)) <span style="color: #98fb98; font-weight: bold;">:json-arry-str</span>)
+<span style="color: #cd8162;">"[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]"</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orga3d3b55" class="outline-4">
+<h4 id="orga3d3b55">Second value returned</h4>
+<div class="outline-text-4" id="text-orga3d3b55">
 <p>
 If the database returns information about the amount rows that were affected,
 such as with updating or deleting queries, this is returned as a second value.
 </p>
 </div>
 </div>
+</div>
 
-<div id="outline-container-orgccaaf9b" class="outline-3">
-<h3 id="71106869-4169-49c8-ba7d-ce6b9fc7d780"><a id="orgccaaf9b"></a><a id="ID-b494a547-353c-4de4-8071-e8703a62b919"></a>macro execute (query &amp;rest args)</h3>
+<div id="outline-container-org74d6445" class="outline-3">
+<h3 id="71106869-4169-49c8-ba7d-ce6b9fc7d780"><a id="org74d6445"></a><a id="ID-b494a547-353c-4de4-8071-e8703a62b919"></a>macro execute (query &amp;rest args)</h3>
 <div class="outline-text-3" id="text-71106869-4169-49c8-ba7d-ce6b9fc7d780">
 <p>
 Execute a query, ignore the results. So, in effect, Like a query called with
@@ -907,8 +1127,8 @@ deprecated.)
 </div>
 </div>
 
-<div id="outline-container-org89649a9" class="outline-3">
-<h3 id="66aa9f57-ac8a-4457-9891-3453682518e0"><a id="org89649a9"></a><a id="ID-db023195-6f0f-446d-9188-0886d895202b"></a>macro doquery (query (&amp;rest names) &amp;body body)</h3>
+<div id="outline-container-org4a94275" class="outline-3">
+<h3 id="66aa9f57-ac8a-4457-9891-3453682518e0"><a id="org4a94275"></a><a id="ID-db023195-6f0f-446d-9188-0886d895202b"></a>macro doquery (query (&amp;rest names) &amp;body body)</h3>
 <div class="outline-text-3" id="text-66aa9f57-ac8a-4457-9891-3453682518e0">
 <p>
 Execute the given query (a string or a list starting with a keyword), iterating
@@ -928,8 +1148,8 @@ arguments. For example:
 </div>
 </div>
 
-<div id="outline-container-org643f077" class="outline-3">
-<h3 id="625b6ade-7b09-49dc-b288-78c550b25d83"><a id="org643f077"></a><a id="ID-0daaa786-45e9-4853-934c-e1499b4c87f0"></a>macro prepare (query &amp;optional (format :rows))</h3>
+<div id="outline-container-orgb3f8bdb" class="outline-3">
+<h3 id="625b6ade-7b09-49dc-b288-78c550b25d83"><a id="orgb3f8bdb"></a><a id="ID-0daaa786-45e9-4853-934c-e1499b4c87f0"></a>macro prepare (query &amp;optional (format :rows))</h3>
 <div class="outline-text-3" id="text-625b6ade-7b09-49dc-b288-78c550b25d83">
 <p>
 → function
@@ -966,8 +1186,8 @@ statements triggering a duplicate-prepared-statement error.
 </div>
 </div>
 
-<div id="outline-container-orgc7a1b9b" class="outline-3">
-<h3 id="b2ed5fb5-d5f5-4425-b30e-5c40a2997eee"><a id="orgc7a1b9b"></a><a id="ID-d95a6214-b951-4fcd-96ab-a0c40d62ee2b"></a>macro defprepared (name query &amp;optional (format :rows))</h3>
+<div id="outline-container-orgf21eb25" class="outline-3">
+<h3 id="b2ed5fb5-d5f5-4425-b30e-5c40a2997eee"><a id="orgf21eb25"></a><a id="ID-d95a6214-b951-4fcd-96ab-a0c40d62ee2b"></a>macro defprepared (name query &amp;optional (format :rows))</h3>
 <div class="outline-text-3" id="text-b2ed5fb5-d5f5-4425-b30e-5c40a2997eee">
 <p>
 → function
@@ -981,8 +1201,8 @@ statement. The name should not a string but may be quoted.
 </div>
 </div>
 
-<div id="outline-container-org67321e7" class="outline-3">
-<h3 id="73823e7b-1fc5-40b2-908f-cec99ac1bc9e"><a id="org67321e7"></a><a id="ID-b29f3cc1-4af4-4619-9817-ecbc06d98d51"></a>macro defprepared-with-names (name (&amp;rest args) (query &amp;rest query-args) &amp;optional (format :rows))</h3>
+<div id="outline-container-orge49bfb9" class="outline-3">
+<h3 id="73823e7b-1fc5-40b2-908f-cec99ac1bc9e"><a id="orge49bfb9"></a><a id="ID-b29f3cc1-4af4-4619-9817-ecbc06d98d51"></a>macro defprepared-with-names (name (&amp;rest args) (query &amp;rest query-args) &amp;optional (format :rows))</h3>
 <div class="outline-text-3" id="text-73823e7b-1fc5-40b2-908f-cec99ac1bc9e">
 <p>
 Like defprepared, but allows to specify names of the function arguments in a
@@ -1000,8 +1220,8 @@ lambda list as well as arguments supplied to the query.
 </div>
 </div>
 
-<div id="outline-container-orgc10708b" class="outline-3">
-<h3 id="453612e6-2835-41b2-8305-01b6b5473138"><a id="orgc10708b"></a><a id="ID-29d50700-9459-4e40-baaa-efafc7fbe0cf"></a>macro with-transaction ((&amp;optional name isolation-level) &amp;body body)</h3>
+<div id="outline-container-org716188e" class="outline-3">
+<h3 id="453612e6-2835-41b2-8305-01b6b5473138"><a id="org716188e"></a><a id="ID-29d50700-9459-4e40-baaa-efafc7fbe0cf"></a>macro with-transaction ((&amp;optional name isolation-level) &amp;body body)</h3>
 <div class="outline-text-3" id="text-453612e6-2835-41b2-8305-01b6b5473138">
 <p>
 Execute the given body within a database transaction, committing it when the
@@ -1055,8 +1275,8 @@ Further discussion of transactions and isolation levels can found at
 </div>
 </div>
 
-<div id="outline-container-org3b989bb" class="outline-3">
-<h3 id="10b5d3e9-b174-4f02-8c47-6eb3430e60fe"><a id="org3b989bb"></a><a id="ID-c5f3a2df-ebef-4180-af02-f54921552736"></a>function commit-transaction (transaction)</h3>
+<div id="outline-container-org1c30409" class="outline-3">
+<h3 id="10b5d3e9-b174-4f02-8c47-6eb3430e60fe"><a id="org1c30409"></a><a id="ID-c5f3a2df-ebef-4180-af02-f54921552736"></a>function commit-transaction (transaction)</h3>
 <div class="outline-text-3" id="text-10b5d3e9-b174-4f02-8c47-6eb3430e60fe">
 <p>
 Immediately commit an open transaction.
@@ -1064,8 +1284,8 @@ Immediately commit an open transaction.
 </div>
 </div>
 
-<div id="outline-container-org4051a07" class="outline-3">
-<h3 id="58a7459f-a1f4-4797-83b5-8b5257ca2cf7"><a id="org4051a07"></a><a id="ID-6c705c87-8bd9-41cd-b63a-7ef67d5691f6"></a>function abort-transaction (transaction)</h3>
+<div id="outline-container-org1f269d7" class="outline-3">
+<h3 id="58a7459f-a1f4-4797-83b5-8b5257ca2cf7"><a id="org1f269d7"></a><a id="ID-6c705c87-8bd9-41cd-b63a-7ef67d5691f6"></a>function abort-transaction (transaction)</h3>
 <div class="outline-text-3" id="text-58a7459f-a1f4-4797-83b5-8b5257ca2cf7">
 <p>
 Roll back the given transaction, but the transaction
@@ -1079,9 +1299,9 @@ is present only for historical reasons..
 </div>
 </div>
 
-<div id="outline-container-org1171715" class="outline-3">
-<h3 id="org1171715">function rollback-transaction (transaction)</h3>
-<div class="outline-text-3" id="text-org1171715">
+<div id="outline-container-org693c207" class="outline-3">
+<h3 id="org693c207">function rollback-transaction (transaction)</h3>
+<div class="outline-text-3" id="text-org693c207">
 <p>
 Roll back the given transaction, but the transaction
 block is still active. Thus calling abort-transaction in the middle of a
@@ -1092,8 +1312,8 @@ transaction and causes all the updates made by the transaction to be discarded.
 </div>
 </div>
 
-<div id="outline-container-orga0efcc3" class="outline-3">
-<h3 id="5899097b-a5fb-4b7a-961b-3c65a95f81d4"><a id="orga0efcc3"></a><a id="ID-2b3980a2-969c-4376-92aa-ce9ee5867b6c"></a>macro with-savepoint (name &amp;body body)</h3>
+<div id="outline-container-org125b11c" class="outline-3">
+<h3 id="5899097b-a5fb-4b7a-961b-3c65a95f81d4"><a id="org125b11c"></a><a id="ID-2b3980a2-969c-4376-92aa-ce9ee5867b6c"></a>macro with-savepoint (name &amp;body body)</h3>
 <div class="outline-text-3" id="text-5899097b-a5fb-4b7a-961b-3c65a95f81d4">
 <p>
 Can only be used within a transaction. Establishes a savepoint with the given
@@ -1152,8 +1372,8 @@ release-savepoint.
 </div>
 </div>
 
-<div id="outline-container-orga8319ff" class="outline-3">
-<h3 id="a6d99838-ed98-4839-ac13-c03ecbfd6f96"><a id="orga8319ff"></a><a id="ID-1d876de8-f717-4a15-a222-18aa4c344583"></a>function release-savepoint (savepoint)</h3>
+<div id="outline-container-org66cd534" class="outline-3">
+<h3 id="a6d99838-ed98-4839-ac13-c03ecbfd6f96"><a id="org66cd534"></a><a id="ID-1d876de8-f717-4a15-a222-18aa4c344583"></a>function release-savepoint (savepoint)</h3>
 <div class="outline-text-3" id="text-a6d99838-ed98-4839-ac13-c03ecbfd6f96">
 <p>
 Immediately release a savepoint, commiting its results.
@@ -1161,8 +1381,8 @@ Immediately release a savepoint, commiting its results.
 </div>
 </div>
 
-<div id="outline-container-org72b875e" class="outline-3">
-<h3 id="1f84633f-e567-42c6-bcfc-2167dad89165"><a id="org72b875e"></a><a id="ID-a19e709e-b574-4494-bb79-aa788fcc0200"></a>function rollback-savepoint (savepoint)</h3>
+<div id="outline-container-org3a2d607" class="outline-3">
+<h3 id="1f84633f-e567-42c6-bcfc-2167dad89165"><a id="org3a2d607"></a><a id="ID-a19e709e-b574-4494-bb79-aa788fcc0200"></a>function rollback-savepoint (savepoint)</h3>
 <div class="outline-text-3" id="text-1f84633f-e567-42c6-bcfc-2167dad89165">
 <p>
 Immediately roll back a savepoint, aborting the results.
@@ -1170,8 +1390,8 @@ Immediately roll back a savepoint, aborting the results.
 </div>
 </div>
 
-<div id="outline-container-orga4dbf15" class="outline-3">
-<h3 id="919494ae-625f-4f63-b271-6cc5d0b16549"><a id="orga4dbf15"></a><a id="ID-c297fecf-bcb8-451c-bd91-22892d04c96d"></a>method commit-hooks (transaction-or-savepoint), setf (commit-hooks transaction-or-savepoint)</h3>
+<div id="outline-container-orgbaa12f0" class="outline-3">
+<h3 id="919494ae-625f-4f63-b271-6cc5d0b16549"><a id="orgbaa12f0"></a><a id="ID-c297fecf-bcb8-451c-bd91-22892d04c96d"></a>method commit-hooks (transaction-or-savepoint), setf (commit-hooks transaction-or-savepoint)</h3>
 <div class="outline-text-3" id="text-919494ae-625f-4f63-b271-6cc5d0b16549">
 <p>
 An accessor for the transaction or savepoint's list of commit hooks, each of
@@ -1181,8 +1401,8 @@ executed when a transaction is committed or a savepoint released.
 </div>
 </div>
 
-<div id="outline-container-org4a5053d" class="outline-3">
-<h3 id="94700fa6-1f29-4c0f-86ad-487e640933b9"><a id="org4a5053d"></a><a id="ID-7dd2980a-9f3d-4bff-a1f5-0745adecba24"></a>function abort-hooks (transaction-or-savepoint), setf (abort-hooks transaction-or-savepoint)</h3>
+<div id="outline-container-orgf8386f4" class="outline-3">
+<h3 id="94700fa6-1f29-4c0f-86ad-487e640933b9"><a id="orgf8386f4"></a><a id="ID-7dd2980a-9f3d-4bff-a1f5-0745adecba24"></a>function abort-hooks (transaction-or-savepoint), setf (abort-hooks transaction-or-savepoint)</h3>
 <div class="outline-text-3" id="text-94700fa6-1f29-4c0f-86ad-487e640933b9">
 <p>
 An accessor for the transaction or savepoint's list of abort hooks, each of
@@ -1194,8 +1414,8 @@ rollback-savepoint).
 </div>
 </div>
 
-<div id="outline-container-org563fad6" class="outline-3">
-<h3 id="44dac415-f1b2-4f01-bb05-a31c6c977b4c"><a id="org563fad6"></a><a id="ID-01275b50-0fa5-4b2f-968f-c360bc3efde0"></a>variable <b>isolation-level</b></h3>
+<div id="outline-container-org0b7eb36" class="outline-3">
+<h3 id="44dac415-f1b2-4f01-bb05-a31c6c977b4c"><a id="org0b7eb36"></a><a id="ID-01275b50-0fa5-4b2f-968f-c360bc3efde0"></a>variable <b>isolation-level</b></h3>
 <div class="outline-text-3" id="text-44dac415-f1b2-4f01-bb05-a31c6c977b4c">
 <p>
 The transaction isolation level currently in use. Defaults to :read-committed-rw
@@ -1216,8 +1436,8 @@ You can specify the following isolation levels in postmodern transactions:
 </div>
 
 
-<div id="outline-container-orgd4b7a6b" class="outline-3">
-<h3 id="5fdcafe3-5da4-48ee-8bb0-8567c7e00837"><a id="orgd4b7a6b"></a><a id="ID-355157ce-0f0c-4f9a-9be0-cfd12fd7bea0"></a>macro with-logical-transaction ((&amp;optional name isolation-level) &amp;body body)</h3>
+<div id="outline-container-org82b9c53" class="outline-3">
+<h3 id="5fdcafe3-5da4-48ee-8bb0-8567c7e00837"><a id="org82b9c53"></a><a id="ID-355157ce-0f0c-4f9a-9be0-cfd12fd7bea0"></a>macro with-logical-transaction ((&amp;optional name isolation-level) &amp;body body)</h3>
 <div class="outline-text-3" id="text-5fdcafe3-5da4-48ee-8bb0-8567c7e00837">
 <p>
 Executes body within a with-transaction form if no transaction is currently
@@ -1270,8 +1490,8 @@ expected here:
 </div>
 </div>
 
-<div id="outline-container-org27991b5" class="outline-3">
-<h3 id="7d237c64-5c3e-44a6-8b7c-6eecc4379b71"><a id="org27991b5"></a><a id="ID-196ef5b0-9c58-4f28-9766-e37334448d3c"></a>function abort-logical-transaction (transaction-or-savepoint)</h3>
+<div id="outline-container-org3ec39df" class="outline-3">
+<h3 id="7d237c64-5c3e-44a6-8b7c-6eecc4379b71"><a id="org3ec39df"></a><a id="ID-196ef5b0-9c58-4f28-9766-e37334448d3c"></a>function abort-logical-transaction (transaction-or-savepoint)</h3>
 <div class="outline-text-3" id="text-7d237c64-5c3e-44a6-8b7c-6eecc4379b71">
 <p>
 Roll back the given logical transaction, regardless of whether it is an actual
@@ -1280,8 +1500,8 @@ transaction or a savepoint.
 </div>
 </div>
 
-<div id="outline-container-org2fe0027" class="outline-3">
-<h3 id="ae0f0c99-0bda-491e-99a5-3a61e0a86166"><a id="org2fe0027"></a><a id="ID-33fd01cd-603f-48e0-a2d9-1433d9b7f4db"></a>function commit-logical-transaction (transaction-or-savepoint)</h3>
+<div id="outline-container-org3764863" class="outline-3">
+<h3 id="ae0f0c99-0bda-491e-99a5-3a61e0a86166"><a id="org3764863"></a><a id="ID-33fd01cd-603f-48e0-a2d9-1433d9b7f4db"></a>function commit-logical-transaction (transaction-or-savepoint)</h3>
 <div class="outline-text-3" id="text-ae0f0c99-0bda-491e-99a5-3a61e0a86166">
 <p>
 Commit the given logical transaction, regardless of whether it is an actual
@@ -1290,8 +1510,8 @@ transaction or a savepoint.
 </div>
 </div>
 
-<div id="outline-container-org24ea055" class="outline-3">
-<h3 id="bf78478f-92a2-4162-963d-b4e101b23154"><a id="org24ea055"></a><a id="ID-2a5d91c2-f990-4a3c-a775-5e1fd539fee8"></a>variable <b>current-logical-transaction</b></h3>
+<div id="outline-container-org2e2a661" class="outline-3">
+<h3 id="bf78478f-92a2-4162-963d-b4e101b23154"><a id="org2e2a661"></a><a id="ID-2a5d91c2-f990-4a3c-a775-5e1fd539fee8"></a>variable <b>current-logical-transaction</b></h3>
 <div class="outline-text-3" id="text-bf78478f-92a2-4162-963d-b4e101b23154">
 <p>
 This is bound to the current transaction-handle or savepoint-handle instance
@@ -1300,8 +1520,8 @@ representing the innermost open logical transaction.
 </div>
 </div>
 
-<div id="outline-container-org42739d7" class="outline-3">
-<h3 id="6ad767b2-75b7-48ee-a260-6caece5bad62"><a id="org42739d7"></a><a id="ID-34881db5-1c47-444e-bb55-bb6249d4764c"></a>macro ensure-transaction (&amp;body body)</h3>
+<div id="outline-container-org76c2f3b" class="outline-3">
+<h3 id="6ad767b2-75b7-48ee-a260-6caece5bad62"><a id="org76c2f3b"></a><a id="ID-34881db5-1c47-444e-bb55-bb6249d4764c"></a>macro ensure-transaction (&amp;body body)</h3>
 <div class="outline-text-3" id="text-6ad767b2-75b7-48ee-a260-6caece5bad62">
 <p>
 Ensures that body is executed within a transaction, but does not begin a new
@@ -1310,8 +1530,8 @@ transaction if one is already in progress.
 </div>
 </div>
 
-<div id="outline-container-org34505ab" class="outline-3">
-<h3 id="9ca2ed2b-60ea-4e34-b370-a4f54c1f1dcd"><a id="org34505ab"></a><a id="ID-dba390df-3c75-4d4c-b8c9-79af3f763914"></a>macro ensure-transaction-with-isolation-level (isolation-level &amp;body body)</h3>
+<div id="outline-container-orgd12baed" class="outline-3">
+<h3 id="9ca2ed2b-60ea-4e34-b370-a4f54c1f1dcd"><a id="orgd12baed"></a><a id="ID-dba390df-3c75-4d4c-b8c9-79af3f763914"></a>macro ensure-transaction-with-isolation-level (isolation-level &amp;body body)</h3>
 <div class="outline-text-3" id="text-9ca2ed2b-60ea-4e34-b370-a4f54c1f1dcd">
 <p>
 Executes body within a with-transaction form if and only if no transaction is
@@ -1322,13 +1542,13 @@ than the current default
 </div>
 </div>
 
-<div id="outline-container-org39e3bbd" class="outline-2">
-<h2 id="6869a7d5-eac4-40c1-8bf6-d14925c7da55"><a id="org39e3bbd"></a><a id="ID-d4846b02-aa2f-4e44-9294-7e5811e61e6c"></a>Helper functions for Prepared Statements</h2>
-<div class="outline-text-2" id="text-6869a7d5-eac4-40c1-8bf6-d14925c7da55">
+<div id="outline-container-org3363884" class="outline-2">
+<h2 id="prepared-statement-helper-functions"><a id="org3363884"></a><a id="ID-d4846b02-aa2f-4e44-9294-7e5811e61e6c"></a>Helper functions for Prepared Statements</h2>
+<div class="outline-text-2" id="text-prepared-statement-helper-functions">
 </div>
 
-<div id="outline-container-orgb7a1fbf" class="outline-3">
-<h3 id="533331a5-6780-41bd-9ae8-2efac3a3c2c2"><a id="orgb7a1fbf"></a><a id="ID-ca5ba066-3d35-4bb1-97b1-c22436c1bc6d"></a>defparameter <b>allow-overwriting-prepared-statements</b></h3>
+<div id="outline-container-orgb106348" class="outline-3">
+<h3 id="533331a5-6780-41bd-9ae8-2efac3a3c2c2"><a id="orgb106348"></a><a id="ID-ca5ba066-3d35-4bb1-97b1-c22436c1bc6d"></a>defparameter <b>allow-overwriting-prepared-statements</b></h3>
 <div class="outline-text-3" id="text-533331a5-6780-41bd-9ae8-2efac3a3c2c2">
 <p>
 When set to t, ensured-prepared will overwrite prepared statements having the
@@ -1338,8 +1558,8 @@ different than the query statement provided to ensure-prepared.
 </div>
 </div>
 
-<div id="outline-container-org2171b2e" class="outline-3">
-<h3 id="7ca58f04-2ad5-4896-b8c2-b13b276b4f5b"><a id="org2171b2e"></a><a id="ID-a9d22ab2-b849-475c-b325-a91638aed7a0"></a>function prepared-statement-exists-p (name)</h3>
+<div id="outline-container-org08c40b5" class="outline-3">
+<h3 id="7ca58f04-2ad5-4896-b8c2-b13b276b4f5b"><a id="org08c40b5"></a><a id="ID-a9d22ab2-b849-475c-b325-a91638aed7a0"></a>function prepared-statement-exists-p (name)</h3>
 <div class="outline-text-3" id="text-7ca58f04-2ad5-4896-b8c2-b13b276b4f5b">
 <p>
 → boolean
@@ -1349,8 +1569,8 @@ session, otherwise nil.
 </div>
 </div>
 
-<div id="outline-container-orgcc3577d" class="outline-3">
-<h3 id="3788ef72-d6a7-4e3b-acad-3f2608914dfb"><a id="orgcc3577d"></a><a id="ID-0028b494-ebd0-40ca-ac31-a4ae7b598609"></a>function list-prepared-statements (&amp;optional (names-only nil))</h3>
+<div id="outline-container-orge79512e" class="outline-3">
+<h3 id="3788ef72-d6a7-4e3b-acad-3f2608914dfb"><a id="orge79512e"></a><a id="ID-0028b494-ebd0-40ca-ac31-a4ae7b598609"></a>function list-prepared-statements (&amp;optional (names-only nil))</h3>
 <div class="outline-text-3" id="text-3788ef72-d6a7-4e3b-acad-3f2608914dfb">
 <p>
 → list
@@ -1364,8 +1584,8 @@ to t, it will only return a list of the names of the prepared statements.
 </div>
 </div>
 
-<div id="outline-container-org06d5c46" class="outline-3">
-<h3 id="7ec6297f-85a7-419e-a9d4-8f6e2ceb9559"><a id="org06d5c46"></a><a id="ID-7ce9f5ff-3750-4359-9850-e9a23b0a279a"></a>function drop-prepared-statement (statement-name &amp;key (location :both) (database <b>database</b>))</h3>
+<div id="outline-container-orgd30d5bd" class="outline-3">
+<h3 id="7ec6297f-85a7-419e-a9d4-8f6e2ceb9559"><a id="orgd30d5bd"></a><a id="ID-7ce9f5ff-3750-4359-9850-e9a23b0a279a"></a>function drop-prepared-statement (statement-name &amp;key (location :both) (database <b>database</b>))</h3>
 <div class="outline-text-3" id="text-7ec6297f-85a7-419e-a9d4-8f6e2ceb9559">
 <p>
 The statement name can be a string or quoted symbol.
@@ -1397,8 +1617,8 @@ This behavior is controlled by the remove-function key parameter.
 </div>
 </div>
 
-<div id="outline-container-orgc0a206a" class="outline-3">
-<h3 id="b6049a3a-55a2-44be-9dc0-1af2849e2128"><a id="orgc0a206a"></a><a id="ID-3350ba3c-2389-44d7-af61-a7b2193794f4"></a>function list-postmodern-prepared-statements (&amp;optional (names-only nil))</h3>
+<div id="outline-container-org6702a83" class="outline-3">
+<h3 id="b6049a3a-55a2-44be-9dc0-1af2849e2128"><a id="org6702a83"></a><a id="ID-3350ba3c-2389-44d7-af61-a7b2193794f4"></a>function list-postmodern-prepared-statements (&amp;optional (names-only nil))</h3>
 <div class="outline-text-3" id="text-b6049a3a-55a2-44be-9dc0-1af2849e2128">
 <p>
 → list
@@ -1420,8 +1640,8 @@ the names of the prepared statements.
 </div>
 </div>
 
-<div id="outline-container-orga40288a" class="outline-3">
-<h3 id="06ea4b19-3d57-4f08-b92d-d477bf61c456"><a id="orga40288a"></a><a id="ID-72bb535d-6a0c-4f59-a00d-fdcb5d84680b"></a>function find-postgresql-prepared-statement (name)</h3>
+<div id="outline-container-org31a72ad" class="outline-3">
+<h3 id="06ea4b19-3d57-4f08-b92d-d477bf61c456"><a id="org31a72ad"></a><a id="ID-72bb535d-6a0c-4f59-a00d-fdcb5d84680b"></a>function find-postgresql-prepared-statement (name)</h3>
 <div class="outline-text-3" id="text-06ea4b19-3d57-4f08-b92d-d477bf61c456">
 <p>
 → string
@@ -1434,8 +1654,8 @@ this session and placed in the meta slot in the connection.
 </div>
 </div>
 
-<div id="outline-container-org6930598" class="outline-3">
-<h3 id="b728be40-afaf-45d3-849c-3b7e27b3b0c1"><a id="org6930598"></a><a id="ID-4eb910d7-0fbe-48a2-9002-8075050c937d"></a>function find-postmodern-prepared-statement (name)</h3>
+<div id="outline-container-org0c9e480" class="outline-3">
+<h3 id="b728be40-afaf-45d3-849c-3b7e27b3b0c1"><a id="org0c9e480"></a><a id="ID-4eb910d7-0fbe-48a2-9002-8075050c937d"></a>function find-postmodern-prepared-statement (name)</h3>
 <div class="outline-text-3" id="text-b728be40-afaf-45d3-849c-3b7e27b3b0c1">
 <p>
 → string
@@ -1449,8 +1669,8 @@ the name.
 </div>
 </div>
 
-<div id="outline-container-org019acce" class="outline-3">
-<h3 id="967c2e66-3ec9-4e07-9de9-1a06d758ac27"><a id="org019acce"></a><a id="ID-96e37531-56dd-4580-9fdc-d0e2bb3fbebc"></a>function reset-prepared-statement (condition)</h3>
+<div id="outline-container-org5070836" class="outline-3">
+<h3 id="967c2e66-3ec9-4e07-9de9-1a06d758ac27"><a id="org5070836"></a><a id="ID-96e37531-56dd-4580-9fdc-d0e2bb3fbebc"></a>function reset-prepared-statement (condition)</h3>
 <div class="outline-text-3" id="text-967c2e66-3ec9-4e07-9de9-1a06d758ac27">
 <p>
 → restart
@@ -1465,8 +1685,8 @@ restart the connection.
 </div>
 </div>
 
-<div id="outline-container-org32f7c7e" class="outline-3">
-<h3 id="a172b4cb-826f-4bcf-9c50-70676bb7599a"><a id="org32f7c7e"></a><a id="ID-92d74162-757f-449d-a52a-5c9daa20c5f0"></a>function get-pid ()</h3>
+<div id="outline-container-orgccba605" class="outline-3">
+<h3 id="a172b4cb-826f-4bcf-9c50-70676bb7599a"><a id="orgccba605"></a><a id="ID-92d74162-757f-449d-a52a-5c9daa20c5f0"></a>function get-pid ()</h3>
 <div class="outline-text-3" id="text-a172b4cb-826f-4bcf-9c50-70676bb7599a">
 <p>
 → integer
@@ -1478,8 +1698,8 @@ Get the process id used by postgresql for this connection.
 </div>
 </div>
 
-<div id="outline-container-org245733c" class="outline-3">
-<h3 id="b0afcff9-dfa9-466a-a3a2-06b189eac23a"><a id="org245733c"></a><a id="ID-693e7941-c239-406f-8870-566cbb5c9209"></a>function get-pid-from-postmodern ()</h3>
+<div id="outline-container-orgbebb367" class="outline-3">
+<h3 id="b0afcff9-dfa9-466a-a3a2-06b189eac23a"><a id="orgbebb367"></a><a id="ID-693e7941-c239-406f-8870-566cbb5c9209"></a>function get-pid-from-postmodern ()</h3>
 <div class="outline-text-3" id="text-b0afcff9-dfa9-466a-a3a2-06b189eac23a">
 <p>
 → integer
@@ -1492,8 +1712,8 @@ postmodern connection parameters.
 </div>
 </div>
 
-<div id="outline-container-org3eb3222" class="outline-3">
-<h3 id="10b17274-a4d8-4805-adbe-b7386fe28cfb"><a id="org3eb3222"></a><a id="ID-09b6f356-9e36-4de6-8c74-58331bfea8de"></a>function cancel-backend (pid)</h3>
+<div id="outline-container-org35747fc" class="outline-3">
+<h3 id="10b17274-a4d8-4805-adbe-b7386fe28cfb"><a id="org35747fc"></a><a id="ID-09b6f356-9e36-4de6-8c74-58331bfea8de"></a>function cancel-backend (pid)</h3>
 <div class="outline-text-3" id="text-10b17274-a4d8-4805-adbe-b7386fe28cfb">
 <p>
 Polite way of terminating a query at the database (as opposed to calling
@@ -1503,8 +1723,8 @@ always work.
 </div>
 </div>
 
-<div id="outline-container-orgfe5c2af" class="outline-3">
-<h3 id="203185f5-030c-48e7-8767-e765ac96f8cb"><a id="orgfe5c2af"></a><a id="ID-d8baac2e-115a-485d-b212-02ae397e5117"></a>function terminate-backend (pid)</h3>
+<div id="outline-container-orgb5aae1d" class="outline-3">
+<h3 id="203185f5-030c-48e7-8767-e765ac96f8cb"><a id="orgb5aae1d"></a><a id="ID-d8baac2e-115a-485d-b212-02ae397e5117"></a>function terminate-backend (pid)</h3>
 <div class="outline-text-3" id="text-203185f5-030c-48e7-8767-e765ac96f8cb">
 <p>
 Less polite way of terminating at the database (as opposed to calling
@@ -1513,22 +1733,26 @@ close-database). Faster than (cancel-backend pid) and more reliable.
 </div>
 </div>
 </div>
-<div id="outline-container-org5644eb8" class="outline-2">
-<h2 id="14e37c88-0e4b-48d6-aa31-5686e6456190"><a id="org5644eb8"></a>Database Management</h2>
-<div class="outline-text-2" id="text-14e37c88-0e4b-48d6-aa31-5686e6456190">
+<div id="outline-container-orge08ea4c" class="outline-2">
+<h2 id="database-management"><a id="orge08ea4c"></a>Database Management</h2>
+<div class="outline-text-2" id="text-database-management">
 </div>
 
-<div id="outline-container-orgace21ba" class="outline-3">
-<h3 id="c3da07c5-73e2-407c-a4cf-155b3ae416b2"><a id="orgace21ba"></a>function create-database (database-name &amp;key (encoding "UTF8") (connection-limit -1) owner limit-public-access comment collation template)</h3>
+<div id="outline-container-org6dafa72" class="outline-3">
+<h3 id="c3da07c5-73e2-407c-a4cf-155b3ae416b2"><a id="org6dafa72"></a>function create-database (database-name &amp;key (encoding "UTF8") (connection-limit -1) owner limit-public-access comment collation template)</h3>
 <div class="outline-text-3" id="text-c3da07c5-73e2-407c-a4cf-155b3ae416b2">
 <p>
 Creates a basic database. Besides the obvious database-name parameter, you
 can also use key parameters to set encoding (defaults to UTF8), owner,
 connection-limit (defaults to no limit)). If limit-public-access is set to t,
 then only superuser roles or roles with explicit access to this database will
-be able to access it. (See <a href="#f2e31575-047f-4629-9ffc-52b792726fd1">Roles</a> below) If collation is set, the assumption
-is that template0 needs to be used as the base of the database rather than
-template1 which may contain encoding specific or locale specific data.
+be able to access it. See <a href="#roles">Roles</a>.
+</p>
+
+<p>
+If collation is set, the assumption is that template0 needs to be used as the base
+of the database rather than template1 which may contain encoding specific or locale
+specific data.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(create-database 'testdb <span style="color: #98fb98; font-weight: bold;">:limit-public-access</span> t
@@ -1537,21 +1761,21 @@ template1 which may contain encoding specific or locale specific data.
 </div>
 </div>
 </div>
-<div id="outline-container-org94ae4eb" class="outline-3">
-<h3 id="b52e172a-2af0-4c19-a28c-db55b543964a"><a id="org94ae4eb"></a>function drop-database (database)</h3>
-<div class="outline-text-3" id="text-b52e172a-2af0-4c19-a28c-db55b543964a">
+<div id="outline-container-org99c8842" class="outline-3">
+<h3 id="database-management"><a id="org99c8842"></a>function drop-database (database)</h3>
+<div class="outline-text-3" id="text-database-management">
 <p>
 Drop the specified database. The database parameter can be a string or a
 symbol. Note: Only the owner of a database (or superuser) can drop a database
 and there cannot be any current connections to the database.
-<a href="#c6f7f5b5-8721-41b4-bf00-85811e189037">See Database information below for information specific functions</a>
+[[#database-information][See Database information below for information specific functions]
 </p>
 </div>
 </div>
 </div>
-<div id="outline-container-orgcd52393" class="outline-2">
-<h2 id="da21e1d9-5b86-42dc-a819-3de4ea2597dc"><a id="orgcd52393"></a><a id="ID-8e7cee8c-f2b9-4569-bf65-e8f3d2f9e31b"></a>Database access objects</h2>
-<div class="outline-text-2" id="text-da21e1d9-5b86-42dc-a819-3de4ea2597dc">
+<div id="outline-container-org0a547eb" class="outline-2">
+<h2 id="daos"><a id="org0a547eb"></a><a id="ID-8e7cee8c-f2b9-4569-bf65-e8f3d2f9e31b"></a>Database access objects</h2>
+<div class="outline-text-2" id="text-daos">
 <p>
 Postmodern contains a simple system for defining CLOS classes that represent
 rows in the database. This is not intended as a full-fledged object-relational
@@ -1561,8 +1785,8 @@ this.
 </p>
 </div>
 
-<div id="outline-container-org29db9f4" class="outline-3">
-<h3 id="d1d4b5c3-8c21-478e-8ac1-404e4ffdbec5"><a id="org29db9f4"></a><a id="ID-bbf28a59-551a-4805-b2f6-b2d0bd8feaf3"></a>metaclass dao-class</h3>
+<div id="outline-container-org0049e3b" class="outline-3">
+<h3 id="d1d4b5c3-8c21-478e-8ac1-404e4ffdbec5"><a id="org0049e3b"></a><a id="ID-bbf28a59-551a-4805-b2f6-b2d0bd8feaf3"></a>metaclass dao-class</h3>
 <div class="outline-text-3" id="text-d1d4b5c3-8c21-478e-8ac1-404e4ffdbec5">
 <p>
 You can work directly with the database or you can use a simple
@@ -1746,8 +1970,8 @@ slot like this:
 </div>
 </div>
 
-<div id="outline-container-orgb819b7c" class="outline-3">
-<h3 id="9027b960-0a1a-4b64-a621-d1d4ab2906f0"><a id="orgb819b7c"></a>Out of Sync Dao Objects</h3>
+<div id="outline-container-org0f40bdb" class="outline-3">
+<h3 id="9027b960-0a1a-4b64-a621-d1d4ab2906f0"><a id="org0f40bdb"></a>Out of Sync Dao Objects</h3>
 <div class="outline-text-3" id="text-9027b960-0a1a-4b64-a621-d1d4ab2906f0">
 <p>
 What Happens when dao classes are out of sync with the database table?
@@ -1990,8 +2214,8 @@ Postgresql rejected the attempted insert with an undefined column error.
 </p>
 </div>
 </div>
-<div id="outline-container-org0d48b68" class="outline-3">
-<h3 id="b12ed2b8-fc3f-4d3a-ba2a-3c9484d770dc"><a id="org0d48b68"></a><a id="ID-959682ab-ee0f-4afe-8cf3-38bb5f6de672"></a>method dao-keys (class)</h3>
+<div id="outline-container-org22f4fda" class="outline-3">
+<h3 id="b12ed2b8-fc3f-4d3a-ba2a-3c9484d770dc"><a id="org22f4fda"></a><a id="ID-959682ab-ee0f-4afe-8cf3-38bb5f6de672"></a>method dao-keys (class)</h3>
 <div class="outline-text-3" id="text-b12ed2b8-fc3f-4d3a-ba2a-3c9484d770dc">
 <p>
 → list
@@ -2015,8 +2239,8 @@ The class must be quoted.
 </div>
 </div>
 
-<div id="outline-container-orgd7ea4e5" class="outline-3">
-<h3 id="34196ad8-c657-4fd0-a475-e2f0b81ff86c"><a id="orgd7ea4e5"></a><a id="ID-4fa1fc88-dfb8-433f-90dc-c88e8908a5a8"></a>method dao-keys (dao)</h3>
+<div id="outline-container-org6712fef" class="outline-3">
+<h3 id="34196ad8-c657-4fd0-a475-e2f0b81ff86c"><a id="org6712fef"></a><a id="ID-4fa1fc88-dfb8-433f-90dc-c88e8908a5a8"></a>method dao-keys (dao)</h3>
 <div class="outline-text-3" id="text-34196ad8-c657-4fd0-a475-e2f0b81ff86c">
 <p>
 → list
@@ -2037,9 +2261,9 @@ been defined. You can provide a quoted class-name or an instance of a dao.
 </div>
 </div>
 
-<div id="outline-container-orgf986e70" class="outline-3">
-<h3 id="orgf986e70">method find-primary-key-column</h3>
-<div class="outline-text-3" id="text-orgf986e70">
+<div id="outline-container-org9df6c5f" class="outline-3">
+<h3 id="org9df6c5f">method find-primary-key-column</h3>
+<div class="outline-text-3" id="text-org9df6c5f">
 <p>
 → symbol
 </p>
@@ -2051,8 +2275,8 @@ that has bound either col-identity or col-primary-key.
 </div>
 </div>
 
-<div id="outline-container-orgca1126d" class="outline-3">
-<h3 id="d5835157-a4ba-4bf0-abbd-214b5a90bc80"><a id="orgca1126d"></a><a id="ID-4a55236e-edfb-4f07-a237-fae3453fc99d"></a>method dao-exists-p (dao)</h3>
+<div id="outline-container-org6fb3787" class="outline-3">
+<h3 id="d5835157-a4ba-4bf0-abbd-214b5a90bc80"><a id="org6fb3787"></a><a id="ID-4a55236e-edfb-4f07-a237-fae3453fc99d"></a>method dao-exists-p (dao)</h3>
 <div class="outline-text-3" id="text-d5835157-a4ba-4bf0-abbd-214b5a90bc80">
 <p>
 → boolean
@@ -2066,8 +2290,8 @@ unbound.
 </div>
 </div>
 
-<div id="outline-container-org69df39a" class="outline-3">
-<h3 id="24bce212-b7c3-4526-a869-92c0218f187d"><a id="org69df39a"></a><a id="ID-a812726c-52ea-4321-9bae-f9646bccc128"></a>method make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)</h3>
+<div id="outline-container-orgf66bc4c" class="outline-3">
+<h3 id="24bce212-b7c3-4526-a869-92c0218f187d"><a id="orgf66bc4c"></a><a id="ID-a812726c-52ea-4321-9bae-f9646bccc128"></a>method make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)</h3>
 <div class="outline-text-3" id="text-24bce212-b7c3-4526-a869-92c0218f187d">
 <p>
 → dao
@@ -2080,9 +2304,9 @@ insert it into the database, returning the created dao.
 </div>
 </div>
 
-<div id="outline-container-org94fe626" class="outline-3">
-<h3 id="org94fe626">method fetch-defaults (dao)</h3>
-<div class="outline-text-3" id="text-org94fe626">
+<div id="outline-container-org8b0d427" class="outline-3">
+<h3 id="org8b0d427">method fetch-defaults (dao)</h3>
+<div class="outline-text-3" id="text-org8b0d427">
 <p>
 → dao if there were unbound slots with default values, otherwise nil
 </p>
@@ -2100,9 +2324,9 @@ and bind the unbound slots which have default values. E.g.
 </div>
 </div>
 </div>
-<div id="outline-container-org320d474" class="outline-3">
-<h3 id="org320d474">method find-primary-key-column (class)</h3>
-<div class="outline-text-3" id="text-org320d474">
+<div id="outline-container-org59d8639" class="outline-3">
+<h3 id="org59d8639">method find-primary-key-column (class)</h3>
+<div class="outline-text-3" id="text-org59d8639">
 <p>
 → symbol
 </p>
@@ -2115,8 +2339,8 @@ Returns a symbol.
 </div>
 </div>
 
-<div id="outline-container-org9faa9c5" class="outline-3">
-<h3 id="f7351c36-cb79-43a2-8a5b-5f8aac8ea2d9"><a id="org9faa9c5"></a><a id="ID-645a03ec-739a-4ee5-b83d-dcbe43ef009a"></a>macro define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)</h3>
+<div id="outline-container-org0712b80" class="outline-3">
+<h3 id="f7351c36-cb79-43a2-8a5b-5f8aac8ea2d9"><a id="org0712b80"></a><a id="ID-645a03ec-739a-4ee5-b83d-dcbe43ef009a"></a>macro define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)</h3>
 <div class="outline-text-3" id="text-f7351c36-cb79-43a2-8a5b-5f8aac8ea2d9">
 <p>
 Create an :around-method for make-dao. The body is executed in a lexical
@@ -2128,8 +2352,8 @@ type serial, which are unknown before insert-dao.
 </div>
 </div>
 
-<div id="outline-container-org3373ef0" class="outline-3">
-<h3 id="73e62fab-5bfa-4986-b8c4-992e4d0a134b"><a id="org3373ef0"></a><a id="ID-6dd7dd12-0f9a-4c47-94ee-43f0886df956"></a>method get-dao (type &amp;rest keys)</h3>
+<div id="outline-container-org0f46288" class="outline-3">
+<h3 id="73e62fab-5bfa-4986-b8c4-992e4d0a134b"><a id="org0f46288"></a><a id="ID-6dd7dd12-0f9a-4c47-94ee-43f0886df956"></a>method get-dao (type &amp;rest keys)</h3>
 <div class="outline-text-3" id="text-73e62fab-5bfa-4986-b8c4-992e4d0a134b">
 <p>
 → dao
@@ -2167,8 +2391,8 @@ set <b>ignore-unknown-columns</b> to t.
 </div>
 </div>
 
-<div id="outline-container-orgfb48d8e" class="outline-3">
-<h3 id="cd11fa85-5019-4b94-a24c-d0857d633bd2"><a id="orgfb48d8e"></a><a id="ID-8b3533e5-2399-47e4-8fac-5345ec44c878"></a>macro select-dao (type &amp;optional (test t) &amp;rest sort)</h3>
+<div id="outline-container-org05cf8c5" class="outline-3">
+<h3 id="cd11fa85-5019-4b94-a24c-d0857d633bd2"><a id="org05cf8c5"></a><a id="ID-8b3533e5-2399-47e4-8fac-5345ec44c878"></a>macro select-dao (type &amp;optional (test t) &amp;rest sort)</h3>
 <div class="outline-text-3" id="text-cd11fa85-5019-4b94-a24c-d0857d633bd2">
 <p>
 → list
@@ -2220,8 +2444,8 @@ If for some reason, you wanted the list in reverse alphabetical order, then:
 </div>
 </div>
 </div>
-<div id="outline-container-orgc271cbc" class="outline-3">
-<h3 id="6273d302-4199-44a0-aa18-3d8f91affd84"><a id="orgc271cbc"></a><a id="ID-b1a7accd-8c3e-429b-a8c8-35f2283855c4"></a>macro do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)</h3>
+<div id="outline-container-org8b84581" class="outline-3">
+<h3 id="6273d302-4199-44a0-aa18-3d8f91affd84"><a id="org8b84581"></a><a id="ID-b1a7accd-8c3e-429b-a8c8-35f2283855c4"></a>macro do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)</h3>
 <div class="outline-text-3" id="text-6273d302-4199-44a0-aa18-3d8f91affd84">
 <p>
 Like select-dao, but iterates over the results rather than returning them.
@@ -2240,8 +2464,8 @@ Example:
 </div>
 </div>
 
-<div id="outline-container-org7af9e4f" class="outline-3">
-<h3 id="6e5766fb-14dd-4f1e-a68a-fd14d781ac9e"><a id="org7af9e4f"></a><a id="ID-134f9dcb-0784-461b-a38c-85c14d850910"></a>macro query-dao (type query &amp;rest args)</h3>
+<div id="outline-container-orgb911e77" class="outline-3">
+<h3 id="6e5766fb-14dd-4f1e-a68a-fd14d781ac9e"><a id="orgb911e77"></a><a id="ID-134f9dcb-0784-461b-a38c-85c14d850910"></a>macro query-dao (type query &amp;rest args)</h3>
 <div class="outline-text-3" id="text-6e5766fb-14dd-4f1e-a68a-fd14d781ac9e">
 <p>
 → list
@@ -2257,8 +2481,8 @@ class, or be bound through with-column-writers.
 </div>
 </div>
 
-<div id="outline-container-org594e316" class="outline-3">
-<h3 id="702edc9e-ef43-4df1-9e99-dac6047bdecc"><a id="org594e316"></a><a id="ID-8f5738c2-a11e-4c1b-91bc-b52f62502fbd"></a>function do-query-dao (((type type-var) query &amp;rest args) &amp;body body)</h3>
+<div id="outline-container-orgc56c2ea" class="outline-3">
+<h3 id="702edc9e-ef43-4df1-9e99-dac6047bdecc"><a id="orgc56c2ea"></a><a id="ID-8f5738c2-a11e-4c1b-91bc-b52f62502fbd"></a>function do-query-dao (((type type-var) query &amp;rest args) &amp;body body)</h3>
 <div class="outline-text-3" id="text-702edc9e-ef43-4df1-9e99-dac6047bdecc">
 <p>
 → list
@@ -2280,8 +2504,8 @@ Example:
 </div>
 </div>
 
-<div id="outline-container-org1e32d2b" class="outline-3">
-<h3 id="4a1219dc-d0bc-4fb7-81c9-cb734cb051cc"><a id="org1e32d2b"></a><a id="ID-a6627d60-61f4-4a9b-86e7-5c1454a4e487"></a>variable <b>ignore-unknown-columns</b></h3>
+<div id="outline-container-org69134ce" class="outline-3">
+<h3 id="4a1219dc-d0bc-4fb7-81c9-cb734cb051cc"><a id="org69134ce"></a><a id="ID-a6627d60-61f4-4a9b-86e7-5c1454a4e487"></a>variable <b>ignore-unknown-columns</b></h3>
 <div class="outline-text-3" id="text-4a1219dc-d0bc-4fb7-81c9-cb734cb051cc">
 <p>
 Normally, when get-dao, select-dao, or query-dao finds a column in the database
@@ -2291,8 +2515,8 @@ non-NIL will cause it to simply ignore the unknown column.
 </div>
 </div>
 
-<div id="outline-container-orgb69a838" class="outline-3">
-<h3 id="4a83ef48-a40a-423c-a97c-3d6743ce940c"><a id="orgb69a838"></a><a id="ID-6e534cce-6d6a-4710-875e-bf53aadb2045"></a>method insert-dao (dao)</h3>
+<div id="outline-container-orge268a0a" class="outline-3">
+<h3 id="4a83ef48-a40a-423c-a97c-3d6743ce940c"><a id="orge268a0a"></a><a id="ID-6e534cce-6d6a-4710-875e-bf53aadb2045"></a>method insert-dao (dao)</h3>
 <div class="outline-text-3" id="text-4a83ef48-a40a-423c-a97c-3d6743ce940c">
 <p>
 → dao
@@ -2307,8 +2531,8 @@ feature only works on PostgreSQL 8.2 and up.)
 </div>
 </div>
 
-<div id="outline-container-org380b043" class="outline-3">
-<h3 id="08306ea2-4027-40e8-a9df-8bb2fbc63b3e"><a id="org380b043"></a><a id="ID-faf45a30-c384-461f-9367-9e7c40c466a5"></a>method update-dao (dao)</h3>
+<div id="outline-container-orgec6f22e" class="outline-3">
+<h3 id="08306ea2-4027-40e8-a9df-8bb2fbc63b3e"><a id="orgec6f22e"></a><a id="ID-faf45a30-c384-461f-9367-9e7c40c466a5"></a>method update-dao (dao)</h3>
 <div class="outline-text-3" id="text-08306ea2-4027-40e8-a9df-8bb2fbc63b3e">
 <p>
 → dao
@@ -2322,8 +2546,8 @@ columns. Raises an error when no row matching the dao exists.
 </div>
 </div>
 
-<div id="outline-container-org3f6a0a2" class="outline-3">
-<h3 id="4697a909-970c-492b-b1d6-7e05895f8882"><a id="org3f6a0a2"></a><a id="ID-a61016ef-bf72-4d7f-804f-c4396098833b"></a>function save-dao (dao)</h3>
+<div id="outline-container-org53936f9" class="outline-3">
+<h3 id="4697a909-970c-492b-b1d6-7e05895f8882"><a id="org53936f9"></a><a id="ID-a61016ef-bf72-4d7f-804f-c4396098833b"></a>function save-dao (dao)</h3>
 <div class="outline-text-3" id="text-4697a909-970c-492b-b1d6-7e05895f8882">
 <p>
 → boolean
@@ -2355,8 +2579,8 @@ See also: upsert-dao.
 </div>
 </div>
 
-<div id="outline-container-org44746b1" class="outline-3">
-<h3 id="62a09a7f-8583-404d-b9f3-28b1eb416b0f"><a id="org44746b1"></a><a id="ID-0162b077-c274-48b0-9d5d-655de2482012"></a>function save-dao/transaction (dao)</h3>
+<div id="outline-container-orgc1069f1" class="outline-3">
+<h3 id="62a09a7f-8583-404d-b9f3-28b1eb416b0f"><a id="orgc1069f1"></a><a id="ID-0162b077-c274-48b0-9d5d-655de2482012"></a>function save-dao/transaction (dao)</h3>
 <div class="outline-text-3" id="text-62a09a7f-8583-404d-b9f3-28b1eb416b0f">
 <p>
 → boolean
@@ -2387,8 +2611,8 @@ See also: upsert-dao.
 </div>
 </div>
 
-<div id="outline-container-orga168c7d" class="outline-3">
-<h3 id="8eeaf5dd-a802-4ba0-9983-dc153ffc1dae"><a id="orga168c7d"></a><a id="ID-ab8ea79a-1761-402c-a1bc-3a5c4fd53c24"></a>method upsert-dao (dao)</h3>
+<div id="outline-container-org2f20e53" class="outline-3">
+<h3 id="8eeaf5dd-a802-4ba0-9983-dc153ffc1dae"><a id="org2f20e53"></a><a id="ID-ab8ea79a-1761-402c-a1bc-3a5c4fd53c24"></a>method upsert-dao (dao)</h3>
 <div class="outline-text-3" id="text-8eeaf5dd-a802-4ba0-9983-dc153ffc1dae">
 <p>
 → dao
@@ -2444,8 +2668,8 @@ there is no existing object to oupdate, then you insert a new object.
 </div>
 </div>
 
-<div id="outline-container-orge54cc8a" class="outline-3">
-<h3 id="b135af85-b194-4a5c-9c2d-be87f6827877"><a id="orge54cc8a"></a><a id="ID-f3371904-cd84-4392-a301-0f910bcf1b90"></a>method delete-dao (dao)</h3>
+<div id="outline-container-org27872a5" class="outline-3">
+<h3 id="b135af85-b194-4a5c-9c2d-be87f6827877"><a id="org27872a5"></a><a id="ID-f3371904-cd84-4392-a301-0f910bcf1b90"></a>method delete-dao (dao)</h3>
 <div class="outline-text-3" id="text-b135af85-b194-4a5c-9c2d-be87f6827877">
 <p>
 Delete the given dao from the database.
@@ -2453,8 +2677,8 @@ Delete the given dao from the database.
 </div>
 </div>
 
-<div id="outline-container-orgec246cf" class="outline-3">
-<h3 id="436e6c77-8550-4462-a956-3affe6d0970c"><a id="orgec246cf"></a><a id="ID-718c03fe-5c70-43c1-a986-bc361d1e2ee6"></a>function dao-table-name (class)</h3>
+<div id="outline-container-orge450c4d" class="outline-3">
+<h3 id="436e6c77-8550-4462-a956-3affe6d0970c"><a id="orge450c4d"></a><a id="ID-718c03fe-5c70-43c1-a986-bc361d1e2ee6"></a>function dao-table-name (class)</h3>
 <div class="outline-text-3" id="text-436e6c77-8550-4462-a956-3affe6d0970c">
 <p>
 → string
@@ -2467,8 +2691,8 @@ such a class).
 </div>
 </div>
 
-<div id="outline-container-orgcbb1276" class="outline-3">
-<h3 id="289d7bc0-b4a3-45e3-991b-14b9cfbdcf68"><a id="orgcbb1276"></a><a id="ID-e796fdb5-a8d9-4399-893a-6783dd925e78"></a>function dao-table-definition (class)</h3>
+<div id="outline-container-orgcdcdcf4" class="outline-3">
+<h3 id="289d7bc0-b4a3-45e3-991b-14b9cfbdcf68"><a id="orgcdcdcf4"></a><a id="ID-e796fdb5-a8d9-4399-893a-6783dd925e78"></a>function dao-table-definition (class)</h3>
 <div class="outline-text-3" id="text-289d7bc0-b4a3-45e3-991b-14b9cfbdcf68">
 <p>
 → string
@@ -2483,8 +2707,8 @@ queries to add them, in which case look to s-sql's create-table function.
 </div>
 </div>
 
-<div id="outline-container-org4d20950" class="outline-3">
-<h3 id="d8aa15a1-7dfc-47b3-ae14-70626c33bcc3"><a id="org4d20950"></a><a id="ID-52b95f7c-f8f0-4e53-8e60-622746f18e16"></a>macro with-column-writers ((&amp;rest writers) &amp;body body)</h3>
+<div id="outline-container-org9e51b09" class="outline-3">
+<h3 id="d8aa15a1-7dfc-47b3-ae14-70626c33bcc3"><a id="org9e51b09"></a><a id="ID-52b95f7c-f8f0-4e53-8e60-622746f18e16"></a>macro with-column-writers ((&amp;rest writers) &amp;body body)</h3>
 <div class="outline-text-3" id="text-d8aa15a1-7dfc-47b3-ae14-70626c33bcc3">
 <p>
 Provides control over the way get-dao, select-dao, and query-dao read values
@@ -2508,9 +2732,9 @@ the objects, and immediately store it in the new instances.
 </div>
 </div>
 
-<div id="outline-container-org5965104" class="outline-2">
-<h2 id="26cf8623-bc7a-419b-831c-e83f6621f950"><a id="org5965104"></a><a id="ID-1c0a254a-4a0e-4012-b519-8fe8cbf9ae02"></a>Table definition and creation</h2>
-<div class="outline-text-2" id="text-26cf8623-bc7a-419b-831c-e83f6621f950">
+<div id="outline-container-org8108396" class="outline-2">
+<h2 id="table-definition"><a id="org8108396"></a><a id="ID-1c0a254a-4a0e-4012-b519-8fe8cbf9ae02"></a>Table definition and creation</h2>
+<div class="outline-text-2" id="text-table-definition">
 <p>
 It can be useful to have the SQL statements needed to build an application's
 tables available from the source code, to do things like automatically deploying
@@ -2520,8 +2744,8 @@ in table definitions.
 </p>
 </div>
 
-<div id="outline-container-orge4503e1" class="outline-3">
-<h3 id="16d26863-ae01-49f3-9350-8ea2d5ca363c"><a id="orge4503e1"></a><a id="ID-39e40910-e25a-4db4-bd0a-b4b6d1a75630"></a>macro deftable (name &amp;body definition)</h3>
+<div id="outline-container-org2187583" class="outline-3">
+<h3 id="16d26863-ae01-49f3-9350-8ea2d5ca363c"><a id="org2187583"></a><a id="ID-39e40910-e25a-4db4-bd0a-b4b6d1a75630"></a>macro deftable (name &amp;body definition)</h3>
 <div class="outline-text-3" id="text-16d26863-ae01-49f3-9350-8ea2d5ca363c">
 <p>
 Define a table. name can be either a symbol or a (symbol string) list. In the
@@ -2535,8 +2759,8 @@ generally want to create your table first and then define indices on it.
 </div>
 </div>
 
-<div id="outline-container-org40fd444" class="outline-3">
-<h3 id="d7e145ff-9666-43eb-813d-78a87116532e"><a id="org40fd444"></a><a id="ID-3e565b16-153c-4281-8f17-3653e7a9dc5d"></a>variable <b>table-name</b></h3>
+<div id="outline-container-org4a050ac" class="outline-3">
+<h3 id="d7e145ff-9666-43eb-813d-78a87116532e"><a id="org4a050ac"></a><a id="ID-3e565b16-153c-4281-8f17-3653e7a9dc5d"></a>variable <b>table-name</b></h3>
 <div class="outline-text-3" id="text-d7e145ff-9666-43eb-813d-78a87116532e">
 <p>
 Used inside deftable to find the name of the table being defined.
@@ -2544,8 +2768,8 @@ Used inside deftable to find the name of the table being defined.
 </div>
 </div>
 
-<div id="outline-container-org22f9c61" class="outline-3">
-<h3 id="00432de6-10f6-4e52-85d9-6c622e6c37ec"><a id="org22f9c61"></a><a id="ID-551359a0-8d5b-4d4f-932d-df8759105ee1"></a>variable <b>table-symbol</b></h3>
+<div id="outline-container-org7b16753" class="outline-3">
+<h3 id="00432de6-10f6-4e52-85d9-6c622e6c37ec"><a id="org7b16753"></a><a id="ID-551359a0-8d5b-4d4f-932d-df8759105ee1"></a>variable <b>table-symbol</b></h3>
 <div class="outline-text-3" id="text-00432de6-10f6-4e52-85d9-6c622e6c37ec">
 <p>
 Used inside deftable to find the symbol naming the table being defined.
@@ -2553,8 +2777,8 @@ Used inside deftable to find the symbol naming the table being defined.
 </div>
 </div>
 
-<div id="outline-container-org3ebe155" class="outline-3">
-<h3 id="01902b36-20f9-4644-9347-fa6cbead2334"><a id="org3ebe155"></a><a id="ID-eb1680a7-2a82-4e6a-b31b-aeea22bf7362"></a>function !dao-def ()</h3>
+<div id="outline-container-org68c7a5e" class="outline-3">
+<h3 id="01902b36-20f9-4644-9347-fa6cbead2334"><a id="org68c7a5e"></a><a id="ID-eb1680a7-2a82-4e6a-b31b-aeea22bf7362"></a>function !dao-def ()</h3>
 <div class="outline-text-3" id="text-01902b36-20f9-4644-9347-fa6cbead2334">
 <p>
 Should only be used inside a deftable form. Define this table using the
@@ -2564,8 +2788,8 @@ on <b>table-symbol</b> to the definition.
 </div>
 </div>
 
-<div id="outline-container-org672c6b5" class="outline-3">
-<h3 id="b0e0a7d4-1c23-4ba2-88a4-dac55a3584c8"><a id="org672c6b5"></a><a id="ID-5ceae010-3712-400a-9c8c-0616b8406390"></a>function !index (&amp;rest columns), !unique-index (&amp;rest columns)</h3>
+<div id="outline-container-org28bcfc9" class="outline-3">
+<h3 id="b0e0a7d4-1c23-4ba2-88a4-dac55a3584c8"><a id="org28bcfc9"></a><a id="ID-5ceae010-3712-400a-9c8c-0616b8406390"></a>function !index (&amp;rest columns), !unique-index (&amp;rest columns)</h3>
 <div class="outline-text-3" id="text-b0e0a7d4-1c23-4ba2-88a4-dac55a3584c8">
 <p>
 Used inside a deftable form. Define an index on the table being defined. The
@@ -2574,8 +2798,8 @@ columns can be given as symbols or strings.
 </div>
 </div>
 
-<div id="outline-container-orgeac83f0" class="outline-3">
-<h3 id="eba9236f-a947-4194-8337-4d0f828f5542"><a id="orgeac83f0"></a><a id="ID-1378528c-3e7a-452b-8775-b3d84d897ebd"></a>function !foreign (target fields &amp;rest target-fields/on-delete/on-update/deferrable/initially-deferred)</h3>
+<div id="outline-container-orgb10cced" class="outline-3">
+<h3 id="eba9236f-a947-4194-8337-4d0f828f5542"><a id="orgb10cced"></a><a id="ID-1378528c-3e7a-452b-8775-b3d84d897ebd"></a>function !foreign (target fields &amp;rest target-fields/on-delete/on-update/deferrable/initially-deferred)</h3>
 <div class="outline-text-3" id="text-eba9236f-a947-4194-8337-4d0f828f5542">
 <p>
 Used insde a deftable form. Add a foreign key to the table being defined.
@@ -2598,8 +2822,8 @@ that they can be specified even when target-columns is not given.
 </div>
 </div>
 
-<div id="outline-container-org7255618" class="outline-3">
-<h3 id="5ccbe683-8a43-4373-9371-529a3007bd40"><a id="org7255618"></a><a id="ID-c4631db6-9994-40df-97b7-150df71bb121"></a>function !unique (target-fields &amp;key deferrable initially-deferred)</h3>
+<div id="outline-container-org1579719" class="outline-3">
+<h3 id="5ccbe683-8a43-4373-9371-529a3007bd40"><a id="org1579719"></a><a id="ID-c4631db6-9994-40df-97b7-150df71bb121"></a>function !unique (target-fields &amp;key deferrable initially-deferred)</h3>
 <div class="outline-text-3" id="text-5ccbe683-8a43-4373-9371-529a3007bd40">
 <p>
 Constrains one or more columns to only contain unique (combinations of) values,
@@ -2608,8 +2832,8 @@ with deferrable and initially-deferred defined as in !foreign
 </div>
 </div>
 
-<div id="outline-container-orgc764835" class="outline-3">
-<h3 id="e1834b87-e348-44ab-9361-0ad1021d1163"><a id="orgc764835"></a><a id="ID-333d4860-6cfe-4009-80f8-a480174d64e1"></a>function create-table (symbol)</h3>
+<div id="outline-container-org8ae947f" class="outline-3">
+<h3 id="e1834b87-e348-44ab-9361-0ad1021d1163"><a id="org8ae947f"></a><a id="ID-333d4860-6cfe-4009-80f8-a480174d64e1"></a>function create-table (symbol)</h3>
 <div class="outline-text-3" id="text-e1834b87-e348-44ab-9361-0ad1021d1163">
 <p>
 Takes the name of a dao-class and creates the table identified by symbol by
@@ -2618,8 +2842,8 @@ executing all forms in its definition as found in the <b>tables</b> list.
 </div>
 </div>
 
-<div id="outline-container-org2332e2a" class="outline-3">
-<h3 id="eba2d105-d5c7-49c0-bfed-828e4ff53b09"><a id="org2332e2a"></a><a id="ID-7477cdc4-59bf-47fb-9b60-25ee9c38eb66"></a>function create-all-tables ()</h3>
+<div id="outline-container-orga46049c" class="outline-3">
+<h3 id="eba2d105-d5c7-49c0-bfed-828e4ff53b09"><a id="orga46049c"></a><a id="ID-7477cdc4-59bf-47fb-9b60-25ee9c38eb66"></a>function create-all-tables ()</h3>
 <div class="outline-text-3" id="text-eba2d105-d5c7-49c0-bfed-828e4ff53b09">
 <p>
 Creates all defined tables.
@@ -2627,8 +2851,8 @@ Creates all defined tables.
 </div>
 </div>
 
-<div id="outline-container-orgd34fbde" class="outline-3">
-<h3 id="a49e80c8-3204-4803-b263-a0cac063ea12"><a id="orgd34fbde"></a><a id="ID-8e36190a-a3a4-4e66-8df4-0a6b6b74f617"></a>function create-package-tables (package)</h3>
+<div id="outline-container-org7fa97ca" class="outline-3">
+<h3 id="a49e80c8-3204-4803-b263-a0cac063ea12"><a id="org7fa97ca"></a><a id="ID-8e36190a-a3a4-4e66-8df4-0a6b6b74f617"></a>function create-package-tables (package)</h3>
 <div class="outline-text-3" id="text-a49e80c8-3204-4803-b263-a0cac063ea12">
 <p>
 Creates all tables identified by symbols interned in the given package.
@@ -2636,8 +2860,8 @@ Creates all tables identified by symbols interned in the given package.
 </div>
 </div>
 
-<div id="outline-container-orgec9d40e" class="outline-3">
-<h3 id="a932fe23-c677-4bb7-8df8-6dd2adf2beff"><a id="orgec9d40e"></a><a id="ID-25924943-75d9-4612-b2a3-dc94f292c2a5"></a>variables <b>table-name</b>, <b>table-symbol</b></h3>
+<div id="outline-container-orgd7f700b" class="outline-3">
+<h3 id="a932fe23-c677-4bb7-8df8-6dd2adf2beff"><a id="orgd7f700b"></a><a id="ID-25924943-75d9-4612-b2a3-dc94f292c2a5"></a>variables <b>table-name</b>, <b>table-symbol</b></h3>
 <div class="outline-text-3" id="text-a932fe23-c677-4bb7-8df8-6dd2adf2beff">
 <p>
 Used inside deftable to find the name of the table being defined.
@@ -2649,8 +2873,8 @@ Used inside deftable to find the symbol naming the table being defined.
 </div>
 </div>
 
-<div id="outline-container-orgc0e1cc4" class="outline-3">
-<h3 id="f6879b3f-12dc-44a4-b92e-03dbedd0b1cd"><a id="orgc0e1cc4"></a><a id="ID-0427ecce-416e-4266-a5c7-90e58e22e0b7"></a>function drop-table (table-name &amp;key if-exists cascade)</h3>
+<div id="outline-container-org008a702" class="outline-3">
+<h3 id="f6879b3f-12dc-44a4-b92e-03dbedd0b1cd"><a id="org008a702"></a><a id="ID-0427ecce-416e-4266-a5c7-90e58e22e0b7"></a>function drop-table (table-name &amp;key if-exists cascade)</h3>
 <div class="outline-text-3" id="text-f6879b3f-12dc-44a4-b92e-03dbedd0b1cd">
 <p>
 If a table exists, drop a table. Available additional key parameters
@@ -2659,8 +2883,8 @@ are :if-exists and :cascade.
 </div>
 </div>
 
-<div id="outline-container-orgb8e0781" class="outline-3">
-<h3 id="9b329d91-58c8-4153-950f-4e58b71455dc"><a id="orgb8e0781"></a><a id="ID-e76fc507-bfa6-481b-b429-128ed0ede9e3"></a>Introduction to Multi-table dao class objects</h3>
+<div id="outline-container-orgae609be" class="outline-3">
+<h3 id="9b329d91-58c8-4153-950f-4e58b71455dc"><a id="orgae609be"></a><a id="ID-e76fc507-bfa6-481b-b429-128ed0ede9e3"></a>Introduction to Multi-table dao class objects</h3>
 <div class="outline-text-3" id="text-9b329d91-58c8-4153-950f-4e58b71455dc">
 <p>
 Postmodern's dao-class objects are not required to be tied down to a specific
@@ -2739,8 +2963,8 @@ be the primary key for region-d).
 </p>
 </div>
 
-<div id="outline-container-orge1cb3f0" class="outline-4">
-<h4 id="da13ef47-1c9c-4d8e-be07-26a2ffa25fdc"><a id="orge1cb3f0"></a><a id="ID-2758d7e8-ae00-4d01-8c8b-c7ff3a827047"></a>Simple Version</h4>
+<div id="outline-container-org63ad43f" class="outline-4">
+<h4 id="da13ef47-1c9c-4d8e-be07-26a2ffa25fdc"><a id="org63ad43f"></a><a id="ID-2758d7e8-ae00-4d01-8c8b-c7ff3a827047"></a>Simple Version</h4>
 <div class="outline-text-4" id="text-da13ef47-1c9c-4d8e-be07-26a2ffa25fdc">
 <p>
 Lets start by declaring our classes and we will use the deftable make to create
@@ -2825,8 +3049,8 @@ The country-d lambda looks like this:
 </div>
 </div>
 </div>
-<div id="outline-container-orgb6d0620" class="outline-4">
-<h4 id="d8cb7f38-7ef3-4ec2-85a2-b4df7b2c4997"><a id="orgb6d0620"></a><a id="ID-933f58e1-a4da-4e7f-a227-0fac621e14b0"></a>Less Simple Version</h4>
+<div id="outline-container-orgc16c7ec" class="outline-4">
+<h4 id="d8cb7f38-7ef3-4ec2-85a2-b4df7b2c4997"><a id="orgc16c7ec"></a><a id="ID-933f58e1-a4da-4e7f-a227-0fac621e14b0"></a>Less Simple Version</h4>
 <div class="outline-text-4" id="text-d8cb7f38-7ef3-4ec2-85a2-b4df7b2c4997">
 <p>
 In the -n version, we are going to use the id columns as the primary key.
@@ -3196,9 +3420,9 @@ from all the foreign tables.
 </div>
 </div>
 
-<div id="outline-container-orgd7816ce" class="outline-2">
-<h2 id="f2e31575-047f-4629-9ffc-52b792726fd1"><a id="orgd7816ce"></a>Roles</h2>
-<div class="outline-text-2" id="text-f2e31575-047f-4629-9ffc-52b792726fd1">
+<div id="outline-container-orgc602a63" class="outline-2">
+<h2 id="roles"><a id="orgc602a63"></a>Roles</h2>
+<div class="outline-text-2" id="text-roles">
 <p>
 Every connection is specific to a particular database. However, creating roles
 or users is global to the entire cluster (the running postgresql server). You
@@ -3243,8 +3467,8 @@ on, then dropping ownership of objects, then dropping the role itself.
 </p>
 </div>
 
-<div id="outline-container-orge40ecb3" class="outline-3">
-<h3 id="694123c8-957f-4b11-a344-094525d35e7f"><a id="orge40ecb3"></a>function role-exists-p (role-name)</h3>
+<div id="outline-container-orgd30a4dd" class="outline-3">
+<h3 id="694123c8-957f-4b11-a344-094525d35e7f"><a id="orgd30a4dd"></a>function role-exists-p (role-name)</h3>
 <div class="outline-text-3" id="text-694123c8-957f-4b11-a344-094525d35e7f">
 <p>
 → boolean
@@ -3255,8 +3479,8 @@ Does the named role exist in this database cluster? Returns t or nil.
 </p>
 </div>
 </div>
-<div id="outline-container-org250ab8f" class="outline-3">
-<h3 id="07a9f936-c1b7-4a7d-b5a5-57cd6a24870a"><a id="org250ab8f"></a>function create-role</h3>
+<div id="outline-container-org56bf7e2" class="outline-3">
+<h3 id="07a9f936-c1b7-4a7d-b5a5-57cd6a24870a"><a id="org56bf7e2"></a>function create-role</h3>
 <div class="outline-text-3" id="text-07a9f936-c1b7-4a7d-b5a5-57cd6a24870a">
 <p>
 (name password &amp;key (base-role :readonly) (schema :public)
@@ -3317,8 +3541,8 @@ as culturally insensitive to change the display of the name.
 </p>
 </div>
 </div>
-<div id="outline-container-org4d9fb24" class="outline-3">
-<h3 id="e527824a-811e-41fa-ae49-2dd24f436ed3"><a id="org4d9fb24"></a>function drop-role (role-name &amp;optional (new-owner "postgres") (database :all))</h3>
+<div id="outline-container-orgfe239af" class="outline-3">
+<h3 id="e527824a-811e-41fa-ae49-2dd24f436ed3"><a id="orgfe239af"></a>function drop-role (role-name &amp;optional (new-owner "postgres") (database :all))</h3>
 <div class="outline-text-3" id="text-e527824a-811e-41fa-ae49-2dd24f436ed3">
 <p>
 → boolean
@@ -3346,8 +3570,8 @@ successful. Will not drop the postgres role.
 </p>
 </div>
 </div>
-<div id="outline-container-org399091b" class="outline-3">
-<h3 id="20f2425f-6a17-46b0-a8b7-22843a7f11e1"><a id="org399091b"></a>function alter-role-search-path (role search-path)</h3>
+<div id="outline-container-orgfe55cbe" class="outline-3">
+<h3 id="20f2425f-6a17-46b0-a8b7-22843a7f11e1"><a id="orgfe55cbe"></a>function alter-role-search-path (role search-path)</h3>
 <div class="outline-text-3" id="text-20f2425f-6a17-46b0-a8b7-22843a7f11e1">
 <p>
 Changes the priority of where a role looks for tables (which schema first,
@@ -3356,8 +3580,8 @@ names either as strings or symbols.
 </p>
 </div>
 </div>
-<div id="outline-container-orga73bfc7" class="outline-3">
-<h3 id="08c10e1f-96a3-4f3b-8b9c-f4a0251d43cd"><a id="orga73bfc7"></a>function change-password (role password &amp;optional expiration-date)</h3>
+<div id="outline-container-orgd964568" class="outline-3">
+<h3 id="08c10e1f-96a3-4f3b-8b9c-f4a0251d43cd"><a id="orgd964568"></a>function change-password (role password &amp;optional expiration-date)</h3>
 <div class="outline-text-3" id="text-08c10e1f-96a3-4f3b-8b9c-f4a0251d43cd">
 <p>
 Alters a role's password. If the optional expiration-date parameter is provided,
@@ -3369,8 +3593,8 @@ automatic with postgresql versions 10 and above.
 </div>
 </div>
 
-<div id="outline-container-org8069e0f" class="outline-3">
-<h3 id="41e66f79-aa57-4f00-b218-5f1a85c7d970"><a id="org8069e0f"></a>function grant-role-permissions (role-type name &amp;key (schema :public) (tables :all) (databases :all))</h3>
+<div id="outline-container-org48c1214" class="outline-3">
+<h3 id="41e66f79-aa57-4f00-b218-5f1a85c7d970"><a id="org48c1214"></a>function grant-role-permissions (role-type name &amp;key (schema :public) (tables :all) (databases :all))</h3>
 <div class="outline-text-3" id="text-41e66f79-aa57-4f00-b218-5f1a85c7d970">
 <p>
 Grant-role-permissions assumes that a role has already been created, but
@@ -3399,8 +3623,8 @@ the connected database at the time of execution of this function.
 </p>
 </div>
 </div>
-<div id="outline-container-org8637e60" class="outline-3">
-<h3 id="ac447228-8f95-4a30-840d-10a1a9a418f4"><a id="org8637e60"></a>function grant-readonly-permissions (schema-name role-name &amp;optional (table-name nil))</h3>
+<div id="outline-container-org789c889" class="outline-3">
+<h3 id="ac447228-8f95-4a30-840d-10a1a9a418f4"><a id="org789c889"></a>function grant-readonly-permissions (schema-name role-name &amp;optional (table-name nil))</h3>
 <div class="outline-text-3" id="text-ac447228-8f95-4a30-840d-10a1a9a418f4">
 <p>
 Grants select privileges to a role for the named schema. If the optional
@@ -3412,8 +3636,8 @@ read-only role with access to only a limited number of tables.
 </p>
 </div>
 </div>
-<div id="outline-container-orgec41f9c" class="outline-3">
-<h3 id="1a271dc1-5e76-4b90-84d5-423a24059e8b"><a id="orgec41f9c"></a>function grant-editor-permissions (schema-name role-name &amp;optional (table-name nil))</h3>
+<div id="outline-container-orga1ead30" class="outline-3">
+<h3 id="1a271dc1-5e76-4b90-84d5-423a24059e8b"><a id="orga1ead30"></a>function grant-editor-permissions (schema-name role-name &amp;optional (table-name nil))</h3>
 <div class="outline-text-3" id="text-1a271dc1-5e76-4b90-84d5-423a24059e8b">
 <p>
 Grants select, insert, update and delete privileges to a role for the named
@@ -3425,8 +3649,8 @@ to a editor role with access to only a limited number of tables.
 </p>
 </div>
 </div>
-<div id="outline-container-org5661f98" class="outline-3">
-<h3 id="4ac88ea3-bf89-462b-a9dd-cfa115234fb3"><a id="org5661f98"></a>function grant-admin-permissions (schema-name role-name &amp;optional (table-name nil))</h3>
+<div id="outline-container-org7712f93" class="outline-3">
+<h3 id="4ac88ea3-bf89-462b-a9dd-cfa115234fb3"><a id="org7712f93"></a>function grant-admin-permissions (schema-name role-name &amp;optional (table-name nil))</h3>
 <div class="outline-text-3" id="text-4ac88ea3-bf89-462b-a9dd-cfa115234fb3">
 <p>
 Grants all privileges to a role for the named schema. If the optional table-name
@@ -3434,8 +3658,8 @@ parameter is provided, the privileges are only granted with respect to that tabl
 </p>
 </div>
 </div>
-<div id="outline-container-orgd78953c" class="outline-3">
-<h3 id="6e7e67b0-0fb1-461e-a842-a6e6c59f4c2f"><a id="orgd78953c"></a>function revoke-all-on-table (table-name role-name)</h3>
+<div id="outline-container-orgc23f883" class="outline-3">
+<h3 id="6e7e67b0-0fb1-461e-a842-a6e6c59f4c2f"><a id="orgc23f883"></a>function revoke-all-on-table (table-name role-name)</h3>
 <div class="outline-text-3" id="text-6e7e67b0-0fb1-461e-a842-a6e6c59f4c2f">
 <p>
 Takes a table-name which could be a string, symbol or list of strings or
@@ -3446,8 +3670,8 @@ of the function.
 </p>
 </div>
 </div>
-<div id="outline-container-orgaf12466" class="outline-3">
-<h3 id="77975516-0416-428c-a9c8-6655b5aebedd"><a id="orgaf12466"></a>function list-role-accessible-databases (role-name)</h3>
+<div id="outline-container-org911afee" class="outline-3">
+<h3 id="77975516-0416-428c-a9c8-6655b5aebedd"><a id="org911afee"></a>function list-role-accessible-databases (role-name)</h3>
 <div class="outline-text-3" id="text-77975516-0416-428c-a9c8-6655b5aebedd">
 <p>
 → list
@@ -3458,8 +3682,8 @@ Returns a list of the databases to which the specified role can connect.
 </p>
 </div>
 </div>
-<div id="outline-container-orgf4ff089" class="outline-3">
-<h3 id="a5bdaaca-11e5-438d-83a8-495cef9b85fa"><a id="orgf4ff089"></a><a id="ID-e6d13898-e158-4001-b54c-cc7e58342023"></a>function list-roles (&amp;optional (lt nil))</h3>
+<div id="outline-container-org240b869" class="outline-3">
+<h3 id="a5bdaaca-11e5-438d-83a8-495cef9b85fa"><a id="org240b869"></a><a id="ID-e6d13898-e158-4001-b54c-cc7e58342023"></a>function list-roles (&amp;optional (lt nil))</h3>
 <div class="outline-text-3" id="text-a5bdaaca-11e5-438d-83a8-495cef9b85fa">
 <p>
 → list
@@ -3474,8 +3698,8 @@ list types to :alists or :plists. This is the same as the psql function \du.
 </div>
 </div>
 
-<div id="outline-container-org87c2911" class="outline-3">
-<h3 id="fd161f71-a334-4959-8b42-dda5271ef6d5"><a id="org87c2911"></a>function list-role-permissions (&amp;optional role)</h3>
+<div id="outline-container-orgbc44a37" class="outline-3">
+<h3 id="fd161f71-a334-4959-8b42-dda5271ef6d5"><a id="orgbc44a37"></a>function list-role-permissions (&amp;optional role)</h3>
 <div class="outline-text-3" id="text-fd161f71-a334-4959-8b42-dda5271ef6d5">
 <p>
 → list
@@ -3491,12 +3715,12 @@ on that table in that schema.
 </div>
 </div>
 </div>
-<div id="outline-container-org7b1ca89" class="outline-2">
-<h2 id="c6f7f5b5-8721-41b4-bf00-85811e189037"><a id="org7b1ca89"></a><a id="ID-ecc7ca5e-9117-488b-aa7c-011d56409f76"></a>Database Information</h2>
-<div class="outline-text-2" id="text-c6f7f5b5-8721-41b4-bf00-85811e189037">
+<div id="outline-container-org41c7303" class="outline-2">
+<h2 id="database-information"><a id="org41c7303"></a><a id="ID-ecc7ca5e-9117-488b-aa7c-011d56409f76"></a>Database Information</h2>
+<div class="outline-text-2" id="text-database-information">
 </div>
-<div id="outline-container-org287d980" class="outline-3">
-<h3 id="22c6eb1c-c0ca-44fc-a8f1-590fda047866"><a id="org287d980"></a>function add-comment (type name comment &amp;optional (second-name ""))</h3>
+<div id="outline-container-orgac3fec5" class="outline-3">
+<h3 id="22c6eb1c-c0ca-44fc-a8f1-590fda047866"><a id="orgac3fec5"></a>function add-comment (type name comment &amp;optional (second-name ""))</h3>
 <div class="outline-text-3" id="text-22c6eb1c-c0ca-44fc-a8f1-590fda047866">
 <p>
 Attempts to add a comment to a particular database object. The first parameter is a keyword for the type of database object. The second parameter is the name of the object. The third parameter is the comment itself. Some objects require an additional identifier. The names can be strings or symbols.
@@ -3525,8 +3749,8 @@ Example usage where two identifiers are required would be constraints:
 </div>
 </div>
 
-<div id="outline-container-orgcd4f223" class="outline-3">
-<h3 id="d993f27b-95d6-4a5b-bdf3-3e06beed0213"><a id="orgcd4f223"></a>function get-database-comment (database-name)</h3>
+<div id="outline-container-org988a9e4" class="outline-3">
+<h3 id="d993f27b-95d6-4a5b-bdf3-3e06beed0213"><a id="org988a9e4"></a>function get-database-comment (database-name)</h3>
 <div class="outline-text-3" id="text-d993f27b-95d6-4a5b-bdf3-3e06beed0213">
 <p>
 → string
@@ -3537,8 +3761,8 @@ Returns the comment, if any, attached to a database.
 </p>
 </div>
 </div>
-<div id="outline-container-org1dc2bd7" class="outline-3">
-<h3 id="29d56bfd-15a0-40bb-b7f1-a1683b392695"><a id="org1dc2bd7"></a><a id="ID-9243f0ff-2001-4427-8cf9-33f9a9b6fd5c"></a>function postgresql-version ()</h3>
+<div id="outline-container-orgba377e1" class="outline-3">
+<h3 id="29d56bfd-15a0-40bb-b7f1-a1683b392695"><a id="orgba377e1"></a><a id="ID-9243f0ff-2001-4427-8cf9-33f9a9b6fd5c"></a>function postgresql-version ()</h3>
 <div class="outline-text-3" id="text-29d56bfd-15a0-40bb-b7f1-a1683b392695">
 <p>
 → string
@@ -3553,8 +3777,8 @@ number, use (cl-postgres:get-postgresql-version).
 </div>
 </div>
 
-<div id="outline-container-org0f908e0" class="outline-3">
-<h3 id="29d56bfd-15a0-40bb-b7f1-a1683b392695"><a id="org0f908e0"></a><a id="ID-9243f0ff-2001-4427-8cf9-33f9a9b6fd5c"></a>function database-version ()</h3>
+<div id="outline-container-org713219a" class="outline-3">
+<h3 id="29d56bfd-15a0-40bb-b7f1-a1683b392695"><a id="org713219a"></a><a id="ID-9243f0ff-2001-4427-8cf9-33f9a9b6fd5c"></a>function database-version ()</h3>
 <div class="outline-text-3" id="text-29d56bfd-15a0-40bb-b7f1-a1683b392695">
 <p>
 → string
@@ -3575,8 +3799,8 @@ number, use (cl-postgres:get-postgresql-version).
 </div>
 </div>
 
-<div id="outline-container-org62b8c22" class="outline-3">
-<h3 id="69269619-9b8a-4e88-8ede-777182579d0a"><a id="org62b8c22"></a><a id="ID-4928edd1-e74c-4e90-92d8-bd9b98ab0894"></a>function current-database ()</h3>
+<div id="outline-container-org972dfbf" class="outline-3">
+<h3 id="69269619-9b8a-4e88-8ede-777182579d0a"><a id="org972dfbf"></a><a id="ID-4928edd1-e74c-4e90-92d8-bd9b98ab0894"></a>function current-database ()</h3>
 <div class="outline-text-3" id="text-69269619-9b8a-4e88-8ede-777182579d0a">
 <p>
 → string
@@ -3588,8 +3812,8 @@ Returns the string name of the current database.
 </div>
 </div>
 
-<div id="outline-container-orgda357ef" class="outline-3">
-<h3 id="03fec9c2-6282-4b33-abf8-4db16044cf52"><a id="orgda357ef"></a><a id="ID-96e0c18f-4a1e-4cc5-b9c6-5bcd368d0d13"></a>function database-exists-p (database-name)</h3>
+<div id="outline-container-orgf2330cd" class="outline-3">
+<h3 id="03fec9c2-6282-4b33-abf8-4db16044cf52"><a id="orgf2330cd"></a><a id="ID-96e0c18f-4a1e-4cc5-b9c6-5bcd368d0d13"></a>function database-exists-p (database-name)</h3>
 <div class="outline-text-3" id="text-03fec9c2-6282-4b33-abf8-4db16044cf52">
 <p>
 → boolean
@@ -3601,8 +3825,8 @@ Checks to see if a particular database exists. Returns T if true, nil if not.
 </div>
 </div>
 
-<div id="outline-container-orgc934789" class="outline-3">
-<h3 id="d8827c9d-64ff-4334-9a14-1ca4536f8d0a"><a id="orgc934789"></a><a id="ID-9afb5a1e-ef10-4d54-91be-b30debc708dd"></a>function database-size (&amp;optional database-name)</h3>
+<div id="outline-container-org36a3431" class="outline-3">
+<h3 id="d8827c9d-64ff-4334-9a14-1ca4536f8d0a"><a id="org36a3431"></a><a id="ID-9afb5a1e-ef10-4d54-91be-b30debc708dd"></a>function database-size (&amp;optional database-name)</h3>
 <div class="outline-text-3" id="text-d8827c9d-64ff-4334-9a14-1ca4536f8d0a">
 <p>
 → list
@@ -3616,8 +3840,8 @@ provided, it will return the result for the currently connected database.
 </div>
 </div>
 
-<div id="outline-container-org50696e9" class="outline-3">
-<h3 id="25b5233f-9a2c-4e39-8902-4a0b88e3b5b3"><a id="org50696e9"></a><a id="ID-2893eb67-97ae-41cb-8987-1924855ec48a"></a>function num-records-in-database ()</h3>
+<div id="outline-container-orgca57330" class="outline-3">
+<h3 id="25b5233f-9a2c-4e39-8902-4a0b88e3b5b3"><a id="orgca57330"></a><a id="ID-2893eb67-97ae-41cb-8987-1924855ec48a"></a>function num-records-in-database ()</h3>
 <div class="outline-text-3" id="text-25b5233f-9a2c-4e39-8902-4a0b88e3b5b3">
 <p>
 → list
@@ -3630,8 +3854,8 @@ records in the currently connected database.
 </div>
 </div>
 
-<div id="outline-container-org690439e" class="outline-3">
-<h3 id="b5909c41-f24b-4678-8bd9-759d543c4d81"><a id="org690439e"></a><a id="ID-a47beb6b-fdbd-470b-ad85-541d0e6518f8"></a>function list-databases (&amp;key (order-by-size nil) (size t))</h3>
+<div id="outline-container-orgb9f803a" class="outline-3">
+<h3 id="b5909c41-f24b-4678-8bd9-759d543c4d81"><a id="orgb9f803a"></a><a id="ID-a47beb6b-fdbd-470b-ad85-541d0e6518f8"></a>function list-databases (&amp;key (order-by-size nil) (size t))</h3>
 <div class="outline-text-3" id="text-b5909c41-f24b-4678-8bd9-759d543c4d81">
 <p>
 → list
@@ -3647,8 +3871,8 @@ in a single list ordered by name. This function excludes the template databases
 </div>
 </div>
 
-<div id="outline-container-org6161be6" class="outline-3">
-<h3 id="ff1d636e-12ba-4fb0-8513-7f808617b956"><a id="org6161be6"></a><a id="ID-61f0e7e5-cf5d-4c2e-967d-588808d1a1bc"></a>function list-database-functions ()</h3>
+<div id="outline-container-org69fcfb1" class="outline-3">
+<h3 id="ff1d636e-12ba-4fb0-8513-7f808617b956"><a id="org69fcfb1"></a><a id="ID-61f0e7e5-cf5d-4c2e-967d-588808d1a1bc"></a>function list-database-functions ()</h3>
 <div class="outline-text-3" id="text-ff1d636e-12ba-4fb0-8513-7f808617b956">
 <p>
 → list
@@ -3665,8 +3889,8 @@ the information_schema table.
 </p>
 </div>
 </div>
-<div id="outline-container-org2c4c3f4" class="outline-3">
-<h3 id="5810bfc5-9338-4a6b-807f-bc72265771a0"><a id="org2c4c3f4"></a><a id="ID-adfb5355-fd04-4835-a2bd-337dc9402915"></a>function list-database-users ()</h3>
+<div id="outline-container-orgb580654" class="outline-3">
+<h3 id="5810bfc5-9338-4a6b-807f-bc72265771a0"><a id="orgb580654"></a><a id="ID-adfb5355-fd04-4835-a2bd-337dc9402915"></a>function list-database-users ()</h3>
 <div class="outline-text-3" id="text-5810bfc5-9338-4a6b-807f-bc72265771a0">
 <p>
 → list
@@ -3677,8 +3901,8 @@ List database users (actually 'roles' in Postgresql terminology).
 </p>
 </div>
 </div>
-<div id="outline-container-org2c12ff0" class="outline-3">
-<h3 id="36e580f9-d647-4f6d-869b-0fcd347fb9d5"><a id="org2c12ff0"></a>function list-database-access-rights (&amp;optional database-name)</h3>
+<div id="outline-container-org84cfb57" class="outline-3">
+<h3 id="36e580f9-d647-4f6d-869b-0fcd347fb9d5"><a id="org84cfb57"></a>function list-database-access-rights (&amp;optional database-name)</h3>
 <div class="outline-text-3" id="text-36e580f9-d647-4f6d-869b-0fcd347fb9d5">
 <p>
 → list
@@ -3694,8 +3918,8 @@ excludes the template databases.
 </div>
 </div>
 
-<div id="outline-container-org699ede4" class="outline-3">
-<h3 id="3aeac559-710e-4f60-b687-33b25a6f575a"><a id="org699ede4"></a><a id="ID-b5ebabe7-31f9-45b6-8ecb-6035febaa392"></a>function list-available-types ()</h3>
+<div id="outline-container-org34f6592" class="outline-3">
+<h3 id="3aeac559-710e-4f60-b687-33b25a6f575a"><a id="org34f6592"></a><a id="ID-b5ebabe7-31f9-45b6-8ecb-6035febaa392"></a>function list-available-types ()</h3>
 <div class="outline-text-3" id="text-3aeac559-710e-4f60-b687-33b25a6f575a">
 <p>
 → list
@@ -3709,8 +3933,8 @@ the name of the data types. E.g. (21 "smallint")
 </div>
 </div>
 
-<div id="outline-container-org04f578f" class="outline-3">
-<h3 id="da41c0fb-9479-4e23-bdf2-ba73db959e36"><a id="org04f578f"></a>function list-available-collations ()</h3>
+<div id="outline-container-orgf66957a" class="outline-3">
+<h3 id="da41c0fb-9479-4e23-bdf2-ba73db959e36"><a id="orgf66957a"></a>function list-available-collations ()</h3>
 <div class="outline-text-3" id="text-da41c0fb-9479-4e23-bdf2-ba73db959e36">
 <p>
 → list
@@ -3724,8 +3948,8 @@ See <a href="https://wiki.postgresql.org/wiki/Collations">https://wiki.postgresq
 </p>
 </div>
 </div>
-<div id="outline-container-orgb5e64e2" class="outline-3">
-<h3 id="f6a3893a-0d39-4484-9d3d-40d0ba2e05fd"><a id="orgb5e64e2"></a><a id="ID-353cafc2-ca5c-4197-b820-3662dbbea2e3"></a>function list-available-extensions ()</h3>
+<div id="outline-container-org8454d85" class="outline-3">
+<h3 id="f6a3893a-0d39-4484-9d3d-40d0ba2e05fd"><a id="org8454d85"></a><a id="ID-353cafc2-ca5c-4197-b820-3662dbbea2e3"></a>function list-available-extensions ()</h3>
 <div class="outline-text-3" id="text-f6a3893a-0d39-4484-9d3d-40d0ba2e05fd">
 <p>
 → list
@@ -3737,8 +3961,8 @@ currently connected database. The extensions may or may not be installed.
 </p>
 </div>
 </div>
-<div id="outline-container-orgbc9105c" class="outline-3">
-<h3 id="2855d5f5-3957-49ba-9d07-f61464e6da28"><a id="orgbc9105c"></a><a id="ID-922fca24-53d7-4883-844a-cf383ffc7322"></a>function list-installed-extensions ()</h3>
+<div id="outline-container-orgea9d04f" class="outline-3">
+<h3 id="2855d5f5-3957-49ba-9d07-f61464e6da28"><a id="orgea9d04f"></a><a id="ID-922fca24-53d7-4883-844a-cf383ffc7322"></a>function list-installed-extensions ()</h3>
 <div class="outline-text-3" id="text-2855d5f5-3957-49ba-9d07-f61464e6da28">
 <p>
 → list
@@ -3750,8 +3974,8 @@ database.
 </p>
 </div>
 </div>
-<div id="outline-container-org96586c7" class="outline-3">
-<h3 id="5bc847be-5de4-4e64-8feb-7256f58b1a0a"><a id="org96586c7"></a>function list-templates ()</h3>
+<div id="outline-container-orgffe3f18" class="outline-3">
+<h3 id="5bc847be-5de4-4e64-8feb-7256f58b1a0a"><a id="orgffe3f18"></a>function list-templates ()</h3>
 <div class="outline-text-3" id="text-5bc847be-5de4-4e64-8feb-7256f58b1a0a">
 <p>
 → list
@@ -3762,8 +3986,8 @@ Returns a list of existing database template names.
 </p>
 </div>
 </div>
-<div id="outline-container-org3308ef0" class="outline-3">
-<h3 id="e0ce24b7-5619-4ab7-9912-48ebfca4605f"><a id="org3308ef0"></a><a id="ID-6d41d3c5-2013-4404-aae6-2a7cd5df4b18"></a>function change-toplevel-database (new-database user password host)</h3>
+<div id="outline-container-org9b1d37d" class="outline-3">
+<h3 id="e0ce24b7-5619-4ab7-9912-48ebfca4605f"><a id="org9b1d37d"></a><a id="ID-6d41d3c5-2013-4404-aae6-2a7cd5df4b18"></a>function change-toplevel-database (new-database user password host)</h3>
 <div class="outline-text-3" id="text-e0ce24b7-5619-4ab7-9912-48ebfca4605f">
 <p>
 → string
@@ -3777,8 +4001,8 @@ database as a string.
 </div>
 </div>
 
-<div id="outline-container-org19e6dd4" class="outline-3">
-<h3 id="932d1dde-71e2-4f26-bac4-17a238101e24"><a id="org19e6dd4"></a><a id="ID-4d405778-1b17-4928-8d40-e239f8d4c73d"></a>function cache-hit-ratio ()</h3>
+<div id="outline-container-org3a31933" class="outline-3">
+<h3 id="932d1dde-71e2-4f26-bac4-17a238101e24"><a id="org3a31933"></a><a id="ID-4d405778-1b17-4928-8d40-e239f8d4c73d"></a>function cache-hit-ratio ()</h3>
 <div class="outline-text-3" id="text-932d1dde-71e2-4f26-bac4-17a238101e24">
 <p>
 → list
@@ -3793,8 +4017,8 @@ memory / total heapblocks hit. Borrowed from: <a href="https://www.citusdata.com
 </div>
 </div>
 
-<div id="outline-container-org2534bc7" class="outline-3">
-<h3 id="84bc40e4-44bf-4c1e-91d2-b32ba77f86c4"><a id="org2534bc7"></a><a id="ID-1d81081b-3cfe-4ef5-989f-23c5ed44d7fc"></a>function bloat-measurement ()</h3>
+<div id="outline-container-org7566db5" class="outline-3">
+<h3 id="84bc40e4-44bf-4c1e-91d2-b32ba77f86c4"><a id="org7566db5"></a><a id="ID-1d81081b-3cfe-4ef5-989f-23c5ed44d7fc"></a>function bloat-measurement ()</h3>
 <div class="outline-text-3" id="text-84bc40e4-44bf-4c1e-91d2-b32ba77f86c4">
 <p>
 → list
@@ -3808,8 +4032,8 @@ borrowed it from <a href="https://github.com/heroku/heroku-pg-extras/tree/master
 </div>
 </div>
 
-<div id="outline-container-org9d4706c" class="outline-3">
-<h3 id="10ec1cf5-e865-43e9-a093-8f27916af0d2"><a id="org9d4706c"></a><a id="ID-cdbc1e43-b4a7-4709-89f7-d93ba7ac3bae"></a>function unused-indexes ()</h3>
+<div id="outline-container-org3f379f6" class="outline-3">
+<h3 id="10ec1cf5-e865-43e9-a093-8f27916af0d2"><a id="org3f379f6"></a><a id="ID-cdbc1e43-b4a7-4709-89f7-d93ba7ac3bae"></a>function unused-indexes ()</h3>
 <div class="outline-text-3" id="text-10ec1cf5-e865-43e9-a093-8f27916af0d2">
 <p>
 → list
@@ -3822,8 +4046,8 @@ of scans. The code was borrowed from: <a href="https://www.citusdata.com/blog/20
 </div>
 </div>
 
-<div id="outline-container-orgd214486" class="outline-3">
-<h3 id="c532268f-61d7-4613-85cc-460d7d92aab0"><a id="orgd214486"></a><a id="ID-31ab040b-01fb-4a08-8c27-4b3bc35c9361"></a>function check-query-performance (&amp;optional (ob nil) (num-calls 100) (limit 20))</h3>
+<div id="outline-container-org4f8df2b" class="outline-3">
+<h3 id="c532268f-61d7-4613-85cc-460d7d92aab0"><a id="org4f8df2b"></a><a id="ID-31ab040b-01fb-4a08-8c27-4b3bc35c9361"></a>function check-query-performance (&amp;optional (ob nil) (num-calls 100) (limit 20))</h3>
 <div class="outline-text-3" id="text-c532268f-61d7-4613-85cc-460d7d92aab0">
 <p>
 → list
@@ -3850,12 +4074,12 @@ stddev_time, rows, rows/calls and the cache hit percentage.
 </div>
 </div>
 
-<div id="outline-container-orgf24f8d7" class="outline-2">
-<h2 id="5042445e-d459-4768-877f-a044c19da7bd"><a id="orgf24f8d7"></a><a id="ID-b857f2fe-7b5c-4b13-9909-cb637f7ba367"></a>Constraints</h2>
-<div class="outline-text-2" id="text-5042445e-d459-4768-877f-a044c19da7bd">
+<div id="outline-container-orge642932" class="outline-2">
+<h2 id="constraints"><a id="orge642932"></a><a id="ID-b857f2fe-7b5c-4b13-9909-cb637f7ba367"></a>Constraints</h2>
+<div class="outline-text-2" id="text-constraints">
 </div>
-<div id="outline-container-org1610375" class="outline-3">
-<h3 id="e20d9e5c-b0a7-44a6-8907-ad205ec1e0b8"><a id="org1610375"></a><a id="ID-e5adb03e-a26a-40fa-bde2-05f541fc70cf"></a>function list-unique-or-primary-constraints (table-name)</h3>
+<div id="outline-container-org2feee49" class="outline-3">
+<h3 id="e20d9e5c-b0a7-44a6-8907-ad205ec1e0b8"><a id="org2feee49"></a><a id="ID-e5adb03e-a26a-40fa-bde2-05f541fc70cf"></a>function list-unique-or-primary-constraints (table-name)</h3>
 <div class="outline-text-3" id="text-e20d9e5c-b0a7-44a6-8907-ad205ec1e0b8">
 <p>
 → list
@@ -3868,8 +4092,8 @@ constraints into keywords if strings-p is not true.
 </div>
 </div>
 
-<div id="outline-container-orgc5172f7" class="outline-3">
-<h3 id="4b8a62cb-647b-4c3b-b2a7-58476fff58d1"><a id="orgc5172f7"></a><a id="ID-d641e79f-b66f-4248-9c1a-284f07182d12"></a>function list-all-constraints (table-name)</h3>
+<div id="outline-container-orgb0c94a8" class="outline-3">
+<h3 id="4b8a62cb-647b-4c3b-b2a7-58476fff58d1"><a id="orgb0c94a8"></a><a id="ID-d641e79f-b66f-4248-9c1a-284f07182d12"></a>function list-all-constraints (table-name)</h3>
 <div class="outline-text-3" id="text-4b8a62cb-647b-4c3b-b2a7-58476fff58d1">
 <p>
 → list
@@ -3883,8 +4107,8 @@ not true.
 </div>
 </div>
 
-<div id="outline-container-orga37b564" class="outline-3">
-<h3 id="4f692c41-549f-462d-b98c-a8f7e400f4cc"><a id="orga37b564"></a><a id="ID-8d6cff99-a479-4b98-9fd5-fd77517b61b4"></a>function describe-constraint (table-name constraint-name)</h3>
+<div id="outline-container-orga50f1ee" class="outline-3">
+<h3 id="4f692c41-549f-462d-b98c-a8f7e400f4cc"><a id="orga50f1ee"></a><a id="ID-8d6cff99-a479-4b98-9fd5-fd77517b61b4"></a>function describe-constraint (table-name constraint-name)</h3>
 <div class="outline-text-3" id="text-4f692c41-549f-462d-b98c-a8f7e400f4cc">
 <p>
 → list
@@ -3897,8 +4121,8 @@ table-name and the constraint name using the information_schema table.
 </div>
 </div>
 
-<div id="outline-container-org16be60a" class="outline-3">
-<h3 id="dfe5a61e-7450-47b7-a17b-0d9bd83e1706"><a id="org16be60a"></a><a id="ID-96f4c221-be13-440d-a7ac-0b446bfb06cc"></a>function describe-foreign-key-constraints ()</h3>
+<div id="outline-container-org8ca14eb" class="outline-3">
+<h3 id="dfe5a61e-7450-47b7-a17b-0d9bd83e1706"><a id="org8ca14eb"></a><a id="ID-96f4c221-be13-440d-a7ac-0b446bfb06cc"></a>function describe-foreign-key-constraints ()</h3>
 <div class="outline-text-3" id="text-dfe5a61e-7450-47b7-a17b-0d9bd83e1706">
 <p>
 → list
@@ -3910,12 +4134,12 @@ Generates a list of lists of information on the foreign key constraints
 </div>
 </div>
 </div>
-<div id="outline-container-org89ac5a1" class="outline-2">
-<h2 id="96fac10c-b466-437d-8652-8576de48ce5e"><a id="org89ac5a1"></a><a id="ID-a265f57e-3928-4386-92c0-ab2764f4fdc5"></a>Indexes/Indices</h2>
-<div class="outline-text-2" id="text-96fac10c-b466-437d-8652-8576de48ce5e">
+<div id="outline-container-org227a234" class="outline-2">
+<h2 id="indexes"><a id="org227a234"></a><a id="ID-a265f57e-3928-4386-92c0-ab2764f4fdc5"></a>Indexes/Indices</h2>
+<div class="outline-text-2" id="text-indexes">
 </div>
-<div id="outline-container-orgf7a79f0" class="outline-3">
-<h3 id="21392a30-a33c-4330-9a96-abaebcc0af66"><a id="orgf7a79f0"></a><a id="ID-8724742c-e2fe-48f5-b190-7c1218f9995d"></a>function create-index (name  &amp;key unique if-not-exists concurrently on using fields)</h3>
+<div id="outline-container-org8bfbbed" class="outline-3">
+<h3 id="21392a30-a33c-4330-9a96-abaebcc0af66"><a id="org8bfbbed"></a><a id="ID-8724742c-e2fe-48f5-b190-7c1218f9995d"></a>function create-index (name  &amp;key unique if-not-exists concurrently on using fields)</h3>
 <div class="outline-text-3" id="text-21392a30-a33c-4330-9a96-abaebcc0af66">
 <p>
 Create an index. Slightly less sophisticated than the query version because it
@@ -3924,8 +4148,8 @@ does not have a where clause capability.
 </div>
 </div>
 
-<div id="outline-container-orga1fed72" class="outline-3">
-<h3 id="6bfcf7a6-6c14-4fad-82f4-5be599f1466b"><a id="orga1fed72"></a><a id="ID-9a3553c3-9d58-490f-93e3-2d04b5bd72bc"></a>function drop-index (name &amp;key concurrently if-exists cascade)</h3>
+<div id="outline-container-org6059777" class="outline-3">
+<h3 id="6bfcf7a6-6c14-4fad-82f4-5be599f1466b"><a id="org6059777"></a><a id="ID-9a3553c3-9d58-490f-93e3-2d04b5bd72bc"></a>function drop-index (name &amp;key concurrently if-exists cascade)</h3>
 <div class="outline-text-3" id="text-6bfcf7a6-6c14-4fad-82f4-5be599f1466b">
 <p>
 Drop an index. Available keys are :concurrently, :if-exists, and :cascade.
@@ -3933,8 +4157,8 @@ Drop an index. Available keys are :concurrently, :if-exists, and :cascade.
 </div>
 </div>
 
-<div id="outline-container-orgbf0fa15" class="outline-3">
-<h3 id="42f1ee95-201b-4d66-b02e-1b35b0e1614c"><a id="orgbf0fa15"></a><a id="ID-e7fa9796-6804-4446-bfda-3455432d4453"></a>function list-indices (&amp;optional strings-p)</h3>
+<div id="outline-container-org99b7b04" class="outline-3">
+<h3 id="42f1ee95-201b-4d66-b02e-1b35b0e1614c"><a id="org99b7b04"></a><a id="ID-e7fa9796-6804-4446-bfda-3455432d4453"></a>function list-indices (&amp;optional strings-p)</h3>
 <div class="outline-text-3" id="text-42f1ee95-201b-4d66-b02e-1b35b0e1614c">
 <p>
 → list
@@ -3947,8 +4171,8 @@ is not true.
 </div>
 </div>
 
-<div id="outline-container-org748c358" class="outline-3">
-<h3 id="72f27f96-392f-4f33-a152-e15888a98c5d"><a id="org748c358"></a><a id="ID-d57a9331-04b4-4920-9fe5-36d4b1d785bb"></a>function list-table-indices (table-name &amp;optional strings-p)</h3>
+<div id="outline-container-org2215765" class="outline-3">
+<h3 id="72f27f96-392f-4f33-a152-e15888a98c5d"><a id="org2215765"></a><a id="ID-d57a9331-04b4-4920-9fe5-36d4b1d785bb"></a>function list-table-indices (table-name &amp;optional strings-p)</h3>
 <div class="outline-text-3" id="text-72f27f96-392f-4f33-a152-e15888a98c5d">
 <p>
 → list
@@ -3961,8 +4185,8 @@ be in a separate sublist.
 </div>
 </div>
 
-<div id="outline-container-orge0be7ae" class="outline-3">
-<h3 id="c01dc7a8-0153-4857-acad-cb7ec8eccbdc"><a id="orge0be7ae"></a><a id="ID-82c1851f-91cc-4e4d-b802-b2ba37ec6938"></a>function index-exists-p (name)</h3>
+<div id="outline-container-org6ec45ef" class="outline-3">
+<h3 id="c01dc7a8-0153-4857-acad-cb7ec8eccbdc"><a id="org6ec45ef"></a><a id="ID-82c1851f-91cc-4e4d-b802-b2ba37ec6938"></a>function index-exists-p (name)</h3>
 <div class="outline-text-3" id="text-c01dc7a8-0153-4857-acad-cb7ec8eccbdc">
 <p>
 → boolean
@@ -3975,8 +4199,8 @@ string or a symbol.
 </div>
 </div>
 
-<div id="outline-container-org0837cce" class="outline-3">
-<h3 id="07e4d320-8201-4cc5-803d-c83ee681d103"><a id="org0837cce"></a><a id="ID-47908329-5309-4319-9c16-56821f4b6233"></a>function list-indexed-column-and-attributes (table-name)</h3>
+<div id="outline-container-org9947035" class="outline-3">
+<h3 id="07e4d320-8201-4cc5-803d-c83ee681d103"><a id="org9947035"></a><a id="ID-47908329-5309-4319-9c16-56821f4b6233"></a>function list-indexed-column-and-attributes (table-name)</h3>
 <div class="outline-text-3" id="text-07e4d320-8201-4cc5-803d-c83ee681d103">
 <p>
 → list
@@ -3989,8 +4213,8 @@ key.
 </div>
 </div>
 
-<div id="outline-container-org7bdee66" class="outline-3">
-<h3 id="56922f26-5ab4-4c1a-98a2-a0ab56eff9bb"><a id="org7bdee66"></a><a id="ID-0078a757-8cc5-46a7-956e-ddb1fe2c579b"></a>function list-index-definitions (table-name)</h3>
+<div id="outline-container-org1d11bba" class="outline-3">
+<h3 id="56922f26-5ab4-4c1a-98a2-a0ab56eff9bb"><a id="org1d11bba"></a><a id="ID-0078a757-8cc5-46a7-956e-ddb1fe2c579b"></a>function list-index-definitions (table-name)</h3>
 <div class="outline-text-3" id="text-56922f26-5ab4-4c1a-98a2-a0ab56eff9bb">
 <p>
 → list
@@ -4004,12 +4228,12 @@ the table
 </div>
 </div>
 
-<div id="outline-container-orga90ac6b" class="outline-2">
-<h2 id="d9f479ec-2b7e-47a6-bd38-847822efd073"><a id="orga90ac6b"></a><a id="ID-342fdfce-eed8-4ed1-a208-37c417b5a291"></a>Keys</h2>
-<div class="outline-text-2" id="text-d9f479ec-2b7e-47a6-bd38-847822efd073">
+<div id="outline-container-org773691b" class="outline-2">
+<h2 id="keys"><a id="org773691b"></a><a id="ID-342fdfce-eed8-4ed1-a208-37c417b5a291"></a>Keys</h2>
+<div class="outline-text-2" id="text-keys">
 </div>
-<div id="outline-container-org5325dd8" class="outline-3">
-<h3 id="5bf78e17-6506-4f49-b103-9900978f8344"><a id="org5325dd8"></a><a id="ID-87a5e1c4-fe1b-4b9a-bdcf-7dbe62bd20f1"></a>function find-primary-key-info (table-name &amp;optional (just-key nil))</h3>
+<div id="outline-container-org50f9ad5" class="outline-3">
+<h3 id="5bf78e17-6506-4f49-b103-9900978f8344"><a id="org50f9ad5"></a><a id="ID-87a5e1c4-fe1b-4b9a-bdcf-7dbe62bd20f1"></a>function find-primary-key-info (table-name &amp;optional (just-key nil))</h3>
 <div class="outline-text-3" id="text-5bf78e17-6506-4f49-b103-9900978f8344">
 <p>
 → list
@@ -4030,8 +4254,8 @@ fully qualified table name e.g. schema-name.table-name.
 </div>
 </div>
 
-<div id="outline-container-orgcb88cb2" class="outline-3">
-<h3 id="68d136c2-a216-4def-87f9-726f72dda631"><a id="orgcb88cb2"></a><a id="ID-cb0a151a-ad44-4a7a-896d-47903d0e718b"></a>function list-foreign-keys (table-name)</h3>
+<div id="outline-container-org5858c66" class="outline-3">
+<h3 id="68d136c2-a216-4def-87f9-726f72dda631"><a id="org5858c66"></a><a id="ID-cb0a151a-ad44-4a7a-896d-47903d0e718b"></a>function list-foreign-keys (table-name)</h3>
 <div class="outline-text-3" id="text-68d136c2-a216-4def-87f9-726f72dda631">
 <p>
 → list
@@ -4046,9 +4270,9 @@ Returns a list of sublists of foreign key info in the form of
 </div>
 </div>
 
-<div id="outline-container-org1e58097" class="outline-2">
-<h2 id="6dc6d668-aab8-47f7-a8ea-ee2a1133219b"><a id="org1e58097"></a><a id="ID-eef5ba67-cfe2-47dc-b432-2a75b45765d8"></a>Schema/Schemata</h2>
-<div class="outline-text-2" id="text-6dc6d668-aab8-47f7-a8ea-ee2a1133219b">
+<div id="outline-container-orge66780b" class="outline-2">
+<h2 id="schema"><a id="orge66780b"></a><a id="ID-eef5ba67-cfe2-47dc-b432-2a75b45765d8"></a>Schema/Schemata</h2>
+<div class="outline-text-2" id="text-schema">
 <p>
 Schema allow you to separate tables into differnet name spaces. In different
 schemata two tables with the same name are allowed to exists. The tables can
@@ -4059,8 +4283,8 @@ functions allow you to create, drop schemata and to set the search path.
 </p>
 </div>
 
-<div id="outline-container-orgd2eb374" class="outline-3">
-<h3 id="9b1b791c-5e04-4512-91cb-9b44fac7b76e"><a id="orgd2eb374"></a><a id="ID-70159647-6efd-4fcc-acf0-86b24594822b"></a>macro with-schema ((namespace &amp;key :strict t :if-not-exist :create :drop-after) &amp;body body)</h3>
+<div id="outline-container-org0c8f176" class="outline-3">
+<h3 id="9b1b791c-5e04-4512-91cb-9b44fac7b76e"><a id="org0c8f176"></a><a id="ID-70159647-6efd-4fcc-acf0-86b24594822b"></a>macro with-schema ((namespace &amp;key :strict t :if-not-exist :create :drop-after) &amp;body body)</h3>
 <div class="outline-text-3" id="text-9b1b791c-5e04-4512-91cb-9b44fac7b76e">
 <p>
 A macro to set the schema search path (namespace) of the postgresql database to
@@ -4105,8 +4329,8 @@ example :
 </div>
 </div>
 
-<div id="outline-container-org83f22ee" class="outline-3">
-<h3 id="cb98d8fa-8750-4d3c-b7c2-a060205609d6"><a id="org83f22ee"></a><a id="ID-8fa081ea-d959-457d-89ae-980bbb997148"></a>function list-schemata ()</h3>
+<div id="outline-container-org6467922" class="outline-3">
+<h3 id="cb98d8fa-8750-4d3c-b7c2-a060205609d6"><a id="org6467922"></a><a id="ID-8fa081ea-d959-457d-89ae-980bbb997148"></a>function list-schemata ()</h3>
 <div class="outline-text-3" id="text-cb98d8fa-8750-4d3c-b7c2-a060205609d6">
 <p>
 → list
@@ -4130,8 +4354,8 @@ pg_tables relations.
 </div>
 </div>
 
-<div id="outline-container-org9ac7d55" class="outline-3">
-<h3 id="612d3bfd-36e2-4b27-a3e9-9f4e4cf15428"><a id="org9ac7d55"></a><a id="ID-06eff6ed-5de0-4947-9dd1-26ae7dedd360"></a>function list-schemas ()</h3>
+<div id="outline-container-org054ae2a" class="outline-3">
+<h3 id="612d3bfd-36e2-4b27-a3e9-9f4e4cf15428"><a id="org054ae2a"></a><a id="ID-06eff6ed-5de0-4947-9dd1-26ae7dedd360"></a>function list-schemas ()</h3>
 <div class="outline-text-3" id="text-612d3bfd-36e2-4b27-a3e9-9f4e4cf15428">
 <p>
 → list
@@ -4143,8 +4367,8 @@ List schemas in the current database, excluding the pg_* system schemas.
 </div>
 </div>
 
-<div id="outline-container-orgd7a7b57" class="outline-3">
-<h3 id="a8a3a0df-edf5-4f17-bb97-a3d76973d078"><a id="orgd7a7b57"></a><a id="ID-f52064e9-e859-416e-bb67-20f5de49613e"></a>function schema-exists-p (schema)</h3>
+<div id="outline-container-orgc24084b" class="outline-3">
+<h3 id="a8a3a0df-edf5-4f17-bb97-a3d76973d078"><a id="orgc24084b"></a><a id="ID-f52064e9-e859-416e-bb67-20f5de49613e"></a>function schema-exists-p (schema)</h3>
 <div class="outline-text-3" id="text-a8a3a0df-edf5-4f17-bb97-a3d76973d078">
 <p>
 → boolean
@@ -4157,8 +4381,8 @@ otherwise. The name provided can be either a string or quoted symbol.
 </div>
 </div>
 
-<div id="outline-container-org903940e" class="outline-3">
-<h3 id="06e76060-e646-4fe8-b1b3-142afb2e370b"><a id="org903940e"></a><a id="ID-3d4619fa-faef-47b2-b6ab-61b36e8b52b2"></a>function create-schema (schema)</h3>
+<div id="outline-container-org49922e6" class="outline-3">
+<h3 id="06e76060-e646-4fe8-b1b3-142afb2e370b"><a id="org49922e6"></a><a id="ID-3d4619fa-faef-47b2-b6ab-61b36e8b52b2"></a>function create-schema (schema)</h3>
 <div class="outline-text-3" id="text-06e76060-e646-4fe8-b1b3-142afb2e370b">
 <p>
 Creates a new schema. Raises an error if the schema is already exists.
@@ -4166,8 +4390,8 @@ Creates a new schema. Raises an error if the schema is already exists.
 </div>
 </div>
 
-<div id="outline-container-orgb6e1d31" class="outline-3">
-<h3 id="79d7fdbb-54d7-48e1-821d-9379e3940577"><a id="orgb6e1d31"></a><a id="ID-cc7fe0f4-31b5-435c-9b8d-22564f7e0ad5"></a>function drop-schema (schema &amp;key (if-exists nil) (cascade nil))</h3>
+<div id="outline-container-org21b3d97" class="outline-3">
+<h3 id="79d7fdbb-54d7-48e1-821d-9379e3940577"><a id="org21b3d97"></a><a id="ID-cc7fe0f4-31b5-435c-9b8d-22564f7e0ad5"></a>function drop-schema (schema &amp;key (if-exists nil) (cascade nil))</h3>
 <div class="outline-text-3" id="text-79d7fdbb-54d7-48e1-821d-9379e3940577">
 <p>
 Drops an existing database schema. Accepts :if-exists and/or :cascade arguments
@@ -4177,8 +4401,8 @@ parameter.
 </div>
 </div>
 
-<div id="outline-container-orgd3d329e" class="outline-3">
-<h3 id="b8999d95-0ef5-492e-af5b-cfbdc91278e6"><a id="orgd3d329e"></a><a id="ID-639f826f-aed2-4a2d-811c-fe862953d195"></a>function get-search-path ()</h3>
+<div id="outline-container-orgc76c800" class="outline-3">
+<h3 id="b8999d95-0ef5-492e-af5b-cfbdc91278e6"><a id="orgc76c800"></a><a id="ID-639f826f-aed2-4a2d-811c-fe862953d195"></a>function get-search-path ()</h3>
 <div class="outline-text-3" id="text-b8999d95-0ef5-492e-af5b-cfbdc91278e6">
 <p>
 Returns the default schema search path for the current session.
@@ -4186,8 +4410,8 @@ Returns the default schema search path for the current session.
 </div>
 </div>
 
-<div id="outline-container-org5cec09a" class="outline-3">
-<h3 id="125a3594-080f-40eb-997d-d7ef927420e6"><a id="org5cec09a"></a><a id="ID-1fa0b1a6-af88-4083-b3f1-16b8b79aca3c"></a>function set-search-path (path)</h3>
+<div id="outline-container-orga184905" class="outline-3">
+<h3 id="125a3594-080f-40eb-997d-d7ef927420e6"><a id="orga184905"></a><a id="ID-1fa0b1a6-af88-4083-b3f1-16b8b79aca3c"></a>function set-search-path (path)</h3>
 <div class="outline-text-3" id="text-125a3594-080f-40eb-997d-d7ef927420e6">
 <p>
 This changes the postgresql runtime parameter controlling what order schemas are
@@ -4197,8 +4421,8 @@ function is used by with-schema.
 </p>
 </div>
 </div>
-<div id="outline-container-org0e4d753" class="outline-3">
-<h3 id="cfacd9fe-b640-4aee-985b-149f4b9ce930"><a id="org0e4d753"></a><a id="ID-1aa410f7-b60b-4c95-bc4e-dacefe8cc04c"></a>function split-fully-qualified-tablename (name)</h3>
+<div id="outline-container-org05ce1f7" class="outline-3">
+<h3 id="cfacd9fe-b640-4aee-985b-149f4b9ce930"><a id="org05ce1f7"></a><a id="ID-1aa410f7-b60b-4c95-bc4e-dacefe8cc04c"></a>function split-fully-qualified-tablename (name)</h3>
 <div class="outline-text-3" id="text-cfacd9fe-b640-4aee-985b-149f4b9ce930">
 <p>
 → list
@@ -4211,12 +4435,12 @@ qualified, it will assume that the schema should be \"public\".
 </div>
 </div>
 
-<div id="outline-container-org96639f8" class="outline-2">
-<h2 id="16b948b1-12c3-447f-bad3-a536aab9a246"><a id="org96639f8"></a><a id="ID-62e4d0bd-e12f-47c6-8373-a174a7d8d7b1"></a>Sequences</h2>
-<div class="outline-text-2" id="text-16b948b1-12c3-447f-bad3-a536aab9a246">
+<div id="outline-container-org54db3e0" class="outline-2">
+<h2 id="sequences"><a id="org54db3e0"></a><a id="ID-62e4d0bd-e12f-47c6-8373-a174a7d8d7b1"></a>Sequences</h2>
+<div class="outline-text-2" id="text-sequences">
 </div>
-<div id="outline-container-org4fa5d92" class="outline-3">
-<h3 id="4d295beb-7a6d-402e-a831-00db88584cb4"><a id="org4fa5d92"></a><a id="ID-37802810-069f-4219-a36a-1e4f754dd5f8"></a>function create-sequence (name &amp;key temp if-not-exists increment min-value max-value start cache)</h3>
+<div id="outline-container-orgbcf2747" class="outline-3">
+<h3 id="4d295beb-7a6d-402e-a831-00db88584cb4"><a id="orgbcf2747"></a><a id="ID-37802810-069f-4219-a36a-1e4f754dd5f8"></a>function create-sequence (name &amp;key temp if-not-exists increment min-value max-value start cache)</h3>
 <div class="outline-text-3" id="text-4d295beb-7a6d-402e-a831-00db88584cb4">
 <p>
   Create a sequence. Available additional key parameters
@@ -4227,8 +4451,8 @@ details on usage.
 </div>
 </div>
 
-<div id="outline-container-org2e8d39f" class="outline-3">
-<h3 id="47336489-34f5-401b-be21-2d7cb0b47e85"><a id="org2e8d39f"></a><a id="ID-3001c5dd-da96-4263-b427-c04368e8cf41"></a>function sequence-next (sequence)</h3>
+<div id="outline-container-org8e26d3b" class="outline-3">
+<h3 id="47336489-34f5-401b-be21-2d7cb0b47e85"><a id="org8e26d3b"></a><a id="ID-3001c5dd-da96-4263-b427-c04368e8cf41"></a>function sequence-next (sequence)</h3>
 <div class="outline-text-3" id="text-47336489-34f5-401b-be21-2d7cb0b47e85">
 <p>
 → integer
@@ -4242,8 +4466,8 @@ string according to S-SQL rules.
 </div>
 </div>
 
-<div id="outline-container-org690b786" class="outline-3">
-<h3 id="e316b343-ad9c-4610-b074-0d554e4b63ed"><a id="org690b786"></a><a id="ID-1998fd52-d0e1-439b-9cfa-d3f72c8a3609"></a>function drop-sequence (name &amp;key if-exists cascade)</h3>
+<div id="outline-container-orgf3abc34" class="outline-3">
+<h3 id="e316b343-ad9c-4610-b074-0d554e4b63ed"><a id="orgf3abc34"></a><a id="ID-1998fd52-d0e1-439b-9cfa-d3f72c8a3609"></a>function drop-sequence (name &amp;key if-exists cascade)</h3>
 <div class="outline-text-3" id="text-e316b343-ad9c-4610-b074-0d554e4b63ed">
 <p>
 → list
@@ -4256,8 +4480,8 @@ and :cascade.
 </div>
 </div>
 
-<div id="outline-container-org62f4231" class="outline-3">
-<h3 id="320f409d-dfc2-4145-b106-0e642b21fa95"><a id="org62f4231"></a><a id="ID-8f8b89c8-9d01-460f-b60f-020e8658bbe7"></a>function list-sequences (&amp;optional strings-p)</h3>
+<div id="outline-container-orgb575286" class="outline-3">
+<h3 id="320f409d-dfc2-4145-b106-0e642b21fa95"><a id="orgb575286"></a><a id="ID-8f8b89c8-9d01-460f-b60f-020e8658bbe7"></a>function list-sequences (&amp;optional strings-p)</h3>
 <div class="outline-text-3" id="text-320f409d-dfc2-4145-b106-0e642b21fa95">
 <p>
 → list
@@ -4270,8 +4494,8 @@ the names will be given as strings, otherwise as keywords.
 </div>
 </div>
 
-<div id="outline-container-org1cc329c" class="outline-3">
-<h3 id="da78ff64-0fb8-41a7-b17e-1f24ec8abe63"><a id="org1cc329c"></a><a id="ID-e64dd37f-81c2-43f8-88fe-8444771b7631"></a>function sequence-exists-p (name)</h3>
+<div id="outline-container-orgedace92" class="outline-3">
+<h3 id="da78ff64-0fb8-41a7-b17e-1f24ec8abe63"><a id="orgedace92"></a><a id="ID-e64dd37f-81c2-43f8-88fe-8444771b7631"></a>function sequence-exists-p (name)</h3>
 <div class="outline-text-3" id="text-da78ff64-0fb8-41a7-b17e-1f24ec8abe63">
 <p>
 → boolean
@@ -4285,12 +4509,12 @@ string or a symbol.
 </div>
 </div>
 
-<div id="outline-container-org649f1d7" class="outline-2">
-<h2 id="93ca2906-0494-4148-8c25-8663d1ea192e"><a id="org649f1d7"></a><a id="ID-5a351917-b940-4c94-a3dc-2795f9a76211"></a>Tables</h2>
-<div class="outline-text-2" id="text-93ca2906-0494-4148-8c25-8663d1ea192e">
+<div id="outline-container-org4198dd2" class="outline-2">
+<h2 id="tables"><a id="org4198dd2"></a><a id="ID-5a351917-b940-4c94-a3dc-2795f9a76211"></a>Tables</h2>
+<div class="outline-text-2" id="text-tables">
 </div>
-<div id="outline-container-orgb738515" class="outline-3">
-<h3 id="ba11f8df-3297-4720-a267-02896b49575a"><a id="orgb738515"></a><a id="ID-bd228cd6-3651-48ca-a9c5-a27737fbaacc"></a>function list-tables (&amp;optional strings-p)</h3>
+<div id="outline-container-orge10f478" class="outline-3">
+<h3 id="ba11f8df-3297-4720-a267-02896b49575a"><a id="orge10f478"></a><a id="ID-bd228cd6-3651-48ca-a9c5-a27737fbaacc"></a>function list-tables (&amp;optional strings-p)</h3>
 <div class="outline-text-3" id="text-ba11f8df-3297-4720-a267-02896b49575a">
 <p>
 → list
@@ -4304,8 +4528,8 @@ returned as lowercase strings if strings-p is true.
 </div>
 </div>
 
-<div id="outline-container-org74fe5ca" class="outline-3">
-<h3 id="ad67dcb1-7123-47dc-9402-e5adcecc7e6a"><a id="org74fe5ca"></a>function list-all-tables (&amp;optional (fully-qualified-names-only nil))</h3>
+<div id="outline-container-org79a397c" class="outline-3">
+<h3 id="ad67dcb1-7123-47dc-9402-e5adcecc7e6a"><a id="org79a397c"></a>function list-all-tables (&amp;optional (fully-qualified-names-only nil))</h3>
 <div class="outline-text-3" id="text-ad67dcb1-7123-47dc-9402-e5adcecc7e6a">
 <p>
 :ID:       bd228cd6-3651-48ca-a9c5-a27737fbaacc
@@ -4330,8 +4554,8 @@ and rowsecurity(&amp;optional strings-p).
 </div>
 </div>
 
-<div id="outline-container-orgf305050" class="outline-3">
-<h3 id="37cd0ae4-b9b2-4776-a58e-dc396e639161"><a id="orgf305050"></a><a id="ID-6e7c1873-ad5b-4cd0-9389-b6389cb7ea05"></a>function list-tables-in-schema (&amp;optional (schema-name "public") (strings-p nil))</h3>
+<div id="outline-container-orgf155c8e" class="outline-3">
+<h3 id="37cd0ae4-b9b2-4776-a58e-dc396e639161"><a id="orgf155c8e"></a><a id="ID-6e7c1873-ad5b-4cd0-9389-b6389cb7ea05"></a>function list-tables-in-schema (&amp;optional (schema-name "public") (strings-p nil))</h3>
 <div class="outline-text-3" id="text-37cd0ae4-b9b2-4776-a58e-dc396e639161">
 <p>
 → list
@@ -4346,8 +4570,8 @@ will be returned as strings with underscores converted to hyphens.
 </div>
 </div>
 
-<div id="outline-container-orgde98abe" class="outline-3">
-<h3 id="5d66ed97-c2b2-4ac5-aede-d6fb70a983c8"><a id="orgde98abe"></a><a id="ID-d911f929-14c6-4279-96e7-a9dfee4d1f59"></a>function list-table-sizes (&amp;key (schema "public") (order-by-size nil) (size t))</h3>
+<div id="outline-container-org57cbb88" class="outline-3">
+<h3 id="5d66ed97-c2b2-4ac5-aede-d6fb70a983c8"><a id="org57cbb88"></a><a id="ID-d911f929-14c6-4279-96e7-a9dfee4d1f59"></a>function list-table-sizes (&amp;key (schema "public") (order-by-size nil) (size t))</h3>
 <div class="outline-text-3" id="text-5d66ed97-c2b2-4ac5-aede-d6fb70a983c8">
 <p>
 → list
@@ -4366,8 +4590,8 @@ result in order of size instead of by table name.
 </div>
 </div>
 
-<div id="outline-container-orgb34f343" class="outline-3">
-<h3 id="55bb44d8-2732-4257-aabd-d38c5e72ef0f"><a id="orgb34f343"></a><a id="ID-ece4d92b-dd60-434e-b864-e42c743deaa6"></a>function table-exists-p (name)</h3>
+<div id="outline-container-org299dee4" class="outline-3">
+<h3 id="55bb44d8-2732-4257-aabd-d38c5e72ef0f"><a id="org299dee4"></a><a id="ID-ece4d92b-dd60-434e-b864-e42c743deaa6"></a>function table-exists-p (name)</h3>
 <div class="outline-text-3" id="text-55bb44d8-2732-4257-aabd-d38c5e72ef0f">
 <p>
 → boolean
@@ -4385,8 +4609,8 @@ controlled by being within a with-schema form.
 </div>
 </div>
 
-<div id="outline-container-org2aa0f4b" class="outline-3">
-<h3 id="bb623170-32c2-43b4-807d-66c34efe9c40"><a id="org2aa0f4b"></a><a id="ID-bff3f942-2652-401f-9db0-10cc5214191d"></a>function table-size (table-name)</h3>
+<div id="outline-container-org8299eea" class="outline-3">
+<h3 id="bb623170-32c2-43b4-807d-66c34efe9c40"><a id="org8299eea"></a><a id="ID-bff3f942-2652-401f-9db0-10cc5214191d"></a>function table-size (table-name)</h3>
 <div class="outline-text-3" id="text-bb623170-32c2-43b4-807d-66c34efe9c40">
 <p>
 → list
@@ -4399,8 +4623,8 @@ a string or quoted.
 </div>
 </div>
 
-<div id="outline-container-orgb531df3" class="outline-3">
-<h3 id="ee444ea2-f49f-41c9-905c-177d89770254"><a id="orgb531df3"></a><a id="ID-45344f09-e8f2-4f82-a0f8-297623478ad8"></a>function table-description (name &amp;optional schema-name)</h3>
+<div id="outline-container-orgf448b9a" class="outline-3">
+<h3 id="ee444ea2-f49f-41c9-905c-177d89770254"><a id="orgf448b9a"></a><a id="ID-45344f09-e8f2-4f82-a0f8-297623478ad8"></a>function table-description (name &amp;optional schema-name)</h3>
 <div class="outline-text-3" id="text-ee444ea2-f49f-41c9-905c-177d89770254">
 <p>
 → list
@@ -4420,8 +4644,8 @@ is not provided, the table will be assumed to be in the public schema.
 </div>
 </div>
 
-<div id="outline-container-org849dce5" class="outline-3">
-<h3 id="795b7f54-85ee-4c77-b962-9176f93ad7ac"><a id="org849dce5"></a><a id="ID-b35cf2c1-7dd0-4676-8f09-2d5679683942"></a>function table-description-plus (table-name)</h3>
+<div id="outline-container-org6ccd747" class="outline-3">
+<h3 id="795b7f54-85ee-4c77-b962-9176f93ad7ac"><a id="org6ccd747"></a><a id="ID-b35cf2c1-7dd0-4676-8f09-2d5679683942"></a>function table-description-plus (table-name)</h3>
 <div class="outline-text-3" id="text-795b7f54-85ee-4c77-b962-9176f93ad7ac">
 <p>
 → list
@@ -4441,8 +4665,8 @@ is not provided, the table will be assumed to be in the public schema.
 </div>
 </div>
 
-<div id="outline-container-org81f4e55" class="outline-3">
-<h3 id="74baf413-72fb-4f17-abb0-1e7535af33ab"><a id="org81f4e55"></a><a id="ID-c867f758-86e5-4242-a825-a273c86acfd0"></a>function list-columns (table-name)</h3>
+<div id="outline-container-org12d4c30" class="outline-3">
+<h3 id="74baf413-72fb-4f17-abb0-1e7535af33ab"><a id="org12d4c30"></a><a id="ID-c867f758-86e5-4242-a825-a273c86acfd0"></a>function list-columns (table-name)</h3>
 <div class="outline-text-3" id="text-74baf413-72fb-4f17-abb0-1e7535af33ab">
 <p>
 → list
@@ -4457,8 +4681,8 @@ qualified with the schema will be assumed to be in the public schema.
 </div>
 </div>
 
-<div id="outline-container-org5e9c685" class="outline-3">
-<h3 id="9ada61bd-a670-49f3-8c04-cf025cde431f"><a id="org5e9c685"></a><a id="ID-8dc78de4-32aa-4b28-98c7-02a22ffe036f"></a>function list-columns-with-types (table-name)</h3>
+<div id="outline-container-org6c99ad4" class="outline-3">
+<h3 id="9ada61bd-a670-49f3-8c04-cf025cde431f"><a id="org6c99ad4"></a><a id="ID-8dc78de4-32aa-4b28-98c7-02a22ffe036f"></a>function list-columns-with-types (table-name)</h3>
 <div class="outline-text-3" id="text-9ada61bd-a670-49f3-8c04-cf025cde431f">
 <p>
 → list
@@ -4474,8 +4698,8 @@ with the schema will be assumed to be in the public schema.
 </div>
 </div>
 
-<div id="outline-container-org760e160" class="outline-3">
-<h3 id="11e937a0-91f6-4475-b393-8f4f2e5d9659"><a id="org760e160"></a><a id="ID-491edd0a-7da3-4289-bcea-9482cdfb6df9"></a>function column-exists-p (table-name column-name &amp;optional schema-name)</h3>
+<div id="outline-container-orgbc039bb" class="outline-3">
+<h3 id="11e937a0-91f6-4475-b393-8f4f2e5d9659"><a id="orgbc039bb"></a><a id="ID-491edd0a-7da3-4289-bcea-9482cdfb6df9"></a>function column-exists-p (table-name column-name &amp;optional schema-name)</h3>
 <div class="outline-text-3" id="text-11e937a0-91f6-4475-b393-8f4f2e5d9659">
 <p>
 → boolean
@@ -4490,8 +4714,8 @@ to be the public schema.
 </div>
 </div>
 
-<div id="outline-container-org23c095e" class="outline-3">
-<h3 id="8ab55683-e44b-44df-bb11-67909d402383"><a id="org23c095e"></a>function get-table-oid (table-name &amp;optional schema-name)</h3>
+<div id="outline-container-org2955495" class="outline-3">
+<h3 id="8ab55683-e44b-44df-bb11-67909d402383"><a id="org2955495"></a>function get-table-oid (table-name &amp;optional schema-name)</h3>
 <div class="outline-text-3" id="text-8ab55683-e44b-44df-bb11-67909d402383">
 <p>
 → integer
@@ -4503,8 +4727,8 @@ for tables in all schemas.
 </p>
 </div>
 </div>
-<div id="outline-container-orgb72d877" class="outline-3">
-<h3 id="e8d6e402-5c76-4533-9b5c-a823b9582c26"><a id="orgb72d877"></a>function get-table-comment (table-name &amp;optional schema-name)</h3>
+<div id="outline-container-org12caf49" class="outline-3">
+<h3 id="e8d6e402-5c76-4533-9b5c-a823b9582c26"><a id="org12caf49"></a>function get-table-comment (table-name &amp;optional schema-name)</h3>
 <div class="outline-text-3" id="text-e8d6e402-5c76-4533-9b5c-a823b9582c26">
 <p>
 → string
@@ -4516,12 +4740,12 @@ Retrieves the comment, if any attached to the table.
 </div>
 </div>
 </div>
-<div id="outline-container-org4ac17c0" class="outline-2">
-<h2 id="3a5fa498-32d0-47fd-91ee-75d807e79087"><a id="org4ac17c0"></a><a id="ID-1772a1eb-bc79-4c5f-90d5-2fc10ae49569"></a>Tablespaces</h2>
-<div class="outline-text-2" id="text-3a5fa498-32d0-47fd-91ee-75d807e79087">
+<div id="outline-container-orgaa133bb" class="outline-2">
+<h2 id="tablespaces"><a id="orgaa133bb"></a><a id="ID-1772a1eb-bc79-4c5f-90d5-2fc10ae49569"></a>Tablespaces</h2>
+<div class="outline-text-2" id="text-tablespaces">
 </div>
-<div id="outline-container-org1f42a26" class="outline-3">
-<h3 id="70537823-781b-47dd-8c38-9936756c666c"><a id="org1f42a26"></a><a id="ID-44a29c6a-0002-4660-920f-a9fee4c29471"></a>function list-tablespaces ()</h3>
+<div id="outline-container-orgc249eb3" class="outline-3">
+<h3 id="70537823-781b-47dd-8c38-9936756c666c"><a id="orgc249eb3"></a><a id="ID-44a29c6a-0002-4660-920f-a9fee4c29471"></a>function list-tablespaces ()</h3>
 <div class="outline-text-3" id="text-70537823-781b-47dd-8c38-9936756c666c">
 <p>
 → list
@@ -4557,12 +4781,12 @@ expensive, slower disk system.
 </div>
 </div>
 
-<div id="outline-container-org3d6e0a4" class="outline-2">
-<h2 id="afa6058b-40a7-42ba-b23b-f6021834440b"><a id="org3d6e0a4"></a><a id="ID-39786cca-6778-4f0b-9187-1f3216b97cda"></a>Triggers</h2>
-<div class="outline-text-2" id="text-afa6058b-40a7-42ba-b23b-f6021834440b">
+<div id="outline-container-org7bb5c9e" class="outline-2">
+<h2 id="triggers"><a id="org7bb5c9e"></a><a id="ID-39786cca-6778-4f0b-9187-1f3216b97cda"></a>Triggers</h2>
+<div class="outline-text-2" id="text-triggers">
 </div>
-<div id="outline-container-org1474e7f" class="outline-3">
-<h3 id="7327ab9a-b79e-4180-8165-434fd4c8d383"><a id="org1474e7f"></a><a id="ID-10c51511-c1e4-4710-8407-3508fb96333e"></a>function describe-triggers ()</h3>
+<div id="outline-container-org02e0734" class="outline-3">
+<h3 id="7327ab9a-b79e-4180-8165-434fd4c8d383"><a id="org02e0734"></a><a id="ID-10c51511-c1e4-4710-8407-3508fb96333e"></a>function describe-triggers ()</h3>
 <div class="outline-text-3" id="text-7327ab9a-b79e-4180-8165-434fd4c8d383">
 <p>
 → list
@@ -4573,8 +4797,8 @@ List detailed information on the triggers from the information_schema table.
 </p>
 </div>
 </div>
-<div id="outline-container-org70a9622" class="outline-3">
-<h3 id="3bcdabed-dd01-4457-bc18-284598aee0a4"><a id="org70a9622"></a><a id="ID-68de46b8-a646-4c1d-9362-747ab1d6cc04"></a>function list-triggers (&amp;optional table-name)</h3>
+<div id="outline-container-org8c8581a" class="outline-3">
+<h3 id="3bcdabed-dd01-4457-bc18-284598aee0a4"><a id="org8c8581a"></a><a id="ID-68de46b8-a646-4c1d-9362-747ab1d6cc04"></a>function list-triggers (&amp;optional table-name)</h3>
 <div class="outline-text-3" id="text-3bcdabed-dd01-4457-bc18-284598aee0a4">
 <p>
 → list
@@ -4591,8 +4815,8 @@ See <a href="https://www.postgresql.org/docs/current/trigger-definition.html">ht
 </div>
 </div>
 
-<div id="outline-container-org3c0bf9e" class="outline-3">
-<h3 id="fc3761c2-fc2e-42e4-86f2-0e918c891b5e"><a id="org3c0bf9e"></a><a id="ID-10c51511-c1e4-4710-8407-3508fb96333e"></a>function list-detailed-triggers ()</h3>
+<div id="outline-container-orgeaf3aec" class="outline-3">
+<h3 id="fc3761c2-fc2e-42e4-86f2-0e918c891b5e"><a id="orgeaf3aec"></a><a id="ID-10c51511-c1e4-4710-8407-3508fb96333e"></a>function list-detailed-triggers ()</h3>
 <div class="outline-text-3" id="text-fc3761c2-fc2e-42e4-86f2-0e918c891b5e">
 <p>
 → list
@@ -4601,12 +4825,12 @@ See <a href="https://www.postgresql.org/docs/current/trigger-definition.html">ht
 </div>
 </div>
 
-<div id="outline-container-orgebfde6e" class="outline-2">
-<h2 id="8b94eb55-6a1a-4316-8bdc-c0ce4533bdff"><a id="orgebfde6e"></a><a id="ID-a9641e8e-3769-4af4-bdd0-3153e0dd7728"></a>Views</h2>
-<div class="outline-text-2" id="text-8b94eb55-6a1a-4316-8bdc-c0ce4533bdff">
+<div id="outline-container-org62a3631" class="outline-2">
+<h2 id="views"><a id="org62a3631"></a><a id="ID-a9641e8e-3769-4af4-bdd0-3153e0dd7728"></a>Views</h2>
+<div class="outline-text-2" id="text-views">
 </div>
-<div id="outline-container-org43bdd9f" class="outline-3">
-<h3 id="4fd820d9-857e-48fa-a62b-e2d72313a10c"><a id="org43bdd9f"></a><a id="ID-9e9e757e-9efa-4445-9fe1-b66e78f025a8"></a>function list-views (&amp;optional strings-p)</h3>
+<div id="outline-container-org4698697" class="outline-3">
+<h3 id="4fd820d9-857e-48fa-a62b-e2d72313a10c"><a id="org4698697"></a><a id="ID-9e9e757e-9efa-4445-9fe1-b66e78f025a8"></a>function list-views (&amp;optional strings-p)</h3>
 <div class="outline-text-3" id="text-4fd820d9-857e-48fa-a62b-e2d72313a10c">
 <p>
 → list
@@ -4619,8 +4843,8 @@ is T, the names will be returned as strings, otherwise as keywords.
 </div>
 </div>
 
-<div id="outline-container-orgb220fa5" class="outline-3">
-<h3 id="f9ba3cce-95e0-45a0-9ede-5654bb71e98e"><a id="orgb220fa5"></a><a id="ID-24cd0fc5-8fb0-4b57-9504-71d9520abf6f"></a>function view-exists-p (name)</h3>
+<div id="outline-container-orgcfb4ce4" class="outline-3">
+<h3 id="f9ba3cce-95e0-45a0-9ede-5654bb71e98e"><a id="orgcfb4ce4"></a><a id="ID-24cd0fc5-8fb0-4b57-9504-71d9520abf6f"></a>function view-exists-p (name)</h3>
 <div class="outline-text-3" id="text-f9ba3cce-95e0-45a0-9ede-5654bb71e98e">
 <p>
 → boolean
@@ -4633,8 +4857,8 @@ symbol for the view name.
 </div>
 </div>
 
-<div id="outline-container-orgd4fc0bf" class="outline-3">
-<h3 id="bbf87da5-981c-42ad-b97e-38c7fafbf8ca"><a id="orgd4fc0bf"></a><a id="ID-51f383ba-fe58-4a5f-bf31-ac79b18170b7"></a>function describe-views (&amp;optional (schema "public")</h3>
+<div id="outline-container-org7f79b4e" class="outline-3">
+<h3 id="bbf87da5-981c-42ad-b97e-38c7fafbf8ca"><a id="org7f79b4e"></a><a id="ID-51f383ba-fe58-4a5f-bf31-ac79b18170b7"></a>function describe-views (&amp;optional (schema "public")</h3>
 <div class="outline-text-3" id="text-bbf87da5-981c-42ad-b97e-38c7fafbf8ca">
 <p>
 → list
@@ -4649,12 +4873,12 @@ public schema.
 </div>
 </div>
 
-<div id="outline-container-orge0c5db6" class="outline-2">
-<h2 id="f2bcb42d-d328-46b6-ac70-fbe05e6d0798"><a id="orge0c5db6"></a><a id="ID-73c18602-c501-4399-ac07-cab915309777"></a>Miscellaneous Utility Functions</h2>
-<div class="outline-text-2" id="text-f2bcb42d-d328-46b6-ac70-fbe05e6d0798">
+<div id="outline-container-orga47a46b" class="outline-2">
+<h2 id="misc-utility-functions"><a id="orga47a46b"></a><a id="ID-73c18602-c501-4399-ac07-cab915309777"></a>Miscellaneous Utility Functions</h2>
+<div class="outline-text-2" id="text-misc-utility-functions">
 </div>
-<div id="outline-container-org3a9f53e" class="outline-3">
-<h3 id="9e576b29-c33d-425d-8759-e8e5e8367593"><a id="org3a9f53e"></a><a id="ID-1df6bd25-618b-4a00-8ec2-cc5b0548b045"></a>function coalesce (&amp;rest arguments)</h3>
+<div id="outline-container-org8c4c2b3" class="outline-3">
+<h3 id="9e576b29-c33d-425d-8759-e8e5e8367593"><a id="org8c4c2b3"></a><a id="ID-1df6bd25-618b-4a00-8ec2-cc5b0548b045"></a>function coalesce (&amp;rest arguments)</h3>
 <div class="outline-text-3" id="text-9e576b29-c33d-425d-8759-e8e5e8367593">
 <p>
 → value
@@ -4668,8 +4892,8 @@ when given only one argument, for transforming :nulls to NIL.
 </div>
 </div>
 
-<div id="outline-container-org66c1377" class="outline-3">
-<h3 id="441f2929-9c04-4b01-8b85-7c474e200755"><a id="org66c1377"></a><a id="ID-37df40a0-86b4-4aef-828e-68663f74927e"></a>function execute-file (filename &amp;optional (print nil))</h3>
+<div id="outline-container-org79d146a" class="outline-3">
+<h3 id="441f2929-9c04-4b01-8b85-7c474e200755"><a id="org79d146a"></a><a id="ID-37df40a0-86b4-4aef-828e-68663f74927e"></a>function execute-file (filename &amp;optional (print nil))</h3>
 <div class="outline-text-3" id="text-441f2929-9c04-4b01-8b85-7c474e200755">
 <p>
 This function will execute sql queries stored in a file. Each sql statement in
@@ -4697,8 +4921,8 @@ queries.
 </p>
 </div>
 </div>
-<div id="outline-container-org2397a1b" class="outline-3">
-<h3 id="fcf022af-ae93-470d-be11-23a25acf0bb9"><a id="org2397a1b"></a>function num-records-in-database ()</h3>
+<div id="outline-container-org6f9c3a6" class="outline-3">
+<h3 id="fcf022af-ae93-470d-be11-23a25acf0bb9"><a id="org6f9c3a6"></a>function num-records-in-database ()</h3>
 <div class="outline-text-3" id="text-fcf022af-ae93-470d-be11-23a25acf0bb9">
 <p>
 → list
@@ -4710,8 +4934,8 @@ records in the currently connected database.
 </p>
 </div>
 </div>
-<div id="outline-container-orgccbd453" class="outline-3">
-<h3 id="1870a515-3f02-45c6-b42c-97659580f257"><a id="orgccbd453"></a>function postgres-array-string-to-list (str)</h3>
+<div id="outline-container-org3aaf879" class="outline-3">
+<h3 id="1870a515-3f02-45c6-b42c-97659580f257"><a id="org3aaf879"></a>function postgres-array-string-to-list (str)</h3>
 <div class="outline-text-3" id="text-1870a515-3f02-45c6-b42c-97659580f257">
 <p>
 → array
@@ -4724,8 +4948,8 @@ Takes a postgresql array in the form of a string like
 </p>
 </div>
 </div>
-<div id="outline-container-org25bc2a6" class="outline-3">
-<h3 id="6fa88adf-cd17-40a8-beb2-0ecea529f6db"><a id="org25bc2a6"></a>function postgres-array-string-to-array (str)</h3>
+<div id="outline-container-org2d63709" class="outline-3">
+<h3 id="6fa88adf-cd17-40a8-beb2-0ecea529f6db"><a id="org2d63709"></a>function postgres-array-string-to-array (str)</h3>
 <div class="outline-text-3" id="text-6fa88adf-cd17-40a8-beb2-0ecea529f6db">
 <p>
   "Takes a postgresql array in the form of a string like
@@ -4735,12 +4959,12 @@ Takes a postgresql array in the form of a string like
 </div>
 </div>
 </div>
-<div id="outline-container-orgaadb39e" class="outline-2">
-<h2 id="b9ec79c0-8e2e-4bad-adcd-e8aa9b6c9a27"><a id="orgaadb39e"></a><a id="ID-cd3d88e6-1e81-4675-bd17-409efdc39730"></a>Imported From s-sql</h2>
+<div id="outline-container-org9bb8069" class="outline-2">
+<h2 id="b9ec79c0-8e2e-4bad-adcd-e8aa9b6c9a27"><a id="org9bb8069"></a><a id="ID-cd3d88e6-1e81-4675-bd17-409efdc39730"></a>Imported From s-sql</h2>
 <div class="outline-text-2" id="text-b9ec79c0-8e2e-4bad-adcd-e8aa9b6c9a27">
 </div>
-<div id="outline-container-org49db412" class="outline-3">
-<h3 id="8c74e736-6b4f-4996-88c4-f087f46cff05"><a id="org49db412"></a><a id="ID-9de76637-62f7-4c7c-a5d1-1f37491b3db3"></a>macro sql (form)</h3>
+<div id="outline-container-orgdee06c7" class="outline-3">
+<h3 id="8c74e736-6b4f-4996-88c4-f087f46cff05"><a id="orgdee06c7"></a><a id="ID-9de76637-62f7-4c7c-a5d1-1f37491b3db3"></a>macro sql (form)</h3>
 <div class="outline-text-3" id="text-8c74e736-6b4f-4996-88c4-f087f46cff05">
 <p>
 → string
@@ -4770,8 +4994,8 @@ would throw an error. For the later case you need to use sql-compile.
 </div>
 </div>
 
-<div id="outline-container-orge32f6cd" class="outline-3">
-<h3 id="ace3cbb6-04f0-435b-b2d9-55e2612ea01b"><a id="orge32f6cd"></a><a id="ID-8d161d2a-06cb-4334-9ee6-86e805eb5295"></a>function sql-compile (form)</h3>
+<div id="outline-container-org1827c9d" class="outline-3">
+<h3 id="ace3cbb6-04f0-435b-b2d9-55e2612ea01b"><a id="org1827c9d"></a><a id="ID-8d161d2a-06cb-4334-9ee6-86e805eb5295"></a>function sql-compile (form)</h3>
 <div class="outline-text-3" id="text-ace3cbb6-04f0-435b-b2d9-55e2612ea01b">
 <p>
 → string
@@ -4802,24 +5026,24 @@ would throw an error. For the later case you need to use sql.
 </div>
 </div>
 
-<div id="outline-container-orga5d0e66" class="outline-3">
-<h3 id="55a205bf-c9f4-450c-aa86-45cce006ee79"><a id="orga5d0e66"></a><a id="ID-3b558b7d-532c-4375-a80a-4526112ae132"></a>deftype smallint ()</h3>
+<div id="outline-container-org98c901b" class="outline-3">
+<h3 id="55a205bf-c9f4-450c-aa86-45cce006ee79"><a id="org98c901b"></a><a id="ID-3b558b7d-532c-4375-a80a-4526112ae132"></a>deftype smallint ()</h3>
 <div class="outline-text-3" id="text-55a205bf-c9f4-450c-aa86-45cce006ee79">
 <p>
 '(signed-byte 16)
 </p>
 </div>
 </div>
-<div id="outline-container-org38efc87" class="outline-3">
-<h3 id="80a15f41-d550-4f3b-adc5-4558d3ddf166"><a id="org38efc87"></a><a id="ID-d5d5048e-f212-4b5a-ae63-c18d2a411279"></a>deftype bigint ()</h3>
+<div id="outline-container-org3475434" class="outline-3">
+<h3 id="80a15f41-d550-4f3b-adc5-4558d3ddf166"><a id="org3475434"></a><a id="ID-d5d5048e-f212-4b5a-ae63-c18d2a411279"></a>deftype bigint ()</h3>
 <div class="outline-text-3" id="text-80a15f41-d550-4f3b-adc5-4558d3ddf166">
 <p>
 '(signed-byte 64)
 </p>
 </div>
 </div>
-<div id="outline-container-org66b3e84" class="outline-3">
-<h3 id="4a38ba2c-b03b-4887-905b-1bf85cd3f607"><a id="org66b3e84"></a><a id="ID-4eb58260-f8e3-4562-bfff-17211cdd98da"></a>deftype numeric (&amp;optional precision/scale scale)</h3>
+<div id="outline-container-org6befcf3" class="outline-3">
+<h3 id="4a38ba2c-b03b-4887-905b-1bf85cd3f607"><a id="org6befcf3"></a><a id="ID-4eb58260-f8e3-4562-bfff-17211cdd98da"></a>deftype numeric (&amp;optional precision/scale scale)</h3>
 <div class="outline-text-3" id="text-4a38ba2c-b03b-4887-905b-1bf85cd3f607">
 <p>
 (declare (ignore precision/scale scale))
@@ -4827,32 +5051,32 @@ would throw an error. For the later case you need to use sql.
 </p>
 </div>
 </div>
-<div id="outline-container-orga7e9957" class="outline-3">
-<h3 id="8e094b66-fcc0-4f6e-91dd-5f3c63a7e8a0"><a id="orga7e9957"></a><a id="ID-b4ec051b-d257-47c6-9876-25aec64f967a"></a>deftype double-precision ()</h3>
+<div id="outline-container-orgdef903e" class="outline-3">
+<h3 id="8e094b66-fcc0-4f6e-91dd-5f3c63a7e8a0"><a id="orgdef903e"></a><a id="ID-b4ec051b-d257-47c6-9876-25aec64f967a"></a>deftype double-precision ()</h3>
 <div class="outline-text-3" id="text-8e094b66-fcc0-4f6e-91dd-5f3c63a7e8a0">
 <p>
 'double-float
 </p>
 </div>
 </div>
-<div id="outline-container-orgcb41515" class="outline-3">
-<h3 id="f4e4e8ac-2d8c-4dea-991f-af57fa589932"><a id="orgcb41515"></a><a id="ID-2532e5a0-cbb5-490a-b142-e971ad0730f7"></a>deftype bytea ()</h3>
+<div id="outline-container-orgeac3df7" class="outline-3">
+<h3 id="f4e4e8ac-2d8c-4dea-991f-af57fa589932"><a id="orgeac3df7"></a><a id="ID-2532e5a0-cbb5-490a-b142-e971ad0730f7"></a>deftype bytea ()</h3>
 <div class="outline-text-3" id="text-f4e4e8ac-2d8c-4dea-991f-af57fa589932">
 <p>
 '(array (unsigned-byte 8))
 </p>
 </div>
 </div>
-<div id="outline-container-org56a159d" class="outline-3">
-<h3 id="a18ec054-2fcb-482f-bda5-988ab94e9763"><a id="org56a159d"></a><a id="ID-d2867c78-0b66-4b45-882e-115a1192de11"></a>deftype text ()</h3>
+<div id="outline-container-org2ffc647" class="outline-3">
+<h3 id="a18ec054-2fcb-482f-bda5-988ab94e9763"><a id="org2ffc647"></a><a id="ID-d2867c78-0b66-4b45-882e-115a1192de11"></a>deftype text ()</h3>
 <div class="outline-text-3" id="text-a18ec054-2fcb-482f-bda5-988ab94e9763">
 <p>
 'string
 </p>
 </div>
 </div>
-<div id="outline-container-orgd77beb2" class="outline-3">
-<h3 id="d4aa0266-7d2d-4207-909f-8b5767be03fd"><a id="orgd77beb2"></a><a id="ID-eecec060-840e-42c3-9b6e-74789b19f3ac"></a>deftype varchar (length)</h3>
+<div id="outline-container-org8dbf951" class="outline-3">
+<h3 id="d4aa0266-7d2d-4207-909f-8b5767be03fd"><a id="org8dbf951"></a><a id="ID-eecec060-840e-42c3-9b6e-74789b19f3ac"></a>deftype varchar (length)</h3>
 <div class="outline-text-3" id="text-d4aa0266-7d2d-4207-909f-8b5767be03fd">
 <p>
 (declare (ignore length))
@@ -4860,16 +5084,16 @@ would throw an error. For the later case you need to use sql.
 </p>
 </div>
 </div>
-<div id="outline-container-orgc9021ea" class="outline-3">
-<h3 id="20cabfe5-d425-422d-a91a-06e7c4cf0a30"><a id="orgc9021ea"></a><a id="ID-cc755c1e-af5f-4958-9e18-7b47831cd786"></a>deftype serial ()</h3>
+<div id="outline-container-orgb0627ac" class="outline-3">
+<h3 id="20cabfe5-d425-422d-a91a-06e7c4cf0a30"><a id="orgb0627ac"></a><a id="ID-cc755c1e-af5f-4958-9e18-7b47831cd786"></a>deftype serial ()</h3>
 <div class="outline-text-3" id="text-20cabfe5-d425-422d-a91a-06e7c4cf0a30">
 <p>
 'integer
 </p>
 </div>
 </div>
-<div id="outline-container-org68970b1" class="outline-3">
-<h3 id="15d4e630-03c8-4fe0-9b1e-b42a2b42910b"><a id="org68970b1"></a><a id="ID-db403045-9608-45f9-8f17-aa3dd951d614"></a>deftype serial8 ()</h3>
+<div id="outline-container-org44bf0ad" class="outline-3">
+<h3 id="15d4e630-03c8-4fe0-9b1e-b42a2b42910b"><a id="org44bf0ad"></a><a id="ID-db403045-9608-45f9-8f17-aa3dd951d614"></a>deftype serial8 ()</h3>
 <div class="outline-text-3" id="text-15d4e630-03c8-4fe0-9b1e-b42a2b42910b">
 <p>
 'integer
@@ -4877,8 +5101,8 @@ would throw an error. For the later case you need to use sql.
 </div>
 </div>
 
-<div id="outline-container-orga8622e8" class="outline-3">
-<h3 id="f862411e-45cb-4f24-9caa-15edbe804999"><a id="orga8622e8"></a><a id="ID-fb204ed8-0ac7-4c74-ad47-ff9e95b75561"></a>deftype db-null ()</h3>
+<div id="outline-container-org1024464" class="outline-3">
+<h3 id="f862411e-45cb-4f24-9caa-15edbe804999"><a id="org1024464"></a><a id="ID-fb204ed8-0ac7-4c74-ad47-ff9e95b75561"></a>deftype db-null ()</h3>
 <div class="outline-text-3" id="text-f862411e-45cb-4f24-9caa-15edbe804999">
 <p>
 Type for representing NULL values. Use like (or integer db-null) for declaring a
@@ -4888,16 +5112,16 @@ type to be an integer that may be null."
 </div>
 </div>
 
-<div id="outline-container-org19b7af1" class="outline-3">
-<h3 id="24878142-d801-4fb0-b58b-b59454ee414d"><a id="org19b7af1"></a><a id="ID-408c0a66-6772-4999-8759-bebeee43646c"></a>function from-sql-name (str)</h3>
+<div id="outline-container-org0630674" class="outline-3">
+<h3 id="24878142-d801-4fb0-b58b-b59454ee414d"><a id="org0630674"></a><a id="ID-408c0a66-6772-4999-8759-bebeee43646c"></a>function from-sql-name (str)</h3>
 <div class="outline-text-3" id="text-24878142-d801-4fb0-b58b-b59454ee414d">
 <p>
 Convert a string to a symbol, upcasing and replacing underscores with hyphens.
 </p>
 </div>
 </div>
-<div id="outline-container-orgefda938" class="outline-3">
-<h3 id="0205cc17-d05d-4ac1-96eb-1c2431e948c8"><a id="orgefda938"></a><a id="ID-d9c23921-9839-422d-aeea-df8bfc11df47"></a>function parse-queries (file-content)</h3>
+<div id="outline-container-org1f228aa" class="outline-3">
+<h3 id="0205cc17-d05d-4ac1-96eb-1c2431e948c8"><a id="org1f228aa"></a><a id="ID-d9c23921-9839-422d-aeea-df8bfc11df47"></a>function parse-queries (file-content)</h3>
 <div class="outline-text-3" id="text-0205cc17-d05d-4ac1-96eb-1c2431e948c8">
 <p>
 → list
@@ -4908,16 +5132,16 @@ Read SQL queries in given string and split them, returns a list.
 </p>
 </div>
 </div>
-<div id="outline-container-org411c6bf" class="outline-3">
-<h3 id="de3bb099-ed34-423a-9bcd-535e1a5f588b"><a id="org411c6bf"></a><a id="ID-b871c68d-2b31-444d-8c2d-9d7093fef956"></a>function read-queries (filename)</h3>
+<div id="outline-container-orga2b5a44" class="outline-3">
+<h3 id="de3bb099-ed34-423a-9bcd-535e1a5f588b"><a id="orga2b5a44"></a><a id="ID-b871c68d-2b31-444d-8c2d-9d7093fef956"></a>function read-queries (filename)</h3>
 <div class="outline-text-3" id="text-de3bb099-ed34-423a-9bcd-535e1a5f588b">
 <p>
 Read SQL queries in a given file and split them, returns a list.
 </p>
 </div>
 </div>
-<div id="outline-container-org7bca7d1" class="outline-3">
-<h3 id="a6245312-f133-481b-8aed-2bd7c4d4b972"><a id="org7bca7d1"></a><a id="ID-02edac61-f915-4d5f-b52e-d4b7ace29352"></a>function sql-escape-string (string)</h3>
+<div id="outline-container-org1eb56cc" class="outline-3">
+<h3 id="a6245312-f133-481b-8aed-2bd7c4d4b972"><a id="org1eb56cc"></a><a id="ID-02edac61-f915-4d5f-b52e-d4b7ace29352"></a>function sql-escape-string (string)</h3>
 <div class="outline-text-3" id="text-a6245312-f133-481b-8aed-2bd7c4d4b972">
 <p>
 → string
@@ -4937,8 +5161,8 @@ Read SQL queries in a given file and split them, returns a list.
 </div>
 
 
-<div id="outline-container-org91be2f8" class="outline-3">
-<h3 id="73012d8f-1e5d-4518-8df8-368a4fae3441"><a id="org91be2f8"></a><a id="ID-8b533d2c-53ec-4f34-b19a-fd68bbef9384"></a>method sql-escape (arg)</h3>
+<div id="outline-container-orgcc407bf" class="outline-3">
+<h3 id="73012d8f-1e5d-4518-8df8-368a4fae3441"><a id="orgcc407bf"></a><a id="ID-8b533d2c-53ec-4f34-b19a-fd68bbef9384"></a>method sql-escape (arg)</h3>
 <div class="outline-text-3" id="text-73012d8f-1e5d-4518-8df8-368a4fae3441">
 <p>
 A generalisation of sql-escape-string looks at the type of the value passed, and
@@ -4961,8 +5185,8 @@ converted to SQL names. Examples:
 </div>
 </div>
 </div>
-<div id="outline-container-orgde83809" class="outline-3">
-<h3 id="1723409d-0013-459a-a89c-236d1c7f2fb5"><a id="orgde83809"></a>macro register-sql-operators (arity &amp;rest names)</h3>
+<div id="outline-container-orge97ed86" class="outline-3">
+<h3 id="1723409d-0013-459a-a89c-236d1c7f2fb5"><a id="orge97ed86"></a>macro register-sql-operators (arity &amp;rest names)</h3>
 <div class="outline-text-3" id="text-1723409d-0013-459a-a89c-236d1c7f2fb5">
 <p>
 Define simple operators. Arity is one of :unary (like
@@ -4977,8 +5201,8 @@ string.
 </p>
 </div>
 </div>
-<div id="outline-container-org540cf93" class="outline-3">
-<h3 id="678a9397-e784-42bf-ba21-7d1d8a5816e2"><a id="org540cf93"></a><a id="ID-fc3763af-74e4-44ed-903e-7c32be128bd3"></a>variable <b>escape-sql-names-p</b></h3>
+<div id="outline-container-orgaaffa18" class="outline-3">
+<h3 id="678a9397-e784-42bf-ba21-7d1d8a5816e2"><a id="orgaaffa18"></a><a id="ID-fc3763af-74e4-44ed-903e-7c32be128bd3"></a>variable <b>escape-sql-names-p</b></h3>
 <div class="outline-text-3" id="text-678a9397-e784-42bf-ba21-7d1d8a5816e2">
 <p>
 Determines whether double quotes are added around column, table, and ** function
@@ -5008,8 +5232,8 @@ downcase unquoted identifiers. This will be revisited in the future if requested
 </div>
 </div>
 
-<div id="outline-container-org865bae6" class="outline-3">
-<h3 id="3cbda7a6-974c-475d-a87c-90353ac15b75"><a id="org865bae6"></a><a id="ID-1b4f5a57-87f7-42f5-ae3c-eff5b41122b3"></a>function to-sql-name (name &amp;optional (escape-p <b>escape-sql-names-p</b>) (ignore-reserved-words nil))</h3>
+<div id="outline-container-orge661766" class="outline-3">
+<h3 id="3cbda7a6-974c-475d-a87c-90353ac15b75"><a id="orge661766"></a><a id="ID-1b4f5a57-87f7-42f5-ae3c-eff5b41122b3"></a>function to-sql-name (name &amp;optional (escape-p <b>escape-sql-names-p</b>) (ignore-reserved-words nil))</h3>
 <div class="outline-text-3" id="text-3cbda7a6-974c-475d-a87c-90353ac15b75">
 <p>
 Convert a symbol or string into a name that can be a sql table, column, or
@@ -5028,8 +5252,8 @@ to be reserved words, but it is not recommended.
 </div>
 </div>
 
-<div id="outline-container-org258faf6" class="outline-3">
-<h3 id="2970d836-dcaa-4b49-aa95-27aa9d3d4f3f"><a id="org258faf6"></a><a id="ID-800c314e-4ff7-435e-84ea-fe6d3ec71353"></a>condition sql-error</h3>
+<div id="outline-container-orgdf59f2c" class="outline-3">
+<h3 id="2970d836-dcaa-4b49-aa95-27aa9d3d4f3f"><a id="orgdf59f2c"></a><a id="ID-800c314e-4ff7-435e-84ea-fe6d3ec71353"></a>condition sql-error</h3>
 <div class="outline-text-3" id="text-2970d836-dcaa-4b49-aa95-27aa9d3d4f3f">
 <p>
 No documentation provided.
@@ -5039,12 +5263,12 @@ No documentation provided.
 </div>
 
 
-<div id="outline-container-orga88a619" class="outline-2">
-<h2 id="5ccb5ff2-0d42-48d4-90c0-2ef6e7f8f1c7"><a id="orga88a619"></a><a id="ID-800ef5ef-fa19-428d-83b9-f38581e38d09"></a>Conditions Imported From cl-postgres</h2>
+<div id="outline-container-org27dc047" class="outline-2">
+<h2 id="5ccb5ff2-0d42-48d4-90c0-2ef6e7f8f1c7"><a id="org27dc047"></a><a id="ID-800ef5ef-fa19-428d-83b9-f38581e38d09"></a>Conditions Imported From cl-postgres</h2>
 <div class="outline-text-2" id="text-5ccb5ff2-0d42-48d4-90c0-2ef6e7f8f1c7">
 </div>
-<div id="outline-container-org6a29741" class="outline-3">
-<h3 id="b16b281c-2103-4f65-bb48-d9ac0083a302"><a id="org6a29741"></a><a id="ID-5d0fdf49-8efa-4e7e-8b9d-925cb19630e1"></a>condition database-connection-error</h3>
+<div id="outline-container-org09be8de" class="outline-3">
+<h3 id="b16b281c-2103-4f65-bb48-d9ac0083a302"><a id="org09be8de"></a><a id="ID-5d0fdf49-8efa-4e7e-8b9d-925cb19630e1"></a>condition database-connection-error</h3>
 <div class="outline-text-3" id="text-b16b281c-2103-4f65-bb48-d9ac0083a302">
 <p>
 Conditions of this type are signalled when an error occurs that breaks the
@@ -5053,8 +5277,8 @@ connection socket. They offer a :reconnect restart.
 </div>
 </div>
 
-<div id="outline-container-org9a8bbe2" class="outline-3">
-<h3 id="06f35002-f176-4bae-b9cc-271b8b3b2cf1"><a id="org9a8bbe2"></a><a id="ID-0ce0752e-d58b-4072-9de1-8c791ab627d0"></a>condition database-error</h3>
+<div id="outline-container-orgae56b97" class="outline-3">
+<h3 id="06f35002-f176-4bae-b9cc-271b8b3b2cf1"><a id="orgae56b97"></a><a id="ID-0ce0752e-d58b-4072-9de1-8c791ab627d0"></a>condition database-error</h3>
 <div class="outline-text-3" id="text-06f35002-f176-4bae-b9cc-271b8b3b2cf1">
 <p>
 This is the condition type that will be used to signal virtually all
@@ -5062,8 +5286,8 @@ database-related errors (though in some cases socket errors may be raised when
 a connection fails on the IP level).
 </p>
 </div>
-<div id="outline-container-org56e1f8a" class="outline-4">
-<h4 id="15654c72-6edc-4fec-8526-d15dbfda6e44"><a id="org56e1f8a"></a>reader database-error-code</h4>
+<div id="outline-container-orgb45464d" class="outline-4">
+<h4 id="15654c72-6edc-4fec-8526-d15dbfda6e44"><a id="orgb45464d"></a>reader database-error-code</h4>
 <div class="outline-text-4" id="text-15654c72-6edc-4fec-8526-d15dbfda6e44">
 <p>
 Code: the Postgresql SQLSTATE code for the error
@@ -5073,8 +5297,8 @@ Code: the Postgresql SQLSTATE code for the error
 </div>
 </div>
 
-<div id="outline-container-org9a7bfd9" class="outline-4">
-<h4 id="94776637-29c8-4966-9105-c00e13c1ec1d"><a id="org9a7bfd9"></a>accessor database-error-message</h4>
+<div id="outline-container-orgde91bbd" class="outline-4">
+<h4 id="94776637-29c8-4966-9105-c00e13c1ec1d"><a id="orgde91bbd"></a>accessor database-error-message</h4>
 <div class="outline-text-4" id="text-94776637-29c8-4966-9105-c00e13c1ec1d">
 <p>
 Message: the primary human-readable error message. This should be accurate
@@ -5083,8 +5307,8 @@ but terse (typically one line). Always present.
 </div>
 </div>
 
-<div id="outline-container-org6fb439f" class="outline-4">
-<h4 id="b01df60b-76be-43a3-9d80-13722658bb55"><a id="org6fb439f"></a>reader database-error-detail</h4>
+<div id="outline-container-org948d8e7" class="outline-4">
+<h4 id="b01df60b-76be-43a3-9d80-13722658bb55"><a id="org948d8e7"></a>reader database-error-detail</h4>
 <div class="outline-text-4" id="text-b01df60b-76be-43a3-9d80-13722658bb55">
 <p>
 Detail: an optional secondary error message carrying
@@ -5094,8 +5318,8 @@ available.
 </div>
 </div>
 
-<div id="outline-container-org2e5ea96" class="outline-4">
-<h4 id="91ab0c67-4276-4eb1-8de9-4028f7f778f7"><a id="org2e5ea96"></a>reader database-error-query</h4>
+<div id="outline-container-org9ac2d74" class="outline-4">
+<h4 id="91ab0c67-4276-4eb1-8de9-4028f7f778f7"><a id="org9ac2d74"></a>reader database-error-query</h4>
 <div class="outline-text-4" id="text-91ab0c67-4276-4eb1-8de9-4028f7f778f7">
 <p>
 Query that led to the error, or NIL if no query was involved.
@@ -5103,8 +5327,8 @@ Query that led to the error, or NIL if no query was involved.
 </div>
 </div>
 
-<div id="outline-container-orgd2c79a5" class="outline-4">
-<h4 id="3262d3c4-53a7-4f81-9d09-ccee5bf59b66"><a id="orgd2c79a5"></a>reader database-error-cause</h4>
+<div id="outline-container-orgd8096d6" class="outline-4">
+<h4 id="3262d3c4-53a7-4f81-9d09-ccee5bf59b66"><a id="orgd8096d6"></a>reader database-error-cause</h4>
 <div class="outline-text-4" id="text-3262d3c4-53a7-4f81-9d09-ccee5bf59b66">
 <p>
 The condition that caused this error, or NIL when it was not caused by another condition.
@@ -5113,8 +5337,8 @@ The condition that caused this error, or NIL when it was not caused by another c
 </div>
 </div>
 
-<div id="outline-container-orgcca2eb0" class="outline-3">
-<h3 id="77cc7700-9573-4280-ba3a-cb368fa96dcc"><a id="orgcca2eb0"></a><a id="ID-300b1531-c01f-4674-b08c-4624d5502a5c"></a>function database-error-constraint-name (err)</h3>
+<div id="outline-container-org93c1743" class="outline-3">
+<h3 id="77cc7700-9573-4280-ba3a-cb368fa96dcc"><a id="org93c1743"></a><a id="ID-300b1531-c01f-4674-b08c-4624d5502a5c"></a>function database-error-constraint-name (err)</h3>
 <div class="outline-text-3" id="text-77cc7700-9573-4280-ba3a-cb368fa96dcc">
 <p>
 Given a database-error for an integrity violation, will attempt to
@@ -5123,8 +5347,8 @@ extract the constraint name.
 </div>
 </div>
 
-<div id="outline-container-org66c072b" class="outline-3">
-<h3 id="52fe59d2-396d-4c36-9a94-5ef452702d79"><a id="org66c072b"></a><a id="ID-91e02238-2910-47d1-9fdd-c466147fe69c"></a>function database-error-extract-name (err)</h3>
+<div id="outline-container-org6a82859" class="outline-3">
+<h3 id="52fe59d2-396d-4c36-9a94-5ef452702d79"><a id="org6a82859"></a><a id="ID-91e02238-2910-47d1-9fdd-c466147fe69c"></a>function database-error-extract-name (err)</h3>
 <div class="outline-text-3" id="text-52fe59d2-396d-4c36-9a94-5ef452702d79">
 <p>
 Given a database-error, will extract the critical name from the error message.
