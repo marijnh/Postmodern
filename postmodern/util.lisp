@@ -711,10 +711,15 @@ with-schema form."
 a table using a fully qualified schema.table-name, you do not need to
 specify the schema in the new-name. You cannot use this function to move
 tables from one schema to another."
-  (let ((new-table-name (first (split-fully-qualified-tablename new-name))))
+  (let* ((new-table-name (first (split-fully-qualified-tablename new-name)))
+         (old-table-name (split-fully-qualified-tablename old-name))
+         (fully-qualified-new-table-name
+           (if (not (string= (second old-table-name) "public"))
+               (concatenate 'string (second old-table-name) "." new-table-name)
+               new-name)))
     (setf old-name (to-sql-name old-name))
     (query (format nil "alter table if exists ~a rename to ~a" old-name new-table-name))
-    (table-exists-p new-name)))
+    (table-exists-p fully-qualified-new-table-name)))
 
 (defun list-table-sizes (&key (schema "public") (order-by-size nil) (size t))
   "Returns a list of lists (table-name, size in 8k pages) of tables in the
