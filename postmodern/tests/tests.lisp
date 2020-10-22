@@ -804,3 +804,214 @@ and second the string name for the datatype."
   (is (equal (valid-sql-identifier-p "住所") T))
   (is (equal (valid-sql-identifier-p "会议") T))
   (is (equal (valid-sql-identifier-p "kusipää") T)))
+
+(defun return-types-fixture ()
+  (with-test-connection
+          (when (table-exists-p 'test-data)
+            (query (:drop-table :if-exists 'test-data :cascade)))
+        (execute (:create-table test-data ((id :type integer :primary-key t)
+                                           (int4 :type integer)
+                                           (text :type (or text db-null))
+                                           (jsonb :type (or jsonb db-null)))))
+        (query (:insert-rows-into 'test-data
+                :columns 'id 'int4 'text 'jsonb
+                :values '((1 2147483645 "text one" "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}")
+                          (2 0 "text two" "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}")
+                          (3 3 "text three" "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\", \"granularity\": \"year\"}"))))))
+
+(test return-types
+      (with-test-connection
+        (return-types-fixture)
+        (is (equal (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:< 'id 3)))
+                   '((1 2147483645 "text one") (2 0 "text two"))))
+        (is (equal (query (:select 'text :from 'test-data :where (:= 'id 3)) :single)
+                   "text three"))
+        (is (equal (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:= 'id 3)) :list)
+                   '(3 3 "text three")))
+        (is (equal (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:< 'id 3)) :lists)
+                   '((1 2147483645 "text one") (2 0 "text two"))))
+        (is (equal (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:= 'id 3)) :alist)
+                   '((:ID . 3) (:INT4 . 3) (:TEXT . "text three"))))
+        (is (equal (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:= 'id 3)) :str-alist)
+                   '(("id" . 3) ("int4" . 3) ("text" . "text three"))))
+        (is (equal (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:< 'id 3)) :alists)
+                   '(((:ID . 1) (:INT4 . 2147483645) (:TEXT . "text one"))
+                     ((:ID . 2) (:INT4 . 0) (:TEXT . "text two")))))
+        (is (equal (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:< 'id 3)) :str-alists)
+                   '((("id" . 1) ("int4" . 2147483645) ("text" . "text one"))
+                     (("id" . 2) ("int4" . 0) ("text" . "text two")))))
+        (is (equal (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:= 'id 3)) :plist)
+                   '(:ID 3 :INT4 3 :TEXT "text three")))
+        (is (equal (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:< 'id 3)) :plists)
+                   '((:ID 1 :INT4 2147483645 :TEXT "text one")
+                     (:ID 2 :INT4 0 :TEXT "text two"))))
+        (is (typep (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:< 'id 3)) :array-hash) 'vector))
+        (is (typep (aref (query (:select 'id 'int4 'text :from 'test-data
+                                 :where (:< 'id 3)) :array-hash) 1) 'hash-table))
+        (let ((val (alexandria:hash-table-alist
+                    (aref
+                     (query (:select 'id 'int4 'text :from 'test-data
+                             :where (:< 'id 3)) :array-hash)
+                     1))))
+          (is (or (equal val
+                         '(("text" . "text two") ("int4" . 0) ("id" . 2)))
+                  (equal val
+                      '(("id" . 2) ("int4" . 0) ("text" . "text two"))))))
+        (is (equal (query (:select 'id :from 'test-data
+                           :where (:< 'id 3)) :column)
+                   '(1 2)))
+        (is (equal (query (:select 'id :from 'test-data
+                           :where (:= 'id 3)) :column)
+                   '(3)))
+        (is (equal (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:< 'id 3)) :json-strs)
+                   '("{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}"
+                     "{\"id\":2,\"int4\":0,\"text\":\"text two\"}")))
+        (is (equal (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:= 'id 3)) :json-str)
+                   "{\"id\":3,\"int4\":3,\"text\":\"text three\"}"))
+        (is (equal (query (:select 'id 'int4 'text :from 'test-data
+                           :where (:< 'id 3)) :json-array-str)
+                   "[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]"))
+        (query (:drop-table :if-exists 'test-data :cascade))))
+
+(test return-types-json
+  (with-test-connection
+    (return-types-fixture)
+    (is (equal (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:< 'id 3)))
+               '((1
+                  "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}")
+                 (2
+                  "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}"))))
+    (is (equal (query (:select 'jsonb :from 'test-data :where (:= 'id 3)) :single)
+               "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\", \"granularity\": \"year\"}"))
+    (is (equal (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:= 'id 3)) :list)
+               '(3
+                 "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\", \"granularity\": \"year\"}")))
+    (is (equal (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:< 'id 3)) :lists)
+               '((1
+                  "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}")
+                 (2
+                  "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}"))))
+    (is (equal (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:= 'id 3)) :alist)
+               '((:ID . 3)
+                 (:JSONB
+                  . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\", \"granularity\": \"year\"}"))))
+    (is (equal (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:= 'id 3)) :str-alist)
+               '(("id" . 3)
+                 ("jsonb"
+                  . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\", \"granularity\": \"year\"}"))))
+    (is (equal (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:< 'id 3)) :alists)
+               '(((:ID . 1)
+                  (:JSONB
+                   . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}"))
+                 ((:ID . 2)
+                  (:JSONB
+                   . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}")))))
+    (is (equal (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:< 'id 3)) :str-alists)
+               '((("id" . 1)
+                  ("jsonb"
+                   . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}"))
+                 (("id" . 2)
+                  ("jsonb"
+                   . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}")))))
+    (is (equal (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:= 'id 3)) :plist)
+               '(:ID 3 :JSONB
+                 "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\", \"granularity\": \"year\"}")))
+    (is (equal (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:< 'id 3)) :plists)
+               '((:ID 1 :JSONB
+                  "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}")
+                 (:ID 2 :JSONB
+                  "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}"))))
+    (is (typep (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:< 'id 3)) :array-hash) 'vector))
+    (is (typep (aref (query (:select 'id 'jsonb :from 'test-data
+                                                :where (:< 'id 3)) :array-hash) 1) 'hash-table))
+    (let ((val (alexandria:hash-table-alist
+                        (aref
+                         (query (:select 'id 'jsonb :from 'test-data
+                                                    :where (:< 'id 3)) :array-hash)
+                         1))))
+      (is (or
+           (equal val
+            '(("jsonb"
+               . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}")
+              ("id" . 2)))
+           (equal val
+            '(("id" . 2)
+              ("jsonb"
+               . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}"))))))
+    (is (equal (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:< 'id 3)) :json-strs)
+               '("{\"id\":1,\"jsonb\":\"{\\\"date\\\": \\\"-300\\\", \\\"lang\\\": \\\"en\\\", \\\"category1\\\": \\\"By place\\\", \\\"category2\\\": \\\"Greece\\\", \\\"description\\\": \\\"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\\\", \\\"granularity\\\": \\\"year\\\"}\"}"
+                 "{\"id\":2,\"jsonb\":\"{\\\"date\\\": \\\"-300\\\", \\\"lang\\\": \\\"en\\\", \\\"category1\\\": \\\"By place\\\", \\\"category2\\\": \\\"Egypt\\\", \\\"description\\\": \\\"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\\\", \\\"granularity\\\": \\\"year\\\"}\"}")))
+    (is (equal (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:= 'id 3)) :json-str)
+               "{\"id\":3,\"jsonb\":\"{\\\"date\\\": \\\"-300\\\", \\\"lang\\\": \\\"en\\\", \\\"category1\\\": \\\"By place\\\", \\\"category2\\\": \\\"Egypt\\\", \\\"description\\\": \\\"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\\\", \\\"granularity\\\": \\\"year\\\"}\"}"))
+    (is (equal (query (:select 'id 'jsonb :from 'test-data
+                                          :where (:< 'id 3)) :json-array-str)
+               "[{\"id\":1,\"jsonb\":\"{\\\"date\\\": \\\"-300\\\", \\\"lang\\\": \\\"en\\\", \\\"category1\\\": \\\"By place\\\", \\\"category2\\\": \\\"Greece\\\", \\\"description\\\": \\\"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\\\", \\\"granularity\\\": \\\"year\\\"}\"}, {\"id\":2,\"jsonb\":\"{\\\"date\\\": \\\"-300\\\", \\\"lang\\\": \\\"en\\\", \\\"category1\\\": \\\"By place\\\", \\\"category2\\\": \\\"Egypt\\\", \\\"description\\\": \\\"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\\\", \\\"granularity\\\": \\\"year\\\"}\"}]"))
+    (query (:drop-table :if-exists 'test-data :cascade))))
+
+
+(test rename-table-and-columns
+  (with-test-connection
+    (when (schema-exists-p 'test-schema)
+      (drop-schema 'test-schema :cascade t :if-exists t))
+    (create-schema 'test-schema))
+    (when (table-exists-p 'test-schema.t1)
+      (drop-table 'test-schema.t1 :if-exists t :cascade t))
+    (when (table-exists-p 'test-rename-t1)
+      (drop-table 'test-rename-t1 :if-exists t :cascade t))
+    (when (table-exists-p 'test-rename-t2)
+      (drop-table 'test-rename-t2 :if-exists t :cascade t))
+    (when (table-exists-p 'test-rename-t3)
+      (drop-table 'test-rename-t3 :if-exists t :cascade t))
+    (query (:create-table 'test-schema.t1 ((id :type (or integer db-null)))))
+    (query (:create-table 'test-rename-t1 ((id :type (or integer db-null)))))
+    (is (table-exists-p 'test-schema.t1))
+    (is (rename-table 'test-schema.t1 'test-schema.t2))
+    (is (table-exists-p 'test-schema.t2))
+    (is (rename-table 'test-schema.t2 't3))
+    (is (table-exists-p 'test-schema.t3))
+    (is (column-exists-p 'test-schema.t3 'id))
+    (is (rename-column 'test-schema.t3 'id 'new-id))
+    (is (column-exists-p 'test-schema.t3 'new-id))
+    (is (rename-column 'test-schema.t3 "new_id" "id"))
+    (is (column-exists-p "test-schema.t3" "id"))
+    (is (rename-table "test-schema.t3" "t2"))
+    (is (table-exists-p "test-schema.t2"))
+    (is (table-exists-p 'test-rename-t1))
+    (is (rename-table 'test-rename-t1 'test-rename-t2))
+    (is (table-exists-p 'test-rename-t2))
+    (is (rename-table 'test-rename-t2 'test-rename-t3))
+    (is (table-exists-p 'test-rename-t3))
+    (is (column-exists-p 'test-rename-t3 'id))
+    (is (rename-column 'test-rename-t3 'id 'new-id))
+    (is (column-exists-p 'test-rename-t3 'new-id))
+    (is (rename-column 'test-rename-t3 "new_id" "id"))
+    (is (column-exists-p "test-rename-t3" "id"))
+    (is (rename-table "test-rename-t3" "test-rename-t2"))
+    (is (table-exists-p "test-rename-t2"))
+    (drop-table 'test-rename-t2 :if-exists t :cascade t)
+    (drop-table 'test-schema.t2 :if-exists t :cascade t)
+    (drop-schema 'test-schema :cascade t :if-exists t))
