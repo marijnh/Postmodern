@@ -234,7 +234,7 @@ This behavior is controlled by the remove-function key parameter."
                   (handler-case
                       (query (format nil "deallocate ~:@(~S~)" name))
                     (cl-postgres-error:invalid-sql-statement-name ()
-                      (format t "Statement does not exist ~a~%" name)))
+                      (format t "Statement does not exist in either postmodern or postgresql or may be in process of creation ~a~%" name)))
                   (when (and remove-function (find-symbol (string-upcase name)))
                     (fmakunbound (find-symbol (string-upcase name)))))))
           ((eq location :postmodern)
@@ -259,7 +259,8 @@ This behavior is controlled by the remove-function key parameter."
                   (handler-case
                         (query (format nil "deallocate ~:@(~S~)" name))
                       (cl-postgres-error:invalid-sql-statement-name ()
-                        (format t "Statement does not exist ~a~%" name)))))))))
+                        (format t "Statement does not exist in postgresql or is being created ~a~%"
+                                name)))))))))
 
 (defun reset-prepared-statement (condition &optional params)
   "If you have received an invalid-prepared-statement error or a

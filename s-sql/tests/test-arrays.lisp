@@ -484,4 +484,5 @@ equality tests with arrays requires equalp, not equal."
                                :on (:= 'recipes.recipe-id 'recipe-tags-array.recipe-id)
                                :where (:= 'recipes.name "Shawarma"))
                       :single)
-               "meat, tahini sauce, pita bread"))))
+               "meat, tahini sauce, pita bread"))
+    (query (:drop-table :if-exists 'agg-data))))
