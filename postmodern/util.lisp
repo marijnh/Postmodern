@@ -711,9 +711,10 @@ with-schema form."
 a table using a fully qualified schema.table-name, you do not need to
 specify the schema in the new-name. You cannot use this function to move
 tables from one schema to another."
-  (setf old-name (to-sql-name old-name))
-  (setf new-name (first (split-fully-qualified-tablename new-name)))
-  (query (format nil "alter table if exists ~a rename to ~a" old-name new-name)))
+  (let ((new-table-name (first (split-fully-qualified-tablename new-name))))
+    (setf old-name (to-sql-name old-name))
+    (query (format nil "alter table if exists ~a rename to ~a" old-name new-table-name))
+    (table-exists-p new-name)))
 
 (defun list-table-sizes (&key (schema "public") (order-by-size nil) (size t))
   "Returns a list of lists (table-name, size in 8k pages) of tables in the
@@ -827,11 +828,13 @@ to be the public schema. Returns t or nil."
 
 (defun rename-column (table old-name new-name)
   "Rename a column in a table. Parameters can be strings or symbols. If the table
-is not in the public schema, it needs to be fully qualified - e.g. schema.table."
+is not in the public schema, it needs to be fully qualified - e.g. schema.table.
+Returns t if successful."
   (setf table (to-sql-name table))
   (setf old-name (to-sql-name old-name))
   (setf new-name (to-sql-name new-name))
-  (query (format nil "alter table ~a rename column ~a to ~a" table old-name new-name)))
+  (query (format nil "alter table ~a rename column ~a to ~a" table old-name new-name))
+  (column-exists-p table new-name))
 
 ;;; Views
 (defun list-views (&optional strings-p)
