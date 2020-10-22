@@ -855,12 +855,15 @@ and second the string name for the datatype."
                            :where (:< 'id 3)) :array-hash) 'vector))
         (is (typep (aref (query (:select 'id 'int4 'text :from 'test-data
                                  :where (:< 'id 3)) :array-hash) 1) 'hash-table))
-        (is (equal (alexandria:hash-table-alist
+        (let ((val (alexandria:hash-table-alist
                     (aref
                      (query (:select 'id 'int4 'text :from 'test-data
                              :where (:< 'id 3)) :array-hash)
-                     1))
-                   '(("text" . "text two") ("int4" . 0) ("id" . 2))))
+                     1))))
+          (is (or (equal val
+                         '(("text" . "text two") ("int4" . 0) ("id" . 2)))
+                  (equal val
+                      '(("id" . 2) ("int4" . 0) ("text" . "text two"))))))
         (is (equal (query (:select 'id :from 'test-data
                            :where (:< 'id 3)) :column)
                    '(1 2)))
@@ -940,14 +943,20 @@ and second the string name for the datatype."
                                           :where (:< 'id 3)) :array-hash) 'vector))
     (is (typep (aref (query (:select 'id 'jsonb :from 'test-data
                                                 :where (:< 'id 3)) :array-hash) 1) 'hash-table))
-    (is (equal (alexandria:hash-table-alist
-                (aref
-                 (query (:select 'id 'jsonb :from 'test-data
-                                            :where (:< 'id 3)) :array-hash)
-                 1))
-               '(("jsonb"
-                  . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}")
-                 ("id" . 2))))
+    (let ((val (alexandria:hash-table-alist
+                        (aref
+                         (query (:select 'id 'jsonb :from 'test-data
+                                                    :where (:< 'id 3)) :array-hash)
+                         1))))
+      (is (or
+           (equal val
+            '(("jsonb"
+               . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}")
+              ("id" . 2)))
+           (equal val
+            '(("id" . 2)
+              ("jsonb"
+               . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}"))))))
     (is (equal (query (:select 'id 'jsonb :from 'test-data
                                           :where (:< 'id 3)) :json-strs)
                '("{\"id\":1,\"jsonb\":\"{\\\"date\\\": \\\"-300\\\", \\\"lang\\\": \\\"en\\\", \\\"category1\\\": \\\"By place\\\", \\\"category2\\\": \\\"Greece\\\", \\\"description\\\": \\\"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\\\", \\\"granularity\\\": \\\"year\\\"}\"}"
