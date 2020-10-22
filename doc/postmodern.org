@@ -3127,6 +3127,17 @@ for tables in all schemas.
 → string
 
 Retrieves the comment, if any attached to the table.
+** function rename-table (old-name new-name)
+
+Renames a table. Parameters can be strings or symbols. If you are renaming
+a table using a fully qualified schema.table-name, you do not need to
+specify the schema in the new-name. You cannot use this function to move
+tables from one schema to another.
+
+** function rename-column (table-name old-name new-name)
+
+Rename a column in a table. Parameters can be strings or symbols. If the table
+is not in the public schema, it needs to be fully qualified - e.g. schema.table.
 * Tablespaces
   :PROPERTIES:
   :ID:       1772a1eb-bc79-4c5f-90d5-2fc10ae49569
