@@ -634,7 +634,7 @@
     (is (equal (funcall 'select-text "BCE")
                "BCE"))
     (is (equal (funcall 'select-text 1)
-               "1"))  where prepared statements cannot change parameter type
+               "1"))
     (is (equal (funcall 'select-text "ABC")
                "ABC"))
     (drop-prepared-statement "all")))
