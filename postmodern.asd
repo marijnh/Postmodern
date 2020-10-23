@@ -54,6 +54,7 @@
   ((:module "postmodern/tests"
             :components ((:file "test-package")
                          (:file "tests")
+                         (:file "test-prepared-statements" :depends-on ("test-package"))
                          (:file "test-dao" :depends-on ("test-package")
                           :if-feature :postmodern-use-mop)
                          (:file "test-transactions" :depends-on ("test-package"))
