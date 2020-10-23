@@ -33,7 +33,7 @@
 
       ;; CHANGE HERE TO SIGNALS ERROR
 
-      (is (equal (funcall select-int :null)                   ; different from binary
+      (is (equal (funcall select-int :null)
                  :null))
       (setf select-int-internal-name (car (list-prepared-statements t)))
       ;; the funcall creates the prepared statements logged in the postmodern connection
@@ -70,10 +70,10 @@
     (is (prepared-statement-exists-p "select1"))
     ;; recreate the first prepared statement back into both postgresql and postmodern
     (is (member "select a from test_data where c = $1"
-                (list-postmodern-prepared-statements) :test 'equal :key 'cdr)) ; different from binary
+                (list-postmodern-prepared-statements) :test 'equal :key 'cdr))
     (is (member "SELECT1" (list-postmodern-prepared-statements t) :test 'equal))
     (is (equal "select a from test_data where c = $1"
-               (find-postmodern-prepared-statement "select1"))) ; different from binary
+               (find-postmodern-prepared-statement "select1")))
     (drop-prepared-statement "select1" :location :postgresql)
     (is (equal 0 (length (list-prepared-statements t))))
     (execute (:drop-table 'test-data))
@@ -82,7 +82,7 @@
 (test prepare-select-no-table-two-parameters
   (with-test-connection
     (is (equal (query (:select '$1 '$2) 1 "a")
-               '(("1" "a"))))                                             ; different from binary
+               '(("1" "a"))))
     (let ((select-two (prepare (:select (:type '$1 'integer) (:type '$2 'string)))))
       (is (equal (funcall select-two 1 "a")
                  '((1 "a")))))
@@ -96,11 +96,11 @@
   (with-test-connection
     (defprepared 'test8e (:select '$1))
     (is (equal (test8e 1)
-               '(("1"))))                                             ; different from binary
+               '(("1"))))
     (is (equal (test8e 189)
-               '(("189"))))                                             ; different from binary
+               '(("189"))))
     (is (equal (test8e 11.5)
-               '(("11.5"))))                                             ; different from binary
+               '(("11.5"))))
     (drop-prepared-statement "all")))
 
 (test prepare-3-drop-no-table
@@ -113,9 +113,9 @@
                "foobar"))
     (drop-prepared-statement 'select2 :location :postgresql)
     (is (equal (funcall 'select2 "foobar")
-               "foobar"))                                      ; different from binary
+               "foobar"))
     (is (equal (select2 "foobar")
-               "foobar"))                                      ; different from binary
+               "foobar"))
     (drop-prepared-statement 'select2 :location :postmodern)
     (signals error (funcall 'select2 "foobar")) ; function undefined
     (defprepared select2 "select $1" :single)
@@ -140,7 +140,7 @@
     ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
     ;; drop the prepared select1 statement from both postgresql and postmodern
     (is (equal 1 (funcall 'select1 "foobar")))
-    (is (equal 1 (select1 "foobar")))                                       ; different from binary
+    (is (equal 1 (select1 "foobar")))
     (drop-prepared-statement 'select1)
     (signals error (funcall 'select1))
     (is (not (prepared-statement-exists-p "select1")))
@@ -167,7 +167,7 @@
     (is (equal "select a from test_data where c = $1"
                (find-postgresql-prepared-statement "select1")))
     (is (equal "select a from test_data where c = $1"
-               (find-postmodern-prepared-statement "select1")))                                    ; different from binary
+               (find-postmodern-prepared-statement "select1")))
     ;; funcall now drops the old version and create the new version. The old parameter no longer works
     (is (equal (funcall 'select1 1)
                "foobar"))
@@ -210,7 +210,7 @@
    (drop-prepared-statement "all")
    (defprepared select1 "select $1" :single)
    (is (equal (funcall 'select1 10)
-              "10"))                           ; different from binary
+              "10"))
    ;; Test to ensure that we do not recreate the statement each time it is funcalled
    (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'"
                        :single)))
@@ -230,12 +230,12 @@
     (is (equal (funcall 'select-text "BCE")
                "BCE"))
     (is (equal (funcall 'select-text 1)
-               "1")) ; different from binary
+               "1"))
     (is (equal (funcall 'select-text "ABC")
                "ABC"))
     (drop-prepared-statement "all")))
 
-(test prepare-change-param-no-table-float ; different from binary
+(test prepare-change-param-no-table-float
   (with-test-connection
     (drop-prepared-statement "all")
     (defprepared 'select-float "select $1" :single)
@@ -256,7 +256,7 @@
                "1.0"))
     (drop-prepared-statement "all")))
 
-(test prepare-change-param-no-table-bool ; different from binary
+(test prepare-change-param-no-table-bool
   (with-test-connection
     (drop-prepared-statement "all")
     (defprepared 'select-bool "select $1" :single)
@@ -274,30 +274,30 @@
                "true"))
     (drop-prepared-statement "all")))
 
-(test prepare-change-param-no-table-int  ; different from binary
+(test prepare-change-param-no-table-int
   (with-test-connection
     (drop-prepared-statement "all")
     (defprepared 'select-int "select $1" :single)
     (is (equal (funcall 'select-int 14)
-               "14")) ; different from binary
+               "14"))
     (is (equal (select-int 6)
-               "6")) ; different from binary
+               "6"))
     (is (equal (funcall 'select-int "14")
-               "14")) ; different from binary
+               "14"))
     (is (equal (select-int "14")
-               "14")) ; different from binary
+               "14"))
     (is (equal (funcall 'select-int 14.2)
-               "14.2")) ; different from binary
+               "14.2"))
     (is (equal (select-int 14.2)
-               "14.2")) ; different from binary
+               "14.2"))
     (is (equal (funcall 'select-int "abc")
-               "abc")) ; different from binary
+               "abc"))
     (is (equal (funcall 'select-int t)
-              "true")) ; different from binary
+              "true"))
     (is (equal (funcall 'select-int 5)
-               "5")) ; different from binary
+               "5"))
     (is (equal (select-int 6)
-               "6")) ; different from binary
+               "6"))
     (drop-prepared-statement "all")))
 
 (test prepare-change-param-no-table-txt-with-disconnect
@@ -309,53 +309,53 @@
     (disconnect *database*)
     (is (equal (funcall 'select-text "BCE")
                "BCE"))
-    (is (equal (funcall 'select-text 1)   ; different from binary
+    (is (equal (funcall 'select-text 1)
                "1"))
     (is (equal (funcall 'select-text "ABC")
                "ABC"))
     (drop-prepared-statement "all")))
 
-(test prepare-change-param-no-table-float-with-disconnect    ; different from binary
+(test prepare-change-param-no-table-float-with-disconnect
   (with-test-connection
     (drop-prepared-statement "all")
     (defprepared 'select-float "select $1" :single)
     (is (equal (funcall 'select-float 1.5)
-               "1.5")) ; different from binary
+               "1.5"))
     (disconnect *database*)
     (is (equal (funcall 'select-float 2.5 )
-               "2.5")) ; different from binary
+               "2.5"))
     (is (equal (funcall 'select-float "abc")
-               "abc")) ; different from binary
+               "abc"))
     (is (equal (funcall 'select-float t)
-               "true")) ; different from binary
+               "true"))
     (is (equal (funcall 'select-float "5")
-               "5")) ; different from binary
+               "5"))
     (is (equal (funcall 'select-float "5.5")
-               "5.5")) ; different from binary
+               "5.5"))
     (is (equal (funcall 'select-float 1.0)
-               "1.0")) ; different from binary
+               "1.0"))
     (is (equal (select-float 1.0)
-               "1.0")) ; different from binary
+               "1.0"))
     (drop-prepared-statement "all")))
 
-(test prepare-change-param-no-table-bool-with-disconnect    ; different from binary
+(test prepare-change-param-no-table-bool-with-disconnect
   (with-test-connection
     (drop-prepared-statement "all")
     (defprepared 'select-bool "select $1" :single)
     (is (equal (funcall 'select-bool t)
-               "true")) ; different from binary
+               "true"))
     (disconnect *database*)
     (is (equal (funcall 'select-bool nil)
-               "false")) ; different from binary
+               "false"))
     (is (equal (funcall 'select-bool "14")
-               "14")) ; different from binary
+               "14"))
     (is (equal (funcall 'select-bool 14.2)
-               "14.2")) ; different from binary
+               "14.2"))
     (is (equal (funcall 'select-bool t)
-               "true")) ; different from binary
+               "true"))
     (drop-prepared-statement "all")))
 
-(test prepare-change-param-no-table-int-with-disconnect    ; different from binary
+(test prepare-change-param-no-table-int-with-disconnect
   (with-test-connection
     (drop-prepared-statement "all")
     (defprepared 'select-int "select $1" :single)
@@ -431,7 +431,7 @@
 
       ;; CHANGE HERE TO SIGNALS ERROR if bnary
 
-      (is (equal (funcall select-int :null)                ; different from binary
+      (is (equal (funcall select-int :null)
                  :NULL))
       (setf select-int-internal-name (car (list-prepared-statements t)))
       ;; the funcall creates the prepared statements logged in the postmodern connection
@@ -469,10 +469,10 @@
     (is (prepared-statement-exists-p "select1"))
     ;; recreate the first prepared statement back into both postgresql and postmodern
     (is (member "select a from test_data where c = $1"
-                (list-postmodern-prepared-statements) :test 'equal :key 'cdr))        ; different from binary
+                (list-postmodern-prepared-statements) :test 'equal :key 'cdr))
     (is (member "SELECT1" (list-postmodern-prepared-statements t) :test 'equal))
     (is (equal "select a from test_data where c = $1"
-               (find-postmodern-prepared-statement "select1")))         ; different from binary
+               (find-postmodern-prepared-statement "select1")))
     (drop-prepared-statement "select1" :location :postgresql)
     (is (equal 0 (length (list-prepared-statements t))))
     (execute (:drop-table 'test-data))
@@ -482,7 +482,7 @@
   (with-pooled-test-connection
     (drop-prepared-statement "all")
     (is (equal (query (:select '$1 '$2) 1 "a")
-               '(("1" "a"))))                             ; different from binary
+               '(("1" "a"))))
     (let ((select-two (prepare (:select (:type '$1 'integer) (:type '$2 'string)))))
       (is (equal (funcall select-two 1 "a")
                  '((1 "a")))))
@@ -497,11 +497,11 @@
     (drop-prepared-statement "all")
     (defprepared 'test8e (:select '$1))
     (is (equal (test8e 1)
-               '(("1"))))                ; different from binary
+               '(("1"))))
     (is (equal (test8e 189)
-               '(("189"))))                ; different from binary
+               '(("189"))))
     (is (equal (test8e 11.5)
-               '(("11.5"))))                ; different from binary
+               '(("11.5"))))
     (drop-prepared-statement "all")))
 
 (test prepare-3-drop-no-table-pooled
@@ -514,9 +514,9 @@
                "foobar"))
     (drop-prepared-statement 'select2 :location :postgresql)
     (is (equal (funcall 'select2 "foobar")
-               "foobar")) ; different from binary
+               "foobar"))
     (is (equal (select2 "foobar")
-               "foobar")) ; different from binary
+               "foobar"))
     (drop-prepared-statement 'select2 :location :postmodern)
     (signals error (funcall 'select2 "foobar")) ; function undefined
     (defprepared select2 "select $1" :single)
@@ -568,7 +568,7 @@
     (is (equal "select a from test_data where c = $1"
                (find-postgresql-prepared-statement "select1")))
     (is (equal "select a from test_data where c = $1"
-               (find-postmodern-prepared-statement "select1")))  ; different from binary
+               (find-postmodern-prepared-statement "select1")))
     ;; funcall now drops the old version and create the new version. The old parameter no longer works
     (is (equal (funcall 'select1 1)
                "foobar"))
@@ -614,7 +614,7 @@
    (drop-prepared-statement "all")
    (defprepared select1 "select $1" :single)
    (is (equal (funcall 'select1 10)
-              "10"))                       ; different from binary
+              "10"))
    ;; Test to ensure that we do not recreate the statement each time it is funcalled
    (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'"
                        :single)))
@@ -634,73 +634,73 @@
     (is (equal (funcall 'select-text "BCE")
                "BCE"))
     (is (equal (funcall 'select-text 1)
-               "1")) ; different from binary where prepared statements cannot change parameter type
+               "1"))  where prepared statements cannot change parameter type
     (is (equal (funcall 'select-text "ABC")
                "ABC"))
     (drop-prepared-statement "all")))
 
-(test prepare-change-param-no-table-float-pooled ; different from binary
+(test prepare-change-param-no-table-float-pooled
   (with-pooled-test-connection
     (drop-prepared-statement "all")
     (defprepared 'select-float "select $1" :single)
     (is (equal (funcall 'select-float 1.5)
-               "1.5"))                          ; different from binary
+               "1.5"))
     (is (equal (funcall 'select-float 2.5)
-               "2.5"))                          ; different from binary
+               "2.5"))
     (is (equal (funcall 'select-float "abc")
-               "abc")) ;  different from binary
+               "abc"))
     (is (equal (funcall 'select-float t)
-               "true")) ; different from binary
+               "true"))
     (is (equal (funcall 'select-float "5")
-               "5")) ; different from binary
+               "5"))
     (is (equal (funcall 'select-float "5.5")
-               "5.5")) ; different from binary
+               "5.5"))
     (is (equal (funcall 'select-float 1.0)
-               "1.0"))  ; different from binary
+               "1.0"))
     (drop-prepared-statement "all")))
 
-(test prepare-change-param-no-table-bool-pooled ; different from binary
+(test prepare-change-param-no-table-bool-pooled
   (with-pooled-test-connection
     (drop-prepared-statement "all")
     (defprepared 'select-bool "select $1" :single)
     (is (equal (funcall 'select-bool t)
-               "true")) ; different from binary
+               "true"))
     (is (equal (funcall 'select-bool nil)
-               "false")) ; different from binary
+               "false"))
     (is (equal (funcall 'select-bool "14")
-               "14")) ; different from binary
+               "14"))
     (is (equal (funcall 'select-bool 14.2)
-               "14.2")) ; different from binary
+               "14.2"))
     (is (equal (funcall 'select-bool t)
-               "true")) ; different from binary
+               "true"))
     (is (equal (select-bool t)
-               "true")) ; different from binary
+               "true"))
     (drop-prepared-statement "all")))
 
-(test prepare-change-param-no-table-int-pooled ; different from binary
+(test prepare-change-param-no-table-int-pooled
   (with-pooled-test-connection
     (drop-prepared-statement "all")
     (defprepared 'select-int "select $1" :single)
     (is (equal (funcall 'select-int 14)
-               "14"))  ; different from binary
+               "14"))
     (is (equal (select-int 6)
-               "6"))  ; different from binary
+               "6"))
     (is (equal (funcall 'select-int "14")
-               "14"))  ; different from binary
+               "14"))
     (is (equal (select-int "14")
-               "14"))  ; different from binary
+               "14"))
     (is (equal (funcall 'select-int 14.2)
-               "14.2"))  ; different from binary
+               "14.2"))
     (is (equal (select-int 14.2)
-               "14.2"))  ; different from binary
+               "14.2"))
     (is (equal (funcall 'select-int "abc")
-               "abc"))  ; different from binary
+               "abc"))
     (is (equal (funcall 'select-int t)
-               "true"))  ; different from binary
+               "true"))
     (is (equal (funcall 'select-int 5)
-               "5"))  ; different from binary
+               "5"))
     (is (equal (select-int 6)
-               "6"))  ; different from binary
+               "6"))
     (drop-prepared-statement "all")))
 
 (test prepare-change-param-no-table-txt-with-disconnect-pooled
@@ -713,12 +713,12 @@
     (is (equal (funcall 'select-text "BCE")
                "BCE"))
     (is (equal (funcall 'select-text 1)
-               "1")) ; different from binary
+               "1"))
     (is (equal (funcall 'select-text "ABC")
                "ABC"))
     (drop-prepared-statement "all")))
 
-(test prepare-change-param-no-table-float-with-disconnect-pooled ; different from binary
+(test prepare-change-param-no-table-float-with-disconnect-pooled
   (with-pooled-test-connection
     (drop-prepared-statement "all")
     (defprepared 'select-float "select $1" :single)
@@ -728,34 +728,34 @@
     (is (equal (funcall 'select-float 2.5 )
                "2.5"))
     (is (equal (funcall 'select-float "abc")
-               "abc")) ; different from binary
+               "abc"))
     (is (equal (funcall 'select-float t)
-               "true")) ; different from binary
+               "true"))
     (is (equal (funcall 'select-float "5")
-               "5")) ; different from binary
+               "5"))
     (is (equal (funcall 'select-float "5.5")
-               "5.5"))  ; different from binary
+               "5.5"))
     (is (equal (funcall 'select-float 1.0)
-               "1.0")) ; different from binary
+               "1.0"))
     (is (equal (select-float 1.0)
-               "1.0")) ; different from binary
+               "1.0"))
     (drop-prepared-statement "all")))
 
-(test prepare-change-param-no-table-bool-with-disconnect-pooled ; different from binary
+(test prepare-change-param-no-table-bool-with-disconnect-pooled
   (with-pooled-test-connection
     (drop-prepared-statement "all")
     (defprepared 'select-bool "select $1" :single)
         (is (equal (funcall 'select-bool t)
-               "true")) ; different from binary
+               "true"))
     (disconnect *database*)
     (is (equal (funcall 'select-bool nil)
-               "false")) ; different from binary
+               "false"))
     (is (equal (funcall 'select-bool "14")
-               "14")) ; different from binary
+               "14"))
     (is (equal (funcall 'select-bool 14.2)
-               "14.2")) ; different from binary
+               "14.2"))
     (is (equal (funcall 'select-bool t)
-               "true")) ; different from binary
+               "true"))
     (drop-prepared-statement "all")))
 
 (test prepare-change-param-no-table-int-with-disconnect-pooled
@@ -763,21 +763,21 @@
     (drop-prepared-statement "all")
     (defprepared 'select-int "select $1" :single)
     (is (equal (funcall 'select-int 14)
-               "14"))                              ; different from binary
+               "14"))
     (disconnect *database*)
     (is (equal (funcall 'select-int 6)
                "6"))
-    (is (equal (funcall 'select-int "14")         ; different from binary
+    (is (equal (funcall 'select-int "14")
                "14"))
-    (is (equal (funcall 'select-int "abc")         ; different from binary
+    (is (equal (funcall 'select-int "abc")
                "abc"))
-    (is (equal (funcall 'select-int 14.2)         ; different from binary
+    (is (equal (funcall 'select-int 14.2)
                "14.2"))
     (is (equal (funcall 'select-int t)
-               "true"))       ; different from binary
-    (is (equal (funcall 'select-int 5)          ; different from binary
+               "true"))
+    (is (equal (funcall 'select-int 5)
                "5"))
-    (is (equal (select-int 5)             ; different from binary
+    (is (equal (select-int 5)
                "5"))
     (drop-prepared-statement "all")))
 
@@ -819,7 +819,7 @@
     (execute (:drop-table 'from-test))
     (drop-prepared-statement "all")))
 
-(test prepared-statement-over-reconnect ; different from binary
+(test prepared-statement-over-reconnect
   (let ((terminate-backend
           (prepare
               "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
