@@ -228,8 +228,6 @@ message definitions themselves stay readable."
   (uint 4 (param-to-oid (pop parameters)))
   (uint 4 (param-to-oid (pop parameters))))
 
-
-
 ;; Close a named parsed query, freeing the name.
 (define-message close-prepared-message #\C (name)
   (uint 1 #.(char-code #\S)) ;; Prepared statement

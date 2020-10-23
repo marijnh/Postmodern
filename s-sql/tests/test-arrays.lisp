@@ -63,8 +63,9 @@
 (test use-of-arrays-tags-table
   "Create a table with arrays and then test the array operators and functions. Remember that lisp
 equality tests with arrays requires equalp, not equal."
-  (is (equal (sql (:create-table doc-tags-array ((doc-id :type integer :references ((documents doc-id)))
-                                                 (tags :type text[] :default "{}"))
+  (is (equal (sql (:create-table doc-tags-array
+                                 ((doc-id :type integer :references ((documents doc-id)))
+                                  (tags :type text[] :default "{}"))
                                  (:unique 'index 'doc-id)))
              "CREATE TABLE doc_tags_array (doc_id INTEGER NOT NULL REFERENCES documents(doc_id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT, tags TEXT[] NOT NULL DEFAULT E'{}', UNIQUE (index, doc_id))"))
   (is (equal (sql (:create-table array_int ((vector :type (or int[][] db-null)))))
@@ -187,8 +188,8 @@ equality tests with arrays requires equalp, not equal."
                  ("paprika" 1) ("pistachios" 1) ("raw meat" 1) ("salt" 1) ("sugar syrup" 1)
                  ("tomato paste" 1) ("yogurt" 1) ("zaatar" 1)) ))
 
-;;; reseting chocolate back to spices using a different method that just updates the arrays with chocolate
-;;; This is accomplished with the use of :<@
+;;; reseting chocolate back to spices using a different method that just
+;;; updates the arrays with chocolate This is accomplished with the use of :<@
     (query (:update 'recipe-tags-array :set 'tags (:array-replace 'tags  "chocolate" "spices")
                     :where (:<@ "{\"chocolate\"}" 'tags)))
 

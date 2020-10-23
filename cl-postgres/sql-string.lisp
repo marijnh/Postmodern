@@ -297,6 +297,8 @@ text for postgresql to interpret."
     (single-float cl-postgres-oid:+float4+)
     (double-float cl-postgres-oid:+float8+)
     (boolean cl-postgres-oid:+bool+)
+;    (text-array cl-postgres-oid:+text-array+)
+ ;   (int4-array cl-postgres-oid:+int4-array+)
     (t 25))
 
 #|
@@ -330,6 +332,18 @@ text for postgresql to interpret."
 
 (deftype int8 ()
   '(integer -9223372036854775808 9223372036854775808))
+
+(deftype text-array (&optional size)
+  "Text-array is an array of strings"
+  `(array string (,size)))
+
+(deftype int4-array (&optional size)
+  "Text-array is an array of strings"
+  `(array int4 (,size)))
+
+(deftype int8-array (&optional size)
+  "Text-array is an array of strings"
+  `(array int8 (,size)))
 
 (defun types-match-p (x y)
   (eq (type-of x) (type-of y)))
