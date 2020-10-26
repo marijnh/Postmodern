@@ -162,14 +162,11 @@ database-error condition."
 (defparameter *ssl-key-file* nil
   "When set to a filename, this file will be used as client key for
   SSL connections.")
-(defparameter *ssl-verify* nil
-  "Verify SSL certificate optional. By default NIL does not verify SSL certificate,
-  :required or :optional can be used.")
 
 ;; The let is used to remember that we have found the
 ;; cl+ssl:make-ssl-client-stream function before.
 (let ((make-ssl-stream nil))
-  (defun initiate-ssl (socket required hostname)
+  (defun initiate-ssl (socket required verify hostname)
     "Initiate SSL handshake with the PostgreSQL server, and wrap the socket in
 an SSL stream. When require is true, an error will be raised when the server
 does not support SSL. When hostname is supplied, the server's certificate will
@@ -187,7 +184,9 @@ be matched against it."
        (setf socket (funcall make-ssl-stream socket
                              :key *ssl-key-file*
                              :certificate *ssl-certificate-file*
-                             :verify *ssl-verify*
+                             :verify (if verify 
+                                         :required
+                                         nil)
                              :hostname hostname)))
       (#.(char-code #\N)
        (when required
@@ -209,7 +208,8 @@ a condition."
         (client-initial-response nil)
         (expected-server-signature nil))
     (unless (eq use-ssl :no)
-      (setf socket (initiate-ssl socket (member use-ssl '(:yes :full))
+      (setf socket (initiate-ssl socket (member use-ssl '(:require :yes :full))
+                                 (member use-ssl '(:yes :full))
                                  (if (eq use-ssl :full) hostname))))
     (startup-message socket user database)
     (force-output socket)
