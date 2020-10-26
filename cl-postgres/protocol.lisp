@@ -162,6 +162,9 @@ database-error condition."
 (defparameter *ssl-key-file* nil
   "When set to a filename, this file will be used as client key for
   SSL connections.")
+(defparameter *ssl-verify* nil
+  "Verify SSL certificate optional. By default NIL does not verify SSL certificate,
+  :required or :optional can be used.")
 
 ;; The let is used to remember that we have found the
 ;; cl+ssl:make-ssl-client-stream function before.
@@ -184,6 +187,7 @@ be matched against it."
        (setf socket (funcall make-ssl-stream socket
                              :key *ssl-key-file*
                              :certificate *ssl-certificate-file*
+                             :verify *ssl-verify*
                              :hostname hostname)))
       (#.(char-code #\N)
        (when required
