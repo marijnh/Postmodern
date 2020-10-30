@@ -96,7 +96,8 @@ connected."
                       &optional (port 5432) (use-ssl :no) (service "postgres"))
   "Create and open a connection for the specified server, database, and user.
 use-ssl may be :no, :try, :yes, or :full; where :try means 'if the server
-supports it', :yes only verifies that the server cert is issued by a trusted CA,
+supports it'. :require uses provided ssl certificate with no verification.
+:yes only verifies that the server cert is issued by a trusted CA,
 but does not verify the server hostname. :full 'means expect a CA-signed cert
 for the supplied host name' and verify the server hostname. When it is anything
 but :no, you must have the CL+SSL package loaded to initiate the connection.
@@ -108,7 +109,7 @@ connect using a Unix domain socket instead of a TCP socket."
   (check-type password (or null string))
   (check-type host (or string (eql :unix)) "a string or :unix")
   (check-type port (integer 1 65535) "an integer from 1 to 65535")
-  (check-type use-ssl (member :no :try :yes :full) ":no, :try, :yes or :full")
+  (check-type use-ssl (member :no :try :require :yes :full) ":no, :try, :require, :yes or :full")
   (let ((conn (make-instance 'database-connection :host host :port port
                                                   :user user :password password
                                                   :socket nil :db database
