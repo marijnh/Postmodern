@@ -42,8 +42,14 @@ Create a new database connection for the given user and the database. Port will
 default to 5432, which is where most PostgreSQL servers are running. If
 pooled-p is T, a connection will be taken from a pool of connections of this
 type, if one is available there, and when the connection is disconnected it will
-be put back into this pool instead. use-ssl can be :no, :yes, or :try, as in
-open-database, and defaults to the value of *default-use-ssl*.
+be put back into this pool instead. use-ssl can be :no, :try, :require, :yes, or :full
+and defaults to the value of *default-use-ssl*
+
+- :try means if the server supports it
+- :require means use provided ssl certificate with no verification
+- :yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname
+- :full means expect a CA-signed cert for the supplied hostname and verify the server hostname
+If you set it to anything other than :no be sure to also load the CL+SSL library.
 
 ** variable *default-use-ssl*
    :PROPERTIES:
@@ -51,8 +57,13 @@ open-database, and defaults to the value of *default-use-ssl*.
    :CUSTOM_ID: e140fab3-b6fe-4e88-b9ca-241bbb64fce4
    :END:
 
-The default for connect's use-ssl argument. This starts at :no. If you set it to
-anything else, be sure to also load the CL+SSL library.
+The default for connect's use-ssl argument.
+Valid settings are :no, :try, :require, :yes, or :full
+:try means if the server supports it
+:require means use provided ssl certificate with no verification
+:yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname
+:full means expect a CA-signed cert for the supplied hostname and verify the server hostname
+If you set it to anything other than :no be sure to also load the CL+SSL library.
 
 ** method disconnect (database-connection)
    :PROPERTIES:

@@ -106,7 +106,12 @@ you would also pass the appropriate keyword port parameter. E.g.:
 #+END_SRC
 
 Ssl connections would similarly use the keyword parameter :use-ssl and
-pass :yes, :no or :try
+pass :no, :try, :require, :yes, or :full
+:try means if the server supports it
+:require means use provided ssl certificate with no verification
+:yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname
+:full means expect a CA-signed cert for the supplied hostname and verify the server hostname
+
 
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
 many:1, (in other words, changing connections) then with-connection form which establishes a connection with a lexical scope is more appropriate.
