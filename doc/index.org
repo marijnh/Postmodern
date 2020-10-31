@@ -620,8 +620,9 @@ There is a good writeup of timezones at
 [[http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html]]
 and [[http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/][http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/]].
 
-Without simple-date or local-time properly loaded, sample date and time data
-from postgresql will look like:
+Without simple-date or local-time properly loaded and without use of the
+Postgresql to_char function, sample date and time data from postgresql will
+look like:
 
 | PG Type         |                                        Sample Return Value | Lisp Type                       |
 |-----------------+------------------------------------------------------------+---------------------------------|
@@ -631,6 +632,48 @@ from postgresql will look like:
 | timestamp_wo_tz |                                                 3798611253 | (INTEGER 0 4611686018427387903) |
 | timestamp_w_tz  |                                                 3798625647 | (INTEGER 0 4611686018427387903) |
 
+YOU DO NOT NEED TO ADD ANY OTHER LIBRARIES IF ALL YOU WANT TO DO IS GET ISO 8601 or
+[[https://tools.ietf.org/html/rfc3339][RFC 3339]] PROPERLY FORMATTED TIME AND DATE STRINGS WITH THE [[https://www.postgresql.org/docs/current/functions-formatting.html][TO_CHAR]] POSTGRESQL
+FUNCTION.
+
+Assume a data table with columns  "col_timestamp_without_time_zone", "col_timestamp_with_time_zone", "col_timestamptz", "col_timestamp", "col_time"
+and "col_date".
+
+First, just basic sql. In this example we ask for the timestamp_with_time_zone field
+three times to show differences in the result dealing with time zones. First we do not
+add a timezone parameter to the pattern, the second time  we ask for the time zone
+using TZ, the third time we ask for the offset from UTC and get back -04. We would get
+the same result using those additional parameters with the col_timestamptz field.
+
+#+BEGIN_SRC sql
+(query "(SELECT to_char(col_timestamp_with_time_zone, E'YYYY-MM-DD HH24:MI:SS'),
+                to_char(col_timestamp_with_time_zone, E'YYYY-MM-DD HH24:MI:SS TZ'),
+                to_char(col_timestamp_with_time_zone, E'YYYY-MM-DD HH24:MI:SS OF'),
+                to_char(col_timestamptz, E'YYYY-MM-DD HH24:MI:SS'),
+                to_char(col_timestamp, E'YYYY-MM-DD HH24:MI:SS'),
+                to_char(col_time, E'HH24:MI:SS'),
+                to_char(col_date, E'YYYY-MM-DD')
+         FROM short_data_type_tests
+         WHERE (id = 1))")
+(("2020-10-30 19:30:54" "2020-10-30 19:30:54 EDT" "2020-10-30 19:30:54 -04"
+"2020-10-30 19:30:54" "2020-10-30 19:30:54" "19:30:54" "2020-10-30"))
+#+END_SRC
+
+Now the s-sql version:
+#+BEGIN_SRC lisp
+(query (:select  (:to-char 'col_timestamp_with_time_zone "YYYY-MM-DD HH24:MI:SS TZ")
+                 (:to-char 'col_timestamp_with_time_zone "YYYY-MM-DD HH24:MI:SS OF")
+                 (:to-char 'col_timestamptz "YYYY-MM-DD HH24:MI:SS")
+                 (:to-char 'col_timestamp "YYYY-MM-DD HH24:MI:SS")
+                 (:to-char 'col_time "HH24:MI:SS")
+                 (:to-char 'col_date "YYYY-MM-DD")
+        :from 'short-data-type-tests
+        :where (:= 'id 1)))
+
+(("2020-10-30 19:30:54 EDT" "2020-10-30 19:30:54 -04" "2020-10-30 19:30:54"
+  "2020-10-30 19:30:54" "19:30:54" "2020-10-30"))
+#+END_SRC
+*** Simple-Date Library Use
 The Simple-date add-on library (not enabled by default)
 provides types (CLOS classes) for dates, timestamps, and intervals
 similar to the ones SQL databases use, in order to be able to store and read
@@ -671,6 +714,7 @@ time zones. One thing to remember is that PostgreSQL doesn't store timezone
 information when using `timestamp with time zone`. Time zone information only
 used to convert it to proper UTC timestamp.
 
+*** Local-Time Library Use
 For those who want to use local-time, to enable the local-time reader:
 #+BEGIN_SRC lisp
 (ql:quickload :cl-postgres+local-time)
