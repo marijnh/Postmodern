@@ -23,7 +23,7 @@
   :components
   ((:module "s-sql/tests"
             :components ((:file "test-package")
-			 (:file "tests")
+			                   (:file "tests")
                          (:file "test-arrays" :depends-on ("tests"))
                          (:file "test-intervals" :depends-on ("tests"))
                          (:file "test-tables" :depends-on ("tests")))))

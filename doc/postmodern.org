@@ -3,6 +3,7 @@
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
 #+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
+#+OPTIONS: toc:2
 
 This is the reference manual for the component named postmodern, which is part
 of a library of the same name.
