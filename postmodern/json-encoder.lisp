@@ -418,7 +418,7 @@ STREAM (or to *JSON-OUTPUT*)."
   (with-object (stream)
     (maphash (stream-object-member-encoder stream) h)))
 
-#+cl-json-clos
+#+postmodern-use-mop
 (defmethod encode-json ((o standard-object)
                         &optional (stream *json-output*))
   "Check to see if the object is a local-time:timestamp, or a simple-date
