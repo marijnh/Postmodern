@@ -2596,25 +2596,51 @@ For purposes of this example, we will use the following employee table:
      :ID: 13c9d0df-7b08-4788-bca9-be650e42809a
      :CUSTOM_ID: symbols-in-variables
      :END:
+*** Select Statements
 Consider the following two toy examples where we determine the table and columns
 to be selected using symbols (either keyword or quoted) inside variables.
 #+BEGIN_SRC lisp
-(let ((table 'quotations) (col1 'id) (col2 'text))
-  (with-connection (list "personal_stuff" "sabra" "mypassword" "localhost")
-    (query (:fetch (:select col1 col2 :from table) 1 6))))
+(let ((table 'employee) (col1 :id) (col2 :name) (id 3))
+    (query (:select col1 col2 :from table :where (:= 'id '$1)) id))
+((3 "Celia"))
 
-((543 "I may have settled in shipping."))
-
-(let ((table :quotations) (col1 :id) (col2 :text))
-  (with-connection (list "personal_stuff" "sabra" "mypassword" "localhost")
-    (query (:fetch (:select col1 col2 :from table) 1 6))))
-
-((543 "I may have settled in shipping."))
+(let ((table 'employee) (col1 'name) (col2 'salary) (id 3))
+    (query (:select col1 col2 :from table :where (:= 'id '$1)) id))
+(("Celia" 24020))
 #+END_SRC
 This will not work if you use strings instead of symbols because sql-expand
 will wrap the strings in the variables in escape format as if they were string
 constants and Postgresql will throw an error because it is not expecting
 string constants in the middle of a select statement.
+
+*** Update Statements
+This works with update statements as well
+#+BEGIN_SRC lisp
+(let ((table 'employee) (col1 :id) (col2 :name) (new-name "Celeste") (id 3))
+    (query (:update table :set col2 new-name :where (:= col1 '$1)) id)
+    (query (:select col1 col2 :from table :where (:= 'id '$1)) id))
+((3 "Celeste"))
+#+END_SRC
+*** Insert Statements
+This works with insert-into statements as well
+#+BEGIN_SRC lisp
+(let ((table 'employee) (col1 'id) (col2 'name) (new-name "Rochelle")
+      (id 10) (col3 'salary) (col3-value 3452) (col4 'start-date)
+      (col4-value "02/01/03") (col5 'city) (col5-value "Victoria")
+      (col6 'region) (col6-value "N") (col7 'age) (col7-value 32))
+  (query (:insert-into table :set col1 id col2 new-name col3 col3-value
+                       col4 col4-value col5 col5-value col6 col6-value
+                       col7 col7-value)))
+
+(query (:select 'id 'name 'salary :from 'employee :where (:= 'id 10 )))
+((10 "Rochelle" 3452))
+#+END_SRC
+*** Delete Statements
+This works with delete statements as well
+#+BEGIN_SRC lisp
+(let ((table 'employee) (col1 :id) (col1-value 10))
+   (query (:delete-from table :where (:= col1 col1-value))))
+#+END_SRC
 **** Approach #2 Use sql-compile
      :PROPERTIES:
      :CUSTOM_ID: 523172f6-bc0b-4402-aa40-989025e0d12f
