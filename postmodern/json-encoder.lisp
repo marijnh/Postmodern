@@ -1,12 +1,66 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
-;;;; Borrowed from cl-json
+;;; Timestamp library utilities
+(defun simple-date-date-string (item)
+  "If the item is a simple-date:date instance, return a string in the form of
+yyyy-mm-dd"
+  (when (find-package 'simple-date)
+    (when (typep item (find-symbol "DATE" :simple-date))
+      (multiple-value-bind (year month day)
+          (funcall (find-symbol "DECODE-DATE" :simple-date) item)
+        (format nil "~a-~a-~a" year month day)))))
+
+(defun simple-date-timestamp-string (item)
+  "If the item is a simple-date:timestamp instance, return a string in the
+form of yyyy-mm-dd hh:mm:ss:ms"
+  (when (find-package 'simple-date)
+    (when (typep item (find-symbol "TIMESTAMP" :simple-date))
+      (multiple-value-bind (year month day hour minute second millisecond)
+          (funcall (find-symbol "DECODE-TIMESTAMP" :simple-date) item)
+        (format nil "~a-~a-~a ~a:~a:~a:~a" year month day hour minute
+                second millisecond)))))
+
+(defun simple-date-time-of-day-string (item)
+  "If the item is a simple-date:timestamp instance, return a string in the
+form of yyyy-mm-dd hh:mm:ss:ms"
+  (when (find-package 'simple-date)
+    (when (typep item (find-symbol "TIME-OF-DAY" :simple-date))
+      (multiple-value-bind (hour minute second millisecond)
+          (funcall (find-symbol "DECODE-TIME-OF-DAY" :simple-date) item)
+        (format nil "~a:~a:~a:~a"  hour minute second millisecond)))))
+
+(defun simple-date-interval-string (item)
+  "If the item is a simple-date:timestamp instance, return a string in the
+form of P3Y6M4DT12H30M5,3S represents a duration of three years, six months,
+four days, twelve hours, thirty minutes, five seconds and 300 milliseconds
+following ISO 8601. Note that milliseconds are a decimal fraction added to
+seconds and the separator is a comma, not a full stop. If the interval does not
+have milliseconds or the milliseconds = 0, that decimal fraction will not be
+added."
+  (when (find-package 'simple-date)
+    (when (typep item (find-symbol "INTERVAL" :simple-date))
+      (multiple-value-bind (year month day hour minute second millisecond)
+          (funcall (find-symbol "DECODE-INTERVAL" :simple-date) item)
+        (if (and millisecond (/= millisecond 0))
+            (format nil "P~aY~aM~aDT~aH~aM~a,~S" year month day hour minute
+                    second (/ millisecond 100))
+            (format nil "P~aY~aM~aDT~aH~aM~aS" year month day hour minute
+                       second))))))
+
+(defun local-time-timestamp-string (item)
+  "If the item is a simple-date:timestamp instance, return a string in the
+form of yyyy-mm-dd hh:mm:ss:ms"
+  (when (find-package 'local-time)
+    (when (typep item (find-symbol "TIMESTAMP" :local-time))
+      (format nil "{~a}"(funcall (find-symbol "FORMAT-TIMESTRING" :local-time) nil item)))))
+
+;;;; Borrowed from cl-json but modified to deal with timestamps, intervals
+;;;; and other specific objects
 ;;;; Copyright (c) 2006-2008 Henrik Hjelte
 ;;;; Copyright (c) 2008 Hans Hübner (marked parts)
 ;;;; All rights reserved.
 ;;;; MIT License
-
 ;;; Symbols
 
 (defparameter +json-lisp-symbol-tokens+
@@ -41,9 +95,9 @@ not already interned in *json-symbols-package* is found.")
   "The default json-intern is not safe. Interns of many
 unique symbols could potentially use a lot of memory.
 An attack could exploit this by submitting something that is passed
-through cl-json that has many very large, unique symbols. This version
+through that has many very large, unique symbols. This version
 is safe in that respect because it only allows symbols that already
-exists."
+exist."
   (or (find-symbol string
                    (or *json-symbols-package* *package*))
       (unknown-symbol-error string)))
@@ -110,9 +164,8 @@ return NIL."))
     (encode-json object stream)))
 
 (defmethod encode-json (anything &optional (stream *json-output*))
-  "If OBJECT is not handled by any specialized encoder signal an error
-which the user can correct by choosing to encode the string which is
-the printed representation of the OBJECT."
+  "signal an error which the user can correct by choosing to encode the
+string which is the printed representation of the OBJECT."
   (declare (ignore stream))
   (unencodable-value-error anything 'encode-json))
 
@@ -140,7 +193,6 @@ and the result is written as String."
         (progn (write-string mapped stream) nil)
         (let ((s (funcall *lisp-identifier-name-to-json* (symbol-name s))))
           (write-json-string s stream)))))
-
 
 ;;; The code below is from Hans Hübner's YASON (with modifications).
 
@@ -369,10 +421,22 @@ STREAM (or to *JSON-OUTPUT*)."
 #+cl-json-clos
 (defmethod encode-json ((o standard-object)
                         &optional (stream *json-output*))
-  "Write the JSON representation (Object) of the CLOS object O to
+  "Check to see if the object is a local-time:timestamp, or a simple-date
+timestamp, date or interval. Is so, handle those. If not then
+Write the JSON representation (Object) of the CLOS object O to
 STREAM (or to *JSON-OUTPUT*)."
-  (with-object (stream)
-    (map-slots (stream-object-member-encoder stream) o)))
+  (cond ((typep o (find-symbol "TIMESTAMP" :simple-date))
+         (encode-json (simple-date-timestamp-string o) stream))
+        ((typep o (find-symbol "TIME-OF-DAY" :simple-date))
+         (encode-json (simple-date-time-of-day-string o) stream))
+        ((typep o (find-symbol "DATE" :simple-date))
+         (encode-json (simple-date-date-string o) stream))
+        ((typep o (find-symbol "INTERVAL" :simple-date))
+         (encode-json (simple-date-interval-string o) stream))
+        ((typep o (find-symbol "TIMESTAMP" :local-time))
+         (encode-json (local-time-timestamp-string o) stream))
+        (t (with-object (stream)
+             (map-slots (stream-object-member-encoder stream) o)))))
 
 (defun encode-json-alist (alist &optional (stream *json-output*))
   "Write the JSON representation (Object) of ALIST to STREAM (or to

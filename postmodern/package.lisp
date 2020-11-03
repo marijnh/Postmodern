@@ -72,6 +72,7 @@
    #:set-search-path
    #:get-search-path
    #:get-database-comment
+   #:encode-json-to-string
 
    ;; Prepared Statement Functions
    #:*allow-overwriting-prepared-statements*

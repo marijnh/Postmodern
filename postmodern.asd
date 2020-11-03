@@ -49,7 +49,8 @@
 
 (defsystem "postmodern/tests"
   :depends-on ("postmodern" "fiveam" "simple-date" "simple-date/postgres-glue"
-                            "cl-postgres/tests" "s-sql/tests")
+                            "cl-postgres/tests" "s-sql/tests" "local-time"
+                            "cl-postgres+local-time")
   :components
   ((:module "postmodern/tests"
             :components ((:file "test-package")
@@ -57,6 +58,8 @@
                          (:file "test-prepared-statements" :depends-on ("test-package"))
                          (:file "test-dao" :depends-on ("test-package")
                           :if-feature :postmodern-use-mop)
+                         (:file "test-return-types" :depends-on ("test-package"))
+                         (:file "test-return-types-timestamps" :depends-on ("test-package"))
                          (:file "test-transactions" :depends-on ("test-package"))
                          (:file "test-roles" :depends-on ("test-package"))
                          (:file "test-execute-file" :depends-on ("test-package")))))
