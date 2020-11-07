@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-06-15 Mon 07:23 -->
+<!-- 2020-11-01 Sun 16:30 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern</title>
@@ -257,7 +257,12 @@ for the JavaScript code in this tag.
 </li>
 <li><a href="#fc095960-ba9d-4a98-ac89-0db7a56777f1">Caveats and to-dos</a>
 <ul>
-<li><a href="#e5c68251-0ca6-4f96-8d36-175cec626eeb">Timezones and Simple-Date and Local-Time</a></li>
+<li><a href="#e5c68251-0ca6-4f96-8d36-175cec626eeb">Timezones and Simple-Date and Local-Time</a>
+<ul>
+<li><a href="#orga0929f7">Simple-Date Library Use</a></li>
+<li><a href="#org34a5be0">Local-Time Library Use</a></li>
+</ul>
+</li>
 <li><a href="#bdf9ddb0-5f95-4807-8862-8970b35bd142">Portability</a></li>
 <li><a href="#565fad0b-aef4-497c-92d8-096a0a78c804">Reserved Words</a></li>
 <li><a href="#4ac8f5f4-d3b0-41c5-a222-fe3086049279">Things that should be implemented</a></li>
@@ -295,8 +300,8 @@ me. Your mileage may vary.
 </p>
 
 
-<div id="outline-container-org3c784a3" class="outline-2">
-<h2 id="6887e7c3-c818-469a-b5f1-10a4b578b90b"><a id="org3c784a3"></a><a id="ID-216c43d0-57ff-4ae3-a302-6d04a3d79665"></a>Dependencies</h2>
+<div id="outline-container-orge0869ab" class="outline-2">
+<h2 id="6887e7c3-c818-469a-b5f1-10a4b578b90b"><a id="orge0869ab"></a><a id="ID-216c43d0-57ff-4ae3-a302-6d04a3d79665"></a>Dependencies</h2>
 <div class="outline-text-2" id="text-6887e7c3-c818-469a-b5f1-10a4b578b90b">
 <p>
 The library depends on <a href="http://quickdocs.org/usocket/">usocket</a> (except on <a href="http://sbcl.org/">SBCL</a> and <a href="https://franz.com/products/allegrocl/">ACL</a>, where the built-in socket library is used), <a href="https://github.com/pmai/md5.git">md5</a>, <a href="https://github.com/pcostanza/closer-mop.git">closer-mop</a>, <a href="https://github.com/sionescu/bordeaux-threads.git">bordeaux-threads</a> if you want
@@ -333,8 +338,8 @@ possible of the work at compile time. Finally,
 </div>
 </div>
 
-<div id="outline-container-orgf22a91f" class="outline-2">
-<h2 id="554e0dee-93b3-47b1-b808-3bd6c366b784"><a id="orgf22a91f"></a><a id="ID-8ba6488f-4b3c-47f7-8a50-844363c5f484"></a>License</h2>
+<div id="outline-container-org248b461" class="outline-2">
+<h2 id="554e0dee-93b3-47b1-b808-3bd6c366b784"><a id="org248b461"></a><a id="ID-8ba6488f-4b3c-47f7-8a50-844363c5f484"></a>License</h2>
 <div class="outline-text-2" id="text-554e0dee-93b3-47b1-b808-3bd6c366b784">
 <p>
 Postmodern is released under a zlib-style license. Which approximately
@@ -350,8 +355,8 @@ Dimitri Fontaine and are released under a BSD-3 license.
 </div>
 </div>
 
-<div id="outline-container-org392dff3" class="outline-2">
-<h2 id="6f05b344-12c2-42b0-b231-3aaced30afb8"><a id="org392dff3"></a><a id="ID-d4cca0ee-ff7f-4530-9be7-e9b3de62bdb4"></a>Download and installation</h2>
+<div id="outline-container-orge5b00f2" class="outline-2">
+<h2 id="6f05b344-12c2-42b0-b231-3aaced30afb8"><a id="orge5b00f2"></a><a id="ID-d4cca0ee-ff7f-4530-9be7-e9b3de62bdb4"></a>Download and installation</h2>
 <div class="outline-text-2" id="text-6f05b344-12c2-42b0-b231-3aaced30afb8">
 <p>
 We suggest using <a href="https://quicklisp.org">quicklisp.org</a> for installation.
@@ -367,8 +372,8 @@ A git repository with the most recent changes can be viewed or checked out at:
 </div>
 </div>
 
-<div id="outline-container-org9f88f81" class="outline-2">
-<h2 id="b5bb7222-8134-4dcb-83b7-f764b7f2bb33"><a id="org9f88f81"></a><a id="ID-f55510fb-3715-4cdd-9e37-4ab0e968e72d"></a>Quickstart</h2>
+<div id="outline-container-orge01a3d8" class="outline-2">
+<h2 id="b5bb7222-8134-4dcb-83b7-f764b7f2bb33"><a id="orge01a3d8"></a><a id="ID-f55510fb-3715-4cdd-9e37-4ab0e968e72d"></a>Quickstart</h2>
 <div class="outline-text-2" id="text-b5bb7222-8134-4dcb-83b7-f764b7f2bb33">
 <p>
 This quickstart is intended to give you a feel of the way coding with
@@ -418,8 +423,14 @@ you would also pass the appropriate keyword port parameter. E.g.:
 
 <p>
 Ssl connections would similarly use the keyword parameter :use-ssl and
-pass :yes, :no or :try
+pass :no, :try, :require, :yes, or :full
 </p>
+<ul class="org-ul">
+<li>:try means if the server supports it</li>
+<li>:require means use provided ssl certificate with no verification</li>
+<li>:yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname</li>
+<li>:full means expect a CA-signed cert for the supplied hostname and verify the server hostname</li>
+</ul>
 
 <p>
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
@@ -519,7 +530,8 @@ it is possible to transparently use run-time values as well:
 That last argument, :single, indicates that we want the result not as a list
 of lists (for the result rows), but as a single value, since we know that we
 are only selecting one value. Some other options are :rows, :row, :column, :alists,
-:dao and :none. Their precise effect is documented in the reference manual.
+:plists, :array-hash, :json-strs, :json-str, :json-array-str, :dao and :none.
+Their precise effect is documented in the [[<a href="postmodern.html">postmodern.html</a>][Postmodern reference manual under [[<a href="postmodern.html#querying">postmodern.html#querying</a>][Queries
 </p>
 
 <p>
@@ -643,12 +655,12 @@ recommend that table names be plural and references to rows be singular.)
 </p>
 </div>
 
-<div id="outline-container-org0772b76" class="outline-3">
-<h3 id="eccad49e-8df8-4451-89ff-4987b103c9dd"><a id="org0772b76"></a><a id="ID-6ac2dcab-bd3b-48de-9ea0-fec010d76879"></a>Table Creation</h3>
+<div id="outline-container-org75c66f7" class="outline-3">
+<h3 id="eccad49e-8df8-4451-89ff-4987b103c9dd"><a id="org75c66f7"></a><a id="ID-6ac2dcab-bd3b-48de-9ea0-fec010d76879"></a>Table Creation</h3>
 <div class="outline-text-3" id="text-eccad49e-8df8-4451-89ff-4987b103c9dd">
 </div>
-<div id="outline-container-orgc4dde0b" class="outline-4">
-<h4 id="7629810d-8ccb-4236-b540-6aff596a042f"><a id="orgc4dde0b"></a>With SQL or S-SQL</h4>
+<div id="outline-container-orgdc0137c" class="outline-4">
+<h4 id="7629810d-8ccb-4236-b540-6aff596a042f"><a id="orgdc0137c"></a>With SQL or S-SQL</h4>
 <div class="outline-text-4" id="text-7629810d-8ccb-4236-b540-6aff596a042f">
 <p>
 You can create tables directly without the need to define a class, and in more
@@ -728,8 +740,8 @@ see <a href="create-tables.html">create-tables.html</a>
 </div>
 </div>
 
-<div id="outline-container-org84cb999" class="outline-4">
-<h4 id="5129ed89-2ff3-45b4-ae70-41c2c286eacc"><a id="org84cb999"></a>With a Previously Created DAO</h4>
+<div id="outline-container-org197c90e" class="outline-4">
+<h4 id="5129ed89-2ff3-45b4-ae70-41c2c286eacc"><a id="org197c90e"></a>With a Previously Created DAO</h4>
 <div class="outline-text-4" id="text-5129ed89-2ff3-45b4-ae70-41c2c286eacc">
 <p>
 You can also use a previously defined dao to create a table as well. The
@@ -778,8 +790,8 @@ and save the more complicated version for the <a href="postmodern.html">postmode
 </div>
 </div>
 
-<div id="outline-container-orga167cbf" class="outline-3">
-<h3 id="0b22f6d2-20e4-49cd-a311-083aade58cbf"><a id="orga167cbf"></a><a id="ID-980103dd-9593-4047-9954-92e80f3785a9"></a>Inserting Data</h3>
+<div id="outline-container-orgdb4fb2c" class="outline-3">
+<h3 id="0b22f6d2-20e4-49cd-a311-083aade58cbf"><a id="orgdb4fb2c"></a><a id="ID-980103dd-9593-4047-9954-92e80f3785a9"></a>Inserting Data</h3>
 <div class="outline-text-3" id="text-0b22f6d2-20e4-49cd-a311-083aade58cbf">
 <p>
 Similarly to table creation, you can insert data using the s-sql wrapper, plain
@@ -927,8 +939,8 @@ faster, especially for complex queries.
 </div>
 </div>
 
-<div id="outline-container-org6e17079" class="outline-2">
-<h2 id="b15533d8-efa3-43a9-b632-a3256cea261f"><a id="org6e17079"></a><a id="ID-5ad46584-6887-4866-9c40-633768c0d39a"></a>Authentication</h2>
+<div id="outline-container-orgc3e95ee" class="outline-2">
+<h2 id="b15533d8-efa3-43a9-b632-a3256cea261f"><a id="orgc3e95ee"></a><a id="ID-5ad46584-6887-4866-9c40-633768c0d39a"></a>Authentication</h2>
 <div class="outline-text-2" id="text-b15533d8-efa3-43a9-b632-a3256cea261f">
 <p>
 Postmodern can use either md5 or scram-sha-256 authentication. Scram-sha-256
@@ -944,8 +956,8 @@ is a authentication method that you believe should be considered.
 </div>
 </div>
 
-<div id="outline-container-orgd0c416a" class="outline-2">
-<h2 id="8993c7bd-4ba2-4080-8c5a-ff90de45eca5"><a id="orgd0c416a"></a><a id="ID-27b39236-15ee-42c3-958a-3c9c903c4567"></a>Reference</h2>
+<div id="outline-container-orgff38fca" class="outline-2">
+<h2 id="8993c7bd-4ba2-4080-8c5a-ff90de45eca5"><a id="orgff38fca"></a><a id="ID-27b39236-15ee-42c3-958a-3c9c903c4567"></a>Reference</h2>
 <div class="outline-text-2" id="text-8993c7bd-4ba2-4080-8c5a-ff90de45eca5">
 <p>
 The reference manuals for the different components of Postmodern are kept
@@ -970,12 +982,12 @@ if you just want a low-level library for talking to a PostgreSQL server.
 </div>
 </div>
 
-<div id="outline-container-org780594e" class="outline-2">
-<h2 id="e2475974-6131-40ef-9ca3-54bf111a5dd0"><a id="org780594e"></a><a id="ID-d089d05b-4485-4fb5-9097-5a66492bc470"></a>Data Types</h2>
+<div id="outline-container-org429090b" class="outline-2">
+<h2 id="e2475974-6131-40ef-9ca3-54bf111a5dd0"><a id="org429090b"></a><a id="ID-d089d05b-4485-4fb5-9097-5a66492bc470"></a>Data Types</h2>
 <div class="outline-text-2" id="text-e2475974-6131-40ef-9ca3-54bf111a5dd0">
 </div>
-<div id="outline-container-orgdc51478" class="outline-3">
-<h3 id="b850ea6c-b61e-4601-8423-65a8a626cb58"><a id="orgdc51478"></a><a id="ID-deae4656-1b87-4518-9718-3b3e8c35f6c5"></a>Data Types</h3>
+<div id="outline-container-orgcb1fe94" class="outline-3">
+<h3 id="b850ea6c-b61e-4601-8423-65a8a626cb58"><a id="orgcb1fe94"></a><a id="ID-deae4656-1b87-4518-9718-3b3e8c35f6c5"></a>Data Types</h3>
 <div class="outline-text-3" id="text-b850ea6c-b61e-4601-8423-65a8a626cb58">
 <p>
 For a short comparison of lisp and Postgresql data types (date and time datatypes are described in the next section)
@@ -1278,12 +1290,12 @@ values to that scale. For more detail, see <a href="https://www.postgresql.org/d
 </div>
 </div>
 
-<div id="outline-container-orgcaaa1f2" class="outline-2">
-<h2 id="fc095960-ba9d-4a98-ac89-0db7a56777f1"><a id="orgcaaa1f2"></a><a id="ID-157ea05f-4c49-4e49-8cf9-a3df4bf16b09"></a>Caveats and to-dos</h2>
+<div id="outline-container-orgee4ccfd" class="outline-2">
+<h2 id="fc095960-ba9d-4a98-ac89-0db7a56777f1"><a id="orgee4ccfd"></a><a id="ID-157ea05f-4c49-4e49-8cf9-a3df4bf16b09"></a>Caveats and to-dos</h2>
 <div class="outline-text-2" id="text-fc095960-ba9d-4a98-ac89-0db7a56777f1">
 </div>
-<div id="outline-container-orga463520" class="outline-3">
-<h3 id="e5c68251-0ca6-4f96-8d36-175cec626eeb"><a id="orga463520"></a><a id="ID-8ff631c8-994f-4658-bbc4-779afc80bdf2"></a>Timezones and Simple-Date and Local-Time</h3>
+<div id="outline-container-org591418a" class="outline-3">
+<h3 id="e5c68251-0ca6-4f96-8d36-175cec626eeb"><a id="org591418a"></a><a id="ID-8ff631c8-994f-4658-bbc4-779afc80bdf2"></a>Timezones and Simple-Date and Local-Time</h3>
 <div class="outline-text-3" id="text-e5c68251-0ca6-4f96-8d36-175cec626eeb">
 <p>
 It is important to understand how postgresql (not postmodern) handles
@@ -1300,8 +1312,9 @@ and <a href="http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/">htt
 </p>
 
 <p>
-Without simple-date or local-time properly loaded, sample date and time data
-from postgresql will look like:
+Without simple-date or local-time properly loaded and without use of the
+Postgresql to_char function, sample date and time data from postgresql will
+look like:
 </p>
 
 <table>
@@ -1354,6 +1367,61 @@ from postgresql will look like:
 </tbody>
 </table>
 
+<p>
+YOU DO NOT NEED TO ADD ANY OTHER LIBRARIES IF ALL YOU WANT TO DO IS GET ISO 8601 or
+<a href="https://tools.ietf.org/html/rfc3339">RFC 3339</a> PROPERLY FORMATTED TIME AND DATE STRINGS WITH THE <a href="https://www.postgresql.org/docs/current/functions-formatting.html">TO_CHAR</a> POSTGRESQL
+FUNCTION.
+</p>
+
+<p>
+Assume a data table with columns  "col_timestamp_without_time_zone", "col_timestamp_with_time_zone", "col_timestamptz", "col_timestamp", "col_time"
+and "col_date".
+</p>
+
+<p>
+First, just basic sql. In this example we ask for the timestamp_with_time_zone field
+three times to show differences in the result dealing with time zones. First we do not
+add a timezone parameter to the pattern, the second time  we ask for the time zone
+using TZ, the third time we ask for the offset from UTC and get back -04. We would get
+the same result using those additional parameters with the col_timestamptz field.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sql">(query "(<span style="color: #00ffff;">SELECT</span> to_char(col_timestamp_with_time_zone, E<span style="color: #cd8162;">'YYYY-MM-DD HH24:MI:SS'</span>),
+                to_char(col_timestamp_with_time_zone, E<span style="color: #cd8162;">'YYYY-MM-DD HH24:MI:SS TZ'</span>),
+                to_char(col_timestamp_with_time_zone, E<span style="color: #cd8162;">'YYYY-MM-DD HH24:MI:SS OF'</span>),
+                to_char(col_timestamptz, E<span style="color: #cd8162;">'YYYY-MM-DD HH24:MI:SS'</span>),
+                to_char(col_timestamp, E<span style="color: #cd8162;">'YYYY-MM-DD HH24:MI:SS'</span>),
+                to_char(col_time, E<span style="color: #cd8162;">'HH24:MI:SS'</span>),
+                to_char(col_date, E<span style="color: #cd8162;">'YYYY-MM-DD'</span>)
+         <span style="color: #00ffff;">FROM</span> short_data_type_tests
+         <span style="color: #00ffff;">WHERE</span> (id = 1))")
+(("2020-10-30 19:30:54" "2020-10-30 19:30:54 EDT" "2020-10-30 19:30:54 -04"
+"2020-10-30 19:30:54" "2020-10-30 19:30:54" "19:30:54" "2020-10-30"))
+</pre>
+</div>
+
+<p>
+Now the s-sql version:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span>  (<span style="color: #98fb98; font-weight: bold;">:to-char</span> 'col_timestamp_with_time_zone <span style="color: #cd8162;">"YYYY-MM-DD HH24:MI:SS TZ"</span>)
+                 (<span style="color: #98fb98; font-weight: bold;">:to-char</span> 'col_timestamp_with_time_zone <span style="color: #cd8162;">"YYYY-MM-DD HH24:MI:SS OF"</span>)
+                 (<span style="color: #98fb98; font-weight: bold;">:to-char</span> 'col_timestamptz <span style="color: #cd8162;">"YYYY-MM-DD HH24:MI:SS"</span>)
+                 (<span style="color: #98fb98; font-weight: bold;">:to-char</span> 'col_timestamp <span style="color: #cd8162;">"YYYY-MM-DD HH24:MI:SS"</span>)
+                 (<span style="color: #98fb98; font-weight: bold;">:to-char</span> 'col_time <span style="color: #cd8162;">"HH24:MI:SS"</span>)
+                 (<span style="color: #98fb98; font-weight: bold;">:to-char</span> 'col_date <span style="color: #cd8162;">"YYYY-MM-DD"</span>)
+        <span style="color: #98fb98; font-weight: bold;">:from</span> 'short-data-type-tests
+        <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 1)))
+
+((<span style="color: #cd8162;">"2020-10-30 19:30:54 EDT"</span> <span style="color: #cd8162;">"2020-10-30 19:30:54 -04"</span> <span style="color: #cd8162;">"2020-10-30 19:30:54"</span>
+  <span style="color: #cd8162;">"2020-10-30 19:30:54"</span> <span style="color: #cd8162;">"19:30:54"</span> <span style="color: #cd8162;">"2020-10-30"</span>))
+</pre>
+</div>
+</div>
+<div id="outline-container-orga0929f7" class="outline-4">
+<h4 id="orga0929f7">Simple-Date Library Use</h4>
+<div class="outline-text-4" id="text-orga0929f7">
 <p>
 The Simple-date add-on library (not enabled by default)
 provides types (CLOS classes) for dates, timestamps, and intervals
@@ -1432,6 +1500,31 @@ With simple date loaded, the same data will look like this:
 </table>
 
 <p>
+You can export these as json-strings with the encode-json-to-string function. E.g.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(encode-json-to-string (query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'timestamp-without-time-zone
+                               <span style="color: #98fb98; font-weight: bold;">:from</span> 'test-data
+                               <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 1))
+                               <span style="color: #98fb98; font-weight: bold;">:single</span>))
+<span style="color: #cd8162;">"\"2020-12-30 13:30:54:0\""</span>
+</pre>
+</div>
+<p>
+Or more simply with passing one of the json result type parameters to the query
+function. E.g.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'timestamp-with-time-zone
+        <span style="color: #98fb98; font-weight: bold;">:from</span> 'test-data
+        <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3))
+  <span style="color: #98fb98; font-weight: bold;">:json-strs</span>)
+
+'(<span style="color: #cd8162;">"{\"timestampWithTimeZone\":\"2019-12-30 18:30:54:0\"}"</span>
+  <span style="color: #cd8162;">"{\"timestampWithTimeZone\":\"1919-12-30 18:30:54:0\"}"</span>)
+</pre>
+</div>
+<p>
 To get back to the default cl-postgres reader:
 </p>
 <div class="org-src-container">
@@ -1447,7 +1540,12 @@ time zones. One thing to remember is that PostgreSQL doesn't store timezone
 information when using `timestamp with time zone`. Time zone information only
 used to convert it to proper UTC timestamp.
 </p>
+</div>
+</div>
 
+<div id="outline-container-org34a5be0" class="outline-4">
+<h4 id="org34a5be0">Local-Time Library Use</h4>
+<div class="outline-text-4" id="text-org34a5be0">
 <p>
 For those who want to use local-time, to enable the local-time reader:
 </p>
@@ -1512,12 +1610,37 @@ the same sample data looks like:
 </tr>
 </tbody>
 </table>
+
+<p>
+Similarly to simple-date timestamps, these can be exported as json-strings with the encode-json-to-string function. E.g.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(encode-json-to-string (query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'timestamp-with-time-zone
+                               <span style="color: #98fb98; font-weight: bold;">:from</span> 'test-data
+                               <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 1))
+                               <span style="color: #98fb98; font-weight: bold;">:single</span>))
+<span style="color: #cd8162;">"\"{2020-12-30T08:30:54.000000-05:00}\""</span>
+</pre>
+</div>
+<p>
+Or more simply with passing one of the json result type parameters to the query
+function. E.g.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'timestamp-with-time-zone
+        <span style="color: #98fb98; font-weight: bold;">:from</span> 'test-data
+        <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3))
+  <span style="color: #98fb98; font-weight: bold;">:json-strs</span>)
+
+'(<span style="color: #cd8162;">"{\"timestampWithTimeZone\":\"{2019-12-30T13:30:54.000000-05:00}\"}"</span>
+  <span style="color: #cd8162;">"{\"timestampWithTimeZone\":\"{1919-12-30T13:30:54.000000-05:00}\"}"</span>)
+</pre>
 </div>
 </div>
-
-
-<div id="outline-container-orgc35e03d" class="outline-3">
-<h3 id="bdf9ddb0-5f95-4807-8862-8970b35bd142"><a id="orgc35e03d"></a><a id="ID-769a0e88-de54-4356-a474-72708accbafb"></a>Portability</h3>
+</div>
+</div>
+<div id="outline-container-orgb5f6599" class="outline-3">
+<h3 id="bdf9ddb0-5f95-4807-8862-8970b35bd142"><a id="orgb5f6599"></a><a id="ID-769a0e88-de54-4356-a474-72708accbafb"></a>Portability</h3>
 <div class="outline-text-3" id="text-bdf9ddb0-5f95-4807-8862-8970b35bd142">
 <p>
 The Lisp code in Postmodern is theoretically portable across implementations,
@@ -1543,8 +1666,8 @@ were only introduced in those newer versions.
 </div>
 </div>
 
-<div id="outline-container-org85a4f04" class="outline-3">
-<h3 id="565fad0b-aef4-497c-92d8-096a0a78c804"><a id="org85a4f04"></a><a id="ID-671c5e6a-f548-4791-86a5-575b3fcc0aa5"></a>Reserved Words</h3>
+<div id="outline-container-org5ea939d" class="outline-3">
+<h3 id="565fad0b-aef4-497c-92d8-096a0a78c804"><a id="org5ea939d"></a><a id="ID-671c5e6a-f548-4791-86a5-575b3fcc0aa5"></a>Reserved Words</h3>
 <div class="outline-text-3" id="text-565fad0b-aef4-497c-92d8-096a0a78c804">
 <p>
 It is highly suggested that you do not use words that are reserved by Postgresql
@@ -1570,8 +1693,8 @@ words are:
 </div>
 </div>
 
-<div id="outline-container-orgea23172" class="outline-3">
-<h3 id="4ac8f5f4-d3b0-41c5-a222-fe3086049279"><a id="orgea23172"></a><a id="ID-50d91126-93f1-4f50-96ad-bd63a7278866"></a>Things that should be implemented</h3>
+<div id="outline-container-org5674096" class="outline-3">
+<h3 id="4ac8f5f4-d3b0-41c5-a222-fe3086049279"><a id="org5674096"></a><a id="ID-50d91126-93f1-4f50-96ad-bd63a7278866"></a>Things that should be implemented</h3>
 <div class="outline-text-3" id="text-4ac8f5f4-d3b0-41c5-a222-fe3086049279">
 <p>
 Postmodern is under active development so Issues and feature requests should
@@ -1586,8 +1709,8 @@ file.
 </div>
 </div>
 
-<div id="outline-container-orgcf11cbb" class="outline-2">
-<h2 id="773ee4ef-a685-484e-bc6a-6daa849a7d04"><a id="orgcf11cbb"></a><a id="ID-eb969965-5221-48f8-bb79-5a93fe451454"></a>Resources</h2>
+<div id="outline-container-org2479591" class="outline-2">
+<h2 id="773ee4ef-a685-484e-bc6a-6daa849a7d04"><a id="org2479591"></a><a id="ID-eb969965-5221-48f8-bb79-5a93fe451454"></a>Resources</h2>
 <div class="outline-text-2" id="text-773ee4ef-a685-484e-bc6a-6daa849a7d04">
 <ul class="org-ul">
 <li><a href="https://mailman.common-lisp.net/listinfo/postmodern-devel">Mailing List</a></li>
@@ -1601,8 +1724,8 @@ file.
 </div>
 </div>
 
-<div id="outline-container-orgd10dd5a" class="outline-2">
-<h2 id="844add79-070b-4e89-8797-3bc21ea3173b"><a id="orgd10dd5a"></a><a id="ID-bd354217-9828-444b-afbf-41e9f0d522ca"></a>Running tests</h2>
+<div id="outline-container-orga6a9323" class="outline-2">
+<h2 id="844add79-070b-4e89-8797-3bc21ea3173b"><a id="orga6a9323"></a><a id="ID-bd354217-9828-444b-afbf-41e9f0d522ca"></a>Running tests</h2>
 <div class="outline-text-2" id="text-844add79-070b-4e89-8797-3bc21ea3173b">
 <p>
 Postmodern uses <a href="https://github.com/sionescu/fiveam">FiveAM</a> for

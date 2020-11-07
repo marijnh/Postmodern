@@ -72,6 +72,7 @@
    #:set-search-path
    #:get-search-path
    #:get-database-comment
+   #:encode-json-to-string
 
    ;; Prepared Statement Functions
    #:*allow-overwriting-prepared-statements*
@@ -116,6 +117,7 @@
    #:list-columns
    #:list-columns-with-types
    #:column-exists-p
+   #:rename-column
    ;; constraints
    #:list-all-constraints
    #:describe-constraint
@@ -194,6 +196,7 @@
    #:drop-table
    #:get-table-oid
    #:get-table-comment
+   #:rename-table
    ;; tablespaces
    #:list-tablespaces
    ;; triggers

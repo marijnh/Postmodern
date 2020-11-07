@@ -3,6 +3,7 @@
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
 #+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
+#+OPTIONS: toc:2
 
 This is the reference manual for the component named postmodern, which is part
 of a library of the same name.
@@ -20,7 +21,7 @@ operation that encountered to the error.
 * Connecting
   :PROPERTIES:
   :ID:       75c23b08-3840-4d28-8ced-978d10a629d5
-  :CUSTOM_ID: d6471bf2-e471-4607-8979-1b811cabada0
+  :CUSTOM_ID: connecting
   :END:
 ** class database-connection
    :PROPERTIES:
@@ -42,8 +43,14 @@ Create a new database connection for the given user and the database. Port will
 default to 5432, which is where most PostgreSQL servers are running. If
 pooled-p is T, a connection will be taken from a pool of connections of this
 type, if one is available there, and when the connection is disconnected it will
-be put back into this pool instead. use-ssl can be :no, :yes, or :try, as in
-open-database, and defaults to the value of *default-use-ssl*.
+be put back into this pool instead. use-ssl can be :no, :try, :require, :yes, or :full
+and defaults to the value of *default-use-ssl*
+
+- :try means if the server supports it
+- :require means use provided ssl certificate with no verification
+- :yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname
+- :full means expect a CA-signed cert for the supplied hostname and verify the server hostname
+If you set it to anything other than :no be sure to also load the CL+SSL library.
 
 ** variable *default-use-ssl*
    :PROPERTIES:
@@ -51,8 +58,13 @@ open-database, and defaults to the value of *default-use-ssl*.
    :CUSTOM_ID: e140fab3-b6fe-4e88-b9ca-241bbb64fce4
    :END:
 
-The default for connect's use-ssl argument. This starts at :no. If you set it to
-anything else, be sure to also load the CL+SSL library.
+The default for connect's use-ssl argument.
+Valid settings are :no, :try, :require, :yes, or :full
+:try means if the server supports it
+:require means use provided ssl certificate with no verification
+:yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname
+:full means expect a CA-signed cert for the supplied hostname and verify the server hostname
+If you set it to anything other than :no be sure to also load the CL+SSL library.
 
 ** method disconnect (database-connection)
    :PROPERTIES:
@@ -160,7 +172,7 @@ does this by returningo info from pg_stat_activity on open connections.
 * Querying
   :PROPERTIES:
   :ID:       e5e99216-0a15-4de8-b1d9-21bdcdf378fa
-  :CUSTOM_ID: 197e3028-ddf0-4897-b6cf-5cabc643757f
+  :CUSTOM_ID: querying
   :END:
 ** macro query (query &rest args/format)
    :PROPERTIES:
@@ -181,62 +193,158 @@ instead. Any of the following formats can be used, with the default being :rows:
 | :list, :row         | 	Return a single row as a list.                                                                                                                         |
 | :alists	           | Return a list of alists which map column names to values, with the names represented as keywords.                                                        |
 | :alist	            | Return a single row as an alist.                                                                                                                         |
-| :array-hash         | Return an array of hashtables which map column names to hash table keys                                                                                  |
 | :str-alists         | 	Like :alists, but use the original column names.                                                                                                       |
 | :str-alist	        | Return a single row as an alist, with strings for names.                                                                                                 |
 | :plists	           | Return a list of plists which map column names to values,with the names represented as keywords.                                                         |
-| :plist	            | Return a single row as a plist.                                                                                                                          |
-| :column	           | Return a single column as a list.                                                                                                                        |
-| :single	           | Return a single value.                                                                                                                                   |
-| :single!	          | Like :single, but raise an error when the number of selected rows is not equal to 1.                                                                     |
+| :plist	            | Return a single row as a plist.                                                          |
+| :column	           | Return a single column as a list.                 |
+| :single	           | Return a single value. Will raise an error if the query returns more than one field. If the query returns more than one row, it returns the first row. |
+| :single!	          | Like :single except that it will throw an error when the number of selected rows is not equal to 1.  |
+| :array-hash         | Return an array of hashtables which map column names to hash table keys     |
+| :json-strs          | Return a list of strings where each row is a json object expressed as a string  |
+| :json-strs          | Return a single string where the row returned is a json object expressed as a string           |
+| :json-array-str     | Return a string containing a json array, each element in the array is a selected row expressed as a json object |
 | (:dao type)	       | Return a list of DAOs of the given type. The names of the fields returned by the query must match slots in the DAO class the same way as with query-dao. |
-| (:dao type :single) | 	Return a single DAO of the given type.                                                                                                                 |
+| (:dao type :single) | 	Return a single DAO of the given type. |
 
 Some Examples:
+*** Default
+The default is :lists
 #+BEGIN_SRC lisp
-(query (:select '* :from 'country :where (:= 'name "Croatia")))
-(("Croatia" 4400000 :NULL))
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)))
+((1 2147483645 "text one") (2 0 "text two"))
+#+END_SRC
+*** Single
+Returns a single field. Will throw an error if the queries returns more than one field or more than one row
+#+BEGIN_SRC lisp
+(query (:select 'text :from 'short-data-type-tests :where (:= 'id 3)) :single)
+"text three"
+#+END_SRC
+*** List
+Returns a list containing the selected fields. Will throw an error if the query returns more than one row
+#+BEGIN_SRC lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :list)
+(3 3 "text three")
+#+END_SRC
+*** Lists
+This is the default
+#+BEGIN_SRC lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :lists)
+((1 2147483645 "text one") (2 0 "text two"))
+#+END_SRC
+*** Alist
+Returns an alist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
+#+BEGIN_SRC lisp
+(query (:select 'id 'int4 'text :from 'test-data :where (:= 'id 3)) :alist)
+((:ID . 3) (:INT4 . 3) (:TEXT . "text three"))
+#+END_SRC
+*** Str-alist
+Returns an alist containing the field name as a lower case string and the selected fields. Will throw an error if the query returns more than one row.
+#+BEGIN_SRC lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :str-alist)
+(("id" . 3) ("int4" . 3) ("text" . "text three"))
+#+END_SRC
 
-(query (:select 'inhabitants :from 'country :where (:= 'name "Croatia")) :single)
-4400000
+*** Alists
+Returns a list of alists containing the field name as a keyword and the selected fields.
+#+BEGIN_SRC lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :alists)
+(((:ID . 1) (:INT4 . 2147483645) (:TEXT . "text one"))
+ ((:ID . 2) (:INT4 . 0) (:TEXT . "text two")))
+#+END_SRC
+*** Str-alists
+Returns a list of alists containing the field name as a lower case string and the selected fields.
+#+BEGIN_SRC lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :str-alists)
+((("id" . 1) ("int4" . 2147483645) ("text" . "text one"))
+ (("id" . 2) ("int4" . 0) ("text" . "text two")))
+#+END_SRC
+*** Plist
+Returns a plist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
+#+BEGIN_SRC lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :plist)
+(:ID 3 :INT4 3 :TEXT "text three")
+#+END_SRC
+*** Plists
+Returns a list of plists containing the field name as a keyword and the selected fields.
+#+BEGIN_SRC lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :plists)
+((:ID 1 :INT4 2147483645 :TEXT "text one") (:ID 2 :INT4 0 :TEXT "text two"))
+#+END_SRC
+*** Array-hash
+Returns a vector of hashtables where each hash table is a returned row from the query with field name as the key expressed as a lower case string.
+#+BEGIN_SRC lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :array-hash)
+#(#<HASH-TABLE :TEST EQUAL :COUNT 3 {100D982B53}>
+  #<HASH-TABLE :TEST EQUAL :COUNT 3 {100D982ED3}>)
 
-(query (:select '* :from 'country :where (:= 'name "Croatia")) :alist)
-((:NAME . "Croatia") (:INHABITANTS . 4400000) (:SOVEREIGN . :NULL))
-
-(query (:select '* :from 'country :where (:= 'name "Croatia")) :str-alist)
-(("name" . "Croatia") ("inhabitants" . 4400000) ("sovereign" . :NULL))
-
-(query (:select '* :from 'country :where (:= 'name "Croatia")) :plist)
-(:NAME "Croatia" :INHABITANTS 4400000 :SOVEREIGN :NULL)
-
-(query (:select '* :from 'country :where (:= 'name "Croatia")) :list)
-("Croatia" 4400000 :NULL)
-
-(query (:select '* :from 'country :where (:= 'name "Croatia")) :lists)
-(("Croatia" 4400000 :NULL))
-
-(query (:select '* :from 'country) :lists)
-(("The Netherlands" 16800000 "Willem-Alexander") ("Croatia" 4400000 :NULL))
-
-(query (:select '* :from 'country) :alists)
-(((:NAME . "The Netherlands") (:INHABITANTS . 16800000)
-  (:SOVEREIGN . "Willem-Alexander"))
- ((:NAME . "Croatia") (:INHABITANTS . 4400000) (:SOVEREIGN . :NULL)))
-
-(query (:select '* :from 'country :where (:= 'name "Croatia")) :array-hash)
-#(#<HASH-TABLE :TEST EQUAL :COUNT 3 {10106CA323}>)
-
-(query (:select '* :from 'country :where (:= 'name "Croatia")) (:dao country))
-(#<COUNTRY {1010688943}>)
-
+(alexandria:hash-table-alist
+  (aref
+    (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :array-hash)
+    1))
+(("text" . "text two") ("int4" . 0) ("id" . 2))
+#+END_SRC
+*** Dao
+Returns a list of daos of the type specified
+#+BEGIN_SRC lisp
 (query (:select '* :from 'country) (:dao country))
 (#<COUNTRY {1010464023}> #<COUNTRY {1010465CB3}>)
 
-(query (:select 'inhabitants :from 'country :where (:= 'name "Croatia")) :column)
-(4400000)
+(query (:select '* :from 'country :where (:= 'name "Croatia")) (:dao country))
+(#<COUNTRY {1010688943}>)
+#+END_SRC
+*** Column
+Returns a list of field values of a single field. Will throw an error if more than one field is selected
+#+BEGIN_SRC lisp
+(query (:select 'id :from 'short-data-type-tests :where (:< 'id 3)) :column)
+(1 2)
+
+(query (:select 'id :from 'short-data-type-tests :where (:= 'id 3)) :column)
+(3)
+#+END_SRC
+*** Json-strs
+Return a list of strings where the row returned is a json object expressed as a string
+#+BEGIN_SRC lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :json-strs)
+("{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}"
+ "{\"id\":2,\"int4\":0,\"text\":\"text two\"}")
+#+END_SRC
+This will also handle local-time timestamps and simple-date timestamps,
+time-of-day and date. E.g. (with a local-time timestamp)
+#+BEGIN_SRC lisp
+(query (:select 'timestamp-with-time-zone
+        :from 'test-data
+        :where (:< 'id 3))
+  :json-strs)
+
+'("{\"timestampWithTimeZone\":\"{2019-12-30T13:30:54.000000-05:00}\"}"
+  "{\"timestampWithTimeZone\":\"{1919-12-30T13:30:54.000000-05:00}\"}")
 #+END_SRC
 
+The following is an example with a simple-date timestamp.
+#+BEGIN_SRC lisp
+(query (:select 'timestamp-with-time-zone
+                       :from 'test-data
+                       :where (:< 'id 3)) :json-strs)
+'("{\"timestampWithTimeZone\":\"2019-12-30 18:30:54:0\"}"
+  "{\"timestampWithTimeZone\":\"1919-12-30 18:30:54:0\"}")
+#+END_SRC
+*** Json-str
+Return a single string where the row returned is a json object expressed as a string
+#+BEGIN_SRC lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :json-str)
+"{\"id\":3,\"int4\":3,\"text\":\"text three\"}"
+#+END_SRC
+As with :json-strs, this will also work for either simple-date or local-time timestamps
 
+*** Json-array-str
+Return a string containing a json array, each element in the array is a selected row expressed as a json object
+#+BEGIN_SRC lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :json-array-str)
+"[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]"
+#+END_SRC
+As with :json-strs, this will also work for either simple-date or local-time timestamps
+*** Second value returned
 If the database returns information about the amount rows that were affected,
 such as with updating or deleting queries, this is returned as a second value.
 
@@ -605,7 +713,7 @@ than the current default
 * Helper functions for Prepared Statements
   :PROPERTIES:
   :ID:       d4846b02-aa2f-4e44-9294-7e5811e61e6c
-  :CUSTOM_ID: 6869a7d5-eac4-40c1-8bf6-d14925c7da55
+  :CUSTOM_ID: prepared-statement-helper-functions
   :END:
 
 ** defparameter *allow-overwriting-prepared-statements*
@@ -751,7 +859,7 @@ Less polite way of terminating at the database (as opposed to calling
 close-database). Faster than (cancel-backend pid) and more reliable.
 * Database Management
   :PROPERTIES:
-  :CUSTOM_ID: 14e37c88-0e4b-48d6-aa31-5686e6456190
+  :CUSTOM_ID: database-management
   :END:
 
 ** function create-database (database-name &key (encoding "UTF8") (connection-limit -1) owner limit-public-access comment collation template)
@@ -763,26 +871,28 @@ Creates a basic database. Besides the obvious database-name parameter, you
 can also use key parameters to set encoding (defaults to UTF8), owner,
 connection-limit (defaults to no limit)). If limit-public-access is set to t,
 then only superuser roles or roles with explicit access to this database will
-be able to access it. (See [[#f2e31575-047f-4629-9ffc-52b792726fd1][Roles]] below) If collation is set, the assumption
-is that template0 needs to be used as the base of the database rather than
-template1 which may contain encoding specific or locale specific data.
+be able to access it. See [[#roles]].
+
+If collation is set, the assumption is that template0 needs to be used as the base
+of the database rather than template1 which may contain encoding specific or locale
+specific data.
 #+BEGIN_SRC lisp
 (create-database 'testdb :limit-public-access t
                          :comment "This database is for testing silly theories")
 #+END_SRC
 ** function drop-database (database)
    :PROPERTIES:
-   :CUSTOM_ID: b52e172a-2af0-4c19-a28c-db55b543964a
+   :CUSTOM_ID: database-management
    :END:
 
 Drop the specified database. The database parameter can be a string or a
 symbol. Note: Only the owner of a database (or superuser) can drop a database
 and there cannot be any current connections to the database.
-[[#c6f7f5b5-8721-41b4-bf00-85811e189037][See Database information below for information specific functions]]
+[[#database-information][See Database information below for information specific functions]
 * Database access objects
   :PROPERTIES:
   :ID:       8e7cee8c-f2b9-4569-bf65-e8f3d2f9e31b
-  :CUSTOM_ID: da21e1d9-5b86-42dc-a819-3de4ea2597dc
+  :CUSTOM_ID: daos
   :END:
 Postmodern contains a simple system for defining CLOS classes that represent
 rows in the database. This is not intended as a full-fledged object-relational
@@ -1502,7 +1612,7 @@ the objects, and immediately store it in the new instances.
 * Table definition and creation
   :PROPERTIES:
   :ID:       1c0a254a-4a0e-4012-b519-8fe8cbf9ae02
-  :CUSTOM_ID: 26cf8623-bc7a-419b-831c-e83f6621f950
+  :CUSTOM_ID: table-definition
   :END:
 It can be useful to have the SQL statements needed to build an application's
 tables available from the source code, to do things like automatically deploying
@@ -2075,7 +2185,7 @@ from all the foreign tables.
 
 * Roles
   :PROPERTIES:
-  :CUSTOM_ID: f2e31575-047f-4629-9ffc-52b792726fd1
+  :CUSTOM_ID: roles
   :END:
 Every connection is specific to a particular database. However, creating roles
 or users is global to the entire cluster (the running postgresql server). You
@@ -2295,7 +2405,7 @@ on that table in that schema.
 * Database Information
   :PROPERTIES:
   :ID:       ecc7ca5e-9117-488b-aa7c-011d56409f76
-  :CUSTOM_ID: c6f7f5b5-8721-41b4-bf00-85811e189037
+  :CUSTOM_ID: database-information
   :END:
 ** function add-comment (type name comment &optional (second-name ""))
    :PROPERTIES:
@@ -2550,7 +2660,7 @@ stddev_time, rows, rows/calls and the cache hit percentage.
 * Constraints
   :PROPERTIES:
   :ID:       b857f2fe-7b5c-4b13-9909-cb637f7ba367
-  :CUSTOM_ID: 5042445e-d459-4768-877f-a044c19da7bd
+  :CUSTOM_ID: constraints
   :END:
 ** function list-unique-or-primary-constraints (table-name)
    :PROPERTIES:
@@ -2594,7 +2704,7 @@ Generates a list of lists of information on the foreign key constraints
 * Indexes/Indices
   :PROPERTIES:
   :ID:       a265f57e-3928-4386-92c0-ab2764f4fdc5
-  :CUSTOM_ID: 96fac10c-b466-437d-8652-8576de48ce5e
+  :CUSTOM_ID: indexes
   :END:
 ** function create-index (name  &key unique if-not-exists concurrently on using fields)
    :PROPERTIES:
@@ -2666,7 +2776,7 @@ the table
 * Keys
   :PROPERTIES:
   :ID:       342fdfce-eed8-4ed1-a208-37c417b5a291
-  :CUSTOM_ID: d9f479ec-2b7e-47a6-bd38-847822efd073
+  :CUSTOM_ID: keys
   :END:
 ** function find-primary-key-info (table-name &optional (just-key nil))
    :PROPERTIES:
@@ -2700,7 +2810,7 @@ Returns a list of sublists of foreign key info in the form of
 * Schema/Schemata
   :PROPERTIES:
   :ID:       eef5ba67-cfe2-47dc-b432-2a75b45765d8
-  :CUSTOM_ID: 6dc6d668-aab8-47f7-a8ea-ee2a1133219b
+  :CUSTOM_ID: schema
   :END:
 Schema allow you to separate tables into differnet name spaces. In different
 schemata two tables with the same name are allowed to exists. The tables can
@@ -2829,7 +2939,7 @@ qualified, it will assume that the schema should be \"public\".
 * Sequences
   :PROPERTIES:
   :ID:       62e4d0bd-e12f-47c6-8373-a174a7d8d7b1
-  :CUSTOM_ID: 16b948b1-12c3-447f-bad3-a536aab9a246
+  :CUSTOM_ID: sequences
   :END:
 ** function create-sequence (name &key temp if-not-exists increment min-value max-value start cache)
    :PROPERTIES:
@@ -2886,7 +2996,7 @@ string or a symbol.
 * Tables
   :PROPERTIES:
   :ID:       5a351917-b940-4c94-a3dc-2795f9a76211
-  :CUSTOM_ID: 93ca2906-0494-4148-8c25-8663d1ea192e
+  :CUSTOM_ID: tables
   :END:
 ** function list-tables (&optional strings-p)
    :PROPERTIES:
@@ -3052,10 +3162,24 @@ for tables in all schemas.
 → string
 
 Retrieves the comment, if any attached to the table.
+** function rename-table (old-name new-name)
+→ boolean
+
+Renames a table. Parameters can be strings or symbols. If you are renaming
+a table using a fully qualified schema.table-name, you do not need to
+specify the schema in the new-name. You cannot use this function to move
+tables from one schema to another. Returns t if successful
+
+** function rename-column (table-name old-name new-name)
+→ boolean
+
+Rename a column in a table. Parameters can be strings or symbols. If the table
+is not in the public schema, it needs to be fully qualified - e.g. schema.table.
+Returns t if successful
 * Tablespaces
   :PROPERTIES:
   :ID:       1772a1eb-bc79-4c5f-90d5-2fc10ae49569
-  :CUSTOM_ID: 3a5fa498-32d0-47fd-91ee-75d807e79087
+  :CUSTOM_ID: tablespaces
   :END:
 ** function list-tablespaces ()
    :PROPERTIES:
@@ -3088,7 +3212,7 @@ expensive, slower disk system.
 * Triggers
   :PROPERTIES:
   :ID:       39786cca-6778-4f0b-9187-1f3216b97cda
-  :CUSTOM_ID: afa6058b-40a7-42ba-b23b-f6021834440b
+  :CUSTOM_ID: triggers
   :END:
 ** function describe-triggers ()
    :PROPERTIES:
@@ -3122,7 +3246,7 @@ See https://www.postgresql.org/docs/current/trigger-definition.html)
 * Views
   :PROPERTIES:
   :ID:       a9641e8e-3769-4af4-bdd0-3153e0dd7728
-  :CUSTOM_ID: 8b94eb55-6a1a-4316-8bdc-c0ce4533bdff
+  :CUSTOM_ID: views
   :END:
 ** function list-views (&optional strings-p)
    :PROPERTIES:
@@ -3158,7 +3282,7 @@ public schema.
 * Miscellaneous Utility Functions
   :PROPERTIES:
   :ID:       73c18602-c501-4399-ac07-cab915309777
-  :CUSTOM_ID: f2bcb42d-d328-46b6-ac70-fbe05e6d0798
+  :CUSTOM_ID: misc-utility-functions
   :END:
 ** function coalesce (&rest arguments)
    :PROPERTIES:

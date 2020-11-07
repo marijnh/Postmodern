@@ -20,6 +20,26 @@
                          :for symbol :in symbols
                          :collect symbol :collect (next-field field)))))
 
+;; Like symbol-alist-row-reader, but return a string holding one or more json objects
+(def-row-reader json-row-reader (fields)
+  (let ((symbols (map 'list (lambda (desc) (from-sql-name (field-name desc)))
+                      fields)))
+    (mapcar #'encode-json-plist-to-string
+     (loop :while (next-row)
+           :collect (loop :for field :across fields
+                          :for symbol :in symbols
+                          :collect symbol :collect (next-field field))))))
+
+(def-row-reader json-row-array-reader (fields)
+  (let ((symbols (map 'list (lambda (desc) (from-sql-name (field-name desc)))
+                      fields)))
+    (format nil "[~{~a~^, ~}]"
+     (mapcar #'encode-json-plist-to-string
+             (loop :while (next-row)
+                   :collect (loop :for field :across fields
+                                  :for symbol :in symbols
+                                  :collect symbol :collect (next-field field)))))))
+
 ;; Converts field names to hash table keys and returns an array of rows
 (def-row-reader array-hash-row-reader (fields)
   (loop :while (next-row)
@@ -56,7 +76,10 @@
     (:array-hash array-hash-row-reader all-rows)
     (:column column-row-reader all-rows)
     (:single column-row-reader single-row)
-    (:single! column-row-reader single-row!))
+    (:single! column-row-reader single-row!)
+    (:json-strs json-row-reader all-rows)
+    (:json-str json-row-reader single-row)
+    (:json-array-str json-row-array-reader all-rows))
   "Mapping from keywords identifying result styles to the row-reader
 that should be used and whether all values or only one value should be
 returned.")
@@ -141,6 +164,12 @@ instead. Any of the following formats can be used, with the default being :rows:
 |                    | fields returned by the query must match slots in the DAO  |
 |                    | class the same way as with query-dao.                     |
 | (:dao type :single)| Return a single DAO of the given type.                    |
+| :json-strs         | Return a list of strings where each row is a json object  |
+|                    | expressed as a string                                     |
+| :json-str          | Return a single string where the row returned is a json   |
+|                    | object expressed as a string                              |
+| :json-array-str    | Return a string containing a json array, each element in  |
+|                    | the array is a selected row expressed as a json object    |
 
 If the database returns information about the amount rows that were affected,
 such as with updating or deleting queries, this is returned as a second value."

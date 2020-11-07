@@ -20,7 +20,7 @@
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :homepage  "https://github.com/marijnh/Postmodern"
   :license "zlib"
-  :version "1.32.3"
+  :version "1.32.4"
   :depends-on ("alexandria"
                "cl-postgres"
                "s-sql"
@@ -33,7 +33,8 @@
   ((:module "postmodern"
             :components ((:file "package")
                          (:file "connect" :depends-on ("package"))
-                         (:file "query" :depends-on ("connect"))
+                         (:file "json-encoder" :depends-on ("package"))
+                         (:file "query" :depends-on ("connect" "json-encoder"))
                          (:file "prepare" :depends-on ("query"))
                          (:file "roles" :depends-on ("query"))
                          (:file "util" :depends-on ("query" "roles"))
@@ -48,13 +49,17 @@
 
 (defsystem "postmodern/tests"
   :depends-on ("postmodern" "fiveam" "simple-date" "simple-date/postgres-glue"
-                            "cl-postgres/tests" "s-sql/tests")
+                            "cl-postgres/tests" "s-sql/tests" "local-time"
+                            "cl-postgres+local-time")
   :components
   ((:module "postmodern/tests"
             :components ((:file "test-package")
                          (:file "tests")
+                         (:file "test-prepared-statements" :depends-on ("test-package"))
                          (:file "test-dao" :depends-on ("test-package")
                           :if-feature :postmodern-use-mop)
+                         (:file "test-return-types" :depends-on ("test-package"))
+                         (:file "test-return-types-timestamps" :depends-on ("test-package"))
                          (:file "test-transactions" :depends-on ("test-package"))
                          (:file "test-roles" :depends-on ("test-package"))
                          (:file "test-execute-file" :depends-on ("test-package")))))
