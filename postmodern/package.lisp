@@ -58,7 +58,6 @@
    #:ensure-transaction-with-isolation-level
    #:abort-hooks
    #:commit-hooks
-   #:db-null
    #:deftable
    #:*table-name*
    #:*table-symbol*
