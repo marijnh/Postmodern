@@ -2179,20 +2179,41 @@ The meaning of args depends on action:
 - :add-column
 
 Adds column to table. args should be a column in the same form as for :create-table.
+#+BEGIN_SRC lisp
+(query (:alter-table "packages" :add-column 'system-data-p :type (or boolean db-null)))
+#+END_SRC
+
+- :set-default
+
+Adds or changes a default value for a column
+#+BEGIN_SRC lisp
+(query (:alter-table 'countries :alter-column 'updated-at :set-default  (:now)))
+#+END_SRC
 
 - :drop-column
 
 Drops a column from the table.
+#+BEGIN_SRC lisp
+(query (:alter-table "test-uniq" :drop-column 'address))
+#+END_SRC
 
 - :add-constraint
 
 Adds a named constraint to the table.
+#+BEGIN_SRC lisp
+(query (:alter-table "test-uniq" :add-constraint silly-key :primary-key 'code 'title))
+
+(query (:alter-table enemy :add-constraint enemy-age-check :check (:> 'age 21)))
+#+END_SRC
 
 - :drop-constraint
 
 Drops constraint. First of args should name a constraint to be dropped; second,
 optional argument specifies behaviour regarding objects dependent on the
 constraint and it may equal :cascade or :restrict.
+#+BEGIN_SRC lisp
+(query (alter-table enemy :drop-constraint enemy-age-check))
+#+END_SRC
 
 - :add
 
@@ -2207,12 +2228,8 @@ Adds the ability to rename a table.
 - :rename-column
 
 Adds the ability to rename a column of a table.
-
-Here is an example using the table defined above:
-#+BEGIN_SRC lsip
-(query (alter-table enemy :drop-constraint enemy-age-check))
-
-(query (:alter-table enemy :add-constraint enemy-age-check :check (:> 'age 21)))
+#+BEGIN_SRC lisp
+(query (:alter-table "test-uniq" :rename-column 'address 'city))
 #+END_SRC
 
 ** sql-op :drop-table (name)

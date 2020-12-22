@@ -100,6 +100,7 @@
    #:sql-error
    #:from-sql-name
    #:to-sql-name
+   #:db-null
 
    ;; Condition type from cl-postgres
    #:database-error
