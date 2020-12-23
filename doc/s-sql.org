@@ -2005,8 +2005,31 @@ query to return the values of these expressions as a single row.
         :returning 'id))
 #+END_SRC
 In Postgresql versions 9.5 and above, it is possible to add
-:on-conflict-do-nothing (if the item already exists, do nothing),
-or :on-conflict-update (if the item already exists, update the values)
+:on-conflict-do-nothing (if the item already exists, do nothing). If you want to specify the unique column to be checked for conflict, use :on-conflict 'column-name :do-nothing. If you do not want to specify the unique column name, use :on-conflict-do-nothing.
+#+BEGIN_SRC lisp
+(query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
+                     :on-conflict 'column-A :do-nothing
+                     :where (:= 'test-table.column-A '$1)
+                     :returning '*)
+        "c" 37)
+
+(query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
+                     :on-conflict-do-nothing 'column-A
+                     :where (:= 'test-table.column-A '$1)
+                     :returning '*)
+        "c" 37)
+#+END_SRC
+If your insertion is setting a column that is an identity column with a value normally created by the system and you want to override that, you can use the :overriding-system-value keyword:
+#+BEGIN_SRC lisp
+(query (:insert-into 'table1  :set 'c1 "A" 'c2 "B" :overriding-system-value))
+
+(query (:insert-rows-into 'table1
+        :overriding-user-value
+        :values '(((:select 'c1 'c2 :from 'table2)))))
+#+END_SRC
+
+To create what is commonly known as an upsert, use :on-conflict-update
+(if the item already exists, update the values)
 followed by a list of field names which are checked for the conflict
 then using :update-set followed by a list of field names or expressions
 following the syntax for updating a table. This is sometimes called
@@ -2022,12 +2045,13 @@ prepend the table name to the column in the where statement if you are updating.
 #+END_SRC
 If the destination table has identity columns and you want to override those identity columns with specific values, you should specify :overriding-system-value.
 #+BEGIN_SRC lisp
-(query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
-                     :overriding-system-value
-                     :on-conflict-update 'column-A
-                     :update-set 'column-B '$2
-                     :where (:= 'test-table.column-A '$1)
-                     :returning '*)
+(query (:insert-into 'test-table
+        :set 'column-A '$1 'column-B '$2
+        :overriding-system-value
+        :on-conflict-update 'column-A
+        :update-set 'column-B '$2
+        :where (:= 'test-table.column-A '$1)
+        :returning '*)
         "c" 37)
 #+END_SRC
 If you are selecting from another table which has column names the same as your destination table and you want to keep the destination table's identity column values, then you can use :overriding-user-value. E.g.
@@ -2041,23 +2065,51 @@ If you are selecting from another table which has column names the same as your 
    :ID:       26d60b83-60f5-4bb4-8a03-cd897a455139
    :CUSTOM_ID: ce43d017-71a6-4205-80aa-372c0882d5a4
    :END:
-Insert-rows-into provides the ability to insert multiple rows into a table without using a select statement. (In fact it cannot use a select statement at the moment.) Specify the columns first with the keyword :columns then provide a list of lists of the values as a parameter to the keyword :values. Example:
+Insert-rows-into provides the ability to insert multiple rows into a table without using a select statement. (Insert-rows-into keeps the VALUES key word in the resulting sql. If you do use a select statement, Postgresql requires that it only return one row.)
+
+Specify the columns first with the keyword :columns then provide a list of lists of the values as a parameter to the keyword :values. Example:
 #+BEGIN_SRC lisp
-(query (:insert-rows-into 'my-table :columns 'field-1 'field-2
-                                    :values '((42 "foobar") (23 "foobaz"))))
+(query (:insert-rows-into 'my-table
+        :columns 'field-1 'field-2
+        :values '((42 "foobar") (23 "foobaz"))))
+#+END_SRC
+An example using a select statement returning one row:
+#+BEGIN_SRC lisp
+(squery (:insert-rows-into 't6
+         :columns 'tags
+         :values '(((:select 'id
+                     :from 't5)))))
 #+END_SRC
 If you will use the default columns, this can be simplified and the :columns
 parameters can be dropped. Example:
 #+BEGIN_SRC lisp
 (query (:insert-rows-into 'my-table
-                          :values '((42 "foobar") (23 "foobaz"))))
+        :values '((42 "foobar") (23 "foobaz"))))
 #+END_SRC
-Similarly to :insert-into, :insert-rows-into allows the "upsert" use of :on-conflict... however :insert-rows-into will require that you specify the row(s) with the potential conflict. The following example uses :on-conflict-do-nothing
+If your insertion is setting a column that is an identity column with a value normally created by the system and you want to override that, you can use the :overriding-system-value keyword:
+#+BEGIN_SRC lisp
+(query (:insert-rows-into 'table1
+                   :columns 'c1 'c2
+                   :overriding-system-value
+                   :values '((1 "a") (2 "b"))))
+
+(query (:insert-rows-into 'table1
+        :overriding-system-value
+        :values '(((:select 'c1 'c2 :from 'table2)))))
+#+END_SRC
+Similarly to :insert-into, :insert-rows-into allows the "upsert" use of :on-conflict. Again, if you want to specify the unique column to be checked for conflict, use :on-conflict 'column-name :do-nothing. If you do not want to specify the unique column name, use :on-conflict-do-nothing. The following example uses :on-conflict-do-nothing
 #+BEGIN_SRC lisp
 (query (:insert-rows-into 'distributors
         :columns 'did 'dname
         :values '((10 "Conrad International"))
-        :on-conflict-do-nothing 'did
+        :on-conflict-do-nothing
+        :where 'is-active))
+
+(query (:insert-rows-into 'distributors
+        :columns 'did 'dname
+        :values '((10 "Conrad International"))
+        :on-conflict 'did
+        :do-nothing
         :where 'is-active))
 #+END_SRC
 or :on-conflict-update
