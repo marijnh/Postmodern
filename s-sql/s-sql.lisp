@@ -39,24 +39,20 @@ errors."
                      (cond (found
                             (let ((after-me (nthcdr (1+ found) values)))
                               (unless (or after-me no-args)
-                                (sql-error "Keyword ~A encountered at end of
-arguments."
+                                (sql-error "Keyword ~A encountered at end of arguments."
                                            me))
                               (let ((next (next-word (cdr words) after-me)))
                                 (cond
                                   (no-args
                                    (unless (zerop next)
-                                     (sql-error "Keyword ~A does not take any
-arguments."
+                                     (sql-error "Keyword ~A does not take any arguments."
                                                 me)))
                                   (multi
                                    (unless (>= next 1)
-                                     (sql-error "Not enough arguments to
-keyword ~A."
+                                     (sql-error "Not enough arguments to keyword ~A."
                                                 me)))
                                   (t (unless (= next 1)
-                                       (sql-error "Keyword ~A takes exactly
-one argument."
+                                       (sql-error "Keyword ~A takes exactly one argument."
                                                   me))))
                                 (push (cons (caar words)
                                             (if no-args t
@@ -1483,8 +1479,7 @@ passed to insert-into sql operator"))
                          ((and (not (cdr method)) (consp (car method))
                                (keywordp (caar method)))
                               (sql-expand (car method)))
-                             (t (sql-error "No :set arguments or select operator
-passed to insert-into sql operator")))
+                             (t (sql-error "No :set arguments or select operator passed to insert-into sql operator")))
                      ,@(when on-conflict-do-nothing
                          `(" ON CONFLICT DO NOTHING"))
                      ,@(when on-conflict-update
@@ -1525,7 +1520,7 @@ passed to insert-into sql operator")))
                      "("
                      ,@(sql-expand-list row)
                      ")")))))
-
+#|
 (def-sql-op :insert-rows-into (table &rest rest)
   (split-on-keywords ((columns ? *) (values) (returning ? *)) rest
     `("INSERT INTO "
@@ -1535,6 +1530,71 @@ passed to insert-into sql operator")))
       ,(if *expand-runtime*
            (expand-rows (car values) (and columns (length columns)))
            `(expand-rows ,(car values) ,(and columns (length columns))))
+      ,@(when returning `(" RETURNING " ,@(sql-expand-list returning))))))
+|#
+(def-sql-op :insert-rows-into (table &rest rest)
+  (split-on-keywords ((columns ? *)
+                      (overriding-system-value ? -)
+                      (overriding-user-value ? -)
+                      (values)
+                      (on-conflict-do-nothing ? *)
+                      (on-conflict-on-constraint-do-nothing ? *)
+                      (on-conflict ? *)
+                      (on-conflict-on-constraint ? *)
+                      (on-conflict-update ? *)
+                      (do-nothing ? -)
+                      (update-set ? *)
+                      (from * ?) (where ?) (returning ? *))
+                     rest
+    `("INSERT INTO "
+      ,@(sql-expand table) " "
+      ,@(when columns `("(" ,@(sql-expand-list columns) ") "))
+      ,@(cond (overriding-system-value
+               '(" OVERRIDING SYSTEM VALUE "))
+              (overriding-user-value
+               '(" OVERRIDING USER VALUE ")))
+      "VALUES "
+      ,(if *expand-runtime*
+           (expand-rows (car values) (and columns (length columns)))
+           `(expand-rows ,(car values) ,(and columns (length columns))))
+      ,@(when on-conflict-do-nothing
+          `(" ON CONFLICT ("  ,@(sql-expand-list on-conflict-do-nothing)  ") "
+            ,@(if where (cons " WHERE " (sql-expand (car where))))
+            " DO NOTHING"))
+      ,@(when on-conflict-on-constraint-do-nothing
+          `(" ON CONFLICT ON CONSTRAINT "
+            ,@(sql-expand-list on-conflict-on-constraint-do-nothing)
+            " DO NOTHING"))
+      ,@(when on-conflict
+          `(" ON CONFLICT "
+            ,@(sql-expand-list on-conflict)))
+      ,@(when on-conflict-on-constraint
+          `(" ON CONFLICT ON CONSTRAINT "
+            ,@(sql-expand-list on-conflict-on-constraint)))
+      ,@(when do-nothing
+          '(" DO NOTHING "))
+      ,@(when on-conflict-update
+          `(" ON CONFLICT ("
+            ,@(sql-expand-list on-conflict-update)
+            ") DO UPDATE SET "
+            ,@(loop :for (field value) :on update-set :by #'cddr
+                    :for first = t :then nil
+                    :append `(,@(if first () '(", "))
+                              ,@(sql-expand field) " = "
+                              ,@(sql-expand value)))
+            ,@(if from (cons " FROM " (expand-joins from)))
+            ,@(if where (cons " WHERE " (sql-expand (car where)))
+                  ())))
+      ,@(when (and update-set (not on-conflict-update))
+          `(" DO UPDATE SET "
+            ,@(loop :for (field value) :on update-set :by #'cddr
+                    :for first = t :then nil
+                    :append `(,@(if first () '(", "))
+                              ,@(sql-expand field) " = "
+                              ,@(sql-expand value)))
+            ,@(if from (cons " FROM " (expand-joins from)))
+            ,@(if where (cons " WHERE " (sql-expand (car where)))
+                ())))
       ,@(when returning `(" RETURNING " ,@(sql-expand-list returning))))))
 
 (def-sql-op :update (table &rest args)

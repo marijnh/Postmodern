@@ -485,6 +485,10 @@ to strings \(which will form an SQL query when concatenated)."
   (is (equal (sql (:select '* :from (:as (:values (:set 1 "one") (:set 2 "two") (:set 3 "three")) (:t1 'num 'letter))))
              "(SELECT * FROM (VALUES (1, E'one'), (2, E'two'), (3, E'three')) AS t1(num, letter))")))
 
+(test select-limit-offset
+      (is (equal (sql (:limit (:select 'country :from 'un-m49) 5 10))
+                 "((SELECT country FROM un_m49) LIMIT 5 OFFSET 10)")))
+
 (test select-distinct
       "Testing select with distinct. From https://www.pgexercises.com/questions/basic/unique.html"
       (is (equal (sql (:limit (:order-by (:select 'surname :distinct :from 'cd.members) 'surname) 10))
@@ -839,7 +843,8 @@ To sum the column len of all films and group the results by kind:"
                                              (:select :null :null (:as (:sum 'slots) 'slots)
                                                       :from 'cd.bookings
                                                       :where (:and (:>= 'starttime "2012-01-01")
-                                                                   (:< 'starttime "2013-01-01")))) 'facid 'month))
+                                                                   (:< 'starttime "2013-01-01"))))
+                                 'facid 'month))
                  "(((SELECT facid, EXTRACT(month FROM starttime) AS month, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid, month) union all (SELECT facid, NULL, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid) union all (SELECT NULL, NULL, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')))) ORDER BY facid, month)")))
 
 (test max-aggregation
@@ -1300,51 +1305,166 @@ To sum the column len of all films and group the results by kind:"
 
 (test insert-into
       "Testing insert into"
-      (is (equal (sql (:insert-into 'cd.facilities :set 'facid 9 'name "Spa" 'membercost 20 'guestcost 30
-                                    'initialoutlay 100000 'monthlymaintenance 800))
+      (is (equal (sql (:insert-into 'cd.facilities
+                       :set 'facid 9 'name "Spa" 'membercost 20 'guestcost 30
+                       'initialoutlay 100000 'monthlymaintenance 800))
                  "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance)  VALUES (9, E'Spa', 20, 30, 100000, 800)"))
 
 ;; Testing with a calculation in the value
-      (is (equal (sql (:insert-into 'test :set 'id 15 'number-string "12" 'numeric-item 12.45
-                                'ratio-item (/ 1 13) 'created-at "2018-02-01"))
+      (is (equal (sql (:insert-into 'test
+                       :set 'id 15 'number-string "12" 'numeric-item 12.45
+                       'ratio-item (/ 1 13) 'created-at "2018-02-01"))
                  "INSERT INTO test (id, number_string, numeric_item, ratio_item, created_at)  VALUES (15, E'12', 12.45, 0.0769230769230769230769230769230769230, E'2018-02-01')"))
 
 ;; Testing overriding-user-value
-      (is (equal (sql (:insert-into 'employee :set 'id 1 'name "Paul"  :overriding-user-value :on-conflict-do-nothing))
+      (is (equal (sql (:insert-into 'employee
+                       :set 'id 1 'name "Paul"
+                       :overriding-user-value
+                       :on-conflict-do-nothing))
                  "INSERT INTO employee (id, name)  OVERRIDING USER VALUE  VALUES (1, E'Paul') ON CONFLICT DO NOTHING"))
 ;; Testing overriding system-value
-      (is (equal (sql (:insert-into 'employee :set 'id 1 'name "Paul"  :overriding-system-value :on-conflict-do-nothing))
+      (is (equal (sql (:insert-into 'employee
+                       :set 'id 1 'name "Paul"
+                       :overriding-system-value
+                       :on-conflict-do-nothing))
                  "INSERT INTO employee (id, name)  OVERRIDING SYSTEM VALUE  VALUES (1, E'Paul') ON CONFLICT DO NOTHING"))
       ;;    Testing On Conflict
-      (is (equal (sql (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
-                     :on-conflict-update 'column-A
-                     :update-set 'column-B '$2
-                     :where (:= 'test-table.column-A '$1)))
+      (is (equal (sql (:insert-into 'test-table
+                       :set 'column-A '$1 'column-B '$2
+                       :on-conflict-update 'column-A
+                       :update-set 'column-B '$2
+                       :where (:= 'test-table.column-A '$1)))
                  "INSERT INTO test_table (column_a, column_b)  VALUES ($1, $2) ON CONFLICT (column_a) DO UPDATE SET column_b = $2 WHERE (test_table.column_a = $1)"))
 
 ;; Testing select in insert statement
 ;; From https://www.pgexercises.com/questions/updates/insert3.html
       (is (equal (sql (:insert-into 'cd.facilities
-                                    :set 'facid (:select (:+ (:select (:max 'facid) :from 'cd.facilities) 1))
-                                         'name "Spa" 'membercost 20 'guestcost 30 'initialoutlay 100000 'monthlymaintenance 800))
-                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance)  VALUES ((SELECT ((SELECT MAX(facid) FROM cd.facilities) + 1)), E'Spa', 20, 30, 100000, 800)"))
+                       :set 'facid
+                       (:select (:+ (:select (:max 'facid)
+                                     :from 'cd.facilities)
+                                    1))
+                       'name "Spa" 'membercost 20 'guestcost 30
+                       'initialoutlay 100000 'monthlymaintenance 800))
+                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance)  VALUES ((SELECT ((SELECT MAX(facid) FROM cd.facilities) + 1)), E'Spa', 20, 30, 100000, 800)")))
 
+(test insert-rows-into
 ;; Testing basic inserting-rows-into
-      (is (equal (sql (:insert-rows-into 'my-table :values '((42 "foobar") (23 "foobaz"))))
-                 "INSERT INTO my_table VALUES (42, E'foobar'), (23, E'foobaz')"))
+  (is (equal (sql (:insert-rows-into 'my-table :values '((42 "foobar") (23 "foobaz"))))
+             "INSERT INTO my_table VALUES (42, E'foobar'), (23, E'foobaz')"))
+
 ;; Testing columns
 ;; From https://www.pgexercises.com/questions/updates/insert2.html
-      (is (equal (sql (:insert-rows-into 'cd.facilities
-                                         :columns 'facid 'name 'membercost 'guestcost 'initialoutlay 'monthlymaintenance
-                                         :values '((9 "Spa" 20 30 100000 800) (10 "Squash Court 2" 3.5 17.5 5000 80))))
+  (is (equal (sql (:insert-rows-into 'cd.facilities
+                   :columns 'facid 'name 'membercost 'guestcost 'initialoutlay 'monthlymaintenance
+                   :values '((9 "Spa" 20 30 100000 800) (10 "Squash Court 2" 3.5 17.5 5000 80))))
                  "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES (9, E'Spa', 20, 30, 100000, 800), (10, E'Squash Court 2', 3.5, 17.5, 5000, 80)"))
+
+  (is (equal (sql (:insert-rows-into 'distributors
+                   :columns 'did 'dname
+                   :values '((10 "Conrad International"))
+                   :on-conflict-do-nothing 'did
+                   :where 'is-active))
+             "INSERT INTO distributors (did, dname) VALUES (10, E'Conrad International') ON CONFLICT (did)  WHERE is_active DO NOTHING"))
 
 ;; Testing select in values in insert-rows-into
 ;; Now using rows https://www.pgexercises.com/questions/updates/insert3.html
-      (is (equal (sql (:insert-rows-into 'cd.facilities
-                         :columns 'facid  'name  'membercost  'guestcost 'initialoutlay 'monthlymaintenance
-                         :values '(((:select (:+ (:select (:max 'facid) :from 'cd.facilities) 1)) "Spa" 20 30 100000 800 ))))
-                 "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES ((SELECT ((SELECT MAX(facid) FROM cd.facilities) + 1)), E'Spa', 20, 30, 100000, 800)")))
+  (is (equal (sql (:insert-rows-into 'cd.facilities
+                   :columns 'facid  'name  'membercost  'guestcost 'initialoutlay 'monthlymaintenance
+                   :values '(((:select (:+ (:select (:max 'facid) :from 'cd.facilities) 1)) "Spa" 20 30 100000 800 ))))
+             "INSERT INTO cd.facilities (facid, name, membercost, guestcost, initialoutlay, monthlymaintenance) VALUES ((SELECT ((SELECT MAX(facid) FROM cd.facilities) + 1)), E'Spa', 20, 30, 100000, 800)"))
+  (is (equal (sql (:insert-rows-into 'distributors
+                   :columns 'did 'dname
+                   :values '((5 "Gizmo Transglobal") (6 "Associated Computing Inc."))
+                   :on-conflict-update 'did
+                   :update-set 'dname 'excluded.dname))
+             "INSERT INTO distributors (did, dname) VALUES (5, E'Gizmo Transglobal'), (6, E'Associated Computing Inc.') ON CONFLICT (did) DO UPDATE SET dname = excluded.dname"))
+  (is (equal (sql (:insert-rows-into 'distributors
+                   :columns 'did 'dname
+                   :values '((7 "Readline GmbH"))
+                   :on-conflict-do-nothing 'did))
+             "INSERT INTO distributors (did, dname) VALUES (7, E'Readline GmbH') ON CONFLICT (did)  DO NOTHING"))
+  (is (equal (sql (:insert-rows-into 'distributors :columns 'did 'dname
+                   :values '((8 "Readline GmbH"))
+                   :on-conflict-do-nothing 'did 'dname
+                   :returning 'id))
+             "INSERT INTO distributors (did, dname) VALUES (8, E'Readline GmbH') ON CONFLICT (did, dname)  DO NOTHING RETURNING id"))
+  (is (equal (sql (:insert-rows-into 'distributors :columns 'did 'dname
+                   :values '((9 "Readline GmbH"))
+                   :on-conflict-on-constraint-do-nothing 'distributors-pkey
+                   :returning 'id))
+             "INSERT INTO distributors (did, dname) VALUES (9, E'Readline GmbH') ON CONFLICT ON CONSTRAINT distributors_pkey DO NOTHING RETURNING id"))
+    (is (equal (sql (:insert-rows-into 'distributors :columns 'did 'dname
+                   :values '((10 "Readline GmbH"))
+                   :on-conflict-on-constraint 'distributors-pkey
+                   :do-nothing
+                   :returning 'id))
+               "INSERT INTO distributors (did, dname) VALUES (10, E'Readline GmbH') ON CONFLICT ON CONSTRAINT distributors_pkey DO NOTHING  RETURNING id"))
+  (is (equal (sql (:insert-rows-into 'users
+                   :values '(((:uuid-generate-v4) "Lucie" "Hawkins" "Lucie-Jones@gmail.com"))
+                   :on-conflict-update 'email
+                   :update-set 'first-name 'excluded.first-name 'last-name 'excluded.last-name
+                   :where (:<> 'u.first-name "Lucie")))
+             "INSERT INTO users VALUES (uuid_generate_v4(), E'Lucie', E'Hawkins', E'Lucie-Jones@gmail.com') ON CONFLICT (email) DO UPDATE SET first_name = excluded.first_name, last_name = excluded.last_name WHERE (u.first_name <> E'Lucie')"))
+  (is (equal (sql (:insert-rows-into (:as 'users 'u)
+                   :values '(((:uuid-generate-v4) "Lucie" "Jones" "Lucie-Jones@gmail.com"))
+                   :on-conflict-update 'email
+                   :update-set 'first-name 'excluded.first-name 'last-name 'excluded.last-name
+                   :where (:<> 'u.first-name "Lucie")))
+             "INSERT INTO users AS u VALUES (uuid_generate_v4(), E'Lucie', E'Jones', E'Lucie-Jones@gmail.com') ON CONFLICT (email) DO UPDATE SET first_name = excluded.first_name, last_name = excluded.last_name WHERE (u.first_name <> E'Lucie')"))
+  (is (equal (sql (:insert-rows-into 'users
+                   :values '(((:uuid-generate-v4) "Lucie" "Hawkins" "Lucie-Jones@gmail.com"))
+                   :on-conflict-update 'email
+                   :update-set 'first-name 'excluded.first-name 'last-name 'excluded.last-name))
+             "INSERT INTO users VALUES (uuid_generate_v4(), E'Lucie', E'Hawkins', E'Lucie-Jones@gmail.com') ON CONFLICT (email) DO UPDATE SET first_name = excluded.first_name, last_name = excluded.last_name"))
+  (is (equal (sql (:insert-rows-into (:as 'distributors 'd)
+                   :columns 'did 'dname
+                   :values '((8 "Anvil Distribution"))
+                   :on-conflict-update 'did
+                   :update-set 'dname (:|| 'excluded.dname  " (formerly " 'd.dname ")")
+                   :where (:<> 'd.zipcode "21201")))
+             "INSERT INTO distributors AS d (did, dname) VALUES (8, E'Anvil Distribution') ON CONFLICT (did) DO UPDATE SET dname = (excluded.dname || E' (formerly ' || d.dname || E')') WHERE (d.zipcode <> E'21201')"))
+  (is (equal (sql (:insert-rows-into 'test :columns 'some-key 'some-val
+                                     :values '(("a" 5) ("b" 6) ("c" 7))
+                                     :on-conflict 'some-key
+                                     :do-nothing))
+             "INSERT INTO test (some_key, some_val) VALUES (E'a', 5), (E'b', 6), (E'c', 7) ON CONFLICT some_key DO NOTHING "))
+  (is (equal (sql (:insert-rows-into 'test :columns 'some-key 'some-val
+                                     :values '(("a" 4) ("b" 6) ("c" 7))
+                                     :on-conflict 'some-key
+                                     :do-nothing
+                   :returning '*))
+             "INSERT INTO test (some_key, some_val) VALUES (E'a', 4), (E'b', 6), (E'c', 7) ON CONFLICT some_key DO NOTHING  RETURNING *"))
+  (is (equal (sql (:insert-rows-into 'test :columns 'some-key 'some-val
+                                     :values '(("a" 3) ("b" 6) ("c" 7))
+                                     :on-conflict-on-constraint 'somekey
+                                     :do-nothing
+                   :returning '*))
+             "INSERT INTO test (some_key, some_val) VALUES (E'a', 3), (E'b', 6), (E'c', 7) ON CONFLICT ON CONSTRAINT somekey DO NOTHING  RETURNING *"))
+  (is (equal (sql (:insert-rows-into 'test :columns 'some-key 'some-val
+                                     :values '(("a" 2) ("b" 6) ("c" 7))
+                                     :on-conflict-on-constraint 'somekey
+                                     :update-set 'some-val 'excluded.some-val
+                   :returning '*))
+             "INSERT INTO test (some_key, some_val) VALUES (E'a', 2), (E'b', 6), (E'c', 7) ON CONFLICT ON CONSTRAINT somekey DO UPDATE SET some_val = excluded.some_val RETURNING *"))
+  (is (equal (sql (:insert-rows-into 'test :columns 'some-key 'some-val
+                                     :values '(("a" 5))
+                                     :on-conflict-on-constraint 'somekey
+                                     :update-set 'some-val 'excluded.some-val))
+             "INSERT INTO test (some_key, some_val) VALUES (E'a', 5) ON CONFLICT ON CONSTRAINT somekey DO UPDATE SET some_val = excluded.some_val"))
+  (is (equal (sql (:insert-rows-into 'test :columns 'some-key
+                   :values '(("a"))
+                   :on-conflict-on-constraint 'somekey
+                   :update-set 'some-val (:+ 'test.some-val 1)))
+             "INSERT INTO test (some_key) VALUES (E'a') ON CONFLICT ON CONSTRAINT somekey DO UPDATE SET some_val = (test.some_val + 1)"))
+  (is (equal (sql (:insert-rows-into 'attendence :columns 'event-id 'client-id 'attend-status
+                   :values '(((:select 'id
+                               :from 'event
+                               :where (:= (:lower 'event-dt) "2020-01-11 17:00:00"))
+                              3
+                              "No Show"))
+                          :on-conflict-on-constraint 'attendance-pkey
+                   :update-set 'attend-status 'excluded.attend_status))
+             "INSERT INTO attendence (event_id, client_id, attend_status) VALUES ((SELECT id FROM event WHERE (lower(event_dt) = E'2020-01-11 17:00:00')), 3, E'No Show') ON CONFLICT ON CONSTRAINT attendance_pkey DO UPDATE SET attend_status = excluded.attend_status")))
 
 (test update
       "Testing updates"
@@ -1768,3 +1888,23 @@ that the table will need to be scanned twice. Everything is a trade-off."
         (create-and-check)
         (query (:drop-table "table-1"))
         (is-false (table-exists-p "table_1"))))))
+
+(test over
+      (is (equal (sql (:over (:sum 'salary)))
+                 "(SUM(salary) OVER ()) "))
+      (is (equal (sql (:over (:sum 'salary) 'w))
+                 "(SUM(salary) OVER w)"))
+      (is (equal (sql (:over (:count '*)
+                  (:partition-by (:date-trunc "month" 'joindate))))
+                 "(COUNT(*) OVER (PARTITION BY date_trunc(E'month', joindate)))"))
+      (is (equal (sql (:over (:rank) (:order-by (:desc 'total))))
+                 "(rank() OVER ( ORDER BY total DESC))"))
+      (is (equal (sql (:over (:percentile-cont :fraction 0.25 :order-by (:asc 'duration))
+                             (:partition-by 'day)))
+                 "(PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day))")))
+
+(test between
+      (is (equal (sql (:between 'latitude -10 10))
+                 "(latitude BETWEEN -10 AND 10)"))
+      (is (equal (sql (:between (:- 'population.year 'ma-population.year)  0 2))
+                 "((population.year - ma_population.year) BETWEEN 0 AND 2)")))
