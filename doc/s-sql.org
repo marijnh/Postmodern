@@ -1978,21 +1978,58 @@ tables.
    :CUSTOM_ID: 62cd3ff0-f034-46fc-a28e-c9875b577c40
    :END:
 
-Insert a row into a table. When the second argument is :set, the other
-arguments should be alternating field names and values, otherwise it
-should be a :select form that will produce the values to be inserted.
-Example:
+Use insert-into when you are either inserting from a select clause and you do not need to specify specific columns:
+#+BEGIN_SRC lisp
+(query (:insert-into 'table1
+         (:select 'c1 'c2 :from 'table2)))
+#+END_SRC
+or you are alternating specific columns and values for a single row:
 #+BEGIN_SRC lisp
 (query (:insert-into 'my-table :set 'field-1 42 'field-2 "foobar"))
 #+END_SRC
-
+You can use parameterized variables in the insert statement.
+#+BEGIN_SRC lisp
+(let ((name "test-cat4"))
+  (query (:insert-into 'categories :set 'name '$1) name))
+#+END_SRC
 It is possible to add :returning, followed by a list of field names or
 expressions, at the end of the :insert-into form. This will cause the
 query to return the values of these expressions as a single row.
+#+BEGIN_SRC lisp
+(query (:insert-into 'my-table
+        :set 'field-1 42 'field-2 "foobar"
+        :returning '*))
 
-In postgresql versions 9.5 and above, it is possible to add
-:on-conflict-do-nothing (if the item already exists, do nothing),
-or :on-conflict-update (if the item already exists, update the values)
+(query (:insert-into 'my-table
+        :set 'field-1 42 'field-2 "foobar"
+        :returning 'id))
+#+END_SRC
+In Postgresql versions 9.5 and above, it is possible to add
+:on-conflict-do-nothing (if the item already exists, do nothing). If you want to specify the unique column to be checked for conflict, use :on-conflict 'column-name :do-nothing. If you do not want to specify the unique column name, use :on-conflict-do-nothing.
+#+BEGIN_SRC lisp
+(query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
+                     :on-conflict 'column-A :do-nothing
+                     :where (:= 'test-table.column-A '$1)
+                     :returning '*)
+        "c" 37)
+
+(query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
+                     :on-conflict-do-nothing 'column-A
+                     :where (:= 'test-table.column-A '$1)
+                     :returning '*)
+        "c" 37)
+#+END_SRC
+If your insertion is setting a column that is an identity column with a value normally created by the system and you want to override that, you can use the :overriding-system-value keyword:
+#+BEGIN_SRC lisp
+(query (:insert-into 'table1  :set 'c1 "A" 'c2 "B" :overriding-system-value))
+
+(query (:insert-rows-into 'table1
+        :overriding-user-value
+        :values '(((:select 'c1 'c2 :from 'table2)))))
+#+END_SRC
+
+To create what is commonly known as an upsert, use :on-conflict-update
+(if the item already exists, update the values)
 followed by a list of field names which are checked for the conflict
 then using :update-set followed by a list of field names or expressions
 following the syntax for updating a table. This is sometimes called
@@ -2002,30 +2039,101 @@ prepend the table name to the column in the where statement if you are updating.
 (query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
                      :on-conflict-update 'column-A
                      :update-set 'column-B '$2
-                     :where (:= 'test-table.column-A '$1)) "c" 37)
+                     :where (:= 'test-table.column-A '$1)
+                     :returning '*)
+        "c" 37)
 #+END_SRC
-
+If the destination table has identity columns and you want to override those identity columns with specific values, you should specify :overriding-system-value.
+#+BEGIN_SRC lisp
+(query (:insert-into 'test-table
+        :set 'column-A '$1 'column-B '$2
+        :overriding-system-value
+        :on-conflict-update 'column-A
+        :update-set 'column-B '$2
+        :where (:= 'test-table.column-A '$1)
+        :returning '*)
+        "c" 37)
+#+END_SRC
+If you are selecting from another table which has column names the same as your destination table and you want to keep the destination table's identity column values, then you can use :overriding-user-value. E.g.
+#+BEGIN_SRC lisp
+(query (:insert-into 'table1
+         :overriding-user-value
+         (:select 'c1 'c2 :from 'table2)))
+#+END_SRC
 ** sql-op :insert-rows-into (table &rest rest)
    :PROPERTIES:
    :ID:       26d60b83-60f5-4bb4-8a03-cd897a455139
    :CUSTOM_ID: ce43d017-71a6-4205-80aa-372c0882d5a4
    :END:
+Insert-rows-into provides the ability to insert multiple rows into a table without using a select statement. (Insert-rows-into keeps the VALUES key word in the resulting sql. If you do use a select statement, Postgresql requires that it only return one row.)
 
-Insert multiple rows into a table. Specify the columns first with the
-keyword :columns then provide a list of lists of the values as a
-parameter to the keyword :values. Example:
+Specify the columns first with the keyword :columns then provide a list of lists of the values as a parameter to the keyword :values. Example:
 #+BEGIN_SRC lisp
-(query (:insert-rows-into 'my-table :columns 'field-1 'field-2
-                                    :values '((42 "foobar") (23 "foobaz"))))
+(query (:insert-rows-into 'my-table
+        :columns 'field-1 'field-2
+        :values '((42 "foobar") (23 "foobaz"))))
 #+END_SRC
-
+An example using a select statement returning one row:
+#+BEGIN_SRC lisp
+(squery (:insert-rows-into 't6
+         :columns 'tags
+         :values '(((:select 'id
+                     :from 't5)))))
+#+END_SRC
 If you will use the default columns, this can be simplified and the :columns
 parameters can be dropped. Example:
 #+BEGIN_SRC lisp
 (query (:insert-rows-into 'my-table
-                          :values '((42 "foobar") (23 "foobaz"))))
+        :values '((42 "foobar") (23 "foobaz"))))
 #+END_SRC
+If your insertion is setting a column that is an identity column with a value normally created by the system and you want to override that, you can use the :overriding-system-value keyword:
+#+BEGIN_SRC lisp
+(query (:insert-rows-into 'table1
+                   :columns 'c1 'c2
+                   :overriding-system-value
+                   :values '((1 "a") (2 "b"))))
 
+(query (:insert-rows-into 'table1
+        :overriding-system-value
+        :values '(((:select 'c1 'c2 :from 'table2)))))
+#+END_SRC
+Similarly to :insert-into, :insert-rows-into allows the "upsert" use of :on-conflict. Again, if you want to specify the unique column to be checked for conflict, use :on-conflict 'column-name :do-nothing. If you do not want to specify the unique column name, use :on-conflict-do-nothing. The following example uses :on-conflict-do-nothing
+#+BEGIN_SRC lisp
+(query (:insert-rows-into 'distributors
+        :columns 'did 'dname
+        :values '((10 "Conrad International"))
+        :on-conflict-do-nothing
+        :where 'is-active))
+
+(query (:insert-rows-into 'distributors
+        :columns 'did 'dname
+        :values '((10 "Conrad International"))
+        :on-conflict 'did
+        :do-nothing
+        :where 'is-active))
+#+END_SRC
+or :on-conflict-update
+#+BEGIN_SRC lisp
+(query (:insert-rows-into 'distributors
+        :columns 'did 'dname
+        :values '((5 "Gizmo Transglobal") (6 "Associated Computing Inc."))
+        :on-conflict-update 'did
+        :update-set 'dname 'excluded.dname))
+#+END_SRC
+You can use :on-conflict-on-constraint to check for conflicts on constraints.
+#+BEGIN_SRC lisp
+(query (:insert-rows-into 'test :columns 'some-key 'some-val
+                                :values '(("a" 3) ("b" 6) ("c" 7))
+                                :on-conflict-on-constraint 'somekey
+                                :do-nothing
+                   :returning '*))
+
+(query (:insert-rows-into 'test :columns 'some-key 'some-val
+                                :values '(("a" 2) ("b" 6) ("c" 7))
+                                :on-conflict-on-constraint 'somekey
+                                :update-set 'some-val 'excluded.some-val
+                   :returning '*))
+#+END_SRC
 ** sql-op :update (table &rest rest)
    :PROPERTIES:
    :ID:       bbf790c1-9baa-4cf0-900c-16a5a2bc2081
