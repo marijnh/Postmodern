@@ -75,55 +75,6 @@ the loss of precision and offering to continue or reset
 can not be expressed within 38 decimal digits (for example 1/3), it will be truncated, and lose some precision. Set this variable to nil to suppress
 that behaviour and raise an error instead.")
 
-(defun write-rational-as-floating-point (number stream digit-length-limit)
-  "DEPRECATED. The same as write-ratio-as-floating point. Note the difference between rational and ratio.
-Kept for backwards compatibility.
-Given a ratio, a stream and a digital-length-limit, if *silently-truncate-rationals* is true,
-will return a potentially truncated ratio. If false and the digital-length-limit is reached,
-it will throw an error noting the loss of precision and offering to continue or reset
-*silently-truncate-rationals* to true. Code contributed by Attila Lendvai."
-  (declare #.*optimize* (type fixnum digit-length-limit))
-  (check-type number ratio)
-  (let ((silently-truncate? *silently-truncate-rationals*))
-    (flet ((fail ()
-                 (unless silently-truncate?
-                   (restart-case
-                    (error 'database-error :message
-                           (format nil "Can not write the rational ~A as a floating point number with only ~A available digits. You may want to (setf ~S t) if you don't mind the loss of precision."
-                                   number digit-length-limit '*silently-truncate-rationals*))
-                    (continue ()
-                              :report (lambda (stream)
-                                        (write-string "Ignore this precision loss and continue" stream))
-                              (setf silently-truncate? t))
-                    (disable-assertion ()
-                                       :report (lambda (stream)
-                                                 (write-string "Set ~S to true (the precision loss of ratios will be silently ignored in this Lisp VM)." stream))
-                                       (setf silently-truncate? t)
-                                       (setf *silently-truncate-rationals* t))))))
-      (multiple-value-bind (quotient remainder)
-          (truncate (if (< number 0)
-                        (progn
-                          (write-char #\- stream)
-                          (- number))
-                      number))
-        (let* ((quotient-part (princ-to-string quotient))
-               (remaining-digit-length (- digit-length-limit (length quotient-part))))
-          (write-string quotient-part stream)
-          (when (<= remaining-digit-length 0)
-            (fail))
-          (unless (zerop remainder)
-            (write-char #\. stream))
-          (loop
-           :for decimal-digits :upfrom 1
-           :until (zerop remainder)
-           :do (progn
-                 (when (> decimal-digits remaining-digit-length)
-                   (fail)
-                   (return))
-                 (multiple-value-bind (quotient rem) (floor (* remainder 10))
-                   (princ quotient stream)
-                   (setf remainder rem)))))))))
-
 (defun write-quoted (string out)
   (write-char #\" out)
   (loop :for ch :across string :do
@@ -194,7 +145,7 @@ used by S-SQL.)")
       ;; handle more. For practical reasons we also draw the line there. If
       ;; someone needs full rational numbers then
       ;; 200 wouldn't help them much more than 38...
-      (write-rational-as-floating-point arg result 38)))
+      (write-ratio-as-floating-point arg result 38)))
   (:method ((arg (eql t)))
     "true")
   (:method ((arg (eql nil)))

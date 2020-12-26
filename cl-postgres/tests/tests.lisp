@@ -721,15 +721,6 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
               (is (equalp (exec-query connection "select array_agg(row(1,2,3));" 'list-row-reader)
                           '((#((1 2 3)))))))))
 
-(test write-rational-as-floating-point
-      (let ((old-silently-truncate *silently-truncate-rationals*))
-        (setf cl-postgres:*silently-truncate-rationals* nil)
-        (signals error (cl-postgres::write-rational-as-floating-point (/ 1321 7) *standard-output* 5))
-        (setf cl-postgres:*silently-truncate-rationals* t)
-        (is (equal  (with-output-to-string (s) (cl-postgres::write-rational-as-floating-point (/ 1321 7) s 5))
-                    "188.71"))
-        (setf cl-postgres:*silently-truncate-rationals* old-silently-truncate)))
-
 (test write-ratio-as-floating-point
       (let ((old-silently-truncate *silently-truncate-ratios*))
         (setf cl-postgres:*silently-truncate-ratios* nil)
