@@ -154,15 +154,22 @@ associated with the keywords from an argument list, and checks for errors."
              '((OWNER "Sabra"))))
   (is (equal (s-sql::split-on-keywords% '((interval ? *)) '(:interval 5 hours))
              '((INTERVAL 5 HOURS))))
-  (is (equal (s-sql::split-on-keywords% '((a1 * ?) (b2 ?) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2 " :c3 "Ceta3 "))
+  (is (equal (s-sql::split-on-keywords% '((a1 * ?) (b2 ?) (c3 ? *))
+                                        '(:a1 "Alpha1 " :b2 "Beta2 " :c3 "Ceta3 "))
              '((A1 "Alpha1 ") (B2 "Beta2 ") (C3 "Ceta3 "))))
-  (is (equal (s-sql::split-on-keywords% '((a1 * ?) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 "))
+  (is (equal (s-sql::split-on-keywords% '((a1 * ?) (c3 ? *))
+                                        '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 "))
              '((A1 "Alpha1 " :B2 "Beta2") (C3 "Ceta3 "))))
-  (signals sql-error (s-sql::split-on-keywords% '((a1 * ?) (b2 ?) (c3 ? *)) '(:a1 "Alpha1 "  :c3 "Ceta3 ")))
-  (signals sql-error (s-sql::split-on-keywords% '((a1 * ?) (b2 -) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 ")))
-  (signals sql-error (s-sql::split-on-keywords% '((a1 * ?) (b2 ) (c3 ? *)) '(:a1 "Alpha1 "  :c3 "Ceta3 ")))
-  (signals sql-error (s-sql::split-on-keywords% '((owner ?)) '(:owner "Sabra" :tourist "Geoffrey")))
-  (signals sql-error (s-sql::split-on-keywords% '((a1 * ?) (c3 ? )) '(:a1 "Alpha1 " :c3 "Ceta3 " "Ceta3.5")))
+  (signals sql-error (s-sql::split-on-keywords% '((a1 * ?) (b2 ?) (c3 ? *))
+                                                '(:a1 "Alpha1 "  :c3 "Ceta3 ")))
+  (signals sql-error (s-sql::split-on-keywords% '((a1 * ?) (b2 -) (c3 ? *))
+                                                '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 ")))
+  (signals sql-error (s-sql::split-on-keywords% '((a1 * ?) (b2 ) (c3 ? *))
+                                                '(:a1 "Alpha1 "  :c3 "Ceta3 ")))
+  (signals sql-error (s-sql::split-on-keywords% '((owner ?))
+                                                '(:owner "Sabra" :tourist "Geoffrey")))
+  (signals sql-error (s-sql::split-on-keywords% '((a1 * ?) (c3 ? ))
+                                                '(:a1 "Alpha1 " :c3 "Ceta3 " "Ceta3.5")))
   (is (equal (s-sql::split-on-keywords% '((fraction *)) `(:fraction 0.5))
              '((FRACTION 0.5)))))
 
@@ -173,27 +180,33 @@ non-keyword symbols in words, and bound to these symbols. After the
 naming symbols, a ? can be used to indicate this argument group is
 optional, an * to indicate it can consist of more than one element,
 and a - to indicate it does not take any elements."
-  (is (equal (s-sql::split-on-keywords ((a1 * ?) (b2 ?) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2 " :c3 "Ceta3 ")
-         `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2)))
+  (is (equal (s-sql::split-on-keywords ((a1 * ?) (b2 ?) (c3 ? *))
+                 '(:a1 "Alpha1 " :b2 "Beta2 " :c3 "Ceta3 ")
+               `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2)))
              '("Results " "Alpha1 " "Ceta3 " "Beta2 ")))
-  (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 ?) (c3 ? *)) '(:a1 "Alpha1 "  :c3 "Ceta3 ")
+  (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 ?) (c3 ? *))
+                         '(:a1 "Alpha1 "  :c3 "Ceta3 ")
                        `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2)))
            '("Results " "Alpha1 " "Ceta3 "))
-  (is (equal (s-sql::split-on-keywords ((a1 * ?) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 ")
-         `("Results " ,@(when a1 a1) ,@(when c3 c3)))
+  (is (equal (s-sql::split-on-keywords ((a1 * ?) (c3 ? *))
+                 '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 ")
+               `("Results " ,@(when a1 a1) ,@(when c3 c3)))
              '("Results " "Alpha1 " :B2 "Beta2" "Ceta3 ")))
   ;; Keyword does not take any arguments
-  (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 -) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 ")
+  (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 -) (c3 ? *))
+                         '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 ")
                        `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2))))
   ;; Required keyword missing
-  (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 ) (c3 ? *)) '(:a1 "Alpha1 "  :c3 "Ceta3 ")
+  (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 ) (c3 ? *))
+                         '(:a1 "Alpha1 "  :c3 "Ceta3 ")
                        `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2))))
   (is  (equal (s-sql::split-on-keywords ((a1 * ?) (c3 ? *)) '(:a1 "Alpha1 " :b2 "Beta2"  :c3 "Ceta3 ")
                 `("Results " ,@(when a1 a1) ,@ (when c3 c3)))
               '("Results " "Alpha1 " :B2 "Beta2" "Ceta3 ")))
   ;;too many elements for a keyword
-  (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (c3 ? )) '(:a1 "Alpha1 " :c3 "Ceta3 " "Ceta3.5")
-         `("Results " ,@(when a1 a1) ,@(when c3 c3)))))
+  (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (c3 ? ))
+                         '(:a1 "Alpha1 " :c3 "Ceta3 " "Ceta3.5")
+                       `("Results " ,@(when a1 a1) ,@(when c3 c3)))))
 
 (test to-sql-name
   "Testing to-sql-name. Convert a symbol or string into a name that can be an sql table,
@@ -484,6 +497,12 @@ to strings \(which will form an SQL query when concatenated)."
 
   (is (equal (sql (:select '* :from (:as (:values (:set 1 "one") (:set 2 "two") (:set 3 "three")) (:t1 'num 'letter))))
              "(SELECT * FROM (VALUES (1, E'one'), (2, E'two'), (3, E'three')) AS t1(num, letter))")))
+
+(test any
+  (is (equal (sql (:select 'sub-region-name :from 'regions :where (:= 'id (:any* '$1))))
+             "(SELECT sub_region_name FROM regions WHERE (id = ANY($1)))"))
+  (is (equal (sql (:select 'sub-region-name :from 'regions :where (:= 'id (:any '$1))))
+             "(SELECT sub_region_name FROM regions WHERE (id = ANY $1))")))
 
 (test select-limit-offset
       (is (equal (sql (:limit (:select 'country :from 'un-m49) 5 10))
@@ -944,12 +963,19 @@ To sum the column len of all films and group the results by kind:"
   (is (equal (sql (:select (:percentile-cont :fraction array[0.25 0.5 0.75 1] :order-by 'number-of-staff)
                     :from  'schools))
              "(SELECT PERCENTILE_CONT(ARRAY[0.25 0.5 0.75 1]) WITHIN GROUP (ORDER BY number_of_staff) FROM schools)"))
-  (is (equal (sql (:order-by (:select 'day
-                                      (:over (:percentile-cont :fraction 0.25 :order-by (:asc 'duration)) (:partition-by 'day))
-                                      (:over (:percentile-cont :fraction 0.5 :order-by (:asc 'duration)) (:partition-by 'day))
-                                      (:over (:percentile-cont :fraction 0.75 :order-by (:asc 'duration)) (:partition-by 'day))
-                                      (:over (:percentile-cont :fraction 0.85 :order-by (:asc 'duration)) (:partition-by 'day))
-                              :from 'query-durations :group-by 1 ) 1))
+  (is (equal (sql (:order-by
+                   (:select 'day
+                            (:over (:percentile-cont :fraction 0.25 :order-by (:asc 'duration))
+                                   (:partition-by 'day))
+                            (:over (:percentile-cont :fraction 0.5 :order-by (:asc 'duration))
+                                   (:partition-by 'day))
+                            (:over (:percentile-cont :fraction 0.75 :order-by (:asc 'duration))
+                                   (:partition-by 'day))
+                            (:over (:percentile-cont :fraction 0.85 :order-by (:asc 'duration))
+                                   (:partition-by 'day))
+                    :from 'query-durations
+                    :group-by 1 )
+                   1))
              "((SELECT day, (PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day)), (PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day)), (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day)), (PERCENTILE_CONT(0.85) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day)) FROM query_durations GROUP BY 1) ORDER BY 1)")))
 
 (test percentile-dist
@@ -2033,21 +2059,151 @@ that the table will need to be scanned twice. Everything is a trade-off."
         (is-false (table-exists-p "table_1"))))))
 
 (test over
-      (is (equal (sql (:over (:sum 'salary)))
-                 "(SUM(salary) OVER ()) "))
-      (is (equal (sql (:over (:sum 'salary) 'w))
-                 "(SUM(salary) OVER w)"))
-      (is (equal (sql (:over (:count '*)
-                  (:partition-by (:date-trunc "month" 'joindate))))
-                 "(COUNT(*) OVER (PARTITION BY date_trunc(E'month', joindate)))"))
-      (is (equal (sql (:over (:rank) (:order-by (:desc 'total))))
-                 "(rank() OVER ( ORDER BY total DESC))"))
-      (is (equal (sql (:over (:percentile-cont :fraction 0.25 :order-by (:asc 'duration))
-                             (:partition-by 'day)))
-                 "(PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day))")))
+  (is (equal (sql (:over (:sum 'salary)))
+             "(SUM(salary) OVER ()) "))
+  (is (equal (sql (:over (:sum 'salary) 'w))
+             "(SUM(salary) OVER w)"))
+  (is (equal (sql (:over (:count '*)
+                         (:partition-by (:date-trunc "month" 'joindate))))
+             "(COUNT(*) OVER (PARTITION BY date_trunc(E'month', joindate)))"))
+  (is (equal (sql (:over (:rank) (:order-by (:desc 'total))))
+             "(rank() OVER ( ORDER BY total DESC))"))
+  (is (equal (sql (:over (:percentile-cont :fraction 0.25 :order-by (:asc 'duration))
+                         (:partition-by 'day)))
+             "(PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY duration ASC) OVER (PARTITION BY day))")))
 
 (test between
-      (is (equal (sql (:between 'latitude -10 10))
-                 "(latitude BETWEEN -10 AND 10)"))
-      (is (equal (sql (:between (:- 'population.year 'ma-population.year)  0 2))
-                 "((population.year - ma_population.year) BETWEEN 0 AND 2)")))
+  (is (equal (sql (:between 'latitude -10 10))
+             "(latitude BETWEEN -10 AND 10)"))
+  (is (equal (sql (:between (:- 'population.year 'ma-population.year)  0 2))
+             "((population.year - ma_population.year) BETWEEN 0 AND 2)")))
+
+(test over-range-between
+  (signals error
+    (sql (:limit
+          (:select (:as 'country 'country-name)
+                   (:as 'population 'country-population)
+                   (:as (:over (:sum 'population)
+                               (:range-between :order-by 'country :preceding 2 :following 2))
+                        'global-population)
+                   :from 'population
+                   :where (:and (:not-null 'iso2)
+                                (:= 'year 1976)))
+          5)))
+  (is (equal
+       (sql (:limit
+             (:select (:as 'country 'country-name)
+                      (:as 'population 'country-population)
+                      (:as (:over (:sum 'population)
+                                  (:range-between :order-by 'country :unbounded-preceding
+                                   :unbounded-following))
+                           'global-population)
+                      :from 'population
+                      :where (:and (:not-null 'iso2)
+                                   (:= 'year 1976)))
+             5))
+             "((SELECT country AS country_name, population AS country_population, (SUM(population) OVER (ORDER BY country RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING )) AS global_population FROM population WHERE ((iso2 IS NOT NULL) and (year = 1976))) LIMIT 5)"))
+  (is (equal
+       (sql (:limit
+             (:select (:as 'country 'country-name)
+                      (:as 'population 'country-population)
+                      (:as (:over (:sum 'population)
+                                  (:range-between :order-by 'country :current-row
+                                   :unbounded-following))
+                           'global-population)
+                      :from 'population
+                      :where (:and (:not-null 'iso2)
+                                   (:= 'year 1976)))
+             5))
+             "((SELECT country AS country_name, population AS country_population, (SUM(population) OVER (ORDER BY country RANGE BETWEEN  CURRENT ROW AND UNBOUNDED FOLLOWING )) AS global_population FROM population WHERE ((iso2 IS NOT NULL) and (year = 1976))) LIMIT 5)")))
+
+(test over-row-between
+  (is (equal
+       (sql (:limit
+             (:select (:as 'country 'country-name)
+                      (:as 'population 'country-population)
+                      (:as (:over (:sum 'population)
+                                  (:rows-between :order-by 'country :preceding 2
+                                                 :following 2))
+                           'global-population)
+                      :from 'population
+                      :where (:and (:not-null 'iso2)
+                                   (:= 'year 1976)))
+             5))
+             "((SELECT country AS country_name, population AS country_population, (SUM(population) OVER (ORDER BY country ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING )) AS global_population FROM population WHERE ((iso2 IS NOT NULL) and (year = 1976))) LIMIT 5)"))
+  (is (equal
+       (sql (:limit
+             (:select (:as 'country 'country-name)
+                      (:as 'population 'country-population)
+                      (:as (:over (:sum 'population)
+                                  (:rows-between :order-by 'country :current-row
+                                   :following 2))
+                           'global-population)
+                      :from 'population
+                      :where (:and (:not-null 'iso2)
+                                   (:= 'year 1976)))
+             5))
+             "((SELECT country AS country_name, population AS country_population, (SUM(population) OVER (ORDER BY country ROWS BETWEEN  CURRENT ROW AND 2 FOLLOWING )) AS global_population FROM population WHERE ((iso2 IS NOT NULL) and (year = 1976))) LIMIT 5)"))
+  (is (equal
+       (sql (:limit
+             (:select (:as 'country 'country-name)
+                      (:as 'population 'country-population)
+                      (:as (:over (:sum 'population)
+                                  (:rows-between :order-by 'country :preceding 2
+                                                 :current-row))
+                           'global-population)
+                      :from 'population
+                      :where (:and (:not-null 'iso2)
+                                   (:= 'year 1976)))
+             5))
+             "((SELECT country AS country_name, population AS country_population, (SUM(population) OVER (ORDER BY country ROWS BETWEEN 2 PRECEDING AND  CURRENT ROW )) AS global_population FROM population WHERE ((iso2 IS NOT NULL) and (year = 1976))) LIMIT 5)")))
+
+(test over-with-partition-with-range-or-row-between
+  (is (equal
+       (sql (:limit
+             (:select (:as 'population.country 'country-name)
+                      (:as 'population 'country-population)
+                      'region-name
+                      (:as (:over (:sum 'population)
+                                  (:partition-by 'region-name :order-by 'population.country
+                                   :range-between :unbounded-preceding :current-row))
+                           'regional-population)
+                      :from 'population
+                      :inner-join 'regions
+                      :on (:= 'population.iso3 'regions.iso3)
+                      :where (:and (:not-null 'population.iso2)
+                                   (:= 'year 1976)))
+             5))
+       "((SELECT population.country AS country_name, population AS country_population, region_name, (SUM(population) OVER (PARTITION BY region_name ORDER BY population.country RANGE BETWEEN UNBOUNDED PRECEDING AND  CURRENT ROW )) AS regional_population FROM population INNER JOIN regions ON (population.iso3 = regions.iso3) WHERE ((population.iso2 IS NOT NULL) and (year = 1976))) LIMIT 5)"))
+  (is (equal
+       (sql (:limit
+             (:select (:as 'population.country 'country-name)
+                      (:as 'population 'country-population)
+                      'region-name
+                      (:as (:over (:sum 'population)
+                                  (:partition-by 'region-name :order-by 'region-name
+                                   :range-between :unbounded-preceding :current-row))
+                           'regional-population)
+                      :from 'population
+                      :inner-join 'regions
+                      :on (:= 'population.iso3 'regions.iso3)
+                      :where (:and (:not-null 'population.iso2)
+                                   (:= 'year 1976)))
+             5))
+       "((SELECT population.country AS country_name, population AS country_population, region_name, (SUM(population) OVER (PARTITION BY region_name ORDER BY region_name RANGE BETWEEN UNBOUNDED PRECEDING AND  CURRENT ROW )) AS regional_population FROM population INNER JOIN regions ON (population.iso3 = regions.iso3) WHERE ((population.iso2 IS NOT NULL) and (year = 1976))) LIMIT 5)"))
+  (is (equal
+       (sql (:limit
+         (:select (:as 'population.country 'country-name)
+                  (:as 'population 'country-population)
+                  'region-name
+                  (:as (:over (:sum 'population)
+                          (:partition-by 'region-name :order-by 'region-name
+                               :rows-between :unbounded-preceding :current-row))
+                       'regional-population)
+          :from 'population
+                  :inner-join 'regions
+                  :on (:= 'population.iso3 'regions.iso3)
+          :where (:and (:not-null 'population.iso2)
+                       (:= 'year 1976)))
+         5))
+       "((SELECT population.country AS country_name, population AS country_population, region_name, (SUM(population) OVER (PARTITION BY region_name ORDER BY region_name ROWS BETWEEN UNBOUNDED PRECEDING AND  CURRENT ROW )) AS regional_population FROM population INNER JOIN regions ON (population.iso3 = regions.iso3) WHERE ((population.iso2 IS NOT NULL) and (year = 1976))) LIMIT 5)")))

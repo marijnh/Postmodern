@@ -1076,7 +1076,7 @@ the proper SQL syntax for joining tables."
                             `(" USING (" ,@(sql-expand-list param) ")")))))))
            (is-join (x)
              (member x '(:left-join :right-join :inner-join :outer-join
-                         :cross-join))))
+                         :cross-join :lateral-join))))
     (when (null args)
       (sql-error "Empty :from clause in select"))
     (loop :for first = t :then nil :while args
@@ -1366,7 +1366,7 @@ Example:
     `("VAR_SAMP(",@(sql-expand-list vars) ")")))
 
 (def-sql-op :fetch (form amount &optional offset)
-  "Fetch is a more efficient way to do pagination instead of using limit and
+  "Fetch can be a more efficient way to do pagination instead of using limit and
 offset. Fetch allows you to retrieve a limited set of rows, optionally offset
 by a specified number of rows. In order to ensure this works correctly, you
 should use the order-by clause. If the amount is not provided, it assumes
@@ -1632,16 +1632,151 @@ operator"))
                      ,@(when returning (cons " RETURNING "
                                              (sql-expand-list returning))))))
 
+(def-sql-op :range-between (&rest args)
+  "Range-between allows window functions to apply to different segments of a result set.
+It accepts the following keywords:
+:order-by, :rows-between, :range-between, :unbounded-preceding,
+:current-row and :unbounded-following. Use of :preceding or :following will generate errors.
+See https://www.postgresql.org/docs/current/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS for Postgresql documentation on usage.
+
+An example which calculates a running total could look like this :
+
+    (query
+     (:select (:as 'country 'country-name)
+              (:as 'population 'country-population)
+              (:as (:over (:sum 'population)
+                          (:range-between :order-by 'country :unbounded-preceding :current-row))
+                   'global-population)
+      :from 'population
+      :where (:and (:not-null 'iso2)
+                   (:= 'year 1976))))"
+  (split-on-keywords ((order-by *) (preceding ? *)(unbounded-preceding ? -)
+                      (current-row ? -) (unbounded-following ? -)(following ? *))
+      args
+    `("(ORDER BY ",@(sql-expand-list order-by)
+                  " RANGE BETWEEN "
+                  ,@(when unbounded-preceding (list "UNBOUNDED PRECEDING AND "))
+                  ,(when preceding
+                    (sql-error (format nil ":range-between cannot use :preceding ~a. Use :rows-between instead." preceding)))
+                  ,@(when current-row (list " CURRENT ROW "))
+                  ,@(when unbounded-following
+                      (if current-row
+                          (list "AND UNBOUNDED FOLLOWING ")
+                          (list "UNBOUNDED FOLLOWING ")))
+                  ,(when following
+                    (sql-error (format nil ":range-between cannot use :following ~a. Use :rows-between instead." following)))
+                  ")")))
+
+(def-sql-op :rows-between (&rest args)
+  "Rows-between allows window functions to apply to different segments of a result set.
+It accepts the following keywords:
+:order-by, :rows-between, :range-between, :preceding, :unbounded-preceding,
+:current-row, :unbounded-following and :following. See https://www.postgresql.org/docs/current/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS for Postgresql documentation on usage.
+
+An example could look like this :
+
+    (query
+     (:select (:as 'country 'country-name)
+              (:as 'population 'country-population)
+              (:as (:over (:sum 'population)
+                          (:rows-between :order-by 'country :preceding 2 :following 2))
+                   'global-population)
+      :from 'population
+      :where (:and (:not-null 'iso2)
+                   (:= 'year 1976))))"
+  (split-on-keywords ((order-by ? *) (preceding ? *) (unbounded-preceding ? -)
+                      (current-row ? -) (unbounded-following ? -) (following ? *))
+      args
+    `(,@(when order-by (cons "(ORDER BY " (sql-expand-list order-by)))
+         " ROWS BETWEEN "
+         ,@(when unbounded-preceding (list "UNBOUNDED PRECEDING AND "))
+         ,@(when preceding   (list (format nil "~a" (car preceding)) " PRECEDING AND "))
+         ,@(when current-row (list " CURRENT ROW "))
+         ,@(when unbounded-following
+             (if unbounded-preceding
+                 (list "UNBOUNDED FOLLOWING ")
+                 (list "AND UNBOUNDED FOLLOWING ")))
+         ,@(when following
+             (if current-row
+                 (list (format nil "AND ~a" (car following)) " FOLLOWING ")
+                 (list (format nil "~a" (car following)) " FOLLOWING ")))
+         ")")))
+
 (def-sql-op :over (form &rest args)
+  "Over allows functions to apply to a result set, creating an additional column.
+A simple example of usage would be:
+
+  (query (:select 'salary (:over (:sum 'salary))
+                :from 'empsalary))
+
+A more complicated version using the :range-between operator could look like this:
+  (query (:limit
+             (:select (:as 'country 'country-name)
+                      (:as 'population 'country-population)
+                      (:as (:over (:sum 'population)
+                                  (:range-between :order-by 'country :unbounded-preceding
+                                   :unbounded-following))
+                           'global-population)
+                      :from 'population
+                      :where (:and (:not-null 'iso2)
+                                   (:= 'year 1976)))
+             5))"
   (if args `("(" ,@(sql-expand form) " OVER " ,@(sql-expand-list args) ")")
       `("(" ,@(sql-expand form) " OVER ()) ")))
 
 (def-sql-op :partition-by (&rest args)
-  (split-on-keywords ((partition-by *) (order-by ? *)) (cons :partition-by args)
+  "Partition-by allows aggregate or window functions to apply separately to
+segments of a result. Partition-by accepts the following keywords:
+:order-by, :rows-between, :range-between, :preceding, :unbounded-preceding,
+:current-row, :unbounded-following and :following. See https://www.postgresql.org/docs/current/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS for Postgresql documentation on usage.
+
+Example:
+       (query
+         (:select (:as 'population.country 'country-name)
+                  (:as 'population 'country-population)
+                  'region-name
+                  (:as (:over (:sum 'population)
+                          (:partition-by 'region-name :order-by 'region-name
+                               :rows-between :unbounded-preceding :current-row))
+                       'regional-population)
+          :from 'population
+                  :inner-join 'regions
+                  :on (:= 'population.iso3 'regions.iso3)
+          :where (:and (:not-null 'population.iso2)
+                       (:= 'year 1976))))"
+  (split-on-keywords ((partition-by *)(order-by ? *) (rows-between ? -) (range-between ? -)
+                      (preceding ? *) (unbounded-preceding ? -)
+                      (current-row ? -) (unbounded-following ? -) (following ? *))
+      (cons :partition-by args)
     `("(PARTITION BY " ,@(sql-expand-list partition-by)
                        ,@(when order-by
                            (cons " ORDER BY "
                                  (sql-expand-list order-by)))
+                       ,@(when rows-between (list " ROWS BETWEEN "))
+                       ,@(when range-between (list " RANGE BETWEEN "))
+                       ,@(when unbounded-preceding (list "UNBOUNDED PRECEDING AND "))
+                       ,(when (and preceding range-between)
+                          (sql-error
+                           (format nil
+                                   ":range-between cannot use :preceding ~a. Use :rows-between."
+                                   preceding)))
+                       ,@(when (and preceding (not range-between))
+                           (list (format nil "~a" (car preceding))
+                                 " PRECEDING AND "))
+                       ,@(when current-row (list " CURRENT ROW "))
+                       ,@(when unbounded-following
+                           (if unbounded-preceding
+                               (list "UNBOUNDED FOLLOWING ")
+                               (list "AND UNBOUNDED FOLLOWING ")))
+                       ,(when (and following range-between)
+                          (sql-error
+                           (format nil
+                                   ":range-between cannot use :following ~a. Use :rows-between."
+                                   following)))
+                       ,@(when (and following (not range-between))
+                           (if current-row
+                               (list (format nil "AND ~a" (car following)) " FOLLOWING ")
+                               (list (format nil "~a" (car following)) " FOLLOWING ")))
                        ")")))
 
 (def-sql-op :parens (op) `(" (" ,@(sql-expand op) ") "))
@@ -1839,17 +1974,18 @@ definition."
                       (:default `(" DEFAULT " ,@(sql-expand value)))
                       (:interval `(" " ,@(expand-interval value)))
                       (:identity-by-default
-                       (when (eq value t)
-                         '(" GENERATED BY DEFAULT AS IDENTITY ")))
+                       '(" GENERATED BY DEFAULT AS IDENTITY "))
                       (:identity-always
-                       (when (eq value t)
-                         '(" GENERATED ALWAYS AS IDENTITY ")))
+                       '(" GENERATED ALWAYS AS IDENTITY "))
                       (:generated-as-identity-by-default
-                       (when (eq value t)
-                         '(" GENERATED BY DEFAULT AS IDENTITY ")))
+                       '(" GENERATED BY DEFAULT AS IDENTITY "))
                       (:generated-as-identity-always
-                       (when (eq value t)
-                         '(" GENERATED ALWAYS AS IDENTITY ")))
+                       '(" GENERATED ALWAYS AS IDENTITY "))
+                      (:generated-as-identity-always1
+                       '(" GENERATED ALWAYS AS IDENTITY "))
+                      (:generated-always
+                       (when value
+                         `(" GENERATED ALWAYS AS (" ,@(sql-expand-names value) ") STORED")))
                       (:primary-key (cond ((and value (stringp value))
                                            `(" PRIMARY KEY " ,value))
                                           ((and value (keywordp value))
