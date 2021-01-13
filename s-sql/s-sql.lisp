@@ -35,11 +35,10 @@ errors."
                           (optional (member '? (car words)))
                           (multi (member '* (car words)))
                           (no-args (member '- (car words)))
-                          (zero-or-more (member '^ (car words)))
                           (found (position me values)))
                      (cond (found
                             (let ((after-me (nthcdr (1+ found) values)))
-                              (unless (or after-me no-args zero-or-more)
+                              (unless (or after-me no-args)
                                 (sql-error "Keyword ~A encountered at end of arguments."
                                            me))
                               (let ((next (next-word (cdr words) after-me)))
@@ -52,7 +51,6 @@ errors."
                                    (unless (>= next 1)
                                      (sql-error "Not enough arguments to keyword ~A."
                                                 me)))
-                                  (zero-or-more t)
                                   (t (unless (= next 1)
                                        (sql-error "Keyword ~A takes exactly one argument."
                                                   me))))
@@ -344,30 +342,7 @@ Symbols will be converted to SQL names. Examples:
           string))))
 
 (defparameter *expand-runtime* nil)
-#|
-(defun sql-expand (arg)
-  "Compile-time expansion of forms into lists of stuff that evaluate
-to strings (which will form a SQL query when concatenated)."
 
-  (cond ((and (consp arg) (keywordp (first arg)))
-         (expand-sql-op (car arg) (cdr arg)))
-        ((and (consp arg) (eq (first arg) 'quote))
-         (list (sql-escape (second arg))))
-        ((and (consp arg) *expand-runtime*)
-         (expand-sql-op (intern (symbol-name (car arg)) :keyword) (cdr arg)))
-        ((and (eq arg '$$) *expand-runtime*)
-         '($$))
-        (*expand-runtime*
-         (list (sql-escape arg)))
-        ((consp arg)
-         (list `(sql-escape ,arg)))
-        ((or (consp arg)
-             (and (symbolp arg)
-                  (not (or (keywordp arg) (eq arg t) (eq arg nil)))))
-         (list `(sql-escape ,arg)))
-        (t (list (sql-escape arg)))))
-|#
-;;; CURRENT DRAFT
 (defun sql-expand (arg)
   "Compile-time expansion of forms into lists of stuff that evaluate
 to strings (which will form a SQL query when concatenated). NEW :default will
@@ -1132,10 +1107,10 @@ the proper SQL syntax for joining tables."
                          ,@(when (eq kind :using)
                             `(" USING (" ,@(sql-expand-list param) ")")))))))
            (is-join (x)
-             (member x '(:joint :left-join :right-join :inner-join :outer-join
+             (member x '(:join :left-join :right-join :inner-join :outer-join
                          :cross-join :join-lateral :left-join-lateral :right-join-lateral
                          :inner-join-lateral :outer-join-lateral
-                         :cross-join-lateral :lateral-join :with-ordinality :with-ordinality-as
+                         :cross-join-lateral :with-ordinality :with-ordinality-as
                          :lateral))))
     (when (null args)
       (sql-error "Empty :from clause in select"))
@@ -1701,24 +1676,7 @@ passed to insert-into sql operator"))
             ,@(if where (cons " WHERE " (sql-expand (car where)))
                 ())))
       ,@(when returning `(" RETURNING " ,@(sql-expand-list returning))))))
-#|
-(def-sql-op :update (table &rest args)
-  (split-on-keywords ((set *) (from * ?) (where ?) (returning ? *)) args
-    (when (oddp (length set))
-      (sql-error "Invalid amount of :set arguments passed to update sql
-operator"))
-    `("UPDATE " ,@(sql-expand table) " SET "
-                ,@(loop :for (field value) :on set :by #'cddr
-                        :for first = t :then nil
-                        :append `(,@(if first () '(", ")) ,@(sql-expand field)
-                                  " = "
-                                  ,@(sql-expand value)))
-                ,@(if from (cons " FROM " (expand-joins from)))
-                ,@(if where (cons " WHERE " (sql-expand (car where))) ())
-                ,@(when returning
-                    (cons " RETURNING " (sql-expand-list returning))))))
-|#
-;;;CURRENT DRAFT
+
 (def-sql-op :update (table &rest args)
   (split-on-keywords ((set * ?) (columns ? *) (from * ?) (where ?) (returning ? *)) args
     (when (oddp (length set))
@@ -1836,7 +1794,6 @@ A more complicated version using the :range-between operator could look like thi
              5))"
   (if args `("(" ,@(sql-expand form) " OVER " ,@(sql-expand-list args) ")")
       `("(" ,@(sql-expand form) " OVER ()) ")))
-
 
 (def-sql-op :partition-by (&rest args)
   "Partition-by allows aggregate or window functions to apply separately to

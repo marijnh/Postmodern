@@ -1,4 +1,114 @@
-# Changelog v. 1.32.1
+# Changelog v. 1.32.8
+S-SQL Enhancements
+
+## :Update
+without the :columns parameter, :update requires alternating column value like so:
+
+    (query (:update 'weather
+            :set 'temp-lo (:+ 'temp-lo 1)
+                 'temp-hi (:+ 'temp-lo 15)
+                 'prcp :default
+            :where (:and (:= 'city "San Francisco")
+                         (:= 'date "2003-07-03"))
+            :returning 'temp-lo 'temp-hi 'prcp))
+
+:update now accepts a :columns parameter. This allows the use of either :set or :select (both of which need to be enclosed in a form) to provide the values, allowing update queries like:
+
+    (query (:update 'weather
+            :columns 'temp-lo 'temp-hi 'prcp
+                     (:set (:+ 'temp-lo 1)  (:+ 'temp-lo 15) :DEFAULT)
+            :where (:and (:= 'city "San Francisco")
+                         (:= 'date "2003-07-03"))))
+
+    (query (:update 't1
+            :columns 'database-name 'encoding
+                     (:select 'x.datname 'x.encoding
+                     :from (:as 'pg-database 'x)
+                     :where (:= 'x.oid 't1.oid))))
+
+## :Insert-into
+Insert-into also now accepts a :columns parameter which allows more precise use of select to insert values into specific row(s). A sample query could look like:
+
+    (query (:insert-into 't11
+            :columns 'region 'subregion 'country
+            (:select (:as 'region-name 'region)
+                     (:as 'sub-region-name 'subregion)
+                     'country
+             :from 'regions)))
+
+## Joins
+### Lateral Joins
+Joins are now expanded to include lateral joins. So addition join types are
+
+- :join-lateral (best practice is still to be specific on what kind of join you want)
+- :left-join-lateral
+- :right-join-lateral
+- :inner-join-lateral
+- :outer-join-lateral
+- :cross-join-lateral
+
+### Ordinality
+Selects can now use :with-ordinality or :with-ordinality-as parameters. Postgresql will give the new ordinality column the name of ordinality. :with-ordinality-as allows you to set different names for the columns in the result set.
+
+    (query (:select '*
+            :from (:generate-series 4 1 -1)
+            :with-ordinality))
+
+
+    (query (:select 't1.*
+            :from (:json-object-keys "{\"a1\":\"1\",\"a2\":\"2\",\"a3\":\"3\"}")
+            :with-ordinality-as (:t1 'keys 'n)
+
+
+## New Utility copy-from-csv
+Just a convenience function. It runs the psql copy command from inside lisp using uiop:run-program
+
+# Changelog v. 1.32.7
+
+Additional capabilities for s-sql functions :insert-into and :insert-rows-into
+
+Specifically, both can now use:
+
+- overriding-system-value
+- overriding-user-value
+- on-conflict-do-nothing
+- on-conflict
+- on-conflict-on-constraint
+- on-conflict-update
+- do-nothing
+- update-set
+- from
+- where
+- returning
+
+See updated s-sql docs for examples.
+
+# Changelog v. 1.32.4
+
+Added the ability to return results as json-encoded results as follows:
+
+- :Json-strs
+Return a list of strings where the row returned is a json object expressed as a string
+
+    (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :json-strs)
+    ("{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}"
+     "{\"id\":2,\"int4\":0,\"text\":\"text two\"}")
+
+- :Json-str
+Return a single string where the row returned is a json object expressed as a string
+
+    (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :json-str)
+    "{\"id\":3,\"int4\":3,\"text\":\"text three\"}"
+
+- :Json-array-str
+Return a string containing a json array, each element in the array is a selected row expressed as a json object
+
+    (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :json-array-str)
+    "[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]"
+
+# Changelog v. 1.32.3
+
+Added flag to avoid SSL certificate verification if required by user
 
 ## Fix S-SQL issue 239 (:drop-table ...) expanded incorrectly
 
