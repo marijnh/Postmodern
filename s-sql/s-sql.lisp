@@ -35,10 +35,11 @@ errors."
                           (optional (member '? (car words)))
                           (multi (member '* (car words)))
                           (no-args (member '- (car words)))
+                          (zero-or-more (member '^ (car words)))
                           (found (position me values)))
                      (cond (found
                             (let ((after-me (nthcdr (1+ found) values)))
-                              (unless (or after-me no-args)
+                              (unless (or after-me no-args zero-or-more)
                                 (sql-error "Keyword ~A encountered at end of arguments."
                                            me))
                               (let ((next (next-word (cdr words) after-me)))
@@ -51,6 +52,7 @@ errors."
                                    (unless (>= next 1)
                                      (sql-error "Not enough arguments to keyword ~A."
                                                 me)))
+                                  (zero-or-more t)
                                   (t (unless (= next 1)
                                        (sql-error "Keyword ~A takes exactly one argument."
                                                   me))))
@@ -342,12 +344,36 @@ Symbols will be converted to SQL names. Examples:
           string))))
 
 (defparameter *expand-runtime* nil)
-
+#|
 (defun sql-expand (arg)
   "Compile-time expansion of forms into lists of stuff that evaluate
 to strings (which will form a SQL query when concatenated)."
 
   (cond ((and (consp arg) (keywordp (first arg)))
+         (expand-sql-op (car arg) (cdr arg)))
+        ((and (consp arg) (eq (first arg) 'quote))
+         (list (sql-escape (second arg))))
+        ((and (consp arg) *expand-runtime*)
+         (expand-sql-op (intern (symbol-name (car arg)) :keyword) (cdr arg)))
+        ((and (eq arg '$$) *expand-runtime*)
+         '($$))
+        (*expand-runtime*
+         (list (sql-escape arg)))
+        ((consp arg)
+         (list `(sql-escape ,arg)))
+        ((or (consp arg)
+             (and (symbolp arg)
+                  (not (or (keywordp arg) (eq arg t) (eq arg nil)))))
+         (list `(sql-escape ,arg)))
+        (t (list (sql-escape arg)))))
+|#
+;;; CURRENT DRAFT
+(defun sql-expand (arg)
+  "Compile-time expansion of forms into lists of stuff that evaluate
+to strings (which will form a SQL query when concatenated). NEW :default will
+return ' DEFAULT' "
+
+  (cond ((eq arg :default) (list " DEFAULT ")) ((and (consp arg) (keywordp (first arg)))
          (expand-sql-op (car arg) (cdr arg)))
         ((and (consp arg) (eq (first arg) 'quote))
          (list (sql-escape (second arg))))
@@ -1056,34 +1082,69 @@ variables. As an example:
   "Helper for the select operator. Turns the part following :from into
 the proper SQL syntax for joining tables."
   (labels ((expand-join (natural-p)
-             (let ((type (first args)) (table (second args)) kind param)
-               (unless table (sql-error "Incomplete join clause in select."))
+             (let ((type (first args)) (table (second args)) kind param ordinality-as)
+               (unless (or table
+                           (eq type :with-ordinality))
+                 (sql-error "Incomplete join clause in select."))
                (setf args (cddr args))
-               (unless (or natural-p (eq type :cross-join))
+               (unless (or natural-p (eq type :cross-join) (eq type :lateral))
                  (setf kind (pop args))
-                 (unless (and (or (eq kind :on) (eq kind :using)) args)
-                   (sql-error "Incorrect join form in select."))
+                 (unless (or (not (is-join kind))
+                             (and (or (eq kind :with-ordinality)
+                                      (eq kind :with-ordinality-as)
+                                      (eq kind :on)
+                                      (eq kind :lateral)
+                                      (eq kind :using))
+                                  args))
+                  (sql-error "Incorrect join form in select."))
                  (setf param (pop args)))
                `(" " ,@(when natural-p '("NATURAL "))
                      ,(ecase type
-                        (:left-join "LEFT") (:right-join "RIGHT")
-                        (:inner-join "INNER") (:outer-join "FULL OUTER")
-                        (:cross-join "CROSS")) " JOIN " ,@(sql-expand table)
-                     ,@(unless (or natural-p (eq type :cross-join))
-                         (ecase kind
-                           (:on `(" ON " . ,(sql-expand param)))
-                           (:using
+                        (:lateral ", LATERAL ")
+                        (:join "JOIN ")
+                        (:left-join "LEFT JOIN ")
+                        (:right-join "RIGHT JOIN ")
+                        (:inner-join "INNER JOIN ")
+                        (:outer-join "FULL OUTER JOIN ")
+                        (:cross-join "CROSS JOIN ")
+                        (:join-lateral "JOIN LATERAL ")
+                        (:left-join-lateral "LEFT JOIN LATERAL ")
+                        (:right-join-lateral "RIGHT JOIN LATERAL ")
+                        (:inner-join-lateral "INNER JOIN LATERAL ")
+                        (:outer-join-lateral "FULL OUTER JOIN LATERAL ")
+                        (:cross-join-lateral "CROSS JOIN LATERAL ")
+                        (:with-ordinality "WITH ORDINALITY ")
+                        (:with-ordinality-as "WITH ORDINALITY AS "))
+                    ,@(when table;(not (eq type :with-ordinality))
+                        (sql-expand table))
+                    ,@(unless (or natural-p (eq type :cross-join))
+                         `("" ,@(if (eq kind :with-ordinality)
+                             (progn (setf kind param)
+                             (setf param (pop args))
+                             `(" WITH ORDINALITY " )))
+                         ,@(when (eq kind :with-ordinality-as)
+                             (setf ordinality-as param)
+                             (setf kind (pop args))
+                             (setf param (pop args))
+                             `(" WITH ORDINALITY AS " . ,(sql-expand ordinality-as)))
+                         ,@(when (eq kind :on)
+                              `(" ON " . ,(sql-expand param)))
+                         ,@(when (eq kind :using)
                             `(" USING (" ,@(sql-expand-list param) ")")))))))
            (is-join (x)
-             (member x '(:left-join :right-join :inner-join :outer-join
-                         :cross-join :lateral-join))))
+             (member x '(:joint :left-join :right-join :inner-join :outer-join
+                         :cross-join :join-lateral :left-join-lateral :right-join-lateral
+                         :inner-join-lateral :outer-join-lateral
+                         :cross-join-lateral :lateral-join :with-ordinality :with-ordinality-as
+                         :lateral))))
     (when (null args)
       (sql-error "Empty :from clause in select"))
     (loop :for first = t :then nil :while args
           :append (cond ((is-join (car args))
                          (when first
                            (sql-error ":from clause starts with a join."))
-                         (expand-join nil))
+                         (progn ;(format t "A1:  args ~a~%" args)
+                                (expand-join nil)))
                         ((eq (car args) :natural)
                          (when first
                            (sql-error ":from clause starts with a join."))
@@ -1092,6 +1153,7 @@ the proper SQL syntax for joining tables."
                         (t
                          `(,@(if first () '(", ")) ,@(sql-expand (pop args))))))))
 
+
 (def-sql-op :select (&rest args)
   "Creates a select query. The arguments are split on the keywords found among
 them. The group of arguments immediately after :select is interpreted as
@@ -1099,19 +1161,47 @@ the expressions that should be selected. After this, an optional :distinct
 may follow, which will cause the query to only select distinct rows, or
 alternatively :distinct-on followed by a group of row names. Next comes the
 optional keyword :from, followed by at least one table name and then any
-number of join statements. Join statements start with one of :left-join,
-:right-join, :inner-join, :outer-join or :cross-join, then a table name or
-subquery, then the keyword :on or :using, if applicable, and then a form.
+number of join statements.
+
+Join statements start with one of :left-join,
+:right-join, :inner-join, :outer-join, :cross-join (or those with -lateral,
+e.g :left-join-lateral, :right-join-lateral, :inner-join-lateral, :outer-join-lateral).
+S-sql will not accept :join, use :inner-join instead.
+
+Then comes a table name or subquery,
+
+then there is an optional :with-ordinality or :with-ordinality-as alisa
+
+Then the keyword :on or :using, if applicable, and then a form.
 A join can be preceded by :natural (leaving off the :on clause) to use a
-natural join. After the joins an optional :where followed by a single form
-may occur. And finally :group-by and :having can optionally be specified.
-The first takes any number of arguments, and the second only one. An example:
+natural join.
+
+After the joins an optional :where followed by a single form may occur.
+
+And finally :group-by and :having can optionally be specified.
+The first takes any number of arguments, and the second only one.
+
+A few examples:
 
     (query (:select (:+ 'field-1 100) 'field-5
             :from (:as 'my-table 'x)
             :left-join 'your-table
             :on (:= 'x.field-2 'your-table.field-1)
-            :where (:not-null 'a.field-3)))"
+            :where (:not-null 'a.field-3)))
+
+    (query (:select 'i.* 'p.*
+            :from (:as 'individual 'i)
+            :inner-join (:as 'publisher 'p)
+            :using ('individualid)
+            :left-join-lateral (:as 'anothertable 'a)
+            :on (:= 'a.identifier 'i.individualid)
+            :where (:= 'a.something \"something\")))
+
+    (query (:select 't1.id 'a.elem 'a.nr
+            :from (:as 't12 't1)
+            :left-join (:unnest (:string-to-array 't1.elements \",\"))
+            :with-ordinality-as (:a 'elem 'nr)
+            :on 't))"
   (split-on-keywords ((vars *) (distinct - ?) (distinct-on * ?) (from * ?)
                       (where ?) (group-by * ?) (having ?) (window ?))
       (cons :vars args)
@@ -1365,7 +1455,7 @@ Example:
   (split-on-keywords ((vars *)) (cons :vars args)
     `("VAR_SAMP(",@(sql-expand-list vars) ")")))
 
-(def-sql-op :fetch (form amount &optional offset)
+(def-sql-op :fetch (form &optional amount offset)
   "Fetch can be a more efficient way to do pagination instead of using limit and
 offset. Fetch allows you to retrieve a limited set of rows, optionally offset
 by a specified number of rows. In order to ensure this works correctly, you
@@ -1479,6 +1569,9 @@ passed to insert-into sql operator"))
                                                               :by #'cddr
                                                               :collect value))
                                          ")"))))
+                         ((eq (car method) :columns)
+                          `(" (" ,@(sql-expand-list (butlast (cdr method))) ") "
+                                 ,@(sql-expand (car (last method)))))
                          ((and (not (cdr method)) (consp (car method))
                                (keywordp (caar method)))
                           (sql-expand (car method)))
@@ -1608,7 +1701,7 @@ passed to insert-into sql operator"))
             ,@(if where (cons " WHERE " (sql-expand (car where)))
                 ())))
       ,@(when returning `(" RETURNING " ,@(sql-expand-list returning))))))
-
+#|
 (def-sql-op :update (table &rest args)
   (split-on-keywords ((set *) (from * ?) (where ?) (returning ? *)) args
     (when (oddp (length set))
@@ -1624,6 +1717,26 @@ operator"))
                 ,@(if where (cons " WHERE " (sql-expand (car where))) ())
                 ,@(when returning
                     (cons " RETURNING " (sql-expand-list returning))))))
+|#
+;;;CURRENT DRAFT
+(def-sql-op :update (table &rest args)
+  (split-on-keywords ((set * ?) (columns ? *) (from * ?) (where ?) (returning ? *)) args
+    (when (oddp (length set))
+      (sql-error "Invalid amount of :set arguments passed to update sql operator"))
+    `("UPDATE " ,@(sql-expand table)
+                ,@(when columns `(" SET  (" ,@(sql-expand-list (butlast columns)) ") = "
+                    ,@(sql-expand (car (last columns)))))
+                ,@(when (and set (not columns)) (list " SET "))
+                ,@(when (and set (not columns)) (loop :for (field value) :on set :by #'cddr
+                        :for first = t :then nil
+                        :append `(,@(if first () '(", ")) ,@(sql-expand field)
+                                  " = "
+                                  ,@(sql-expand value))))
+                ,@(if from (cons " FROM " (expand-joins from)))
+                ,@(if where (cons " WHERE " (sql-expand (car where))) ())
+                ,@(when returning
+                    (cons " RETURNING " (sql-expand-list returning))))))
+
 
 (def-sql-op :delete-from (table &rest args)
   (split-on-keywords ((where ?) (returning ? *)) args
@@ -1723,6 +1836,7 @@ A more complicated version using the :range-between operator could look like thi
              5))"
   (if args `("(" ,@(sql-expand form) " OVER " ,@(sql-expand-list args) ")")
       `("(" ,@(sql-expand form) " OVER ()) ")))
+
 
 (def-sql-op :partition-by (&rest args)
   "Partition-by allows aggregate or window functions to apply separately to
