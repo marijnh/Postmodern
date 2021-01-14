@@ -2269,25 +2269,6 @@ To sum the column len of all films and group the results by kind:"
              "TRUNCATE  ONLY bigtable, fattable CONTINUE IDENTITY  CASCADE "))
   (is (equal (sql (:truncate 'bigtable 'fattable :continue-identity :cascade ))
              "TRUNCATE bigtable, fattable CONTINUE IDENTITY  CASCADE ")))
-#|
-
-Here is an example of a function with an ordinality column added:
-
-SELECT * FROM unnest(ARRAY['a','b','c','d','e','f']) WITHORD INALITY;
-
-
-https://www.postgresql.org/docs/current/static/sql-select.html
-This example uses LATERAL to apply a set-returning function get_product_names() for each row of the manufacturers table:
-
-SELECT m.name AS mname, pname
-FROM manufacturers m, LATERAL get_product_names(m.id) pname;
-
-Manufacturers not currently having any products would not appear in the result, since it is an inner join. If we wished to include the names of such manufacturers in the result, we could do:
-
-SELECT m.name AS mname, pname
-FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
-
-|#
 
 (test dissect-type-0
   "Testing dissect-type"

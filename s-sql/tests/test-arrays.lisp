@@ -143,6 +143,16 @@ equality tests with arrays requires equalp, not equal."
                  ("pistachios") ("pita bread") ("raw meat") ("salt") ("spices") ("sugar syrup")
                  ("tahini sauce") ("tomatoes") ("tomato paste") ("yogurt") ("zaatar"))))
 
+    (is (equal
+         (sql (:select '*
+               :from (:unnest (:type (:array[] "my" "dog" "eats" "dog food" )
+                                     text[]))))
+         "(SELECT * FROM unnest(ARRAY[E'my', E'dog', E'eats', E'dog food']::TEXT[]))"))
+    (is (equal
+         (query (:select '*
+                 :from (:unnest (:type (:array[] "my" "dog" "eats" "dog food" ) text[]))))
+         '(("my") ("dog") ("eats") ("dog food"))))
+
 ;;; 8 counting each unique tag
 
     (is (equal (query (:order-by (:with (:as 'p (:select (:as (:unnest 'tags) 'tag)
