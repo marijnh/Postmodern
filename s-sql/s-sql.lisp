@@ -1525,8 +1525,7 @@ to runtime. Used to create stored procedures."
                      ,@(cond
                          ((eq (car method) :set)
                           (cond ((oddp (length (cdr method)))
-                                 (sql-error "Invalid amount of :set arguments
-passed to insert-into sql operator"))
+                                 (sql-error "Invalid amount of :set arguments passed to insert-into sql operator"))
                                 ((null (cdr method)) '("DEFAULT VALUES"))
                                 (t `("(" ,@(sql-expand-list
                                             (loop :for (field nil)
@@ -2092,32 +2091,6 @@ definition."
 (defun expand-composite-table-name (frm)
   "Helper function for building a composite table name"
   (strcat (list (to-sql-name (second frm)) " OF " (to-sql-name (third frm)))))
-;; old expand-table-name
-#|
-(defun expand-table-name (name &optional (tableset nil))
-  "Note: temporary tables are unlogged tables. Having both :temp and :unlogged
-would be redundant."
-  (cond ((and name (stringp name))
-         (concatenate 'string (unless tableset  "TABLE ") (to-sql-name name)))
-        ((and name (symbolp name))
-         (concatenate 'string (unless tableset  "TABLE ") (to-sql-name name)))
-        ((and name (listp name))
-         (case (car name)
-           (quote (concatenate 'string (unless tableset  "TABLE ")
-                               (to-sql-name (cadr name))))
-           (:temp (concatenate 'string "TEMP TABLE "
-                               (expand-table-name (cadr name) t)))
-           (:unlogged (concatenate 'string "UNLOGGED TABLE "
-                                   (expand-table-name (cadr name) t)))
-           (:if-not-exists (concatenate 'string (unless tableset  "TABLE ")
-                                        "IF NOT EXISTS "
-                                        (expand-table-name (cadr name) t)))
-           (:of (concatenate 'string (unless tableset  "TABLE ")
-                             (expand-composite-table-name name)))
-           (t (concatenate 'string (unless tableset  "TABLE ")
-                           (to-sql-name (car name))))))
-        (t (sql-error "Unknown table option: ~A" name))))
-|#
 
 (defun expand-table-name (name &optional (tableset nil))
                "Note: temporary tables are unlogged tables. Having both :temp and :unlogged
@@ -2136,8 +2109,9 @@ would be redundant."
                                 (expand-table-name (cdr name) t)))
             (:temporary (concatenate 'string "TEMP TABLE "
                                      (expand-table-name (cdr name) t)))
-            (:unlogged (if tableset (expand-table-name (cdr name) t) (concatenate 'string "UNLOGGED TABLE "
-                                                    (expand-table-name (cdr name) t))))
+            (:unlogged (if tableset (expand-table-name (cdr name) t)
+                           (concatenate 'string "UNLOGGED TABLE "
+                                        (expand-table-name (cdr name) t))))
             (:if-not-exists (concatenate 'string (unless tableset  "TABLE ")
                                          "IF NOT EXISTS "
                                          (expand-table-name (cdr name) t)))
