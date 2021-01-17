@@ -306,7 +306,7 @@ read-only role with access to only a limited number of tables."
                     (grant-editor-permissions schema-x name))
                    (:readonly
                     (grant-readonly-permissions schema-x name))
-                   (t (query (readonly-permissions schema-x name)))))
+                   (t (query (grant-readonly-permissions schema-x name)))))
                 ((listp tables)
                  (let ((existing-tables (list-tables t))) ;  Grant access to existing tables
                    (when (or (eq (first tables) :all)
