@@ -1281,3 +1281,22 @@ underscore and returns the modified string."
                         (alphanumericp ch))
                     (write-char ch)
                     (write-char replacement))))))
+
+(defun copy-from-csv (tablename filename
+                      &key (delimiter 'comma) (header-p nil)
+                        (database (when *database* (cl-postgres::connection-db *database*)))
+                        (user (when *database* (cl-postgres::connection-user *database*)))
+                        (password (when *database* (cl-postgres::connection-password *database*)))
+                        (host (if *database* (cl-postgres::connection-host *database*)
+                                  "localhost"))
+                        (port (if *database* (cl-postgres::connection-port *database*)
+                                  5432)))
+  "Runs the psql copy command against a file. Assuming you are already connected to the desired database and the *database* global variable is set to that, then the mMinimum parameters required are the postgresql table-name and the file name including its absolute path. The delimiter parameter should be either 'comma or 'tab. Set the header-p parameter t if the first line of the csv file is a header that should not get imported into the database table. The table name can be either a string or quoted symbol."
+  (setf tablename (to-sql-name tablename))
+  (uiop:run-program
+   (format nil "psql postgresql://~a:~a@~a:~a/~a -c \"\\copy ~a from '~a' delimiter ~a csv ~a;\""
+           user password host port database tablename filename
+           (case delimiter
+             (comma "','")
+             (tab "E'\t'"))
+           (if header-p "HEADER" "")) :output :string))

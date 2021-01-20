@@ -182,39 +182,38 @@
              '(USERNAME))))
 
 (test single-column-primary-keys
-  (dao-test-table-fixture)
-  (let ((dao (make-instance 'test-data :a "quux"))
-        (dao-col-identity (make-instance 'test-data-not-serial-key :a "quux-ci")))
-    (is (equal (find-primary-key-column 'test-data)
-               nil))
-    (is (equal (find-primary-key-column dao-col-identity)
-               nil))
-    (is (equal (find-primary-key-column dao)
-               nil))
-    (is (equal (find-primary-key-column 'test-data-col-identity)
-               'id))
-    (is (equal (find-primary-key-column
-                (class-of (make-instance 'test-data-col-identity)))
-               'id))
-    (is (equal (pomo::dao-keys 'test-data)
-               '(id)))
-    (with-test-connection
-      (protect
-        (progn
-          (is (equal (find-primary-key-info
-                  (dao-table-name
-                   (class-of (make-instance 'test-data :a "quux"))))
-                 '(("id" "integer"))))
-          (is (equal (dao-keys 'test-data)
-                     '(id))))
-        (execute (:drop-table 'dao-test :cascade))))))
-
-(test multi-column-primary-keys
-  (dao-test-table-fixture-mk)
-  (is (equal (find-primary-key-column 'test-data-multicolumn-key)
-             nil))
   (with-test-connection
     (protect
+      (dao-test-table-fixture)
+      (let ((dao (make-instance 'test-data :a "quux"))
+            (dao-col-identity (make-instance 'test-data-not-serial-key :a "quux-ci")))
+        (is (equal (find-primary-key-column 'test-data)
+                   nil))
+        (is (equal (find-primary-key-column dao-col-identity)
+                   nil))
+        (is (equal (find-primary-key-column dao)
+                   nil))
+        (is (equal (find-primary-key-column 'test-data-col-identity)
+                   'id))
+        (is (equal (find-primary-key-column
+                    (class-of (make-instance 'test-data-col-identity)))
+                   'id))
+        (is (equal (pomo::dao-keys 'test-data)
+                   '(id)))
+        (is (equal (find-primary-key-info
+                    (dao-table-name
+                     (class-of (make-instance 'test-data :a "quux"))))
+                   '(("id" "integer"))))
+        (is (equal (dao-keys 'test-data)
+                   '(id))))
+      (execute (:drop-table 'dao-test :cascade)))))
+
+(test multi-column-primary-keys
+  (with-test-connection
+    (protect
+      (dao-test-table-fixture-mk)
+      (is (equal (find-primary-key-column 'test-data-multicolumn-key)
+                 nil))
       (is (equal (find-primary-key-info 'dao-test-mk)
                  '(("id" "integer") ("a" "character varying(100)"))))
       (is (equal (dao-keys 'test-data-multicolumn-key)

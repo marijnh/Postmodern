@@ -3,6 +3,7 @@
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
 #+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
+#+OPTIONS: toc:2
 
 This is the reference manual for the component named postmodern, which is part
 of a library of the same name.
@@ -42,8 +43,14 @@ Create a new database connection for the given user and the database. Port will
 default to 5432, which is where most PostgreSQL servers are running. If
 pooled-p is T, a connection will be taken from a pool of connections of this
 type, if one is available there, and when the connection is disconnected it will
-be put back into this pool instead. use-ssl can be :no, :yes, or :try, as in
-open-database, and defaults to the value of *default-use-ssl*.
+be put back into this pool instead. use-ssl can be :no, :try, :require, :yes, or :full
+and defaults to the value of *default-use-ssl*
+
+- :try means if the server supports it
+- :require means use provided ssl certificate with no verification
+- :yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname
+- :full means expect a CA-signed cert for the supplied hostname and verify the server hostname
+If you set it to anything other than :no be sure to also load the CL+SSL library.
 
 ** variable *default-use-ssl*
    :PROPERTIES:
@@ -51,8 +58,13 @@ open-database, and defaults to the value of *default-use-ssl*.
    :CUSTOM_ID: e140fab3-b6fe-4e88-b9ca-241bbb64fce4
    :END:
 
-The default for connect's use-ssl argument. This starts at :no. If you set it to
-anything else, be sure to also load the CL+SSL library.
+The default for connect's use-ssl argument.
+Valid settings are :no, :try, :require, :yes, or :full
+:try means if the server supports it
+:require means use provided ssl certificate with no verification
+:yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname
+:full means expect a CA-signed cert for the supplied hostname and verify the server hostname
+If you set it to anything other than :no be sure to also load the CL+SSL library.
 
 ** method disconnect (database-connection)
    :PROPERTIES:
@@ -188,10 +200,10 @@ instead. Any of the following formats can be used, with the default being :rows:
 | :column	           | Return a single column as a list.                 |
 | :single	           | Return a single value. Will raise an error if the query returns more than one field. If the query returns more than one row, it returns the first row. |
 | :single!	          | Like :single except that it will throw an error when the number of selected rows is not equal to 1.  |
- | :array-hash         | Return an array of hashtables which map column names to hash table keys     |
-    | :json-strs          | Return a list of strings where each row is a json object expressed as a string  |
-    | :json-strs          | Return a single string where the row returned is a json object expressed as a string           |
-    | :json-array-str     | Return a string containing a json array, each element in the array is a selected row expressed as a json object |
+| :array-hash         | Return an array of hashtables which map column names to hash table keys     |
+| :json-strs          | Return a list of strings where each row is a json object expressed as a string  |
+| :json-strs          | Return a single string where the row returned is a json object expressed as a string           |
+| :json-array-str     | Return a string containing a json array, each element in the array is a selected row expressed as a json object |
 | (:dao type)	       | Return a list of DAOs of the given type. The names of the fields returned by the query must match slots in the DAO class the same way as with query-dao. |
 | (:dao type :single) | 	Return a single DAO of the given type. |
 
@@ -223,7 +235,7 @@ This is the default
 *** Alist
 Returns an alist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
 #+BEGIN_SRC lisp
-(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :alist)
+(query (:select 'id 'int4 'text :from 'test-data :where (:= 'id 3)) :alist)
 ((:ID . 3) (:INT4 . 3) (:TEXT . "text three"))
 #+END_SRC
 *** Str-alist
@@ -297,18 +309,41 @@ Return a list of strings where the row returned is a json object expressed as a 
 ("{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}"
  "{\"id\":2,\"int4\":0,\"text\":\"text two\"}")
 #+END_SRC
+This will also handle local-time timestamps and simple-date timestamps,
+time-of-day and date. E.g. (with a local-time timestamp)
+#+BEGIN_SRC lisp
+(query (:select 'timestamp-with-time-zone
+        :from 'test-data
+        :where (:< 'id 3))
+  :json-strs)
+
+'("{\"timestampWithTimeZone\":\"{2019-12-30T13:30:54.000000-05:00}\"}"
+  "{\"timestampWithTimeZone\":\"{1919-12-30T13:30:54.000000-05:00}\"}")
+#+END_SRC
+
+The following is an example with a simple-date timestamp.
+#+BEGIN_SRC lisp
+(query (:select 'timestamp-with-time-zone
+                       :from 'test-data
+                       :where (:< 'id 3)) :json-strs)
+'("{\"timestampWithTimeZone\":\"2019-12-30 18:30:54:0\"}"
+  "{\"timestampWithTimeZone\":\"1919-12-30 18:30:54:0\"}")
+#+END_SRC
 *** Json-str
 Return a single string where the row returned is a json object expressed as a string
 #+BEGIN_SRC lisp
 (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :json-str)
 "{\"id\":3,\"int4\":3,\"text\":\"text three\"}"
 #+END_SRC
+As with :json-strs, this will also work for either simple-date or local-time timestamps
+
 *** Json-array-str
 Return a string containing a json array, each element in the array is a selected row expressed as a json object
 #+BEGIN_SRC lisp
 (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :json-array-str)
 "[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]"
 #+END_SRC
+As with :json-strs, this will also work for either simple-date or local-time timestamps
 *** Second value returned
 If the database returns information about the amount rows that were affected,
 such as with updating or deleting queries, this is returned as a second value.

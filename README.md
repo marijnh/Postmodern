@@ -1,7 +1,7 @@
 # Postmodern
 A Common Lisp PostgreSQL programming interface
 ---
-Version 1.32
+Version 1.38
 
 Postmodern is a Common Lisp library for interacting with [PostgreSQL](http://www.postgresql.org) databases. It is under active development. Features are:
 
@@ -19,6 +19,13 @@ The biggest differences between this library and CLSQL/CommonSQL or cl-dbi are t
 * [License](#dependencies)
 * [Download and installation](#download-and-installation)
 * [Quickstart](#quickstart)
+* [Authentication](#authentication)
+* [Reference](#reference)
+* [Data types](#data-types)
+* [Portability](#portability)
+* [Reserved Words](#reserved-words)
+* [Feature Requests](#feature-requests)
+* [Resources](#resources)
 * [Running tests](#running-tests)
 * [Reference](#reference)
 * [Caveats and to-dos](#caveats-and-to-dos)
@@ -419,9 +426,8 @@ The reference manuals for the different components of Postmodern are kept in sep
 - [Simple-date](https://marijnhaverbeke.nl/postmodern/simple-date.html)
 - [CL-postgres](https://marijnhaverbeke.nl/postmodern/cl-postgres.html)
 
-## Data Types, Caveats and to-dos
+## Data Types
 ---
-### Data Types
 
 For a short comparison of lisp and Postgresql data types (date and time datatypes are described in the next section)
 
@@ -551,7 +557,7 @@ the same sample data looks like:
 | timestamp\_without\_timezone | 2020-05-16T05:47:33.315622-04:00 | TIMESTAMP             |
 | timestamp\_with\_timezone    | 2020-05-16T09:47:27.855146-04:00 | TIMESTAMP             |
 
-### Portability
+## Portability
 The Lisp code in Postmodern is theoretically portable across implementations,
 and seems to work on all major ones as well as some minor ones such as Genera.
 It is regularly tested on ccl, sbcl, ecl and cmucl. ABCL currently has issues with utf-8 and :null.
@@ -560,7 +566,7 @@ Please let us know if it does not work on the implementation that you normally u
 
 The library is not likely to work for PostgreSQL versions older than 8.4. Other features only work in newer Postgresql versions as the features were only introduced in those newer versions.
 
-### Reserved Words
+## Reserved Words
 It is highly suggested that you do not use words that are reserved by Postgresql as identifiers (e.g. table names, columns). The reserved words are:
 
 "all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric"
@@ -577,11 +583,9 @@ It is highly suggested that you do not use words that are reserved by Postgresql
 "similar" "some" "symmetric" "table" "then" "to" "trailing" "true" "union"
 "unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"
 
-### Things that could be implemented
+## Feature Requests
 Postmodern is under active development so issues and feature requests should
 be flagged on [[https://github.com/marijnh/Postmodern](Postmodern's site on github).
-
-Some areas that are currently under consideration can be found in the ROADMAP.md file.
 
 ## Resources
 ---

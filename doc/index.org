@@ -106,7 +106,11 @@ you would also pass the appropriate keyword port parameter. E.g.:
 #+END_SRC
 
 Ssl connections would similarly use the keyword parameter :use-ssl and
-pass :yes, :no or :try
+pass :no, :try, :require, :yes, or :full
+- :try means if the server supports it
+- :require means use provided ssl certificate with no verification
+- :yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname
+- :full means expect a CA-signed cert for the supplied hostname and verify the server hostname
 
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
 many:1, (in other words, changing connections) then with-connection form which establishes a connection with a lexical scope is more appropriate.
@@ -615,8 +619,9 @@ There is a good writeup of timezones at
 [[http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html]]
 and [[http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/][http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/]].
 
-Without simple-date or local-time properly loaded, sample date and time data
-from postgresql will look like:
+Without simple-date or local-time properly loaded and without use of the
+Postgresql to_char function, sample date and time data from postgresql will
+look like:
 
 | PG Type         |                                        Sample Return Value | Lisp Type                       |
 |-----------------+------------------------------------------------------------+---------------------------------|
@@ -626,6 +631,48 @@ from postgresql will look like:
 | timestamp_wo_tz |                                                 3798611253 | (INTEGER 0 4611686018427387903) |
 | timestamp_w_tz  |                                                 3798625647 | (INTEGER 0 4611686018427387903) |
 
+YOU DO NOT NEED TO ADD ANY OTHER LIBRARIES IF ALL YOU WANT TO DO IS GET ISO 8601 or
+[[https://tools.ietf.org/html/rfc3339][RFC 3339]] PROPERLY FORMATTED TIME AND DATE STRINGS WITH THE [[https://www.postgresql.org/docs/current/functions-formatting.html][TO_CHAR]] POSTGRESQL
+FUNCTION.
+
+Assume a data table with columns  "col_timestamp_without_time_zone", "col_timestamp_with_time_zone", "col_timestamptz", "col_timestamp", "col_time"
+and "col_date".
+
+First, just basic sql. In this example we ask for the timestamp_with_time_zone field
+three times to show differences in the result dealing with time zones. First we do not
+add a timezone parameter to the pattern, the second time  we ask for the time zone
+using TZ, the third time we ask for the offset from UTC and get back -04. We would get
+the same result using those additional parameters with the col_timestamptz field.
+
+#+BEGIN_SRC sql
+(query "(SELECT to_char(col_timestamp_with_time_zone, E'YYYY-MM-DD HH24:MI:SS'),
+                to_char(col_timestamp_with_time_zone, E'YYYY-MM-DD HH24:MI:SS TZ'),
+                to_char(col_timestamp_with_time_zone, E'YYYY-MM-DD HH24:MI:SS OF'),
+                to_char(col_timestamptz, E'YYYY-MM-DD HH24:MI:SS'),
+                to_char(col_timestamp, E'YYYY-MM-DD HH24:MI:SS'),
+                to_char(col_time, E'HH24:MI:SS'),
+                to_char(col_date, E'YYYY-MM-DD')
+         FROM short_data_type_tests
+         WHERE (id = 1))")
+(("2020-10-30 19:30:54" "2020-10-30 19:30:54 EDT" "2020-10-30 19:30:54 -04"
+"2020-10-30 19:30:54" "2020-10-30 19:30:54" "19:30:54" "2020-10-30"))
+#+END_SRC
+
+Now the s-sql version:
+#+BEGIN_SRC lisp
+(query (:select  (:to-char 'col_timestamp_with_time_zone "YYYY-MM-DD HH24:MI:SS TZ")
+                 (:to-char 'col_timestamp_with_time_zone "YYYY-MM-DD HH24:MI:SS OF")
+                 (:to-char 'col_timestamptz "YYYY-MM-DD HH24:MI:SS")
+                 (:to-char 'col_timestamp "YYYY-MM-DD HH24:MI:SS")
+                 (:to-char 'col_time "HH24:MI:SS")
+                 (:to-char 'col_date "YYYY-MM-DD")
+        :from 'short-data-type-tests
+        :where (:= 'id 1)))
+
+(("2020-10-30 19:30:54 EDT" "2020-10-30 19:30:54 -04" "2020-10-30 19:30:54"
+  "2020-10-30 19:30:54" "19:30:54" "2020-10-30"))
+#+END_SRC
+*** Simple-Date Library Use
 The Simple-date add-on library (not enabled by default)
 provides types (CLOS classes) for dates, timestamps, and intervals
 similar to the ones SQL databases use, in order to be able to store and read
@@ -654,6 +701,25 @@ With simple date loaded, the same data will look like this:
 | timestamp_without_timezone | #<TIMESTAMP 16-05-2020T09:47:33,315> | TIMESTAMP             |
 | timestamp_with_timezone    | #<TIMESTAMP 16-05-2020T13:47:27,855> | TIMESTAMP             |
 
+You can export these as json-strings with the encode-json-to-string function. E.g.
+#+BEGIN_SRC lisp
+(encode-json-to-string (query (:select 'timestamp-without-time-zone
+                               :from 'test-data
+                               :where (:= 'id 1))
+                               :single))
+"\"2020-12-30 13:30:54:0\""
+#+END_SRC
+Or more simply with passing one of the json result type parameters to the query
+function. E.g.
+#+BEGIN_SRC lisp
+(query (:select 'timestamp-with-time-zone
+        :from 'test-data
+        :where (:< 'id 3))
+  :json-strs)
+
+'("{\"timestampWithTimeZone\":\"2019-12-30 18:30:54:0\"}"
+  "{\"timestampWithTimeZone\":\"1919-12-30 18:30:54:0\"}")
+#+END_SRC
 To get back to the default cl-postgres reader:
 #+BEGIN_SRC lisp
 (setf cl-postgres:*sql-readtable*
@@ -666,6 +732,7 @@ time zones. One thing to remember is that PostgreSQL doesn't store timezone
 information when using `timestamp with time zone`. Time zone information only
 used to convert it to proper UTC timestamp.
 
+*** Local-Time Library Use
 For those who want to use local-time, to enable the local-time reader:
 #+BEGIN_SRC lisp
 (ql:quickload :cl-postgres+local-time)
@@ -684,7 +751,25 @@ the same sample data looks like:
 | timestamp_without_timezone | 2020-05-16T05:47:33.315622-04:00 | TIMESTAMP             |
 | timestamp_with_timezone    | 2020-05-16T09:47:27.855146-04:00 | TIMESTAMP             |
 
+Similarly to simple-date timestamps, these can be exported as json-strings with the encode-json-to-string function. E.g.
+#+BEGIN_SRC lisp
+(encode-json-to-string (query (:select 'timestamp-with-time-zone
+                               :from 'test-data
+                               :where (:= 'id 1))
+                               :single))
+"\"{2020-12-30T08:30:54.000000-05:00}\""
+#+END_SRC
+Or more simply with passing one of the json result type parameters to the query
+function. E.g.
+#+BEGIN_SRC lisp
+(query (:select 'timestamp-with-time-zone
+        :from 'test-data
+        :where (:< 'id 3))
+  :json-strs)
 
+'("{\"timestampWithTimeZone\":\"{2019-12-30T13:30:54.000000-05:00}\"}"
+  "{\"timestampWithTimeZone\":\"{1919-12-30T13:30:54.000000-05:00}\"}")
+#+END_SRC
 ** Portability
    :PROPERTIES:
    :ID:       769a0e88-de54-4356-a474-72708accbafb

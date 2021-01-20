@@ -7,7 +7,7 @@
 ;; (fiveam:run! :postmodern)
 
 (fiveam:def-suite :postmodern
-    :description "Test suite for postmodern subdirectory files")
+  :description "Test suite for postmodern subdirectory files")
 
 (fiveam:def-suite :postmodern-base
     :description "Base Test suite for postmodern subdirectory files")
@@ -15,8 +15,8 @@
 (fiveam:in-suite :postmodern-base)
 
 (fiveam:def-suite :postmodern-base
-    :description "Base test suite for postmodern"
-    :in :postmodern)
+  :description "Base test suite for postmodern"
+  :in :postmodern)
 
 (fiveam:in-suite :postmodern-base)
 
@@ -37,8 +37,8 @@
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
 
 (fiveam:def-suite :postmodern-base
-    :description "Base test suite for postmodern"
-    :in :postmodern)
+  :description "Base test suite for postmodern"
+  :in :postmodern)
 
 (fiveam:in-suite :postmodern-base)
 
@@ -123,6 +123,359 @@
       (execute (:drop-table 'test-data)))
     (is (not (table-exists-p 'test-data)))))
 
+(test base-prepare
+  (with-test-connection
+    (drop-prepared-statement "all")
+    (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
+    (execute (:create-table test-data ((a :type integer :primary-key t)
+                                       (b :type real)
+                                       (c :type (or text db-null)))))
+    (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
+    (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null))
+    (let ((select-int (prepare (:select (:type '$1 integer)) :single))
+          (byte-arr (make-array 10 :element-type '(unsigned-byte 8) :initial-element 10))
+          (select-bytes (prepare (:select (:type '$1 bytea)) :single))
+          (select-int-internal-name nil))
+      (defprepared 'select1 "select a from test_data where c = $1" :single)
+      ;; Defprepared does not change the prepared statements logged in the postmodern connection or
+      ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
+      (is (equal 0 (length (list-postmodern-prepared-statements t))))
+      (is (equal 0 (length (list-prepared-statements t))))
+      (is (= (funcall select-int 10) 10))
+      (is (= (funcall select-int -40) -40))
+      (is (eq (funcall select-int :null) :null))
+      (setf select-int-internal-name (car (list-prepared-statements t)))
+      ;; the funcall creates the prepared statements logged in the postmodern connection
+      ;; and the postgresql connection
+      (is (equal 1 (length (list-postmodern-prepared-statements t))))
+      (is (equal 1 (length (list-prepared-statements t))))
+      (is (equalp (funcall select-bytes byte-arr) byte-arr))
+      (is (equal 2 (length (list-prepared-statements t))))
+      (is (not (prepared-statement-exists-p "select1")))
+      (is (equal 1 (funcall 'select1 "foobar")))
+      (is (prepared-statement-exists-p "select1"))
+      (is (equal 3 (length (list-postmodern-prepared-statements t))))
+      (is (equal 3 (length (list-prepared-statements t))))
+      ;; drop the defprepared statement from postgresql, but not from postmodern`
+      (drop-prepared-statement "select1" :location :postgresql)
+      (is (equal 3 (length (list-postmodern-prepared-statements t))))
+      (is (equal 2 (length (list-prepared-statements t))))
+      ;; drop one of the prepared statements from both postgresql and postmodern
+      (drop-prepared-statement select-int-internal-name)
+      (is (not (prepared-statement-exists-p "select1")))
+      (is (equal 1 (length (list-prepared-statements t))))
+      (is (equal 2 (length (list-postmodern-prepared-statements t))))
+      ;; recreate the defprepared statement into postgresql
+      (is (equal 1 (funcall 'select1 "foobar")))
+      (is (prepared-statement-exists-p "select1"))
+      (is (equal 2 (length (list-prepared-statements t))))
+      ;; recreate the first prepared statement back into both postgresql and postmodern
+      (is (= (funcall select-int 10) 10))
+      (is (equal 3 (length (list-postmodern-prepared-statements t))))
+      (is (equal 3 (length (list-prepared-statements t))))
+      (is (member '("SELECT1" . "select a from test_data where c = $1")
+                  (list-postmodern-prepared-statements) :test 'equal))
+      (is (member "SELECT1" (list-postmodern-prepared-statements t) :test 'equal))
+      (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
+      ;; drop the prepared select1 statement from both postgresql and postmodern
+      (drop-prepared-statement 'select1)
+      (signals error (funcall 'select1))
+      (is (not (prepared-statement-exists-p "select1")))
+      ;; Testing overwrites. Now change the defprepared statement
+      (defprepared select1 "select a from test_data where c = $1" :single)
+      (is (equal 1 (funcall 'select1 "foobar")))
+      (defprepared select1 "select c from test_data where a = $1" :single)
+      ;; Defprepared does not change the prepared statements logged in the postmodern connection or
+      ;; in the postgresql connection. That happens at funcall.
+      ;; Test still the original in both postgresql and postmodern
+      (is (equal "select a from test_data where c = $1" (find-postgresql-prepared-statement "select1")))
+      (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
+      ;; funcall now creates the new version
+      (if *allow-overwriting-prepared-statements*
+          (is (eq :null (funcall 'select1 2)))
+          (is (eq nil (funcall 'select1 2))))
+      ;; Test to ensure that we do not recreate the statement each time it is funcalled
+      (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single)))
+        (format t "Sleep 1 to allow prepare_time comparison~%")
+        (sleep 1)
+        (funcall 'select1 2)
+        (is (equal time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'" :single))))
+      (drop-prepared-statement "select1")
+      (signals error (funcall 'select1 2))
+      (defprepared select1 "select c from test_data where a = $1" :single)
+      (if *allow-overwriting-prepared-statements*
+          (is (eq :null (funcall 'select1 2)))
+          (is (eq :null (funcall 'select1 2))))
+      (drop-prepared-statement "all")
+      (is (equal 0 (length (list-prepared-statements t))))
+      (is (equal 0 (length (list-postmodern-prepared-statements t))))
+      ;; recreate select1, then drop the connection and call select1
+      (defprepared select1 "select c from test_data where a = $1" :single)
+      (disconnect *database*)
+      (signals error (query "select c from test_data where a = 2" :single))
+      (is (eq :null (funcall 'select1 2)))
+      (execute (:drop-table 'test-data)))))
+
+(test base-prepare-reserved-words
+  (with-test-connection
+    (drop-prepared-statement "all")
+    (when (table-exists-p 'from-test) (execute (:drop-table 'from-test)))
+    (execute "CREATE TABLE from_test (id SERIAL NOT NULL, flight INTEGER DEFAULT NULL, \"from\" VARCHAR(100) DEFAULT NULL, to_destination VARCHAR(100) DEFAULT NULL, PRIMARY KEY (id, \"from\"))")
+    (execute (:insert-into 'from-test :set 'flight 1 'from "Stykkishólmur" :to-destination "Reykjavík"))
+    (execute (:insert-into 'from-test :set 'flight 2 'from "Reykjavík" :to-destination "Seyðisfjörður"))
+    (defprepared select1 "select \"from\" from from_test where to_destination = $1" :single)
+    ;; the funcall creates the prepared statements logged in the postmodern connection
+    ;; and the postgresql connection
+    (is (equal "Reykjavík" (funcall 'select1 "Seyðisfjörður")))
+    (execute (:drop-table 'from-test))))
+
+(test base-prepare-pooled
+  (with-pooled-test-connection
+    (drop-prepared-statement "all")
+    (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
+    (execute (:create-table test-data ((a :type integer :primary-key t)
+                                       (b :type real)
+                                       (c :type (or text db-null)))))
+    (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
+    (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null))
+    (let ((select-int (prepare (:select (:type '$1 integer)) :single))
+          (byte-arr (make-array 10 :element-type '(unsigned-byte 8) :initial-element 10))
+          (select-bytes (prepare (:select (:type '$1 bytea)) :single))
+          (select-int-internal-name nil))
+      (defprepared select1 "select a from test_data where c = $1" :single)
+      ;; Defprepared does not change the prepared statements logged in the postmodern connection or
+      ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
+      (is (equal 0 (length (list-postmodern-prepared-statements t))))
+      (is (equal 0 (length (list-prepared-statements t))))
+      (is (= (funcall select-int 10) 10))
+      (is (= (funcall select-int -40) -40))
+      (is (eq (funcall select-int :null) :null))
+      (setf select-int-internal-name (car (list-prepared-statements t)))
+      ;; the funcall creates the prepared statements logged in the postmodern connection
+      ;; and the postgresql connection
+      (is (equal 1 (length (list-postmodern-prepared-statements t))))
+      (is (equal 1 (length (list-prepared-statements t))))
+      (is (equalp (funcall select-bytes byte-arr) byte-arr))
+      (is (equal 2 (length (list-prepared-statements t))))
+      (is (not (prepared-statement-exists-p "select1")))
+      (is (equal 1 (funcall 'select1 "foobar")))
+      (is (prepared-statement-exists-p "select1"))
+      (is (equal 3 (length (list-postmodern-prepared-statements t))))
+      (is (equal 3 (length (list-prepared-statements t))))
+      ;; drop the defprepared statement from postgresql, but not from postmodern`
+      (drop-prepared-statement "select1" :location :postgresql)
+      (is (equal 3 (length (list-postmodern-prepared-statements t))))
+      (is (equal 2 (length (list-prepared-statements t))))
+      ;; drop one of the prepared statements from both postgresql and postmodern
+      (drop-prepared-statement select-int-internal-name)
+      (is (not (prepared-statement-exists-p "select1")))
+      (is (equal 1 (length (list-prepared-statements t))))
+      (is (equal 2 (length (list-postmodern-prepared-statements t))))
+      ;; recreate the defprepared statement into postgresql
+      (is (equal 1 (funcall 'select1 "foobar")))
+      (is (prepared-statement-exists-p "select1"))
+      (is (equal 2 (length (list-prepared-statements t))))
+      ;; recreate the first prepared statement back into both postgresql and postmodern
+      (is (= (funcall select-int 10) 10))
+      (is (equal 3 (length (list-postmodern-prepared-statements t))))
+      (is (equal 3 (length (list-prepared-statements t))))
+      (is (member '("SELECT1" . "select a from test_data where c = $1")
+                  (list-postmodern-prepared-statements) :test 'equal))
+      (is (member "SELECT1" (list-postmodern-prepared-statements t) :test 'equal))
+      (is (equal "select a from test_data where c = $1" (find-postmodern-prepared-statement "select1")))
+      ;; drop the prepared select1 statement from both postgresql and postmodern
+      (drop-prepared-statement 'select1)
+      (signals error (funcall 'select1))
+      (is (not (prepared-statement-exists-p "select1")))
+      ;; Testing overwrites. Now change the defprepared statement
+      (defprepared select1 "select a from test_data where c = $1" :single)
+      (is (equal 1 (funcall 'select1 "foobar")))
+      (defprepared select1 "select c from test_data where a = $1" :single)
+      ;; Defprepared does not change the prepared statements logged in the postmodern connection or
+      ;; in the postgresql connection. That happens at funcall.
+      ;; Test still the original in both postgresql and postmodern
+      (is (equal "select a from test_data where c = $1"
+                 (find-postgresql-prepared-statement "select1")))
+      (is (equal "select a from test_data where c = $1"
+                 (find-postmodern-prepared-statement "select1")))
+      ;; funcall now creates the new version
+      (if *allow-overwriting-prepared-statements*
+          (is (eq :null (funcall 'select1 2)))
+          (is (eq nil (funcall 'select1 2))))
+
+      ;; Test to ensure that we do not recreate the statement each time it is funcalled
+      (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'"
+                          :single)))
+        (format t "Sleep 1 to allow prepare_time comparison~%")
+        (sleep 1)
+        (funcall 'select1 2)
+        (is (equal time1
+                   (query "select prepare_time from pg_prepared_statements where name = 'select1'"
+                          :single))))
+      (drop-prepared-statement "select1")
+      (signals error (funcall 'select1 2))
+      (defprepared select1 "select c from test_data where a = $1" :single)
+      (if *allow-overwriting-prepared-statements*
+          (is (eq :null (funcall 'select1 2)))
+          (is (eq :null (funcall 'select1 2))))
+      (drop-prepared-statement "all")
+      (is (equal 0 (length (list-prepared-statements t))))
+      (is (equal 0 (length (list-postmodern-prepared-statements t))))
+      ;; recreate select1, then drop the connection and call select1
+      (defprepared select1 "select c from test_data where a = $1" :single)
+      (disconnect *database*)
+      (is (eq :null (funcall 'select1 2)))
+      (execute (:drop-table 'test-data)))))
+
+(test base-prepared-statement-over-reconnect
+  (let ((terminate-backend
+          (prepare
+           "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
+           :rows))
+        (getpid (prepare "SELECT pg_backend_pid()" :single)))
+    (with-test-connection
+      (is (equal (query "select pg_backend_pid()" :single)
+                 (funcall getpid)))
+      (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
+      (let ((pid (pomo:get-pid)))
+        (pomo:terminate-backend pid)
+        (signals database-connection-error
+          (query "select pg_backend_pid()" :single)))
+      (is (integerp (funcall getpid))))
+
+    ;; Demonstrate that a prepared statement will reconnect
+    ;; even if it is a termination
+    (with-test-connection
+      (is (equal (query "select pg_backend_pid()" :single)
+                 (funcall getpid)))
+      (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
+      (funcall getpid)
+      (is-true (query "select pg_backend_pid()" :single)))
+
+    ;; A regular query does not have the built-in exception handling
+    ;; available to prepared statements, so this will trigger the
+    ;; exception handling below, setting reconnected to true.
+    (with-test-connection
+      (let ((original-pid (funcall getpid))
+            (reconnectedp nil))
+        (block done
+          (handler-bind
+              ((database-connection-error
+                 (lambda (condition)
+                   (let ((restart (find-restart :reconnect condition)))
+                     (is (not (null restart)))
+                     (setq reconnectedp t)
+                     (invoke-restart restart)))))
+            (pomo:terminate-backend original-pid)
+            (is-true (query "select pg_backend_pid()" :single))
+            (is-true reconnectedp)
+            (is (/= original-pid (funcall getpid)))))
+
+        ;; Re-using the prepared statement on the new connection.
+        (multiple-value-bind (rows count)
+            (funcall terminate-backend 0)
+          (is (null rows))
+          (is (zerop count)))))
+
+    ;; A funcall to a prepared statement reconnects on its own
+    ;; without acdessing the database-connection-error handler
+    ;; above, so reconnectedp will still be nil
+    (with-test-connection
+      (let ((original-pid (funcall getpid))
+            (reconnectedp nil))
+        (block done
+          (handler-bind
+              ((database-connection-error
+                 (lambda (condition)
+                   (let ((restart (find-restart :reconnect condition)))
+                     (is (not (null restart)))
+                     (setq reconnectedp t)
+                     (invoke-restart restart)))))
+            (pomo:terminate-backend original-pid)
+            (is-true (funcall getpid))
+            (is-false reconnectedp)
+            (is (/= original-pid (funcall getpid)))))
+
+        ;; Re-using the prepared statement on the new connection.
+        (multiple-value-bind (rows count)
+            (funcall terminate-backend 0)
+          (is (null rows))
+          (is (zerop count)))))))
+
+(test base-prepared-statement-over-reconnect-pooled-1
+  (with-pooled-test-connection
+    (drop-prepared-statement "all")
+    (let ((terminate-backend
+            (prepare
+             "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
+             :rows))
+          (getpid (prepare "SELECT pg_backend_pid()" :single)))
+      ;; Demonstrate that a prepared statement will reconnect
+      ;; even if it is a termination
+
+      (is (equal (query "select pg_backend_pid()" :single)
+                 (funcall getpid)))
+      (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
+      (let ((pid (pomo:get-pid)))
+        (pomo:terminate-backend pid)
+        (signals database-connection-error
+          (query "select pg_backend_pid()" :single)))
+
+      (funcall getpid)
+      (sleep 1)
+      (is (integerp (query "select pg_backend_pid()" :single)))
+      (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
+      (funcall getpid)
+      (is-true (query "select pg_backend_pid()" :single))
+
+      ;; A regular query does not have the built-in exception handling
+      ;; available to prepared statements, so this will trigger the
+      ;; exception handling below, setting reconnected to true.
+      (let ((original-pid (funcall getpid))
+            (reconnectedp nil))
+        (block done
+          (handler-bind
+              ((database-connection-error
+                 (lambda (condition)
+                   (let ((restart (find-restart :reconnect condition)))
+                     (is (not (null restart)))
+                     (setq reconnectedp t)
+                     (invoke-restart restart)))))
+            (pomo:terminate-backend original-pid)
+            (is-true (query "select pg_backend_pid()" :single))
+            (is-true reconnectedp)
+            (is (/= original-pid (funcall getpid)))))
+
+        ;; Re-using the prepared statement on the new connection.
+        (multiple-value-bind (rows count)
+            (funcall terminate-backend 0)
+          (is (null rows))
+          (is (zerop count))))
+
+      ;; A funcall to a prepared statement reconnects on its own
+      ;; without acdessing the database-connection-error handler
+      ;; above, so reconnectedp will still be nil
+      (let ((original-pid (funcall getpid))
+            (reconnectedp nil))
+        (block done
+          (handler-bind
+              ((database-connection-error
+                 (lambda (condition)
+                   (let ((restart (find-restart :reconnect condition)))
+                     (is (not (null restart)))
+                     (setq reconnectedp t)
+                     (invoke-restart restart)))))
+            (pomo:terminate-backend original-pid)
+            (is-true (funcall getpid))
+            (is-false reconnectedp)
+            (is (/= original-pid (funcall getpid)))))
+
+        ;; Re-using the prepared statement on the new connection.
+        (multiple-value-bind (rows count)
+            (funcall terminate-backend 0)
+          (is (null rows))
+          (is (zerop count)))))))
+
 (test doquery
   (with-test-connection
     (doquery (:select 55 "foobar") (number string)
@@ -132,7 +485,7 @@
 (test doquery-params
   (with-test-connection
     (doquery ("select $1::integer + 10" 20) (answer)
-       (is (= answer 30)))))
+      (is (= answer 30)))))
 
 
 (test notification
@@ -161,7 +514,7 @@
                             '("public" "information_schema" "uniq")
                             :test #'equal)))
       (when excess-schemas (loop for x in excess-schemas do
-                                 (drop-schema x :cascade 't))))
+        (drop-schema x :cascade 't))))
     (when (table-exists-p 'test-uniq)
       (execute (:drop-table 'test-uniq)))
     (is (schema-exists-p :public))
@@ -183,12 +536,12 @@
       (execute (:drop-table 'test-uniq)))
     (query (:create-table 'uniq.gracie ((id :type integer))))
     (is (equal (list-tables-in-schema "uniq")
-        '(("gracie"))))
+               '(("gracie"))))
     (is (equal (list-tables-in-schema 'uniq)
-        '(("gracie"))))
+               '(("gracie"))))
     (query (:create-table "uniq.george" ((id :type integer))))
     (is (equal (list-tables-in-schema "uniq")
-        '(("george") ("gracie"))))
+               '(("george") ("gracie"))))
     (is (table-exists-p "test.uniq.george"))
     (is (table-exists-p "uniq.george"))
     (is (table-exists-p "george" "uniq"))
@@ -250,15 +603,15 @@ and second the string name for the datatype."
     (query (:create-index 'idx-people-names :on 'people :fields 'last-name 'first-name))
     (query (:create-index 'idx-people-first-names :on 'people :fields 'first-name))
     (query (:insert-rows-into 'people
-                          :columns 'first-name 'last-name
-                          :values '(("Eliza" "Gregory")  ("Dean" "Rodgers")  ("Christine" "Alvarez")
-                                    ("Dennis" "Peterson") ("Ernest" "Roberts") ("Jorge" "Wood")
-                                    ("Harvey" "Strickland") ("Eugene" "Rivera")
-                                    ("Tillie" "Bell")  ("Marie" "Lloyd")  ("John" "Lyons")
-                                    ("Lucas" "Gray")  ("Edward" "May")
-                                    ("Randy" "Fields")  ("Nell" "Malone")  ("Jacob" "Maxwell")
-                                    ("Vincent" "Adams") ("Henrietta" "Schneider")
-                                    ("Ernest" "Mendez")  ("Jean" "Adams")  ("Olivia" "Adams"))))
+            :columns 'first-name 'last-name
+            :values '(("Eliza" "Gregory")  ("Dean" "Rodgers")  ("Christine" "Alvarez")
+                      ("Dennis" "Peterson") ("Ernest" "Roberts") ("Jorge" "Wood")
+                      ("Harvey" "Strickland") ("Eugene" "Rivera")
+                      ("Tillie" "Bell")  ("Marie" "Lloyd")  ("John" "Lyons")
+                      ("Lucas" "Gray")  ("Edward" "May")
+                      ("Randy" "Fields")  ("Nell" "Malone")  ("Jacob" "Maxwell")
+                      ("Vincent" "Adams") ("Henrietta" "Schneider")
+                      ("Ernest" "Mendez")  ("Jean" "Adams")  ("Olivia" "Adams"))))
     (let ((idx-symbol (first (list-indices)))
           (idx-string (first (list-indices t))))
       (is (pomo:index-exists-p idx-symbol))
@@ -268,13 +621,13 @@ and second the string name for the datatype."
                  (:IDX-PEOPLE-NAMES :LAST-NAME) (:PEOPLE-PKEY :ID))))
     (is (equal (list-table-indices 'people t)
                '(("idx_people_first_names" "first_name") ("idx_people_names" "first_name")
-          ("idx_people_names" "last_name") ("people_pkey" "id"))))
+                 ("idx_people_names" "last_name") ("people_pkey" "id"))))
     (is (equal (list-table-indices "people")
                '((:IDX-PEOPLE-FIRST-NAMES :FIRST-NAME) (:IDX-PEOPLE-NAMES :FIRST-NAME)
                  (:IDX-PEOPLE-NAMES :LAST-NAME) (:PEOPLE-PKEY :ID))))
     (is (equal (list-table-indices "people" t)
                '(("idx_people_first_names" "first_name") ("idx_people_names" "first_name")
-          ("idx_people_names" "last_name") ("people_pkey" "id"))))
+                 ("idx_people_names" "last_name") ("people_pkey" "id"))))
     (is (equal (list-unique-or-primary-constraints "people" t)
                '(("people_pkey"))))
     (is (equal (list-unique-or-primary-constraints "people")
@@ -452,179 +805,11 @@ and second the string name for the datatype."
   (is (equal (valid-sql-identifier-p "会议") T))
   (is (equal (valid-sql-identifier-p "kusipää") T)))
 
-(defun return-types-fixture ()
-  (with-test-connection
-          (when (table-exists-p 'test-data)
-            (query (:drop-table :if-exists 'test-data :cascade)))
-        (execute (:create-table test-data ((id :type integer :primary-key t)
-                                           (int4 :type integer)
-                                           (text :type (or text db-null))
-                                           (jsonb :type (or jsonb db-null)))))
-        (query (:insert-rows-into 'test-data
-                :columns 'id 'int4 'text 'jsonb
-                :values '((1 2147483645 "text one" "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}")
-                          (2 0 "text two" "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}")
-                          (3 3 "text three" "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\", \"granularity\": \"year\"}"))))))
-
-(test return-types
-      (with-test-connection
-        (return-types-fixture)
-        (is (equal (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:< 'id 3)))
-                   '((1 2147483645 "text one") (2 0 "text two"))))
-        (is (equal (query (:select 'text :from 'test-data :where (:= 'id 3)) :single)
-                   "text three"))
-        (is (equal (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:= 'id 3)) :list)
-                   '(3 3 "text three")))
-        (is (equal (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:< 'id 3)) :lists)
-                   '((1 2147483645 "text one") (2 0 "text two"))))
-        (is (equal (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:= 'id 3)) :alist)
-                   '((:ID . 3) (:INT4 . 3) (:TEXT . "text three"))))
-        (is (equal (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:= 'id 3)) :str-alist)
-                   '(("id" . 3) ("int4" . 3) ("text" . "text three"))))
-        (is (equal (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:< 'id 3)) :alists)
-                   '(((:ID . 1) (:INT4 . 2147483645) (:TEXT . "text one"))
-                     ((:ID . 2) (:INT4 . 0) (:TEXT . "text two")))))
-        (is (equal (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:< 'id 3)) :str-alists)
-                   '((("id" . 1) ("int4" . 2147483645) ("text" . "text one"))
-                     (("id" . 2) ("int4" . 0) ("text" . "text two")))))
-        (is (equal (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:= 'id 3)) :plist)
-                   '(:ID 3 :INT4 3 :TEXT "text three")))
-        (is (equal (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:< 'id 3)) :plists)
-                   '((:ID 1 :INT4 2147483645 :TEXT "text one")
-                     (:ID 2 :INT4 0 :TEXT "text two"))))
-        (is (typep (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:< 'id 3)) :array-hash) 'vector))
-        (is (typep (aref (query (:select 'id 'int4 'text :from 'test-data
-                                 :where (:< 'id 3)) :array-hash) 1) 'hash-table))
-        (let ((val (alexandria:hash-table-alist
-                    (aref
-                     (query (:select 'id 'int4 'text :from 'test-data
-                             :where (:< 'id 3)) :array-hash)
-                     1))))
-          (is (or (equal val
-                         '(("text" . "text two") ("int4" . 0) ("id" . 2)))
-                  (equal val
-                      '(("id" . 2) ("int4" . 0) ("text" . "text two"))))))
-        (is (equal (query (:select 'id :from 'test-data
-                           :where (:< 'id 3)) :column)
-                   '(1 2)))
-        (is (equal (query (:select 'id :from 'test-data
-                           :where (:= 'id 3)) :column)
-                   '(3)))
-        (is (equal (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:< 'id 3)) :json-strs)
-                   '("{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}"
-                     "{\"id\":2,\"int4\":0,\"text\":\"text two\"}")))
-        (is (equal (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:= 'id 3)) :json-str)
-                   "{\"id\":3,\"int4\":3,\"text\":\"text three\"}"))
-        (is (equal (query (:select 'id 'int4 'text :from 'test-data
-                           :where (:< 'id 3)) :json-array-str)
-                   "[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]"))
-        (query (:drop-table :if-exists 'test-data :cascade))))
-
-(test return-types-json
-  (with-test-connection
-    (return-types-fixture)
-    (is (equal (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:< 'id 3)))
-               '((1
-                  "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}")
-                 (2
-                  "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}"))))
-    (is (equal (query (:select 'jsonb :from 'test-data :where (:= 'id 3)) :single)
-               "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\", \"granularity\": \"year\"}"))
-    (is (equal (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:= 'id 3)) :list)
-               '(3
-                 "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\", \"granularity\": \"year\"}")))
-    (is (equal (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:< 'id 3)) :lists)
-               '((1
-                  "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}")
-                 (2
-                  "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}"))))
-    (is (equal (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:= 'id 3)) :alist)
-               '((:ID . 3)
-                 (:JSONB
-                  . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\", \"granularity\": \"year\"}"))))
-    (is (equal (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:= 'id 3)) :str-alist)
-               '(("id" . 3)
-                 ("jsonb"
-                  . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\", \"granularity\": \"year\"}"))))
-    (is (equal (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:< 'id 3)) :alists)
-               '(((:ID . 1)
-                  (:JSONB
-                   . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}"))
-                 ((:ID . 2)
-                  (:JSONB
-                   . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}")))))
-    (is (equal (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:< 'id 3)) :str-alists)
-               '((("id" . 1)
-                  ("jsonb"
-                   . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}"))
-                 (("id" . 2)
-                  ("jsonb"
-                   . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}")))))
-    (is (equal (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:= 'id 3)) :plist)
-               '(:ID 3 :JSONB
-                 "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\", \"granularity\": \"year\"}")))
-    (is (equal (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:< 'id 3)) :plists)
-               '((:ID 1 :JSONB
-                  "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}")
-                 (:ID 2 :JSONB
-                  "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}"))))
-    (is (typep (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:< 'id 3)) :array-hash) 'vector))
-    (is (typep (aref (query (:select 'id 'jsonb :from 'test-data
-                                                :where (:< 'id 3)) :array-hash) 1) 'hash-table))
-    (let ((val (alexandria:hash-table-alist
-                        (aref
-                         (query (:select 'id 'jsonb :from 'test-data
-                                                    :where (:< 'id 3)) :array-hash)
-                         1))))
-      (is (or
-           (equal val
-            '(("jsonb"
-               . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}")
-              ("id" . 2)))
-           (equal val
-            '(("id" . 2)
-              ("jsonb"
-               . "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Egypt\", \"description\": \"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\", \"granularity\": \"year\"}"))))))
-    (is (equal (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:< 'id 3)) :json-strs)
-               '("{\"id\":1,\"jsonb\":\"{\\\"date\\\": \\\"-300\\\", \\\"lang\\\": \\\"en\\\", \\\"category1\\\": \\\"By place\\\", \\\"category2\\\": \\\"Greece\\\", \\\"description\\\": \\\"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\\\", \\\"granularity\\\": \\\"year\\\"}\"}"
-                 "{\"id\":2,\"jsonb\":\"{\\\"date\\\": \\\"-300\\\", \\\"lang\\\": \\\"en\\\", \\\"category1\\\": \\\"By place\\\", \\\"category2\\\": \\\"Egypt\\\", \\\"description\\\": \\\"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\\\", \\\"granularity\\\": \\\"year\\\"}\"}")))
-    (is (equal (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:= 'id 3)) :json-str)
-               "{\"id\":3,\"jsonb\":\"{\\\"date\\\": \\\"-300\\\", \\\"lang\\\": \\\"en\\\", \\\"category1\\\": \\\"By place\\\", \\\"category2\\\": \\\"Egypt\\\", \\\"description\\\": \\\"Ptolemy concludes an alliance with King Lysimachus of Thrace and gives him his daughter Arsinoe II in marriage.\\\", \\\"granularity\\\": \\\"year\\\"}\"}"))
-    (is (equal (query (:select 'id 'jsonb :from 'test-data
-                                          :where (:< 'id 3)) :json-array-str)
-               "[{\"id\":1,\"jsonb\":\"{\\\"date\\\": \\\"-300\\\", \\\"lang\\\": \\\"en\\\", \\\"category1\\\": \\\"By place\\\", \\\"category2\\\": \\\"Greece\\\", \\\"description\\\": \\\"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\\\", \\\"granularity\\\": \\\"year\\\"}\"}, {\"id\":2,\"jsonb\":\"{\\\"date\\\": \\\"-300\\\", \\\"lang\\\": \\\"en\\\", \\\"category1\\\": \\\"By place\\\", \\\"category2\\\": \\\"Egypt\\\", \\\"description\\\": \\\"Pyrrhus, the King of Epirus, is taken as a hostage to Egypt after the Battle of Ipsus and makes a diplomatic marriage with the princess Antigone, daughter of Ptolemy and Berenice.\\\", \\\"granularity\\\": \\\"year\\\"}\"}]"))
-    (query (:drop-table :if-exists 'test-data :cascade))))
-
-
 (test rename-table-and-columns
   (with-test-connection
     (when (schema-exists-p 'test-schema)
       (drop-schema 'test-schema :cascade t :if-exists t))
-    (create-schema 'test-schema))
+    (create-schema 'test-schema)
     (when (table-exists-p 'test-schema.t1)
       (drop-table 'test-schema.t1 :if-exists t :cascade t))
     (when (table-exists-p 'test-rename-t1)
@@ -661,4 +846,4 @@ and second the string name for the datatype."
     (is (table-exists-p "test-rename-t2"))
     (drop-table 'test-rename-t2 :if-exists t :cascade t)
     (drop-table 'test-schema.t2 :if-exists t :cascade t)
-    (drop-schema 'test-schema :cascade t :if-exists t))
+    (drop-schema 'test-schema :cascade t :if-exists t)))

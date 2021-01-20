@@ -23,6 +23,22 @@
 
 ;;; These tests must be run in order. They also assume that the existing user is a superuser
 
+(defun test-create-role-names ()
+  (let ((names nil))
+    (loop for database in '("d1" "d2" "all") do
+      (loop for schema in '("public" "s2") do
+        (loop for table in '("t1" "all")  do
+          (let ((name (format nil "readonly_d_~a_s_~a_t_~a" database schema table)))
+            (push name names)))))
+    (push "standard" names)
+    names))
+
+(defparameter *test-dbs* '("d1" "d1_al" "d2" "d2_al" "d3" "d3_al"))
+(defparameter *first-test-dbs* '("d1" "d1_al" "d2" "d2_al"))
+(defparameter *subsequent-test-dbs* '("d3"))
+(defparameter *public-limited-test-dbs* '("d1_al""d2_al" "d3_al"))
+(defparameter *test-roles* (test-create-role-names))
+
 (defun test-result (result)
   (cond ((not (listp result))
          result)
@@ -55,15 +71,6 @@
         (loop for table in '("t1" "t2" "t3")  do
           (generate-test-table-row database name schema table))))))
 
-(defun test-create-role-names ()
-  (let ((names nil))
-    (loop for database in '("d1" "d2" "all") do
-      (loop for schema in '("public" "s2") do
-        (loop for table in '("t1" "all")  do
-          (let ((name (format nil "readonly_d_~a_s_~a_t_~a" database schema table)))
-            (push name names)))))
-    (push "standard" names)
-    names))
 
 (defun test-create-roles ()
   (loop for database in '("d1" "d2" "all") do
@@ -75,12 +82,6 @@
                                                 :all
                                                 database))))))
   (create-role "standard" "standard" :base-role :standard))
-
-(defparameter *test-dbs* '("d1" "d1_al" "d2" "d2_al" "d3" "d3_al"))
-(defparameter *first-test-dbs* '("d1" "d1_al" "d2" "d2_al"))
-(defparameter *subsequent-test-dbs* '("d3"))
-(defparameter *public-limited-test-dbs* '("d1_al""d2_al" "d3_al"))
-(defparameter *test-roles* (test-create-role-names))
 
 (defun clean-test ()
   "Drops roles and databases created by this test suite."

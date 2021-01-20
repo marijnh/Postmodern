@@ -293,18 +293,31 @@ the expressions that should be selected. After this, an optional :distinct
 may follow, which will cause the query to only select distinct rows, or
 alternatively :distinct-on followed by a group of row names. Next comes the
 optional keyword :from, followed by at least one table name and then any
-number of join statements. Join statements start with one of :left-join,
-:right-join, :inner-join, :outer-join or :cross-join, then a table name or
-subquery, then the keyword :on or :using, if applicable, and then a form.
+number of join statements.
+
+Join statements start with one of :join, :left-join,
+:right-join, :inner-join, :outer-join, :cross-join (or those with -lateral,
+e.g :join-lateral, :left-join-lateral, :right-join-lateral, :inner-join-lateral, :outer-join-lateral).
+S-sql will accept :join, but best usage is to explicitly use :inner-join instead.
+
+Then comes a table name or subquery,
+
+Then there is an optional :with-ordinality or :with-ordinality-as alisa
+
+Then the keyword :on or :using, if applicable, and then a form.
 A join can be preceded by :natural (leaving off the :on clause) to use a
-natural join. After the joins an optional :where followed by a single form
-may occur. And finally :group-by and :having can optionally be specified.
-The first takes any number of arguments, and the second only one. A couple of
-examples:
+natural join.
+
+After the joins an optional :where followed by a single form may occur.
+
+Finally :group-by and :having can optionally be specified.
+The first takes any number of arguments, and the second only one.
+
+A few examples:
 #+BEGIN_SRC lisp
 (query (:select 'item :distinct
-                :from 'item-table
-                :where (:= 'col1 "Albania")))
+        :from 'item-table
+        :where (:= 'col1 "Albania")))
 
 (query (:select (:+ 'field-1 100) 'field-5
         :from (:as 'my-table 'x)
@@ -313,25 +326,54 @@ examples:
         :where (:not-null 'a.field-3)))
 
 (query (:order-by
-        (:select 'regions.name
-                 (:count 'regions.name)
-                 :from 'countries 'regions
-                 :where (:= 'regions.id 'countries.region-id)
-                 :group-by 'regions.name)
+         (:select 'regions.name
+            (:count 'regions.name)
+          :from 'countries 'regions
+          :where (:= 'regions.id 'countries.region-id)
+          :group-by 'regions.name)
         'regions.name))
 
 (query (:select (:count 'c.id) 'r.name
-                :from (:as 'countries 'c)
-                :inner-join (:as 'regions 'r)
-                :on (:= 'c.region-id 'r.id)
-                :group-by 'r.name
-                :having (:< (:count 'c.id) 10)))
+        :from (:as 'countries 'c)
+        :inner-join (:as 'regions 'r)
+        :on (:= 'c.region-id 'r.id)
+        :group-by 'r.name
+        :having (:< (:count 'c.id) 10)))
+
+(query (:select 'i.* 'p.*
+        :from (:as 'individual 'i)
+        :inner-join (:as 'publisher 'p)
+        :using ('individualid)
+        :left-join-lateral (:as 'anothertable 'a)
+        :on (:= 'a.identifier 'i.individualid)
+        :where (:= 'a.something \"something\")))
+
+(query (:select 't1.id 'a.elem 'a.nr
+        :from (:as 't12 't1)
+        :left-join (:unnest (:string-to-array 't1.elements ","))
+        :with-ordinality-as (:a 'elem 'nr)
+        :on 't))
 #+END_SRC
+Other examples can be found in s-sql/tests/tests.lisp
 ** Joins
    :PROPERTIES:
    :CUSTOM_ID: e0f01ac7-cb3c-4b38-8902-dc4a981a15e8
    :END:
-*** Cross Join
+Allowable join keywords are:
+- :left-join
+- :right-join
+- :inner-join
+- :outer-join
+- :cross-join
+- :join-lateral
+- :left-join-lateral (left join with an additional sql keyword LATERAL)
+- :right-join-lateral (right join with an additional sql keyword LATERAL)
+- :inner-join-lateral (inner join with an additional sql keyword LATERAL)
+- :outer-join-lateral (outer join with an additional sql keyword LATERAL)
+- :cross-join-lateral (cross join with an additional sql keyword LATERAL)
+
+The lateral joins will not be discussed separately.
+*** Cross Join/ Cross Join Lateral
     :PROPERTIES:
     :CUSTOM_ID: 40e45849-5e9d-4b4c-830b-53f79f0b21e2
     :END:
@@ -341,7 +383,7 @@ From the postgresql documentation: "For every possible combination of rows from 
 (query (:select '* from 'employee :cross-join 'compensation))
 #+END_SRC
 
-*** Inner Join
+*** Inner Join / Inner Join Lateral
     :PROPERTIES:
     :CUSTOM_ID: 85c25a7d-3660-4d38-85f0-2b9c9dc88684
     :END:
@@ -397,7 +439,7 @@ The full portable ansi version, using inner join would look like this.
                 :on (:= 'tmp1.region-id 'tmp2.id)))
 #+END_SRC
 
-*** Outer Join
+*** Outer Join / Outer Join Lateral
     :PROPERTIES:
     :CUSTOM_ID: ee0a6fef-de2f-407e-9cc9-3667de7775dc
     :END:
@@ -406,7 +448,7 @@ An outer join not only generates an inner join, it also joins the rows from one 
 
 A left join (or left outer join) looks at two tables, keeps the matched rows from both and the unmatched rows from the left table and drops the unmatched rows from the right table. A right outer join keeps the matched rows, the unmatched rows from the right table and drops the unmatched rows from the left table. A full outer join includes the rows that match from each table individually, with null values for the missing matching columns.
 
-*** Left Join
+*** Left Join / Left Join Lateral / Right Join / Right Join Lateral
     :PROPERTIES:
     :CUSTOM_ID: 3061c378-d2d1-4dda-833a-f1b3f8569018
     :END:
@@ -1811,6 +1853,46 @@ The var-samp function returns the sample variance of the input values
 #+END_SRC
 
 Window Functions
+** sql-op :range-between (&rest args)
+Range-between allows window functions to apply to different segments of a result set.
+It accepts the following keywords: :order-by, :rows-between, :range-between,
+:unbounded-preceding, :current-row and :unbounded-following. Use of :preceding or
+:following will generate errors.
+See https://www.postgresql.org/docs/current/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS for Postgresql documentation on usage.
+
+An example which calculates a running total could look like this:
+#+BEGIN_SRC lisp
+(query
+ (:select (:as 'country 'country-name)
+          (:as 'population 'country-population)
+          (:as (:over (:sum 'population)
+                      (:range-between :order-by 'country
+                                      :unbounded-preceding :current-row))
+               'global-population)
+  :from 'population
+  :where (:and (:not-null 'iso2)
+               (:= 'year 1976))))
+#+END_SRC
+
+** sql-op :rows-between (&rest args)
+Rows-between allows window functions to apply to different segments of a result set.
+It accepts the following keywords:
+:order-by, :rows-between, :range-between, :preceding, :unbounded-preceding,
+:current-row, :unbounded-following and :following. See https://www.postgresql.org/docs/current/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS for Postgresql documentation on usage.
+
+An example could look like this :
+#+BEGIN_SRC lisp
+(query
+ (:select (:as 'country 'country-name)
+          (:as 'population 'country-population)
+          (:as (:over (:sum 'population)
+                      (:rows-between :order-by 'country :preceding 2 :following 2))
+               'global-population)
+  :from 'population
+  :where (:and (:not-null 'iso2)
+               (:= 'year 1976))))
+#+END_SRC
+
 ** sql-op :over (form &rest args)
    :PROPERTIES:
    :ID:       bb6eb9f2-d9ed-4348-9467-79cae9b78819
@@ -1819,10 +1901,22 @@ Window Functions
 
 Over, partition-by and window are so-called window functions. A window
 function performs a calculation across a set of table rows that are
-somehow related to the current row.
+somehow related to the current row and adds that as an additional column to
+the result. The following collects individual salaries and the total salaries.
 #+BEGIN_SRC lisp
 (query (:select 'salary (:over (:sum 'salary))
                 :from 'empsalary))
+#+END_SRC
+A more complicated version that calculates a running total might look like:
+#+BEGIN_SRC lisp
+(query
+ (:select 'name
+          (:as 'salary 'individual-salary)
+          (:as (:over (:sum 'salary)
+                      (:range-between :order-by 'name :unbounded-preceding
+                       :current-row))
+               'running-total-salary)
+  :from 'empsalary))
 #+END_SRC
 
 ** sql-op :partition-by (&rest args)
@@ -1832,7 +1926,9 @@ somehow related to the current row.
    :END:
 
 Args is a list of one or more columns to partition by, optionally
-followed by an :order-by clause.
+followed by other keywords. Partition-by accepts the following keywords:
+:order-by, :rows-between, :range-between, :preceding, :unbounded-preceding,
+:current-row, :unbounded-following and :following. See https://www.postgresql.org/docs/current/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS for Postgresql documentation on usage.
 #+BEGIN_SRC lisp
 (query (:select 'depname 'subdepname 'empno 'salary
                 (:over (:avg 'salary)
@@ -1848,6 +1944,22 @@ Note the use of :order-by without parens:
                 :from 'empsalary))
 #+END_SRC
 
+The following example shows a query for country population in 1976 with running total population by region.
+#+BEGIN_SRC lisp
+(query
+ (:select (:as 'population.country 'country-name)
+          (:as 'population 'country-population)
+          'region-name
+          (:as (:over (:sum 'population)
+                      (:partition-by 'region-name :order-by 'region-name
+                       :rows-between :unbounded-preceding :current-row))
+               'regional-population)
+          :from 'population
+          :inner-join 'regions
+          :on (:= 'population.iso3 'regions.iso3)
+          :where (:and (:not-null 'population.iso2)
+                       (:= 'year 1976))))
+#+END_SRC
 
 ** sql-op :window (form)
    :PROPERTIES:
@@ -1938,6 +2050,17 @@ Recursive modifier to a WITH statement, allowing the query to refer to its own o
                                   (:not 'cycle)))))
       (:select '* :from 'search-graph)))
 #+END_SRC
+** sql-op :with-ordinality, :with-ordinality-as
+Selects can use :with-ordinality or :with-ordinality-as parameters. Postgresql will give the new ordinality column the name of ordinality. :with-ordinality-as allows you to set different names for the columns in the result set.
+#+BEGIN_SRC lisp
+(query (:select '*
+        :from (:generate-series 4 1 -1)
+        :with-ordinality))
+
+(query (:select 't1.*
+        :from (:json-object-keys "{\"a1\":\"1\",\"a2\":\"2\",\"a3\":\"3\"}")
+        :with-ordinality-as (:t1 'keys 'n)
+#+END_SRC
 
 * Table Functions
   :PROPERTIES:
@@ -1978,21 +2101,67 @@ tables.
    :CUSTOM_ID: 62cd3ff0-f034-46fc-a28e-c9875b577c40
    :END:
 
-Insert a row into a table. When the second argument is :set, the other
-arguments should be alternating field names and values, otherwise it
-should be a :select form that will produce the values to be inserted.
-Example:
+You can use insert-into when you are:
+
+1. Inserting from a select clause and you do not need to specify specific columns:
+#+BEGIN_SRC lisp
+(query (:insert-into 'table1
+         (:select 'c1 'c2 :from 'table2)))
+#+END_SRC
+2. Inserting from a select clause and you specifying the columns which will be filled with values from the select clause
+#+BEGIN_SRC lisp
+(query (:insert-into 't11
+        :columns 'region 'subregion 'country
+        (:select (:as 'region-name 'region)
+                 (:as 'sub-region-name 'subregion)
+                 'country
+         :from 'regions)))
+#+END_SRC
+or
+3. You are alternating specific columns and values for a single row:
 #+BEGIN_SRC lisp
 (query (:insert-into 'my-table :set 'field-1 42 'field-2 "foobar"))
 #+END_SRC
-
+You can use parameterized variables in the insert statement.
+#+BEGIN_SRC lisp
+(let ((name "test-cat4"))
+  (query (:insert-into 'categories :set 'name '$1) name))
+#+END_SRC
 It is possible to add :returning, followed by a list of field names or
 expressions, at the end of the :insert-into form. This will cause the
 query to return the values of these expressions as a single row.
+#+BEGIN_SRC lisp
+(query (:insert-into 'my-table
+        :set 'field-1 42 'field-2 "foobar"
+        :returning '*))
 
-In postgresql versions 9.5 and above, it is possible to add
-:on-conflict-do-nothing (if the item already exists, do nothing),
-or :on-conflict-update (if the item already exists, update the values)
+(query (:insert-into 'my-table
+        :set 'field-1 42 'field-2 "foobar"
+        :returning 'id))
+#+END_SRC
+In Postgresql versions 9.5 and above, it is possible to add
+:on-conflict-do-nothing (if the item already exists, do nothing). If you want to specify the unique column to be checked for conflict, use :on-conflict 'column-name :do-nothing. If you do not want to specify the unique column name, use :on-conflict-do-nothing.
+#+BEGIN_SRC lisp
+(query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
+                     :on-conflict 'column-A :do-nothing
+                     :where (:= 'test-table.column-A '$1)
+                     :returning '*)
+        "c" 37)
+
+(query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
+                     :on-conflict-do-nothing 'column-A
+                     :where (:= 'test-table.column-A '$1)
+                     :returning '*)
+        "c" 37)
+#+END_SRC
+If your insertion is setting a column that is an identity column with a value normally created by the system and you want to override that, you can use the :overriding-system-value keyword:
+#+BEGIN_SRC lisp
+(query (:insert-into 'table1
+        :set 'c1 "A" 'c2 "B"
+        :overriding-system-value))
+#+END_SRC
+To create what is commonly known as an upsert, use :on-conflict-update
+(if the item already exists, update the values)
 followed by a list of field names which are checked for the conflict
 then using :update-set followed by a list of field names or expressions
 following the syntax for updating a table. This is sometimes called
@@ -2002,44 +2171,138 @@ prepend the table name to the column in the where statement if you are updating.
 (query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
                      :on-conflict-update 'column-A
                      :update-set 'column-B '$2
-                     :where (:= 'test-table.column-A '$1)) "c" 37)
+                     :where (:= 'test-table.column-A '$1)
+                     :returning '*)
+        "c" 37)
 #+END_SRC
-
+If the destination table has identity columns and you want to override those identity columns with specific values, you should specify :overriding-system-value.
+#+BEGIN_SRC lisp
+(query (:insert-into 'test-table
+        :set 'column-A '$1 'column-B '$2
+        :overriding-system-value
+        :on-conflict-update 'column-A
+        :update-set 'column-B '$2
+        :where (:= 'test-table.column-A '$1)
+        :returning '*)
+        "c" 37)
+#+END_SRC
+If you are selecting from another table which has column names the same as your destination table and you want to keep the destination table's identity column values, then you can use :overriding-user-value. E.g.
+#+BEGIN_SRC lisp
+(query (:insert-into 'table1
+         :overriding-user-value
+         (:select 'c1 'c2 :from 'table2)))
+#+END_SRC
 ** sql-op :insert-rows-into (table &rest rest)
    :PROPERTIES:
    :ID:       26d60b83-60f5-4bb4-8a03-cd897a455139
    :CUSTOM_ID: ce43d017-71a6-4205-80aa-372c0882d5a4
    :END:
+Insert-rows-into provides the ability to insert multiple rows into a table without using a select statement. (Insert-rows-into keeps the VALUES key word in the resulting sql. If you do use a select statement, Postgresql requires that it only return one row.)
 
-Insert multiple rows into a table. Specify the columns first with the
-keyword :columns then provide a list of lists of the values as a
-parameter to the keyword :values. Example:
+Specify the columns first with the keyword :columns then provide a list of lists of the values as a parameter to the keyword :values. Example:
 #+BEGIN_SRC lisp
-(query (:insert-rows-into 'my-table :columns 'field-1 'field-2
-                                    :values '((42 "foobar") (23 "foobaz"))))
+(query (:insert-rows-into 'my-table
+        :columns 'field-1 'field-2
+        :values '((42 "foobar") (23 "foobaz"))))
 #+END_SRC
-
+An example using a select statement returning one row:
+#+BEGIN_SRC lisp
+(squery (:insert-rows-into 't6
+         :columns 'tags
+         :values '(((:select 'id
+                     :from 't5)))))
+#+END_SRC
 If you will use the default columns, this can be simplified and the :columns
 parameters can be dropped. Example:
 #+BEGIN_SRC lisp
 (query (:insert-rows-into 'my-table
-                          :values '((42 "foobar") (23 "foobaz"))))
+        :values '((42 "foobar") (23 "foobaz"))))
 #+END_SRC
+If your insertion is setting a column that is an identity column with a value normally created by the system and you want to override that, you can use the :overriding-system-value keyword:
+#+BEGIN_SRC lisp
+(query (:insert-rows-into 'table1
+                   :columns 'c1 'c2
+                   :overriding-system-value
+                   :values '((1 "a") (2 "b"))))
 
+(query (:insert-rows-into 'table1
+        :overriding-system-value
+        :values '(((:select 'c1 'c2 :from 'table2)))))
+#+END_SRC
+Similarly to :insert-into, :insert-rows-into allows the "upsert" use of :on-conflict. Again, if you want to specify the unique column to be checked for conflict, use :on-conflict 'column-name :do-nothing. If you do not want to specify the unique column name, use :on-conflict-do-nothing. The following example uses :on-conflict-do-nothing
+#+BEGIN_SRC lisp
+(query (:insert-rows-into 'distributors
+        :columns 'did 'dname
+        :values '((10 "Conrad International"))
+        :on-conflict-do-nothing
+        :where 'is-active))
+
+(query (:insert-rows-into 'distributors
+        :columns 'did 'dname
+        :values '((10 "Conrad International"))
+        :on-conflict 'did
+        :do-nothing
+        :where 'is-active))
+#+END_SRC
+or :on-conflict-update
+#+BEGIN_SRC lisp
+(query (:insert-rows-into 'distributors
+        :columns 'did 'dname
+        :values '((5 "Gizmo Transglobal") (6 "Associated Computing Inc."))
+        :on-conflict-update 'did
+        :update-set 'dname 'excluded.dname))
+#+END_SRC
+You can use :on-conflict-on-constraint to check for conflicts on constraints.
+#+BEGIN_SRC lisp
+(query (:insert-rows-into 'test :columns 'some-key 'some-val
+                                :values '(("a" 3) ("b" 6) ("c" 7))
+                                :on-conflict-on-constraint 'somekey
+                                :do-nothing
+                   :returning '*))
+
+(query (:insert-rows-into 'test :columns 'some-key 'some-val
+                                :values '(("a" 2) ("b" 6) ("c" 7))
+                                :on-conflict-on-constraint 'somekey
+                                :update-set 'some-val 'excluded.some-val
+                   :returning '*))
+#+END_SRC
 ** sql-op :update (table &rest rest)
    :PROPERTIES:
    :ID:       bbf790c1-9baa-4cf0-900c-16a5a2bc2081
    :CUSTOM_ID: fadb04ea-7827-477c-bc40-8e5baf263690
    :END:
 
-Update values in a table. After the table name there should follow the
-keyword :set and any number of alternating field names and values, like
+Update values in a table. There are two ways to update the values
+
+The first method uses the keyword :set and any number of alternating field names and values, like
 for :insert-into. Next comes the optional keyword :from, followed by at
 least one table name and then any number of join statements, like for
 :select. After the joins, an optional :where keyword followed by the condition,
 and :returning keyword followed by a list of field names or expressions
 indicating values to be returned as query result.
+#+BEGIN_SRC lisp
+(query (:update 'weather
+        :set 'temp-lo (:+ 'temp-lo 1)
+             'temp-hi (:+ 'temp-lo 15)
+             'prcp :default
+        :where (:and (:= 'city "San Francisco")
+                     (:= 'date "2003-07-03"))
+        :returning 'temp-lo 'temp-hi 'prcp))
+#+END_SRC
+The second method uses the :columns keyword to specify which columns get created and allows  the use of either :set or :select (both of which need to be enclosed in a form) to provide the values, allowing update queries like:
+#+BEGIN_SRC lisp
+(query (:update 'weather
+        :columns 'temp-lo 'temp-hi 'prcp
+                 (:set (:+ 'temp-lo 1)  (:+ 'temp-lo 15) :DEFAULT)
+        :where (:and (:= 'city "San Francisco")
+                     (:= 'date "2003-07-03"))))
 
+(query (:update 't1
+        :columns 'database-name 'encoding
+                 (:select 'x.datname 'x.encoding
+                  :from (:as 'pg-database 'x)
+                  :where (:= 'x.oid 't1.oid))))
+#+END_SRC
 ** sql-op :delete-from (table &rest rest)
    :PROPERTIES:
    :ID:       cdee608e-71cb-4d41-9e1d-a21b7728d956
@@ -2179,20 +2442,41 @@ The meaning of args depends on action:
 - :add-column
 
 Adds column to table. args should be a column in the same form as for :create-table.
+#+BEGIN_SRC lisp
+(query (:alter-table "packages" :add-column 'system-data-p :type (or boolean db-null)))
+#+END_SRC
+
+- :set-default
+
+Adds or changes a default value for a column
+#+BEGIN_SRC lisp
+(query (:alter-table 'countries :alter-column 'updated-at :set-default  (:now)))
+#+END_SRC
 
 - :drop-column
 
 Drops a column from the table.
+#+BEGIN_SRC lisp
+(query (:alter-table "test-uniq" :drop-column 'address))
+#+END_SRC
 
 - :add-constraint
 
 Adds a named constraint to the table.
+#+BEGIN_SRC lisp
+(query (:alter-table "test-uniq" :add-constraint silly-key :primary-key 'code 'title))
+
+(query (:alter-table enemy :add-constraint enemy-age-check :check (:> 'age 21)))
+#+END_SRC
 
 - :drop-constraint
 
 Drops constraint. First of args should name a constraint to be dropped; second,
 optional argument specifies behaviour regarding objects dependent on the
 constraint and it may equal :cascade or :restrict.
+#+BEGIN_SRC lisp
+(query (alter-table enemy :drop-constraint enemy-age-check))
+#+END_SRC
 
 - :add
 
@@ -2207,12 +2491,8 @@ Adds the ability to rename a table.
 - :rename-column
 
 Adds the ability to rename a column of a table.
-
-Here is an example using the table defined above:
-#+BEGIN_SRC lsip
-(query (alter-table enemy :drop-constraint enemy-age-check))
-
-(query (:alter-table enemy :add-constraint enemy-age-check :check (:> 'age 21)))
+#+BEGIN_SRC lisp
+(query (:alter-table "test-uniq" :rename-column 'address 'city))
 #+END_SRC
 
 ** sql-op :drop-table (name)
@@ -2546,6 +2826,15 @@ build a query?
     :CUSTOM_ID: programmer-built-queries
     :ID:       17b9050a-026f-4552-93b3-e08cb9ba5851
     :END:
+The question gets asked how to build dynamic or composable queries in
+postmodern. First we need to understand the context - is the programmer
+building the query or are you taking data from a user and using that to
+build a query? We need to remember that the query macro assumes that everything
+that is not a list starting with a keyword will evaluate to a string.
+
+In any case you will need to ensure that either you have control over the inputs
+or they still result in parameterized queries. If not you have opened yourself up
+to an sql injection attack.
 
 If you are not using s-sql, then it becomes easy. The query macro
 assumes that everything that is not a list starting with a keyword will
@@ -2556,8 +2845,8 @@ string
 #+END_SRC
 
 With s-sql, there are generally three approaches to building dynamic or
-composible queries: either use sql-compile or use :raw or you can pass
-symbols as variables.
+composible queries: pass symbols and values as variables,  use sql-compile
+or use :raw.
 
 For purposes of this example, we will use the following employee table:
 
@@ -2582,8 +2871,57 @@ For purposes of this example, we will use the following employee table:
                                     (8 "Chris" 26020 "07/08/01" "Vancouver" "N" 22)
                                     (9 "Mary" 60020 "06/08/02" "Toronto" "W" 34))))
 #+END_SRC
+**** Approach #1 Using symbols in variables
+     :PROPERTIES:
+     :ID: 13c9d0df-7b08-4788-bca9-be650e42809a
+     :CUSTOM_ID: symbols-in-variables
+     :END:
+***** Select Statements
+Consider the following two toy examples where we determine the table and columns
+to be selected using symbols (either keyword or quoted) inside variables.
+#+BEGIN_SRC lisp
+(let ((table 'employee) (col1 :id) (col2 :name) (id 3))
+    (query (:select col1 col2 :from table :where (:= 'id '$1)) id))
+((3 "Celia"))
 
-**** Approach #1 Use sql-compile
+(let ((table 'employee) (col1 'name) (col2 'salary) (id 3))
+    (query (:select col1 col2 :from table :where (:= 'id '$1)) id))
+(("Celia" 24020))
+#+END_SRC
+This will not work if you use strings instead of symbols because sql-expand
+will wrap the strings in the variables in escape format as if they were string
+constants and Postgresql will throw an error because it is not expecting
+string constants in the middle of a select statement.
+
+***** Update Statements
+This works with update statements as well
+#+BEGIN_SRC lisp
+(let ((table 'employee) (col1 :id) (col2 :name) (new-name "Celeste") (id 3))
+    (query (:update table :set col2 new-name :where (:= col1 '$1)) id)
+    (query (:select col1 col2 :from table :where (:= 'id '$1)) id))
+((3 "Celeste"))
+#+END_SRC
+***** Insert Statements
+This works with insert-into statements as well
+#+BEGIN_SRC lisp
+(let ((table 'employee) (col1 'id) (col2 'name) (new-name "Rochelle")
+      (id 10) (col3 'salary) (col3-value 3452) (col4 'start-date)
+      (col4-value "02/01/03") (col5 'city) (col5-value "Victoria")
+      (col6 'region) (col6-value "N") (col7 'age) (col7-value 32))
+  (query (:insert-into table :set col1 id col2 new-name col3 col3-value
+                       col4 col4-value col5 col5-value col6 col6-value
+                       col7 col7-value)))
+
+(query (:select 'id 'name 'salary :from 'employee :where (:= 'id 10 )))
+((10 "Rochelle" 3452))
+#+END_SRC
+**** Delete Statements
+This works with delete statements as well
+#+BEGIN_SRC lisp
+(let ((table 'employee) (col1 :id) (col1-value 10))
+   (query (:delete-from table :where (:= col1 col1-value))))
+#+END_SRC
+*** Approach #2 Use sql-compile
      :PROPERTIES:
      :CUSTOM_ID: 523172f6-bc0b-4402-aa40-989025e0d12f
      :END:
@@ -2720,7 +3058,7 @@ postgresql server versionr:
                  (to-sql-name table-name))))
 #+END_SRC
 
-**** Approach #2 Use :raw
+*** Approach #3 Use :raw
      :PROPERTIES:
      :CUSTOM_ID: f0c37b97-4907-4153-bdfb-3381ae4a08d7
      :END:
@@ -2733,29 +3071,6 @@ sometimes...
 (query (:select (:raw "tmp1.name") :from (:as 'baz (:raw "tmp1"))))
 #+END_SRC
 
-**** Approach #3 Using symbols in variables
-     :PROPERTIES:
-     :CUSTOM_ID: 13c9d0df-7b08-4788-bca9-be650e42809a
-     :END:
-Consider the following two toy examples where we determine the table and columns
-to be selected using symbols (either keyword or quoted) inside variables.
-#+BEGIN_SRC lisp
-(let ((table 'quotations) (col1 'id) (col2 'text))
-  (with-connection (list "personal_stuff" "sabra" "mypassword" "localhost")
-    (query (:fetch (:select col1 col2 :from table) 1 6))))
-
-((543 "I may have settled in shipping."))
-
-(let ((table :quotations) (col1 :id) (col2 :text))
-  (with-connection (list "personal_stuff" "sabra" "mypassword" "localhost")
-    (query (:fetch (:select col1 col2 :from table) 1 6))))
-
-((543 "I may have settled in shipping."))
-#+END_SRC
-This will not work if you use strings instead of symbols because sql-expand
-will wrap the strings in the variables in escape format as if they were string
-constants and Postgresql will throw an error because it is not expecting
-string constants in the middle of a select statement.
 *** Queries with User Input
     :PROPERTIES:
     :CUSTOM_ID: queries-with-user-input
@@ -2764,5 +3079,5 @@ string constants in the middle of a select statement.
 
 In any of the above approaches to building queries you will need to
 ensure that either you have control over the inputs or they still result
-in parameterized queries. If not you have opened yourself up to an sql
+in parameterized queries. If not, you have opened yourself up to an sql
 injection attack.

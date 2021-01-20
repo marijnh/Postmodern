@@ -58,7 +58,6 @@
    #:ensure-transaction-with-isolation-level
    #:abort-hooks
    #:commit-hooks
-   #:db-null
    #:deftable
    #:*table-name*
    #:*table-symbol*
@@ -72,6 +71,7 @@
    #:set-search-path
    #:get-search-path
    #:get-database-comment
+   #:encode-json-to-string
 
    ;; Prepared Statement Functions
    #:*allow-overwriting-prepared-statements*
@@ -101,6 +101,7 @@
    #:sql-error
    #:from-sql-name
    #:to-sql-name
+   #:db-null
 
    ;; Condition type from cl-postgres
    #:database-error

@@ -164,6 +164,12 @@ instead. Any of the following formats can be used, with the default being :rows:
 |                    | fields returned by the query must match slots in the DAO  |
 |                    | class the same way as with query-dao.                     |
 | (:dao type :single)| Return a single DAO of the given type.                    |
+| :json-strs         | Return a list of strings where each row is a json object  |
+|                    | expressed as a string                                     |
+| :json-str          | Return a single string where the row returned is a json   |
+|                    | object expressed as a string                              |
+| :json-array-str    | Return a string containing a json array, each element in  |
+|                    | the array is a selected row expressed as a json object    |
 
 If the database returns information about the amount rows that were affected,
 such as with updating or deleting queries, this is returned as a second value."
