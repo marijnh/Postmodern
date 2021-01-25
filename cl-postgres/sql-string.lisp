@@ -248,9 +248,10 @@ text for postgresql to interpret."
     (single-float cl-postgres-oid:+float4+)
     (double-float cl-postgres-oid:+float8+)
     (boolean cl-postgres-oid:+bool+)
+    (string cl-postgres-oid:+text+)
 ;    (text-array cl-postgres-oid:+text-array+)
  ;   (int4-array cl-postgres-oid:+int4-array+)
-    (t 25))
+    (t 0))
 
 #|
   (cond ((and (integerp param)

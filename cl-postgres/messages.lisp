@@ -256,6 +256,18 @@ indicating binary and 0 indicating plain text."
   (uint 2 (length formats)) ;; Number of result format specifications
   (bytes (formats-to-bytes formats))) ;; Result format
 
+(defun go-binary-p (parameters)
+  "Function used by both bind-message and send-parse to decide whether to send
+parameters in binary."
+  (let ((len (length parameters)))
+    (or (not parameters)
+        (= 0 len)
+        (> len 10)
+        (notany #'(lambda (x)
+                    (or (eq 0 (param-to-oid x))
+                        (eq 25 (param-to-oid x))))
+             parameters))))
+
 ;; This one was a bit too complex to put into define-message format,
 ;; so it does everything by hand.
 (defun bind-message (socket name result-formats parameters)
@@ -272,7 +284,8 @@ for binding data for binary long object columns."
          (param-formats (make-array n-params :element-type 'fixnum))
          (param-sizes (make-array n-params :element-type 'fixnum))
          (param-values (make-array n-params))
-         (n-result-formats (length result-formats)))
+         (n-result-formats (length result-formats))
+         (go-binary (go-binary-p parameters)))
     (declare (type (unsigned-byte 16) n-params n-result-formats))
     (loop :for param :in parameters
           :for i :from 0
@@ -304,7 +317,7 @@ for binding data for binary long object columns."
     (write-str socket name)                 ;; Name of the prepared statement
     (write-uint2 socket n-params)           ;; Number of parameters
     (loop :for format :across param-formats ;; Param formats (text/binary) must be 0 or 1
-          :do (write-uint2 socket format))
+          :do (write-uint2 socket (if go-binary 1 0)))
     (write-uint2 socket n-params)           ;; Number of parameter values
     (loop :for param :across param-values
           :for size :across param-sizes

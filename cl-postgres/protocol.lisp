@@ -184,7 +184,7 @@ be matched against it."
        (setf socket (funcall make-ssl-stream socket
                              :key *ssl-key-file*
                              :certificate *ssl-certificate-file*
-                             :verify (if verify 
+                             :verify (if verify
                                          :required
                                          nil)
                              :hostname hostname)))
@@ -513,19 +513,23 @@ results."
   (declare (type stream socket)
            (type string name query)
            #.*optimize*)
+  (format t "1. protocol:send-parse name ~a query ~a ~%parameters ~a~%" name query parameters)
   (let ((len (length parameters)))
     (with-syncing
             (with-query (query)
-              (if (or (not parameters)
-                      (= 0 len)
-                      (> len 10))
+              (if (not (go-binary-p parameters))
                   (progn
+                    ;(format t "2. protocol:send-parse parse-message-1~%")
                     (parse-message socket name query))
                   (ecase len
-                    (1 (parse-message-1 socket name query parameters))
-                    (2 (parse-message-2 socket name query parameters))
-                    (3 (parse-message-3 socket name query parameters))
-                    (4 (parse-message-4 socket name query parameters))
+                    (1 (progn ;(format t "2. protocol:send-parse parse-message-1~%")
+                              (parse-message-1 socket name query parameters)))
+                    (2 (progn ;(format t "2. protocol:send-parse parse-message-2~%")
+                              (parse-message-2 socket name query parameters)))
+                    (3 (progn ;(format t "2. protocol:send-parse parse-message-3~%")
+                              (parse-message-3 socket name query parameters)))
+                    (4 (progn ;(format t "2. protocol:send-parse parse-message-4~%")
+                         (parse-message-4 socket name query parameters)))
                     (5 (parse-message-5 socket name query parameters))
                     (6 (parse-message-6 socket name query parameters))
                     (7 (parse-message-7 socket name query parameters))
@@ -558,6 +562,7 @@ to the result."
            (type string name)
            (type list parameters)
            #.*optimize*)
+  (format t "protocol:send-execute name ~a parameters ~a~%" name parameters)
   (with-syncing
       (let ((row-description nil)
             (n-parameters 0))
