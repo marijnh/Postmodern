@@ -88,7 +88,9 @@
       (is (or (equal val
                      '(("text" . "text two") ("int4" . 0) ("id" . 2)))
               (equal val
-                     '(("id" . 2) ("int4" . 0) ("text" . "text two"))))))
+                     '(("id" . 2) ("int4" . 0) ("text" . "text two")))
+              (equal val
+                     '(("int4" . 0) ("text" . "text two") ("id" . 2))))))
     (is (equal (query (:select 'id :from 'test-data
                        :where (:< 'id 3)) :column)
                '(1 2)))
