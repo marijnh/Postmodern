@@ -38,7 +38,6 @@
 (defparameter *subsequent-test-dbs* '("d3"))
 (defparameter *public-limited-test-dbs* '("d1_al""d2_al" "d3_al"))
 (defparameter *test-roles* (test-create-role-names))
-(defparameter *port* (with-test-connection (cl-postgres::connection-port *database*)))
 
 (defun test-result (result)
   (cond ((not (listp result))
