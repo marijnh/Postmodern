@@ -228,3 +228,12 @@ cdr contains the arguments. For example:
            (exec-prepared *database* "" (list ,@args) ,reader-expr))
         `(let ((,query-name ,(real-query query)))
            (exec-query *database* ,query-name ,reader-expr)))))
+
+(defun use-binary-parameters (param)
+  "Accepts nil or t. The default for cl-postgres/Postmodern is pass parameters to
+Postgresql as text (not in binary format). This is how it has been since the beginning
+of Postmodern and the default is set this way in order to avoid breaking existing user
+code. If you want to pass parameters to Postgresql in binary format, you can either
+setf cl-postgres:*use-binary-parameters* to t manually or use this use-binary-parameters
+function which will do it for you."
+  (setf cl-postgres:*use-binary-parameters* param))

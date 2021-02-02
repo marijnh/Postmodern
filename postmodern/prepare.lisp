@@ -87,11 +87,14 @@ overwrite unless postgresql throws a duplicate-prepared-statement error."
                                                param-types)
                                             (ensure-prepared *database* statement-id
                                                              query overwrite params)
-                                            (error (make-condition 'mismatched-parameter-types
-                                                             :prepared-statement-types
-                                                             prepared-statement-param-types
-                                                             :parameter-types
-                                                             param-types)))))
+                                            (if cl-postgres:*use-binary-parameters*
+                                             (error (make-condition 'mismatched-parameter-types
+                                                                    :prepared-statement-types
+                                                                    prepared-statement-param-types
+                                                                    :parameter-types
+                                                                    param-types))
+                                             (ensure-prepared *database* statement-id
+                                                             query overwrite params)))))
                                   (,result-form ,base))))))))))
 
 (defmacro prepare (query &optional (format :rows))

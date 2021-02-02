@@ -513,10 +513,8 @@ so there is a single source of type truth."
       (progn
         (signals error (insert-dao (make-instance 'test-data--col-identity-with-references
                                                   :username "user-1" :department-id 1)))
-        (format t "Departments ~a~%" (query "select * from departments"))
         (insert-dao (make-instance 'test-data-department :department-name "department 1"
                                                          :department-id 1))
-        (format t "Departments ~a~%" (query "select * from departments"))
         (insert-dao (make-instance 'test-data-col-identity-with-references
                                    :username "user-1" :department-id 1))
         (is (equal (query "select * from usersr")

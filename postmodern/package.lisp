@@ -87,7 +87,7 @@
    #:cancel-backend
    #:terminate-backend
    #:get-pid-from-postmodern
-
+   #:use-binary-parameters
 
    ;; Reduced S-SQL interface
    #:sql #:sql-compile

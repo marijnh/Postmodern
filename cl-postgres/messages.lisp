@@ -123,110 +123,22 @@ message definitions themselves stay readable."
   (string query)
   (uint 2 0))
 
-(define-message parse-message-1 #\P (name query parameters)
-  (string name)
-  (string query)
-  (uint 2 (length parameters))
-  (uint 4 (param-to-oid (pop parameters))))
-
-(define-message parse-message-2 #\P (name query parameters)
-  (string name)
-  (string query)
-  (uint 2 (length parameters))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters))))
-
-(define-message parse-message-3 #\P (name query parameters)
-  (string name)
-  (string query)
-  (uint 2 (length parameters))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters))))
-
-(define-message parse-message-4 #\P (name query parameters)
-  (string name)
-  (string query)
-  (uint 2 (length parameters))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters))))
-
-(define-message parse-message-5 #\P (name query parameters)
-  (string name)
-  (string query)
-  (uint 2 (length parameters))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters))))
-
-(define-message parse-message-6 #\P (name query parameters)
-  (string name)
-  (string query)
-  (uint 2 (length parameters))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters))))
-
-(define-message parse-message-7 #\P (name query parameters)
-  (string name)
-  (string query)
-  (uint 2 (length parameters))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters))))
-
-(define-message parse-message-8 #\P (name query parameters)
-  (string name)
-  (string query)
-  (uint 2 (length parameters))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters))))
-
-(define-message parse-message-9 #\P (name query parameters)
-  (string name)
-  (string query)
-  (uint 2 (length parameters))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters))))
-
-(define-message parse-message-10 #\P (name query parameters)
-  (string name)
-  (string query)
-  (uint 2 (length parameters))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters)))
-  (uint 4 (param-to-oid (pop parameters))))
+(defun parse-message-binary-parameters (s name query parameters)
+  (declare (type stream s)
+           (optimize (speed 3) (safety 0) (space 1) (debug 1)
+                     (compilation-speed 0)))
+  (let ((len (length parameters)))
+    (write-uint1 s 80)
+    (write-uint4 s
+                 (+ 8 (* len 4) (enc-byte-length query) (enc-byte-length name)))
+    (write-str s name)
+    (write-str s query)
+    (if (and *use-binary-parameters* parameters)
+        (progn
+          (write-uint2 s len)
+          (loop for x in parameters do
+            (write-uint4 s (param-to-oid x))))
+        (write-uint2 s 0))))
 
 ;; Close a named parsed query, freeing the name.
 (define-message close-prepared-message #\C (name)
@@ -256,20 +168,27 @@ indicating binary and 0 indicating plain text."
   (uint 2 (length formats)) ;; Number of result format specifications
   (bytes (formats-to-bytes formats))) ;; Result format
 
-(defun go-binary-p (parameters)
+(defun go-binary-list-p (parameters)
   "Function used by both bind-message and send-parse to decide whether to send
 parameters in binary."
-  (let ((len (length parameters)))
-    (or (not parameters)
-        (= 0 len)
-        (> len 10)
-        (notany #'(lambda (x)
+  (when (and *use-binary-parameters* parameters)
+    (let ((len (length parameters)))
+      (and (< len 11)
+           (notany #'(lambda (x)
                     (or (eq 0 (param-to-oid x))
                         (eq 25 (param-to-oid x))))
-             parameters))))
+                   parameters)))))
+
+(defun go-binary-p (parameter)
+  "Function used by both bind-message and send-parse to decide whether to send
+parameters in binary."
+  (when (and *use-binary-parameters* parameter)
+    (not (or (eq 0 (param-to-oid parameter))
+         (eq 25 (param-to-oid parameter))))))
 
 ;; This one was a bit too complex to put into define-message format,
 ;; so it does everything by hand.
+
 (defun bind-message (socket name result-formats parameters)
   "Bind a prepared statement, ask for the given formats, and pass the
 given parameters, that can be either string or byte vector.
@@ -285,7 +204,7 @@ for binding data for binary long object columns."
          (param-sizes (make-array n-params :element-type 'fixnum))
          (param-values (make-array n-params))
          (n-result-formats (length result-formats))
-         (go-binary (go-binary-p parameters)))
+         (go-binary (go-binary-list-p parameters)))
     (declare (type (unsigned-byte 16) n-params n-result-formats))
     (loop :for param :in parameters
           :for i :from 0
@@ -296,11 +215,13 @@ for binding data for binary long object columns."
                 (declare (inline set-param))
                 (cond ((eq param :null)
                        (set-param 0 0 nil))
-                      ((typep param '(vector (unsigned-byte 8)))
+                      ((typep param '(vector (unsigned-byte 8))) ;param already in binary form
                        (set-param 1 (length param) param))
                       (t
                        (unless (typep param 'string)
-                         (setf param (serialize-for-postgres param)))
+                         (if go-binary
+                             (setf param (serialize-for-postgres param))
+                             (setf param (to-sql-string param))))
                        (etypecase param
                          (string
                           (set-param 0 (enc-byte-length param) param))
@@ -317,7 +238,7 @@ for binding data for binary long object columns."
     (write-str socket name)                 ;; Name of the prepared statement
     (write-uint2 socket n-params)           ;; Number of parameters
     (loop :for format :across param-formats ;; Param formats (text/binary) must be 0 or 1
-          :do (write-uint2 socket (if go-binary 1 0)))
+          :do (write-uint2 socket (if (or go-binary (= 1 format)) 1 0)))
     (write-uint2 socket n-params)           ;; Number of parameter values
     (loop :for param :across param-values
           :for size :across param-sizes

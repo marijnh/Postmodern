@@ -1118,8 +1118,7 @@ the proper SQL syntax for joining tables."
           :append (cond ((is-join (car args))
                          (when first
                            (sql-error ":from clause starts with a join."))
-                         (progn ;(format t "A1:  args ~a~%" args)
-                                (expand-join nil)))
+                         (expand-join nil))
                         ((eq (car args) :natural)
                          (when first
                            (sql-error ":from clause starts with a join."))

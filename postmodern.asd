@@ -55,8 +55,11 @@
   ((:module "postmodern/tests"
             :components ((:file "test-package")
                          (:file "tests")
-                         (:file "test-prepared-statements" :depends-on ("test-package")
-                                :if-feature :postmodern-use-mop)
+                         (:file "test-prepared-statements" :depends-on ("test-package" "tests")
+                          :if-feature :postmodern-use-mop)
+                         (:file "test-binary-prepared-statements" :depends-on ("test-package" "tests")
+                          :if-feature :postmodern-use-mop)
+                         (:file "test-binary-parameters" :depends-on ("test-package" "tests"))
                          (:file "test-dao" :depends-on ("test-package")
                           :if-feature :postmodern-use-mop)
                          (:file "test-return-types" :depends-on ("test-package"))

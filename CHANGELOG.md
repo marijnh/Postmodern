@@ -1,3 +1,38 @@
+# Changelog v. 1.33.0
+This version of Postmodern now provides an optional setting which will cause Postmodern to pass parameters to Postgresql in binary format if that format is available for that datatype. Currently this means int2, int4, int8, float, double-float (except clisp) and boolean. Rational numbers continue to be passed as text.
+
+The default text setting with results:
+
+    (query "select $1" 1 :single)
+    "1"
+    (query "select $1" 1.5 :single)
+    "1.5"
+    (query "select $1" T :single)
+    "true"
+    (query "select $1" nil :single)
+    "false"
+    (query "select $1" :NULL :single)
+    :NULL
+
+Setting cl-postgres:\*use-binary-parameters* to t has the following results:
+
+    (query "select $1" 1 :single)
+    1
+    (query "select $1" 1.5 :single)
+    1.5
+    (query "select $1" T :single)
+    T
+    (query "select $1" nil :single)
+    NIL
+    (query "select $1" :NULL :single)
+    :NULL
+
+The default for cl-postgres/Postmodern is to continue to pass parameters to Postgresql as text (not in binary format) in order to avoid breaking existing user code. If you want to pass parameters to Postgresql in binary format, you can either setf cl-postgres:\*use-binary-parameters\* to t manually or use Postmodern's new (use-binary-parameters t) function which will do it for you.
+
+Using binary parameters does tighten type checking. This will affect prepared queries in that you will not be able to use prepared queries with varying formats. In other words, if you have a prepared query that you pass an integer as the first parameter and a string as the second parameter the first time it is used, any subsequent uses of that prepared query during that session will also have to pass an integer as the first parameter and a string as the second parameter.
+
+Benchmarking does indicate a slight speed and consing benefit to passing parameters as binary, but your mileage will vary depending on your use case.
+
 # Changelog v. 1.32.8
 S-SQL Enhancements
 

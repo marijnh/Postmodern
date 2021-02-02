@@ -478,7 +478,9 @@ names. Sorry"))
   "Changes the priority of where a role looks for tables (which schema first,
 second, etc. Role should be a string or symbol. Search-path could be a list of schema
 names either as strings or symbols."
-  (when (listp search-path) (setf search-path (format nil "~{~a~^, ~}" (mapcar 'to-sql-name search-path))))
+  (when (listp search-path)
+    (setf search-path
+          (format nil "~{~a~^, ~}" (mapcar 'to-sql-name search-path))))
   (when (symbolp role) (setf role (to-sql-name role)))
   (query (format nil "alter role ~a set search_path = ~a" role search-path)))
 
@@ -557,5 +559,6 @@ The password will be encrypted in the system catalogs. This is
 automatic with postgresql versions 10 and above."
   (when (role-exists-p role)
     (if expiration-date
-        (query (format nil "alter role ~a with encrypted password '~a' valide until '~a'" role password expiration-date)))
+        (query (format nil "alter role ~a with encrypted password '~a' valide until '~a'"
+                       role password expiration-date)))
     (query (format nil "alter role ~a with encrypted password '~a'" role password))))

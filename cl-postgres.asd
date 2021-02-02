@@ -27,13 +27,15 @@
     :components ((:file "package")
                  (:file "features")
                  (:file "errors" :depends-on ("package"))
-                 (:file "sql-string" :depends-on ("package"))
+                 (:file "config")
+                 (:file "data-types" :depends-on ("package" "config"))
+                 (:file "sql-string" :depends-on ("package" "config" "data-types"))
                  (:file "trivial-utf-8" :depends-on ("package"))
                  (:file #.*string-file*
                   :depends-on ("package" "trivial-utf-8"))
                  (:file "communicate"
                   :depends-on (#.*string-file* "sql-string"))
-                 (:file "messages" :depends-on ("communicate"))
+                 (:file "messages" :depends-on ("communicate" "config"))
                  (:file "oid" :depends-on ("package"))
                  (:file "ieee-floats")
                  (:file "interpret"
@@ -41,11 +43,11 @@
                  (:file "saslprep")
                  (:file "scram"
                   :depends-on ("messages" "errors" "saslprep"
-                                          "trivial-utf-8"))
+                                          "trivial-utf-8" "config"))
                  (:file "protocol"
                   :depends-on ("interpret" "messages" "errors" "scram"
-                                           "saslprep" "trivial-utf-8"))
-                 (:file "public" :depends-on ("protocol" "features"))
+                                           "saslprep" "trivial-utf-8" "config"))
+                 (:file "public" :depends-on ("protocol" "features" "config"))
                  (:file "bulk-copy"
                   :depends-on ("public" "trivial-utf-8")))))
   :in-order-to ((test-op (test-op "cl-postgres/tests")
@@ -57,6 +59,7 @@
   ((:module "cl-postgres/tests"
     :components ((:file "test-package")
                  (:file "tests")
+                 (:file "test-oids" :depends-on ("tests"))
                  (:file "tests-scram" :depends-on ("test-package")))))
   :perform (test-op (o c)
                     (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)

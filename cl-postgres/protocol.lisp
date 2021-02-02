@@ -217,8 +217,7 @@ a condition."
                (when (null gss-init-function)
                  (when (null (find-package "CL-GSS"))
                    (error 'database-error
-                          :message  "To use GSS authentication, make sure the
-CL-GSS package is loaded."))
+                          :message  "To use GSS authentication, make sure the CL-GSS package is loaded."))
                  (setq gss-init-function (find-symbol "INIT-SEC" "CL-GSS"))
                  (unless gss-init-function
                    (error 'database-error
@@ -271,34 +270,27 @@ CL-GSS package is loaded."))
                              (ecase type
                                (0 (return))
                                (2 (error 'database-error
-                                         :message "Unsupported Kerberos
-authentication requested."))
+                                         :message "Unsupported Kerberos authentication requested."))
                                (3 (unless password
-                                    (error "Server requested plain-password
-authentication, but no password was given."))
+                                    (error "Server requested plain-password authentication, but no password was given."))
                                 (plain-password-message socket password)
                                 (force-output socket))
                                (4 (error 'database-error
-                                         :message "Unsupported crypt
-authentication requested."))
+                                         :message "Unsupported crypt authentication requested."))
                                (5 (unless password
-                                    (error "Server requested md5-password
-authentication, but no password was given."))
+                                    (error "Server requested md5-password authentication, but no password was given."))
                                 (md5-password-message socket password user
                                                       (read-bytes socket 4))
                                 (force-output socket))
                                (6 (error 'database-error
-                                         :message "Unsupported SCM
-authentication requested."))
+                                         :message "Unsupported SCM authentication requested."))
                                (7 (when gss-context
                                     (error 'database-error
-                                           :message "Got GSS init message when
-a context was already established"))
+                                           :message "Got GSS init message when a context was already established"))
                                 (init-gss-msg nil))
                                (8 (unless gss-context
                                     (error 'database-error
-                                           :message "Got GSS continuation
-message without a context"))
+                                           :message "Got GSS continuation message without a context"))
                                 (init-gss-msg (read-bytes socket (- size 4))))
                                (9 ) ; auth_required_sspi or auth_req_sspi sspi
                                     ;negotiate without wrap() see postgresql
@@ -513,34 +505,17 @@ results."
   (declare (type stream socket)
            (type string name query)
            #.*optimize*)
-  (format t "1. protocol:send-parse name ~a query ~a ~%parameters ~a~%" name query parameters)
-  (let ((len (length parameters)))
-    (with-syncing
-            (with-query (query)
-              (if (not (go-binary-p parameters))
-                  (progn
-                    ;(format t "2. protocol:send-parse parse-message-1~%")
-                    (parse-message socket name query))
-                  (ecase len
-                    (1 (progn ;(format t "2. protocol:send-parse parse-message-1~%")
-                              (parse-message-1 socket name query parameters)))
-                    (2 (progn ;(format t "2. protocol:send-parse parse-message-2~%")
-                              (parse-message-2 socket name query parameters)))
-                    (3 (progn ;(format t "2. protocol:send-parse parse-message-3~%")
-                              (parse-message-3 socket name query parameters)))
-                    (4 (progn ;(format t "2. protocol:send-parse parse-message-4~%")
-                         (parse-message-4 socket name query parameters)))
-                    (5 (parse-message-5 socket name query parameters))
-                    (6 (parse-message-6 socket name query parameters))
-                    (7 (parse-message-7 socket name query parameters))
-                    (8 (parse-message-8 socket name query parameters))
-                    (9 (parse-message-9 socket name query parameters))
-                    (10 (parse-message-10 socket name query parameters))))
-              (flush-message socket)
-              (force-output socket)
-              (message-case socket
-                ;; ParseComplete
-                (#\1))))))
+  (with-syncing
+    (with-query (query)
+      (if *use-binary-parameters*
+          (parse-message-binary-parameters socket name query parameters)
+          (parse-message socket name query))
+      (flush-message socket)
+      (force-output socket)
+      (message-case socket
+        ;; ParseComplete
+        (#\1)))))
+
 
 (defun send-close (socket name)
   "Send a close command to the server, giving it a name."
@@ -562,7 +537,6 @@ to the result."
            (type string name)
            (type list parameters)
            #.*optimize*)
-  (format t "protocol:send-execute name ~a parameters ~a~%" name parameters)
   (with-syncing
       (let ((row-description nil)
             (n-parameters 0))
@@ -582,8 +556,7 @@ to the result."
                       (#\n))
         (unless (= (length parameters) n-parameters)
           (error 'database-error
-                 :message (format nil "Incorrect number of parameters given for
-prepared statement ~A. ~A parameters expected. ~A parameters received."
+                 :message (format nil "Incorrect number of parameters given for prepared statement ~A. ~A parameters expected. ~A parameters received."
                                   name n-parameters (length parameters))))
         (bind-message socket name (map 'vector 'field-binary-p row-description)
                       parameters)
