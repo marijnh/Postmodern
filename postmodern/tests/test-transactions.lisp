@@ -224,7 +224,8 @@
           (is (equal (query "select * from test_data")
                      '((0) (1) (2))))))
       (is (equal (query "select * from test_data")
-                 '((0) (1) (2)))))))
+                 '((0) (1) (2))))
+      (execute (:drop-table 'test-data)))))
 
 (test savepoint-rollback-from-inside
   (let ((x 1)
@@ -261,4 +262,5 @@
           (is (equal (query "select * from test_data")
                      '((0) (1))))))
       (is (equal (query "select * from test_data")
-                 '((0) (1)))))))
+                 '((0) (1))))
+      (execute (:drop-table 'test-data)))))

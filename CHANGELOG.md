@@ -44,6 +44,33 @@ Using binary parameters does tighten type checking when using prepared queries. 
 
 Benchmarking does indicate a slight speed and consing benefit to passing parameters as binary, but your mileage will vary depending on your use case.
 
+# Changelog v. 1.32.9
+Adds new utility functions
+
+- table-description-menu which allows you to pick and choose
+what table characteristics you want returned. See giant docstring for details.
+
+- get-schema-comment which takes a schema name and returns the schema comment
+as a string
+
+- list-check-constraints which takes a fully qualified table name and returns
+a list of lists of check constraints where each sublist has the form
+of (check-constraint-name check).
+
+Example: (list-check-constraints "s2.employees")
+(("employees_birth_date_check" "CHECK (birth_date > '1900-01-01'::date)")
+ ("employees_check" "CHECK (start_date > birth_date)")
+ ("employees_salary_check" "CHECK (salary > 0::numeric)"))
+
+Now exports
+get-column-comments (the parameter string has changed if you were using the internal version)
+get-all-table-comments
+
+Bug Fixes:
+
+Fixes a bug when trying to connect to a database using ssl. If the keyword :try was used,
+the connection would not fall back to non-ssl connections.
+
 # Changelog v. 1.32.8
 S-SQL Enhancements
 

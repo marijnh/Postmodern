@@ -502,7 +502,8 @@ so there is a single source of type truth."
                                                  :id 1 :username "turkey" :department-id 43)))
        ;; still no turkey to update
        (is (equal (query "select * from users1")
-               '((1 "goose" 17) (1 "duck" 3) (1 "chicken" 3) (1 "penguin" 43))))))))
+                  '((1 "goose" 17) (1 "duck" 3) (1 "chicken" 3) (1 "penguin" 43))))))
+    (query (:drop-table :if-exists 'users1 :cascade))))
 
 (test dao-create-table-with-references
   (is (equal (dao-table-definition 'test-data-col-identity-with-references)

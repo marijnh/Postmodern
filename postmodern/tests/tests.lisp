@@ -48,12 +48,6 @@
 (defmacro protect (&body body)
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
 
-(fiveam:def-suite :postmodern-base
-  :description "Base test suite for postmodern"
-  :in :postmodern)
-
-(fiveam:in-suite :postmodern-base)
-
 (test connect-sanely
   (with-test-connection
     (is (not (null *database*)))))
@@ -201,12 +195,12 @@
       (execute (:drop-table 'test-uniq)))
     (query (:create-table 'uniq.gracie ((id :type integer))))
     (is (equal (list-tables-in-schema "uniq")
-               '(("gracie"))))
+               '("gracie")))
     (is (equal (list-tables-in-schema 'uniq)
-               '(("gracie"))))
+               '("gracie")))
     (query (:create-table "uniq.george" ((id :type integer))))
     (is (equal (list-tables-in-schema "uniq")
-               '(("george") ("gracie"))))
+               '("george" "gracie")))
     (is (table-exists-p "test.uniq.george"))
     (is (table-exists-p "uniq.george"))
     (is (table-exists-p "george" "uniq"))
@@ -217,15 +211,12 @@
     (drop-schema 'uniq :cascade 't)
     (is (not (schema-exists-p 'uniq)))
     (create-schema 'uniq)
-    (is (not (set-difference (list-schemas)
-                             '("public" "information_schema" "uniq")
-                             :test #'equal)))
+    (format t "List-schemas ~a~%" (list-schemas))
+    (is (equal "uniq" (find "uniq" (list-schemas) :test #'equal)))
     (drop-schema "uniq" :cascade 't)
     (is (not (schema-exists-p "uniq")))
     (create-schema "uniq")
-    (is (not (set-difference (list-schemas)
-                             '("public" "information_schema" "uniq")
-                             :test #'equal)))
+    (is (equal "uniq" (find "uniq" (list-schemas) :test #'equal)))
     (drop-schema 'uniq :cascade 't)
     (is (equal (get-search-path)
                "\"$user\", public"))
@@ -328,7 +319,8 @@ and second the string name for the datatype."
     (is (equal (sql (:drop-index :concurrently 'george-idx))
                "DROP INDEX CONCURRENTLY george_idx"))
     (is (equal (sql (:drop-index 'george-idx))
-               "DROP INDEX george_idx"))))
+               "DROP INDEX george_idx"))
+    (query (:drop-table :if-exists 'george :cascade))))
 
 (test sequence
   "Sequence testing"

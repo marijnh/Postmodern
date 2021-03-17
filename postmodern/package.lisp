@@ -137,6 +137,7 @@
    #:list-templates
    #:list-available-collations
    #:list-database-access-rights
+   #:find-comments
 
    ;; extensions
    #:list-available-extensions
@@ -180,6 +181,7 @@
    #:drop-schema
    #:with-schema
    #:schema-exists-p
+   #:get-schema-comment
    ;; sequences
    #:sequence-next
    #:list-sequences
@@ -192,13 +194,18 @@
    #:table-exists-p
    #:table-description
    #:table-description-plus
+   #:table-description-menu
    #:list-table-sizes
    #:table-size
    #:list-tables-in-schema
    #:drop-table
    #:get-table-oid
    #:get-table-comment
+   #:get-column-comments
+   #:get-column-comment
+   #:get-all-table-comments
    #:rename-table
+   #:list-check-constraints
    ;; tablespaces
    #:list-tablespaces
    ;; triggers
@@ -207,6 +214,7 @@
    #:list-detailed-triggers
    ;; util
    #:add-comment
+   #:find-comments
    #:list-available-types
    #:cache-hit-ratio
    #:bloat-measurement
