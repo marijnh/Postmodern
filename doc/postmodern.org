@@ -2429,13 +2429,22 @@ Example usage where two identifiers are required would be constraints:
               'country-locations)
 #+END_SRC
 
+** find-comments (type identifier)
+
+Returns the comments attached to a particular database object. The allowed
+types are :database :schema :table :columns (all the columns in a table)
+:column (for a single column).
+
+An example would be (find-comments :table 's2.employees) where the table employees
+is in the s2 schema.
 ** function get-database-comment (database-name)
    :PROPERTIES:
    :CUSTOM_ID: d993f27b-95d6-4a5b-bdf3-3e06beed0213
    :END:
 → string
 
-Returns the comment, if any, attached to a database.
+Returns the comment, if any, attached to a database. See also get-schema-comment,
+get-column-comments and get-database-comment.
 ** function postgresql-version ()
    :PROPERTIES:
    :ID:       9243f0ff-2001-4427-8cf9-33f9a9b6fd5c
@@ -2936,6 +2945,11 @@ return the tablename and the schema name. The name can be a symbol or a string.
 Returns a list of form '(table schema database. If the tablename is not fully
 qualified, it will assume that the schema should be \"public\".
 
+** function get-schema-comment (schema-name)
+→ string
+
+Retrieves the comment, if any attached to the schema. See also get-schema-comment,
+get-column-comments and get-database-comment.
 * Sequences
   :PROPERTIES:
   :ID:       62e4d0bd-e12f-47c6-8373-a174a7d8d7b1
@@ -3110,6 +3124,80 @@ Table can be either a string or quoted. Table-names can be fully qualified with
 the schema or not. If the table-name is not fully qualified and a schema name
 is not provided, the table will be assumed to be in the public schema.
 
+** function table-description-menu (table-name &key char-max-length data-type-length
+                                            has-default default-value not-null
+                                            numeric-precision numeric-scale
+                                            storage primary primary-key-name
+                                            unique unique-key-name fkey fkey-name
+                                            fkey-col-id fkey-table fkey-local-col-id
+                                            identity generated collation
+                                            col-comments locally-defined inheritance-count
+                                            stat-collection)
+→ list string list
+
+Takes a fully qualified table name which can be either a string or a symbol.
+
+Returns three values.
+
+1. A list of plists of each row's parameters. This will always
+include :column-name and :data-type-name but all other parameters can be set or unset
+and are set by default (set to t).
+
+2. The comment string attached to the table itself (if any).
+
+3. A list of the check constraints applied to the rows in the table. See documentation for
+list-check-constraints for an example.
+
+The available keyword parameters are:
+
+- data-type-length (For a fixed-size type, typlen is the number of bytes in the internal representation of the type. But for a variable-length type, typlen is negative. -1 indicates a “varlena” type (one that has a length word), -2 indicates a null-terminated C string.)
+- char-max-length (Typically used for something like a varchar and shows the maximum length)
+- has-default (value T if this column has a default value and :NULL if not)
+- default-value (value is the default value as string. A default of 9.99 will still be a string)
+- not-null (value is T if the column must have a value or :NULL otherwise)
+- numeric-precision (value is the total number of digits for a numeric type if that precision was specified)
+- numeric-scale (value is the number of digits in the fraction part of a numeric type if that scale was specified)
+- storage (value is the storage setting for a column. Result can be plain, extended, main or external)
+- primary (value is T if the column is the primary key for the table, :NULL otherwise)
+- primary-key-name (value is the name of the primary-key itself, not the column, if the column is the primary key for the table, :NULL otherwise)
+- unique (value is T if the column is subject to a unique key, :NULL otherwise)
+- unique-key-name (value is the name of the unique-key itself, not the column, applied to the column, :NULL otherwise)
+- fkey (value is T if the column is a foreign key, :NULL otherwise)
+- fkey-name (value is the name of the foreign key, :NULL otherwise)
+- fkey-col-id (value is the column id of the foreign table used as the foreign key. Probably easier to use the Postmodern function list-foreign-keys if you are looking for the name of the columns)
+- fkey-table (value is the name of the foreign table, :NULL otherwise)
+- fkey-local-col-id (value is the column id of this column. Probably easier to use the Postmodern function list-foreign-keys if you are looking for the name of the columns involved in the foreign key)
+- identity (if the column is an identity column, the values can be 'generated always' or 'generated by default'. Otherwise :NULL)
+- generated (columns can be generated, if this column is generated and stored on disk, the value will be 'stored', otherwise :NULL)
+- collation (columns with collations which are not the default collation for the database will show that collation here, otherwise :NULL)
+- col-comments (value is any comment that has been applied to the column, :NULL otherwise)
+- locally-defined (value is T if locally defined. It might be both locally defined and inherited)
+- inheritance-count (the number of direct ancestors this column has inherited)
+- stat-collection (stat-collection returns the value of attstattarget which controls the level of detail of statistics accumulated for this column by ANALYZE. A zero value indicates that no statistics should be collected. A negative value says to use the system default statistics target. The exact meaning of positive values is data type-dependent. For scalar data types, attstattarget is both the target number of most common values to collect, and the target number of histogram bins to create. Attstorage is normally a copy of pg_type.typstorage of this column's type. For TOAST-able data types, this can be altered after column creation to control storage policy.)
+** function list-check-constraints (table-name)
+→ list
+
+Takes a fully qualified table name and returns a list of lists of check constraints
+where each sublist has the form of (check-constraint-name check)
+
+Example:
+
+#+BEGIN_SRC lisp
+(query (:create-table 'employees2
+                      ((did :type (or integer db-null)
+                            :primary-key "generated by default as identity")
+                       (name :type (varchar 40) :check (:<> 'name ""))
+                       (birth-date :type date :check (:> 'birth-date "1900-01-01"))
+                       (start-date :type date :check (:> 'start-date 'birth-date))
+                       (salary :type numeric :check (:> 'salary 0)))))
+
+(list-check-constraints 'employees2)
+
+(("employees2_birth_date_check" "CHECK (birth_date > '1900-01-01'::date)")
+ ("employees2_check" "CHECK (start_date > birth_date)")
+ ("employees2_name_check" "CHECK (name::text <> ''::text)")
+ ("employees2_salary_check" "CHECK (salary > 0::numeric)"))
+#+END_SRC
 ** function list-columns (table-name)
    :PROPERTIES:
    :ID:       c867f758-86e5-4242-a825-a273c86acfd0
@@ -3161,7 +3249,16 @@ for tables in all schemas.
    :END:
 → string
 
-Retrieves the comment, if any attached to the table.
+Retrieves the comment, if any attached to the table. See also get-schema-comment,
+get-column-comments and get-database-comment
+** function get-column-comments (database schema table)
+   :PROPERTIES:
+   :CUSTOM_ID: e8d6e402-5c76-4533-9b5c-a823b9582c26
+   :END:
+→ string
+
+Retrieves a list of lists of column names and the comments, if any, attached
+to the columns of a table.
 ** function rename-table (old-name new-name)
 → boolean
 

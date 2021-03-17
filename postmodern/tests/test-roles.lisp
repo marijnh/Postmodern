@@ -139,7 +139,6 @@
           (with-connection (list x superuser-name superuser-password host)
             (test-db-creation-helper)
             ;; YES CREATE THE ROLES ONLY ONCE, BUT WHAT ABOUT THE PERMISSIONS?
-
             (when (= y 1) (test-create-roles))
             ;; Create table in same database, but subsequent to creation of the roles
             (query (:create-table 't3
