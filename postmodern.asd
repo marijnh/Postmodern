@@ -59,6 +59,7 @@
                          (:file "test-dao" :depends-on ("test-package")
                           :if-feature :postmodern-use-mop)
                          (:file "test-return-types" :depends-on ("test-package"))
+                         (:file "test-table-info" :depends-on ("test-package"))
                          (:file "test-return-types-timestamps" :depends-on ("test-package"))
                          (:file "test-transactions" :depends-on ("test-package"))
                          (:file "test-roles" :depends-on ("test-package"))

@@ -1,6 +1,9 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
+(defun make-keyword (name)
+  (values (intern (string-upcase name) "KEYWORD")))
+
 (defun valid-sql-character-p (chr)
   "Returns t if chr is letter, underscore, digits or dollar sign"
   (or (cl-unicode:has-property chr "Letter")
@@ -196,6 +199,20 @@ is '~a'"  name comment)))
     (:type (query (format nil "comment on TYPE ~a is '~a'"  name comment)))
     (:view (query (format nil "comment on VIEW ~a is '~a'"  name comment)))))
 
+(defun find-comments (type identifier)
+  "Returns the comments attached to a particular database object. The allowed
+types are :database :schema :table :columns (all the columns in a table)
+:column (for a single column).
+
+An example would be (find-comments :table 's2.employees) where the table employees
+is in the s2 schema."
+  (ecase type
+    (:database (get-database-comment identifier))
+    (:schema (get-schema-comment identifier))
+    (:table (get-table-comment identifier))
+    (:columns (get-column-comments identifier))
+    (:column (get-column-comment identifier))))
+
 ;;; Databases
 (define-condition invalid-database-name (error)
   ((text :initarg :text :reader text))
@@ -327,14 +344,14 @@ provided, it will return the result for the currently connected database."
                    :where (:= 'datname '$1))
           (to-sql-name name))))
 
-(defun get-database-comment (database-name)
+(defun get-database-comment (&optional database-name)
   "Returns the comment, if any, attached to a database"
-  (setf database-name (to-sql-name database-name))
-  (when (database-exists-p database-name)
-    (query "SELECT pg_catalog.shobj_description(d.oid, 'pg_database')
+  (if database-name (setf database-name (to-sql-name database-name))
+      (setf database-name (current-database)))
+  (query "SELECT pg_catalog.shobj_description(d.oid, 'pg_database')
                       FROM   pg_catalog.pg_database d
                       WHERE  datname = $1" database-name
-                  :single)))
+                      :single))
 
 (defun list-databases (&key (order-by-size nil) (size t) (names-only nil))
   "Returns a list of lists where each sub-list contains the name of the
@@ -416,6 +433,12 @@ a database name, a role name and whether they have access rights (T or NIL)."
             role-name))))
 
 ;;;; Schemas
+(defun get-schema-comment (schema-name)
+  "If the schema has been commented, returns that string, else nil. Must be a
+schema in the currently connected database."
+  (query "select obj_description($1::regnamespace)"
+         (to-sql-name schema-name)
+         :single))
 ;;;; See namespace.lisp
 
 ;;; Sequences
@@ -513,15 +536,26 @@ the name of the data types. E.g. (21 \"smallint\")"
                   :where (:= 'typtype "b"))))
 
 ;;; Tables
+(define-condition inconsistent-schema-name (error)
+  ((text :initarg :text :reader text)))
+
 (defun table-schema-names (table-name schema-name)
   "Helper function to allow for fully qualified table names and non-qualified
 tables names that just exist in public schema or in a separately stated
-schema in the second parameter."
+schema in the second parameter. Will thrown an error if the table-name is
+fully qualified and has a schema name different than the specified schema name."
   (let ((split-name (split-fully-qualified-tablename table-name)))
     (setf table-name (first split-name))
-    (if schema-name (setf schema-name (to-sql-name schema-name))
-        (setf schema-name (second split-name))))
-  (values table-name schema-name))
+    (cond ((and schema-name
+                (not (string= (second split-name) "public"))
+                (not (string= (second split-name)
+                              (to-sql-name schema-name))))
+           (error 'inconsistent-schema-name
+               :text (format nil "You have specified a schema name ~a and an inconsistent schema name in a fully qualified table name ~a" schema-name (second split-name))))
+          ((not schema-name)
+           (setf schema-name (second split-name)))
+          (t (setf schema-name (to-sql-name schema-name))))
+    (values table-name schema-name)))
 
 
 ;;; create table can only be done either using a deftable approach or s-sql
@@ -530,15 +564,9 @@ schema in the second parameter."
   "Retrieves the comment, if any attached to the table."
   (multiple-value-bind (tn sn)
       (table-schema-names table-name schema-name)
-    (query (:select 'description
-            :from 'pg-description
-            :inner-join 'pg-class
-            :on (:= 'objoid 'oid)
-            :inner-join 'pg-namespace
-            :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
-            :where (:and (:= 'pg-class.relname '$1)
-                         (:= 'pg-namespace.nspname '$2)))
-           tn sn :single)))
+    (query (format nil "select obj_description($1::regclass)")
+           (concatenate 'string sn "." tn)
+           :single)))
 
 (defun get-all-table-comments ()
   "Returns a list of lists, each list showing the schema, table and comment
@@ -594,7 +622,7 @@ is not provided, the table will be assumed to be in the public schema."
                    tn sn))))
 
 (defun table-description-plus (table-name &optional schema-name)
-  "Returns more table info than table-description. Specifically returns
+  "Returns more table info than table-description. It defaults to returning
 column-name, data-type, character-maximum-length, modifier,
 whether it is not-null and the default value.
 
@@ -604,28 +632,228 @@ is not provided, the table will be assumed to be in the public schema."
   (multiple-value-bind (tn sn)
       (table-schema-names table-name schema-name)
     (mapcar #'butlast
-          (query (:order-by
-                  (:select
-                   (:as 'a.attname 'column-name)
-                   (:as 'tn.typname 'data-type)
-                   (:as 'a.attlen  'character-maximum-length)
-                   (:as 'a.atttypmod 'modifier)
-                   (:as 'a.attnotnull 'notnull)
-                   (:as 'a.atthasdef 'hasdefault)
-                   (:as 'a.attnum 'ordinal-position)
-                   :distinct
-                   :from (:as 'pg-attribute 'a)
-                   :inner-join (:as 'pg-type 'tn)
-                   :on (:= 'tn.oid 'a.atttypid)
-                   :inner-join 'pg-class
-                   :on (:and (:= 'pg-class.oid 'attrelid)
-                             (:= 'pg-class.relname '$1))
-                   :inner-join 'pg-namespace
-                   :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
-                   :where (:and (:> 'attnum 0)
-                                (:= 'pg-namespace.nspname '$2)))
-                  'ordinal-position)
-                 tn sn))))
+            (query (:order-by
+             (:select
+              (:as 'a.attname 'column-name)
+              (:as 'tn.typname 'data-type)
+              (:as 'a.attlen  'character-maximum-length)
+              (:as 'a.atttypmod 'modifier)
+              (:as 'a.attnotnull 'notnull)
+              (:as 'a.atthasdef 'hasdefault)
+              (:as 'a.attnum 'ordinal-position)
+              :distinct
+              :from (:as 'pg-attribute 'a)
+              :inner-join (:as 'pg-type 'tn)
+              :on (:= 'tn.oid 'a.atttypid)
+              :inner-join 'pg-class
+              :on (:and (:= 'pg-class.oid 'attrelid)
+                        (:= 'pg-class.relname '$1))
+              :inner-join 'pg-namespace
+              :on (:= 'pg-namespace.oid 'pg-class.relnamespace)
+              :where (:and (:> 'attnum 0)
+                           (:= 'pg-namespace.nspname '$2)))
+             'ordinal-position)
+                   tn sn))))
+
+(defun table-parameter-helper (version>11 version>10 char-max-length data-type-length
+                               has-default default-value not-null
+                               numeric-precision numeric-scale
+                               storage primary primary-key-name
+                               unique unique-key-name fkey fkey-name
+                               fkey-col-id fkey-table fkey-local-col-id
+                               identity generated collation
+                               col-comments locally-defined inheritance-count
+                               stat-collection)
+  (let ((param-list (list "t.typname AS data_type_name" "f.attname as column_name")))
+    (when char-max-length
+      (push " CASE
+              WHEN f.atttypmod >= 0 AND t.typname <> 'numeric'
+                THEN (f.atttypmod - 4) --first 4 bytes are for storing actual length of data
+              END AS character_maximum_length" param-list))
+    (when data-type-length
+      (push " f.attlen as data_type_length " param-list))
+    (when has-default
+      (push " case when f.atthasdef then f.atthasdef else null end as has_default" param-list))
+    (when default-value
+      (push " CASE
+              WHEN f.atthasdef = 't' THEN pg_get_expr(d.adbin, d.adrelid)
+              END AS default_value " param-list))
+    (when not-null
+      (push "case when f.attnotnull then f.attnotnull else null end as not_null " param-list))
+    (when numeric-precision
+      (push " CASE
+              WHEN t.typname = 'numeric' THEN (((f.atttypmod - 4) >> 16) & 65535)
+              END AS numeric_precision " param-list))
+    (when numeric-scale
+      (push " CASE
+              WHEN t.typname = 'numeric' THEN ((f.atttypmod - 4)& 65535 )
+              END AS numeric_scale " param-list))
+    (when storage
+      (push " CASE
+              WHEN f.attstorage ='p' THEN 'plain'
+              WHEN f.attstorage ='m' THEN 'main'
+              WHEN f.attstorage ='e' THEN 'external'
+              WHEN f.attstorage ='x' THEN 'extended'
+              END
+              as storage " param-list))
+    (when primary
+      (push " CASE
+              WHEN p.contype = 'p' THEN 'Primary'
+              ELSE ''
+              END AS primary " param-list))
+    (when primary-key-name
+      (push " CASE
+              WHEN p.contype = 'p' THEN p.conname
+              END AS primary_key_name " param-list))
+    (when unique
+      (push " CASE
+              WHEN p.contype = 'u' THEN True
+              ELSE null
+              END AS unique " param-list))
+    (when unique-key-name
+      (push " CASE
+              WHEN p.contype = 'u' THEN p.conname
+              END AS unique_key_name " param-list))
+    (when fkey
+      (push " CASE
+              WHEN p.contype = 'f' THEN True
+              ELSE NULL
+              END AS fkey " param-list))
+    (when fkey-name
+      (push " CASE
+              WHEN p.contype = 'f' THEN p.conname
+              END AS fkey_name " param-list))
+    (when fkey-col-id
+      (push " CASE
+              WHEN p.contype = 'f' THEN p.confkey
+              END AS fkey_col_id " param-list))
+    (when fkey-table
+      (push " CASE
+              WHEN p.contype = 'f' THEN g.relname
+              END AS fkey_table " param-list))
+    (when fkey-local-col-id
+      (push " CASE
+              WHEN p.contype = 'f' THEN p.conkey
+              END AS fkey_local_col_id " param-list))
+    (when (and identity version>10)
+      (push " case when f.attidentity ='a' then 'generated always'
+                   when f.attidentity = 'd' then 'generated by default'
+                   else null
+                   end as identity " param-list))
+    (when (and generated version>11)
+      (push " case when f.attgenerated ='s' then 'stored' else null end as generated " param-list))
+    (when collation
+      (push " (select c.collname from pg_catalog.pg_collation as c, pg_catalog.pg_type t
+              where c.oid = f.attcollation
+                    and t.oid = f.atttypid
+                    and f.attcollation <> t.typcollation) AS collation "
+            param-list))
+    (when col-comments
+      (push " pg_catalog.col_description(f.attrelid, f.attnum) as col_comments " param-list))
+    (when locally-defined
+      (push " case when f.attislocal then true else null end as locally_defined " param-list))
+    (when inheritance-count
+      (push " f.attinhcount inheritance_count " param-list))
+    (when stat-collection
+      (push " CASE WHEN f.attstattarget=-1 THEN NULL ELSE f.attstattarget END AS stat_collection "
+            param-list))
+    (format nil "~{~a~^, ~}" (nreverse param-list))))
+
+(defun table-description-menu (table-name
+                               &key (char-max-length t) (data-type-length t)
+                                 (has-default t) (default-value t) (not-null t)
+                                 (numeric-precision t) (numeric-scale t)
+                                 (storage t) (primary t) (primary-key-name t)
+                                 (unique t) (unique-key-name t) (fkey t) (fkey-name t)
+                                 (fkey-col-id t) (fkey-table t) (fkey-local-col-id t)
+                                 (identity t) (generated t) (collation t)
+                                 (col-comments t) (locally-defined t) (inheritance-count t)
+                                 (stat-collection t))
+  "Takes a fully qualified table name which can be either a string or a symbol.
+Returns three values.
+
+1. A list of plists of each row's parameters. This will always
+include :column-name and :data-type-name but all other parameters can be set or unset
+and are set by default (set to t).
+
+2. The comment string attached to the table itself (if any).
+
+3. A list of the check constraints applied to the rows in the table. See documentation for
+list-check-constraints for an example.
+
+The available keyword parameters are:
+
+- char-max-length (Typically used for something like a varchar and shows the maximum length)
+- data-type-length (For a fixed-size type, typlen is the number of bytes in the internal representation of the type. But for a variable-length type, typlen is negative. -1 indicates a “varlena” type (one that has a length word), -2 indicates a null-terminated C string.)
+- has-default (value T if this column has a default value and :NULL if not)
+- default-value (value is the default value as string. A default of 9.99 will still be a string)
+- not-null (value is T if the column must have a value or :NULL otherwise)
+- numeric-precision (value is the total number of digits for a numeric type if that precision was specified)
+- numeric-scale (value is the number of digits in the fraction part of a numeric type if that scale was specified)
+- storage (value is the storage setting for a column. Result can be plain, extended, main or external)
+- primary (value is T if the column is the primary key for the table, :NULL otherwise)
+- primary-key-name (value is the name of the primary-key itself, not the column, if the column is the primary key for the table, :NULL otherwise)
+- unique (value is T if the column is subject to a unique key, :NULL otherwise)
+- unique-key-name (value is the name of the unique-key itself, not the column, applied to the column, :NULL otherwise)
+- fkey (value is T if the column is a foreign key, :NULL otherwise)
+- fkey-name (value is the name of the foreign key, :NULL otherwise)
+- fkey-col-id (value is the column id of the foreign table used as the foreign key. Probably easier to use the Postmodern function list-foreign-keys if you are looking for the name of the columns)
+- fkey-table (value is the name of the foreign table, :NULL otherwise)
+- fkey-local-col-id (value is the column id of this column. Probably easier to use the Postmodern function list-foreign-keys if you are looking for the name of the columns involved in the foreign key)
+- identity (if the column is an identity column, the values can be 'generated always' or 'generated by default'. Otherwise :NULL)
+- generated (columns can be generated, if this column is generated and stored on disk, the value will be 'stored', otherwise :NULL)
+- collation (columns with collations which are not the default collation for the database will show that collation here, otherwise :NULL)
+- col-comments (value is any comment that has been applied to the column, :NULL otherwise)
+- locally-defined (value is T if locally defined. It might be both locally defined and inherited)
+- inheritance-count (the number of direct ancestors this column has inherited)
+- stat-collection (stat-collection returns the value of attstattarget which controls the level of detail of statistics accumulated for this column by ANALYZE. A zero value indicates that no statistics should be collected. A negative value says to use the system default statistics target. The exact meaning of positive values is data type-dependent. For scalar data types, attstattarget is both the target number of most common values to collect, and the target number of histogram bins to create. Attstorage is normally a copy of pg_type.typstorage of this column's type. For TOAST-able data types, this can be altered after column creation to control storage policy.)"
+  (let* ((version>11 (cl-postgres:postgresql-version-at-least "12.0" pomo:*database*))
+         (version>10 (cl-postgres:postgresql-version-at-least "11.0" pomo:*database*)))
+    (destructuring-bind (table schema database)
+        (pomo:split-fully-qualified-tablename table-name)
+      (declare (ignore database))
+      (setf schema (to-sql-name schema))
+      (setf table (to-sql-name table))
+      (when (and (pomo:schema-exists-p schema)
+                 (pomo:table-exists-p (concatenate 'string schema "." table)))
+        (let ((overall-description
+                (get-table-comment table schema))
+              (constraint-checks (list-check-constraints table-name))
+              (col-descriptions
+                (query
+                 (format nil
+                         "SELECT
+                          ~a
+                          FROM pg_attribute f
+                          JOIN pg_class c ON c.oid = f.attrelid
+                          JOIN pg_type t ON t.oid = f.atttypid
+                          LEFT JOIN pg_attrdef d
+                          ON d.adrelid = c.oid
+                            AND d.adnum = f.attnum
+                          LEFT JOIN pg_namespace n
+                          ON n.oid = c.relnamespace
+                          LEFT JOIN pg_constraint p
+                          ON p.conrelid = c.oid
+                             AND f.attnum = ANY (p.conkey)
+                          LEFT JOIN pg_class AS g ON p.confrelid = g.oid
+                          WHERE c.relkind = 'r'::char
+                          AND f.attisdropped = false
+                          AND n.nspname = $1  -- Replace with Schema name
+                          AND c.relname = $2  -- Replace with table name
+                          AND f.attnum > 0
+                          ORDER BY f.attnum"
+                         (table-parameter-helper version>11 version>10
+                                                 char-max-length data-type-length
+                                                 has-default default-value not-null
+                                                 numeric-precision numeric-scale
+                                                 storage primary primary-key-name
+                                                 unique unique-key-name fkey fkey-name
+                                                 fkey-col-id fkey-table fkey-local-col-id
+                                                 identity generated collation
+                                                 col-comments locally-defined inheritance-count
+                                                 stat-collection))
+                 schema table :plists)))
+          (values col-descriptions overall-description constraint-checks))))))
 
 (defun list-all-tables (&optional (fully-qualified-names-only nil))
   "If fully-qualified-names-only is set to t, returns all schema.table names
@@ -668,8 +896,9 @@ the names will be returned as strings with underscores converted to hyphens."
                                  ORDER BY table_name)"
                     (to-sql-name schema-name))))))
     (if strings-p
-        (mapcar 'from-sql-name result)
-        result )))
+        (mapcar 'to-sql-name result)
+        result)
+    (alexandria:flatten result)))
 
 (defun list-tables (&optional (strings-p nil))
   "DEPRECATED FOR LIST-ALL-TABLES. Return a list of the tables in the public
@@ -769,24 +998,41 @@ either a string or quoted."
 
 
 ;; Columns
-(defun get-column-comments (database schema table)
- "Retrieves a list of lists of column names and comments, if any, from a table "
-  (query (format nil "SELECT
-    cols.column_name,
-    (
-        SELECT
-            pg_catalog.col_description(c.oid, cols.ordinal_position::int)
-        FROM pg_catalog.pg_class c
-        WHERE
-            c.oid     = (SELECT cols.table_name::regclass::oid) AND
-            c.relname = cols.table_name
-    ) as column_comment
+(defun get-column-comments (fully-qualified-table-name)
+  "Retrieves a list of lists of column names and comments, if any, from a table.
+Each sublist will be in the form of (column-name comment-string)"
+  (query "SELECT a.attname,
+          pg_catalog.col_description(a.attrelid, a.attnum)
+          FROM pg_catalog.pg_attribute a
+          WHERE a.attrelid = $1
+          AND a.attnum > 0
+          AND NOT a.attisdropped
+          and pg_catalog.col_description(a.attrelid, a.attnum) is not null
+          ORDER BY a.attnum;"
+         (get-table-oid fully-qualified-table-name)))
 
-    FROM information_schema.columns cols
-    WHERE
-    cols.table_catalog = '~a' AND
-    cols.table_schema  = '~a' AND
-    cols.table_name    = '~a';" database schema table)))
+(defun get-column-comment (qualified-column-name)
+  "Retrieves a string which is the comment applied to a particular column in a table
+in the currently connected database. The parameter can be in the form
+of table.column, schema.table.column or database.schema.table.colum."
+  (let* ((split-name
+          (split-sequence:split-sequence #\.
+                                         (to-sql-name qualified-column-name)
+                                         :test 'equal))
+         (col-name (car (last split-name)))
+         (qualified-table-name (format nil "~{~a~^.~}" (butlast split-name)))
+         (table-oid (get-table-oid qualified-table-name)))
+    (when table-oid
+      (cadar (query "SELECT a.attname,
+          pg_catalog.col_description(a.attrelid, a.attnum)
+          FROM pg_catalog.pg_attribute a
+          WHERE a.attrelid = $1
+          AND a.attnum > 0
+          AND NOT a.attisdropped
+          AND a.attname = $2
+          and pg_catalog.col_description(a.attrelid, a.attnum) is not null
+          ORDER BY a.attnum;"
+                  table-oid col-name)))))
 
 (defun list-columns (table-name)
   "Returns a list of strings of just the column names in a table.
@@ -1029,7 +1275,7 @@ fully qualified table name e.g. schema-name.table-name."
                      table)))
     (if just-key (loop for x in info collect (first x)) info)))
 
-(defun list-foreign-keys (table schema)
+(defun list-foreign-keys (table &optional (schema "public"))
   "Returns a list of sublists of foreign key info in the form of
    '((constraint-name local-table local-table-column
      foreign-table-name foreign-column-name))"
@@ -1096,6 +1342,17 @@ Turns constraints into keywords if strings-p is not true."
                                  collect
                                  (mapcar 'from-sql-name x))))))
 
+(defun list-check-constraints (table-name)
+  "Takes a fully qualified table name and returns a list of lists of check constraints
+where each sublist has the form of (check-constraint-name check). See postmodern doc for
+ example"
+  (query "SELECT r.conname, pg_catalog.pg_get_constraintdef(r.oid, true)
+          FROM pg_catalog.pg_constraint r
+          WHERE r.conrelid = $1 AND r.contype = 'c'
+          ORDER BY 1;"
+         (get-table-oid table-name)))
+
+
 (defun list-all-constraints (table-name &optional (strings-p))
   "Uses information_schema to list all the constraints in a table. Table-name
 can be either a string or quoted. Turns constraints into keywords if strings-p
@@ -1151,7 +1408,9 @@ table."
       table-name :alists))))
 
 (defun describe-foreign-key-constraints ()
-  "Generates a list of lists of information on the foreign key constraints"
+  "Generates a list of lists of information on the foreign key constraints
+where each row returned is in the form of
+(constraint-name 631066 table-name table-column 631061 foreign-table-name foreign-table-column)"
   (query (:order-by (:select 'conname
                              (:as 'conrelid 'table)
                              (:as 'pgc.relname 'tabname)

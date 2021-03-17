@@ -114,7 +114,8 @@
                                         ("6 years")
                                         ("5 months")
                                         ("5 months 12 hours"))))
-    (is-true (table-exists-p 'interval))))
+    (is-true (table-exists-p 'interval))
+    (query (:drop-table 'interval))))
 
 (test intervals
   "Testing intervals"

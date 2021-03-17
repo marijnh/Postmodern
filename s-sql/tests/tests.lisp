@@ -62,7 +62,8 @@
     (is (equal (query (:select 'nullable :from 'null-test :where (:= 'id 2)) :single)
                :null))
     (is (equal (query (:select '* :from 'null-test :where (:= 'id 2)))
-               '((2 :null))))))
+               '((2 :null))))
+    (query (:drop-table :if-exists 'null-test :cascade))))
 
 (defun build-recipe-tables ()
   "Build recipe tables uses in array tests"

@@ -184,7 +184,7 @@ be matched against it."
        (setf socket (funcall make-ssl-stream socket
                              :key *ssl-key-file*
                              :certificate *ssl-certificate-file*
-                             :verify (if verify 
+                             :verify (if verify
                                          :required
                                          nil)
                              :hostname hostname)))
@@ -208,9 +208,14 @@ a condition."
         (client-initial-response nil)
         (expected-server-signature nil))
     (unless (eq use-ssl :no)
-      (setf socket (initiate-ssl socket (member use-ssl '(:require :yes :full))
-                                 (member use-ssl '(:yes :full))
-                                 (if (eq use-ssl :full) hostname))))
+      (if (eq use-ssl :try)
+              (let ((old-socket socket)
+                    (new-socket (initiate-ssl socket nil nil nil)))
+                (if new-socket (setf socket new-socket)
+                    (setf socket old-socket)))
+              (setf socket (initiate-ssl socket (member use-ssl '(:require :yes :full))
+                                  (member use-ssl '(:yes :full))
+                                  (if (eq use-ssl :full) hostname)))))
     (startup-message socket user database)
     (force-output socket)
     (labels ((init-gss-msg (in-buffer)
@@ -271,34 +276,27 @@ CL-GSS package is loaded."))
                              (ecase type
                                (0 (return))
                                (2 (error 'database-error
-                                         :message "Unsupported Kerberos
-authentication requested."))
+                                         :message "Unsupported Kerberos authentication requested."))
                                (3 (unless password
-                                    (error "Server requested plain-password
-authentication, but no password was given."))
+                                    (error "Server requested plain-password authentication, but no password was given."))
                                 (plain-password-message socket password)
                                 (force-output socket))
                                (4 (error 'database-error
-                                         :message "Unsupported crypt
-authentication requested."))
+                                         :message "Unsupported crypt authentication requested."))
                                (5 (unless password
-                                    (error "Server requested md5-password
-authentication, but no password was given."))
+                                    (error "Server requested md5-password authentication, but no password was given."))
                                 (md5-password-message socket password user
                                                       (read-bytes socket 4))
                                 (force-output socket))
                                (6 (error 'database-error
-                                         :message "Unsupported SCM
-authentication requested."))
+                                         :message "Unsupported SCM authentication requested."))
                                (7 (when gss-context
                                     (error 'database-error
-                                           :message "Got GSS init message when
-a context was already established"))
+                                           :message "Got GSS init message when a context was already established"))
                                 (init-gss-msg nil))
                                (8 (unless gss-context
                                     (error 'database-error
-                                           :message "Got GSS continuation
-message without a context"))
+                                           :message "Got GSS continuation message without a context"))
                                 (init-gss-msg (read-bytes socket (- size 4))))
                                (9 ) ; auth_required_sspi or auth_req_sspi sspi
                                     ;negotiate without wrap() see postgresql

@@ -49,10 +49,6 @@ No guarantee is given with respect to resolution or timing on any item.
 - [ ]   Named Prepared Statement explicit arglist
 - [ ]   SQL Read Table Review (comments requested on any work that should be done here)
 - [ ]   Row Reader Review (comments requested on any work that should be done here)
-- [ ]   Prepared Query Review (comments requested on any work that should be done here)
-- [ ]   Reading large bytea column over ssl connection errors have been reported. Postgresql does not
-        have a chunk API so the network is handling the content as a whole.
-- [ ]   Alter system (postgresql 9.4)
 - [ ]   Allow parameters to be passed as binary to postgresql
 
 ## Connections/Reconnections and Transactions

@@ -223,7 +223,7 @@ a single string name or :current, :all or \"all\"."
          (list (current-database)))
         ((or (eq databases :all)
              (equalp databases "all"))
-         (list-databases :names-only t))
+         (mapcar #'to-sql-name (list-databases :names-only t)))
         ((listp databases)
          (intersection (mapcar #'to-sql-name databases)
                        (list-databases :names-only t)
