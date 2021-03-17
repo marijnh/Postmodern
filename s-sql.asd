@@ -9,7 +9,7 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
-  :version "1.32.8"
+  :version "1.32.9"
   :depends-on ("cl-postgres"
                "alexandria")
   :components
