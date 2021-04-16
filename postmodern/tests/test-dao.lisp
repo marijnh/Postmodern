@@ -592,6 +592,19 @@ so there is a single source of type truth."
   (let ((a (make-class (write-to-string (gensym)))))
     (is (not (equal nil (make-instance a :id 12 :a "six" :b t))))))
 
+(defun make-alternate-class (name)
+  (eval `(defclass ,(intern name) ()
+           ((id :col-type serial :initarg :id :accessor test-id)
+            (a :col-type (varchar 10) :initarg :a :accessor test-a)
+            (b :col-type boolean :col-default nil :initarg :b :accessor test-b))
+           (:metaclass dao-class)
+           (:table-name dao-test)
+           (:keys id b))))
+
+(test make-alternate-class
+      (let ((a (make-alternate-class (write-to-string (gensym)))))
+        (is (not (equal nil (make-instance a :id 12 :a "six" :b "dittle"))))))
+
 (test dao-class-threads
   (with-test-connection
       (unless (pomo:table-exists-p 'dao-test)
@@ -718,3 +731,22 @@ so there is a single source of type truth."
         (is (equal (query "select * from dao_test")
                    '((1 "dao1" NIL 2 0) (2 "dao2" NIL 2 0)))))
       (execute (:drop-table 'dao-test :cascade)))))
+
+(test dao-table-update
+  (protect
+    (let ((class-name (intern (symbol-name (gensym)))))
+      (make-class (write-to-string class-name))
+      (with-test-connection
+        (execute-statements (dao-table-update class-name))
+        (is (equal (columns-description 'dao-test)
+                   '(("id" "serial" nil)
+                     ("a" "varchar(100)" t)
+                     ("b" "boolean" nil)
+                     ("c" "integer" nil))))
+        (make-alternate-class (write-to-string class-name))
+        (execute-statements (dao-table-update class-name))
+        (is (equal (columns-description 'dao-test)
+                   '(("id" "serial" nil)
+                     ("a" "varchar(10)" nil)
+                     ("b" "boolean" nil))))))))
+
