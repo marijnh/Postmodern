@@ -195,6 +195,10 @@ is deprecated.)"
   `(let ((rows (nth-value 1 (query ,query ,@args :none))))
      (if rows (values rows rows) 0)))
 
+(defun execute-statements (statements)
+  (dolist (statement statements)
+    (execute statement)))
+
 (defmacro doquery (query (&rest names) &body body)
   "Execute the given query (a string or a list starting with a keyword),
 iterating over the rows in the result. The body will be executed with the values

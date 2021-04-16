@@ -35,6 +35,7 @@
    #:list-connections
    #:query
    #:execute
+   #:execute-statements
    #:doquery
    #:parse-queries
    #:read-queries
