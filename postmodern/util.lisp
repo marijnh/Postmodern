@@ -655,6 +655,37 @@ is not provided, the table will be assumed to be in the public schema."
              'ordinal-position)
                    tn sn))))
 
+(defun columns-description (table-name)
+  "Return information in information_schema.columns for TABLE-NAME."
+  (map 'list
+       (lambda (column)
+         (destructuring-bind
+             (name type nullable default max-length) column
+           (list name
+                 ;; type
+                 (cond
+                   ;; serial type
+                   ((and (string= "integer" type)
+                         (alexandria:starts-with-subseq
+                          "nextval"
+                          (princ-to-string default)))
+                    "serial")
+                   ;; varchar
+                   ((string= "character varying" type)
+                    (format nil "varchar(~a)" max-length))
+                   (:else type))
+                 ;; nullable
+                 (when (string= "YES" nullable) t))))
+       (let ((tn (table-schema-names table-name nil)))
+         (query (:select 'column-name
+                         'data-type
+                         'is-nullable
+                         'column-default
+                         'character-maximum-length
+                 :from 'information-schema.columns
+                 :where (:= 'table-name '$1))
+           tn))))
+
 (defun table-parameter-helper (version>11 version>10 char-max-length data-type-length
                                has-default default-value not-null
                                numeric-precision numeric-scale
