@@ -671,7 +671,8 @@ is not provided, the table will be assumed to be in the public schema."
                           (princ-to-string default)))
                     "serial")
                    ;; varchar
-                   ((string= "character varying" type)
+                   ((alexandria:starts-with-subseq
+                     "character varying" type)
                     (format nil "varchar(~a)" max-length))
                    (:else type))
                  ;; nullable

@@ -14,7 +14,7 @@
    #:insert-dao #:update-dao #:save-dao #:save-dao/transaction #:upsert-dao
    #:delete-dao #:make-dao
    #:define-dao-finalization
-   #:dao-table-name #:dao-table-definition
+   #:dao-table-name #:dao-table-definition #:dao-table-update
    #:\!dao-def #:*ignore-unknown-columns*)
 
   (:export

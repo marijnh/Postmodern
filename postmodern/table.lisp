@@ -763,3 +763,142 @@ own queries to add them, in which case look to s-sql's create-table function."
                                            `(:default ,(column-default slot)))))
                    ,@(when (and (dao-keys table) (not (find-primary-key-column table)))
                        `((:primary-key ,@(dao-keys table)))))))
+
+(defun dao-table-update (table)
+  "Given a DAO class, or the name of one, produce an SQL string that,
+when executed, will update the database table to match TABLE."
+  (when (typep table 'symbol)
+    (setq table (find-class table)))
+  (unless (class-finalized-p table)
+    #+postmodern-thread-safe
+    (unless (class-finalized-p table)
+      (bordeaux-threads:with-lock-held (*class-finalize-lock*)
+        (unless (class-finalized-p table)
+          (finalize-inheritance table))))
+    #-postmodern-thread-safe
+    (finalize-inheritance table))
+  (if (not (table-exists-p (dao-table-name table)))
+      (list (dao-table-definition table))
+      (let ((dao-columns
+              (map 'list
+                   (lambda (slot)
+                     (multiple-value-bind (type nullable)
+                         (s-sql::dissect-type (column-type slot))
+                       (list (slot-sql-name slot)
+                             (string-downcase (s-sql::to-type-name type))
+                             nullable)))
+                   (dao-column-slots table)))
+            (dao-keys (map 'list 'to-sql-name (dao-keys table)))
+            (sql-columns (columns-description (dao-table-name table)))
+            (sql-keys (map 'list 'first (find-primary-key-info (dao-table-name table)))))
+        (let ((adds
+                (loop :for slot :in (dao-column-slots table)
+                      :for sql-column = (find (slot-sql-name slot)
+                                              sql-columns
+                                              :key 'first
+                                              :test 'string=)
+                      ;; create column
+                      :if (and (not (ghost slot))
+                               (not sql-column))
+                        :collect
+                        (sql-compile
+                         `(:alter-table ,(dao-table-name table)
+                           :add-column ,(slot-definition-name slot)
+                           :type ,(column-type slot)))))
+              (alters
+                (loop
+                  :for slot :in (dao-column-slots table)
+                  :for column :in dao-columns
+                  :for type = (second column)
+                  :for sql-column = (find (first column)
+                                          sql-columns
+                                          :key 'first
+                                          :test 'string=)
+                  :with result = (list)
+                  :finally (return (reverse result))
+                  :do (unless (ghost slot)
+                        ;; alter type
+                        (when (and sql-column
+                                   (string/= type (second sql-column)))
+                          ;; serial type
+                          (when (string= "serial" (second column))
+                            (push (format nil
+                                          "CREATE SEQUENCE IF NOT EXISTS seq_~a OWNED BY ~a.~a"
+                                          (first column)
+                                          (to-sql-name (dao-table-name table))
+                                          (first column))
+                                  result)
+                            (push (format nil
+                                          "ALTER SEQUENCE seq_~a MINVALUE ~a"
+                                          (first column)
+                                          (let ((min (query (format nil
+                                                                    "SELECT (1 + MAX(~a)) FROM ~a"
+                                                                    (first column)
+                                                                    (to-sql-name (dao-table-name table)))
+                                                            :single)))
+                                            (if (string= (format nil "~a" min) "NULL")
+                                                0
+                                                min)))
+                                  result))
+                          ;; alter type
+                          (push (concatenate
+                                 'string
+                                 (format nil
+                                         "ALTER TABLE ~a ALTER COLUMN ~a TYPE ~a USING ~a::~a"
+                                         (to-sql-name (dao-table-name table))
+                                         (first column)
+                                         type
+                                         (first column)
+                                         type)
+                                 (when (string= "serial" (second column))
+                                   (format nil
+                                           ", ALTER COLUMN ~a SET DEFAULT nextval('seq_~a')"
+                                           (first column)
+                                           (first column))))
+                                result))
+                        ;; nullability change
+                        (unless (eq (third column) (third sql-column))
+                          (push (format nil
+                                        "ALTER TABLE ~a ALTER COLUMN ~a ~a NOT NULL"
+                                        (to-sql-name (dao-table-name table))
+                                        (first column)
+                                        (if (third column)
+                                            "DROP"
+                                            "SET"))
+                                result)))))
+              (drops
+                (loop :for column :in sql-columns
+                      :for dao-column = (find (first column)
+                                              dao-columns
+                                              :key 'first
+                                              :test 'equalp)
+                      :if (not dao-column)
+                        :collect ;; drop column
+                        (sql-compile
+                         `(:alter-table ,(dao-table-name table)
+                           :drop-column ,(first column)))))
+              (add-keys
+                (some
+                 (lambda (key)
+                   (not (member key sql-keys :test 'equalp)))
+                 dao-keys))
+              (gone-keys
+                (some
+                 (lambda (key)
+                   (not (member key dao-keys :test 'equalp)))
+                 sql-keys)))
+          (concatenate
+           'list
+           adds
+           (when (or gone-keys add-keys)
+             (list (sql-compile ;; drop all primary keys
+                    `(:alter-table ,(dao-table-name table)
+                      :drop-constraint ,(format nil "~a_pkey"
+                                                (dao-table-name table))))
+                   (sql-compile ;; add all primary keys
+                    `(:alter-table ,(dao-table-name table)
+                      :add-constraint ,(format nil "~a_pkey"
+                                               (dao-table-name table))
+                      :primary-key ,@dao-keys))))
+           alters
+           drops)))))
