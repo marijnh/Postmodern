@@ -423,10 +423,10 @@ and second the string name for the datatype."
     (query (:create-table "schema_1.s1"
                           ((id :type integer :generated-as-identity-always t)
                            (text :type text))))
-    (add-comment :table 'p1 "a comment on receipes")
+    (add-comment :table 'p1 "a comment on recipes")
     (add-comment :table 'schema-1.s1 "a comment on schema-1 s1")
     (is (equal (get-table-comment 'p1)
-               "a comment on receipes"))
+               "a comment on recipes"))
     (is (equal (integerp (get-table-oid 'schema-1.s1)) t))
     (is (equal (integerp (get-table-oid 'information-schema.columns)) t))
     (is (equal (get-table-comment 'schema-1.s1)

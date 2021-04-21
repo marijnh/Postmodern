@@ -16,7 +16,7 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
-  :version "1.32.9"
+  :version "1.33.0"
   :depends-on ("md5" "split-sequence" "ironclad" "cl-base64" "uax-15"
                      (:feature (:or :sbcl :allegro :ccl :clisp :genera
                                 :armedbear :cmucl :lispworks)
@@ -60,11 +60,15 @@
     :components ((:file "test-package")
                  (:file "tests")
                  (:file "test-oids" :depends-on ("tests"))
-                 (:file "tests-scram" :depends-on ("test-package")))))
+                 (:file "test-ieee-float" :depends-on ("tests"))
+                 (:file "test-clp-utf8" :depends-on ("tests"))
+                 (:file "test-data-types" :depends-on ("tests"))
+                 (:file "test-communicate" :depends-on ("tests"))
+                 (:file "tests-scram" :depends-on ("test-package"))
+                 (:file "tests-saslprep" :depends-on ("test-package")))))
   :perform (test-op (o c)
                     (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
                     (uiop:symbol-call :fiveam '#:run! :cl-postgres)))
-
 
 (defsystem "cl-postgres/simple-date-tests"
   :depends-on ("cl-postgres" "cl-postgres/tests" "fiveam" "simple-date"

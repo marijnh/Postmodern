@@ -45,6 +45,8 @@ string."
 minor versions separated by a period e.g. '12.2' or '9.6.17'. Checks against the
 connection understanding of the running postgresql version and returns t if the
 running version is the requested version or newer."
+  (when (numberp desired-version)
+    (setf desired-version (write-to-string desired-version)))
   (flet ((validate-input (str)
            (unless (or (not (stringp desired-version))
                        (= 0 (length str)))

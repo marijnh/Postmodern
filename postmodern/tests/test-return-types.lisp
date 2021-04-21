@@ -44,6 +44,8 @@
 (test return-types
   (with-test-connection
     (return-types-fixture)
+    (is (no (query (:select 'id 'int4 'text :from 'test-data
+                       :where (:= 'id 3)) :none)))
     (is (equal (query (:select 'id 'int4 'text :from 'test-data
                        :where (:< 'id 3)))
                '((1 2147483645 "text one") (2 0 "text two"))))

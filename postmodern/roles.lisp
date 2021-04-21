@@ -53,54 +53,6 @@ In PostgreSQL*, you cannot drop a database while clients are connected to it.
 (defparameter *execute-privileges-list*
   '("grant execute on all functions in schema ~a to ~a"))
 
-(defun list-database-users ()
-  "List database users (actually 'roles' in Postgresql terminology)."
-  (alexandria:flatten (query (:order-by
-                              (:select 'usename :from 'pg_user)
-                              'usename))))
-
-(defun list-roles (&optional (lt nil))
-  "Returns a list of alists of rolenames, role attributes and membership in
-roles. See https://www.postgresql.org/docs/current/role-membership.html for an
-explanation. The optional parameter can be used to set the return list types
-to :alists or :plists."
-  (let ((sql-query
-          "SELECT r.rolname, r.rolsuper, r.rolinherit,
-            r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,
-            r.rolconnlimit, r.rolvaliduntil,
-            ARRAY(SELECT b.rolname
-                  FROM pg_catalog.pg_auth_members m
-                  JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)
-                  WHERE m.member = r.oid) as memberof,
-            r.rolreplication,
-            r.rolbypassrls
-            FROM pg_catalog.pg_roles r
-            WHERE r.rolname !~ '^pg_'
-            ORDER BY 1;"))
-    (cond ((equal lt :alists)
-           (query  sql-query :alists))
-          ((equal lt :plists)
-           (query  sql-query :plists))
-          (t (query sql-query)))))
-
-(defun role-exists-p (role-name)
-  "Does the named role exist in this database cluster? Returns t or nil"
-  (query "select exists (SELECT r.rolname
-            FROM pg_catalog.pg_roles r
-            WHERE r.rolname = $1)"
-       role-name :single))
-
-(defun remove-whitespace (str)
-  "Removes whitespace from strings. "
-  (let ((scanner-w (cl-ppcre:create-scanner :whitespace-char-class)))
-    (cl-ppcre:regex-replace-all scanner-w str "")))
-
-(defun whitespace-in-string (str)
-  "Returns location of whitespace in string. You probably do not want to allow
-whitespace in either user names or passwords."
-  (let ((scanner-w (cl-ppcre:create-scanner :whitespace-char-class)))
-    (cl-ppcre:scan scanner-w str)))
-
 (defparameter *disallowed-role-names*
   (let ((words (make-hash-table :test 'equal)))
     (dolist (word '(".htaccess" ".htpasswd" ".json" ".rss" ".well-known" ".xml"
@@ -182,6 +134,54 @@ whitespace in either user names or passwords."
     words)
   "A set of words that maybe should be disallowed from user names. Edit as you
 please.")
+
+(defun list-database-users ()
+  "List database users (actually 'roles' in Postgresql terminology)."
+  (alexandria:flatten (query (:order-by
+                              (:select 'usename :from 'pg_user)
+                              'usename))))
+
+(defun list-roles (&optional (lt nil))
+  "Returns a list of alists of rolenames, role attributes and membership in
+roles. See https://www.postgresql.org/docs/current/role-membership.html for an
+explanation. The optional parameter can be used to set the return list types
+to :alists or :plists."
+  (let ((sql-query
+          "SELECT r.rolname, r.rolsuper, r.rolinherit,
+            r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,
+            r.rolconnlimit, r.rolvaliduntil,
+            ARRAY(SELECT b.rolname
+                  FROM pg_catalog.pg_auth_members m
+                  JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)
+                  WHERE m.member = r.oid) as memberof,
+            r.rolreplication,
+            r.rolbypassrls
+            FROM pg_catalog.pg_roles r
+            WHERE r.rolname !~ '^pg_'
+            ORDER BY 1;"))
+    (cond ((equal lt :alists)
+           (query  sql-query :alists))
+          ((equal lt :plists)
+           (query  sql-query :plists))
+          (t (query sql-query)))))
+
+(defun role-exists-p (role-name)
+  "Does the named role exist in this database cluster? Returns t or nil"
+  (query "select exists (SELECT r.rolname
+            FROM pg_catalog.pg_roles r
+            WHERE r.rolname = $1)"
+       role-name :single))
+
+(defun remove-whitespace (str)
+  "Removes whitespace from strings. "
+  (let ((scanner-w (cl-ppcre:create-scanner :whitespace-char-class)))
+    (cl-ppcre:regex-replace-all scanner-w str "")))
+
+(defun whitespace-in-string (str)
+  "Returns location of whitespace in string. You probably do not want to allow
+whitespace in either user names or passwords."
+  (let ((scanner-w (cl-ppcre:create-scanner :whitespace-char-class)))
+    (cl-ppcre:scan scanner-w str)))
 
 (defun revoke-all-on-table (table-name role-name)
   "Takes a table-name which could be a string, symbol or list of strings or

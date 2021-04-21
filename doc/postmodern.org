@@ -392,6 +392,14 @@ argument for every placeholder in the query, executes the prepared query, and
 returns the result in the format specified. (Allowed formats are the same as for
 query.)
 
+#+begin_src lisp
+  (let ((select-two (prepare (:select (:type '$1 'integer) (:type '$2 'string)))))
+    (funcall select-two 1 "a"))
+
+  (let ((getpid (prepare "select pg_backend_oid()" :single)))
+    (funcall getpid))
+#+end_src
+
 For queries that have to be run very often, especially when they are complex,
 it may help performance since the server only has to plan them once. See the [[http://www.postgresql.org/docs/current/static/sql-prepare.html][
 PostgreSQL manual]] for details.
@@ -413,9 +421,15 @@ statements triggering a duplicate-prepared-statement error.
    :END:
 → function
 
-This is the macro-style variant of prepare. It is like prepare, but gives the
+This is a macro-style variant of prepare. It is like prepare, but gives the
 function a name which now becomes a top-level function for the prepared
 statement. The name should not a string but may be quoted.
+
+#+begin_src lisp
+  (defprepared 'select1 "select a from test_data where c = $1" :single)
+
+  (funcall 'select1 "foobar")
+#+end_src
 
 ** macro defprepared-with-names (name (&rest args) (query &rest query-args) &optional (format :rows))
    :PROPERTIES:

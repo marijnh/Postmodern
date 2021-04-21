@@ -185,7 +185,7 @@ when it is not will result in Postgresql throwing type mismatch errors."
     (t 0)))
 
 (defun types-match-p (x y)
-  (eq (type-of x) (type-of y)))
+  (equal (type-of x) (type-of y)))
 
 (defun oid-types-match-p (x y)
   "Returns t if the two parameters have matching types"

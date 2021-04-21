@@ -75,6 +75,10 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
 
 (test connect-sanity
   (with-test-connection
+    (is (database-open-p connection))
+    (close-database connection)
+    (is (not (database-open-p connection)))
+    (reopen-database connection)
     (is (database-open-p connection))))
 
 (test simple-query
@@ -158,19 +162,42 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
     (is (equal (exec-query connection "select 42 as foo, 99 as bar" 'alist-row-reader)
                '((("foo" . 42) ("bar" . 99)))))))
 
+(test vector-row-reader
+  (with-test-connection
+    (is (equalp (exec-query connection "select 12, 'a'" 'vector-row-reader)
+                #(#(12 "a"))))))
+
+(test ignore-row-reader
+  (with-test-connection
+    (is (not (exec-query connection "select 12, 'a'" 'ignore-row-reader)))))
+
 (test prepare-and-exec-query
   (with-test-connection
-    (prepare-query connection "test1" "select $1::integer")
-    (is (equal (exec-prepared connection "test1" '(42) 'list-row-reader)
-               '((42))))
-    (prepare-query connection "test2" "select $1::integer, $2::boolean")
-    (is (equal (exec-prepared connection "test2" '(42 nil) 'list-row-reader)
-               '((42 nil))))
-    (prepare-query connection "test3" "select $1::integer, $2::boolean, $3::text")
-    (is (equal (exec-prepared connection "test3" '(42 t "foo") 'list-row-reader)
-               '((42 t "foo"))))
-    (is (equal (exec-prepared connection "test3" '(42 nil "foo") 'list-row-reader)
-               '((42 nil "foo"))))))
+    (if cl-postgres::*use-binary-parameters*
+        (progn
+          (prepare-query connection "test1" "select $1")
+          (is (equal (exec-prepared connection "test1" '(42) 'list-row-reader)
+                     '((42))))
+          (prepare-query connection "test2" "select $1, $2")
+          (is (equal (exec-prepared connection "test2" '(42 nil) 'list-row-reader)
+                     '((42 nil))))
+          (prepare-query connection "test3" "select $1, $2, $3")
+          (is (equal (exec-prepared connection "test3" '(42 t "foo") 'list-row-reader)
+                     '((42 t "foo"))))
+          (is (equal (exec-prepared connection "test3" '(42 nil "foo") 'list-row-reader)
+                     '((42 nil "foo")))))
+        (progn
+          (prepare-query connection "test1" "select $1::integer")
+          (is (equal (exec-prepared connection "test1" '(42) 'list-row-reader)
+                     '((42))))
+          (prepare-query connection "test2" "select $1::integer, $2::boolean")
+          (is (equal (exec-prepared connection "test2" '(42 nil) 'list-row-reader)
+                     '((42 nil))))
+          (prepare-query connection "test3" "select $1::integer, $2::boolean, $3::text")
+          (is (equal (exec-prepared connection "test3" '(42 t "foo") 'list-row-reader)
+                     '((42 t "foo"))))
+          (is (equal (exec-prepared connection "test3" '(42 nil "foo") 'list-row-reader)
+                     '((42 nil "foo"))))))))
 
 (test unprepare-query
   (with-test-connection
