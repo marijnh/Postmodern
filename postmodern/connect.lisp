@@ -20,7 +20,8 @@ this parameter which will get read by reconnect.")
 
 (defun connect (database-name user-name password host &key (port 5432) pooled-p
                                                         (use-ssl *default-use-ssl*)
-                                                        (service "postgres"))
+                                                        (service "postgres")
+                                                        (application-name ""))
   "Create a new database connection for the given user and the database. Port
 will default to 5432, which is where most PostgreSQL servers are running. If
 pooled-p is T, a connection will be taken from a pool of connections of this
@@ -28,11 +29,11 @@ type, if one is available there, and when the connection is disconnected it
 will be put back into this pool instead. use-ssl can be :no, :yes, or :try,
 as in open-database, and defaults to the value of *default-use-ssl*."
   (cond (pooled-p
-         (let ((type (list database-name user-name password host port use-ssl)))
+         (let ((type (list database-name user-name password host port use-ssl application-name)))
            (or (get-from-pool type)
                (let ((connection (cl-postgres:open-database database-name user-name
                                                             password host port
-                                                            use-ssl)))
+                                                            use-ssl service application-name)))
                  #-genera (change-class connection 'pooled-database-connection
                                         :pool-type type)
                  #+genera (progn
@@ -40,7 +41,7 @@ as in open-database, and defaults to the value of *default-use-ssl*."
                             (setf (slot-value connection 'pool-type) type))
                  connection))))
         (t (cl-postgres:open-database database-name user-name password host port
-                                      use-ssl service))))
+                                      use-ssl service application-name))))
 
 (defun connected-p (database)
   "Returns a boolean indicating whether the given connection is still connected
@@ -48,7 +49,7 @@ to the server."
   (cl-postgres:database-open-p database))
 
 (defun connect-toplevel (database-name user-name password host
-                         &key (port 5432) (use-ssl *default-use-ssl*))
+                         &key (port 5432) (use-ssl *default-use-ssl*) (application-name ""))
   "Bind the *database* to a new connection. Use this if you only need one
 connection, or if you want a connection for debugging from the REPL."
   (when (and *database* (connected-p *database*))
@@ -57,7 +58,7 @@ connection, or if you want a connection for debugging from the REPL."
         (disconnect-toplevel))
       (leave () :report "Leave it." (return-from connect-toplevel nil))))
   (setf *database* (connect database-name user-name password host
-                            :port port :use-ssl use-ssl))
+                            :port port :use-ssl use-ssl :application-name application-name))
   (values))
 
 (defgeneric disconnect (database)

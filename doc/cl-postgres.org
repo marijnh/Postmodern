@@ -19,7 +19,21 @@ library, but can be used separately.
 
 Representation of a database connection. Contains login information in order to be able to automatically re-establish a connection when it is somehow closed.
 
-** function open-database (database user password host &optional (port 5432) (use-ssl :no))
+-  ((host :initarg :host :reader connection-host)
+-   (port :initarg :port :reader connection-port)
+-   (database :initarg :db :reader connection-db)
+-   (user :initarg :user :reader connection-user)
+-   (password :initarg :password :reader connection-password)
+-   (use-ssl :initarg :ssl :reader connection-use-ssl)
+-   (service :initarg :service :accessor connection-service)
+-   (application-name :initarg :application-name :accessor connection-application-name)
+-   (socket :initarg :socket :accessor connection-socket)
+-   (meta :initform nil)
+-   (available :initform t :accessor connection-available)
+-   (parameters :accessor connection-parameters)
+-   (timestamp-format :accessor connection-timestamp-format))
+
+** function open-database (database user password host &optional (port 5432) (use-ssl :no) (service "postgres")(application-name ""))
    :PROPERTIES:
    :ID:       f4429361-bc8d-4c27-b3af-af70b676081c
    :END:
@@ -37,6 +51,10 @@ When it is anything but :no, you must have the CL+SSL package loaded to initiate
 
 On SBCL and Clozure CL, the value :unix may be passed for host, in order to
 connect using a Unix domain socket instead of a TCP socket.
+
+Service defaults to "postgres".
+
+Application-name defaults to a blank string. If provided, Postgresl can use it to track applications with multiple connections.
 
 ** function close-database (database-connection)
    :PROPERTIES:
@@ -83,7 +101,7 @@ prepared statements that have been parsed for this connection.
 This method returns a mapping (string to string) containing all the
 configuration parameters for the connection.
 
-variable *unix-socket-dir*
+variable =*unix-socket-dir*=
 
 Directory where the Unix domain socket for PostgreSQL be found.
 
@@ -91,17 +109,17 @@ On SBCL, when using the :unix keyword as host argument when creating a
 connection, this variable determines the directory in which CL-Postgres
 will look for the socket file.
 
-variable *ssl-certificate-file*
-variable *ssl-key-file*
+variable =*ssl-certificate-file*=
+variable =*ssl-key-file*=
 
 When using SSL (see open-database), these can be used to provide client key
 and certificate files. They can be either NIL, for no file, or a pathname.
 
-variable *retry-connect-times* (5)
+variable =*retry-connect-times*= (5)
 
 How many times do we try to connect again. Borrowed from pgloader
 
-variable *retry-connect-delay* (0.5)
+variable =*retry-connect-delay*= (0.5)
 
 How many seconds to wait before trying to connect again. Borrowed from pgloader
 
@@ -183,17 +201,17 @@ able to pass them to exec-prepared. When a non-NIL second value is returned,
 this may be T to indicate that the first value should simply be escaped as a
 string, or a second string providing a type prefix for the value. (This is
 used by S-SQL.)
-** variable *silently-truncate-ratios*
+** variable =*silently-truncate-ratios*=
    :PROPERTIES:
    :ID:       93d593c6-70f2-4c62-aadd-5dc48c72cb48
    :END:
 
-Given a ratio, a stream and a digital-length-limit, if *silently-truncate-ratios* is true,
+Given a ratio, a stream and a digital-length-limit, if =*silently-truncate-ratios*= is true,
 will return a potentially truncated ratio. If false and the digital-length-limit is reached,
 it will throw an error noting the loss of precision and offering to continue or reset
-*silently-truncate-ratios* to true. Code contributed by Attila Lendvai.
+=*silently-truncate-ratios*= to true. Code contributed by Attila Lendvai.
 
-** variable *silently-truncate-rationals*
+** variable =*silently-truncate-rationals*=
    :PROPERTIES:
    :ID:       5ab0cb88-e5aa-446b-8160-8dc3cf53dd34
    :END:
@@ -203,28 +221,28 @@ can not be expressed within 38 decimal digits (for example 1/3), it will be
 truncated, and lose some precision. Set this variable to nil to suppress
 that behaviour and raise an error instead.
 
-** variable *query-log*
+** variable =*query-log*=
    :PROPERTIES:
    :ID:       1767cf7a-a8f0-43aa-ad95-6c6294965efd
    :END:
 
 When debugging, it can be helpful to inspect the queries that are being sent
-to the database. Set this variable to an output stream value (*standard-output*,
+to the database. Set this variable to an output stream value (=*standard-output*=,
 for example) to have CL-postgres log every query it makes.
 
-** variable *query-callback*
+** variable =*query-callback*=
    :PROPERTIES:
    :ID:       8007d8c8-a315-4f5e-8398-9ec768fcc201
    :END:
 
-When profiling or debugging, the *query-log* may not give enough information,
+When profiling or debugging, the =*query-log*= may not give enough information,
 or reparsing its output may not be feasible. This variable may be set to a
 designator of function taking two arguments. This function will be then called
 after every query, and receive query string and internal time units (as in
 (CL:GET-INTERNAL-REAL-TIME)) spent in query as its arguments.
 
-Default value of this variable is 'LOG-QUERY, which takes care of *QUERY-LOG*
-processing. If you provide custom query callback and wish to keep *QUERY-LOG*
+Default value of this variable is 'LOG-QUERY, which takes care of =*QUERY-LOG*=
+processing. If you provide custom query callback and wish to keep =*QUERY-LOG*=
 functionality, you will have to call LOG-QUERY from your callback function
 
 ** function log-query (query internal-time)
@@ -232,8 +250,8 @@ functionality, you will have to call LOG-QUERY from your callback function
    :ID:       9ad4c0a7-90cb-4190-b8f9-a875220b4807
    :END:
 
-This function is default value of *QUERY-CALLBACK* and logs queries
-to *QUERY-LOG* if it is not NIL.
+This function is default value of =*QUERY-CALLBACK*= and logs queries
+to =*QUERY-LOG*= if it is not NIL.
 
 * Reading values
   :PROPERTIES:
@@ -259,7 +277,7 @@ that interpret them is kept in so-called SQL readtables. All types for which
 no reader is defined will be returned as string values containing their
 PostgreSQL representation.
 
-variable *sql-readtable*
+variable =*sql-readtable*=
 
 The exported special var holding the current read table, a hash
 mapping OIDs to instances of the type-interpreter class that contain
@@ -291,7 +309,7 @@ CL-postgres itself.
    :ID:       6809275d-a961-4bcb-919b-8d39048483ca
    :END:
 
-Define a new reader for a given type. table defaults to *sql-readtable*.
+Define a new reader for a given type. table defaults to =*sql-readtable*=.
 The reader function should take a single argument, a string, and transform
 that into some kind of equivalent Lisp value. When binary-p is true, the reader
 function is supposed to directly read the binary representation of the value.

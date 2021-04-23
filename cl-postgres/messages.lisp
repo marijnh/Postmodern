@@ -46,7 +46,7 @@ message definitions themselves stay readable."
   (uint 4 80877103))
 
 ;; Sends the initial message and sets a few parameters.
-(define-message startup-message nil (user database)
+(define-message startup-message nil (user database application-name)
   (uint 4 196608) ;; Identifies protocol 3.0
   (string "user")
   (string user)
@@ -54,6 +54,8 @@ message definitions themselves stay readable."
   (string database)
   (string "client_encoding")
   (string *client-encoding*)
+  (string "application_name")
+  (string application-name)
   (uint 1 0)) ;; Terminates the parameter list
 
 ;; Identify a user with a plain-text password.

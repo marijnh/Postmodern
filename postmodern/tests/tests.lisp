@@ -40,7 +40,9 @@
       (list db user password host :port port :use-ssl use-ssl))))
 
 (defmacro with-test-connection (&body body)
-  `(with-connection (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection)) ,@body))
+  `(with-connection (prompt-connection-to-postmodern-db-spec
+                     (cl-postgres-tests:prompt-connection))
+     ,@body))
 
 (defmacro with-pooled-test-connection (&body body)
   `(with-connection (append (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection)) '(:pooled-p t)) ,@body))
@@ -51,6 +53,20 @@
 (test connect-sanely
   (with-test-connection
     (is (not (null *database*)))))
+
+(defmacro with-application-connection (&body body)
+  `(with-connection
+       (append
+        (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection))
+        '(:application-name "george"))
+     ,@body))
+
+(test application-name
+  (with-application-connection
+    (is (equal
+         (query "select distinct application_name from pg_stat_activity where application_name = 'george'"
+                :single)
+                 "george"))))
 
 (test connection-pool
   (let* ((db-params (append (prompt-connection-to-postmodern-db-spec (cl-postgres-tests:prompt-connection)) '(:pooled-p t)))

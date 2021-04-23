@@ -19,6 +19,7 @@ all the configuration parameters for the connection."))
    (password :initarg :password :reader connection-password)
    (use-ssl :initarg :ssl :reader connection-use-ssl)
    (service :initarg :service :accessor connection-service)
+   (application-name :initarg :application-name :accessor connection-application-name)
    (socket :initarg :socket :accessor connection-socket)
    (meta :initform nil)
    (available :initform t :accessor connection-available)
@@ -95,7 +96,7 @@ connected."
        (open-stream-p (connection-socket connection))))
 
 (defun open-database (database user password host
-                      &optional (port 5432) (use-ssl :no) (service "postgres"))
+                      &optional (port 5432) (use-ssl :no) (service "postgres") (application-name ""))
   "Create and open a connection for the specified server, database, and user.
 use-ssl may be :no, :try, :yes, or :full; where :try means 'if the server
 supports it'. :require uses provided ssl certificate with no verification.
@@ -116,7 +117,8 @@ connect using a Unix domain socket instead of a TCP socket."
                                                   :user user :password password
                                                   :socket nil :db database
                                                   :ssl use-ssl
-                                                  :service service))
+                                                  :service service
+                                                  :application-name application-name))
         (connection-attempts 0))
     (initiate-connection conn connection-attempts)
     conn))

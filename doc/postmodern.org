@@ -32,7 +32,7 @@ operation that encountered to the error.
 Representation of a database connection. Contains login information in order to
 be able to automatically re-establish a connection when it is somehow closed.
 
-** function connect (database user-name password host &key (port 5432) pooled-p use-ssl)
+** function connect (database user-name password host &key (port 5432) pooled-p use-ssl service application-name)
    :PROPERTIES:
    :ID:       66e24327-bae9-4378-987c-ccdacc312ddf
    :CUSTOM_ID: d4aa3e04-ab90-4271-b3e7-60a48e4f2e49
@@ -44,7 +44,7 @@ default to 5432, which is where most PostgreSQL servers are running. If
 pooled-p is T, a connection will be taken from a pool of connections of this
 type, if one is available there, and when the connection is disconnected it will
 be put back into this pool instead. use-ssl can be :no, :try, :require, :yes, or :full
-and defaults to the value of *default-use-ssl*
+and defaults to the value of =*default-use-ssl*=
 
 - :try means if the server supports it
 - :require means use provided ssl certificate with no verification
@@ -52,7 +52,11 @@ and defaults to the value of *default-use-ssl*
 - :full means expect a CA-signed cert for the supplied hostname and verify the server hostname
 If you set it to anything other than :no be sure to also load the CL+SSL library.
 
-** variable *default-use-ssl*
+Service defaults to "postgres".
+
+Application-name defaults to a blank string. If provided, Postgresl can use it to track applications with multiple connections.
+
+** variable =*default-use-ssl*=
    :PROPERTIES:
    :ID:       106f14f7-270e-4e27-a238-34c50b14e44b
    :CUSTOM_ID: e140fab3-b6fe-4e88-b9ca-241bbb64fce4
@@ -95,7 +99,7 @@ Reconnect a disconnected database connection. This is not allowed for pooled
 connections ― after they are disconnected they might be in use by some other
 process, and should no longer be used.
 
-** variable *database*
+** variable =*database*=
    :PROPERTIES:
    :ID:       73c9e729-4db7-4ef3-a095-7b91a9db6238
    :CUSTOM_ID: 9b9cf868-214b-4026-8f80-25b23f445c91
@@ -111,7 +115,7 @@ database.
    :CUSTOM_ID: 056d4921-c834-4655-a487-83314f22da42
    :END:
 
-Evaluates the body with *database* bound to a connection as specified by spec,
+Evaluates the body with =*database*= bound to a connection as specified by spec,
 which should be list that connect can be applied to.
 
 ** macro call-with-connection (spec thunk)
@@ -120,7 +124,7 @@ which should be list that connect can be applied to.
    :CUSTOM_ID: 0e0c03e9-7681-433f-ae75-8f06c9685221
    :END:
 
-The functional backend to with-connection. Binds *database* to a new connection
+The functional backend to with-connection. Binds =*database*= to a new connection
 as specified by spec, which should be a list that connect can be applied to, and
 runs the zero-argument function given as second argument in the new environment.
 When the function returns or throws, the new connection is disconnected.
@@ -131,7 +135,7 @@ When the function returns or throws, the new connection is disconnected.
    :CUSTOM_ID: a74be5d0-9b86-4c15-b738-76cd92908d25
    :END:
 
-Bind the *database* to a new connection. Use this if you only need one
+Bind the =*database*= to a new connection. Use this if you only need one
 connection, or if you want a connection for debugging from the REPL.
 
 ** function disconnect-toplevel ()
@@ -140,7 +144,7 @@ connection, or if you want a connection for debugging from the REPL.
    :CUSTOM_ID: a63f929c-805d-42d5-8fbe-f1c01e62b50a
    :END:
 
-Disconnect the *database*.
+Disconnect the =*database*=.
 
 ** function clear-connection-pool ()
    :PROPERTIES:
@@ -150,7 +154,7 @@ Disconnect the *database*.
 
 Disconnect and remove all connections from the connection pools.
 
-** variable *max-pool-size*
+** variable =*max-pool-size*=
    :PROPERTIES:
    :ID:       92ab48e3-bf8f-4327-8d9c-69b6c168f94e
    :CUSTOM_ID: 97aa1ebb-ef91-4254-a6b7-bfcd8128ad96
@@ -372,7 +376,7 @@ one can specify a list whose car is the query, and whose cdr contains the
 arguments. For example:
 #+BEGIN_SRC lisp
 (doquery (:select 'name 'score :from 'scores) (n s)
-  (incf (gethash n *scores*) s))
+  (incf (gethash n scores) s))
 
 (doquery ((:select 'name :from 'scores :where (:> 'score '$1)) 100) (name)
   (print name))
@@ -414,6 +418,12 @@ database-connection-error, or admin-shutdown. It will reset prepared statements
 triggering an invalid-sql-statement-name error. It will overwrite old prepared
 statements triggering a duplicate-prepared-statement error.
 
+Example:
+#+begin_src lisp
+  (let ((select-int (prepare (:select (:type '$1 integer)) :single)))
+    (funcall select-int 10))
+#+end_src
+
 ** macro defprepared (name query &optional (format :rows))
    :PROPERTIES:
    :ID:       d95a6214-b951-4fcd-96ab-a0c40d62ee2b
@@ -424,6 +434,8 @@ statements triggering a duplicate-prepared-statement error.
 This is a macro-style variant of prepare. It is like prepare, but gives the
 function a name which now becomes a top-level function for the prepared
 statement. The name should not a string but may be quoted.
+
+Example:
 
 #+begin_src lisp
   (defprepared 'select1 "select a from test_data where c = $1" :single)
@@ -617,7 +629,7 @@ executed when a transaction is aborted or a savepoint rolled back (whether via a
 non-local transfer of control or explicitly by either abort-transaction or
 rollback-savepoint).
 
-** variable *isolation-level*
+** variable =*isolation-level*=
    :PROPERTIES:
    :ID:       01275b50-0fa5-4b2f-968f-c360bc3efde0
    :CUSTOM_ID: 44dac415-f1b2-4f01-bb05-a31c6c977b4c
@@ -696,7 +708,7 @@ transaction or a savepoint.
 Commit the given logical transaction, regardless of whether it is an actual
 transaction or a savepoint.
 
-** variable *current-logical-transaction*
+** variable =*current-logical-transaction*=
    :PROPERTIES:
    :ID:       2a5d91c2-f990-4a3c-a775-5e1fd539fee8
    :CUSTOM_ID: bf78478f-92a2-4162-963d-b4e101b23154
@@ -760,7 +772,7 @@ This is syntactic sugar. It runs a query that lists the prepared statements in
 the session in which the function is run. If the names-only parameter is set
 to t, it will only return a list of the names of the prepared statements.
 
-** function drop-prepared-statement (statement-name &key (location :both) (database *database*))
+** function drop-prepared-statement (statement-name &key (location :both) (database =*database*=))
    :PROPERTIES:
    :ID:       7ce9f5ff-3750-4359-9850-e9a23b0a279a
    :CUSTOM_ID: 7ec6297f-85a7-419e-a9d4-8f6e2ceb9559
@@ -1193,12 +1205,12 @@ Restarts:
 
 #+END_SRC
 Not only did it throw an exception, but I needed to actually use an interrupt
-from the repl to get back in operation. And then use (reconnect *database*).
+from the repl to get back in operation. And then use (reconnect =*database*=).
 Very Bad result.
 
-THIS ERROR IS CONTROLLABLE BY THE VARIABLE *IGNORE-UNKNOWN-COLUMNS*
+THIS ERROR IS CONTROLLABLE BY THE VARIABLE =*IGNORE-UNKNOWN-COLUMNS*=
 
-Now if we setf the default global variable *ignore-unknown-columns* to t
+Now if we setf the default global variable =*ignore-unknown-columns*= to t
 #+BEGIN_SRC lisp
 (setf *ignore-unknown-columns* t)
 
@@ -1365,7 +1377,7 @@ definition, get-dao and select-dao will throw errors. This may cause your
 application to appear to hang unless you have the necessary condition handling
 in your code. Usually this will only happen during development, so throwing an
 error is not a bad idea. If you want to ignore the errors,
-set *ignore-unknown-columns* to t.
+set =*ignore-unknown-columns*= to t.
 
 ** macro select-dao (type &optional (test t) &rest sort)
    :PROPERTIES:
@@ -1455,7 +1467,7 @@ Example:
   (pushnew user high-scorers))
 #+END_SRC
 
-** variable *ignore-unknown-columns*
+** variable =*ignore-unknown-columns*=
    :PROPERTIES:
    :ID:       a6627d60-61f4-4a9b-86e7-5c1454a4e487
    :CUSTOM_ID: 4a1219dc-d0bc-4fb7-81c9-cb734cb051cc
@@ -1644,11 +1656,11 @@ Define a table. name can be either a symbol or a (symbol string) list. In the
 first case, the table name is derived from the symbol's name by S-SQL's rules.
 In the second case, the name is given explicitly. The body of definitions can
 contain anything that evaluates to a string, as well as S-SQL expressions. The
-variables *table-name* and *table-symbol* are bound to the relevant values in
+variables =*table-name*= and =*table-symbol*= are bound to the relevant values in
 the body. Note that the evaluation of the definition is ordered, so you'll
 generally want to create your table first and then define indices on it.
 
-** variable *table-name*
+** variable =*table-name*=
    :PROPERTIES:
    :ID:       3e565b16-153c-4281-8f17-3653e7a9dc5d
    :CUSTOM_ID: d7e145ff-9666-43eb-813d-78a87116532e
@@ -1656,7 +1668,7 @@ generally want to create your table first and then define indices on it.
 
 Used inside deftable to find the name of the table being defined.
 
-** variable *table-symbol*
+** variable =*table-symbol*=
    :PROPERTIES:
    :ID:       551359a0-8d5b-4d4f-932d-df8759105ee1
    :CUSTOM_ID: 00432de6-10f6-4e52-85d9-6c622e6c37ec
@@ -1689,7 +1701,7 @@ columns can be given as symbols or strings.
    :CUSTOM_ID: eba9236f-a947-4194-8337-4d0f828f5542
    :END:
 
-Used insde a deftable form. Add a foreign key to the table being defined.
+Used inside a deftable form. Add a foreign key to the table being defined.
 target-table is the referenced table. columns is a list of column names or
 single name in this table, and, if the columns have different names in the
 referenced table, target-columns must be another list of column names or single
@@ -1720,7 +1732,7 @@ with deferrable and initially-deferred defined as in !foreign
    :END:
 
 Takes the name of a dao-class and creates the table identified by symbol by
-executing all forms in its definition as found in the *tables* list.
+executing all forms in its definition as found in the =*tables*= list.
 
 ** function create-all-tables ()
    :PROPERTIES:
@@ -1738,7 +1750,7 @@ Creates all defined tables.
 
 Creates all tables identified by symbols interned in the given package.
 
-** variables *table-name*, *table-symbol*
+** variables =*table-name*=, =*table-symbol*=
    :PROPERTIES:
    :ID:       25924943-75d9-4612-b2a3-dc94f292c2a5
    :CUSTOM_ID: a932fe23-c677-4bb7-8df8-6dd2adf2beff
@@ -1826,7 +1838,7 @@ be the primary key for region-d).
    :CUSTOM_ID: da13ef47-1c9c-4d8e-be07-26a2ffa25fdc
    :END:
 Lets start by declaring our classes and we will use the deftable make to create
-a definition for our tables that gets stored in the *tables* special variable.
+a definition for our tables that gets stored in the =*tables*= special variable.
 We can then use the (create-table 'class-name) function to create the table in
 the database.
 
@@ -1868,7 +1880,7 @@ that a region with that id already exist before you can insert a country.
 By the way, because of the foreign key constraint, postgresql will require that
 the region-d table be created before the country-d table.
 
-Look at *tables* for a moment:
+Look at =*tables*= for a moment:
 #+BEGIN_SRC lisp
 *tables*
 ((REGION-D . #<FUNCTION (LAMBDA ()) {534D126B}>)
@@ -2280,7 +2292,7 @@ is https://github.com/flurdy/bad_usernames and https://github.com/dsignr/disallo
 and https://www.b-list.org/weblog/2018/feb/11/usernames/
 
  :allow-disallowed-names defaults to nil. If nil, the user name will be checked
-against *disallowed-role-names*.
+against =*disallowed-role-names*=.
 
  As an aside, if allowing utf8 in names, you might want to think about whether
 you should second copy of the username in the original casing and normalized as
@@ -3649,13 +3661,13 @@ case). After the arity follow any number of operators, either just a
 keyword, in which case the downcased symbol name is used as the
 operator, or a two-element list containing a keyword and a name
 string.
-** variable *escape-sql-names-p*
+** variable =*escape-sql-names-p*=
    :PROPERTIES:
    :ID:       fc3763af-74e4-44ed-903e-7c32be128bd3
    :CUSTOM_ID: 678a9397-e784-42bf-ba21-7d1d8a5816e2
    :END:
 
-Determines whether double quotes are added around column, table, and ** function
+Determines whether double quotes are added around column, table, and function
 names in queries. Valid values:
 
 - T, in which case every name is escaped,
@@ -3671,7 +3683,7 @@ tends to happen at compile-time, the result might not be what you expect. Mixed
 case sensitivity is not currently well supported. Postgresql itself will
 downcase unquoted identifiers. This will be revisited in the future if requested.
 
-** function to-sql-name (name &optional (escape-p *escape-sql-names-p*) (ignore-reserved-words nil))
+** function to-sql-name (name &optional (escape-p =*escape-sql-names-p*=) (ignore-reserved-words nil))
    :PROPERTIES:
    :ID:       1b4f5a57-87f7-42f5-ae3c-eff5b41122b3
    :CUSTOM_ID: 3cbda7a6-974c-475d-a87c-90353ac15b75
@@ -3682,7 +3694,7 @@ operation name. Add quotes when escape-p is true, or escape-p is :auto and the
 name contains reserved words. Quoted or delimited identifiers can be used by
 passing :literal as the value of escape-p. If escape-p is :literal, and the
 name is a string then the string is still escaped but the symbol or string is
-not downcased, regardless of the setting for *downcase-symbols* and the hyphen
+not downcased, regardless of the setting for =*downcase-symbols*= and the hyphen
 and forward slash characters are not replaced with underscores.
 
 Ignore-reserved-words is only used internally for column names which are allowed

@@ -64,11 +64,12 @@
                  (:file "test-clp-utf8" :depends-on ("tests"))
                  (:file "test-data-types" :depends-on ("tests"))
                  (:file "test-communicate" :depends-on ("tests"))
-                 (:file "tests-scram" :depends-on ("test-package"))
-                 (:file "tests-saslprep" :depends-on ("test-package")))))
+                 (:file "tests-scram" :depends-on ("test-package" "tests"))
+                 (:file "tests-saslprep" :depends-on ("test-package"))))
+
   :perform (test-op (o c)
                     (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
-                    (uiop:symbol-call :fiveam '#:run! :cl-postgres)))
+                    (uiop:symbol-call :fiveam '#:run! :cl-postgres))))
 
 (defsystem "cl-postgres/simple-date-tests"
   :depends-on ("cl-postgres" "cl-postgres/tests" "fiveam" "simple-date"

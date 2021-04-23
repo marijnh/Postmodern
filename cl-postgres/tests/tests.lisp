@@ -282,12 +282,16 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
                          (4 "one two	three" "2012-01-01" "2012-01-01 00:00" #(1)))
             do
                (db-write-row stream row))
-      (close-db-writer stream))
-    (is (equalp (second (first (exec-query connection "select * from test_bulk_writer" 'list-row-reader)))
-                "one"))
-    (is (equal (first (fourth (exec-query connection "select * from test_bulk_writer" 'list-row-reader)))
-               4))
-    (exec-query connection "drop table test_bulk_writer")))
+          (close-db-writer stream))
+        (is (equalp (second
+                     (first
+                      (exec-query connection "select * from test_bulk_writer" 'list-row-reader)))
+                    "one"))
+        (is (equal (first
+                    (fourth
+                     (exec-query connection "select * from test_bulk_writer" 'list-row-reader)))
+                   4))
+        (exec-query connection "drop table test_bulk_writer")))
 
 (test row-boolean-array
   (with-test-connection
