@@ -43,9 +43,11 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
                         (mapcar #'list env-vars descriptions provided defaults))
                 (mapcar #'ask descriptions provided defaults)))))
     (when (stringp (elt *cl-postgres-test-connection* 4))
-      (setf (elt *cl-postgres-test-connection* 4) (parse-integer (elt *cl-postgres-test-connection* 4))))
+      (setf (elt *cl-postgres-test-connection* 4)
+            (parse-integer (elt *cl-postgres-test-connection* 4))))
     (when (stringp (elt *cl-postgres-test-connection* 5))
-      (setf (elt *cl-postgres-test-connection* 5) (make-keyword (elt *cl-postgres-test-connection* 5))))
+      (setf (elt *cl-postgres-test-connection* 5)
+            (make-keyword (elt *cl-postgres-test-connection* 5))))
     *cl-postgres-test-connection*))
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
@@ -72,8 +74,8 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
        (exec-query connection "rollback"))))
 
 (test connect-sanity
-      (with-test-connection
-          (is (database-open-p connection))))
+  (with-test-connection
+    (is (database-open-p connection))))
 
 (test simple-query
       (with-test-connection
@@ -246,9 +248,13 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
              do
                (db-write-row stream row))
           (close-db-writer stream))
-        (is (equalp (second (first (exec-query connection "select * from test_bulk_writer" 'list-row-reader)))
+        (is (equalp (second
+                     (first
+                      (exec-query connection "select * from test_bulk_writer" 'list-row-reader)))
                     "one"))
-        (is (equal (first (fourth (exec-query connection "select * from test_bulk_writer" 'list-row-reader)))
+        (is (equal (first
+                    (fourth
+                     (exec-query connection "select * from test_bulk_writer" 'list-row-reader)))
                    4))
         (exec-query connection "drop table test_bulk_writer")))
 
@@ -260,14 +266,16 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
 (test row-boolean-array-binary
       (with-test-connection
           (with-binary-row-values
-              (is (equalp (exec-query connection "select row(ARRAY[TRUE, FALSE, TRUE])" 'list-row-reader)
-                          '(((#(T NIL T)))))))))
+            (is (equalp
+                 (exec-query connection "select row(ARRAY[TRUE, FALSE, TRUE])" 'list-row-reader)
+                 '(((#(T NIL T)))))))))
 
 (test cast-to-bits
       (with-test-connection
-          (is (equalp (exec-query connection "select cast(255 as bit(8)), cast(-44 as bit(128))" 'list-row-reader)
-                      '((#*11111111
-                         #*11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111010100))))
+        (is (equalp
+             (exec-query connection "select cast(255 as bit(8)), cast(-44 as bit(128))" 'list-row-reader)
+             '((#*11111111
+                #*11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111010100))))
         (is (equalp (exec-query connection "select row(cast(32 as bit(12)))" 'list-row-reader)
                     '(("(000000100000)"))))
         (is (equalp (exec-query connection "select ARRAY[cast(32 as bit(16))]" 'list-row-reader)

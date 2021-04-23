@@ -57,7 +57,7 @@
   ((:module "cl-postgres/tests"
     :components ((:file "test-package")
                  (:file "tests")
-                 (:file "tests-scram" :depends-on ("test-package")))))
+                 (:file "tests-scram" :depends-on ("test-package" "tests")))))
   :perform (test-op (o c)
                     (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
                     (uiop:symbol-call :fiveam '#:run! :cl-postgres)))
