@@ -6,11 +6,6 @@
 ;; currently exists. Then after loading the file, run the tests with
 ;; (fiveam:run! :postmodern)
 
-(fiveam:def-suite :postmodern
-  :description "Test suite for postmodern subdirectory files")
-
-(fiveam:in-suite :postmodern)
-
 (fiveam:def-suite :postmodern-table-info
   :description "Test suite for postmodern table information functions"
   :in :postmodern)

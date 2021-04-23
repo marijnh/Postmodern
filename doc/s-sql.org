@@ -122,14 +122,14 @@ converted to SQL names. Examples:
 
 "ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']"
 #+END_SRC
-** variable *downcase-symbols*
+** variable =*downcase-symbols*=
    :PROPERTIES:
    :ID:       19c05bac-8209-4e48-b2e0-549ff03df44e
    :CUSTOM_ID: 0be281bd-0fc9-4221-998b-32768ffa2366
    :END:
 
 When converting symbols to strings, whether to downcase the symbols is set here. The default is to downcase symbols.
-** variable *standard-sql-strings*
+** variable =*standard-sql-strings*=
    :PROPERTIES:
    :ID:       95a70c76-0fcb-4967-88a2-3460bbcb5311
    :CUSTOM_ID: a4949071-98e5-481b-8f47-965247b41e2e
@@ -137,7 +137,7 @@ When converting symbols to strings, whether to downcase the symbols is set here.
 
 Used to configure whether S-SQL will use standard SQL strings (just replace #\' with ''), or backslash-style escaping. Setting this to NIL is always safe, but when the server is configured to allow standard strings (compile-time parameter 'standard_conforming_strings' is 'on', which will become the default in future versions of PostgreSQL), the noise in queries can be reduced by setting this to T.
 
-** variable *postgres-reserved-words* hashtable
+** variable =*postgres-reserved-words*= hashtable
    :PROPERTIES:
    :ID:       a975b46b-5ade-4358-aa77-f83681299a94
    :CUSTOM_ID: 7b4cd6d2-f9bf-4262-a8a8-83f340063adf
@@ -156,7 +156,7 @@ A set of all Postgresql's reserved words, for automatic escaping. Probably not a
    "right" "select" "session-user" "Share" "similar" "some" "symmetric" "table" "then" "to" "trailing" "true"
    "union" "unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"))
 
-** variable *escape-sql-names-p*
+** variable =*escape-sql-names-p*=
    :PROPERTIES:
    :ID:       974ac94c-23eb-4bba-b324-d79fba034c1d
    :CUSTOM_ID: 1d66e5f3-fd90-473f-ae0a-bafb336ebc1f
@@ -186,14 +186,14 @@ future if requested.
 
 Transform a lisp type into a string containing something SQL understands. Default is to just use the type symbol's name.
 
-** function to-sql-name (name &optional (escape-p *escape-sql-names-p*)(ignore-reserved-words nil)
+** function to-sql-name (name &optional (escape-p =*escape-sql-names-p*=)(ignore-reserved-words nil)
    :PROPERTIES:
    :ID:       46c8eab0-4fac-4b14-8193-6b93c985ad0f
    :CUSTOM_ID: 59c6c567-e01b-43d1-bf3b-b4f40ffb3054
    :END:
 → string
 
-Convert a symbol or string into a name that can be a sql table, column, or operation name. Add quotes when escape-p is true, or escape-p is :auto and the name contains reserved words. Quoted or delimited identifiers can be used by passing :literal as the value of escape-p. If escape-p is :literal, and the name is a string then the string is still escaped but the symbol or string is not downcased, regardless of the setting for *downcase-symbols* and the hyphen and forward slash characters are not replaced with underscores.
+Convert a symbol or string into a name that can be a sql table, column, or operation name. Add quotes when escape-p is true, or escape-p is :auto and the name contains reserved words. Quoted or delimited identifiers can be used by passing :literal as the value of escape-p. If escape-p is :literal, and the name is a string then the string is still escaped but the symbol or string is not downcased, regardless of the setting for =*downcase-symbols*= and the hyphen and forward slash characters are not replaced with underscores.
 
 Ignore-reserved-words is only used internally for column names which are allowed to be reserved words, but it is not recommended.
 
