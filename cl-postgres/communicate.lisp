@@ -114,7 +114,9 @@ support is enabled.)."
   (declare (type stream socket)
            (type fixnum length)
            #.*optimize*)
-  (let ((result (make-array length :element-type '(unsigned-byte 8))))
+  (let ((result (make-array length
+                            :element-type '(unsigned-byte 8)
+                            :initial-element 0)))
     (read-sequence result socket)
     result))
 

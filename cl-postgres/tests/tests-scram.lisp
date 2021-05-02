@@ -47,10 +47,14 @@
   (is (equalp (cl-postgres::make-octet-vector 2)
               #(0 0))))
 
-(test pad-octet-array
-  (is (equalp (cl-postgres::pad-octet-array #(2 4 6))
+(test pad-octet-vector
+  (is (equalp (cl-postgres::pad-octet-vector #(2 4 6))
               #(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 4 6)))
-  (is (equalp  (cl-postgres::pad-octet-array #(2 4 6) 8)
+
+  (is (equalp (cl-postgres::pad-octet-vector #(2 4 6) 16)
+             #(0 0 0 0 0 0 0 0 0 0 0 0 0 2 4 6)))
+
+  (is (equalp  (cl-postgres::pad-octet-vector #(2 4 6) 8)
              #(0 0 0 0 0 2 4 6))))
 
 (test gen-client-nonce

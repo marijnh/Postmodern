@@ -61,28 +61,6 @@
 #+postmodern-thread-safe
 (defvar *class-finalize-lock* (bt:make-lock))
 
-(defparameter *result-styles*
-  '((:none ignore-row-reader all-rows)
-    (:lists list-row-reader all-rows)
-    (:list list-row-reader single-row)
-    (:rows list-row-reader all-rows)
-    (:row list-row-reader single-row)
-    (:alists symbol-alist-row-reader all-rows)
-    (:alist symbol-alist-row-reader single-row)
-    (:str-alists alist-row-reader all-rows)
-    (:str-alist alist-row-reader single-row)
-    (:plists symbol-plist-row-reader all-rows)
-    (:plist symbol-plist-row-reader single-row)
-    (:array-hash array-hash-row-reader all-rows)
-    (:column column-row-reader all-rows)
-    (:single column-row-reader single-row)
-    (:single! column-row-reader single-row!)
-    (:json-strs json-row-reader all-rows)
-    (:json-str json-row-reader single-row)
-    (:json-array-str json-row-array-reader all-rows))
-  "Mapping from keywords identifying result styles to the row-reader
-that should be used and whether all values or only one value should be
-returned.")
 
 (defun dao-spec-for-format (format)
   (if (and (consp format)
@@ -233,7 +211,8 @@ cdr contains the arguments. For example:
   "Accepts nil or t. The default for cl-postgres/Postmodern is pass parameters to
 Postgresql as text (not in binary format). This is how it has been since the beginning
 of Postmodern and the default is set this way in order to avoid breaking existing user
-code. If you want to pass parameters to Postgresql in binary format, you can either
-setf cl-postgres:*use-binary-parameters* to t manually or use this use-binary-parameters
+code. If you want to pass integer, float or boolean parameters to Postgresql in binary
+format, you can either setf the non-exported cl-postgres variable
+cl-postgres::*use-binary-parameters* to t manually or use this use-binary-parameters
 function which will do it for you."
-  (setf cl-postgres:*use-binary-parameters* param))
+  (setf cl-postgres::*use-binary-parameters* param))

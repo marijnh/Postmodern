@@ -8,10 +8,10 @@
 (in-suite :cl-postgres-communicate)
 
 (test connection-pid
-  (is (equal (with-test-connection
-               (cl-postgres::parameter-list-types
-                (cl-postgres::connection-pid connection)))
-             '(23 23))))
+  (is (equal (length (with-test-connection
+                (cl-postgres::parameter-list-types
+                 (cl-postgres::connection-pid connection))))
+             2)))
 
 (test postgresql-versions
     (with-test-connection

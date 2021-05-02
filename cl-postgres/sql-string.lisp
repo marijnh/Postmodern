@@ -15,13 +15,6 @@ textual format for binary data."
                       (princ (digit-char (ldb (byte 3 0) byte) 8) out))
                     (princ (code-char byte) out))))))
 
-(defparameter *silently-truncate-ratios* t "Given a ratio, a stream and a
-digital-length-limit, if *silently-truncate-ratios* is true,
-will return a potentially truncated ratio. If false and the digital-length-limit
-is reached, it will throw an error noting the loss of precision and offering to
-continue or reset *silently-truncate-ratios* to true. Code contributed by
-Attila Lendvai.")
-
 (defun write-ratio-as-floating-point (number stream digit-length-limit)
   "Given a ratio, a stream and a digital-length-limit, if
 *silently-truncate-ratios* is true, will return a potentially truncated ratio.
@@ -71,10 +64,6 @@ the loss of precision and offering to continue or reset
                  (multiple-value-bind (quotient rem) (floor (* remainder 10))
                    (princ quotient stream)
                    (setf remainder rem)))))))))
-
-(defparameter *silently-truncate-rationals* t "When a rational number is passed into a query (as per to-sql-string), but it
-can not be expressed within 38 decimal digits (for example 1/3), it will be truncated, and lose some precision. Set this variable to nil to suppress
-that behaviour and raise an error instead.")
 
 (defun write-quoted (string out)
   (write-char #\" out)

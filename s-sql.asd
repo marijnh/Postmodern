@@ -14,8 +14,9 @@
                "alexandria")
   :components
   ((:module "s-sql"
-	    :components ((:file "package")
-			 (:file "s-sql"))))
+	  :components ((:file "package")
+                 (:file "config" :depends-on ("package"))
+			           (:file "s-sql" :depends-on ("package" "config")))))
   :in-order-to ((test-op (test-op "s-sql/tests"))))
 
 (defsystem "s-sql/tests"

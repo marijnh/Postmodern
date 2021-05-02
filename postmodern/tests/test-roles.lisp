@@ -1,11 +1,11 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN-TESTS; -*-
 (in-package :postmodern-tests)
 
-(fiveam:def-suite :postmodern-roles
+(def-suite :postmodern-roles
     :description "Dao suite for postmodern"
     :in :postmodern)
 
-(fiveam:in-suite :postmodern-roles)
+(in-suite :postmodern-roles)
 
 ;;; Test what happens if role already exists
 ;;; Test if role name is not allowed

@@ -3,14 +3,14 @@
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
 ;; refers to a valid postgresql database, then after loading the file,
-;; run the tests with (fiveam:run! :cl-postgres)
+;; run the tests with (run! :cl-postgres)
 
-(fiveam:def-suite :s-sql
+(def-suite :s-sql
   :description "Master suite for s-sql")
 
-(fiveam:in-suite :s-sql)
+(in-suite :s-sql)
 
-(fiveam:def-suite :s-sql-base
+(def-suite :s-sql-base
   :description "Base suite for s-sql"
   :in :s-sql)
 
@@ -34,11 +34,11 @@
 (defmacro protect (&body body)
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
 
-(fiveam:def-suite :s-sql-base
+(def-suite :s-sql-base
   :description "Base test suite for s-sql"
   :in :s-sql)
 
-(fiveam:in-suite :s-sql-base)
+(in-suite :s-sql-base)
 
 (test connect-sanity
   (with-test-connection

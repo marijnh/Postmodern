@@ -14,6 +14,18 @@ happens in the communcation with the server. Should only happen in
 case of a bug or a connection to something that is not a \(supported)
 PostgreSQL server at all."))
 
+(defparameter *connection-params* nil
+  "Bound to the current connection's parameter table when executing
+a query.")
+
+(defparameter *ssl-certificate-file* nil
+  "When set to a filename, this file will be used as client
+  certificate for SSL connections.")
+(defparameter *ssl-key-file* nil
+  "When set to a filename, this file will be used as client key for
+  SSL connections.")
+
+
 (defmacro message-case (socket &body clauses)
   "Helper macro for reading messages from the server. A list of cases
 \(characters that identify the message) can be given, each with a body
@@ -77,9 +89,6 @@ from the socket."
                                                 (code-char ,char-name))))))))))
            (,iter-name))))))
 
-(defparameter *connection-params* nil
-  "Bound to the current connection's parameter table when executing
-a query.")
 
 (defun update-parameter (socket)
   (let ((name (read-str socket))
@@ -155,13 +164,6 @@ database-error condition."
             :format-control "PostgreSQL warning: ~A~@[~%~A~]"
             :format-arguments (list (get-field #\M) (or (get-field #\D)
                                                         (get-field #\H)))))))
-
-(defparameter *ssl-certificate-file* nil
-  "When set to a filename, this file will be used as client
-  certificate for SSL connections.")
-(defparameter *ssl-key-file* nil
-  "When set to a filename, this file will be used as client key for
-  SSL connections.")
 
 ;; The let is used to remember that we have found the
 ;; cl+ssl:make-ssl-client-stream function before.
@@ -497,7 +499,7 @@ results."
           (force-output socket)
           (message-case socket
                         ;; BindComplete
-                        (#\2))
+            (#\2))
           (returning-effected-rows
            (if row-description
                (funcall row-reader socket row-description)
@@ -537,8 +539,8 @@ results."
                   (#\3))))
 
 (defun send-execute (socket name parameters row-reader)
-  "Execute a previously parsed query, and apply the given row-reader
-to the result."
+  "Used by cl-postgres:exec-prepared to Execute a previously parsed query,
+and apply the given row-reader to the result."
   (declare (type stream socket)
            (type string name)
            (type list parameters)
@@ -572,7 +574,7 @@ to the result."
         (force-output socket)
         (message-case socket
                       ;; BindComplete
-                      (#\2))
+          (#\2))
         (returning-effected-rows
          (if row-description
              (funcall row-reader socket row-description)

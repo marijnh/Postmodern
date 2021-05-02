@@ -53,7 +53,6 @@
            #:*read-row-values-as-binary*
            #:with-binary-row-values
            #:with-text-row-values
-           #:*silently-truncate-rationals*
            #:*silently-truncate-ratios*
            #:*query-callback*
            #:*query-log*

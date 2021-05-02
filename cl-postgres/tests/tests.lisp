@@ -52,7 +52,7 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
 ;; refers to a valid postgresql database, then after loading the file,
-;; run the tests with (fiveam:run! :cl-postgres)
+;; run the tests with (run! :cl-postgres)
 
 (def-suite :cl-postgres
   :description "Test suite for cl-postgres")
@@ -72,6 +72,18 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
      (exec-query connection "start transaction")
      (unwind-protect (progn ,@body)
        (exec-query connection "rollback"))))
+
+(defmacro with-binary (&body body)
+  `(let ((old-use-binary-parameters cl-postgres::*use-binary-parameters*))
+     (setf cl-postgres::*use-binary-parameters* t)
+     (unwind-protect (progn ,@body)
+       (setf cl-postgres::*use-binary-parameters* old-use-binary-parameters))))
+
+(defmacro without-binary (&body body)
+  `(let ((old-use-binary-parameters cl-postgres::*use-binary-parameters*))
+     (setf cl-postgres::*use-binary-parameters* nil)
+     (unwind-protect (progn ,@body)
+       (setf cl-postgres::*use-binary-parameters* old-use-binary-parameters))))
 
 (test connect-sanity
   (with-test-connection
@@ -171,33 +183,109 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
   (with-test-connection
     (is (not (exec-query connection "select 12, 'a'" 'ignore-row-reader)))))
 
-(test prepare-and-exec-query
+(test prepare-query-empty-names
   (with-test-connection
-    (if cl-postgres::*use-binary-parameters*
-        (progn
-          (prepare-query connection "test1" "select $1")
-          (is (equal (exec-prepared connection "test1" '(42) 'list-row-reader)
-                     '((42))))
-          (prepare-query connection "test2" "select $1, $2")
-          (is (equal (exec-prepared connection "test2" '(42 nil) 'list-row-reader)
-                     '((42 nil))))
-          (prepare-query connection "test3" "select $1, $2, $3")
-          (is (equal (exec-prepared connection "test3" '(42 t "foo") 'list-row-reader)
-                     '((42 t "foo"))))
-          (is (equal (exec-prepared connection "test3" '(42 nil "foo") 'list-row-reader)
-                     '((42 nil "foo")))))
-        (progn
-          (prepare-query connection "test1" "select $1::integer")
-          (is (equal (exec-prepared connection "test1" '(42) 'list-row-reader)
-                     '((42))))
-          (prepare-query connection "test2" "select $1::integer, $2::boolean")
-          (is (equal (exec-prepared connection "test2" '(42 nil) 'list-row-reader)
-                     '((42 nil))))
-          (prepare-query connection "test3" "select $1::integer, $2::boolean, $3::text")
-          (is (equal (exec-prepared connection "test3" '(42 t "foo") 'list-row-reader)
-                     '((42 t "foo"))))
-          (is (equal (exec-prepared connection "test3" '(42 nil "foo") 'list-row-reader)
-                     '((42 nil "foo"))))))))
+    (prepare-query connection "" "select $1")
+    (is (equal (exec-query connection "select * from pg_prepared_statements" 'list-row-reader)
+               nil))
+    (prepare-query connection "tte" "select $1")
+    (is (equalp (exec-query connection
+                           "select name,statement, parameter_types from pg_prepared_statements"
+                           'list-row-reader)
+                '(("tte" "select $1" "{text}"))))))
+
+(test exec-queries
+  (with-binary
+    (with-test-connection
+      (is (equal (exec-query connection "select 1" 'list-row-reader)
+                 '((1))))
+      (is (equal (exec-query connection "select 1::integer" 'list-row-reader)
+                 '((1))))
+      (is (equal (exec-query connection "select 1::int2" 'list-row-reader)
+                 '((1))))
+      (signals error (exec-query connection "select 123456789::int2" 'list-row-reader))
+      (is (equal (exec-query connection "select 123456789123456789" 'list-row-reader)
+                 '((123456789123456789))))
+      (is (equal (exec-query connection "select 'text'" 'list-row-reader)
+                 '(("text"))))))
+  (without-binary
+    (with-test-connection
+      (is (equal (exec-query connection "select 1" 'list-row-reader)
+                 '((1))))
+      (is (equal (exec-query connection "select 1::integer" 'list-row-reader)
+                 '((1))))
+      (signals error (exec-query connection "select 123456789::int2" 'list-row-reader))
+      (is (equal (exec-query connection "select 123456789" 'list-row-reader)
+                 '((123456789))))
+      (is (equal (exec-query connection "select 'text'" 'list-row-reader)
+                 '(("text")))))))
+
+(test prepare-and-exec-query-with-binary-unspecified-parameters
+  (with-test-connection
+    (with-binary
+      (prepare-query connection "test-integer-1" "select $1")
+      (prepare-query connection "test-float-1" "select $1")
+      (prepare-query connection "test-text-1" "select $1")
+      (signals error (exec-prepared connection "test-integer-1" '(42) 'list-row-reader))
+      (signals error (exec-prepared connection "test-float-1" '(4.2) 'list-row-reader))
+      (is (equal  (exec-prepared connection "test-text-1" '("a") 'list-row-reader)
+                  '(("a")))))))
+
+(test prepare-and-exec-query-with-binary-specified-parameters
+  (with-test-connection
+    (with-binary
+      (prepare-query connection "test-integer-2" "select $1" '(12))
+      (prepare-query connection "test-float-2" "select $1" '(4.2))
+      (prepare-query connection "test-text-2" "select $1" '("something"))
+      (is (equal (exec-prepared connection "test-integer-2" '(42) 'list-row-reader)
+                 '((42))))
+      (is (equal (exec-prepared connection "test-float-2" '(4.2) 'list-row-reader)
+                 '((4.2))))
+      (is (equal (exec-prepared connection "test-text-2" '("a") 'list-row-reader)
+                 '(("a"))))
+      (prepare-query connection "test2" "select $1, $2" '(1 t))
+      (is (equal (exec-prepared connection "test2" '(42 nil) 'list-row-reader)
+                 '((42 nil))))
+      (prepare-query connection "test3" "select $1, $2, $3" '(1 t "something"))
+      (is (equal (exec-prepared connection "test3" '(42 t "foo") 'list-row-reader)
+                 '((42 t "foo"))))
+      (is (equal (exec-prepared connection "test3" '(42 nil "foo") 'list-row-reader)
+                 '((42 nil "foo"))))
+      (prepare-query connection "test4" "select $1::integer")
+      (signals error (exec-prepared connection "test4" '(42) 'list-row-reader))
+      (prepare-query connection "test5" "select $1::integer" '(3))
+      (is (equal (exec-prepared connection "test5" '(42) 'list-row-reader)
+                 '((42)))))))
+
+(test prepare-and-exec-query-with-bool-binary
+  (with-test-connection
+    (with-binary
+      (prepare-query connection "test-bool-1" "select $1")
+      (prepare-query connection "test-bool-2" "select $1" '(t))
+      (is (not (equal (exec-prepared connection "test-bool-1" '(t) 'list-row-reader)
+                  '((t)))))
+      (is (equal (exec-prepared connection "test-bool-2" '(t) 'list-row-reader)
+                 '((t))))
+      (is (equal (exec-prepared connection "test-bool-2" '(nil) 'list-row-reader)
+                 '((nil)))))))
+
+(test prepare-and-exec-query-without-binary
+  (with-test-connection
+    (without-binary
+      (prepare-query connection "test1" "select $1::integer")
+      (is (equal (exec-prepared connection "test1" '(42) 'list-row-reader)
+                 '((42))))
+      (prepare-query connection "test2" "select $1::integer, $2::boolean")
+      (is (equal (exec-prepared connection "test2" '(42 nil) 'list-row-reader)
+                 '((42 nil))))
+      (prepare-query connection "test3" "select $1::integer, $2::boolean, $3::text")
+      (is (equal (exec-prepared connection "test3" '(42 t "foo") 'list-row-reader)
+                 '((42 t "foo"))))
+      (is (equal (exec-prepared connection "test3" '(42 nil "foo") 'list-row-reader)
+                 '((42 nil "foo"))))
+      (prepare-query connection "test4" "select $1")
+      (is (equal (exec-prepared connection "test4" '(42) 'list-row-reader)
+                 '(("42")))))))
 
 (test unprepare-query
   (with-test-connection
@@ -548,7 +636,9 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
   (with-test-connection
     (exec-query connection "create temporary table test (a bytea)")
     (unwind-protect
-         (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
+         (let ((random-bytes (make-array *random-byte-count*
+                                         :element-type '(unsigned-byte 8)
+                                         :initial-element 0)))
            (loop for i below *random-byte-count*
                  do (setf (aref random-bytes i)
                           (random #x100)))
@@ -569,7 +659,9 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
     (exec-query connection "create temporary table test (a bytea)")
     (let ((*random-byte-count* 16))
       (unwind-protect
-           (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
+           (let ((random-bytes (make-array *random-byte-count*
+                                           :element-type '(unsigned-byte 8)
+                                           :initial-element 0)))
              (loop for i below *random-byte-count*
                    do (setf (aref random-bytes i)
                             (random #x100)))
@@ -586,7 +678,9 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
     (exec-query connection "create temporary table test (a bytea)")
     (let ((*random-byte-count* 16))
       (unwind-protect
-           (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
+           (let ((random-bytes (make-array *random-byte-count*
+                                           :element-type '(unsigned-byte 8)
+                                           :initial-element 0)))
              (loop for i below *random-byte-count*
                    do (setf (aref random-bytes i)
                             (random #x100)))
@@ -600,7 +694,9 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
     (with-binary-row-values
       (exec-query connection "create temporary table test (a bytea)")
       (unwind-protect
-           (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
+           (let ((random-bytes (make-array *random-byte-count*
+                                           :element-type '(unsigned-byte 8)
+                                           :initial-element 0)))
              (loop for i below *random-byte-count*
                    do (setf (aref random-bytes i)
                             (random #x100)))
@@ -614,7 +710,9 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
     (with-binary-row-values
       (exec-query connection "create temporary table test (a bytea)")
       (unwind-protect
-           (let ((random-bytes (make-array *random-byte-count* :element-type '(unsigned-byte 8))))
+           (let ((random-bytes (make-array *random-byte-count*
+                                           :element-type '(unsigned-byte 8)
+                                           :initial-element 0)))
              (loop for i below *random-byte-count*
                    do (setf (aref random-bytes i)
                             (random #x100)))

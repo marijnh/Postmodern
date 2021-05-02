@@ -1,11 +1,11 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN-TESTS; -*-
 (in-package :postmodern-tests)
 
-(fiveam:def-suite :postmodern-daos
+(def-suite :postmodern-daos
     :description "Dao suite for postmodern"
     :in :postmodern)
 
-(fiveam:in-suite :postmodern-daos)
+(in-suite :postmodern-daos)
 
 (defclass test-data ()
   ((id :col-type serial :initarg :id :accessor test-id)
@@ -570,7 +570,7 @@ so there is a single source of type truth."
     (execute "CREATE TEMPORARY TABLE test_col_name (aa text primary key default md5(random()::text), bb text not null, c text not null,
               \"from\" text not null, \"to\" text not null)")
     (let ((o (make-instance 'test-col-name :b "2" :c "3" :d "Reykjavík" :e "Garðabær")))
-      (fiveam:finishes
+      (finishes
         (insert-dao o)))))
 
 ;;; For threading tests

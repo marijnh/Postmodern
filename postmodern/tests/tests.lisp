@@ -4,33 +4,33 @@
 ;; Adjust the above to some db/user/pass/host combination that refers
 ;; to a valid postgresql database in which no table named test_data
 ;; currently exists. Then after loading the file, run the tests with
-;; (fiveam:run! :postmodern)
+;; (run! :postmodern)
 
-(fiveam:def-suite :postmodern
+(def-suite :postmodern
   :description "Test suite for postmodern subdirectory files")
 
-(fiveam:def-suite :postmodern-base
+(def-suite :postmodern-base
     :description "Base Test suite for postmodern subdirectory files")
 
-(fiveam:in-suite :postmodern-base)
+(in-suite :postmodern-base)
 
-(fiveam:def-suite :postmodern-base
+(def-suite :postmodern-base
   :description "Base test suite for postmodern"
   :in :postmodern)
 
-(fiveam:in-suite :postmodern-base)
+(in-suite :postmodern-base)
 
 (defmacro with-binary (&body body)
-  `(let ((old-use-binary-parameters cl-postgres:*use-binary-parameters*))
-     (setf cl-postgres:*use-binary-parameters* t)
+  `(let ((old-use-binary-parameters cl-postgres::*use-binary-parameters*))
+     (setf cl-postgres::*use-binary-parameters* t)
      (unwind-protect (progn ,@body)
-       (setf cl-postgres:*use-binary-parameters* old-use-binary-parameters))))
+       (setf cl-postgres::*use-binary-parameters* old-use-binary-parameters))))
 
 (defmacro without-binary (&body body)
-  `(let ((old-use-binary-parameters cl-postgres:*use-binary-parameters*))
-     (setf cl-postgres:*use-binary-parameters* nil)
+  `(let ((old-use-binary-parameters cl-postgres::*use-binary-parameters*))
+     (setf cl-postgres::*use-binary-parameters* nil)
      (unwind-protect (progn ,@body)
-       (setf cl-postgres:*use-binary-parameters* old-use-binary-parameters))))
+       (setf cl-postgres::*use-binary-parameters* old-use-binary-parameters))))
 
 (defun prompt-connection-to-postmodern-db-spec (param-lst)
   "Takes the 6 item parameter list from prompt-connection and restates it for pomo:with-connection. Note that cl-postgres does not provide the pooled connection - that is only in postmodern - so that parameter is not passed."

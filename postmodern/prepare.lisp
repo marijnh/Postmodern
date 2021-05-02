@@ -1,18 +1,6 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
-(defparameter *allow-overwriting-prepared-statements* t
-  "When set to t, ensured-prepared will overwrite prepared statements having the
-same name if the query statement itself in the postmodern meta connection is
-different than the query statement provided to ensure-prepared.")
-
-(defparameter *enforce-parameter-types* nil
-  "When set to t, the parameters of the first invocation of a prepared statement
-will set the mandatory types that subsequent invocations of that prepared
-statement must meet. If the parameters are used in paramparameters must meet.  parameters must match type ensured-prepared will overwrite prepared statements having the
-same name if the query statement itself in the postmodern meta connection is
-different than the query statement provided to ensure-prepared.")
-
 (define-condition mismatched-parameter-types (error)
   ((prepared-statement-types :initarg prepared-statement-types
                              :reader prepared-statement-types)
@@ -73,28 +61,32 @@ overwrite unless postgresql throws a duplicate-prepared-statement error."
                                        #'pomo:reset-prepared-statement)
                                      (cl-postgres-error:duplicate-prepared-statement
                                        #'pomo:reset-prepared-statement))
-                                  (if overwrite
-                                      (progn
-                                        (setf overwrite nil)
-                                        (drop-prepared-statement statement-id :remove-function nil)
-                                        (ensure-prepared *database* statement-id
-                                                         query t params))
-                                      (let ((prepared-statement-param-types
-                                              (cl-postgres::parameter-list-types (second
-                                                                     (find-postmodern-prepared-statement statement-id))))
-                                            (param-types (cl-postgres::parameter-list-types params)))
-                                        (if (equal prepared-statement-param-types
-                                               param-types)
-                                            (ensure-prepared *database* statement-id
-                                                             query overwrite params)
-                                            (if cl-postgres:*use-binary-parameters*
-                                             (error (make-condition 'mismatched-parameter-types
-                                                                    :prepared-statement-types
-                                                                    prepared-statement-param-types
-                                                                    :parameter-types
-                                                                    param-types))
-                                             (ensure-prepared *database* statement-id
-                                                             query overwrite params)))))
+                                  (cond (overwrite
+                                         (setf overwrite nil)
+                                         (drop-prepared-statement statement-id :remove-function nil)
+                                         (ensure-prepared *database* statement-id
+                                                          query t params))
+                                        ((not cl-postgres::*use-binary-parameters*)
+                                         (ensure-prepared *database* statement-id
+                                                          query overwrite params))
+                                        (t
+                                         (let ((prepared-statement-param-types
+                                                 (cl-postgres::parameter-list-types
+                                                  (second
+                                                   (find-postmodern-prepared-statement
+                                                    statement-id))))
+                                               (param-types
+                                                 (cl-postgres::parameter-list-types params)))
+                                           (if (equal prepared-statement-param-types
+                                                      param-types)
+                                               (ensure-prepared *database* statement-id
+                                                                query overwrite params)
+                                               (error
+                                                (make-condition 'mismatched-parameter-types
+                                                                :prepared-statement-types
+                                                                prepared-statement-param-types
+                                                                :parameter-types
+                                                                param-types))))))
                                   (,result-form ,base))))))))))
 
 (defmacro prepare (query &optional (format :rows))
@@ -123,7 +115,7 @@ triggering a duplicate-prepared-statement error."
      ,(generate-prepared '(lambda) (next-statement-id) query format)))
 
 (defmacro defprepared (name query &optional (format :rows))
-  "This is the macro-style variant of prepare. It is like prepare, but gives the
+  "This is another macro variant of prepare. It is like prepare, but gives the
 function a name which now becomes a top-level function for the prepared
 statement. The name should not be a string but may be quoted."
   (when (consp name) (setf name (s-sql::dequote name)))
@@ -146,8 +138,8 @@ lambda list as well as arguments supplied to the query."
 session, otherwise nil."
   (if (query (:select 'name
               :from 'pg-prepared-statements
-              :where (:= 'name (string-upcase name)))
-             :single)
+              :where (:= 'name '$1))
+             (string-upcase name) :single)
       t
       nil))
 
@@ -181,21 +173,23 @@ the names of the prepared statements."
 for this session."
   (query (:select 'statement
           :from 'pg-prepared-statements
-          :where (:= 'name (string-upcase name)))
-         :single))
+          :where (:= 'name '$1))
+         (string-upcase name) :single))
 
 (defun find-postgresql-prepared-statement-by-query (query)
   "Returns the name of prepared statement (if any) postgresql has
 for this session that matches the query ."
   (query (:select 'name
           :from 'pg-prepared-statements
-          :where (:= 'statement query))))
+          :where (:= 'statement '$1))
+         query))
 
 (defun find-postmodern-prepared-statement (name)
   "Returns the specified named prepared statement (if any) that postmodern has
 put in the meta slot in the connection. Note that this is the statement itself,
 not the name."
-  (gethash (string-upcase name) (postmodern::connection-meta *database*)))
+  (gethash (string-upcase name)
+           (postmodern::connection-meta *database*)))
 
 (defun drop-prepared-statement (name &key (location :both) (database *database*)
                                        (remove-function t))
@@ -237,7 +231,7 @@ This behavior is controlled by the remove-function key parameter."
                   (handler-case
                       (query (format nil "deallocate ~:@(~S~)" name))
                     (cl-postgres-error:invalid-sql-statement-name ()
-                      (format t "Statement does not exist in either postmodern or postgresql or may be in process of creation ~a~%" name)))
+                      (format nil "Statement does not exist in either postmodern or postgresql or may be in process of creation ~a~%" name)))
                   (when (and remove-function (find-symbol (string-upcase name)))
                     (fmakunbound (find-symbol (string-upcase name)))))))
           ((eq location :postmodern)
@@ -262,7 +256,7 @@ This behavior is controlled by the remove-function key parameter."
                   (handler-case
                         (query (format nil "deallocate ~:@(~S~)" name))
                       (cl-postgres-error:invalid-sql-statement-name ()
-                        (format t "Statement does not exist in postgresql or is being created ~a~%"
+                        (format nil "Statement does not exist in postgresql or is being created ~a~%"
                                 name)))))))))
 
 (defun reset-prepared-statement (condition &optional params)
@@ -277,9 +271,10 @@ prepared statement at the database connection level and restart the connection."
     (when statement
       (cl-postgres::with-reconnect-restart *database*
         (terminate-backend pid))
-      (cl-postgres:prepare-query *database* name (first statement) (if params
-                                                                       params
-                                                                       (second statement)))
+      (cl-postgres:prepare-query *database* name (first statement)
+                                 (if params
+                                     params
+                                     (second statement)))
       (invoke-restart 'reset-prepared-statement))))
 
 (defun get-pid ()

@@ -1,11 +1,11 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN-TESTS; -*-
 (in-package :postmodern-tests)
 
-(fiveam:def-suite :postmodern-binary-parameters
+(def-suite :postmodern-binary-parameters
   :description "Prepared query suite for postmodern"
   :in :postmodern)
 
-(fiveam:in-suite :postmodern-binary-parameters)
+(in-suite :postmodern-binary-parameters)
 
 (defun create-data-type-table ()
   (with-test-connection

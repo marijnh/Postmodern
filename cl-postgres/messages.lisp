@@ -117,15 +117,14 @@ message definitions themselves stay readable."
 
 ;; Parse a query, giving it a name.
 ;; https://www.postgresql.org/docs/current/protocol-message-formats.html
-;; Current Bugs: Handles up to 10 parameters but is borken on prepared statements and daos
 ;; handles parameters which are integers, single or double floats or booleans
-;; must call the appropriate version for the number of parameters
 (define-message parse-message #\P (name query)
   (string name)
   (string query)
   (uint 2 0))
 
 (defun parse-message-binary-parameters (s name query parameters)
+  "Like parse-message but specifically when binary parameters are parsed."
   (declare (type stream s)
            (optimize (speed 3) (safety 0) (space 1) (debug 1)
                      (compilation-speed 0)))
@@ -171,7 +170,7 @@ indicating binary and 0 indicating plain text."
   (bytes (formats-to-bytes formats))) ;; Result format
 
 (defun go-binary-list-p (parameters)
-  "Function used by both bind-message and send-parse to decide whether to send
+  "Function used by bind-message to decide whether to send
 parameters in binary."
   (when (and *use-binary-parameters* parameters)
     (let ((len (length parameters)))
@@ -182,8 +181,7 @@ parameters in binary."
                    parameters)))))
 
 (defun go-binary-p (parameter)
-  "Function used by both bind-message and send-parse to decide whether to send
-parameters in binary."
+  "Potential use for a single parameter to decide whether to send it in binary."
   (when (and *use-binary-parameters* parameter)
     (not (or (eq 0 (param-to-oid parameter))
          (eq 25 (param-to-oid parameter))))))
@@ -202,15 +200,20 @@ for binding data for binary long object columns."
            (type list parameters)
            #.*optimize*)
   (let* ((n-params (length parameters))
-         (param-formats (make-array n-params :element-type 'fixnum))
-         (param-sizes (make-array n-params :element-type 'fixnum))
+         (param-formats (make-array n-params
+                                    :element-type 'fixnum
+                                    :initial-element 0))
+         (param-sizes (make-array n-params
+                                  :element-type 'fixnum
+                                  :initial-element 0))
          (param-values (make-array n-params))
          (n-result-formats (length result-formats))
          (go-binary (go-binary-list-p parameters)))
     (declare (type (unsigned-byte 16) n-params n-result-formats))
     (loop :for param :in parameters
           :for i :from 0
-          :do (flet ((set-param (format size value)
+          :do
+             (flet ((set-param (format size value)
                        (setf (aref param-formats i) format
                              (aref param-sizes i) size
                              (aref param-values i) value)))

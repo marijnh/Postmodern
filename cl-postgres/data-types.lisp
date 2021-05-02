@@ -4,7 +4,9 @@
 (defun int64-to-vector (int)
   "Takes a 64 byte integer and returns a vector of unsigned bytes with a length of 8"
   (when (and (integerp int) (< int 18446744073709551615))
-      (let ((intv (make-array '(8) :element-type '(unsigned-byte 8))))
+    (let ((intv (make-array '(8)
+                            :element-type '(unsigned-byte 8)
+                            :initial-element 0)))
         (setf (aref intv 0) (ldb (byte 8 56) int))
         (setf (aref intv 1) (ldb (byte 8 48) int))
         (setf (aref intv 2) (ldb (byte 8 40) int))
@@ -18,7 +20,9 @@
 (defun int32-to-vector (int)
   "Takes a 32 byte integer and returns a vector of unsigned bytes with a length of 4"
   (when (and (integerp int) (< int 4294967296))
-   (let ((intv (make-array '(4) :element-type '(unsigned-byte 8))))
+    (let ((intv (make-array '(4)
+                            :element-type '(unsigned-byte 8)
+                            :initial-element 0)))
      (setf (aref intv 0) (ldb (byte 8 24) int))
      (setf (aref intv 1) (ldb (byte 8 16) int))
      (setf (aref intv 2) (ldb (byte 8 8) int))
@@ -29,7 +33,9 @@
     "Takes a 16 byte integer and returns a vector of unsigned bytes
 with a length of 2."
   (when (and (integerp int) (< int 65536))
-    (let ((intv (make-array '(2) :element-type '(unsigned-byte 8))))
+    (let ((intv (make-array '(2)
+                            :element-type '(unsigned-byte 8)
+                            :initial-element 0)))
       (setf (aref intv 0) (ldb (byte 8 8) int))
       (setf (aref intv 1) (ldb (byte 8 0) int))
       intv)))
@@ -37,7 +43,9 @@ with a length of 2."
 (defun int8-to-vector (int)
     "Takes a 8 byte positive integer and returns a vector of unsigned bytes
 with a length of 1 byte."
-  (let ((intv (make-array '(1) :element-type '(unsigned-byte 8))))
+  (let ((intv (make-array '(1)
+                          :element-type '(unsigned-byte 8)
+                          :initial-element 0)))
     (setf (aref intv 0) (ldb (byte 8 0) int))
     intv))
 
@@ -94,7 +102,9 @@ purposes (int2, int4, int8)"
 
 (defun uuid-to-byte-array (uuid)
   "Takes a uuid string and creates a vector of unsigned bytes"
-  (let ((array (make-array 16 :element-type '(unsigned-byte 8)))
+  (let ((array (make-array 16
+                           :element-type '(unsigned-byte 8)
+                           :initial-element 0))
         (sec1 (parse-integer uuid :start 0 :end 8 :radix 16))
         (sec2 (parse-integer uuid :start 9 :end 13 :radix 16))
         (sec3 (parse-integer uuid :start 14 :end 18 :radix 16))

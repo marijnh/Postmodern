@@ -1,11 +1,11 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN-TESTS; -*-
 (in-package :postmodern-tests)
 
-(fiveam:def-suite :postmodern-binary
+(def-suite :postmodern-binary
     :description "Dao suite for postmodern"
     :in :postmodern)
 
-(fiveam:in-suite :postmodern-binary)
+(in-suite :postmodern-binary)
 
 (test binary-parameters
   (with-test-connection

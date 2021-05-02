@@ -10,32 +10,34 @@ library, but can be used separately.
 
 * Connecting
   :PROPERTIES:
-  :ID:       6c37a5bc-e314-4936-bad8-b39c9bb3e4fa
+  :CUSTOM_ID: connecting
   :END:
 ** class database-connection
    :PROPERTIES:
-   :ID:       5cded584-56ec-4c2d-bab9-df081b61e121
+   :CUSTOM_ID: class-database-connection
    :END:
 
 Representation of a database connection. Contains login information in order to be able to automatically re-establish a connection when it is somehow closed.
-
--  ((host :initarg :host :reader connection-host)
--   (port :initarg :port :reader connection-port)
--   (database :initarg :db :reader connection-db)
--   (user :initarg :user :reader connection-user)
--   (password :initarg :password :reader connection-password)
--   (use-ssl :initarg :ssl :reader connection-use-ssl)
--   (service :initarg :service :accessor connection-service)
--   (application-name :initarg :application-name :accessor connection-application-name)
--   (socket :initarg :socket :accessor connection-socket)
--   (meta :initform nil)
--   (available :initform t :accessor connection-available)
--   (parameters :accessor connection-parameters)
--   (timestamp-format :accessor connection-timestamp-format))
+#+begin_src lisp
+(defclass database-connection ()
+  ((host :initarg :host :reader connection-host)
+   (port :initarg :port :reader connection-port)
+   (database :initarg :db :reader connection-db)
+   (user :initarg :user :reader connection-user)
+   (password :initarg :password :reader connection-password)
+   (use-ssl :initarg :ssl :reader connection-use-ssl)
+   (service :initarg :service :accessor connection-service)
+   (application-name :initarg :application-name :accessor connection-application-name)
+   (socket :initarg :socket :accessor connection-socket)
+   (meta :initform nil)
+   (available :initform t :accessor connection-available)
+   (parameters :accessor connection-parameters)
+   (timestamp-format :accessor connection-timestamp-format)))
+#+end_src
 
 ** function open-database (database user password host &optional (port 5432) (use-ssl :no) (service "postgres")(application-name ""))
    :PROPERTIES:
-   :ID:       f4429361-bc8d-4c27-b3af-af70b676081c
+   :CUSTOM_ID: function-open-databasec
    :END:
 → database-connection
 
@@ -58,7 +60,7 @@ Application-name defaults to a blank string. If provided, Postgresl can use it t
 
 ** function close-database (database-connection)
    :PROPERTIES:
-   :ID:       44eb26db-1341-4427-8d96-7813b8014396
+   :CUSTOM_ID: function-close-database
    :END:
 
 Close a database connection. It is advisable to call this on connections when
@@ -68,7 +70,7 @@ with it.
 
 ** function reopen-database (database-connection)
    :PROPERTIES:
-   :ID:       dc658d2c-d67c-4cd9-a719-b8a402eecc1b
+   :CUSTOM_ID: function-reopen-database
    :END:
 
 Re-establish a database connection for a previously closed connection object.
@@ -76,7 +78,7 @@ Re-establish a database connection for a previously closed connection object.
 
 ** function database-open-p (database-connection)
    :PROPERTIES:
-   :ID:       e2bab886-8144-4ccf-a12d-6958de97da93
+   :CUSTOM_ID: function-database-open-p
    :END:
 → boolean
 
@@ -84,7 +86,7 @@ Returns a boolean indicating whether the given connection is currently connected
 
 ** method connection-meta (database-connection)
    :PROPERTIES:
-   :ID:       f258cf9d-cad3-44f7-b1d2-7da57c73f0cc
+   :CUSTOM_ID: method-conection-meta
    :END:
 → hash-table
 
@@ -94,14 +96,17 @@ prepared statements that have been parsed for this connection.
 
 ** method connection-parameters (database-connection)
    :PROPERTIES:
-   :ID:       b5944a42-40cb-48a3-97a6-fdd79bc900ec
+   :CUSTOM_ID: method-connection-parameters
    :END:
 → hash-table
 
 This method returns a mapping (string to string) containing all the
 configuration parameters for the connection.
 
-variable =*unix-socket-dir*=
+** variable =*unix-socket-dir*=
+   :PROPERTIES:
+   :CUSTOM_ID: variable-unix-socket-dir
+   :END:
 
 Directory where the Unix domain socket for PostgreSQL be found.
 
@@ -109,46 +114,58 @@ On SBCL, when using the :unix keyword as host argument when creating a
 connection, this variable determines the directory in which CL-Postgres
 will look for the socket file.
 
-variable =*ssl-certificate-file*=
-variable =*ssl-key-file*=
+** variable =*ssl-certificate-file*=
+   :PROPERTIES:
+   :CUSTOM_ID: variable-ssl-certificate-file
+   :END:
+** variable =*ssl-key-file*=
+   :PROPERTIES:
+   :CUSTOM_ID: variable-ssl-key-files
+   :END:
 
 When using SSL (see open-database), these can be used to provide client key
 and certificate files. They can be either NIL, for no file, or a pathname.
 
-variable =*retry-connect-times*= (5)
+** variable =*retry-connect-times*= (5)
+   :PROPERTIES:
+   :CUSTOM_ID: variable-retry-connect-times
+   :END:
 
 How many times do we try to connect again. Borrowed from pgloader
 
-variable =*retry-connect-delay*= (0.5)
+** variable =*retry-connect-delay*= (0.5)
+   :PROPERTIES:
+   :CUSTOM_ID: variable-retry-connect-delay
+   :END:
 
 How many seconds to wait before trying to connect again. Borrowed from pgloader
 
 ** function wait-for-notification (database-connection)
    :PROPERTIES:
-   :ID:       106b659f-a234-48cd-86e3-9c0e3951ba66
+   :CUSTOM_ID: function-wait-for-notification
    :END:
 
 This function blocks until asynchronous notification is received on the connection. Retrun the channel string, the payload and notifying pid as multiple values. The PostgreSQL LISTEN command must be used to enable listening for notifications.
 
 ** function get-postgresql-version (database-connection)
    :PROPERTIES:
-   :ID:       b3ad3928-7603-4df8-97b4-c112e362f59c
+   :CUSTOM_ID: function-get-postgresql-version
    :END:
 This function returns the version of the connected postgresql instance as a string.
 
 ** function postgresql-version-at-least (desired-version connection)
    :PROPERTIES:
-   :ID:       e0b78f36-4ed2-4c58-9ed5-81f92ad30f3c
+   :CUSTOM_ID: function-postgresql-version-at-least
    :END:
 
 Takes a postgresql version number which should be a string with the major and minor versions separated by a period e.g. '12.2' or '9.6.17'. Checks against the connection understanding of the running postgresql version and returns t if the running version is the requested version or newer.
 * Querying
   :PROPERTIES:
-  :ID:       2ad7cf5b-68c5-4a9e-85a4-af5ab329551c
+  :CUSTOM_ID: querying
   :END:
 ** function exec-query (database-connection query &optional (row-reader 'ignore-row-reader))
    :PROPERTIES:
-   :ID:       3b4897a3-73ce-4c70-b74b-1880bc62cecd
+   :CUSTOM_ID: function-exec-query
    :END:
 → result
 
@@ -156,18 +173,41 @@ Sends the given query to the given connection, and interprets the results (if
 there are any) with the given row-reader. If the database returns information
 about the amount of rows affected, this is returned as a second value.
 
+Example:
+#+begin_src lisp
+  (exec-query connection "select 1" 'list-row-reader)
+  '((1))
+
+  (exec-query connection "select name from employees where id=3" 'list-row-reader)
+#+end_src
+
 ** function prepare-query (database-connection name query)
    :PROPERTIES:
-   :ID:       76b91fb3-750b-4d61-97d6-a99c66edcb55
+   :CUSTOM_ID: function-prepare-query
    :END:
 
 Parse and plan the given query, and store it under the given name. Note that
 prepared statements are per-connection, so they can only be executed through
-the same connection that prepared them.
+the same connection that prepared them. Also note that while the Postmodern package
+will also stored the prepared query in the connection-meta slot of the connection, but
+cl-postgres prepare-query does not. If the name is an empty string, Postgresql will not
+store it as a reusable query.
+
+If parameters are not passed and =*use-binary-parameters*= is true, Postgresql will assume the parameters will be text. In order to pass integer, float or boolean parameters as binary while
+=*use-binary-parameters*= is true, you need to pass a list of parameters with the same
+type as you will be using when you call (exec-prepared).
+
+The following example shows preparing and executing a query that will accept a boolean parameter:
+#+begin_src lisp
+  (prepare-query connection "test-bool" "select $1" '(t))
+  (exec-prepared connection "test-bool" '(nil) 'list-row-reader)
+
+'((nil))
+#+end_src
 
 ** function exec-prepared (database-connection name parameters &optional (row-reader 'ignore-row-reader))
    :PROPERTIES:
-   :ID:       1381ab1c-f89f-4f12-9cf2-997ebfc1b97d
+   :CUSTOM_ID: function-exec-prepared
    :END:
 → result
 
@@ -178,17 +218,29 @@ without being put through to-sql-string.) The result of the executing the
 statement, if any, is interpreted by the given row reader, and returned.
 Again, the number or affected rows is optionally returned as a second value.
 
+The following example shows preparing and executing a query that will accept an integer and a float in that order:
+#+begin_src lisp
+  (prepare-query connection "test-prepl" "select $1" '(10 7.4))
+  (exec-prepared connection "test-prep1" '(12 4.2) 'list-row-reader)
+
+'((nil))
+#+end_src
+
 ** function unprepare-query (database-connection name)
    :PROPERTIES:
-   :ID:       9f32c4e8-58a2-436c-8220-87eab74098bb
+   :CUSTOM_ID: function-unprepare-query
    :END:
 
 Close the prepared query given by name by closing the session connection.
-Does not remove the query from the meta slot in connection.
+Note: This is not the same as keeping the connection open and sending Postgresql query to deallocate the named prepared query. That can be done with the postmodern package's function:
+#+begin_src lisp
+(drop-prepared-statement (name &key (location :both) (database *database*)
+                                       (remove-function t))
+#+end_src
 
 ** method to-sql-string (value)
    :PROPERTIES:
-   :ID:       44bfb336-e1db-41f2-b279-cf6d418d9aa3
+   :CUSTOM_ID: method-to-sql-string
    :END:
 → (values string needs-escaping)
 
@@ -201,9 +253,10 @@ able to pass them to exec-prepared. When a non-NIL second value is returned,
 this may be T to indicate that the first value should simply be escaped as a
 string, or a second string providing a type prefix for the value. (This is
 used by S-SQL.)
+
 ** variable =*silently-truncate-ratios*=
    :PROPERTIES:
-   :ID:       93d593c6-70f2-4c62-aadd-5dc48c72cb48
+   :CUSTOM_ID: variable-silently-truncate-ratios
    :END:
 
 Given a ratio, a stream and a digital-length-limit, if =*silently-truncate-ratios*= is true,
@@ -211,19 +264,9 @@ will return a potentially truncated ratio. If false and the digital-length-limit
 it will throw an error noting the loss of precision and offering to continue or reset
 =*silently-truncate-ratios*= to true. Code contributed by Attila Lendvai.
 
-** variable =*silently-truncate-rationals*=
-   :PROPERTIES:
-   :ID:       5ab0cb88-e5aa-446b-8160-8dc3cf53dd34
-   :END:
-
-When a rational number is passed into a query (as per to-sql-string), but it
-can not be expressed within 38 decimal digits (for example 1/3), it will be
-truncated, and lose some precision. Set this variable to nil to suppress
-that behaviour and raise an error instead.
-
 ** variable =*query-log*=
    :PROPERTIES:
-   :ID:       1767cf7a-a8f0-43aa-ad95-6c6294965efd
+   :CUSTOM_ID: variable-query-log
    :END:
 
 When debugging, it can be helpful to inspect the queries that are being sent
@@ -232,7 +275,7 @@ for example) to have CL-postgres log every query it makes.
 
 ** variable =*query-callback*=
    :PROPERTIES:
-   :ID:       8007d8c8-a315-4f5e-8398-9ec768fcc201
+   :CUSTOM_ID: variable-query-callback
    :END:
 
 When profiling or debugging, the =*query-log*= may not give enough information,
@@ -247,7 +290,7 @@ functionality, you will have to call LOG-QUERY from your callback function
 
 ** function log-query (query internal-time)
    :PROPERTIES:
-   :ID:       9ad4c0a7-90cb-4190-b8f9-a875220b4807
+   :CUSTOM_ID: function-log-query
    :END:
 
 This function is default value of =*QUERY-CALLBACK*= and logs queries
@@ -255,7 +298,7 @@ to =*QUERY-LOG*= if it is not NIL.
 
 * Reading values
   :PROPERTIES:
-  :ID:       3d22ee03-bb03-4833-9b12-0bd18eec1495
+  :CUSTOM_ID: reading-values
   :END:
 CL-postgres knows how to convert commonly used PostgreSQL data types to Lisp
 values. This table shows the mapping:
@@ -289,7 +332,7 @@ requires different readers in different situations, in which case you can create
 
 ** function copy-sql-readtable (table)
    :PROPERTIES:
-   :ID:       9a167cf2-b370-4f94-948d-5b18d53807a2
+   :CUSTOM_ID: function-copy-sql-readtable
    :END:
 → readtable
 
@@ -297,7 +340,7 @@ Copies a given readtable.
 
 ** function default-sql-readtable ()
    :PROPERTIES:
-   :ID:       0cfa9da6-3c72-4e81-99c4-22cc51faaee8
+   :CUSTOM_ID: function-default-sql-readtable
    :END:
 → readtable
 
@@ -306,7 +349,7 @@ CL-postgres itself.
 
 ** function set-sql-reader (oid function &key table binary-p)
    :PROPERTIES:
-   :ID:       6809275d-a961-4bcb-919b-8d39048483ca
+   :CUSTOM_ID: function-set-sql-reader
    :END:
 
 Define a new reader for a given type. table defaults to =*sql-readtable*=.
@@ -320,7 +363,7 @@ less or more bytes than the given size will horribly break your connection.
 
 ** function set-sql-datetime-readers (&key date timestamp timestamp-with-timezone time interval table)
    :PROPERTIES:
-   :ID:       8d8da14e-8b04-42b0-ae42-c5a934441469
+   :CUSTOM_ID: function-set-sql-datetime-readers
    :END:
 
 Since there is no widely recognised standard way of representing dates and
@@ -355,7 +398,7 @@ account.
 
 * Row readers
   :PROPERTIES:
-  :ID:       336b75f9-544a-4e9a-8cd8-bd3353e072ed
+  :CUSTOM_ID: row-readers
   :END:
 Row readers are a way to read and group the results of queries. Roughly, they
 are functions that perform the iteration over the rows and cells in the
@@ -363,7 +406,7 @@ result, and do something with the returned values.
 
 ** macro row-reader ((fields) &body body)
    :PROPERTIES:
-   :ID:       e9a4790e-3e16-4b79-872b-a0a861c38cba
+   :CUSTOM_ID: macro-row-reader
    :END:
 → function
 
@@ -395,7 +438,7 @@ results from the current query.
 
 ** macro def-row-reader (name (fields) &body body)
    :PROPERTIES:
-   :ID:       10ee99db-865e-4880-86a2-a53d0a189175
+   :CUSTOM_ID: macro-def-row-reader
    :END:
 
 The defun-like variant of row-reader: creates a row reader and gives it a
@@ -403,7 +446,7 @@ top-level function name.
 
 ** method field-name (field)
    :PROPERTIES:
-   :ID:       b4f2749d-a489-4c58-8635-83c6ca1ddd59
+   :CUSTOM_ID: method-field-name
    :END:
 → string
 
@@ -413,7 +456,7 @@ this column.
 
 ** method field-type (field)
    :PROPERTIES:
-   :ID:       5035128a-a2a8-4637-bb9c-1228317da3b3
+   :CUSTOM_ID: method-field-type
    :END:
 → oid
 
@@ -423,7 +466,7 @@ types denoted by OIDs.
 
 ** function list-row-reader (socket fields)
    :PROPERTIES:
-   :ID:       3dca00ab-3983-486a-83be-211f08eeadd0
+   :CUSTOM_ID: function-list-row-reader
    :END:
 → list
 
@@ -431,7 +474,7 @@ A row reader that builds a list of lists from the query results.
 
 ** function alist-row-reader (socket fields)
    :PROPERTIES:
-   :ID:       5d623581-75bf-48ae-92a8-a8f63d59969b
+   :CUSTOM_ID: function-alist-row-reader
    :END:
 → alist
 
@@ -440,14 +483,14 @@ values.
 
 ** function ignore-row-reader (socket fields)
    :PROPERTIES:
-   :ID:       ce755aa5-bb6d-4642-94db-699bb3431c6b
+   :CUSTOM_ID: function-ignore-row-reader
    :END:
 
 A row reader that completely ignores the result of a query.
 
 * Bulk Copying
   :PROPERTIES:
-  :ID:       e8988375-c6c1-41dd-a8ed-a05f1cfc2e88
+  :CUSTOM_ID: bulk-copying
   :END:
 When loading large amounts of data into PostgreSQL, it can be done
 significantly faster using the bulk copying feature. The drawback to this
@@ -456,7 +499,7 @@ entire batch is completed but sometimes the speed is worth it
 
 ** function open-db-writer (db table &optional columns)
    :PROPERTIES:
-   :ID:       201aea77-e3f4-4575-9651-bd712d97b57c
+   :CUSTOM_ID: function-open-db-writer
    :END:
 
 Opens a table stream into which rows can be written one at a time using
@@ -467,7 +510,7 @@ columns, use columns to indicate those that you do.
 
 ** function close-db-writer (writer &key abort)
    :PROPERTIES:
-   :ID:       33f41251-d294-468b-97ba-480bbdbb0f73
+   :CUSTOM_ID: function-close-db-writer
    :END:
 
 Closes a bulk writer opened by open-db-writer. Will close the associated
@@ -475,7 +518,7 @@ database connection when it was created for this copier, or abort is true.
 
 ** function db-write-row (writer row-data)
    :PROPERTIES:
-   :ID:       70082c1c-dd42-41a4-8676-904f6241de7d
+   :CUSTOM_ID: function-db-write-row
    :END:
 
 Writes row-data into the table and columns referenced by the writer.
@@ -485,11 +528,11 @@ will be serialized into their PostgreSQL representation before being written
 into the DB.
 * Normalization
   :PROPERTIES:
-  :ID:       3eb961af-8ada-4bf4-8027-c158638891f6
+  :CUSTOM_ID: normalization
   :END:
 ** function saslprep-normalize (str &optional form)
    :PROPERTIES:
-   :ID:       7be15b9c-09e8-4a3d-be4c-410108b73681
+   :CUSTOM_ID: function-saslprep-normalize
    :END:
 → string
 
@@ -497,7 +540,7 @@ Scans string. If any character should be mapped to nothing, it eliminates that c
 
 ** function string-mapped-to-nothing (str)
    :PROPERTIES:
-   :ID:       6bf426e0-4915-4e4b-9f9b-5c0f614770cf
+   :CUSTOM_ID:  function-string-mapped-to-nothing
    :END:
 → string
 
@@ -505,22 +548,22 @@ Reads a string and removes any character that should be mapped to nothing per RF
 
 ** function string-mapped-to-space (str)
    :PROPERTIES:
-   :ID:       105584f2-2224-41f1-9ac4-b9c3b6f032a1
+   :CUSTOM_ID: function-string-mapped-to-space
    :END:
 → string
 
-Reads a string and converts any character which should be mapped to a space pre RFC 3454 and RFC 4013 to a space.
+Reads a string and converts any character which should be mapped to a space per RFC 3454 and RFC 4013 to a space.
 
 ** function string-printable-ascii-p (str)
    :PROPERTIES:
-   :ID:       bb3be8b3-bda0-4dc5-9eef-ec60f4cc41ed
+   :CUSTOM_ID: function-string-printable-ascii-p
    :END:
 → boolean
 
 Returns t if every character in the string is printable ascii.
 * Conditions
   :PROPERTIES:
-  :ID:       2ea005bf-7350-4a1c-b6e7-19da76acd2e6
+  :CUSTOM_ID: conditions
   :END:
 Opening or querying a database may raise errors. CL-postgres will wrap the
 errors that the server returns in a lisp condition, and raise conditions of
@@ -529,7 +572,7 @@ through as they are.
 
 ** condition database-error
    :PROPERTIES:
-   :ID:       212caa5b-cc60-41a4-b26a-1bc70df5f0e3
+   :CUSTOM_ID: condition-database-error
    :END:
 
 This is the condition type that will be used to signal virtually all database-related errors \(though in some cases
@@ -537,7 +580,7 @@ socket errors may be raised when a connection fails on the IP level). For errors
 
 ** method database-error-message (database-error)
    :PROPERTIES:
-   :ID:       7962524a-455d-4f68-bf21-35476b8bf929
+   :CUSTOM_ID: method-database-error-message
    :END:
 → string
 
@@ -545,7 +588,7 @@ The primary human-readable error message. This should be accurate but terse (typ
 
 ** method database-error-detail (database-error)
    :PROPERTIES:
-   :ID:       11d194c1-c32f-436e-bfc6-1390b2391f1c
+   :CUSTOM_ID: method-database-error-detail
    :END:
 → string
 
@@ -553,7 +596,7 @@ Detail: an optional secondary error message carrying more detail about the probl
 
 ** method database-error-code (database-error)
    :PROPERTIES:
-   :ID:       aefb04d7-4f25-4be3-82fb-d21a7e123410
+   :CUSTOM_ID: method-database-error-code
    :END:
 → string
 
@@ -561,7 +604,7 @@ Code: the Postgresql SQLSTATE code for the error (see the Postgresql Manual Appe
 
 ** method database-error-query (database-error)
    :PROPERTIES:
-   :ID:       923da3dd-da4c-4f58-a1d1-3bc77481b8b4
+   :CUSTOM_ID: method-database-error-query
    :END:
 → string
 
@@ -569,7 +612,7 @@ The query that led to this error, or NIL if no query was involved.
 
 ** method database-error-cause (database-error)
    :PROPERTIES:
-   :ID:       9b07e8c0-355f-45d7-bc4f-dcf3e2f1217d
+   :CUSTOM_ID: method-database-error-cause
    :END:
 → condition
 
@@ -577,7 +620,7 @@ The condition that caused this error, or NIL when it was not caused by another c
 
 ** function database-error-constraint-name (database-error)
    :PROPERTIES:
-   :ID:       d8d43625-e6b7-45e3-800c-6252a37f4d8e
+   :CUSTOM_ID: function-database-error-constraint-name
    :END:
 → string
 
@@ -586,7 +629,7 @@ extract and return the constraint name (or nil if no constraint was found).
 
 ** function database-error-extract-name (database-error)
    :PROPERTIES:
-   :ID:       7a009b31-b4ec-476a-a191-4ef59e7d6427
+   :CUSTOM_ID: function-database-error-extract-name
    :END:
 → string
 
@@ -595,7 +638,7 @@ For various errors, returns the name provided by the error message
 
 ** condition database-connection-error
    :PROPERTIES:
-   :ID:       1d9adc13-de7f-4b74-b1ce-5bff4e8faf2a
+   :CUSTOM_ID: condition-database-connection-error
    :END:
 
 Subtype of database-error. An error of this type (or one of its subclasses)
@@ -622,7 +665,7 @@ successively longer pauses.
 
 ** condition postgresql-notification
    :PROPERTIES:
-   :ID:       a8e40623-1d79-448b-ab42-102ab723e63d
+   :CUSTOM_ID: condition-postgresql-notification
    :END:
 
 The condition that is signalled when a notification message is received from
@@ -632,7 +675,7 @@ notifications.
 
 ** method postgresql-notification-channel (postgresql-notification)
    :PROPERTIES:
-   :ID:       d40a0504-facc-433c-9a13-fa2fea63d345
+   :CUSTOM_ID: method-postgresql-notification-channel
    :END:
 → string
 
@@ -640,7 +683,7 @@ The channel string of this notification.
 
 ** method postgresql-notification-payload (postgresql-notification)
    :PROPERTIES:
-   :ID:       1f0a9735-632a-4503-ae47-80a774918f97
+   :CUSTOM_ID: method-postgresql-notification-payload
    :END:
 → string
 
@@ -648,7 +691,7 @@ The payload of this notification.
 
 ** method postgresql-notification-pid (postgresql-notification)
    :PROPERTIES:
-   :ID:       4b1b20a4-18f3-4b80-af6f-2a2e67259bbe
+   :CUSTOM_ID: method-postgresql-notification-pid
    :END:
 → integer
 

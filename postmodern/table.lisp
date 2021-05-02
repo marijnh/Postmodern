@@ -521,13 +521,6 @@ or accessor or reader.)"
           (when fetch-defaults
             (fetch-defaults object)))))))
 
-(defparameter *custom-column-writers* nil
-  "A hook for locally overriding/adding behaviour to DAO row readers.
-Should be an alist mapping strings (column names) to symbols or
-functions. Symbols are interpreted as slot names that values should be
-written to, functions are called with the new object and the value as
-arguments.")
-
 (defmacro with-column-writers ((&rest defs) &body body)
   "Provides control over the way get-dao, select-dao, and query-dao read values
 from the database. This is not commonly needed, but can be used to reduce the
@@ -548,12 +541,6 @@ about the objects, and immediately store it in the new instances."
                                  :collect `(cons (to-sql-name ,field nil) ,writer)))
                    *custom-column-writers*)))
      ,@body))
-
-(defparameter *ignore-unknown-columns* nil "Normally, when get-dao, select-dao,
-save-dao or query-dao finds a column in the database that's not in the DAO class,
-it should raise an error. THIS IS NOT ALWAYS THROWING AN ERROR AND IT IS NOT
-OBVIOUS WHY. Setting this variable to a non-NIL will cause it to
-simply ignore the unknown column.")
 
 (defun dao-from-fields (class column-map query-fields
                         result-next-field-generator-fn)
