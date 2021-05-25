@@ -1,6 +1,9 @@
 # Postmodern
+
 A Common Lisp PostgreSQL programming interface
+
 ---
+
 Version 1.38
 
 Postmodern is a Common Lisp library for interacting with [PostgreSQL](http://www.postgresql.org) databases. It is under active development. Features are:
@@ -14,25 +17,29 @@ Postmodern is a Common Lisp library for interacting with [PostgreSQL](http://www
 The biggest differences between this library and CLSQL/CommonSQL or cl-dbi are that Postmodern has no intention of being portable across different SQL implementations (it embraces non-standard PostgreSQL features), and approaches extensions like lispy SQL and database access objects in a quite different way. This library was written because the CLSQL approach did not really work for me. Your mileage may vary.
 
 ## Contents
+
 ---
-* [Dependencies](#dependencies)
-* [License](#dependencies)
-* [Download and installation](#download-and-installation)
-* [Quickstart](#quickstart)
-* [Authentication](#authentication)
-* [Reference](#reference)
-* [Data types](#data-types)
-* [Portability](#portability)
-* [Reserved Words](#reserved-words)
-* [Feature Requests](#feature-requests)
-* [Resources](#resources)
-* [Running tests](#running-tests)
-* [Reference](#reference)
-* [Caveats and to-dos](#caveats-and-to-dos)
-* [Resources](#resources)
+
+- [Dependencies](#dependencies)
+- [License](#dependencies)
+- [Download and installation](#download-and-installation)
+- [Quickstart](#quickstart)
+- [Authentication](#authentication)
+- [Reference](#reference)
+- [Data types](#data-types)
+- [Portability](#portability)
+- [Reserved Words](#reserved-words)
+- [Feature Requests](#feature-requests)
+- [Resources](#resources)
+- [Running tests](#running-tests)
+- [Reference](#reference)
+- [Caveats and to-dos](#caveats-and-to-dos)
+- [Resources](#resources)
 
 ## Dependencies
+
 ---
+
 The library depends on usocket (except on SBCL and ACL, where the built-in socket library is used), md5, closer-mop, bordeaux-threads if you want thread-safe connection pools, and CL+SSL when SSL connections are needed. As of version 1.3 it also depends on ironclad, base64 and uax-15 because of the requirement to support scram-sha-256 authentication.
 
 Postmodern itself is split into four different packages, some of which can be used independently.
@@ -46,36 +53,41 @@ S-SQL is used to compile s-expressions to strings of SQL code, escaping any Lisp
 Finally, Postmodern itself is a wrapper around these packages and provides higher level functions, a very simple data access object that can be mapped directly to database tables and some convient utilities. It then tries to put all these things together into a convenient programming interface.
 
 ## License
+
 ---
+
 Postmodern is released under a zlib-style license. Which approximately means you can use the code in whatever way you like, except for passing it off as your own or releasing a modified version without indication that it is not the original.
 
 The functions execute-file.lisp were ported from [[https://github.com/dimitri/pgloader][pgloader]] with grateful thanks to
 Dimitri Fontaine and are released under a BSD-3 license.
 
 ## Download and installation
+
 ---
+
 We suggest using [quicklisp](https://www.quicklisp.org/beta/) for installation.
 
-A git repository with the most recent changes can be viewed or checked out at https://github.com/marijnh/Postmodern
-
+A git repository with the most recent changes can be viewed or checked out at <https://github.com/marijnh/Postmodern>
 
 ## Quickstart
+
 ---
+
 This quickstart is intended to give you a feel of the way coding with Postmodern works. Further details about the workings of the library can be found in the reference manual.
 
 Assuming you have already installed it, first load and use the system:
 
-
-    (ql:quickload :postmodern)
-    (use-package :postmodern)
-
+```lisp
+(ql:quickload :postmodern)
+(use-package :postmodern)
+```
 
 If you have a PostgreSQL server running on localhost, with a database called 'testdb' on it, which is accessible for user 'foucault' with password 'surveiller', there are two basic ways to connect
 to a database. If your role/application/database(s) looks like a 1:1 relationship, you can connect like this:
 
-
-    (connect-toplevel "testdb" "foucault" "surveiller" "localhost")
-
+```lisp
+(connect-toplevel "testdb" "foucault" "surveiller" "localhost")
+```
 
 Which will establish a connection to be used by all code, except for that wrapped in a with-connection form, which takes the same arguments but only establishes the connection within
 that lexical scope.
@@ -84,17 +96,19 @@ Connect-toplevel will maintain a single connection for the life of the session.
 
 If the Postgresql server is running on a port other than 5432, you would also pass the appropriate keyword port parameter. E.g.:
 
-
-    (connect-toplevel "testdb" "foucault" "surveiller" "localhost" :port 5434)
+```lisp
+(connect-toplevel "testdb" "foucault" "surveiller" "localhost" :port 5434)
+```
 
 Ssl connections would similarly use the keyword parameter :use-ssl and pass :yes, :no or :try
 
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
 many:1, (in other words, changing connections) then with-connection form which establishes a connection with a lexical scope is more appropriate.
 
-
-    (with-connection '("testdb" "foucault" "surveiller" "localhost")
-      ...)
+```lisp
+(with-connection '("testdb" "foucault" "surveiller" "localhost")
+    ...)
+```
 
 For example, if you are creating a database, you need to have established a connection
 to a currently existing database (typically "postgres"). Assuming the foucault role
@@ -102,13 +116,13 @@ is a superuser and you want to stay in a development connection with your new da
 afterwards, you would first use with-connection to connect to postgres, create the
 database and then switch to connect-toplevel for development ease.
 
+```lisp
+(with-connection '("postgres" "foucault" "surveiller" "localhost")
+    (create-database 'testdb :limit-public-access t
+                        :comment "This database is for testing silly theories"))
 
-    (with-connection '("postgres" "foucault" "surveiller" "localhost")
-      (create-database 'testdb :limit-public-access t
-                         :comment "This database is for testing silly theories"))
-
-    (connect-toplevel "testdb" "foucault" "surveiller" "localhost")
-
+(connect-toplevel "testdb" "foucault" "surveiller" "localhost")
+```
 
 Note: (create-database) functionality is new to postmodern v. 1.32. Setting the
 :limit-public-access parameter to t will block connections to that database from
@@ -127,99 +141,102 @@ and returning it to the pool when finished, saving connection time and memory.
 
 To use postmodern's simple connection pooler, the with-connection call would look like:
 
-
-    (with-connection '("testdb" "foucault" "surveiller" "localhost" :pooled-p t)
-      ...)
+```lisp
+(with-connection '("testdb" "foucault" "surveiller" "localhost" :pooled-p t)
+    ...)
+```
 
 The maximum number of connections in the pool is set in the special variable
 \*max-pool-size\*, which defaults to nil (no maximum).
 
 Now for a basic sanity test which does not need a database connection at all:
 
-
-    (query "select 22, 'Folie et déraison', 4.5")
-    ;; => ((22 "Folie et déraison" 9/2))
-
+```lisp
+(query "select 22, 'Folie et déraison', 4.5")
+;; => ((22 "Folie et déraison" 9/2))
+```
 
 That should work. query is the basic way to send queries to the database. The same query can be expressed like this:
 
-
-    (query (:select 22 "Folie et déraison" 4.5))
-    ;; => ((22 "Folie et déraison" 9/2))
-
+```lisp
+(query (:select 22 "Folie et déraison" 4.5))
+;; => ((22 "Folie et déraison" 9/2))
+```
 
 In many contexts, query strings and lists starting with keywords can be used interchangeably. The lists will be compiled to SQL. The S-SQL manual describes the syntax used by these expressions. Lisp values occurring in them are automatically escaped. In the above query, only constant values are used, but it is possible to transparently use run-time values as well:
 
-
-    (defun database-powered-addition (a b)
-      (query (:select (:+ a b)) :single))
-    (database-powered-addition 1030 204)
-    ;; => 1234
-
+```lisp
+(defun database-powered-addition (a b)
+    (query (:select (:+ a b)) :single))
+(database-powered-addition 1030 204)
+;; => 1234
+```
 
 That last argument, :single, indicates that we want the result not as a list of lists (for the result rows), but as a single value, since we know that we are only selecting one value. Some other options are :rows, :row, :column, :alists, and :none. Their precise effect is documented in the reference manual.
 
 You do not have to pull in the whole result of a query at once, you can also iterate over it with the doquery macro:
 
-
-    (doquery (:select 'x 'y :from 'some-imaginary-table) (x y)
-      (format t "On this row, x = ~A and y = ~A.~%" x y))
-
+```lisp
+(doquery (:select 'x 'y :from 'some-imaginary-table) (x y)
+    (format t "On this row, x = ~A and y = ~A.~%" x y))
+```
 
 You can work directly with the database or you can use a simple database-access-class (aka dao) which would cover all the columns in a row. This is what a database-access class looks like:
 
-
-    (defclass country ()
-      ((name :col-type string :initarg :name
-             :reader country-name)
-       (inhabitants :col-type integer :initarg :inhabitants
-                    :accessor country-inhabitants)
-       (sovereign :col-type (or db-null string) :initarg :sovereign
-                  :accessor country-sovereign))
-      (:metaclass dao-class)
-      (:keys name))
-
+```lisp
+(defclass country ()
+    ((name :col-type string :initarg :name
+            :reader country-name)
+    (inhabitants :col-type integer :initarg :inhabitants
+                :accessor country-inhabitants)
+    (sovereign :col-type (or db-null string) :initarg :sovereign
+                :accessor country-sovereign))
+    (:metaclass dao-class)
+    (:keys name))
+```
 
 The above defines a class that can be used to handle records in a table with three columns: name, inhabitants and sovereign. The :keys parameter specifies which column(s) are used for the primary key. Once you have created the class, you can return an instance of the country class by calling
 
-
-    (get-dao 'country "Croatia")
-
+```lisp
+(get-dao 'country "Croatia")
+```
 
 You can also define classes that use multiple columns in the primary key:
 
-
-    (defclass points ()
-      ((x :col-type integer :initarg :x
-          :reader point-x)
-       (y :col-type integer :initarg :y
-          :reader point-y)
-       (value :col-type integer :initarg :value
-              :accessor value))
-      (:metaclass dao-class)
-      (:keys x y))
-
+```lisp
+(defclass points ()
+    ((x :col-type integer :initarg :x
+        :reader point-x)
+    (y :col-type integer :initarg :y
+        :reader point-y)
+    (value :col-type integer :initarg :value
+            :accessor value))
+    (:metaclass dao-class)
+    (:keys x y))
+```
 
 In this case, retrieving a points record would look like the following where 12 and 34 would be the values you are looking to find in the x column and y column respectively.:
 
-
-    (get-dao 'points 12 34)
+```lisp
+(get-dao 'points 12 34)
+```
 
 Consider a slightly more complicated version of country:
 
-
-    (defclass country ()
-      ((id :col-type integer :col-identity t :accessor id)
-       (name :col-type string :col-unique t :check (:<> 'name "")
-             :initarg :name :reader country-name)
-       (inhabitants :col-type integer :initarg :inhabitants
-                    :accessor country-inhabitants)
-       (sovereign :col-type (or db-null string) :initarg :sovereign
-                  :accessor country-sovereign)
-       (region-id :col-type integer :col-references ((regions id))
-                  :initarg :region-id :accessor region-id))
-      (:metaclass dao-class)
-      (:table-name countries))
+```lisp
+(defclass country ()
+    ((id :col-type integer :col-identity t :accessor id)
+    (name :col-type string :col-unique t :check (:<> 'name "")
+            :initarg :name :reader country-name)
+    (inhabitants :col-type integer :initarg :inhabitants
+                :accessor country-inhabitants)
+    (sovereign :col-type (or db-null string) :initarg :sovereign
+                :accessor country-sovereign)
+    (region-id :col-type integer :col-references ((regions id))
+                :initarg :region-id :accessor region-id))
+    (:metaclass dao-class)
+    (:table-name countries))
+```
 
 In this example we have an id column which is specified to be an identity column.
 Postgresql will automatically generate a sequence of of integers and this will
@@ -235,14 +252,15 @@ number. Postgresql will also not allow deleting a region if there are countries
 that reference that region's id. If we wanted Postgresql to delete countries when
 regions are deleted, that column would be specified as:
 
-    (region-id :col-type integer :col-references ((regions id) :cascade)
-      :initarg :region-id :accessor region-id)
+```lisp
+(region-id :col-type integer :col-references ((regions id) :cascade)
+    :initarg :region-id :accessor region-id)
+```
 
 Now you can see why the double parens.
 
 We also specify that the table name is not "country" but "countries". (Some style guides
 recommend that table names be plural and references to rows be singular.)
-
 
 ### Table Creation
 
@@ -253,145 +271,158 @@ dao-class above (but ignoring the fact that the references parameter would
 actually require us to create the regions table first) and using s-sql rather
 than plain vanilla sql would be the following:
 
-    (query (:create-table 'countries
-          ((id :type integer  :primary-key t :identity-always t)
-           (name :type string :unique t :check (:<> 'name ""))
-           (inhabitants :type integer)
-           (sovereign :type (or db-null string))
-           (region-id :type integer :references ((regions id))))))
+```lisp
+(query (:create-table 'countries
+        ((id :type integer  :primary-key t :identity-always t)
+        (name :type string :unique t :check (:<> 'name ""))
+        (inhabitants :type integer)
+        (sovereign :type (or db-null string))
+        (region-id :type integer :references ((regions id))))))
+```
 
 Restated using vanilla sql:
 
-    (query "CREATE TABLE countries (
-             id INTEGER NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-             name TEXT NOT NULL UNIQUE CHECK (NAME <> E''),
-             inhabitants INTEGER NOT NULL,
-             sovereign TEXT,
-             region_id INTEGER NOT NULL REFERENCES regions(id)
-               MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)")
+```lisp
+(query "CREATE TABLE countries (
+            id INTEGER NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+            name TEXT NOT NULL UNIQUE CHECK (NAME <> E''),
+            inhabitants INTEGER NOT NULL,
+            sovereign TEXT,
+            region_id INTEGER NOT NULL REFERENCES regions(id)
+            MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)")
+```
 
 Let's look at a slightly different example:
 
-    (query (:create-table so-items
-             ((item-id :type integer)
-              (so-id :type (or integer db-null) :references ((so-headers id)))
-              (product-id :type (or integer db-null))
-              (qty :type (or integer db-null))
-              (net-price :type (or numeric db-null)))
-             (:primary-key item-id so-id)))
+```lisp
+(query (:create-table so-items
+            ((item-id :type integer)
+            (so-id :type (or integer db-null) :references ((so-headers id)))
+            (product-id :type (or integer db-null))
+            (qty :type (or integer db-null))
+            (net-price :type (or numeric db-null)))
+            (:primary-key item-id so-id)))
+```
 
 Restated using plain  sql:
 
-    (query "CREATE TABLE so_items (
-     item_id INTEGER NOT NULL,
-     so_id INTEGER REFERENCES so_headers(id)
-                   MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT,
-     product_id INTEGER,
-     qty INTEGER,
-     net_price NUMERIC,
-     PRIMARY KEY (item_id, so_id)
-     );"
-    )
+```lisp
+(query "CREATE TABLE so_items (
+    item_id INTEGER NOT NULL,
+    so_id INTEGER REFERENCES so_headers(id)
+                MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT,
+    product_id INTEGER,
+    qty INTEGER,
+    net_price NUMERIC,
+    PRIMARY KEY (item_id, so_id)
+    );"
+)
+```
 
 In the above case, the new table's name will be so_items because sql does not allow hyphens and plain vanilla sql will require that. Postmodern will generally allow you to use the quoted symbol 'so-items. This is also true for all the column names. The column item-id is an integer and cannot be null. The column so-id is also an integer, but is allowed to be null and is a foreign key to the id field in the so-headers table so-headers. The primary key is actually a composite of item-id and so-id. (If we wanted the primary key to be just item-id, we could have specified that in the form defining item-id.)
 
 You can also use a previously defined dao to create a table as well using the dao-table-definition function which generates the plain vanilla sql for creating plain vanilla sql for creating a table
 described above. Using the slightly more complicated version of the country dao above:
 
-    (dao-table-definition 'country)
+```lisp
+(dao-table-definition 'country)
 
+;; => "CREATE TABLE countries (
+;;       id INTEGER NOT NULL PRIMARY KEY generated always as identity,
+;;       name TEXT NOT NULL UNIQUE,
+;;       inhabitants INTEGER NOT NULL,
+;;       sovereign TEXT DEFAULT NULL,
+;;       region_id INTEGER NOT NULL REFERENCES regions(id)
+;;         MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)
 
-    ;; => "CREATE TABLE countries (
-    ;;       id INTEGER NOT NULL PRIMARY KEY generated always as identity,
-    ;;       name TEXT NOT NULL UNIQUE,
-    ;;       inhabitants INTEGER NOT NULL,
-    ;;       sovereign TEXT DEFAULT NULL,
-    ;;       region_id INTEGER NOT NULL REFERENCES regions(id)
-    ;;         MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)
-
-    (execute (dao-table-definition 'country))
+(execute (dao-table-definition 'country))
+```
 
 This defines our table in the database. execute works like query, but does not expect any results back.
 
 See [Introduction to Multi-table dao class objects](doc/postmodern.html) in the postmodern.org or postmodern.html manual for a further discussion of multi-table use of daos.
 
-
 ### Inserting Data
+
 Similarly to table creation, you can insert data using the s-sql wrapper, plain
 vanilla sql or daos. Because we have not created a regions table, we are just
 going to use the simple version of country without the region-id.
 
 The s-sql approach would be:
 
+```lisp
+(query (:insert-into 'country :set 'name "The Netherlands"
+                                    'inhabitants 16800000
+                                    'sovereign "Willem-Alexander"))
 
-    (query (:insert-into 'country :set 'name "The Netherlands"
-                                       'inhabitants 16800000
-                                       'sovereign "Willem-Alexander"))
-
-    (query (:insert-into 'country :set 'name "Croatia"
-                                       'inhabitants 4400000))
+(query (:insert-into 'country :set 'name "Croatia"
+                                    'inhabitants 4400000))
+```
 
 You could also insert multiple rows at a time but that requires the same columns for each row:
 
-
-    (query (:insert-rows-into 'country :columns 'name 'inhabitants 'sovereign
-                                       :values '(("The Netherlands" 16800000 "Willem-Alexander")
-                                                 ("Croatia" 4400000 :null))))
-
+```lisp
+(query (:insert-rows-into 'country :columns 'name 'inhabitants 'sovereign
+                                    :values '(("The Netherlands" 16800000 "Willem-Alexander")
+                                                ("Croatia" 4400000 :null))))
+```
 
 The sql approach would be:
 
+```lisp
+(query "insert into country (name, inhabitants, sovereign)
+                            values ('The Netherlands', 16800000, 'Willem-Alexander')")
 
-    (query "insert into country (name, inhabitants, sovereign)
-                                values ('The Netherlands', 16800000, 'Willem-Alexander')")
-
-    (query "insert into country (name, inhabitants)
-                                values ('Croatia', 4400000)")
+(query "insert into country (name, inhabitants)
+                            values ('Croatia', 4400000)")
+```
 
 The multiple row sql approach would be:
 
-
-    (query "insert into country (name, inhabitants, sovereign)
-                                values
-                                  ('The Netherlands', 16800000, 'Willem-Alexander'),
-                                  ('Croatia', 4400000, NULL)")
+```lisp
+(query "insert into country (name, inhabitants, sovereign)
+                            values
+                                ('The Netherlands', 16800000, 'Willem-Alexander'),
+                                ('Croatia', 4400000, NULL)")
+```
 
 Using dao classes would look like:
 
-
-    (insert-dao (make-instance 'country :name "The Netherlands"
-                                        :inhabitants 16800000
-                                        :sovereign "Willem-Alexander"))
-    (insert-dao (make-instance 'country :name "Croatia"
-                                        :inhabitants 4400000))
+```lisp
+(insert-dao (make-instance 'country :name "The Netherlands"
+                                    :inhabitants 16800000
+                                    :sovereign "Willem-Alexander"))
+(insert-dao (make-instance 'country :name "Croatia"
+                                    :inhabitants 4400000))
+```
 
 Postmodern does not yet have an insert-daos (plural) function.
 
 Staying with the dao class approach, to update Croatia's population, we could do this:
 
-
-    (let ((croatia (get-dao 'country "Croatia")))
-      (setf (country-inhabitants croatia) 4500000)
-      (update-dao croatia))
-    (query (:select '* :from 'country))
-    ;; => (("The Netherlands" 16800000 "Willem-Alexander")
-    ;;     ("Croatia" 4500000 :NULL))
-
+```lisp
+(let ((croatia (get-dao 'country "Croatia")))
+    (setf (country-inhabitants croatia) 4500000)
+    (update-dao croatia))
+(query (:select '* :from 'country))
+;; => (("The Netherlands" 16800000 "Willem-Alexander")
+;;     ("Croatia" 4500000 :NULL))
+```
 
 Next, to demonstrate a bit more of the S-SQL syntax, here is the query the utility function list-tables uses to get a list of the tables in a database:
 
+```lisp
+(sql (:select 'relname :from 'pg-catalog.pg-class
+        :inner-join 'pg-catalog.pg-namespace :on (:= 'relnamespace 'pg-namespace.oid)
+        :where (:and (:= 'relkind "r")
+                    (:not-in 'nspname (:set "pg_catalog" "pg_toast"))
+                    (:pg-catalog.pg-table-is-visible 'pg-class.oid))))
 
-    (sql (:select 'relname :from 'pg-catalog.pg-class
-          :inner-join 'pg-catalog.pg-namespace :on (:= 'relnamespace 'pg-namespace.oid)
-          :where (:and (:= 'relkind "r")
-                       (:not-in 'nspname (:set "pg_catalog" "pg_toast"))
-                       (:pg-catalog.pg-table-is-visible 'pg-class.oid))))
-
-    ;; => "(SELECT relname FROM pg_catalog.pg_class
-    ;;      INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
-    ;;      WHERE ((relkind = 'r') and (nspname NOT IN ('pg_catalog', 'pg_toast'))
-    ;;             and pg_catalog.pg_table_is_visible(pg_class.oid)))"
-
+;; => "(SELECT relname FROM pg_catalog.pg_class
+;;      INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
+;;      WHERE ((relkind = 'r') and (nspname NOT IN ('pg_catalog', 'pg_toast'))
+;;             and pg_catalog.pg_table_is_visible(pg_class.oid)))"
+```
 
 sql is a macro that will simply compile a query, it can be useful for seeing how your queries are expanded or if you want to do something unexpected with them.
 
@@ -399,26 +430,30 @@ As you can see, lists starting with keywords are used to express SQL commands an
 
 Finally, here is an example of the use of prepared statements:
 
-
-    (defprepared sovereign-of
-      (:select 'sovereign :from 'country :where (:= 'name '$1))
-      :single!)
-    (sovereign-of "The Netherlands")
-    ;; => "Willem-Alexander"
-
+```lisp
+(defprepared sovereign-of
+    (:select 'sovereign :from 'country :where (:= 'name '$1))
+    :single!)
+(sovereign-of "The Netherlands")
+;; => "Willem-Alexander"
+```
 
 The defprepared macro creates a function that takes the same amount of arguments as there are $X placeholders in the given query. The query will only be parsed and planned once (per database connection), which can be faster, especially for complex queries.
 
-
-    (disconnect-toplevel)
+```lisp
+(disconnect-toplevel)
+```
 
 ## Authentication
+
 Postmodern can use either md5 or scram-sha-256 authentication. Scram-sha-256 authentication is obviously more secure, but slower than md5, so take that into account if you are planning on opening and closing many connections without using a connection pooling setup..
 
 Other authentication methods have not been tested. Please let us know if there is a authentication method that you believe should be considered.
 
 ## Reference
+
 ---
+
 The reference manuals for the different components of Postmodern are kept in separate files. For using the library in the most straightforward way, you only really need to read the Postmodern reference and glance over the S-SQL reference. The simple-date reference explains the time-related data types included in Postmodern, and the CL-postgres reference might be useful if you just want a low-level library for talking to a PostgreSQL server.
 
 - [Postmodern](https://marijnhaverbeke.nl/postmodern/postmodern.html)
@@ -427,6 +462,7 @@ The reference manuals for the different components of Postmodern are kept in sep
 - [CL-postgres](https://marijnhaverbeke.nl/postmodern/cl-postgres.html)
 
 ## Data Types
+
 ---
 
 For a short comparison of lisp and Postgresql data types (date and time datatypes are described in the next section)
@@ -451,7 +487,7 @@ For a short comparison of lisp and Postgresql data types (date and time datatype
 Numeric and decimal are variable storage size numbers with user specified precision.
 Up to 131072 digits before the decimal point; up to 16383 digits after the decimal point.
 The syntax is numeric(precision, scale). Numeric columns with a specified scale will coerce input
-values to that scale. For more detail, see https://www.postgresql.org/docs/current/datatype-numeric.html
+values to that scale. For more detail, see <https://www.postgresql.org/docs/current/datatype-numeric.html>
 
 | PG Type          | Sample Postmodern Return Value                                              | Lisp Type (per sbcl)                 |
 | ---------------  | --------------------------------------------------------------------------- | ------------------------------------ |
@@ -487,11 +523,15 @@ values to that scale. For more detail, see https://www.postgresql.org/docs/curre
 | enum\_mood        | happy (Note: enum_mood was defined as 'sad','ok' or 'happy')                | (VECTOR CHARACTER 64)                |
 
 ---
+
 ### Arrays
+
 See [array-notes.html](https://marijnhaverbeke.nl/postmodern/array-notes.html)
 
 ---
+
 ### Timezones
+
 It is important to understand how postgresql (not postmodern) handles timestamps and timestamps with time zones. Postgresql keeps everything in UTC, it does not store a timezone even in a timezone aware column. If you use a timestamp with timezone column, postgresql will calculate the UTC time and will normalize the timestamp data to UTC. When you later select the record, postgresql will look at the timezone for the postgresql session, retrieve the data and then provide the data recalculated from UTC to the timezone for that postgresql session. There is a good writeup of timezones at [http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html](http://blog.untrod.com/2016/08/actually-understanding-timezones-in-postgresql.html) and [http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/](http://phili.pe/posts/timestamps-and-time-zones-in-postgresql/).
 
 Without simple-date or local-time properly loaded, sample date and time data
@@ -505,7 +545,6 @@ from postgresql will look like:
 | timestamp\_without\_timezone  | #<TIMESTAMP 16-05-2020T09:47:33,315> | TIMESTAMP             |
 | timestamp\_with\_timezone     | #<TIMESTAMP 16-05-2020T13:47:27,855> | TIMESTAMP             |
 
-
 The Simple-date add-on library (not enabled by default)
 provides types (CLOS classes) for dates, timestamps, and intervals
 similar to the ones SQL databases use, in order to be able to store and read
@@ -516,11 +555,13 @@ To use simple-date with cl-postgres or postmodern,
 load simple-date-cl-postgres-glue and register suitable SQL
 readers and writers for the associated database types.
 
-    (ql:quickload :simple-date/postgres-glue)
+```lisp
+(ql:quickload :simple-date/postgres-glue)
 
-    (setf cl-postgres:*sql-readtable*
-            (cl-postgres:copy-sql-readtable
-             simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
+(setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+            simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
+```
 
 With simple date loaded, the same data will look like this:
 
@@ -534,16 +575,20 @@ With simple date loaded, the same data will look like this:
 
 To get back to the default cl-postgres reader:
 
-    (setf cl-postgres:*sql-readtable*
-            (cl-postgres:copy-sql-readtable
-             cl-postgres::*default-sql-readtable*))
+```lisp
+(setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+            cl-postgres::*default-sql-readtable*))
+```
 
 However [Simple-date](http://marijnhaverbeke.nl/postmodern/simple-date.html) has no concept of time zones. Many users use another library, [local-time](https://github.com/dlowe-net/local-time), which solves the same problem as simple-date, but does understand time zones.
 
 For those who want to use local-time, to enable the local-time reader:
 
-    (ql:quickload :cl-postgres+local-time)
-    (local-time:set-local-time-cl-postgres-readers)
+```lisp
+(ql:quickload :cl-postgres+local-time)
+(local-time:set-local-time-cl-postgres-readers)
+```
 
 With that set postgresql time datatype returns look like:
 With local-time loaded and local-time:set-local-time-cl-postgres-readers run,
@@ -558,6 +603,7 @@ the same sample data looks like:
 | timestamp\_with\_timezone    | 2020-05-16T09:47:27.855146-04:00 | TIMESTAMP             |
 
 ## Portability
+
 The Lisp code in Postmodern is theoretically portable across implementations,
 and seems to work on all major ones as well as some minor ones such as Genera.
 It is regularly tested on ccl, sbcl, ecl and cmucl. ABCL currently has issues with utf-8 and :null.
@@ -567,6 +613,7 @@ Please let us know if it does not work on the implementation that you normally u
 The library is not likely to work for PostgreSQL versions older than 8.4. Other features only work in newer Postgresql versions as the features were only introduced in those newer versions.
 
 ## Reserved Words
+
 It is highly suggested that you do not use words that are reserved by Postgresql as identifiers (e.g. table names, columns). The reserved words are:
 
 "all" "analyse" "analyze" "and" "any" "array" "as" "asc" "asymmetric"
@@ -584,11 +631,14 @@ It is highly suggested that you do not use words that are reserved by Postgresql
 "unique" "user" "using" "variadic" "verbose" "when" "where" "window" "with"
 
 ## Feature Requests
+
 Postmodern is under active development so issues and feature requests should
 be flagged on [[https://github.com/marijnh/Postmodern](Postmodern's site on github).
 
 ## Resources
+
 ---
+
 - [Mailing List](https://mailman.common-lisp.net/listinfo/postmodern-devel)
 - [A collection of Postmodern examples](https://sites.google.com/site/sabraonthehill/postmodern-examples)
 - [The PostgreSQL manuals](http://www.postgresql.org/docs/current/static/index.html)
@@ -597,6 +647,7 @@ be flagged on [[https://github.com/marijnh/Postmodern](Postmodern's site on gith
 - [Local-time](http://common-lisp.net/project/local-time/)
 
 ## Running tests
+
 ---
 
 Postmodern uses [FiveAM](https://github.com/sionescu/fiveam) for
@@ -630,28 +681,34 @@ To test a particular component one would first load the corresponding
 test system, and then run the test suite.  For example, to test the
 `postmodern` system in the REPL one would do the following:
 
-    (ql:quickload "postmodern/tests")
-    (5am:run! :postmodern)
-    ;; ... test output ...
+```lisp
+(ql:quickload "postmodern/tests")
+(5am:run! :postmodern)
+;; ... test output ...
+```
 
 It is also possible to test multiple components at once by first
 loading test systems and then running all tests:
 
-    (ql:quickload '("cl-postgres/tests" "s-sql/tests"))
-    (5am:run-all-tests)
-    ;; ... test output ...
+```lisp
+(ql:quickload '("cl-postgres/tests" "s-sql/tests"))
+(5am:run-all-tests)
+;; ... test output ...
+```
 
 To run the tests from command-line specify the same forms using your
 implementation's command-line syntax.  For instance, to test all
 Postmodern components on SBCL, use the following command:
 
-    env DB_USER=$USER sbcl --noinform \
-        --eval '(ql:quickload "postmodern/tests")' \
-        --eval '(ql:quickload "cl-postgres/tests")' \
-        --eval '(ql:quickload "s-sql/tests")' \
-        --eval '(ql:quickload "simple-date/tests")' \
-        --eval '(progn (setq 5am:*print-names* nil) (5am:run-all-tests))' \
-        --eval '(sb-ext:exit)'
+```lisp
+env DB_USER=$USER sbcl --noinform \
+    --eval '(ql:quickload "postmodern/tests")' \
+    --eval '(ql:quickload "cl-postgres/tests")' \
+    --eval '(ql:quickload "s-sql/tests")' \
+    --eval '(ql:quickload "simple-date/tests")' \
+    --eval '(progn (setq 5am:*print-names* nil) (5am:run-all-tests))' \
+    --eval '(sb-ext:exit)'
+```
 
 As you can see from above, database connection parameters can be
 provided using environment variables:
