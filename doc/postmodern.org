@@ -205,6 +205,7 @@ instead. Any of the following formats can be used, with the default being :rows:
 | :column	           | Return a single column as a list.                 |
 | :single	           | Return a single value. Will raise an error if the query returns more than one field. If the query returns more than one row, it returns the first row. |
 | :single!	          | Like :single except that it will throw an error when the number of selected rows is not equal to 1.  |
+| :vectors	    | Return a vector of vectors, each vector containing the values for a row. (This is only the plural) |
 | :array-hash         | Return an array of hashtables which map column names to hash table keys     |
 | :json-strs          | Return a list of strings where each row is a json object expressed as a string  |
 | :json-strs          | Return a single string where the row returned is a json object expressed as a string           |
@@ -249,7 +250,6 @@ Returns an alist containing the field name as a lower case string and the select
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :str-alist)
   (("id" . 3) ("int4" . 3) ("text" . "text three"))
 #+END_SRC
-
 *** Alists
 Returns a list of alists containing the field name as a keyword and the selected fields.
 #+BEGIN_SRC lisp
@@ -276,6 +276,15 @@ Returns a list of plists containing the field name as a keyword and the selected
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :plists)
   ((:ID 1 :INT4 2147483645 :TEXT "text one") (:ID 2 :INT4 0 :TEXT "text two"))
 #+END_SRC
+*** Vectors
+Returns a vector of vectors where each internal vector is a returned row from the query. The field names are not included.
+#+begin_src lisp
+  (query (:select 'id 'int4 'text :from 'test-data)
+         :vectors))
+  #(#(1 2147483645 "text one")
+    #(2 0 "text two")
+    #(3 3 "text three"))
+#+end_src
 *** Array-hash
 Returns a vector of hashtables where each hash table is a returned row from the query with field name as the key expressed as a lower case string.
 #+BEGIN_SRC lisp

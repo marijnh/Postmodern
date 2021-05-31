@@ -41,6 +41,11 @@
                      "1983-12-30 13:30:54"
                      "14:33:54" "1983-12-30" "5 years 3 months 2 hours 10 minutes")))))
 
+(test return-types-vector
+  (with-test-connection
+    (return-types-fixture))
+  )
+
 
 (test return-types-json
   (with-test-connection
@@ -167,10 +172,30 @@
                        :where (:< 'id 3)) :plists)
                '((:ID 1 :INT4 2147483645 :TEXT "text one")
                  (:ID 2 :INT4 0 :TEXT "text two"))))
+    (is (equalp (query (:select '* :from 'test-data :where (:= 'id 1)) :vectors)
+               #(#(1 2147483645 "text one"
+                   "{\"date\": \"-300\", \"lang\": \"en\", \"category1\": \"By place\", \"category2\": \"Greece\", \"description\": \"Pilgrims travel to the healing temples of Asclepieion to be cured of their ills. After a ritual purification the followers bring offerings or sacrifices.\", \"granularity\": \"year\"}"
+    3818323854 3786719454 3755183454 3723629454
+    ((:HOURS 14) (:MINUTES 31) (:SECONDS 54) (:MICROSECONDS 0)) 3692044800
+                   ((:MONTHS 0) (:DAYS 0) (:SECONDS 7800) (:USECONDS 0))))))
+    (is (equalp (query (:select 'id :from 'test-data) :vectors)
+                #(#(1) #(2) #(3))))
+    (is (equalp (query (:select 'id 'int4 'text :from 'test-data) :vectors)
+                #(#(1 2147483645 "text one") #(2 0 "text two") #(3 3 "text three"))))
+    (is (equalp (aref (query (:select 'id 'int4 'text :from 'test-data) :vectors) 1)
+                #(2 0 "text two")))
+
+    (is (typep (query (:select 'id 'int4 'text :from 'test-data) :vectors)
+               'vector))
+    (is (typep (aref (query (:select 'id 'int4 'text :from 'test-data) :vectors)
+                     1)
+               'vector))
+
     (is (typep (query (:select 'id 'int4 'text :from 'test-data
                        :where (:< 'id 3)) :array-hash) 'vector))
     (is (typep (aref (query (:select 'id 'int4 'text :from 'test-data
                              :where (:< 'id 3)) :array-hash) 1) 'hash-table))
+
     (let ((val (alexandria:hash-table-alist
                 (aref
                  (query (:select 'id 'int4 'text :from 'test-data

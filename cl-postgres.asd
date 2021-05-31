@@ -54,7 +54,7 @@
                          (test-op "cl-postgres/simple-date-tests"))))
 
 (defsystem "cl-postgres/tests"
-  :depends-on ("cl-postgres" "parachute-fiveam")
+  :depends-on ("cl-postgres" "fiveam")
   :components
   ((:module "cl-postgres/tests"
     :components ((:file "test-package")
@@ -69,7 +69,7 @@
 
   :perform (test-op (o c)
                     (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
-                    (uiop:symbol-call :parachute-fiveam '#:run! :cl-postgres)))
+                    (uiop:symbol-call :fiveam '#:run! :cl-postgres)))
 
 (defsystem "cl-postgres/simple-date-tests"
   :depends-on ("cl-postgres" "cl-postgres/tests" "fiveam" "simple-date"
