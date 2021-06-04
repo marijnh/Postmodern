@@ -2,7 +2,7 @@
 (in-package :postmodern-tests)
 
 (def-suite :postmodern-transactions
-    :description "Dao suite for postmodern"
+    :description "Transaction testing suite for postmodern"
     :in :postmodern)
 
 (in-suite :postmodern-transactions)

@@ -135,10 +135,13 @@ Note: (create-database) functionality is new to postmodern v. 1.32. Setting the
 anyone who you have not explicitly given permission (except other superusers).
 
 A word about Postgresql connections. Postgresql connections are not lightweight
-threads. They actually consume about 10 MB of memory per connection and Postgresql can be tuned
-to limit the number of connections allowed at any one time. In addition, any connections
+threads. They actually consume about 10 MB of memory per connection. In addition, any connections
 which require security (ssl or scram authentication) will take additiona time and create
 more overhead.
+
+Postgresql can be tuned to limit the number of connections allowed at any one time. It defaults to 100. The parameter is set in the postgresql.conf file. Depending on the size of your server and what you are doing, the sweet spot generally seems to be between 200-400 connections before you need to bring in connection pooling.
+
+If your application is threaded, each thread should use its own connection. Connections are stateful and attempts to use the same connection for multiple threads will
 
 If you have an application like a web app which will make many connections, you also
 generally do not want to create and drop connections for every query. The usual solution
