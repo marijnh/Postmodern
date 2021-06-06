@@ -1,7 +1,7 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: S-SQL-TESTS; -*-
 (in-package :s-sql-tests)
 
-(def-suite :s-sql-tables
+(fiveam:def-suite :s-sql-tables
     :description "Table suite for s-sql"
     :in :s-sql)
 

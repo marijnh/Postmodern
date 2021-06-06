@@ -1,6 +1,13 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: CL-POSTGRES; -*-
 (in-package :cl-postgres)
 
+;; For more information about the PostgreSQL scocket protocol, see
+;; http://www.postgresql.org/docs/current/interactive/protocol.html
+
+;; Scram Functions following the specifications here:
+;; RFC 5802 https://tools.ietf.org/html/rfc5802
+;; RFC 7677 https://tools.ietf.org/html/rfc7677
+
 (defvar *printable-ascii-chars* '(#\  #\! #\" #\# #\$ #\% #\& #\' #\( #\) #\*
                                   #\+ #\, #\- #\. #\/ #\0 #\1 #\2 #\3 #\4 #\5
                                   #\6 #\7 #\8 #\9 #\: #\; #\< #\= #\> #\? #\@
@@ -52,7 +59,7 @@
 (defun code-point-printable-ascii-p (int)
   "Returns t if the int is a printable ascii code-point."
   (and (>= int 32)
-       (<= int 126)))
+       (<= 126)))
 
 (defun char-mapped-to-nothing-p (chr)
   "Returns t if the character should be mapped to nothing per RFC 3454

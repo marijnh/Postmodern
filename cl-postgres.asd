@@ -16,7 +16,7 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
-  :version "1.33.0"
+  :version "1.32.9"
   :depends-on ("md5" "split-sequence" "ironclad" "cl-base64" "uax-15"
                      (:feature (:or :sbcl :allegro :ccl :clisp :genera
                                 :armedbear :cmucl :lispworks)
@@ -26,30 +26,28 @@
   ((:module "cl-postgres"
     :components ((:file "package")
                  (:file "features")
-                 (:file "config")
                  (:file "errors" :depends-on ("package"))
-                 (:file "data-types" :depends-on ("package" "config"))
-                 (:file "sql-string" :depends-on ("package" "config" "data-types"))
-                 (:file "trivial-utf-8" :depends-on ("package" "config"))
+                 (:file "sql-string" :depends-on ("package"))
+                 (:file "trivial-utf-8" :depends-on ("package"))
                  (:file #.*string-file*
-                  :depends-on ("package" "trivial-utf-8" "config"))
+                  :depends-on ("package" "trivial-utf-8"))
                  (:file "communicate"
-                  :depends-on (#.*string-file* "sql-string" "config"))
-                 (:file "messages" :depends-on ("communicate" "config"))
-                 (:file "oid" :depends-on ("package" "config"))
-                 (:file "ieee-floats" :depends-on ("config"))
+                  :depends-on (#.*string-file* "sql-string"))
+                 (:file "messages" :depends-on ("communicate"))
+                 (:file "oid" :depends-on ("package"))
+                 (:file "ieee-floats")
                  (:file "interpret"
-                  :depends-on ("oid" "communicate" "ieee-floats" "config"))
-                 (:file "saslprep" :depends-on ("package" "config"))
+                  :depends-on ("oid" "communicate" "ieee-floats"))
+                 (:file "saslprep")
                  (:file "scram"
-                  :depends-on ("package" "messages" "errors" "saslprep"
-                                          "trivial-utf-8" "config"))
+                  :depends-on ("messages" "errors" "saslprep"
+                                          "trivial-utf-8"))
                  (:file "protocol"
-                  :depends-on ("package" "interpret" "messages" "errors" "scram"
-                                           "saslprep" "trivial-utf-8" "config"))
-                 (:file "public" :depends-on ("package" "protocol" "features" "config"))
+                  :depends-on ("interpret" "messages" "errors" "scram"
+                                           "saslprep" "trivial-utf-8"))
+                 (:file "public" :depends-on ("protocol" "features"))
                  (:file "bulk-copy"
-                  :depends-on ("package" "public" "trivial-utf-8")))))
+                  :depends-on ("public" "trivial-utf-8")))))
   :in-order-to ((test-op (test-op "cl-postgres/tests")
                          (test-op "cl-postgres/simple-date-tests"))))
 
@@ -58,18 +56,12 @@
   :components
   ((:module "cl-postgres/tests"
     :components ((:file "test-package")
-                 (:file "tests" :depends-on ("test-package"))
-                 (:file "test-oids" :depends-on ("test-package" "tests"))
-                 (:file "test-ieee-float" :depends-on ("test-package" "tests"))
-                 (:file "test-clp-utf8" :depends-on ("test-package" "tests"))
-                 (:file "test-data-types" :depends-on ("test-package" "tests"))
-                 (:file "test-communicate" :depends-on ("test-package" "tests"))
-                 (:file "tests-scram" :depends-on ("test-package" "tests"))
-                 (:file "tests-saslprep" :depends-on ("test-package")))))
-
+                 (:file "tests")
+                 (:file "tests-scram" :depends-on ("test-package" "tests")))))
   :perform (test-op (o c)
                     (uiop:symbol-call :cl-postgres-tests '#:prompt-connection)
                     (uiop:symbol-call :fiveam '#:run! :cl-postgres)))
+
 
 (defsystem "cl-postgres/simple-date-tests"
   :depends-on ("cl-postgres" "cl-postgres/tests" "fiveam" "simple-date"

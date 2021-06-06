@@ -1,11 +1,11 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN-TESTS; -*-
 (in-package :postmodern-tests)
 
-(def-suite :postmodern-return-types-timestamps
+(fiveam:def-suite :postmodern-return-types-timestamps
     :description "Timestamp Return types"
     :in :postmodern)
 
-(in-suite :postmodern-return-types-timestamps)
+(fiveam:in-suite :postmodern-return-types-timestamps)
 
 
 (defun get-local-timezone (&optional (timezone nil))

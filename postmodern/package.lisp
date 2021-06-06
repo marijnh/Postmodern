@@ -15,9 +15,7 @@
    #:delete-dao #:make-dao
    #:define-dao-finalization
    #:dao-table-name #:dao-table-definition
-   #:\!dao-def #:*ignore-unknown-columns*
-   #:class-finalized-p
-   #:finalize-inheritance)
+   #:\!dao-def #:*ignore-unknown-columns*)
 
   (:export
    #:connect
@@ -77,7 +75,6 @@
 
    ;; Prepared Statement Functions
    #:*allow-overwriting-prepared-statements*
-   #:*enforce-parameter-types*
    #:prepared-statement-exists-p
    #:list-prepared-statements
    #:drop-prepared-statement
@@ -89,7 +86,6 @@
    #:cancel-backend
    #:terminate-backend
    #:get-pid-from-postmodern
-   #:use-binary-parameters
 
    ;; Reduced S-SQL interface
    #:sql #:sql-compile

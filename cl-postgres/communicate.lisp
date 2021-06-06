@@ -88,7 +88,6 @@
 (integer-writer 1)
 (integer-writer 2)
 (integer-writer 4)
-(integer-writer 8)
 
 (defun write-bytes (socket bytes)
   "Write a byte-array to a stream."
@@ -114,9 +113,7 @@ support is enabled.)."
   (declare (type stream socket)
            (type fixnum length)
            #.*optimize*)
-  (let ((result (make-array length
-                            :element-type '(unsigned-byte 8)
-                            :initial-element 0)))
+  (let ((result (make-array length :element-type '(unsigned-byte 8))))
     (read-sequence result socket)
     result))
 

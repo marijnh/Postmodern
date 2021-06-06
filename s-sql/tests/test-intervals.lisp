@@ -1,7 +1,7 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: S-SQL-TESTS; -*-
 (in-package :s-sql-tests)
 
-(def-suite :s-sql-intervals
+(fiveam:def-suite :s-sql-intervals
     :description "Interval suite for s-sql"
     :in :s-sql)
 
