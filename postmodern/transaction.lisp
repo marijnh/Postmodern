@@ -1,9 +1,19 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
+(defparameter *transaction-level* 0)
 (defparameter *current-logical-transaction* nil
   "This is bound to the current transaction-handle or savepoint-handle instance
 representing the innermost open logical transaction.")
+(defparameter *isolation-level* :read-committed-rw "The transaction isolation
+level currently in use. You can specify the following isolation levels in
+postmodern transactions:
+
+- :read-committed-rw (read committed with read and write)
+- :read-committed-ro (read committed with read only)
+- :repeatable-read-rw (repeatable read with read and write)
+- :repeatable-read-ro (repeatable read with read only)
+- :serializable (serializable with reand and write)")
 
 (defgeneric abort-hooks (obj)
   (:documentation "An accessor for the transaction or savepoint's list of abort

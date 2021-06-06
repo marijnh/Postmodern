@@ -106,8 +106,7 @@ interpreted as an array of the given type."
                (uint2s `(let* ((size (/ (- ,size-name ,length-used) 2))
                                (result
                                  (make-array size
-                                             :element-type '(unsigned-byte 16)
-                                             :initial-element 0)))
+                                             :element-type '(unsigned-byte 16))))
                           (dotimes (i size)
                             (setf (elt result i) (read-uint2 ,stream-name)))
                           result))
@@ -198,9 +197,7 @@ executing body so that row values will be returned as t."
   (let ((byte-count (- size 4))
         (bit-count (read-uint4 stream)))
     (let ((bit-bytes (read-bytes stream byte-count))
-          (bit-array (make-array (list bit-count)
-                                 :element-type 'bit
-                                 :initial-element 0)))
+          (bit-array (make-array (list bit-count) :element-type 'bit)))
       (loop for i below bit-count
             do (let ((cur-byte (ash i -3))
                      (cur-bit (ldb (byte 3 0) i)))

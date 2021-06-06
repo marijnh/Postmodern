@@ -1,11 +1,11 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN-TESTS; -*-
 (in-package :postmodern-tests)
 
-(def-suite :postmodern-transactions
-    :description "Transaction testing suite for postmodern"
+(fiveam:def-suite :postmodern-transactions
+    :description "Dao suite for postmodern"
     :in :postmodern)
 
-(in-suite :postmodern-transactions)
+(fiveam:in-suite :postmodern-transactions)
 
 (defun transaction-test-table-fixture ()
   (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))

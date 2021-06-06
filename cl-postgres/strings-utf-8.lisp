@@ -14,12 +14,12 @@
 
 (declaim (inline enc-read-string))
 (declaim (ftype (function (t &key (:null-terminated t)
-                             (:byte-length fixnum))
+                                  (:byte-length fixnum))
                           string)
                 enc-read-string))
 (defun enc-read-string (input &key null-terminated (byte-length -1))
   (cl-postgres-trivial-utf-8:read-utf-8-string
-   input :null-terminated null-terminated :stop-at-eof t :byte-length byte-length))
+   input :null-terminated null-terminated :byte-length byte-length))
 
 (declaim (inline enc-string-bytes))
 (defun enc-string-bytes (string &key null-terminate)
