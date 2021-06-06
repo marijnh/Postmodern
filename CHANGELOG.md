@@ -44,6 +44,17 @@ Using binary parameters does tighten type checking when using prepared queries. 
 
 Benchmarking does indicate a slight speed and consing benefit to passing parameters as binary, but your mileage will vary depending on your use case.
 
+In addition, this version also adds the ability to have queries returned as vectors of vectors, using a vectors keyword.
+
+    (query "select id, some_int, some_text from tests_data :where id = 1" :vectors)
+    or
+    (query (:select 'id 'some-int 'some-text :from 'test-data)
+         :vectors)
+    #(#(1 2147483645 "text one")
+      #(2 0 "text two")
+      #(3 3 "text three"))
+
+Like :array-hash, if there is no result it will return an empty array, not nil.
 # Changelog v. 1.32.9
 Adds new utility functions
 

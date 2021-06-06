@@ -277,13 +277,17 @@ Returns a list of plists containing the field name as a keyword and the selected
   ((:ID 1 :INT4 2147483645 :TEXT "text one") (:ID 2 :INT4 0 :TEXT "text two"))
 #+END_SRC
 *** Vectors
-Returns a vector of vectors where each internal vector is a returned row from the query. The field names are not included.
+Returns a vector of vectors where each internal vector is a returned row from the query. The field names are not included. NOTE: It will return an empty vector instead of NIL if there is no result.
 #+begin_src lisp
   (query (:select 'id 'int4 'text :from 'test-data)
-         :vectors))
+         :vectors)
   #(#(1 2147483645 "text one")
     #(2 0 "text two")
     #(3 3 "text three"))
+
+  (query (:select 'id 'int4 'text :from 'test-data :where (:< 'id 1))
+         :vectors)
+  #()
 #+end_src
 *** Array-hash
 Returns a vector of hashtables where each hash table is a returned row from the query with field name as the key expressed as a lower case string.
@@ -352,10 +356,13 @@ Return a single string where the row returned is a json object expressed as a st
 As with :json-strs, this will also work for either simple-date or local-time timestamps
 
 *** Json-array-str
-Return a string containing a json array, each element in the array is a selected row expressed as a json object
+Return a string containing a json array, each element in the array is a selected row expressed as a json object. NOTE: If there is no result, this will return a string with an empty json array.
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :json-array-str)
   "[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]"
+
+  (query (:select 'id 'int4 'text :from 'test-data :where (:< 'id 1)) :json-array-str)
+  "[]"
 #+END_SRC
 As with :json-strs, this will also work for either simple-date or local-time timestamps
 *** Second value returned

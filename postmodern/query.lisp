@@ -128,7 +128,12 @@ instead. Any of the following formats can be used, with the default being :rows:
 |                    | with the names represented as keywords.                   |
 | :alist	           | Return a single row as an alist.                          |
 | :array-hash        | Return an array of hashtables which map column names to   |
-|                    | hash table keys                                           |
+|                    | hash table keys. NOTE: It will return an empty array      |
+|                    | if there is no result.                                    |
+| :vectors           | Returns a vector of vectors where each internal vector is |
+|                    | a returned row from the query. The field names are not    |
+|                    | included. NOTE: It will return an empty vector instead of |
+|                    | NIL if there is no result.                                |
 | :str-alists        | Like :alists, but use the original column names.          |
 | :str-alist	       | Return a single row as an alist, with strings for names.  |
 | :plists	           | Return a list of plists which map column names to values, |
@@ -145,9 +150,11 @@ instead. Any of the following formats can be used, with the default being :rows:
 | :json-strs         | Return a list of strings where each row is a json object  |
 |                    | expressed as a string                                     |
 | :json-str          | Return a single string where the row returned is a json   |
-|                    | object expressed as a string                              |
+|                    | object expressed as a string.                             |
 | :json-array-str    | Return a string containing a json array, each element in  |
-|                    | the array is a selected row expressed as a json object    |
+|                    | the array is a selected row expressed as a json object.   |
+|                    | NOTE: If there is no result, it will return a string with |
+|                    | an empty json array.                                      |
 
 If the database returns information about the amount rows that were affected,
 such as with updating or deleting queries, this is returned as a second value."

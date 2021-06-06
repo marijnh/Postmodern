@@ -15,7 +15,9 @@
    #:delete-dao #:make-dao
    #:define-dao-finalization
    #:dao-table-name #:dao-table-definition
-   #:\!dao-def #:*ignore-unknown-columns*)
+   #:\!dao-def #:*ignore-unknown-columns*
+   #:class-finalized-p
+   #:finalize-inheritance)
 
   (:export
    #:connect
