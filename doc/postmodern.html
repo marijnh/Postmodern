@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-05-31 Mon 12:51 -->
+<!-- 2021-06-06 Sun 07:06 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern Reference Manual</title>
@@ -378,7 +378,7 @@
 <li><a href="#database-information">Database Information</a>
 <ul>
 <li><a href="#funciton-add-comment">function add-comment (type name comment &amp;optional (second-name ""))</a></li>
-<li><a href="#org7dcb596">find-comments (type identifier)</a></li>
+<li><a href="#orgc0f8af9">find-comments (type identifier)</a></li>
 <li><a href="#function-get-database-comment">function get-database-comment (database-name)</a></li>
 <li><a href="#function-postgresql-version">function postgresql-version ()</a></li>
 <li><a href="#function-database-version">function database-version ()</a></li>
@@ -469,7 +469,7 @@
 <li><a href="#function-get-table-comment">function get-table-comment (table-name &amp;optional schema-name)</a></li>
 <li><a href="#function-get-column-comments">function get-column-comments (database schema table)</a></li>
 <li><a href="#rename-table">function rename-table (old-name new-name)</a></li>
-<li><a href="#orgd3499cd">function rename-column (table-name old-name new-name)</a></li>
+<li><a href="#orgd118727">function rename-column (table-name old-name new-name)</a></li>
 </ul>
 </li>
 <li><a href="#tablespaces">Tablespaces</a>
@@ -893,9 +893,9 @@ instead. Any of the following formats can be used, with the default being :rows:
 Some Examples:
 </p>
 </div>
-<div id="outline-container-orgbdfd008" class="outline-4">
-<h4 id="orgbdfd008">Default</h4>
-<div class="outline-text-4" id="text-orgbdfd008">
+<div id="outline-container-org7c11485" class="outline-4">
+<h4 id="org7c11485">Default</h4>
+<div class="outline-text-4" id="text-org7c11485">
 <p>
 The default is :lists
 </p>
@@ -906,9 +906,9 @@ The default is :lists
 </div>
 </div>
 </div>
-<div id="outline-container-org8b1d279" class="outline-4">
-<h4 id="org8b1d279">Single</h4>
-<div class="outline-text-4" id="text-org8b1d279">
+<div id="outline-container-org00e338a" class="outline-4">
+<h4 id="org00e338a">Single</h4>
+<div class="outline-text-4" id="text-org00e338a">
 <p>
 Returns a single field. Will throw an error if the queries returns more than one field or more than one row
 </p>
@@ -919,9 +919,9 @@ Returns a single field. Will throw an error if the queries returns more than one
 </div>
 </div>
 </div>
-<div id="outline-container-orgd3688a0" class="outline-4">
-<h4 id="orgd3688a0">List</h4>
-<div class="outline-text-4" id="text-orgd3688a0">
+<div id="outline-container-orgc5673cf" class="outline-4">
+<h4 id="orgc5673cf">List</h4>
+<div class="outline-text-4" id="text-orgc5673cf">
 <p>
 Returns a list containing the selected fields. Will throw an error if the query returns more than one row
 </p>
@@ -932,9 +932,9 @@ Returns a list containing the selected fields. Will throw an error if the query 
 </div>
 </div>
 </div>
-<div id="outline-container-org6c84730" class="outline-4">
-<h4 id="org6c84730">Lists</h4>
-<div class="outline-text-4" id="text-org6c84730">
+<div id="outline-container-org6932c02" class="outline-4">
+<h4 id="org6932c02">Lists</h4>
+<div class="outline-text-4" id="text-org6932c02">
 <p>
 This is the default
 </p>
@@ -945,9 +945,9 @@ This is the default
 </div>
 </div>
 </div>
-<div id="outline-container-org13883f4" class="outline-4">
-<h4 id="org13883f4">Alist</h4>
-<div class="outline-text-4" id="text-org13883f4">
+<div id="outline-container-orgd605178" class="outline-4">
+<h4 id="orgd605178">Alist</h4>
+<div class="outline-text-4" id="text-orgd605178">
 <p>
 Returns an alist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
 </p>
@@ -958,9 +958,9 @@ Returns an alist containing the field name as a keyword and the selected fields.
 </div>
 </div>
 </div>
-<div id="outline-container-orgf576813" class="outline-4">
-<h4 id="orgf576813">Str-alist</h4>
-<div class="outline-text-4" id="text-orgf576813">
+<div id="outline-container-org21618b3" class="outline-4">
+<h4 id="org21618b3">Str-alist</h4>
+<div class="outline-text-4" id="text-org21618b3">
 <p>
 Returns an alist containing the field name as a lower case string and the selected fields. Will throw an error if the query returns more than one row.
 </p>
@@ -971,9 +971,9 @@ Returns an alist containing the field name as a lower case string and the select
 </div>
 </div>
 </div>
-<div id="outline-container-org96b2822" class="outline-4">
-<h4 id="org96b2822">Alists</h4>
-<div class="outline-text-4" id="text-org96b2822">
+<div id="outline-container-orgf5e3b99" class="outline-4">
+<h4 id="orgf5e3b99">Alists</h4>
+<div class="outline-text-4" id="text-orgf5e3b99">
 <p>
 Returns a list of alists containing the field name as a keyword and the selected fields.
 </p>
@@ -985,9 +985,9 @@ Returns a list of alists containing the field name as a keyword and the selected
 </div>
 </div>
 </div>
-<div id="outline-container-org08c42ce" class="outline-4">
-<h4 id="org08c42ce">Str-alists</h4>
-<div class="outline-text-4" id="text-org08c42ce">
+<div id="outline-container-org462cd10" class="outline-4">
+<h4 id="org462cd10">Str-alists</h4>
+<div class="outline-text-4" id="text-org462cd10">
 <p>
 Returns a list of alists containing the field name as a lower case string and the selected fields.
 </p>
@@ -999,9 +999,9 @@ Returns a list of alists containing the field name as a lower case string and th
 </div>
 </div>
 </div>
-<div id="outline-container-org16a46f0" class="outline-4">
-<h4 id="org16a46f0">Plist</h4>
-<div class="outline-text-4" id="text-org16a46f0">
+<div id="outline-container-orge560253" class="outline-4">
+<h4 id="orge560253">Plist</h4>
+<div class="outline-text-4" id="text-orge560253">
 <p>
 Returns a plist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
 </p>
@@ -1012,9 +1012,9 @@ Returns a plist containing the field name as a keyword and the selected fields. 
 </div>
 </div>
 </div>
-<div id="outline-container-org34e8033" class="outline-4">
-<h4 id="org34e8033">Plists</h4>
-<div class="outline-text-4" id="text-org34e8033">
+<div id="outline-container-org2347718" class="outline-4">
+<h4 id="org2347718">Plists</h4>
+<div class="outline-text-4" id="text-org2347718">
 <p>
 Returns a list of plists containing the field name as a keyword and the selected fields.
 </p>
@@ -1025,25 +1025,29 @@ Returns a list of plists containing the field name as a keyword and the selected
 </div>
 </div>
 </div>
-<div id="outline-container-orga9195fd" class="outline-4">
-<h4 id="orga9195fd">Vectors</h4>
-<div class="outline-text-4" id="text-orga9195fd">
+<div id="outline-container-org8f89516" class="outline-4">
+<h4 id="org8f89516">Vectors</h4>
+<div class="outline-text-4" id="text-org8f89516">
 <p>
-Returns a vector of vectors where each internal vector is a returned row from the query. The field names are not included.
+Returns a vector of vectors where each internal vector is a returned row from the query. The field names are not included. NOTE: It will return an empty vector instead of NIL if there is no result.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'test-data)
-       <span style="color: #23d7d7;">:vectors</span>))
+       <span style="color: #23d7d7;">:vectors</span>)
 #(#(1 2147483645 <span style="color: #e67128;">"text one"</span>)
   #(2 0 <span style="color: #e67128;">"text two"</span>)
   #(3 3 <span style="color: #e67128;">"text three"</span>))
+
+(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'test-data <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 1))
+       <span style="color: #23d7d7;">:vectors</span>)
+#()
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org406fc03" class="outline-4">
-<h4 id="org406fc03">Array-hash</h4>
-<div class="outline-text-4" id="text-org406fc03">
+<div id="outline-container-orgaec8536" class="outline-4">
+<h4 id="orgaec8536">Array-hash</h4>
+<div class="outline-text-4" id="text-orgaec8536">
 <p>
 Returns a vector of hashtables where each hash table is a returned row from the query with field name as the key expressed as a lower case string.
 </p>
@@ -1061,9 +1065,9 @@ Returns a vector of hashtables where each hash table is a returned row from the 
 </div>
 </div>
 </div>
-<div id="outline-container-orgdc7f98b" class="outline-4">
-<h4 id="orgdc7f98b">Dao</h4>
-<div class="outline-text-4" id="text-orgdc7f98b">
+<div id="outline-container-orgc320b9b" class="outline-4">
+<h4 id="orgc320b9b">Dao</h4>
+<div class="outline-text-4" id="text-orgc320b9b">
 <p>
 Returns a list of daos of the type specified
 </p>
@@ -1077,9 +1081,9 @@ Returns a list of daos of the type specified
 </div>
 </div>
 </div>
-<div id="outline-container-org034bd54" class="outline-4">
-<h4 id="org034bd54">Column</h4>
-<div class="outline-text-4" id="text-org034bd54">
+<div id="outline-container-orga238876" class="outline-4">
+<h4 id="orga238876">Column</h4>
+<div class="outline-text-4" id="text-orga238876">
 <p>
 Returns a list of field values of a single field. Will throw an error if more than one field is selected
 </p>
@@ -1093,9 +1097,9 @@ Returns a list of field values of a single field. Will throw an error if more th
 </div>
 </div>
 </div>
-<div id="outline-container-orgbaff929" class="outline-4">
-<h4 id="orgbaff929">Json-strs</h4>
-<div class="outline-text-4" id="text-orgbaff929">
+<div id="outline-container-org565c895" class="outline-4">
+<h4 id="org565c895">Json-strs</h4>
+<div class="outline-text-4" id="text-org565c895">
 <p>
 Return a list of strings where the row returned is a json object expressed as a string
 </p>
@@ -1133,9 +1137,9 @@ The following is an example with a simple-date timestamp.
 </div>
 </div>
 </div>
-<div id="outline-container-org30c2624" class="outline-4">
-<h4 id="org30c2624">Json-str</h4>
-<div class="outline-text-4" id="text-org30c2624">
+<div id="outline-container-orgcbbc913" class="outline-4">
+<h4 id="orgcbbc913">Json-str</h4>
+<div class="outline-text-4" id="text-orgcbbc913">
 <p>
 Return a single string where the row returned is a json object expressed as a string
 </p>
@@ -1150,15 +1154,18 @@ As with :json-strs, this will also work for either simple-date or local-time tim
 </div>
 </div>
 
-<div id="outline-container-org4a82319" class="outline-4">
-<h4 id="org4a82319">Json-array-str</h4>
-<div class="outline-text-4" id="text-org4a82319">
+<div id="outline-container-orga128050" class="outline-4">
+<h4 id="orga128050">Json-array-str</h4>
+<div class="outline-text-4" id="text-orga128050">
 <p>
-Return a string containing a json array, each element in the array is a selected row expressed as a json object
+Return a string containing a json array, each element in the array is a selected row expressed as a json object. NOTE: If there is no result, this will return a string with an empty json array.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #23d7d7;">:json-array-str</span>)
 <span style="color: #e67128;">"[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]"</span>
+
+(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'test-data <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 1)) <span style="color: #23d7d7;">:json-array-str</span>)
+<span style="color: #e67128;">"[]"</span>
 </pre>
 </div>
 <p>
@@ -1166,9 +1173,9 @@ As with :json-strs, this will also work for either simple-date or local-time tim
 </p>
 </div>
 </div>
-<div id="outline-container-org251f6be" class="outline-4">
-<h4 id="org251f6be">Second value returned</h4>
-<div class="outline-text-4" id="text-org251f6be">
+<div id="outline-container-org7e1fa63" class="outline-4">
+<h4 id="org7e1fa63">Second value returned</h4>
+<div class="outline-text-4" id="text-org7e1fa63">
 <p>
 If the database returns information about the amount rows that were affected,
 such as with updating or deleting queries, this is returned as a second value.
@@ -3856,9 +3863,9 @@ Example usage where two identifiers are required would be constraints:
 </div>
 </div>
 
-<div id="outline-container-org7dcb596" class="outline-3">
-<h3 id="org7dcb596">find-comments (type identifier)</h3>
-<div class="outline-text-3" id="text-org7dcb596">
+<div id="outline-container-orgc0f8af9" class="outline-3">
+<h3 id="orgc0f8af9">find-comments (type identifier)</h3>
+<div class="outline-text-3" id="text-orgc0f8af9">
 <p>
 Returns the comments attached to a particular database object. The allowed
 types are :database :schema :table :columns (all the columns in a table)
@@ -5013,9 +5020,9 @@ tables from one schema to another. Returns t if successful
 </div>
 </div>
 
-<div id="outline-container-orgd3499cd" class="outline-3">
-<h3 id="orgd3499cd">function rename-column (table-name old-name new-name)</h3>
-<div class="outline-text-3" id="text-orgd3499cd">
+<div id="outline-container-orgd118727" class="outline-3">
+<h3 id="orgd118727">function rename-column (table-name old-name new-name)</h3>
+<div class="outline-text-3" id="text-orgd118727">
 <p>
 → boolean
 </p>
