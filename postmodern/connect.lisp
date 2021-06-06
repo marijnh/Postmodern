@@ -1,22 +1,18 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
-(defclass pooled-database-connection (database-connection)
-  ((pool-type :initarg :pool-type :accessor connection-pool-type))
-  (:documentation "Type for database connections that are pooled.
-Stores the arguments used to create it, so different pools can be
-distinguished."))
+(defvar *connection-pools* (make-hash-table :test 'equal)
+  "Maps pool specifiers to lists of pooled connections.")
 
 (defparameter *database* nil
   "Special holding the current database. Most functions and macros operating
 on a database assume this contains a connected database.")
 
-(defparameter *default-use-ssl* :no "The default for connect's use-ssl argument.
-This starts at :no. If you set it to anything else, be sure to also load the
-CL+SSL library.")
-
-(defparameter *schema-path* nil "If the default path is reset, it will also reset
-this parameter which will get read by reconnect.")
+(defclass pooled-database-connection (database-connection)
+  ((pool-type :initarg :pool-type :accessor connection-pool-type))
+  (:documentation "Type for database connections that are pooled.
+Stores the arguments used to create it, so different pools can be
+distinguished."))
 
 (defun connect (database-name user-name password host &key (port 5432) pooled-p
                                                         (use-ssl *default-use-ssl*)
@@ -100,14 +96,6 @@ which should be list that connect can be applied to."
   `(let ((*database* (apply #'connect ,spec)))
      (unwind-protect (progn ,@body)
        (disconnect *database*))))
-
-(defvar *max-pool-size* nil
-  "Set the maximum amount of connections kept in a single connection pool, where
-a pool consists of all the stored connections with the exact same connect
-arguments. Defaults to NIL, which means there is no maximum.")
-
-(defvar *connection-pools* (make-hash-table :test 'equal)
-  "Maps pool specifiers to lists of pooled connections.")
 
 #+postmodern-thread-safe
 (defvar *pool-lock*

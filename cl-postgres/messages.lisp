@@ -116,10 +116,30 @@ message definitions themselves stay readable."
   (uint 2 0)) ;; Parameter types
 
 ;; Parse a query, giving it a name.
+;; https://www.postgresql.org/docs/current/protocol-message-formats.html
+;; handles parameters which are integers, single or double floats or booleans
 (define-message parse-message #\P (name query)
   (string name)
   (string query)
   (uint 2 0))
+
+(defun parse-message-binary-parameters (s name query parameters)
+  "Like parse-message but specifically when binary parameters are parsed."
+  (declare (type stream s)
+           (optimize (speed 3) (safety 0) (space 1) (debug 1)
+                     (compilation-speed 0)))
+  (let ((len (length parameters)))
+    (write-uint1 s 80)
+    (write-uint4 s
+                 (+ 8 (* len 4) (enc-byte-length query) (enc-byte-length name)))
+    (write-str s name)
+    (write-str s query)
+    (if (and *use-binary-parameters* parameters)
+        (progn
+          (write-uint2 s len)
+          (loop for x in parameters do
+            (write-uint4 s (param-to-oid x))))
+        (write-uint2 s 0))))
 
 ;; Close a named parsed query, freeing the name.
 (define-message close-prepared-message #\C (name)
@@ -149,8 +169,26 @@ indicating binary and 0 indicating plain text."
   (uint 2 (length formats)) ;; Number of result format specifications
   (bytes (formats-to-bytes formats))) ;; Result format
 
+(defun go-binary-list-p (parameters)
+  "Function used by bind-message to decide whether to send
+parameters in binary."
+  (when (and *use-binary-parameters* parameters)
+    (let ((len (length parameters)))
+      (and (< len 11)
+           (notany #'(lambda (x)
+                    (or (eq 0 (param-to-oid x))
+                        (eq 25 (param-to-oid x))))
+                   parameters)))))
+
+(defun go-binary-p (parameter)
+  "Potential use for a single parameter to decide whether to send it in binary."
+  (when (and *use-binary-parameters* parameter)
+    (not (or (eq 0 (param-to-oid parameter))
+         (eq 25 (param-to-oid parameter))))))
+
 ;; This one was a bit too complex to put into define-message format,
 ;; so it does everything by hand.
+
 (defun bind-message (socket name result-formats parameters)
   "Bind a prepared statement, ask for the given formats, and pass the
 given parameters, that can be either string or byte vector.
@@ -162,31 +200,39 @@ for binding data for binary long object columns."
            (type list parameters)
            #.*optimize*)
   (let* ((n-params (length parameters))
-         (param-formats (make-array n-params :element-type 'fixnum))
-         (param-sizes (make-array n-params :element-type 'fixnum))
+         (param-formats (make-array n-params
+                                    :element-type 'fixnum
+                                    :initial-element 0))
+         (param-sizes (make-array n-params
+                                  :element-type 'fixnum
+                                  :initial-element 0))
          (param-values (make-array n-params))
-         (n-result-formats (length result-formats)))
+         (n-result-formats (length result-formats))
+         (go-binary (go-binary-list-p parameters)))
     (declare (type (unsigned-byte 16) n-params n-result-formats))
     (loop :for param :in parameters
           :for i :from 0
-          :do (flet ((set-param (format size value)
+          :do
+             (flet ((set-param (format size value)
                        (setf (aref param-formats i) format
                              (aref param-sizes i) size
                              (aref param-values i) value)))
                 (declare (inline set-param))
                 (cond ((eq param :null)
                        (set-param 0 0 nil))
-                      ((typep param '(vector (unsigned-byte 8)))
+                      ((typep param '(vector (unsigned-byte 8))) ;param already in binary form
                        (set-param 1 (length param) param))
                       (t
                        (unless (typep param 'string)
-                         (setf param (serialize-for-postgres param)))
+                         (if go-binary
+                             (setf param (serialize-for-postgres param))
+                             (setf param (to-sql-string param))))
                        (etypecase param
                          (string
                           (set-param 0 (enc-byte-length param) param))
                          ((vector (unsigned-byte 8))
                           (set-param 1 (length param) param)))))))
-    (write-uint1 socket #.(char-code #\B))
+    (write-uint1 socket #.(char-code #\B)) ; identifies message as bind command
     (write-uint4 socket (+ 12
                            (enc-byte-length name)
                            (* 6 n-params)   ;; Input formats and sizes
@@ -195,19 +241,19 @@ for binding data for binary long object columns."
                                  :sum size)))
     (write-uint1 socket 0)                  ;; Name of the portal
     (write-str socket name)                 ;; Name of the prepared statement
-    (write-uint2 socket n-params)           ;; Number of parameter format specs
-    (loop :for format :across param-formats ;; Param formats (text/binary)
-          :do (write-uint2 socket format))
-    (write-uint2 socket n-params)           ;; Number of parameter specifications
+    (write-uint2 socket n-params)           ;; Number of parameters
+    (loop :for format :across param-formats ;; Param formats (text/binary) must be 0 or 1
+          :do (write-uint2 socket (if (or go-binary (= 1 format)) 1 0)))
+    (write-uint2 socket n-params)           ;; Number of parameter values
     (loop :for param :across param-values
           :for size :across param-sizes
-          :do (write-int4 socket (if param size -1))
+          :do (write-int4 socket (if param size -1)) ;; length of parameter values
           :do (when param
                 (if (typep param '(vector (unsigned-byte 8)))
-                    (write-sequence param socket)
-                    (enc-write-string param socket))))
+                    (write-sequence param socket) ;; value of the parameter if binary
+                    (enc-write-string param socket)))) ;; value of the parameter if text
     (write-uint2 socket n-result-formats)   ;; Number of result formats
-    (loop :for format :across result-formats ;; Result formats (text/binary)
+    (loop :for format :across result-formats ;; Result formats (text/binary) must be 0 or 1
           :do (write-uint2 socket (if format 1 0)))))
 
 ;; Describe the anonymous portal, so we can find out what kind of

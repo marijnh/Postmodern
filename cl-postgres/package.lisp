@@ -53,7 +53,6 @@
            #:*read-row-values-as-binary*
            #:with-binary-row-values
            #:with-text-row-values
-           #:*silently-truncate-rationals*
            #:*silently-truncate-ratios*
            #:*query-callback*
            #:*query-log*
@@ -68,6 +67,16 @@
            #:string-mapped-to-space
            #:saslprep-normalize
            #:string-printable-ascii-p
+           #:int4
+           #:int8
+           #:uuid-string
+           #:-uuip-p
+           #:types-match-p
+           #:oid-types-match-p
+           #:parameter-lists-match-oid-types-p
+           #:parameter-list-types
+           #:param-to-oid
+           #:*use-binary-parameters*
            #+(and sbcl unix) #:*unix-socket-dir*))
 
 (defpackage :cl-postgres-error

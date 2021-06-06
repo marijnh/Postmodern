@@ -1,13 +1,13 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN-TESTS; -*-
 (in-package :postmodern-tests)
 
-(def-suite :postmodern-prepare
+(def-suite :postmodern-binary-prepare
   :description "Prepared query suite for postmodern"
   :in :postmodern)
 
-(in-suite :postmodern-prepare)
+(in-suite :postmodern-binary-prepare)
 
-(defun prepare-fixture ()
+(defun prepare-binary-fixture ()
   (drop-prepared-statement "all")
   (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
   (execute (:create-table test-data ((a :type integer :primary-key t)
@@ -16,66 +16,51 @@
   (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
   (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null)))
 
-(test prepare-basic-statement
+(test binary-prepare-basic-statement
   (with-test-connection
-    (without-binary
+    (with-binary
       (defprepared 'select1 "select $1" :single)
-      (is (equal (funcall 'select1 13)
-                 "13")))))
+    (is (equal (funcall 'select1 13)
+               13)))))
 
-(test prepare-proving-life-limited-to-connection
+(test binary-prepare-tracking-statements-1
   (with-test-connection
-    (defprepared 'select1 "select $1" :single)
-    (funcall 'select1 13)
-    (is (equal (list-postmodern-prepared-statements t)
-               '("SELECT1")))
-    (is (equal (list-prepared-statements t)
-               '("SELECT1"))))
+    (with-binary
+      (prepare-binary-fixture)
+      (let ((select-int (prepare (:select (:type '$1 integer)) :single))
+            (select-int1 (prepare "select $1" :single))
+            (select-int2 (prepare "select $1::integer" :single))
+            (byte-arr (make-array 10 :element-type '(unsigned-byte 8) :initial-element 10))
+            (select-bytes (prepare (:select (:type '$1 bytea)) :single)))
+        (defprepared 'select1 "select a from test_data where c = $1" :single)
+        ;; Defprepared does not change the prepared statements logged in the postmodern connection or
+        ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
+        (is (equal 0 (length (list-postmodern-prepared-statements t))))
+        (is (equal 0 (length (list-prepared-statements t))))
+        (is (= (funcall select-int 10) 10))
+        (is (= (funcall select-int -40) -40))
+        (is (= (funcall select-int1 12) 12))
+        (is (= (funcall select-int2 14) 14))
+
+        ;; CHANGE HERE TO SIGNALS ERROR
+
+        (signals error(funcall select-int :null))
+        ;; the funcall creates the prepared statements logged in the postmodern connection
+        ;; and the postgresql connection
+        (is (equal 3 (length (list-postmodern-prepared-statements t))))
+        (is (equal 3 (length (list-prepared-statements t))))
+        (is (equalp (funcall select-bytes byte-arr) byte-arr))
+        (is (equal 4 (length (list-prepared-statements t))))
+        (is (not (prepared-statement-exists-p "select1")))
+        (is (equal 1 (funcall 'select1 "foobar")))
+        (is (prepared-statement-exists-p "select1"))
+        (is (equal 5 (length (list-postmodern-prepared-statements t))))
+        (is (equal 5 (length (list-prepared-statements t))))))))
+
+(test binary-prepare-tracking-statements-with-drops-1
   (with-test-connection
-    (is (equal (list-postmodern-prepared-statements t)
-               nil))
-    (is (equal (list-prepared-statements t)
-               nil))))
-
-(test prepare-tracking-statements-1
-  "This test just checks that prepared statements are being logged both in the
-postmodern meta connection and in Postgresql"
-  (with-test-connection
-    (without-binary
-     (prepare-fixture))
-    (let ((select-int (prepare (:select (:type '$1 integer)) :single))
-          (byte-arr (make-array 10 :element-type '(unsigned-byte 8) :initial-element 10))
-          (select-bytes (prepare (:select (:type '$1 bytea)) :single)))
-      (defprepared 'select1 "select a from test_data where c = $1" :single)
-      ;; Defprepared does not change the prepared statements logged in the postmodern connection or
-      ;; in the postgresql connection. That will only happen when the prepared statement is
-      ;; funcalled.
-      (is (equal 0 (length (list-postmodern-prepared-statements t))))
-      (is (equal 0 (length (list-prepared-statements t))))
-      (is (= (funcall select-int 10) 10))
-      (is (= (funcall select-int -40) -40))
-
-      ;; CHANGE HERE TO SIGNALS ERROR
-
-      (is (equal (funcall select-int :null)
-                 :NULL)) ;mismatched parameter types if cl-postgres::*use-binary-parameters* is set
-      ;; the funcall creates the prepared statements logged in the postmodern connection
-      ;; and the postgresql connection
-      (is (equal 1 (length (list-postmodern-prepared-statements t))))
-      (is (equal 1 (length (list-prepared-statements t))))
-      (is (equalp (funcall select-bytes byte-arr) byte-arr))
-      (is (equal 2 (length (list-prepared-statements t))))
-      (is (not (prepared-statement-exists-p "select1")))
-      (is (equal 1 (funcall 'select1 "foobar")))
-      (is (prepared-statement-exists-p "select1"))
-      (is (prepared-statement-exists-p 'select1))
-      (is (equal 3 (length (list-postmodern-prepared-statements t))))
-      (is (equal 3 (length (list-prepared-statements t)))))))
-
-(test prepare-tracking-statements-with-drops-1
-  (with-test-connection
-    (prepare-fixture)
-    (without-binary
+    (prepare-binary-fixture)
+    (with-binary
       (defprepared 'select1 "select a from test_data where c = $1" :single)
       ;; Defprepared does not change the prepared statements logged in the postmodern connection or
       ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
@@ -102,11 +87,11 @@ postmodern meta connection and in Postgresql"
       (is (equal 0 (length (list-prepared-statements t))))
       (execute (:drop-table 'test-data)))))
 
-(test prepare-select-no-table-two-parameters
+(test binary-prepare-select-no-table-two-parameters
   (with-test-connection
-    (without-binary
+    (with-binary
       (is (equal (query (:select '$1 '$2) 1 "a")
-                 '(("1" "a"))))
+                 '((1 "a"))))
       (let ((select-two (prepare (:select (:type '$1 'integer) (:type '$2 'string)))))
         (is (equal (funcall select-two 1 "a")
                    '((1 "a")))))
@@ -115,17 +100,19 @@ postmodern meta connection and in Postgresql"
       (let ((select-two (prepare (:select (:type '$1 integer) (:type '$2 string)))))
         (signals error (funcall select-two "a" 1))))))
 
-(test defprepared-select-no-table
+(test binary-defprepared-select-no-table
   (with-test-connection
-    (without-binary
+    (with-binary
       (defprepared 'test8e (:select '$1))
-      (is (equal (test8e 1) '(("1"))))
-      (is (equal (test8e 189) '(("189"))))
-      (is (equal (test8e 11.5) '(("11.5")))))))
+      (is (equal (test8e 1)
+                 '((1))))
+      (is (equal (test8e 189)
+                 '((189))))
+      (signals error (test8e 11.5)))))
 
-(test prepare-3-drop-no-table
+(test binary-prepare-3-drop-no-table
   (with-test-connection
-    (without-binary
+    (with-binary
       (drop-prepared-statement "all")
       (defprepared select2 "select $1" :single)
       (is (equal (funcall 'select2 "foobar")
@@ -145,9 +132,9 @@ postmodern meta connection and in Postgresql"
       (drop-prepared-statement 'select2)
       (signals error (funcall 'select2 "foobar")))))
 
-(test prepare-3-drop-with-table
+(test binary-prepare-3-drop-with-table
   (with-test-connection
-    (without-binary
+    (with-binary
       (drop-prepared-statement "all")
       (when (table-exists-p 'test-data)
         (execute (:drop-table 'test-data)))
@@ -167,10 +154,9 @@ postmodern meta connection and in Postgresql"
       (is (not (prepared-statement-exists-p "select1")))
       (execute (:drop-table 'test-data)))))
 
-(test prepare-3-overwrite
-  "Testing Overwriting prepared statements"
+(test binary-prepare-3-overwrite
   (with-test-connection
-    (without-binary
+    (with-binary
       (drop-prepared-statement "all")
       (when (table-exists-p 'test-data)
         (execute (:drop-table 'test-data)))
@@ -190,15 +176,14 @@ postmodern meta connection and in Postgresql"
                  (find-postgresql-prepared-statement "select1")))
       (is (equal '("select a from test_data where c = $1" ("foobar"))
                  (find-postmodern-prepared-statement "select1")))
-      ;; funcall now drops the old version and create the new version.
-      ;; The old parameter no longer works
+      ;; funcall now drops the old version and create the new version. The old parameter no longer works
       (is (equal (funcall 'select1 1)
                  "foobar"))
       (signals error (funcall 'select1 "foobar")))))
 
-(test prepare-3-partial
+(test binary-prepare-3-partial
   (with-test-connection
-    (without-binary
+    (with-binary
       (drop-prepared-statement "all")
       (when (table-exists-p 'test-data)
         (execute (:drop-table 'test-data)))
@@ -212,10 +197,10 @@ postmodern meta connection and in Postgresql"
       (is (equal (funcall 'select1 1)
                  "foobar")))))
 
-(test prepare-4
+(test binary-prepare-4
   (with-test-connection
-    (prepare-fixture)
-    (without-binary
+    (with-binary
+      (prepare-binary-fixture)
       (defprepared select1 "select c from test_data where a = $1" :single)
       (is (eq :null (funcall 'select1 2)))
       (drop-prepared-statement "all")
@@ -228,14 +213,14 @@ postmodern meta connection and in Postgresql"
       (is (eq :null (funcall 'select1 2)))
       (execute (:drop-table 'test-data)))))
 
-(test prepare-5
-  "Test to ensure that we do not recreate the statement each time it is funcalled"
+(test binary-prepare-5
   (with-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared select1 "select $1" :single)
       (is (equal (funcall 'select1 10)
-                 "10"))
+                 10))
+      ;; Test to ensure that we do not recreate the statement each time it is funcalled
       (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'"
                           :single)))
         (sleep 1)
@@ -244,167 +229,139 @@ postmodern meta connection and in Postgresql"
                    (query "select prepare_time from pg_prepared_statements where name = 'select1'"
                           :single)))))))
 
-(test prepare-change-param-no-table-txt
+(test binary-prepare-change-param-no-table-txt
   (with-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-text "select $1" :single)
       (is (equal (funcall 'select-text "A")
                  "A"))
       (is (equal (funcall 'select-text "BCE")
                  "BCE"))
-      (is (equal (funcall 'select-text 1)
-                 "1"))
+      (signals error (funcall 'select-text 1))
       (is (equal (funcall 'select-text "ABC")
                  "ABC")))))
 
-(test prepare-change-param-no-table-float
+(test binary-prepare-change-param-no-table-float
   (with-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-float "select $1" :single)
       (is (equal (funcall 'select-float 1.5)
-                 "1.5"))
+                 1.5))
       (is (equal (funcall 'select-float 2.5)
-                 "2.5"))
-
-      (is (equal (funcall 'select-float "abc")
-                 "abc"))
-      (is (equal (funcall 'select-float t)
-                 "true"))
-      (is (equal (funcall 'select-float "5")
-                 "5"))
-      (is (equal (funcall 'select-float "5.5")
-                 "5.5"))
+                 2.5))
+      (signals error (funcall 'select-float "abc"))
+      (signals error (funcall 'select-float t))
+      (signals error (funcall 'select-float "5"))
+      (signals error (funcall 'select-float "5.5"))
       (is (equal (funcall 'select-float 1.0)
-                 "1.0")))))
+                 1.0)))))
 
-(test prepare-change-param-no-table-bool
+(test binary-prepare-change-param-no-table-bool
   (with-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-bool "select $1" :single)
       (is (equal (funcall 'select-bool t)
-                 "true"))
+                 T))
       (is (equal (funcall 'select-bool nil)
-                 "false"))
-      (is (equal (funcall 'select-bool "14")
-                 "14"))
-      (is (equal (funcall 'select-bool 14.2)
-                 "14.2"))
+                 NIL))
+      (signals error (funcall 'select-bool "14"))
+      (signals error (funcall 'select-bool 14.2))
       (is (equal (funcall 'select-bool t)
-                 "true"))
+                 T))
       (is (equal (select-bool t)
-                 "true")))))
+                 T)))))
 
-(test prepare-change-param-no-table-int
+(test binary-prepare-change-param-no-table-int
   (with-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-int "select $1" :single)
       (is (equal (funcall 'select-int 14)
-                 "14"))
+                 14))
       (is (equal (select-int 6)
-                 "6"))
-      (is (equal (funcall 'select-int "14")
-                 "14"))
-      (is (equal (select-int "14")
-                 "14"))
-      (is (equal (funcall 'select-int 14.2)
-                 "14.2"))
-      (is (equal (select-int 14.2)
-                 "14.2"))
-      (is (equal (funcall 'select-int "abc")
-                 "abc"))
-      (is (equal (funcall 'select-int t)
-                 "true"))
+                 6))
+      (signals error (funcall 'select-int "14"))
+      (signals error (select-int "14"))
+      (signals error (funcall 'select-int 14.2))
+      (signals error (select-int 14.2))
+      (signals error (funcall 'select-int "abc"))
+      (signals error (funcall 'select-int t))
       (is (equal (funcall 'select-int 5)
-                 "5"))
-      (is (equal (select-int 6)
-                 "6")))))
+                 5)))))
 
-(test prepare-change-param-no-table-txt-with-disconnect
+(test binary-prepare-change-param-no-table-txt-with-disconnect
   (with-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-text "select $1" :single)
       (is (equal (funcall 'select-text "A")
                  "A"))
       (disconnect *database*)
       (is (equal (funcall 'select-text "BCE")
                  "BCE"))
-      (is (equal (funcall 'select-text 1)
-                 "1"))
+      (signals error (funcall 'select-text 1))
       (is (equal (funcall 'select-text "ABC")
                  "ABC")))))
 
-(test prepare-change-param-no-table-float-with-disconnect
+(test binary-prepare-change-param-no-table-float-with-disconnect
   (with-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-float "select $1" :single)
       (is (equal (funcall 'select-float 1.5)
-                 "1.5"))
+                 1.5))
       (disconnect *database*)
-      (is (equal (funcall 'select-float 2.5 )
-                 "2.5"))
-      (is (equal (funcall 'select-float "abc")
-                 "abc"))
-      (is (equal (funcall 'select-float t)
-                 "true"))
-      (is (equal (funcall 'select-float "5")
-                 "5"))
-      (is (equal (funcall 'select-float "5.5")
-                 "5.5"))
+      (is (equal (funcall 'select-float 2.5)
+                 2.5))
+      (signals error (funcall 'select-float "abc"))
+      (signals error (funcall 'select-float t))
+      (signals error (funcall 'select-float "5"))
+      (signals error (funcall 'select-float "5.5"))
       (is (equal (funcall 'select-float 1.0)
-                 "1.0"))
-      (is (equal (select-float 1.0)
-                 "1.0")))))
+                 1.0)))))
 
-(test prepare-change-param-no-table-bool-with-disconnect
+(test binary-prepare-change-param-no-table-bool-with-disconnect
   (with-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-bool "select $1" :single)
       (is (equal (funcall 'select-bool t)
-                 "true"))
+                 T))
       (disconnect *database*)
       (is (equal (funcall 'select-bool nil)
-                 "false"))
-      (is (equal (funcall 'select-bool "14")
-                 "14"))
-      (is (equal (funcall 'select-bool 14.2)
-                 "14.2"))
+                 NIL))
+      (signals error (funcall 'select-bool "14"))
+      (signals error (funcall 'select-bool 14.2))
       (is (equal (funcall 'select-bool t)
-                 "true")))))
+                 T)))))
 
-(test prepare-change-param-no-table-int-with-disconnect
+(test binary-prepare-change-param-no-table-int-with-disconnect
   (with-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-int "select $1" :single)
       (is (equal (funcall 'select-int 14)
-                 "14"))
+                 14))
       (disconnect *database*)
       (is (equal (funcall 'select-int 6)
-                 "6"))
-      (is (equal (funcall 'select-int "14")
-                 "14"))
-      (is (equal (funcall 'select-int "abc")
-                 "abc"))
-      (is (equal (funcall 'select-int 14.2)
-                 "14.2"))
-      (is (equal (funcall 'select-int t)
-                 "true"))
+                 6))
+      (signals error (funcall 'select-int "14"))
+      (signals error (funcall 'select-int "abc"))
+      (signals error (funcall 'select-int 14.2))
+      (signals error (funcall 'select-int t))
       (is (equal (funcall 'select-int 5)
-                 "5"))
+                 5))
       (is (equal (select-int 5)
-                 "5")))))
+                 5)))))
 
-(test prepare-change-params-with-table
+(test binary-prepare-change-params-with-table
   (with-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
       (execute (:create-table test-data ((a :type integer :primary-key t)
                                          (b :type real)
@@ -423,10 +380,11 @@ postmodern meta connection and in Postgresql"
       (is (eq :null (funcall 'select-1 2)))
       (execute (:drop-table 'test-data)))))
 
-(test prepare-reserved-words
+(test binary-prepare-reserved-words
   (with-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (when (table-exists-p 'from-test) (execute (:drop-table 'from-test)))
       (execute "CREATE TABLE from_test (id SERIAL NOT NULL, flight INTEGER DEFAULT NULL, \"from\" VARCHAR(100) DEFAULT NULL, to_destination VARCHAR(100) DEFAULT NULL, PRIMARY KEY (id, \"from\"))")
       (execute (:insert-into 'from-test :set 'flight 1 'from "Stykkishólmur"
@@ -439,14 +397,13 @@ postmodern meta connection and in Postgresql"
       (is (equal "Reykjavík" (funcall 'select1 "Seyðisfjörður")))
       (execute (:drop-table 'from-test)))))
 
-(test prepare-tracking-statements-1-pooled
+(test binary-prepare-tracking-statements-1-pooled
   (with-pooled-test-connection
-    (prepare-fixture)
-    (without-binary
+    (with-binary
+      (prepare-binary-fixture)
       (let ((select-int (prepare (:select (:type '$1 integer)) :single))
             (byte-arr (make-array 10 :element-type '(unsigned-byte 8) :initial-element 10))
-            (select-bytes (prepare (:select (:type '$1 bytea)) :single))
-            (select-int-internal-name nil))
+            (select-bytes (prepare (:select (:type '$1 bytea)) :single)))
         (defprepared 'select1 "select a from test_data where c = $1" :single)
         ;; Defprepared does not change the prepared statements logged in the postmodern connection or
         ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
@@ -454,12 +411,9 @@ postmodern meta connection and in Postgresql"
         (is (equal 0 (length (list-prepared-statements t))))
         (is (= (funcall select-int 10) 10))
         (is (= (funcall select-int -40) -40))
-
         ;; CHANGE HERE TO SIGNALS ERROR if bnary
-
-        (is (equal (funcall select-int :null)
-                   :NULL))
-        (setf select-int-internal-name (car (list-prepared-statements t)))
+        (signals error (funcall select-int :null)
+            :NULL)
         ;; the funcall creates the prepared statements logged in the postmodern connection
         ;; and the postgresql connection
         (is (equal 1 (length (list-postmodern-prepared-statements t))))
@@ -473,24 +427,12 @@ postmodern meta connection and in Postgresql"
         (is (equal 3 (length (list-prepared-statements t))))
         (drop-prepared-statement "all")))))
 
-(test proof-that-prepared-statements-survive-in-pool
-  (without-binary
-    (drop-prepared-statement "all")
-    (with-pooled-test-connection
-      (defprepared 'test8e (:select '$1))
-      (is (equal (test8e 17)
-                 '(("17")))))
-    (with-pooled-test-connection
-      (is (equal (list-postmodern-prepared-statements t)
-                 '("TEST8E")))
-      (is (equal (list-prepared-statements t)
-                 '("TEST8E"))))))
-
-(test prepare-tracking-statements-with-drops-1-pooled
+(test binary-prepare-tracking-statements-with-drops-1-pooled
   (with-pooled-test-connection
-    (prepare-fixture)
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (prepare-binary-fixture)
+      (drop-prepared-statement "all")
+
       (defprepared 'select1 "select a from test_data where c = $1" :single)
       ;; Defprepared does not change the prepared statements logged in the postmodern connection or
       ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
@@ -518,12 +460,13 @@ postmodern meta connection and in Postgresql"
       (execute (:drop-table 'test-data))
       (drop-prepared-statement "all"))))
 
-(test prepare-select-no-table-two-parameters-pooled
+(test binary-prepare-select-no-table-two-parameters-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (is (equal (query (:select '$1 '$2) 1 "a")
-                 '(("1" "a"))))
+                 '((1 "a"))))
       (let ((select-two (prepare (:select (:type '$1 'integer) (:type '$2 'string)))))
         (is (equal (funcall select-two 1 "a")
                    '((1 "a")))))
@@ -533,23 +476,24 @@ postmodern meta connection and in Postgresql"
         (signals error (funcall select-two "a" 1)))
       (drop-prepared-statement "all"))))
 
-(test defprepared-select-no-table-pooled
+(test binary-defprepared-select-no-table-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (defprepared 'test8e (:select '$1))
       (is (equal (test8e 1)
-                 '(("1"))))
+                 '((1))))
       (is (equal (test8e 189)
-                 '(("189"))))
-      (is (equal (test8e 11.5)
-                 '(("11.5"))))
+                 '((189))))
+      (signals error (test8e 11.5))
       (drop-prepared-statement "all"))))
 
-(test prepare-3-drop-no-table-pooled
+(test binary-prepare-3-drop-no-table-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (defprepared select2 "select $1" :single)
       (is (equal (funcall 'select2 "foobar")
                  "foobar"))
@@ -569,10 +513,11 @@ postmodern meta connection and in Postgresql"
       (signals error (funcall 'select2 "foobar"))
       (drop-prepared-statement "all"))))
 
-(test prepare-3-drop-with-table-pooled
+(test binary-prepare-3-drop-with-table-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (when (table-exists-p 'test-data)
         (execute (:drop-table 'test-data)))
       (execute (:create-table test-data ((a :type integer :primary-key t)
@@ -592,10 +537,11 @@ postmodern meta connection and in Postgresql"
       (execute (:drop-table 'test-data))
       (drop-prepared-statement "all"))))
 
-(test prepare-3-overwrite-pooled
+(test binary-prepare-3-overwrite-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (when (table-exists-p 'test-data)
         (execute (:drop-table 'test-data)))
       (execute (:create-table test-data ((a :type integer :primary-key t)
@@ -620,10 +566,11 @@ postmodern meta connection and in Postgresql"
       (signals error (funcall 'select1 "foobar"))
       (drop-prepared-statement "all"))))
 
-(test prepare-3-partial-pooled
+(test binary-prepare-3-partial-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (when (table-exists-p 'test-data)
         (execute (:drop-table 'test-data)))
       (execute (:create-table test-data ((a :type integer :primary-key t)
@@ -639,13 +586,14 @@ postmodern meta connection and in Postgresql"
                  "foobar"))
       (drop-prepared-statement "all"))))
 
-(test prepare-4-pooled
+(test binary-prepare-4-pooled
   (with-pooled-test-connection
-    (prepare-fixture)
-    (without-binary
+    (with-binary
+      (prepare-binary-fixture)
       (defprepared select1 "select c from test_data where a = $1" :single)
       (is (eq :null (funcall 'select1 2)))
       (drop-prepared-statement "all")
+
       (is (equal 0 (length (list-prepared-statements t))))
       (is (equal 0 (length (list-postmodern-prepared-statements t))))
       ;; recreate select1, then drop the connection and call select1
@@ -656,13 +604,14 @@ postmodern meta connection and in Postgresql"
       (execute (:drop-table 'test-data))
       (drop-prepared-statement "all"))))
 
-(test prepare-5-pooled
+(test binary-prepare-5-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (defprepared select1 "select $1" :single)
       (is (equal (funcall 'select1 10)
-                 "10"))
+                 10))
       ;; Test to ensure that we do not recreate the statement each time it is funcalled
       (let ((time1 (query "select prepare_time from pg_prepared_statements where name = 'select1'"
                           :single)))
@@ -673,174 +622,151 @@ postmodern meta connection and in Postgresql"
                           :single))))
       (drop-prepared-statement "all"))))
 
-(test prepare-change-param-no-table-txt-pooled
+(test binary-prepare-change-param-no-table-txt-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (defprepared 'select-text "select $1" :single)
       (is (equal (funcall 'select-text "A")
                  "A"))
       (is (equal (funcall 'select-text "BCE")
                  "BCE"))
-      (is (equal (funcall 'select-text 1)
-                 "1"))
+      (signals error (funcall 'select-text 1))
       (is (equal (funcall 'select-text "ABC")
                  "ABC"))
       (drop-prepared-statement "all"))))
 
-(test prepare-change-param-no-table-float-pooled
+(test binary-prepare-change-param-no-table-float-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (defprepared 'select-float "select $1" :single)
       (is (equal (funcall 'select-float 1.5)
-                 "1.5"))
+                 1.5))
       (is (equal (funcall 'select-float 2.5)
-                 "2.5"))
-      (is (equal (funcall 'select-float "abc")
-                 "abc"))
-      (is (equal (funcall 'select-float t)
-                 "true"))
-      (is (equal (funcall 'select-float "5")
-                 "5"))
-      (is (equal (funcall 'select-float "5.5")
-                 "5.5"))
+                 2.5))
+      (signals error (funcall 'select-float "abc"))
+      (signals error (funcall 'select-float t))
+      (signals error (funcall 'select-float "5"))
+      (signals error (funcall 'select-float "5.5"))
       (is (equal (funcall 'select-float 1.0)
-                 "1.0"))
+                 1.0))
       (drop-prepared-statement "all"))))
 
-(test prepare-change-param-no-table-bool-pooled
+(test binary-prepare-change-param-no-table-bool-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (defprepared 'select-bool "select $1" :single)
       (is (equal (funcall 'select-bool t)
-                 "true"))
+                 T))
       (is (equal (funcall 'select-bool nil)
-                 "false"))
-      (is (equal (funcall 'select-bool "14")
-                 "14"))
-      (is (equal (funcall 'select-bool 14.2)
-                 "14.2"))
+                 NIL))
+      (signals error (funcall 'select-bool "14"))
+      (signals error (funcall 'select-bool 14.2))
       (is (equal (funcall 'select-bool t)
-                 "true"))
+                 T))
       (is (equal (select-bool t)
-                 "true"))
+                 T))
       (drop-prepared-statement "all"))))
 
-(test prepare-change-param-no-table-int-pooled
+(test binary-prepare-change-param-no-table-int-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-int "select $1" :single)
       (is (equal (funcall 'select-int 14)
-                 "14"))
+                 14))
       (is (equal (select-int 6)
-                 "6"))
-      (is (equal (funcall 'select-int "14")
-                 "14"))
-      (is (equal (select-int "14")
-                 "14"))
-      (is (equal (funcall 'select-int 14.2)
-                 "14.2"))
-      (is (equal (select-int 14.2)
-                 "14.2"))
-      (is (equal (funcall 'select-int "abc")
-                 "abc"))
-      (is (equal (funcall 'select-int t)
-                 "true"))
+                 6))
+      (signals error (funcall 'select-int "14"))
+      (signals error (select-int "14"))
+      (signals error (funcall 'select-int 14.2))
+      (signals error (select-int 14.2))
+      (signals error (funcall 'select-int "abc"))
+      (signals error (funcall 'select-int t))
       (is (equal (funcall 'select-int 5)
-                 "5"))
-      (is (equal (select-int 6)
-                 "6"))
+                 5))
       (drop-prepared-statement "all"))))
 
-(test prepare-change-param-no-table-txt-with-disconnect-pooled
+(test binary-prepare-change-param-no-table-txt-with-disconnect-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-text "select $1" :single)
       (is (equal (funcall 'select-text "A")
                  "A"))
       (disconnect *database*)
       (is (equal (funcall 'select-text "BCE")
                  "BCE"))
-      (is (equal (funcall 'select-text 1)
-                 "1"))
+      (signals error (funcall 'select-text 1))
       (is (equal (funcall 'select-text "ABC")
                  "ABC"))
       (drop-prepared-statement "all"))))
 
-(test prepare-change-param-no-table-float-with-disconnect-pooled
+(test binary-prepare-change-param-no-table-float-with-disconnect-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-float "select $1" :single)
-      (is (equal (funcall 'select-float 1.5 )
-                 "1.5"))
+      (is (equal (funcall 'select-float 1.5)
+                 1.5))
       (disconnect *database*)
-      (is (equal (funcall 'select-float 2.5 )
-                 "2.5"))
-      (is (equal (funcall 'select-float "abc")
-                 "abc"))
-      (is (equal (funcall 'select-float t)
-                 "true"))
-      (is (equal (funcall 'select-float "5")
-                 "5"))
-      (is (equal (funcall 'select-float "5.5")
-                 "5.5"))
+      (is (equal (funcall 'select-float 2.5)
+                 2.5))
+      (signals error (funcall 'select-float "abc"))
+      (signals error (funcall 'select-float t))
+      (signals error (funcall 'select-float "5"))
+      (signals error (funcall 'select-float "5.5"))
       (is (equal (funcall 'select-float 1.0)
-                 "1.0"))
-      (is (equal (select-float 1.0)
-                 "1.0"))
+                 1.0))
       (drop-prepared-statement "all"))))
 
-(test prepare-change-param-no-table-bool-with-disconnect-pooled
+(test binary-prepare-change-param-no-table-bool-with-disconnect-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-bool "select $1" :single)
       (is (equal (funcall 'select-bool t)
-                 "true"))
+                 T))
       (disconnect *database*)
       (is (equal (funcall 'select-bool nil)
-                 "false"))
-      (is (equal (funcall 'select-bool "14")
-                 "14"))
-      (is (equal (funcall 'select-bool 14.2)
-                 "14.2"))
+                 NIL))
+      (signals error (funcall 'select-bool "14"))
+      (signals error (funcall 'select-bool 14.2))
       (is (equal (funcall 'select-bool t)
-                 "true"))
+                 T))
       (drop-prepared-statement "all"))))
 
-(test prepare-change-param-no-table-int-with-disconnect-pooled
+(test binary-prepare-change-param-no-table-int-with-disconnect-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (defprepared 'select-int "select $1" :single)
       (is (equal (funcall 'select-int 14)
-                 "14"))
+                 14))
       (disconnect *database*)
       (is (equal (funcall 'select-int 6)
-                 "6"))
-      (is (equal (funcall 'select-int "14")
-                 "14"))
-      (is (equal (funcall 'select-int "abc")
-                 "abc"))
-      (is (equal (funcall 'select-int 14.2)
-                 "14.2"))
-      (is (equal (funcall 'select-int t)
-                 "true"))
+                 6))
+      (signals error (funcall 'select-int "14")
+          14)
+      (signals error (funcall 'select-int "abc"))
+      (signals error (funcall 'select-int 14.2))
+      (signals error (funcall 'select-int t))
       (is (equal (funcall 'select-int 5)
-                 "5"))
+                 5))
       (is (equal (select-int 5)
-                 "5"))
+                 5))
       (drop-prepared-statement "all"))))
 
-(test prepare-change-params-with-table-pooled
+(test binary-prepare-change-params-with-table-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (when (table-exists-p 'test-data) (execute (:drop-table 'test-data)))
       (execute (:create-table test-data ((a :type integer :primary-key t)
                                          (b :type real)
@@ -860,10 +786,11 @@ postmodern meta connection and in Postgresql"
       (execute (:drop-table 'test-data))
       (drop-prepared-statement "all"))))
 
-(test prepare-reserved-words-pooled
+(test binary-prepare-reserved-words-pooled
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
+
       (when (table-exists-p 'from-test) (execute (:drop-table 'from-test)))
       (execute "CREATE TABLE from_test (id SERIAL NOT NULL, flight INTEGER DEFAULT NULL, \"from\" VARCHAR(100) DEFAULT NULL, to_destination VARCHAR(100) DEFAULT NULL, PRIMARY KEY (id, \"from\"))")
       (execute (:insert-into 'from-test :set 'flight 1 'from "Stykkishólmur"
@@ -877,94 +804,88 @@ postmodern meta connection and in Postgresql"
       (execute (:drop-table 'from-test))
       (drop-prepared-statement "all"))))
 
-(test prepared-statement-over-reconnect
-  (without-binary
-    (let ((terminate-backend
-            (prepare
-             "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
-             :rows))
-          (getpid (prepare "SELECT pg_backend_pid()" :single)))
-      (with-test-connection
-        (is (equal (query "select pg_backend_pid()" :single)
-                   (funcall getpid)))
-        (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
-        (let ((pid (pomo:get-pid)))
-          (pomo:terminate-backend pid)
-          (signals database-connection-error
-            (query "select pg_backend_pid()" :single)))
-        (is (integerp (funcall getpid))))
+(test binary-prepared-statement-over-reconnect
+  (with-binary
+   (let ((getpid (prepare "SELECT pg_backend_pid()" :single)))
+     (with-test-connection
+       (is (equal (query "select pg_backend_pid()" :single)
+                  (funcall getpid)))
+       (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
+       (let ((pid (pomo:get-pid)))
+         (pomo:terminate-backend pid)
+         (signals database-connection-error
+           (query "select pg_backend_pid()" :single)))
+       (is (integerp (funcall getpid)))
+       ;; Demonstrate that a prepared statement will reconnect even if it is termination
+       (with-test-connection
+         (is (equal (query "select pg_backend_pid()" :single)
+                    (funcall getpid)))
+         (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
+         (funcall getpid)
+         (is-true (query "select pg_backend_pid()" :single)))
+       ;; A regular query does not have the built-in exception handling
+       ;; available to prepared statements, so this will trigger the
+       ;; exception handling below, setting reconnected to true.
+       (with-test-connection
+         (let ((original-pid (funcall getpid))
+               (reconnectedp nil)
+               (local-terminate-backend
+                 (prepare  "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
+                           :single)))
+           (block done
+             (handler-bind
+                 ((database-connection-error
+                    (lambda (condition)
+                      (let ((restart (find-restart :reconnect condition)))
+                        (is (not (null restart)))
+                        (setq reconnectedp t)
+                        (invoke-restart restart)))))
+               (pomo:terminate-backend original-pid)
+               (is-true (query "select pg_backend_pid()" :single))
+               (is-true reconnectedp)
+               (is (/= original-pid (funcall getpid)))))
+           ;; Re-using the prepared statement on the new connection.
+           (multiple-value-bind (rows count)
+               (funcall local-terminate-backend 0)
+             (is (null rows))
+             (is (zerop count)))))
+       ;; A funcall to a prepared statement reconnects on its own
+       ;; without acdessing the database-connection-error handler
+       ;; above, so reconnectedp will still be nil
+       (with-test-connection
+         (let ((original-pid (funcall getpid))
+               (reconnectedp nil)
+               (local-terminate-backend-1
+                 (prepare "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
+                          :single)))
+           (block done
+             (handler-bind
+                 ((database-connection-error
+                    (lambda (condition)
+                      (let ((restart (find-restart :reconnect condition)))
+                        (is (not (null restart)))
+                        (setq reconnectedp t)
+                        (invoke-restart restart)))))
+               (pomo:terminate-backend original-pid)
+               (is-true (funcall getpid))
+               (is-false reconnectedp)
+               (is (/= original-pid (funcall getpid)))))
+           ;; Re-using the prepared statement on the new connection.
+           (multiple-value-bind (rows count)
+               (funcall local-terminate-backend-1 (funcall getpid))
+             (is (null rows))
+             (is (zerop count)))))))))
 
-      ;; Demonstrate that a prepared statement will reconnect
-      ;; even if it is a termination
-      (with-test-connection
-        (is (equal (query "select pg_backend_pid()" :single)
-                   (funcall getpid)))
-        (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
-        (funcall getpid)
-        (is-true (query "select pg_backend_pid()" :single)))
-
-      ;; A regular query does not have the built-in exception handling
-      ;; available to prepared statements, so this will trigger the
-      ;; exception handling below, setting reconnected to true.
-      (with-test-connection
-        (let ((original-pid (funcall getpid))
-              (reconnectedp nil))
-          (block done
-            (handler-bind
-                ((database-connection-error
-                   (lambda (condition)
-                     (let ((restart (find-restart :reconnect condition)))
-                       (is (not (null restart)))
-                       (setq reconnectedp t)
-                       (invoke-restart restart)))))
-              (pomo:terminate-backend original-pid)
-              (is-true (query "select pg_backend_pid()" :single))
-              (is-true reconnectedp)
-              (is (/= original-pid (funcall getpid)))))
-
-          ;; Re-using the prepared statement on the new connection.
-          (multiple-value-bind (rows count)
-              (funcall terminate-backend 0)
-            (is (null rows))
-            (is (zerop count)))))
-
-      ;; A funcall to a prepared statement reconnects on its own
-      ;; without acdessing the database-connection-error handler
-      ;; above, so reconnectedp will still be nil
-      (with-test-connection
-        (let ((original-pid (funcall getpid))
-              (reconnectedp nil))
-          (block done
-            (handler-bind
-                ((database-connection-error
-                   (lambda (condition)
-                     (let ((restart (find-restart :reconnect condition)))
-                       (is (not (null restart)))
-                       (setq reconnectedp t)
-                       (invoke-restart restart)))))
-              (pomo:terminate-backend original-pid)
-              (is-true (funcall getpid))
-              (is-false reconnectedp)
-              (is (/= original-pid (funcall getpid)))))
-
-          ;; Re-using the prepared statement on the new connection.
-          (multiple-value-bind (rows count)
-              (funcall terminate-backend 0)
-            (is (null rows))
-            (is (zerop count))))))))
-
-(test prepared-statement-over-reconnect-pooled-1
+(test binary-prepared-statement-over-reconnect-pooled-1
   (with-pooled-test-connection
-    (drop-prepared-statement "all")
-    (without-binary
+    (with-binary
+      (drop-prepared-statement "all")
       (let ((terminate-backend
               (prepare
                "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
                :rows))
             (getpid (prepare "SELECT pg_backend_pid()" :single)))
-        ;; Demonstrate that a prepared statement will reconnect
-        ;; even if it is a termination
-
+        ;; Demonstrate that a prepared statement will reconnect even if it is a termination
         (is (equal (query "select pg_backend_pid()" :single)
                    (funcall getpid)))
         (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
@@ -972,14 +893,12 @@ postmodern meta connection and in Postgresql"
           (pomo:terminate-backend pid)
           (signals database-connection-error
             (query "select pg_backend_pid()" :single)))
-
         (funcall getpid)
         (sleep 1)
         (is (integerp (query "select pg_backend_pid()" :single)))
         (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
         (funcall getpid)
         (is-true (query "select pg_backend_pid()" :single))
-
         ;; A regular query does not have the built-in exception handling
         ;; available to prepared statements, so this will trigger the
         ;; exception handling below, setting reconnected to true.
@@ -997,13 +916,11 @@ postmodern meta connection and in Postgresql"
               (is-true (query "select pg_backend_pid()" :single))
               (is-true reconnectedp)
               (is (/= original-pid (funcall getpid)))))
-
           ;; Re-using the prepared statement on the new connection.
           (multiple-value-bind (rows count)
               (funcall terminate-backend 0)
             (is (null rows))
             (is (zerop count))))
-
         ;; A funcall to a prepared statement reconnects on its own
         ;; without acdessing the database-connection-error handler
         ;; above, so reconnectedp will still be nil
@@ -1021,84 +938,83 @@ postmodern meta connection and in Postgresql"
               (is-true (funcall getpid))
               (is-false reconnectedp)
               (is (/= original-pid (funcall getpid)))))
-
           ;; Re-using the prepared statement on the new connection.
           (multiple-value-bind (rows count)
               (funcall terminate-backend 0)
             (is (null rows))
             (is (zerop count))))))))
 
-(test prepared-statement-over-reconnect-pooled
-  (without-binary
-    (let ((terminate-my-backend
-            (prepare
-             "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
-             :rows))
-          (getpid (prepare "SELECT pg_backend_pid()" :single)))
-      (with-pooled-test-connection
-        (is (equal (query "select pg_backend_pid()" :single)
-                   (funcall getpid)))
-        (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
-        (let ((pid (pomo:get-pid)))
-          (pomo:terminate-backend pid)
-          (signals database-connection-error
-            (query "select pg_backend_pid()" :single)))
-        (is (integerp (funcall getpid))))
-
-      ;; Demonstrate that a prepared statement will reconnect
-      ;; even if it is a termination
-      (with-pooled-test-connection
-        (is (equal (query "select pg_backend_pid()" :single)
-                   (funcall getpid)))
-        (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
-        (funcall getpid)
-        (is-true (query "select pg_backend_pid()" :single)))
-
-      ;; A regular query does not have the built-in exception handling
-      ;; available to prepared statements, so this will trigger the
-      ;; exception handling below, setting reconnected to true.
-      (with-pooled-test-connection
-        (let ((original-pid (funcall getpid))
-              (reconnectedp nil))
-          (block done
-            (handler-bind
-                ((database-connection-error
-                   (lambda (condition)
-                     (let ((restart (find-restart :reconnect condition)))
-                       (is (not (null restart)))
-                       (setq reconnectedp t)
-                       (invoke-restart restart)))))
-              (pomo:terminate-backend original-pid)
-              (is-true (query "select pg_backend_pid()" :single))
-              (is-true reconnectedp)
-              (is (/= original-pid (funcall getpid)))))
-
-          ;; Re-using the prepared statement on the new connection.
-          (multiple-value-bind (rows count)
-              (funcall terminate-my-backend 0)
-            (is (null rows))
-            (is (zerop count)))))
-      ;; A funcall to a prepared statement reconnects on its own
-      ;; without acessing the database-connection-error handler
-      ;; above, so reconnectedp will still be nil
-      (with-pooled-test-connection
-        (let ((original-pid (funcall getpid))
-              (reconnectedp nil))
-          (block done
-            (handler-bind
-                ((database-connection-error
-                   (lambda (condition)
-                     (let ((restart (find-restart :reconnect condition)))
-                       (is (not (null restart)))
-                       (setq reconnectedp t)
-                       (invoke-restart restart)))))
-              (pomo:terminate-backend original-pid)
-              (is-true (funcall getpid))
-              (is-false reconnectedp)
-              (is (/= original-pid (funcall getpid)))))
-          ;; Re-using the prepared statement on the new connection.
-          (multiple-value-bind (rows count)
-              (funcall terminate-my-backend 0)
-            (is (null rows))
-            (is (zerop count)))))
-      (drop-prepared-statement "all"))))
+(test binary-prepared-statement-over-reconnect-pooled
+  (with-binary
+   (let ((getpid (prepare "SELECT pg_backend_pid()" :single)))
+     (with-pooled-test-connection
+       (is (equal (query "select pg_backend_pid()" :single)
+                  (funcall getpid)))
+       (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
+       (let ((pid (pomo:get-pid)))
+         (pomo:terminate-backend pid)
+         (signals database-connection-error
+           (query "select pg_backend_pid()" :single)))
+       (is (integerp (funcall getpid)))
+       ;; Demonstrate that a prepared statement will reconnect even if it is a termination
+       (with-pooled-test-connection
+         (is (equal (query "select pg_backend_pid()" :single)
+                    (funcall getpid)))
+         (is (equal (funcall getpid) (pomo:get-pid-from-postmodern)))
+         (funcall getpid)
+         (is-true (query "select pg_backend_pid()" :single)))
+       ;; A regular query does not have the built-in exception handling
+       ;; available to prepared statements, so this will trigger the
+       ;; exception handling below, setting reconnected to true.
+       (with-pooled-test-connection
+         (let ((original-pid (funcall getpid))
+               (reconnectedp nil)
+               (local-terminate-my-backend
+                 (prepare
+                  "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
+                  :rows)))
+           (block done
+             (handler-bind
+                 ((database-connection-error
+                    (lambda (condition)
+                      (let ((restart (find-restart :reconnect condition)))
+                        (is (not (null restart)))
+                        (setq reconnectedp t)
+                        (invoke-restart restart)))))
+               (pomo:terminate-backend original-pid)
+               (is-true (query "select pg_backend_pid()" :single))
+               (is-true reconnectedp)
+               (is (/= original-pid (funcall getpid)))))
+           ;; Re-using the prepared statement on the new connection.
+           (multiple-value-bind (rows count)
+               (funcall local-terminate-my-backend 0)
+             (is (null rows))
+             (is (zerop count)))))
+       ;; A funcall to a prepared statement reconnects on its own
+       ;; without acessing the database-connection-error handler
+       ;; above, so reconnectedp will still be nil
+       (with-pooled-test-connection
+         (let ((original-pid (funcall getpid))
+               (reconnectedp nil)
+               (local-terminate-my-backend
+                 (prepare
+                  "SELECT pg_terminate_backend($1) WHERE pg_backend_pid() = $1"
+                  :rows)))
+           (block done
+             (handler-bind
+                 ((database-connection-error
+                    (lambda (condition)
+                      (let ((restart (find-restart :reconnect condition)))
+                        (is (not (null restart)))
+                        (setq reconnectedp t)
+                        (invoke-restart restart)))))
+               (pomo:terminate-backend original-pid)
+               (is-true (funcall getpid))
+               (is-false reconnectedp)
+               (is (/= original-pid (funcall getpid)))))
+           ;; Re-using the prepared statement on the new connection.
+           (multiple-value-bind (rows count)
+               (funcall local-terminate-my-backend 0)
+             (is (null rows))
+             (is (zerop count)))))
+       (drop-prepared-statement "all")))))

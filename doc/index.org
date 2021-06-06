@@ -4,7 +4,7 @@
 #+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
-Version 1.32
+Version 1.33.0
 
 Postmodern is a Common Lisp library for interacting with [[https://postgresql.org][PostgreSQL databases]].
 Features are:
@@ -135,10 +135,13 @@ Note: (create-database) functionality is new to postmodern v. 1.32. Setting the
 anyone who you have not explicitly given permission (except other superusers).
 
 A word about Postgresql connections. Postgresql connections are not lightweight
-threads. They actually consume about 10 MB of memory per connection and Postgresql can be tuned
-to limit the number of connections allowed at any one time. In addition, any connections
+threads. They actually consume about 10 MB of memory per connection. In addition, any connections
 which require security (ssl or scram authentication) will take additiona time and create
 more overhead.
+
+Postgresql can be tuned to limit the number of connections allowed at any one time. It defaults to 100. The parameter is set in the postgresql.conf file. Depending on the size of your server and what you are doing, the sweet spot generally seems to be between 200-400 connections before you need to bring in connection pooling.
+
+If your application is threaded, each thread should use its own connection. Connections are stateful and attempts to use the same connection for multiple threads will
 
 If you have an application like a web app which will make many connections, you also
 generally do not want to create and drop connections for every query. The usual solution
@@ -596,6 +599,58 @@ values to that scale. For more detail, see https://www.postgresql.org/docs/curre
 | bytea            | #(222 173 190 239)                                                          | (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (4)) |
 | text             | Lorem ipsum dolor sit amet, consectetur adipiscing elit                     | (VECTOR CHARACTER 64)                |
 | enum_mood        | happy *Note: enum_mood was defined as 'sad','ok' or 'happy'                 | (VECTOR CHARACTER 64)                |
+
+* Passing Parameters as Text or Binary
+Postmodern defaults to passing query parameters as text. If Postgresql does not have a table column which would allow it to determine the appropriate data type and you do not specify the date type in the query, Postgresql treats the parameter as text. In other words:
+#+BEGIN_SRC lisp
+(query "select $1" 1 :single)
+"1"
+
+(query "select $1::integer" 1 :single)
+1
+#+END_SRC
+As of version 1.33, Postmodern provides an optional setting which will cause Postmodern to pass parameters to Postgresql in binary format if that format is available for that datatype. Currently this means int2, int4, int8, float, double-float (except clisp) and boolean. Rational numbers continue to be passed as text.
+
+The default for cl-postgres/Postmodern is to continue to pass parameters to Postgresql as text (not in binary format) in order to avoid breaking existing user code. If you want to pass parameters to Postgresql in binary format, you can either:
+#+BEGIN_SRC lisp
+(setf cl-postgres:*use-binary-parameters* t)
+#+END_SRC
+or use postmodern's use-binary-parameters function:
+#+BEGIN_SRC lisp
+(pomo:use-binary-parameters t)
+#+END_SRC
+
+The default text setting with results:
+#+BEGIN_SRC lisp
+(query "select $1" 1 :single)
+"1"
+(query "select $1" 1.5 :single)
+"1.5"
+(query "select $1" T :single)
+"true"
+(query "select $1" nil :single)
+"false"
+(query "select $1" :NULL :single)
+:NULL
+#+END_SRC
+
+Setting cl-postgres:*use-binary-parameters* to t has the following results:
+#+BEGIN_SRC lisp
+(query "select $1" 1 :single)
+1
+(query "select $1" 1.5 :single)
+1.5
+(query "select $1" T :single)
+T
+(query "select $1" nil :single)
+NIL
+(query "select $1" :NULL :single)
+:NULL
+#+END_SRC
+
+Using binary parameters does tighten type checking when using prepared queries. You will not be able to use prepared queries with varying formats. In other words, if you have a prepared query that you pass an integer as the first parameter and a string as the second parameter the first time it is used, any subsequent uses of that prepared query during that session will also have to pass an integer as the first parameter and a string as the second parameter.
+
+Benchmarking does indicate a slight speed and consing benefit to passing parameters as binary, but your mileage will vary depending on your use case.
 
 * Caveats and to-dos
   :PROPERTIES:

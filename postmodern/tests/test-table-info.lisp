@@ -4,13 +4,13 @@
 ;; Adjust the above to some db/user/pass/host combination that refers
 ;; to a valid postgresql database in which no table named test_data
 ;; currently exists. Then after loading the file, run the tests with
-;; (fiveam:run! :postmodern)
+;; (run! :postmodern)
 
-(fiveam:def-suite :postmodern-table-info
+(def-suite :postmodern-table-info
   :description "Test suite for postmodern table information functions"
   :in :postmodern)
 
-(fiveam:in-suite :postmodern-table-info)
+(in-suite :postmodern-table-info)
 
 (defun create-products ()
   (drop-table "products" :if-exists t :cascade t)
