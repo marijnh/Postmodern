@@ -232,15 +232,6 @@ available database"
        (to-sql-name database)
        :single))
 
-(defparameter *character-sets*
-  '("EUC_CN" "EUC_JP" "EUC_JIS_2004" "EUC_KR" "EUC_TW" "ISO_8859_5" "ISO_8859_6"
-    "ISO_8859_7" "ISO_8859_8" "KOI8R" "KOI8U" "LATIN1" "LATIN2" "LATIN3" "LATIN4"
-    "LATIN5" "LATIN6" "LATIN7" "LATIN8" "LATIN9" "LATIN10" "MULE_INTERNAL"
-    "SQL_ASCII" "UTF8" "WIN866" "WIN874" "WIN1250" "WIN1251" "WIN1252" "WIN1253"
-    "WIN1254" "WIN1255" "WIN1256" "WIN1257" "WIN1258"))
-
-(defparameter *collations* nil)
-
 (defun list-available-collations ()
   "Get a list of the collations available from the current database cluster.
 Collations are a mess as different operating systems provide different

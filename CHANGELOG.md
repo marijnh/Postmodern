@@ -1,3 +1,87 @@
+# Changelog v. 1.33.0
+This version of Postmodern now provides the ability to pass parameters to Postgresql in binary format IF that format is available for that datatype. Currently this means int2, int4, int8, float, double-float (except clisp) and boolean. Rational numbers continue to be passed as text.
+
+The flag is set in the database connection object. (Thank you Cyrus Harmon for suggesting that). This means it can be set either in the initial connection to the database or using the use-binary-parameters function to set it after the initial connection has been established. If you are using multiple connections, some can be set to use binary parameters, some not.
+
+If a query to Postgresql does not have a table column which would allow Postgresql to determine the correct datatype and you do not specify differently, Postgresql will treat the parameters passed with the query as text. The default text setting with results:
+
+    (query "select $1" 1 :single)
+    "1"
+    (query "select $1" 1.5 :single)
+    "1.5"
+    (query "select $1" T :single)
+    "true"
+    (query "select $1" nil :single)
+    "false"
+    (query "select $1" :NULL :single)
+    :NULL
+
+You can specify parameter type as so:
+
+    (query "select $1::integer" 1 :single)
+    1
+
+Setting the use-binary slot in the database connection object to t has the following results:
+
+    (query "select $1" 1 :single)
+    1
+    (query "select $1" 1.5 :single)
+    1.5
+    (query "select $1" T :single)
+    T
+    (query "select $1" nil :single)
+    NIL
+    (query "select $1" :NULL :single)
+    :NULL
+
+The default for cl-postgres/Postmodern is to continue to pass parameters to Postgresql as text (not in binary format) in order to avoid breaking existing user code. If you want to pass parameters to Postgresql in binary format and want to set that up when you are making the database connection, the following examples may help. We continue the difference in the signatures (cl-postgres using optional parameters and postmodern using keyword parameters) because of the expected downstream breakage if we shifted cl-postgres:open-database to using keyword parameters.
+
+The signature for opening a database in cl-postgres:
+
+    (defun open-database (database user password host
+                          &optional (port 5432) (use-ssl :no)
+                          (service "postgres") (application-name "")
+                          (use-binary nil))
+        ...)
+
+or your favorite macro.
+
+In postmodern you have the connect function or the with-connection macro:
+
+    (defun connect (database-name user-name password host
+                    &key (port 5432) pooled-p
+                    (use-ssl *default-use-ssl*)
+                    (use-binary nil)
+                    (service "postgres")
+                    (application-name ""))
+      ...)
+
+    (defmacro with-connection (spec &body body)
+      `(let ((*database* (apply #'connect ,spec)))
+         (unwind-protect (progn ,@body)
+           (disconnect *database*))))
+
+In any case, you can set the flag after the connection is established with the use-binary-parameters function:
+
+    (pomo:use-binary-parameters *database* t)
+
+    (cl-postgres:use-binary-parameters some-database-connection t)
+
+Using binary parameters does tighten type checking when using prepared queries. You will not be able to use prepared queries with varying formats. In other words, if you have a prepared query that you pass an integer as the first parameter and a string as the second parameter the first time it is used, any subsequent uses of that prepared query during that session will also have to pass an integer as the first parameter and a string as the second parameter.
+
+Benchmarking does indicate a slight speed and consing benefit to passing parameters as binary, but your mileage will vary depending on your use case.
+
+In addition, this version also adds the ability to have queries returned as vectors of vectors, using a vectors keyword.
+
+    (query "select id, some_int, some_text from tests_data :where id = 1" :vectors)
+    or
+    (query (:select 'id 'some-int 'some-text :from 'test-data)
+         :vectors)
+    #(#(1 2147483645 "text one")
+      #(2 0 "text two")
+      #(3 3 "text three"))
+
+Like :array-hash, if there is no result it will return an empty array, not nil.
 # Changelog v. 1.32.9
 Adds new utility functions
 

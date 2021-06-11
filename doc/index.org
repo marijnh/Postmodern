@@ -4,7 +4,7 @@
 #+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
-Version 1.32
+Version 1.33.0
 
 Postmodern is a Common Lisp library for interacting with [[https://postgresql.org][PostgreSQL databases]].
 Features are:
@@ -87,7 +87,7 @@ Assuming you have already installed quicklisp, load postmodern.
 If you have a PostgreSQL server running on localhost, with a database called 'testdb'
 on it, which is accessible for user 'foucault' with password 'surveiller', there are
 two basic ways to connect to a database. If your role/application/database(s) looks
-like a 1:1 relationship, you can connect like this:
+like a 1:1 relationship and you are not using threads, you can connect like this:
 #+BEGIN_SRC lisp
 (connect-toplevel "testdb" "foucault" "surveiller" "localhost")
 #+END_SRC
@@ -98,6 +98,11 @@ the connection within that lexical scope.
 
 Connect-toplevel will maintain a single connection for the life of the session.
 
+If the server is not on localhost, replace that string with a string containing the ip address of the server:
+#+BEGIN_SRC lisp
+(connect-toplevel "testdb" "foucault" "surveiller" "216.27.61.135")
+#+END_SRC
+
 If the Postgresql server is running on a port other than 5432,
 you would also pass the appropriate keyword port parameter. E.g.:
 
@@ -107,18 +112,21 @@ you would also pass the appropriate keyword port parameter. E.g.:
 
 Ssl connections would similarly use the keyword parameter :use-ssl and
 pass :no, :try, :require, :yes, or :full
+
 - :try means if the server supports it
 - :require means use provided ssl certificate with no verification
 - :yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname
 - :full means expect a CA-signed cert for the supplied hostname and verify the server hostname
 
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
-many:1, (in other words, changing connections) then with-connection form which establishes a connection with a lexical scope is more appropriate.
+many:1, (in other words, changing connections) or you are using threads (each thread must have its own connection) then with Postmodern you can use the =with-connection= form which establishes a connection with a lexical scope is more appropriate.
 #+BEGIN_SRC lisp
 (with-connection '("testdb" "foucault" "surveiller" "localhost")
   ...)
 #+END_SRC
-For example, if you are creating a database, you need to have established a connection
+For other connection options, please see [[https://marijnhaverbeke.nl/postmodern.html#function-connection][https://marijnhaverbeke.nl/postmodern.html#function-connection]]
+
+If you are creating a database, you need to have established a connection
 to a currently existing database (typically "postgres"). Assuming the foucault role
 is a superuser and you want to stay in a development connection with your new database
 afterwards, you would first use with-connection to connect to postgres, create the
@@ -135,17 +143,20 @@ Note: (create-database) functionality is new to postmodern v. 1.32. Setting the
 anyone who you have not explicitly given permission (except other superusers).
 
 A word about Postgresql connections. Postgresql connections are not lightweight
-threads. They actually consume about 10 MB of memory per connection and Postgresql can be tuned
-to limit the number of connections allowed at any one time. In addition, any connections
+threads. They actually consume about 10 MB of memory per connection. In addition, any connections
 which require security (ssl or scram authentication) will take additiona time and create
 more overhead.
+
+Postgresql can be tuned to limit the number of connections allowed at any one time. It defaults to 100. The parameter is set in the postgresql.conf file. Depending on the size of your server and what you are doing, the sweet spot generally seems to be between 200-400 connections before you need to bring in connection pooling.
+
+If your application is threaded, each thread should use its own connection. Connections are stateful and attempts to use the same connection for multiple threads will
 
 If you have an application like a web app which will make many connections, you also
 generally do not want to create and drop connections for every query. The usual solution
 is to use connection pools so that the application is grabbing an already existing connection
 and returning it to the pool when finished, saving connection time and memory.
 
-To use postmodern's simple connection pooler, the with-connection call would look like:
+To use postmodern's simple connection pooler, the =with-connection= call would look like:
 #+BEGIN_SRC lisp
 (with-connection '("testdb" "foucault" "surveiller" "localhost" :pooled-p t)
       ...)
@@ -596,6 +607,71 @@ values to that scale. For more detail, see https://www.postgresql.org/docs/curre
 | bytea            | #(222 173 190 239)                                                          | (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (4)) |
 | text             | Lorem ipsum dolor sit amet, consectetur adipiscing elit                     | (VECTOR CHARACTER 64)                |
 | enum_mood        | happy *Note: enum_mood was defined as 'sad','ok' or 'happy'                 | (VECTOR CHARACTER 64)                |
+
+* Passing Parameters as Text or Binary
+:PROPERTIES:
+:CUSTOM_ID: passing-binary-parameters
+:END:
+To avoid sql injection attacks you should be using parameterized queries. They also help avoid the hassle of worrying about double quotes and single quotes. They are also a required part of prepared queries. The following shows an example of parameterized query in regular sql and s-sql.
+#+begin_src lisp
+(query "select name, address from customers where id = $1" 237)
+
+(query (:select 'name 'address :from 'customers :where (:= 'id '$1)) 237)
+#+end_src
+Postmodern defaults to passing query parameters as text. In an example like the above, Postgresql would look at the customer table, see that "id" must be an integer or big integer and proceed accordingly. If Postgresql does not have a table column which would allow it to determine the appropriate data type and you do not specify the date type in the query, Postgresql treats the parameter as text. The following example in plain sql demonstrates:
+#+BEGIN_SRC lisp
+(query "select $1" 1 :single)
+"1"
+(query "select $1" 1.5 :single)
+"1.5"
+(query "select $1" T :single)
+"true"
+(query "select $1" nil :single)
+"false"
+(query "select $1" :NULL :single)
+:NULL
+#+END_SRC
+
+You can specify the type and Postgresql will attempt to follow that:
+#+begin_src lisp
+(query "select $1::integer" 1 :single)
+1
+#+END_SRC
+As of version 1.33, Postmodern provides an optional setting in the database connection object which will cause Postmodern to pass parameters to Postgresql in binary format if that format is available for that datatype. Currently this means int2, int4, int8, float, double-float (except clisp) and boolean. Rational numbers continue to be passed as text.
+
+The default for cl-postgres/Postmodern is to continue to pass parameters to Postgresql as text (not in binary format) in order to avoid breaking existing user code. If you want to pass parameters to Postgresql in binary format, you can either provide the keyword parameter :use-binary in creating a connection like so:
+#+begin_src lisp
+  (connect "test-db" "test-user" "test-password" "192.168.5.223"
+           :port 5434 :pooled-p t :use-ssl try :application-name "test-app" :use-binary t)
+#+end_src:
+or use the postmodern =with-connection= macro:
+#+begin_src lisp
+  (with-connection '("database-name" "user-name" "user-password" "localhost or IP address"
+                     :use-binary t [any other keyword parameters you want to apply])
+    ...)
+#+end_src
+You can also change the flag after the connection is established with the =use-binary-parameters= function, passing T to use binary parameters or nil to use text parameters:
+#+begin_src lisp
+  (use-binary-parameters *database* t)
+
+  (use-binary-parameters some-database-connection t)
+#+end_src
+Using binary parameters the results has the following results:
+#+BEGIN_SRC lisp
+(query "select $1" 1 :single)
+1
+(query "select $1" 1.5 :single)
+1.5
+(query "select $1" T :single)
+T
+(query "select $1" nil :single)
+NIL
+(query "select $1" :NULL :single)
+:NULL
+#+END_SRC
+Using binary parameters does tighten type checking when using prepared queries. You will not be able to use prepared queries with varying formats. In other words, if you have a prepared query that you pass an integer as the first parameter and a string as the second parameter the first time it is used, any subsequent uses of that prepared query during that session will also have to pass an integer as the first parameter and a string as the second parameter.
+
+Benchmarking does indicate a slight speed and consing benefit to passing parameters as binary, but your mileage will vary depending on your use case.
 
 * Caveats and to-dos
   :PROPERTIES:

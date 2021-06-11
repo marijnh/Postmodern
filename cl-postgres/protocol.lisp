@@ -14,6 +14,18 @@ happens in the communcation with the server. Should only happen in
 case of a bug or a connection to something that is not a \(supported)
 PostgreSQL server at all."))
 
+(defparameter *connection-params* nil
+  "Bound to the current connection's parameter table when executing
+a query.")
+
+(defparameter *ssl-certificate-file* nil
+  "When set to a filename, this file will be used as client
+  certificate for SSL connections.")
+(defparameter *ssl-key-file* nil
+  "When set to a filename, this file will be used as client key for
+  SSL connections.")
+
+
 (defmacro message-case (socket &body clauses)
   "Helper macro for reading messages from the server. A list of cases
 \(characters that identify the message) can be given, each with a body
@@ -77,9 +89,6 @@ from the socket."
                                                 (code-char ,char-name))))))))))
            (,iter-name))))))
 
-(defparameter *connection-params* nil
-  "Bound to the current connection's parameter table when executing
-a query.")
 
 (defun update-parameter (socket)
   (let ((name (read-str socket))
@@ -156,13 +165,6 @@ database-error condition."
             :format-arguments (list (get-field #\M) (or (get-field #\D)
                                                         (get-field #\H)))))))
 
-(defparameter *ssl-certificate-file* nil
-  "When set to a filename, this file will be used as client
-  certificate for SSL connections.")
-(defparameter *ssl-key-file* nil
-  "When set to a filename, this file will be used as client key for
-  SSL connections.")
-
 ;; The let is used to remember that we have found the
 ;; cl+ssl:make-ssl-client-stream function before.
 (let ((make-ssl-stream nil))
@@ -223,8 +225,7 @@ a condition."
                (when (null gss-init-function)
                  (when (null (find-package "CL-GSS"))
                    (error 'database-error
-                          :message  "To use GSS authentication, make sure the
-CL-GSS package is loaded."))
+                          :message  "To use GSS authentication, make sure the CL-GSS package is loaded."))
                  (setq gss-init-function (find-symbol "INIT-SEC" "CL-GSS"))
                  (unless gss-init-function
                    (error 'database-error
@@ -498,7 +499,7 @@ results."
           (force-output socket)
           (message-case socket
                         ;; BindComplete
-                        (#\2))
+            (#\2))
           (returning-effected-rows
            (if row-description
                (funcall row-reader socket row-description)
@@ -507,19 +508,22 @@ results."
                          ;; ReadyForQuery, skipping transaction status
                          (#\Z (read-uint1 socket))))))))
 
-(defun send-parse (socket name query)
+(defun send-parse (socket name query parameters binary-parameters-p)
   "Send a parse command to the server, giving it a name."
   (declare (type stream socket)
            (type string name query)
            #.*optimize*)
   (with-syncing
-      (with-query (query)
-        (parse-message socket name query)
-        (flush-message socket)
-        (force-output socket)
-        (message-case socket
-                      ;; ParseComplete
-                      (#\1)))))
+    (with-query (query)
+      (if binary-parameters-p
+          (parse-message-binary-parameters socket name query parameters)
+          (parse-message socket name query))
+      (flush-message socket)
+      (force-output socket)
+      (message-case socket
+        ;; ParseComplete
+        (#\1)))))
+
 
 (defun send-close (socket name)
   "Send a close command to the server, giving it a name."
@@ -534,9 +538,9 @@ results."
                   ;; CloseComplete
                   (#\3))))
 
-(defun send-execute (socket name parameters row-reader)
-  "Execute a previously parsed query, and apply the given row-reader
-to the result."
+(defun send-execute (socket name parameters row-reader binary-parameters-p)
+  "Used by cl-postgres:exec-prepared to Execute a previously parsed query,
+and apply the given row-reader to the result."
   (declare (type stream socket)
            (type string name)
            (type list parameters)
@@ -549,9 +553,9 @@ to the result."
         (flush-message socket)
         (force-output socket)
         (message-case socket
-                      ;; ParameterDescription
-                      (#\t (setf n-parameters (read-uint2 socket))
-                           (skip-bytes socket (* 4 n-parameters))))
+          ;; ParameterDescription
+          (#\t (setf n-parameters (read-uint2 socket))
+               (skip-bytes socket (* 4 n-parameters))))
         (message-case socket
                       ;; RowDescription
                       (#\T (setf row-description
@@ -560,18 +564,17 @@ to the result."
                       (#\n))
         (unless (= (length parameters) n-parameters)
           (error 'database-error
-                 :message (format nil "Incorrect number of parameters given for
-prepared statement ~A. ~A parameters expected. ~A parameters received."
+                 :message (format nil "Incorrect number of parameters given for prepared statement ~A. ~A parameters expected. ~A parameters received."
                                   name n-parameters (length parameters))))
         (bind-message socket name (map 'vector 'field-binary-p row-description)
-                      parameters)
+                      parameters binary-parameters-p)
         (simple-execute-message socket)
         (sync-message socket)
         (setf sync-sent t)
         (force-output socket)
         (message-case socket
                       ;; BindComplete
-                      (#\2))
+          (#\2))
         (returning-effected-rows
          (if row-description
              (funcall row-reader socket row-description)

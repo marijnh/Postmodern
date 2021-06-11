@@ -15,7 +15,9 @@
    #:delete-dao #:make-dao
    #:define-dao-finalization
    #:dao-table-name #:dao-table-definition
-   #:\!dao-def #:*ignore-unknown-columns*)
+   #:\!dao-def #:*ignore-unknown-columns*
+   #:class-finalized-p
+   #:finalize-inheritance)
 
   (:export
    #:connect
@@ -33,6 +35,8 @@
    #:*max-pool-size*
    #:*default-use-ssl*
    #:list-connections
+   #:connection-use-binary
+   #:use-binary-parameters
    #:query
    #:execute
    #:doquery
@@ -75,6 +79,7 @@
 
    ;; Prepared Statement Functions
    #:*allow-overwriting-prepared-statements*
+   #:*enforce-parameter-types*
    #:prepared-statement-exists-p
    #:list-prepared-statements
    #:drop-prepared-statement

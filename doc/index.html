@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-11-01 Sun 16:30 -->
+<!-- 2021-06-10 Thu 08:33 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern</title>
 <meta name="generator" content="Org mode">
+<meta name="author" content="Sabra Crolleton">
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
   .title  { text-align: center;
@@ -37,7 +38,7 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
+    overflow: auto;
     padding-top: 1.2em;
   }
   pre.src:before {
@@ -49,7 +50,7 @@
     padding: 3px;
     border: 1px solid black;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
@@ -158,6 +159,19 @@
   .footdef  { margin-bottom: 1em; }
   .figure { padding: 1em; }
   .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
   .inlinetask {
     padding: 10px;
     border: 2px solid gray;
@@ -180,50 +194,26 @@
 <link rel="stylesheet" type="text/css" href="style.css" />
 <style>pre.src{background:#343131;color:white;} </style>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2017 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 </head>
 <body>
@@ -255,12 +245,13 @@ for the JavaScript code in this tag.
 <li><a href="#b850ea6c-b61e-4601-8423-65a8a626cb58">Data Types</a></li>
 </ul>
 </li>
+<li><a href="#passing-binary-parameters">Passing Parameters as Text or Binary</a></li>
 <li><a href="#fc095960-ba9d-4a98-ac89-0db7a56777f1">Caveats and to-dos</a>
 <ul>
 <li><a href="#e5c68251-0ca6-4f96-8d36-175cec626eeb">Timezones and Simple-Date and Local-Time</a>
 <ul>
-<li><a href="#orga0929f7">Simple-Date Library Use</a></li>
-<li><a href="#org34a5be0">Local-Time Library Use</a></li>
+<li><a href="#org40dda31">Simple-Date Library Use</a></li>
+<li><a href="#org54c52ac">Local-Time Library Use</a></li>
 </ul>
 </li>
 <li><a href="#bdf9ddb0-5f95-4807-8862-8970b35bd142">Portability</a></li>
@@ -274,7 +265,7 @@ for the JavaScript code in this tag.
 </div>
 </nav>
 <p>
-Version 1.32
+Version 1.33.0
 </p>
 
 <p>
@@ -300,8 +291,8 @@ me. Your mileage may vary.
 </p>
 
 
-<div id="outline-container-orge0869ab" class="outline-2">
-<h2 id="6887e7c3-c818-469a-b5f1-10a4b578b90b"><a id="orge0869ab"></a><a id="ID-216c43d0-57ff-4ae3-a302-6d04a3d79665"></a>Dependencies</h2>
+<div id="outline-container-6887e7c3-c818-469a-b5f1-10a4b578b90b" class="outline-2">
+<h2 id="6887e7c3-c818-469a-b5f1-10a4b578b90b">Dependencies</h2>
 <div class="outline-text-2" id="text-6887e7c3-c818-469a-b5f1-10a4b578b90b">
 <p>
 The library depends on <a href="http://quickdocs.org/usocket/">usocket</a> (except on <a href="http://sbcl.org/">SBCL</a> and <a href="https://franz.com/products/allegrocl/">ACL</a>, where the built-in socket library is used), <a href="https://github.com/pmai/md5.git">md5</a>, <a href="https://github.com/pcostanza/closer-mop.git">closer-mop</a>, <a href="https://github.com/sionescu/bordeaux-threads.git">bordeaux-threads</a> if you want
@@ -338,8 +329,8 @@ possible of the work at compile time. Finally,
 </div>
 </div>
 
-<div id="outline-container-org248b461" class="outline-2">
-<h2 id="554e0dee-93b3-47b1-b808-3bd6c366b784"><a id="org248b461"></a><a id="ID-8ba6488f-4b3c-47f7-8a50-844363c5f484"></a>License</h2>
+<div id="outline-container-554e0dee-93b3-47b1-b808-3bd6c366b784" class="outline-2">
+<h2 id="554e0dee-93b3-47b1-b808-3bd6c366b784">License</h2>
 <div class="outline-text-2" id="text-554e0dee-93b3-47b1-b808-3bd6c366b784">
 <p>
 Postmodern is released under a zlib-style license. Which approximately
@@ -355,8 +346,8 @@ Dimitri Fontaine and are released under a BSD-3 license.
 </div>
 </div>
 
-<div id="outline-container-orge5b00f2" class="outline-2">
-<h2 id="6f05b344-12c2-42b0-b231-3aaced30afb8"><a id="orge5b00f2"></a><a id="ID-d4cca0ee-ff7f-4530-9be7-e9b3de62bdb4"></a>Download and installation</h2>
+<div id="outline-container-6f05b344-12c2-42b0-b231-3aaced30afb8" class="outline-2">
+<h2 id="6f05b344-12c2-42b0-b231-3aaced30afb8">Download and installation</h2>
 <div class="outline-text-2" id="text-6f05b344-12c2-42b0-b231-3aaced30afb8">
 <p>
 We suggest using <a href="https://quicklisp.org">quicklisp.org</a> for installation.
@@ -372,8 +363,8 @@ A git repository with the most recent changes can be viewed or checked out at:
 </div>
 </div>
 
-<div id="outline-container-orge01a3d8" class="outline-2">
-<h2 id="b5bb7222-8134-4dcb-83b7-f764b7f2bb33"><a id="orge01a3d8"></a><a id="ID-f55510fb-3715-4cdd-9e37-4ab0e968e72d"></a>Quickstart</h2>
+<div id="outline-container-b5bb7222-8134-4dcb-83b7-f764b7f2bb33" class="outline-2">
+<h2 id="b5bb7222-8134-4dcb-83b7-f764b7f2bb33">Quickstart</h2>
 <div class="outline-text-2" id="text-b5bb7222-8134-4dcb-83b7-f764b7f2bb33">
 <p>
 This quickstart is intended to give you a feel of the way coding with
@@ -385,8 +376,8 @@ can be found in the reference manuals linked below.
 Assuming you have already installed quicklisp, load postmodern.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(ql:quickload <span style="color: #98fb98; font-weight: bold;">:postmodern</span>)
-(use-package <span style="color: #98fb98; font-weight: bold;">:postmodern</span>)
+<pre class="src src-lisp">(ql:quickload <span style="color: #23d7d7;">:postmodern</span>)
+(use-package <span style="color: #23d7d7;">:postmodern</span>)
 </pre>
 </div>
 
@@ -394,10 +385,10 @@ Assuming you have already installed quicklisp, load postmodern.
 If you have a PostgreSQL server running on localhost, with a database called 'testdb'
 on it, which is accessible for user 'foucault' with password 'surveiller', there are
 two basic ways to connect to a database. If your role/application/database(s) looks
-like a 1:1 relationship, you can connect like this:
+like a 1:1 relationship and you are not using threads, you can connect like this:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(connect-toplevel <span style="color: #cd8162;">"testdb"</span> <span style="color: #cd8162;">"foucault"</span> <span style="color: #cd8162;">"surveiller"</span> <span style="color: #cd8162;">"localhost"</span>)
+<pre class="src src-lisp">(connect-toplevel <span style="color: #e67128;">"testdb"</span> <span style="color: #e67128;">"foucault"</span> <span style="color: #e67128;">"surveiller"</span> <span style="color: #e67128;">"localhost"</span>)
 </pre>
 </div>
 
@@ -412,12 +403,20 @@ Connect-toplevel will maintain a single connection for the life of the session.
 </p>
 
 <p>
+If the server is not on localhost, replace that string with a string containing the ip address of the server:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(connect-toplevel <span style="color: #e67128;">"testdb"</span> <span style="color: #e67128;">"foucault"</span> <span style="color: #e67128;">"surveiller"</span> <span style="color: #e67128;">"216.27.61.135"</span>)
+</pre>
+</div>
+
+<p>
 If the Postgresql server is running on a port other than 5432,
 you would also pass the appropriate keyword port parameter. E.g.:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(connect-toplevel <span style="color: #cd8162;">"testdb"</span> <span style="color: #cd8162;">"foucault"</span> <span style="color: #cd8162;">"surveiller"</span> <span style="color: #cd8162;">"localhost"</span> <span style="color: #98fb98; font-weight: bold;">:port</span> 5434)
+<pre class="src src-lisp">(connect-toplevel <span style="color: #e67128;">"testdb"</span> <span style="color: #e67128;">"foucault"</span> <span style="color: #e67128;">"surveiller"</span> <span style="color: #e67128;">"localhost"</span> <span style="color: #23d7d7;">:port</span> 5434)
 </pre>
 </div>
 
@@ -425,6 +424,7 @@ you would also pass the appropriate keyword port parameter. E.g.:
 Ssl connections would similarly use the keyword parameter :use-ssl and
 pass :no, :try, :require, :yes, or :full
 </p>
+
 <ul class="org-ul">
 <li>:try means if the server supports it</li>
 <li>:require means use provided ssl certificate with no verification</li>
@@ -434,26 +434,30 @@ pass :no, :try, :require, :yes, or :full
 
 <p>
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
-many:1, (in other words, changing connections) then with-connection form which establishes a connection with a lexical scope is more appropriate.
+many:1, (in other words, changing connections) or you are using threads (each thread must have its own connection) then with Postmodern you can use the <code>with-connection</code> form which establishes a connection with a lexical scope is more appropriate.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #00ffff;">with-connection</span> '(<span style="color: #cd8162;">"testdb"</span> <span style="color: #cd8162;">"foucault"</span> <span style="color: #cd8162;">"surveiller"</span> <span style="color: #cd8162;">"localhost"</span>)
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"testdb"</span> <span style="color: #e67128;">"foucault"</span> <span style="color: #e67128;">"surveiller"</span> <span style="color: #e67128;">"localhost"</span>)
   ...)
 </pre>
 </div>
 <p>
-For example, if you are creating a database, you need to have established a connection
+For other connection options, please see <a href="https://marijnhaverbeke.nl/postmodern.html#function-connection">https://marijnhaverbeke.nl/postmodern.html#function-connection</a>
+</p>
+
+<p>
+If you are creating a database, you need to have established a connection
 to a currently existing database (typically "postgres"). Assuming the foucault role
 is a superuser and you want to stay in a development connection with your new database
 afterwards, you would first use with-connection to connect to postgres, create the
 database and then switch to connect-toplevel for development ease.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #00ffff;">with-connection</span> '(<span style="color: #cd8162;">"postgres"</span> <span style="color: #cd8162;">"foucault"</span> <span style="color: #cd8162;">"surveiller"</span> <span style="color: #cd8162;">"localhost"</span>)
-  (create-database 'testdb <span style="color: #98fb98; font-weight: bold;">:limit-public-access</span> t
-                     <span style="color: #98fb98; font-weight: bold;">:comment</span> <span style="color: #cd8162;">"This database is for testing silly theories"</span>))
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"postgres"</span> <span style="color: #e67128;">"foucault"</span> <span style="color: #e67128;">"surveiller"</span> <span style="color: #e67128;">"localhost"</span>)
+  (create-database 'testdb <span style="color: #23d7d7;">:limit-public-access</span> t
+                     <span style="color: #23d7d7;">:comment</span> <span style="color: #e67128;">"This database is for testing silly theories"</span>))
 
-(connect-toplevel <span style="color: #cd8162;">"testdb"</span> <span style="color: #cd8162;">"foucault"</span> <span style="color: #cd8162;">"surveiller"</span> <span style="color: #cd8162;">"localhost"</span>)
+(connect-toplevel <span style="color: #e67128;">"testdb"</span> <span style="color: #e67128;">"foucault"</span> <span style="color: #e67128;">"surveiller"</span> <span style="color: #e67128;">"localhost"</span>)
 </pre>
 </div>
 <p>
@@ -464,10 +468,17 @@ anyone who you have not explicitly given permission (except other superusers).
 
 <p>
 A word about Postgresql connections. Postgresql connections are not lightweight
-threads. They actually consume about 10 MB of memory per connection and Postgresql can be tuned
-to limit the number of connections allowed at any one time. In addition, any connections
+threads. They actually consume about 10 MB of memory per connection. In addition, any connections
 which require security (ssl or scram authentication) will take additiona time and create
 more overhead.
+</p>
+
+<p>
+Postgresql can be tuned to limit the number of connections allowed at any one time. It defaults to 100. The parameter is set in the postgresql.conf file. Depending on the size of your server and what you are doing, the sweet spot generally seems to be between 200-400 connections before you need to bring in connection pooling.
+</p>
+
+<p>
+If your application is threaded, each thread should use its own connection. Connections are stateful and attempts to use the same connection for multiple threads will
 </p>
 
 <p>
@@ -478,10 +489,10 @@ and returning it to the pool when finished, saving connection time and memory.
 </p>
 
 <p>
-To use postmodern's simple connection pooler, the with-connection call would look like:
+To use postmodern's simple connection pooler, the <code>with-connection</code> call would look like:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #00ffff;">with-connection</span> '(<span style="color: #cd8162;">"testdb"</span> <span style="color: #cd8162;">"foucault"</span> <span style="color: #cd8162;">"surveiller"</span> <span style="color: #cd8162;">"localhost"</span> <span style="color: #98fb98; font-weight: bold;">:pooled-p</span> t)
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"testdb"</span> <span style="color: #e67128;">"foucault"</span> <span style="color: #e67128;">"surveiller"</span> <span style="color: #e67128;">"localhost"</span> <span style="color: #23d7d7;">:pooled-p</span> t)
       ...)
 </pre>
 </div>
@@ -496,8 +507,8 @@ Now for a basic sanity test which does not need a database connection at all:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query <span style="color: #cd8162;">"select 22, 'Folie et d&#233;raison', 4.5"</span>)
-<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">=&gt; ((22 "Folie et d&#233;raison" 9/2))</span>
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select 22, 'Folie et d&#233;raison', 4.5"</span>)
+<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; ((22 "Folie et d&#233;raison" 9/2))</span>
 </pre>
 </div>
 <p>
@@ -505,8 +516,8 @@ That should work. query is the basic way to send queries to the database.
 The same query can be expressed like this:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 22 <span style="color: #cd8162;">"Folie et d&#233;raison"</span> 4.5))
-<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">=&gt; ((22 "Folie et d&#233;raison" 9/2))</span>
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 22 <span style="color: #e67128;">"Folie et d&#233;raison"</span> 4.5))
+<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; ((22 "Folie et d&#233;raison" 9/2))</span>
 </pre>
 </div>
 
@@ -518,11 +529,11 @@ automatically escaped. In the above query, only constant values are used, but
 it is possible to transparently use run-time values as well:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #00ffff;">defun</span> <span style="color: #63b8ff;">database-powered-addition</span> (a b)
-  (query (<span style="color: #98fb98; font-weight: bold;">:select</span> (<span style="color: #98fb98; font-weight: bold;">:+</span> a b)) <span style="color: #98fb98; font-weight: bold;">:single</span>))
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">database-powered-addition</span> (a b)
+  (query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:+</span> a b)) <span style="color: #23d7d7;">:single</span>))
 
 (database-powered-addition 1030 204)
-<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">=&gt; 1234</span>
+<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; 1234</span>
 </pre>
 </div>
 
@@ -539,8 +550,8 @@ You do not have to pull in the whole result of a query at once, you can
 also iterate over it with the doquery macro:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(doquery (<span style="color: #98fb98; font-weight: bold;">:select</span> 'x 'y <span style="color: #98fb98; font-weight: bold;">:from</span> 'some-imaginary-table) (x y)
-  (format t <span style="color: #cd8162;">"On this row, x = ~A and y = ~A.~%"</span> x y))
+<pre class="src src-lisp">(doquery (<span style="color: #23d7d7;">:select</span> 'x 'y <span style="color: #23d7d7;">:from</span> 'some-imaginary-table) (x y)
+  (format t <span style="color: #e67128;">"On this row, x = ~A and y = ~A.~%"</span> x y))
 </pre>
 </div>
 
@@ -550,15 +561,15 @@ database-access-class (aka dao) which would cover all the fields in a row.
 This is what a database-access class looks like:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #00ffff;">defclass</span> <span style="color: #7ccd7c;">country</span> ()
-  ((name <span style="color: #98fb98; font-weight: bold;">:col-type</span> string <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:name</span>
-         <span style="color: #98fb98; font-weight: bold;">:reader</span> country-name)
-   (inhabitants <span style="color: #98fb98; font-weight: bold;">:col-type</span> integer <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:inhabitants</span>
-                <span style="color: #98fb98; font-weight: bold;">:accessor</span> country-inhabitants)
-   (sovereign <span style="color: #98fb98; font-weight: bold;">:col-type</span> (or db-null string) <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:sovereign</span>
-              <span style="color: #98fb98; font-weight: bold;">:accessor</span> country-sovereign))
-  (<span style="color: #98fb98; font-weight: bold;">:metaclass</span> dao-class)
-  (<span style="color: #98fb98; font-weight: bold;">:keys</span> name))
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">country</span> ()
+  ((name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span>
+         <span style="color: #23d7d7;">:reader</span> country-name)
+   (inhabitants <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:inhabitants</span>
+                <span style="color: #23d7d7;">:accessor</span> country-inhabitants)
+   (sovereign <span style="color: #23d7d7;">:col-type</span> (or db-null string) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:sovereign</span>
+              <span style="color: #23d7d7;">:accessor</span> country-sovereign))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:keys</span> name))
 </pre>
 </div>
 <p>
@@ -569,7 +580,7 @@ created the class, you can return an instance of the country class by calling
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(get-dao 'country <span style="color: #cd8162;">"Croatia"</span>)
+<pre class="src src-lisp">(get-dao 'country <span style="color: #e67128;">"Croatia"</span>)
 </pre>
 </div>
 
@@ -578,15 +589,15 @@ You can also define classes that use multiple columns in the primary key:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #00ffff;">defclass</span> <span style="color: #7ccd7c;">points</span> ()
-  ((x <span style="color: #98fb98; font-weight: bold;">:col-type</span> integer <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:x</span>
-      <span style="color: #98fb98; font-weight: bold;">:reader</span> point-x)
-   (y <span style="color: #98fb98; font-weight: bold;">:col-type</span> integer <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:y</span>
-      <span style="color: #98fb98; font-weight: bold;">:reader</span> point-y)
-   (value <span style="color: #98fb98; font-weight: bold;">:col-type</span> integer <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:value</span>
-          <span style="color: #98fb98; font-weight: bold;">:accessor</span> value))
-  (<span style="color: #98fb98; font-weight: bold;">:metaclass</span> dao-class)
-  (<span style="color: #98fb98; font-weight: bold;">:keys</span> x y))
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">points</span> ()
+  ((x <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:x</span>
+      <span style="color: #23d7d7;">:reader</span> point-x)
+   (y <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:y</span>
+      <span style="color: #23d7d7;">:reader</span> point-y)
+   (value <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:value</span>
+          <span style="color: #23d7d7;">:accessor</span> value))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:keys</span> x y))
 </pre>
 </div>
 
@@ -605,18 +616,18 @@ column respectively.:
 Consider a slightly more complicated version of country:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #00ffff;">defclass</span> <span style="color: #7ccd7c;">country-c</span> ()
-  ((id <span style="color: #98fb98; font-weight: bold;">:col-type</span> integer <span style="color: #98fb98; font-weight: bold;">:col-identity</span> t <span style="color: #98fb98; font-weight: bold;">:accessor</span> id)
-   (name <span style="color: #98fb98; font-weight: bold;">:col-type</span> string <span style="color: #98fb98; font-weight: bold;">:col-unique</span> t <span style="color: #98fb98; font-weight: bold;">:check</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;&gt;</span> 'name <span style="color: #cd8162;">""</span>)
-         <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:name</span> <span style="color: #98fb98; font-weight: bold;">:reader</span> country-name)
-   (inhabitants <span style="color: #98fb98; font-weight: bold;">:col-type</span> integer <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:inhabitants</span>
-                <span style="color: #98fb98; font-weight: bold;">:accessor</span> country-inhabitants)
-   (sovereign <span style="color: #98fb98; font-weight: bold;">:col-type</span> (or db-null string) <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:sovereign</span>
-              <span style="color: #98fb98; font-weight: bold;">:accessor</span> country-sovereign)
-   (region-id <span style="color: #98fb98; font-weight: bold;">:col-type</span> integer <span style="color: #98fb98; font-weight: bold;">:col-references</span> ((regions id))
-              <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:region-id</span> <span style="color: #98fb98; font-weight: bold;">:accessor</span> region-id))
-  (<span style="color: #98fb98; font-weight: bold;">:metaclass</span> dao-class)
-  (<span style="color: #98fb98; font-weight: bold;">:table-name</span> countries))
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">country-c</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
+         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:reader</span> country-name)
+   (inhabitants <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:inhabitants</span>
+                <span style="color: #23d7d7;">:accessor</span> country-inhabitants)
+   (sovereign <span style="color: #23d7d7;">:col-type</span> (or db-null string) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:sovereign</span>
+              <span style="color: #23d7d7;">:accessor</span> country-sovereign)
+   (region-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-references</span> ((regions id))
+              <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-id</span> <span style="color: #23d7d7;">:accessor</span> region-id))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> countries))
 </pre>
 </div>
 
@@ -640,8 +651,8 @@ that reference that region's id. If we wanted Postgresql to delete countries whe
 regions are deleted, that column would be specified as:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(region-id <span style="color: #98fb98; font-weight: bold;">:col-type</span> integer <span style="color: #98fb98; font-weight: bold;">:col-references</span> ((regions id) <span style="color: #98fb98; font-weight: bold;">:cascade</span>)
-  <span style="color: #98fb98; font-weight: bold;">:initarg</span> <span style="color: #98fb98; font-weight: bold;">:region-id</span> <span style="color: #98fb98; font-weight: bold;">:accessor</span> region-id)
+<pre class="src src-lisp">(region-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-references</span> ((regions id) <span style="color: #23d7d7;">:cascade</span>)
+  <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-id</span> <span style="color: #23d7d7;">:accessor</span> region-id)
 </pre>
 </div>
 
@@ -655,12 +666,12 @@ recommend that table names be plural and references to rows be singular.)
 </p>
 </div>
 
-<div id="outline-container-org75c66f7" class="outline-3">
-<h3 id="eccad49e-8df8-4451-89ff-4987b103c9dd"><a id="org75c66f7"></a><a id="ID-6ac2dcab-bd3b-48de-9ea0-fec010d76879"></a>Table Creation</h3>
+<div id="outline-container-eccad49e-8df8-4451-89ff-4987b103c9dd" class="outline-3">
+<h3 id="eccad49e-8df8-4451-89ff-4987b103c9dd">Table Creation</h3>
 <div class="outline-text-3" id="text-eccad49e-8df8-4451-89ff-4987b103c9dd">
 </div>
-<div id="outline-container-orgdc0137c" class="outline-4">
-<h4 id="7629810d-8ccb-4236-b540-6aff596a042f"><a id="orgdc0137c"></a>With SQL or S-SQL</h4>
+<div id="outline-container-7629810d-8ccb-4236-b540-6aff596a042f" class="outline-4">
+<h4 id="7629810d-8ccb-4236-b540-6aff596a042f">With SQL or S-SQL</h4>
 <div class="outline-text-4" id="text-7629810d-8ccb-4236-b540-6aff596a042f">
 <p>
 You can create tables directly without the need to define a class, and in more
@@ -671,12 +682,12 @@ actually require us to create the regions table first) and using s-sql rather
 than plain vanilla sql would be the following:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'countries
-      ((id <span style="color: #98fb98; font-weight: bold;">:type</span> integer  <span style="color: #98fb98; font-weight: bold;">:primary-key</span> t <span style="color: #98fb98; font-weight: bold;">:identity-always</span> t)
-       (name <span style="color: #98fb98; font-weight: bold;">:type</span> string <span style="color: #98fb98; font-weight: bold;">:unique</span> t <span style="color: #98fb98; font-weight: bold;">:check</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;&gt;</span> 'name <span style="color: #cd8162;">""</span>))
-       (inhabitants <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
-       (sovereign <span style="color: #98fb98; font-weight: bold;">:type</span> (or db-null string))
-       (region-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer <span style="color: #98fb98; font-weight: bold;">:references</span> ((regions id))))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'countries
+      ((id <span style="color: #23d7d7;">:type</span> integer  <span style="color: #23d7d7;">:primary-key</span> t <span style="color: #23d7d7;">:identity-always</span> t)
+       (name <span style="color: #23d7d7;">:type</span> string <span style="color: #23d7d7;">:unique</span> t <span style="color: #23d7d7;">:check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>))
+       (inhabitants <span style="color: #23d7d7;">:type</span> integer)
+       (sovereign <span style="color: #23d7d7;">:type</span> (or db-null string))
+       (region-id <span style="color: #23d7d7;">:type</span> integer <span style="color: #23d7d7;">:references</span> ((regions id))))))
 </pre>
 </div>
 
@@ -684,26 +695,26 @@ than plain vanilla sql would be the following:
 Restated using vanilla sql:
 </p>
 <div class="org-src-container">
-<pre class="src src-sql">(query "<span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> countries (
-           id <span style="color: #7ccd7c;">INTEGER</span> <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span> <span style="color: #00ffff;">PRIMARY</span> <span style="color: #00ffff;">KEY</span> <span style="color: #00ffff;">GENERATED</span> ALWAYS <span style="color: #00ffff;">AS</span> <span style="color: #00ffff;">IDENTITY</span>,
-           <span style="color: #00ffff;">name</span> TEXT <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span> <span style="color: #00ffff;">UNIQUE</span> <span style="color: #00ffff;">CHECK</span> (<span style="color: #00ffff;">NAME</span> &lt;&gt; E<span style="color: #cd8162;">''</span>),
-           inhabitants <span style="color: #7ccd7c;">INTEGER</span> <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span>,
+<pre class="src src-sql">(query "<span style="color: #ffad29; font-weight: bold;">CREATE</span> <span style="color: #ffad29; font-weight: bold;">TABLE</span> countries (
+           id <span style="color: #34cae2;">INTEGER</span> <span style="color: #ffad29; font-weight: bold;">NOT</span> <span style="color: #ffad29; font-weight: bold;">NULL</span> <span style="color: #ffad29; font-weight: bold;">PRIMARY</span> <span style="color: #ffad29; font-weight: bold;">KEY</span> <span style="color: #ffad29; font-weight: bold;">GENERATED</span> ALWAYS <span style="color: #ffad29; font-weight: bold;">AS</span> <span style="color: #ffad29; font-weight: bold;">IDENTITY</span>,
+           <span style="color: #ffad29; font-weight: bold;">name</span> TEXT <span style="color: #ffad29; font-weight: bold;">NOT</span> <span style="color: #ffad29; font-weight: bold;">NULL</span> <span style="color: #ffad29; font-weight: bold;">UNIQUE</span> <span style="color: #ffad29; font-weight: bold;">CHECK</span> (<span style="color: #ffad29; font-weight: bold;">NAME</span> &lt;&gt; E<span style="color: #e67128;">''</span>),
+           inhabitants <span style="color: #34cae2;">INTEGER</span> <span style="color: #ffad29; font-weight: bold;">NOT</span> <span style="color: #ffad29; font-weight: bold;">NULL</span>,
            sovereign TEXT,
-           region_id <span style="color: #7ccd7c;">INTEGER</span> <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span> <span style="color: #00ffff;">REFERENCES</span> regions(id)
-             <span style="color: #00ffff;">MATCH</span> <span style="color: #00ffff;">SIMPLE</span> <span style="color: #00ffff;">ON</span> <span style="color: #00ffff;">DELETE</span> <span style="color: #00ffff;">RESTRICT</span> <span style="color: #00ffff;">ON</span> <span style="color: #00ffff;">UPDATE</span> <span style="color: #00ffff;">RESTRICT</span>)")
+           region_id <span style="color: #34cae2;">INTEGER</span> <span style="color: #ffad29; font-weight: bold;">NOT</span> <span style="color: #ffad29; font-weight: bold;">NULL</span> <span style="color: #ffad29; font-weight: bold;">REFERENCES</span> regions(id)
+             <span style="color: #ffad29; font-weight: bold;">MATCH</span> <span style="color: #ffad29; font-weight: bold;">SIMPLE</span> <span style="color: #ffad29; font-weight: bold;">ON</span> <span style="color: #ffad29; font-weight: bold;">DELETE</span> <span style="color: #ffad29; font-weight: bold;">RESTRICT</span> <span style="color: #ffad29; font-weight: bold;">ON</span> <span style="color: #ffad29; font-weight: bold;">UPDATE</span> <span style="color: #ffad29; font-weight: bold;">RESTRICT</span>)")
 </pre>
 </div>
 <p>
 Let's look at a slightly different example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> so-items
-         ((item-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
-          (so-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null) <span style="color: #98fb98; font-weight: bold;">:references</span> ((so-headers id)))
-          (product-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-          (qty <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-          (net-price <span style="color: #98fb98; font-weight: bold;">:type</span> (or numeric db-null)))
-         (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> item-id so-id)))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> so-items
+         ((item-id <span style="color: #23d7d7;">:type</span> integer)
+          (so-id <span style="color: #23d7d7;">:type</span> (or integer db-null) <span style="color: #23d7d7;">:references</span> ((so-headers id)))
+          (product-id <span style="color: #23d7d7;">:type</span> (or integer db-null))
+          (qty <span style="color: #23d7d7;">:type</span> (or integer db-null))
+          (net-price <span style="color: #23d7d7;">:type</span> (or numeric db-null)))
+         (<span style="color: #23d7d7;">:primary-key</span> item-id so-id)))
 </pre>
 </div>
 
@@ -711,14 +722,14 @@ Let's look at a slightly different example:
 Restated using plain sql:
 </p>
 <div class="org-src-container">
-<pre class="src src-sql">(query "<span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> so_items (
-           item_id <span style="color: #7ccd7c;">INTEGER</span> <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span>,
-           so_id <span style="color: #7ccd7c;">INTEGER</span> <span style="color: #00ffff;">REFERENCES</span> so_headers(id)
-                 <span style="color: #00ffff;">MATCH</span> <span style="color: #00ffff;">SIMPLE</span> <span style="color: #00ffff;">ON</span> <span style="color: #00ffff;">DELETE</span> <span style="color: #00ffff;">RESTRICT</span> <span style="color: #00ffff;">ON</span> <span style="color: #00ffff;">UPDATE</span> <span style="color: #00ffff;">RESTRICT</span>,
-           product_id <span style="color: #7ccd7c;">INTEGER</span>,
-           qty <span style="color: #7ccd7c;">INTEGER</span>,
-           net_price <span style="color: #7ccd7c;">NUMERIC</span>,
-           <span style="color: #00ffff;">PRIMARY</span> <span style="color: #00ffff;">KEY</span> (item_id, so_id)
+<pre class="src src-sql">(query "<span style="color: #ffad29; font-weight: bold;">CREATE</span> <span style="color: #ffad29; font-weight: bold;">TABLE</span> so_items (
+           item_id <span style="color: #34cae2;">INTEGER</span> <span style="color: #ffad29; font-weight: bold;">NOT</span> <span style="color: #ffad29; font-weight: bold;">NULL</span>,
+           so_id <span style="color: #34cae2;">INTEGER</span> <span style="color: #ffad29; font-weight: bold;">REFERENCES</span> so_headers(id)
+                 <span style="color: #ffad29; font-weight: bold;">MATCH</span> <span style="color: #ffad29; font-weight: bold;">SIMPLE</span> <span style="color: #ffad29; font-weight: bold;">ON</span> <span style="color: #ffad29; font-weight: bold;">DELETE</span> <span style="color: #ffad29; font-weight: bold;">RESTRICT</span> <span style="color: #ffad29; font-weight: bold;">ON</span> <span style="color: #ffad29; font-weight: bold;">UPDATE</span> <span style="color: #ffad29; font-weight: bold;">RESTRICT</span>,
+           product_id <span style="color: #34cae2;">INTEGER</span>,
+           qty <span style="color: #34cae2;">INTEGER</span>,
+           net_price <span style="color: #34cae2;">NUMERIC</span>,
+           <span style="color: #ffad29; font-weight: bold;">PRIMARY</span> <span style="color: #ffad29; font-weight: bold;">KEY</span> (item_id, so_id)
      );")
 </pre>
 </div>
@@ -740,8 +751,8 @@ see <a href="create-tables.html">create-tables.html</a>
 </div>
 </div>
 
-<div id="outline-container-org197c90e" class="outline-4">
-<h4 id="5129ed89-2ff3-45b4-ae70-41c2c286eacc"><a id="org197c90e"></a>With a Previously Created DAO</h4>
+<div id="outline-container-5129ed89-2ff3-45b4-ae70-41c2c286eacc" class="outline-4">
+<h4 id="5129ed89-2ff3-45b4-ae70-41c2c286eacc">With a Previously Created DAO</h4>
 <div class="outline-text-4" id="text-5129ed89-2ff3-45b4-ae70-41c2c286eacc">
 <p>
 You can also use a previously defined dao to create a table as well. The
@@ -752,11 +763,11 @@ a table. For example the simple country dao would generate:
 <div class="org-src-container">
 <pre class="src src-lisp">(dao-table-definition 'country)
 
-<span style="color: #cd8162;">"CREATE TABLE country</span>
-<span style="color: #cd8162;">  (name TEXT NOT NULL,</span>
-<span style="color: #cd8162;">   inhabitants INTEGER NOT NULL,</span>
-<span style="color: #cd8162;">   sovereign TEXT DEFAULT NULL,</span>
-<span style="color: #cd8162;">  PRIMARY KEY (name))"</span>
+<span style="color: #e67128;">"CREATE TABLE country</span>
+<span style="color: #e67128;">  (name TEXT NOT NULL,</span>
+<span style="color: #e67128;">   inhabitants INTEGER NOT NULL,</span>
+<span style="color: #e67128;">   sovereign TEXT DEFAULT NULL,</span>
+<span style="color: #e67128;">  PRIMARY KEY (name))"</span>
 
 (execute (dao-table-definition 'country))
 </pre>
@@ -771,13 +782,13 @@ The slightly more complicated country-c version would generate:
 <div class="org-src-container">
 <pre class="src src-lisp">(dao-table-definition 'country-c)
 
-<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">=&gt; "CREATE TABLE countries (</span>
-<span style="color: #cd4f39;">;;       </span><span style="color: #cd4f39;">id INTEGER NOT NULL PRIMARY KEY generated always as identity,</span>
-<span style="color: #cd4f39;">;;       </span><span style="color: #cd4f39;">name TEXT NOT NULL UNIQUE,</span>
-<span style="color: #cd4f39;">;;       </span><span style="color: #cd4f39;">inhabitants INTEGER NOT NULL,</span>
-<span style="color: #cd4f39;">;;       </span><span style="color: #cd4f39;">sovereign TEXT DEFAULT NULL,</span>
-<span style="color: #cd4f39;">;;       </span><span style="color: #cd4f39;">region_id INTEGER NOT NULL REFERENCES regions(id)</span>
-<span style="color: #cd4f39;">;;         </span><span style="color: #cd4f39;">MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)</span>
+<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "CREATE TABLE countries (</span>
+<span style="color: #74af68;">;;       </span><span style="color: #74af68;">id INTEGER NOT NULL PRIMARY KEY generated always as identity,</span>
+<span style="color: #74af68;">;;       </span><span style="color: #74af68;">name TEXT NOT NULL UNIQUE,</span>
+<span style="color: #74af68;">;;       </span><span style="color: #74af68;">inhabitants INTEGER NOT NULL,</span>
+<span style="color: #74af68;">;;       </span><span style="color: #74af68;">sovereign TEXT DEFAULT NULL,</span>
+<span style="color: #74af68;">;;       </span><span style="color: #74af68;">region_id INTEGER NOT NULL REFERENCES regions(id)</span>
+<span style="color: #74af68;">;;         </span><span style="color: #74af68;">MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)</span>
 
 (execute (dao-table-definition 'country-c))
 </pre>
@@ -790,8 +801,8 @@ and save the more complicated version for the <a href="postmodern.html">postmode
 </div>
 </div>
 
-<div id="outline-container-orgdb4fb2c" class="outline-3">
-<h3 id="0b22f6d2-20e4-49cd-a311-083aade58cbf"><a id="orgdb4fb2c"></a><a id="ID-980103dd-9593-4047-9954-92e80f3785a9"></a>Inserting Data</h3>
+<div id="outline-container-0b22f6d2-20e4-49cd-a311-083aade58cbf" class="outline-3">
+<h3 id="0b22f6d2-20e4-49cd-a311-083aade58cbf">Inserting Data</h3>
 <div class="outline-text-3" id="text-0b22f6d2-20e4-49cd-a311-083aade58cbf">
 <p>
 Similarly to table creation, you can insert data using the s-sql wrapper, plain
@@ -803,11 +814,11 @@ The s-sql approach would be:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'country <span style="color: #98fb98; font-weight: bold;">:set</span> 'name <span style="color: #cd8162;">"The Netherlands"</span>
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:insert-into</span> 'country <span style="color: #23d7d7;">:set</span> 'name <span style="color: #e67128;">"The Netherlands"</span>
                                    'inhabitants 16800000
-                                   'sovereign <span style="color: #cd8162;">"Willem-Alexander"</span>))
+                                   'sovereign <span style="color: #e67128;">"Willem-Alexander"</span>))
 
-(query (<span style="color: #98fb98; font-weight: bold;">:insert-into</span> 'country <span style="color: #98fb98; font-weight: bold;">:set</span> 'name <span style="color: #cd8162;">"Croatia"</span>
+(query (<span style="color: #23d7d7;">:insert-into</span> 'country <span style="color: #23d7d7;">:set</span> 'name <span style="color: #e67128;">"Croatia"</span>
                                    'inhabitants 4400000))
 </pre>
 </div>
@@ -817,9 +828,9 @@ You could also insert multiple rows at a time but that requires the same columns
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:insert-rows-into</span> 'country <span style="color: #98fb98; font-weight: bold;">:columns</span> 'name 'inhabitants 'sovereign
-                                   <span style="color: #98fb98; font-weight: bold;">:values</span> '((<span style="color: #cd8162;">"The Netherlands"</span> 16800000 <span style="color: #cd8162;">"Willem-Alexander"</span>)
-                                             (<span style="color: #cd8162;">"Croatia"</span> 4400000 <span style="color: #98fb98; font-weight: bold;">:null</span>))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:insert-rows-into</span> 'country <span style="color: #23d7d7;">:columns</span> 'name 'inhabitants 'sovereign
+                                   <span style="color: #23d7d7;">:values</span> '((<span style="color: #e67128;">"The Netherlands"</span> 16800000 <span style="color: #e67128;">"Willem-Alexander"</span>)
+                                             (<span style="color: #e67128;">"Croatia"</span> 4400000 <span style="color: #23d7d7;">:null</span>))))
 </pre>
 </div>
 
@@ -827,11 +838,11 @@ You could also insert multiple rows at a time but that requires the same columns
 The sql approach would be:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query <span style="color: #cd8162;">"insert into country (name, inhabitants, sovereign)</span>
-<span style="color: #cd8162;">                            values ('The Netherlands', 16800000, 'Willem-Alexander')"</span>)
+<pre class="src src-lisp">(query <span style="color: #e67128;">"insert into country (name, inhabitants, sovereign)</span>
+<span style="color: #e67128;">                            values ('The Netherlands', 16800000, 'Willem-Alexander')"</span>)
 
-(query <span style="color: #cd8162;">"insert into country (name, inhabitants)</span>
-<span style="color: #cd8162;">                            values ('Croatia', 4400000)"</span>)
+(query <span style="color: #e67128;">"insert into country (name, inhabitants)</span>
+<span style="color: #e67128;">                            values ('Croatia', 4400000)"</span>)
 </pre>
 </div>
 
@@ -839,10 +850,10 @@ The sql approach would be:
 The multiple row sql approach would be:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query <span style="color: #cd8162;">"insert into country (name, inhabitants, sovereign)</span>
-<span style="color: #cd8162;">                            values</span>
-<span style="color: #cd8162;">                              ('The Netherlands', 16800000, 'Willem-Alexander'),</span>
-<span style="color: #cd8162;">                              ('Croatia', 4400000, NULL)"</span>)
+<pre class="src src-lisp">(query <span style="color: #e67128;">"insert into country (name, inhabitants, sovereign)</span>
+<span style="color: #e67128;">                            values</span>
+<span style="color: #e67128;">                              ('The Netherlands', 16800000, 'Willem-Alexander'),</span>
+<span style="color: #e67128;">                              ('Croatia', 4400000, NULL)"</span>)
 </pre>
 </div>
 
@@ -851,11 +862,11 @@ Using dao classes would look like:
 Let us go back to our approach using a dao class and add a few countries:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(insert-dao (make-instance 'country <span style="color: #98fb98; font-weight: bold;">:name</span> <span style="color: #cd8162;">"The Netherlands"</span>
-                                    <span style="color: #98fb98; font-weight: bold;">:inhabitants</span> 16800000
-                                    <span style="color: #98fb98; font-weight: bold;">:sovereign</span> <span style="color: #cd8162;">"Willem-Alexander"</span>))
-(insert-dao (make-instance 'country <span style="color: #98fb98; font-weight: bold;">:name</span> <span style="color: #cd8162;">"Croatia"</span>
-                                    <span style="color: #98fb98; font-weight: bold;">:inhabitants</span> 4400000))
+<pre class="src src-lisp">(insert-dao (make-instance 'country <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"The Netherlands"</span>
+                                    <span style="color: #23d7d7;">:inhabitants</span> 16800000
+                                    <span style="color: #23d7d7;">:sovereign</span> <span style="color: #e67128;">"Willem-Alexander"</span>))
+(insert-dao (make-instance 'country <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Croatia"</span>
+                                    <span style="color: #23d7d7;">:inhabitants</span> 4400000))
 </pre>
 </div>
 <p>
@@ -866,13 +877,13 @@ Postmodern does not yet have an insert-daos (plural) function.
 Staying with the dao class approach, to update Croatia's population, we could do this:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #00ffff;">let</span> ((croatia (get-dao 'country <span style="color: #cd8162;">"Croatia"</span>)))
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((croatia (get-dao 'country <span style="color: #e67128;">"Croatia"</span>)))
   (setf (country-inhabitants croatia) 4500000)
   (update-dao croatia))
-(query (<span style="color: #98fb98; font-weight: bold;">:select</span> '* <span style="color: #98fb98; font-weight: bold;">:from</span> 'country))
+(query (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'country))
 
-<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">=&gt; (("The Netherlands" 16800000 "Willem-Alexander")</span>
-<span style="color: #cd4f39;">;;     </span><span style="color: #cd4f39;">("Croatia" 4500000 :NULL))</span>
+<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; (("The Netherlands" 16800000 "Willem-Alexander")</span>
+<span style="color: #74af68;">;;     </span><span style="color: #74af68;">("Croatia" 4500000 :NULL))</span>
 </pre>
 </div>
 <p>
@@ -884,17 +895,17 @@ Next, to demonstrate a bit more of the S-SQL syntax, here is the query the
 utility function list-tables uses to get a list of the tables in a database:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(sql (<span style="color: #98fb98; font-weight: bold;">:select</span> 'relname <span style="color: #98fb98; font-weight: bold;">:from</span> 'pg-catalog.pg-class
-      <span style="color: #98fb98; font-weight: bold;">:inner-join</span> 'pg-catalog.pg-namespace <span style="color: #98fb98; font-weight: bold;">:on</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'relnamespace
+<pre class="src src-lisp">(sql (<span style="color: #23d7d7;">:select</span> 'relname <span style="color: #23d7d7;">:from</span> 'pg-catalog.pg-class
+      <span style="color: #23d7d7;">:inner-join</span> 'pg-catalog.pg-namespace <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'relnamespace
                                                    'pg-namespace.oid)
-      <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:and</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'relkind <span style="color: #cd8162;">"r"</span>)
-                   (<span style="color: #98fb98; font-weight: bold;">:not-in</span> 'nspname (<span style="color: #98fb98; font-weight: bold;">:set</span> <span style="color: #cd8162;">"pg_catalog"</span> <span style="color: #cd8162;">"pg_toast"</span>))
-                   (<span style="color: #98fb98; font-weight: bold;">:pg-catalog.pg-table-is-visible</span> 'pg-class.oid))))
+      <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:and</span> (<span style="color: #23d7d7;">:=</span> 'relkind <span style="color: #e67128;">"r"</span>)
+                   (<span style="color: #23d7d7;">:not-in</span> 'nspname (<span style="color: #23d7d7;">:set</span> <span style="color: #e67128;">"pg_catalog"</span> <span style="color: #e67128;">"pg_toast"</span>))
+                   (<span style="color: #23d7d7;">:pg-catalog.pg-table-is-visible</span> 'pg-class.oid))))
 
-<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">=&gt; "(SELECT relname FROM pg_catalog.pg_class</span>
-<span style="color: #cd4f39;">;;      </span><span style="color: #cd4f39;">INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)</span>
-<span style="color: #cd4f39;">;;      </span><span style="color: #cd4f39;">WHERE ((relkind = 'r') and (nspname NOT IN ('pg_catalog', 'pg_toast'))</span>
-<span style="color: #cd4f39;">;;             </span><span style="color: #cd4f39;">and pg_catalog.pg_table_is_visible(pg_class.oid)))"</span>
+<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "(SELECT relname FROM pg_catalog.pg_class</span>
+<span style="color: #74af68;">;;      </span><span style="color: #74af68;">INNER JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)</span>
+<span style="color: #74af68;">;;      </span><span style="color: #74af68;">WHERE ((relkind = 'r') and (nspname NOT IN ('pg_catalog', 'pg_toast'))</span>
+<span style="color: #74af68;">;;             </span><span style="color: #74af68;">and pg_catalog.pg_table_is_visible(pg_class.oid)))"</span>
 </pre>
 </div>
 
@@ -918,10 +929,10 @@ Finally, here is an example of the use of prepared statements:
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(defprepared sovereign-of
-  (<span style="color: #98fb98; font-weight: bold;">:select</span> 'sovereign <span style="color: #98fb98; font-weight: bold;">:from</span> 'country <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'name '$1))
-  <span style="color: #98fb98; font-weight: bold;">:single!</span>)
-(sovereign-of <span style="color: #cd8162;">"The Netherlands"</span>)
-<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">=&gt; "Willem-Alexander"</span>
+  (<span style="color: #23d7d7;">:select</span> 'sovereign <span style="color: #23d7d7;">:from</span> 'country <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'name '$1))
+  <span style="color: #23d7d7;">:single!</span>)
+(sovereign-of <span style="color: #e67128;">"The Netherlands"</span>)
+<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "Willem-Alexander"</span>
 </pre>
 </div>
 
@@ -939,8 +950,8 @@ faster, especially for complex queries.
 </div>
 </div>
 
-<div id="outline-container-orgc3e95ee" class="outline-2">
-<h2 id="b15533d8-efa3-43a9-b632-a3256cea261f"><a id="orgc3e95ee"></a><a id="ID-5ad46584-6887-4866-9c40-633768c0d39a"></a>Authentication</h2>
+<div id="outline-container-b15533d8-efa3-43a9-b632-a3256cea261f" class="outline-2">
+<h2 id="b15533d8-efa3-43a9-b632-a3256cea261f">Authentication</h2>
 <div class="outline-text-2" id="text-b15533d8-efa3-43a9-b632-a3256cea261f">
 <p>
 Postmodern can use either md5 or scram-sha-256 authentication. Scram-sha-256
@@ -956,8 +967,8 @@ is a authentication method that you believe should be considered.
 </div>
 </div>
 
-<div id="outline-container-orgff38fca" class="outline-2">
-<h2 id="8993c7bd-4ba2-4080-8c5a-ff90de45eca5"><a id="orgff38fca"></a><a id="ID-27b39236-15ee-42c3-958a-3c9c903c4567"></a>Reference</h2>
+<div id="outline-container-8993c7bd-4ba2-4080-8c5a-ff90de45eca5" class="outline-2">
+<h2 id="8993c7bd-4ba2-4080-8c5a-ff90de45eca5">Reference</h2>
 <div class="outline-text-2" id="text-8993c7bd-4ba2-4080-8c5a-ff90de45eca5">
 <p>
 The reference manuals for the different components of Postmodern are kept
@@ -982,12 +993,12 @@ if you just want a low-level library for talking to a PostgreSQL server.
 </div>
 </div>
 
-<div id="outline-container-org429090b" class="outline-2">
-<h2 id="e2475974-6131-40ef-9ca3-54bf111a5dd0"><a id="org429090b"></a><a id="ID-d089d05b-4485-4fb5-9097-5a66492bc470"></a>Data Types</h2>
+<div id="outline-container-e2475974-6131-40ef-9ca3-54bf111a5dd0" class="outline-2">
+<h2 id="e2475974-6131-40ef-9ca3-54bf111a5dd0">Data Types</h2>
 <div class="outline-text-2" id="text-e2475974-6131-40ef-9ca3-54bf111a5dd0">
 </div>
-<div id="outline-container-orgcb1fe94" class="outline-3">
-<h3 id="b850ea6c-b61e-4601-8423-65a8a626cb58"><a id="orgcb1fe94"></a><a id="ID-deae4656-1b87-4518-9718-3b3e8c35f6c5"></a>Data Types</h3>
+<div id="outline-container-b850ea6c-b61e-4601-8423-65a8a626cb58" class="outline-3">
+<h3 id="b850ea6c-b61e-4601-8423-65a8a626cb58">Data Types</h3>
 <div class="outline-text-3" id="text-b850ea6c-b61e-4601-8423-65a8a626cb58">
 <p>
 For a short comparison of lisp and Postgresql data types (date and time datatypes are described in the next section)
@@ -1290,12 +1301,102 @@ values to that scale. For more detail, see <a href="https://www.postgresql.org/d
 </div>
 </div>
 
-<div id="outline-container-orgee4ccfd" class="outline-2">
-<h2 id="fc095960-ba9d-4a98-ac89-0db7a56777f1"><a id="orgee4ccfd"></a><a id="ID-157ea05f-4c49-4e49-8cf9-a3df4bf16b09"></a>Caveats and to-dos</h2>
+<div id="outline-container-passing-binary-parameters" class="outline-2">
+<h2 id="passing-binary-parameters">Passing Parameters as Text or Binary</h2>
+<div class="outline-text-2" id="text-passing-binary-parameters">
+<p>
+To avoid sql injection attacks you should be using parameterized queries. They also help avoid the hassle of worrying about double quotes and single quotes. They are also a required part of prepared queries. The following shows an example of parameterized query in regular sql and s-sql.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select name, address from customers where id = $1"</span> 237)
+
+(query (<span style="color: #23d7d7;">:select</span> 'name 'address <span style="color: #23d7d7;">:from</span> 'customers <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id '$1)) 237)
+</pre>
+</div>
+<p>
+Postmodern defaults to passing query parameters as text. In an example like the above, Postgresql would look at the customer table, see that "id" must be an integer or big integer and proceed accordingly. If Postgresql does not have a table column which would allow it to determine the appropriate data type and you do not specify the date type in the query, Postgresql treats the parameter as text. The following example in plain sql demonstrates:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select $1"</span> 1 <span style="color: #23d7d7;">:single</span>)
+<span style="color: #e67128;">"1"</span>
+(query <span style="color: #e67128;">"select $1"</span> 1.5 <span style="color: #23d7d7;">:single</span>)
+<span style="color: #e67128;">"1.5"</span>
+(query <span style="color: #e67128;">"select $1"</span> T <span style="color: #23d7d7;">:single</span>)
+<span style="color: #e67128;">"true"</span>
+(query <span style="color: #e67128;">"select $1"</span> nil <span style="color: #23d7d7;">:single</span>)
+<span style="color: #e67128;">"false"</span>
+(query <span style="color: #e67128;">"select $1"</span> <span style="color: #23d7d7;">:NULL</span> <span style="color: #23d7d7;">:single</span>)
+<span style="color: #23d7d7;">:NULL</span>
+</pre>
+</div>
+
+<p>
+You can specify the type and Postgresql will attempt to follow that:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select $1::integer"</span> 1 <span style="color: #23d7d7;">:single</span>)
+1
+</pre>
+</div>
+<p>
+As of version 1.33, Postmodern provides an optional setting in the database connection object which will cause Postmodern to pass parameters to Postgresql in binary format if that format is available for that datatype. Currently this means int2, int4, int8, float, double-float (except clisp) and boolean. Rational numbers continue to be passed as text.
+</p>
+
+<p>
+The default for cl-postgres/Postmodern is to continue to pass parameters to Postgresql as text (not in binary format) in order to avoid breaking existing user code. If you want to pass parameters to Postgresql in binary format, you can either provide the keyword parameter :use-binary in creating a connection like so:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (connect <span style="color: #e67128;">"test-db"</span> <span style="color: #e67128;">"test-user"</span> <span style="color: #e67128;">"test-password"</span> <span style="color: #e67128;">"192.168.5.223"</span>
+           <span style="color: #23d7d7;">:port</span> 5434 <span style="color: #23d7d7;">:pooled-p</span> t <span style="color: #23d7d7;">:use-ssl</span> try <span style="color: #23d7d7;">:application-name</span> <span style="color: #e67128;">"test-app"</span> <span style="color: #23d7d7;">:use-binary</span> t)
+<span style="color: #74af68;">#+end_src:</span>
+<span style="color: #74af68;">or</span> use the postmodern =with-connection= macro:
+<span style="color: #74af68;">#+begin_src lisp</span>
+  (<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"database-name"</span> <span style="color: #e67128;">"user-name"</span> <span style="color: #e67128;">"user-password"</span> <span style="color: #e67128;">"localhost or IP address"</span>
+                     <span style="color: #23d7d7;">:use-binary</span> t [any other keyword parameters you want to apply])
+    ...)
+</pre>
+</div>
+<p>
+You can also change the flag after the connection is established with the <code>use-binary-parameters</code> function, passing T to use binary parameters or nil to use text parameters:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(use-binary-parameters *database* t)
+
+(use-binary-parameters some-database-connection t)
+</pre>
+</div>
+<p>
+Using binary parameters the results has the following results:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select $1"</span> 1 <span style="color: #23d7d7;">:single</span>)
+1
+(query <span style="color: #e67128;">"select $1"</span> 1.5 <span style="color: #23d7d7;">:single</span>)
+1.5
+(query <span style="color: #e67128;">"select $1"</span> T <span style="color: #23d7d7;">:single</span>)
+T
+(query <span style="color: #e67128;">"select $1"</span> nil <span style="color: #23d7d7;">:single</span>)
+NIL
+(query <span style="color: #e67128;">"select $1"</span> <span style="color: #23d7d7;">:NULL</span> <span style="color: #23d7d7;">:single</span>)
+<span style="color: #23d7d7;">:NULL</span>
+</pre>
+</div>
+<p>
+Using binary parameters does tighten type checking when using prepared queries. You will not be able to use prepared queries with varying formats. In other words, if you have a prepared query that you pass an integer as the first parameter and a string as the second parameter the first time it is used, any subsequent uses of that prepared query during that session will also have to pass an integer as the first parameter and a string as the second parameter.
+</p>
+
+<p>
+Benchmarking does indicate a slight speed and consing benefit to passing parameters as binary, but your mileage will vary depending on your use case.
+</p>
+</div>
+</div>
+
+<div id="outline-container-fc095960-ba9d-4a98-ac89-0db7a56777f1" class="outline-2">
+<h2 id="fc095960-ba9d-4a98-ac89-0db7a56777f1">Caveats and to-dos</h2>
 <div class="outline-text-2" id="text-fc095960-ba9d-4a98-ac89-0db7a56777f1">
 </div>
-<div id="outline-container-org591418a" class="outline-3">
-<h3 id="e5c68251-0ca6-4f96-8d36-175cec626eeb"><a id="org591418a"></a><a id="ID-8ff631c8-994f-4658-bbc4-779afc80bdf2"></a>Timezones and Simple-Date and Local-Time</h3>
+<div id="outline-container-e5c68251-0ca6-4f96-8d36-175cec626eeb" class="outline-3">
+<h3 id="e5c68251-0ca6-4f96-8d36-175cec626eeb">Timezones and Simple-Date and Local-Time</h3>
 <div class="outline-text-3" id="text-e5c68251-0ca6-4f96-8d36-175cec626eeb">
 <p>
 It is important to understand how postgresql (not postmodern) handles
@@ -1387,15 +1488,15 @@ the same result using those additional parameters with the col_timestamptz field
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sql">(query "(<span style="color: #00ffff;">SELECT</span> to_char(col_timestamp_with_time_zone, E<span style="color: #cd8162;">'YYYY-MM-DD HH24:MI:SS'</span>),
-                to_char(col_timestamp_with_time_zone, E<span style="color: #cd8162;">'YYYY-MM-DD HH24:MI:SS TZ'</span>),
-                to_char(col_timestamp_with_time_zone, E<span style="color: #cd8162;">'YYYY-MM-DD HH24:MI:SS OF'</span>),
-                to_char(col_timestamptz, E<span style="color: #cd8162;">'YYYY-MM-DD HH24:MI:SS'</span>),
-                to_char(col_timestamp, E<span style="color: #cd8162;">'YYYY-MM-DD HH24:MI:SS'</span>),
-                to_char(col_time, E<span style="color: #cd8162;">'HH24:MI:SS'</span>),
-                to_char(col_date, E<span style="color: #cd8162;">'YYYY-MM-DD'</span>)
-         <span style="color: #00ffff;">FROM</span> short_data_type_tests
-         <span style="color: #00ffff;">WHERE</span> (id = 1))")
+<pre class="src src-sql">(query "(<span style="color: #ffad29; font-weight: bold;">SELECT</span> to_char(col_timestamp_with_time_zone, E<span style="color: #e67128;">'YYYY-MM-DD HH24:MI:SS'</span>),
+                to_char(col_timestamp_with_time_zone, E<span style="color: #e67128;">'YYYY-MM-DD HH24:MI:SS TZ'</span>),
+                to_char(col_timestamp_with_time_zone, E<span style="color: #e67128;">'YYYY-MM-DD HH24:MI:SS OF'</span>),
+                to_char(col_timestamptz, E<span style="color: #e67128;">'YYYY-MM-DD HH24:MI:SS'</span>),
+                to_char(col_timestamp, E<span style="color: #e67128;">'YYYY-MM-DD HH24:MI:SS'</span>),
+                to_char(col_time, E<span style="color: #e67128;">'HH24:MI:SS'</span>),
+                to_char(col_date, E<span style="color: #e67128;">'YYYY-MM-DD'</span>)
+         <span style="color: #ffad29; font-weight: bold;">FROM</span> short_data_type_tests
+         <span style="color: #ffad29; font-weight: bold;">WHERE</span> (id = 1))")
 (("2020-10-30 19:30:54" "2020-10-30 19:30:54 EDT" "2020-10-30 19:30:54 -04"
 "2020-10-30 19:30:54" "2020-10-30 19:30:54" "19:30:54" "2020-10-30"))
 </pre>
@@ -1405,23 +1506,23 @@ the same result using those additional parameters with the col_timestamptz field
 Now the s-sql version:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span>  (<span style="color: #98fb98; font-weight: bold;">:to-char</span> 'col_timestamp_with_time_zone <span style="color: #cd8162;">"YYYY-MM-DD HH24:MI:SS TZ"</span>)
-                 (<span style="color: #98fb98; font-weight: bold;">:to-char</span> 'col_timestamp_with_time_zone <span style="color: #cd8162;">"YYYY-MM-DD HH24:MI:SS OF"</span>)
-                 (<span style="color: #98fb98; font-weight: bold;">:to-char</span> 'col_timestamptz <span style="color: #cd8162;">"YYYY-MM-DD HH24:MI:SS"</span>)
-                 (<span style="color: #98fb98; font-weight: bold;">:to-char</span> 'col_timestamp <span style="color: #cd8162;">"YYYY-MM-DD HH24:MI:SS"</span>)
-                 (<span style="color: #98fb98; font-weight: bold;">:to-char</span> 'col_time <span style="color: #cd8162;">"HH24:MI:SS"</span>)
-                 (<span style="color: #98fb98; font-weight: bold;">:to-char</span> 'col_date <span style="color: #cd8162;">"YYYY-MM-DD"</span>)
-        <span style="color: #98fb98; font-weight: bold;">:from</span> 'short-data-type-tests
-        <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 1)))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span>  (<span style="color: #23d7d7;">:to-char</span> 'col_timestamp_with_time_zone <span style="color: #e67128;">"YYYY-MM-DD HH24:MI:SS TZ"</span>)
+                 (<span style="color: #23d7d7;">:to-char</span> 'col_timestamp_with_time_zone <span style="color: #e67128;">"YYYY-MM-DD HH24:MI:SS OF"</span>)
+                 (<span style="color: #23d7d7;">:to-char</span> 'col_timestamptz <span style="color: #e67128;">"YYYY-MM-DD HH24:MI:SS"</span>)
+                 (<span style="color: #23d7d7;">:to-char</span> 'col_timestamp <span style="color: #e67128;">"YYYY-MM-DD HH24:MI:SS"</span>)
+                 (<span style="color: #23d7d7;">:to-char</span> 'col_time <span style="color: #e67128;">"HH24:MI:SS"</span>)
+                 (<span style="color: #23d7d7;">:to-char</span> 'col_date <span style="color: #e67128;">"YYYY-MM-DD"</span>)
+        <span style="color: #23d7d7;">:from</span> 'short-data-type-tests
+        <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id 1)))
 
-((<span style="color: #cd8162;">"2020-10-30 19:30:54 EDT"</span> <span style="color: #cd8162;">"2020-10-30 19:30:54 -04"</span> <span style="color: #cd8162;">"2020-10-30 19:30:54"</span>
-  <span style="color: #cd8162;">"2020-10-30 19:30:54"</span> <span style="color: #cd8162;">"19:30:54"</span> <span style="color: #cd8162;">"2020-10-30"</span>))
+((<span style="color: #e67128;">"2020-10-30 19:30:54 EDT"</span> <span style="color: #e67128;">"2020-10-30 19:30:54 -04"</span> <span style="color: #e67128;">"2020-10-30 19:30:54"</span>
+  <span style="color: #e67128;">"2020-10-30 19:30:54"</span> <span style="color: #e67128;">"19:30:54"</span> <span style="color: #e67128;">"2020-10-30"</span>))
 </pre>
 </div>
 </div>
-<div id="outline-container-orga0929f7" class="outline-4">
-<h4 id="orga0929f7">Simple-Date Library Use</h4>
-<div class="outline-text-4" id="text-orga0929f7">
+<div id="outline-container-org40dda31" class="outline-4">
+<h4 id="org40dda31">Simple-Date Library Use</h4>
+<div class="outline-text-4" id="text-org40dda31">
 <p>
 The Simple-date add-on library (not enabled by default)
 provides types (CLOS classes) for dates, timestamps, and intervals
@@ -1437,7 +1538,7 @@ readers and writers for the associated database types.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(ql:quickload <span style="color: #98fb98; font-weight: bold;">:simple-date/postgres-glue</span>)
+<pre class="src src-lisp">(ql:quickload <span style="color: #23d7d7;">:simple-date/postgres-glue</span>)
 
 (setf cl-postgres:*sql-readtable*
         (cl-postgres:copy-sql-readtable
@@ -1503,11 +1604,11 @@ With simple date loaded, the same data will look like this:
 You can export these as json-strings with the encode-json-to-string function. E.g.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(encode-json-to-string (query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'timestamp-without-time-zone
-                               <span style="color: #98fb98; font-weight: bold;">:from</span> 'test-data
-                               <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 1))
-                               <span style="color: #98fb98; font-weight: bold;">:single</span>))
-<span style="color: #cd8162;">"\"2020-12-30 13:30:54:0\""</span>
+<pre class="src src-lisp">(encode-json-to-string (query (<span style="color: #23d7d7;">:select</span> 'timestamp-without-time-zone
+                               <span style="color: #23d7d7;">:from</span> 'test-data
+                               <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id 1))
+                               <span style="color: #23d7d7;">:single</span>))
+<span style="color: #e67128;">"\"2020-12-30 13:30:54:0\""</span>
 </pre>
 </div>
 <p>
@@ -1515,13 +1616,13 @@ Or more simply with passing one of the json result type parameters to the query
 function. E.g.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'timestamp-with-time-zone
-        <span style="color: #98fb98; font-weight: bold;">:from</span> 'test-data
-        <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3))
-  <span style="color: #98fb98; font-weight: bold;">:json-strs</span>)
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'timestamp-with-time-zone
+        <span style="color: #23d7d7;">:from</span> 'test-data
+        <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3))
+  <span style="color: #23d7d7;">:json-strs</span>)
 
-'(<span style="color: #cd8162;">"{\"timestampWithTimeZone\":\"2019-12-30 18:30:54:0\"}"</span>
-  <span style="color: #cd8162;">"{\"timestampWithTimeZone\":\"1919-12-30 18:30:54:0\"}"</span>)
+'(<span style="color: #e67128;">"{\"timestampWithTimeZone\":\"2019-12-30 18:30:54:0\"}"</span>
+  <span style="color: #e67128;">"{\"timestampWithTimeZone\":\"1919-12-30 18:30:54:0\"}"</span>)
 </pre>
 </div>
 <p>
@@ -1543,14 +1644,14 @@ used to convert it to proper UTC timestamp.
 </div>
 </div>
 
-<div id="outline-container-org34a5be0" class="outline-4">
-<h4 id="org34a5be0">Local-Time Library Use</h4>
-<div class="outline-text-4" id="text-org34a5be0">
+<div id="outline-container-org54c52ac" class="outline-4">
+<h4 id="org54c52ac">Local-Time Library Use</h4>
+<div class="outline-text-4" id="text-org54c52ac">
 <p>
 For those who want to use local-time, to enable the local-time reader:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(ql:quickload <span style="color: #98fb98; font-weight: bold;">:cl-postgres+local-time</span>)
+<pre class="src src-lisp">(ql:quickload <span style="color: #23d7d7;">:cl-postgres+local-time</span>)
 (local-time:set-local-time-cl-postgres-readers)
 </pre>
 </div>
@@ -1615,11 +1716,11 @@ the same sample data looks like:
 Similarly to simple-date timestamps, these can be exported as json-strings with the encode-json-to-string function. E.g.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(encode-json-to-string (query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'timestamp-with-time-zone
-                               <span style="color: #98fb98; font-weight: bold;">:from</span> 'test-data
-                               <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'id 1))
-                               <span style="color: #98fb98; font-weight: bold;">:single</span>))
-<span style="color: #cd8162;">"\"{2020-12-30T08:30:54.000000-05:00}\""</span>
+<pre class="src src-lisp">(encode-json-to-string (query (<span style="color: #23d7d7;">:select</span> 'timestamp-with-time-zone
+                               <span style="color: #23d7d7;">:from</span> 'test-data
+                               <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id 1))
+                               <span style="color: #23d7d7;">:single</span>))
+<span style="color: #e67128;">"\"{2020-12-30T08:30:54.000000-05:00}\""</span>
 </pre>
 </div>
 <p>
@@ -1627,20 +1728,20 @@ Or more simply with passing one of the json result type parameters to the query
 function. E.g.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:select</span> 'timestamp-with-time-zone
-        <span style="color: #98fb98; font-weight: bold;">:from</span> 'test-data
-        <span style="color: #98fb98; font-weight: bold;">:where</span> (<span style="color: #98fb98; font-weight: bold;">:&lt;</span> 'id 3))
-  <span style="color: #98fb98; font-weight: bold;">:json-strs</span>)
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'timestamp-with-time-zone
+        <span style="color: #23d7d7;">:from</span> 'test-data
+        <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3))
+  <span style="color: #23d7d7;">:json-strs</span>)
 
-'(<span style="color: #cd8162;">"{\"timestampWithTimeZone\":\"{2019-12-30T13:30:54.000000-05:00}\"}"</span>
-  <span style="color: #cd8162;">"{\"timestampWithTimeZone\":\"{1919-12-30T13:30:54.000000-05:00}\"}"</span>)
+'(<span style="color: #e67128;">"{\"timestampWithTimeZone\":\"{2019-12-30T13:30:54.000000-05:00}\"}"</span>
+  <span style="color: #e67128;">"{\"timestampWithTimeZone\":\"{1919-12-30T13:30:54.000000-05:00}\"}"</span>)
 </pre>
 </div>
 </div>
 </div>
 </div>
-<div id="outline-container-orgb5f6599" class="outline-3">
-<h3 id="bdf9ddb0-5f95-4807-8862-8970b35bd142"><a id="orgb5f6599"></a><a id="ID-769a0e88-de54-4356-a474-72708accbafb"></a>Portability</h3>
+<div id="outline-container-bdf9ddb0-5f95-4807-8862-8970b35bd142" class="outline-3">
+<h3 id="bdf9ddb0-5f95-4807-8862-8970b35bd142">Portability</h3>
 <div class="outline-text-3" id="text-bdf9ddb0-5f95-4807-8862-8970b35bd142">
 <p>
 The Lisp code in Postmodern is theoretically portable across implementations,
@@ -1666,8 +1767,8 @@ were only introduced in those newer versions.
 </div>
 </div>
 
-<div id="outline-container-org5ea939d" class="outline-3">
-<h3 id="565fad0b-aef4-497c-92d8-096a0a78c804"><a id="org5ea939d"></a><a id="ID-671c5e6a-f548-4791-86a5-575b3fcc0aa5"></a>Reserved Words</h3>
+<div id="outline-container-565fad0b-aef4-497c-92d8-096a0a78c804" class="outline-3">
+<h3 id="565fad0b-aef4-497c-92d8-096a0a78c804">Reserved Words</h3>
 <div class="outline-text-3" id="text-565fad0b-aef4-497c-92d8-096a0a78c804">
 <p>
 It is highly suggested that you do not use words that are reserved by Postgresql
@@ -1693,8 +1794,8 @@ words are:
 </div>
 </div>
 
-<div id="outline-container-org5674096" class="outline-3">
-<h3 id="4ac8f5f4-d3b0-41c5-a222-fe3086049279"><a id="org5674096"></a><a id="ID-50d91126-93f1-4f50-96ad-bd63a7278866"></a>Things that should be implemented</h3>
+<div id="outline-container-4ac8f5f4-d3b0-41c5-a222-fe3086049279" class="outline-3">
+<h3 id="4ac8f5f4-d3b0-41c5-a222-fe3086049279">Things that should be implemented</h3>
 <div class="outline-text-3" id="text-4ac8f5f4-d3b0-41c5-a222-fe3086049279">
 <p>
 Postmodern is under active development so Issues and feature requests should
@@ -1709,8 +1810,8 @@ file.
 </div>
 </div>
 
-<div id="outline-container-org2479591" class="outline-2">
-<h2 id="773ee4ef-a685-484e-bc6a-6daa849a7d04"><a id="org2479591"></a><a id="ID-eb969965-5221-48f8-bb79-5a93fe451454"></a>Resources</h2>
+<div id="outline-container-773ee4ef-a685-484e-bc6a-6daa849a7d04" class="outline-2">
+<h2 id="773ee4ef-a685-484e-bc6a-6daa849a7d04">Resources</h2>
 <div class="outline-text-2" id="text-773ee4ef-a685-484e-bc6a-6daa849a7d04">
 <ul class="org-ul">
 <li><a href="https://mailman.common-lisp.net/listinfo/postmodern-devel">Mailing List</a></li>
@@ -1724,8 +1825,8 @@ file.
 </div>
 </div>
 
-<div id="outline-container-orga6a9323" class="outline-2">
-<h2 id="844add79-070b-4e89-8797-3bc21ea3173b"><a id="orga6a9323"></a><a id="ID-bd354217-9828-444b-afbf-41e9f0d522ca"></a>Running tests</h2>
+<div id="outline-container-844add79-070b-4e89-8797-3bc21ea3173b" class="outline-2">
+<h2 id="844add79-070b-4e89-8797-3bc21ea3173b">Running tests</h2>
 <div class="outline-text-2" id="text-844add79-070b-4e89-8797-3bc21ea3173b">
 <p>
 Postmodern uses <a href="https://github.com/sionescu/fiveam">FiveAM</a> for
@@ -1770,10 +1871,10 @@ test system, and then run the test suite.  For example, to test the
 `postmodern` system in the REPL one would do the following:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(ql:quickload <span style="color: #cd8162;">"postmodern/tests"</span>)
-(5am:run! <span style="color: #98fb98; font-weight: bold;">:postmodern</span>)
+<pre class="src src-lisp">(ql:quickload <span style="color: #e67128;">"postmodern/tests"</span>)
+(5am:run! <span style="color: #23d7d7;">:postmodern</span>)
 
-    <span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">... test output ...</span>
+    <span style="color: #74af68;">;; </span><span style="color: #74af68;">... test output ...</span>
 </pre>
 </div>
 
@@ -1783,10 +1884,10 @@ It is also possible to test multiple components at once by first
 loading test systems and then running all tests:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(ql:quickload '(<span style="color: #cd8162;">"cl-postgres/tests"</span> <span style="color: #cd8162;">"s-sql/tests"</span>))
+<pre class="src src-lisp">(ql:quickload '(<span style="color: #e67128;">"cl-postgres/tests"</span> <span style="color: #e67128;">"s-sql/tests"</span>))
 (5am:run-all-tests)
 
-    <span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">... test output ...</span>
+    <span style="color: #74af68;">;; </span><span style="color: #74af68;">... test output ...</span>
 </pre>
 </div>
 

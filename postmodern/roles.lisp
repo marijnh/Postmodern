@@ -39,20 +39,6 @@ on, then dropping ownership of objects, then dropping the role itself.
 In PostgreSQL*, you cannot drop a database while clients are connected to it.
 |#
 
-(defparameter *alter-all-default-select-privileges*
-  '("grant usage on schema ~a to ~a"
-    "grant select on all tables in schema ~a to ~a"
-    "grant select on all sequences in schema ~a to ~a"
-    "alter default privileges in schema ~a grant select on tables to ~a"))
-
-(defparameter *alter-all-default-editor-privileges*
-  '("grant usage on schema ~a to ~a"
-    "grant select, insert, update, delete on all tables in schema ~a to ~a"
-    "alter default privileges in schema ~a grant select, insert, update, delete on tables to ~a"    ))
-
-(defparameter *execute-privileges-list*
-  '("grant execute on all functions in schema ~a to ~a"))
-
 (defun list-database-users ()
   "List database users (actually 'roles' in Postgresql terminology)."
   (alexandria:flatten (query (:order-by
@@ -100,88 +86,6 @@ to :alists or :plists."
 whitespace in either user names or passwords."
   (let ((scanner-w (cl-ppcre:create-scanner :whitespace-char-class)))
     (cl-ppcre:scan scanner-w str)))
-
-(defparameter *disallowed-role-names*
-  (let ((words (make-hash-table :test 'equal)))
-    (dolist (word '(".htaccess" ".htpasswd" ".json" ".rss" ".well-known" ".xml"
-                    "about" "abuse" "access" "account" "accounts" "activate"
-                    "ad" "add" "address" "adm" "admin" "admins" "administration"
-                    "administrator" "administrators" "ads" "adult" "advertising"
-                    "affiliate" "affiliates" "ajax" "all" "analytics" "android"
-                    "anon" "anonymous" "api" "app" "apps" "archive" "atom"
-                    "auth" "authentication" "authorize" "autoconfig"
-                    "autodiscover" "avatar" "backend" "backoffice" "backup"
-                    "bad" "banner" "banners" "best" "beta" "billing" "bin"
-                    "blackberry" "blog" "blogs" "board" "bot" "bots"
-                    "broadcasthost" "business" "bug" "buy" "cache" "calendar"
-                    "campaign" "career" "careers" "cart" "cdn" "ceo" "cfo"
-                    "cgi" "chat" "chef" "client" "clientaccesspolicy.xml"
-                    "clients" "code" "codes" "commercial" "compare" "config"
-                    "configuration" "connect" "contact" "contact-us" "contactus"
-                    "contest" "coo" "cookie" "copyright" "corporate" "create"
-                    "crossdomain" "crossdomain.xml" "css" "cto" "customer"
-                    "dash" "dashboard" "data" "database" "db" "delete" "demo"
-                    "design" "designer" "dev" "devel" "developer" "developers"
-                    "development" "dir" "directory" "dmca" "doc" "docs"
-                    "document" "documents" "documentation" "domain""domainadmin"
-                    "domainadministrator" "download" "downloads" "ecommerce"
-                    "edit" "editor" "email" "embed" "enquiry" "enterprise"
-                    "facebook" "faq" "favicon.ico" "favorite" "favorites"
-                    "favourite" "favourites" "feed" "feedback" "feeds"
-                    "file" "files" "follow" "font" "fonts" "forum" "forums"
-                    "free" "ftp" "gadget" "gadgets" "games" "gift" "good"
-                    "google" "group" "groups" "guest" "guests" "help"
-                    "helpcenter" "home" "homepage" "host" "hosting" "hostmaster"
-                    "host-master" "host_master" "hostname" "html" "http" "httpd"
-                    "https" "humans.txt" "image" "images" "imap" "img"
-                    "index" "indice" "info" "information" "inquiry" "intranet"
-                    "invite" "ipad" "iphone" "irc" "is" "isatap" "it" "java"
-                    "javascript" "job" "jobs" "js" "json" "keybase.txt"
-                    "knowledgebase" "ldap" "legal" "license" "list"
-                    "list-request" "lists" "localdomain" "localhost" "log"
-                    "login" "logout" "logs" "mail" "mailer-daemon" "majordomo"
-                    "manager" "manifesto" "map" "marketing" "master" "me"
-                    "media" "member" "membership" "message" "messages"
-                    "messenger" "mine" "mis" "mob" "mobile" "msg" "must" "mx"
-                    "my" "myaccount" "mysql" "name" "named" "net" "network"
-                    "new" "newest" "news" "newsletter" "no-reply" "nobody" "noc"
-                    "noreply" "notes" "oauth" "oembed" "office" "old" "oldest"
-                    "online" "operator" "order" "orders" "owner " "page" "pager"
-                    "pages" "panel" "password" "pay" "payment" "payments" "perl"
-                    "photo" "photos" "php" "pic" "pics" "plan" "plans" "plugin"
-                    "plugins" "pop" "pop3" "portfolio" "post" "postfix"
-                    "postmaster" "post-master" "post_master" "posts"
-                    "preferences" "press" "pricing" "privacy" "privacy-policy"
-                    "private" "profile" "project" "projects" "promo" "pub"
-                    "public" "python" "random" "recipe" "recipes" "register"
-                    "registration" "remove" "request" "reset" "robots"
-                    "robots.txt" "root" "rss" "ruby" "sale" "sales" "sample"
-                    "samples" "save" "script" "scripts" "search" "secure"
-                    "security" "send" "service" "services" "setting" "settings"
-                    "setup" "sftp" "shop" "shopping" "signin" "signout" "signup"
-                    "site" "sitemap" "sitemap.xml" "sites" "smtp" "sql" "src"
-                    "ssh" "ssl" "ssladmin" "ssladministrator" "sslwebmaster"
-                    "ssl_admin" "ssl-admin" "ssl_administrator"
-                    "ssl-administrator" "ssl_webmaster" "ssl-webmaster"
-                    "stage" "staging" "start" "stat" "static" "stats" "status"
-                    "store" "stores" "subdomain" "subscribe" "support"
-                    "surprise" "svn" "sys" "sysadmin" "sysadministrator" "sysop"
-                    "system" "tablet" "tablets" "talk" "task" "tasks" "tech"
-                    "telnet" "terms" "terms-of-use" "test" "test1" "test2"
-                    "test3" "tests" "theme" "themes" "tmp" "todo" "tools" "top"
-                    "tos" "trouble" "trust" "tv" "twitter" "twittr"
-                    "unsubscribe" "update" "upload" "url" "usage" "usenet" "user"
-                    "username" "users" "uucp" "video" "videos" "visitor" "web"
-                    "weblog" "webmail""web_master" "web-master" "web_admin"
-                    "web-admin" "wheel" "webmaster" "website" "websites"
-                    "welcome" "wiki" "win" "work" "wpad" "ww" "wws" "www" "www1"
-                    "www2" "www3" "www4" "www5" "www6" "www7" "wwws" "wwww"
-                    "xml" "xpg" "xxx" "yahoo" "you" "yourdomain" "yourname"
-                    "yoursite" "yourusername"))
-      (setf (gethash word words) t))
-    words)
-  "A set of words that maybe should be disallowed from user names. Edit as you
-please.")
 
 (defun revoke-all-on-table (table-name role-name)
   "Takes a table-name which could be a string, symbol or list of strings or
@@ -478,7 +382,9 @@ names. Sorry"))
   "Changes the priority of where a role looks for tables (which schema first,
 second, etc. Role should be a string or symbol. Search-path could be a list of schema
 names either as strings or symbols."
-  (when (listp search-path) (setf search-path (format nil "~{~a~^, ~}" (mapcar 'to-sql-name search-path))))
+  (when (listp search-path)
+    (setf search-path
+          (format nil "~{~a~^, ~}" (mapcar 'to-sql-name search-path))))
   (when (symbolp role) (setf role (to-sql-name role)))
   (query (format nil "alter role ~a set search_path = ~a" role search-path)))
 
@@ -557,5 +463,6 @@ The password will be encrypted in the system catalogs. This is
 automatic with postgresql versions 10 and above."
   (when (role-exists-p role)
     (if expiration-date
-        (query (format nil "alter role ~a with encrypted password '~a' valide until '~a'" role password expiration-date)))
+        (query (format nil "alter role ~a with encrypted password '~a' valide until '~a'"
+                       role password expiration-date)))
     (query (format nil "alter role ~a with encrypted password '~a'" role password))))

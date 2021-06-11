@@ -83,7 +83,11 @@ that the interval parameter is a string within a form provided to the :interval 
 
 ((:MONTHS 77) (:DAYS 4) (:SECONDS 10921) (:USECONDS 0))
 #+END_SRC
-
+** Creating an interval column
+#+BEGIN_SRC lisp
+(query (:create-table 'data-type-tests
+                      ((len :type (or interval db-null) :interval :hour-to-minute))))
+#+END_SRC
 ** Allowable Formats of the parameter to Interval
    :PROPERTIES:
    :ID:       48cca061-c649-44e3-8312-e349de885b3f

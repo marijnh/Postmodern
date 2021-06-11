@@ -1,11 +1,11 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN-TESTS; -*-
 (in-package :postmodern-tests)
 
-(fiveam:def-suite :postmodern-daos
+(def-suite :postmodern-daos
     :description "Dao suite for postmodern"
     :in :postmodern)
 
-(fiveam:in-suite :postmodern-daos)
+(in-suite :postmodern-daos)
 
 (defclass test-data ()
   ((id :col-type serial :initarg :id :accessor test-id)
@@ -119,11 +119,23 @@
     (query (:drop-table :if-exists 'dao-test :cascade)))
   (execute (dao-table-definition 'test-data)))
 
+(defmacro with-dao-test-table-fixture (&body body)
+  `(progn
+     (dao-test-table-fixture)
+     (unwind-protect (progn ,@body)
+       (execute (:drop-table :if-exists 'dao-test :cascade)))))
+
 (defun dao-test-table-fixture-mk ()
   "Drops and recreates the dao-test-mk table"
   (when (table-exists-p 'dao-test-mk)
     (query (:drop-table :if-exists 'dao-test-mk :cascade)))
   (execute (dao-table-definition 'test-data-multicolumn-key)))
+
+(defmacro with-dao-test-table-fixture-mk (&body body)
+  `(progn
+     (dao-test-table-fixture-mk)
+     (unwind-protect (progn ,@body)
+       (execute (:drop-table 'dao-test-mk :cascade)))))
 
 (defun dao-test-table-fixture-references ()
   "Drops and recreates the usersr and departments tables"
@@ -134,15 +146,28 @@
   (execute (dao-table-definition 'test-data-department))
   (execute (dao-table-definition 'test-data-col-identity-with-references)))
 
+(defmacro with-dao-test-table-fixture-references (&body body)
+  `(progn
+     (dao-test-table-fixture-references)
+     (unwind-protect (progn ,@body)
+       (execute (:drop-table 'usersr :cascade))
+       (execute (:drop-table 'departments :cascade)))))
+
 (defun dao-test-table-fixture-not-serial-key ()
   "Drops and recreates the users1 table"
   (when (table-exists-p 'users1)
     (query (:drop-table :if-exists 'users1 :cascade)))
   (execute (dao-table-definition 'test-data-not-serial-key)))
 
+(defmacro with-dao-test-table-fixture-not-serial-key (&body body)
+  `(progn
+     (dao-test-table-fixture-not-serial-key)
+     (unwind-protect (progn ,@body)
+       (execute (:drop-table 'users1 :cascade)))))
+
 (test dao-class
   (with-test-connection
-    (dao-test-table-fixture)
+    (with-dao-test-table-fixture
     (is (equal (dao-table-definition 'test-data)
                "CREATE TABLE dao_test (id SERIAL NOT NULL, a VARCHAR(100) DEFAULT NULL, b BOOLEAN NOT NULL DEFAULT false, c INTEGER NOT NULL DEFAULT 0, d NUMERIC NOT NULL DEFAULT 0.0, PRIMARY KEY (id))"))
     (is (equal (dao-keys (find-class 'test-data))
@@ -167,8 +192,7 @@
            (is (eq (test-b new-database-dao) t))
            (is (eq (test-b database-dao) nil))
            (delete-dao dao)))
-       (is (not (select-dao 'test-data))))
-     (execute (:drop-table 'dao-test :cascade)))))
+       (is (not (select-dao 'test-data))))))))
 
 (test dao-keys
   "Explicit keys takes priority over col-identity which takes priority over col-primary-key"
@@ -183,8 +207,7 @@
 
 (test single-column-primary-keys
   (with-test-connection
-    (protect
-      (dao-test-table-fixture)
+    (with-dao-test-table-fixture
       (let ((dao (make-instance 'test-data :a "quux"))
             (dao-col-identity (make-instance 'test-data-not-serial-key :a "quux-ci")))
         (is (equal (find-primary-key-column 'test-data)
@@ -205,20 +228,18 @@
                      (class-of (make-instance 'test-data :a "quux"))))
                    '(("id" "integer"))))
         (is (equal (dao-keys 'test-data)
-                   '(id))))
-      (execute (:drop-table 'dao-test :cascade)))))
+                   '(id)))))))
 
 (test multi-column-primary-keys
   (with-test-connection
-    (protect
+    (with-dao-test-table-fixture-mk
       (dao-test-table-fixture-mk)
       (is (equal (find-primary-key-column 'test-data-multicolumn-key)
                  nil))
       (is (equal (find-primary-key-info 'dao-test-mk)
                  '(("id" "integer") ("a" "character varying(100)"))))
       (is (equal (dao-keys 'test-data-multicolumn-key)
-                 '(id a)))
-      (execute (:drop-table 'dao-test-mk :cascade)))))
+                 '(id a))))))
 
 (test dao-column-slots
   (is (equal (mapcar #'pomo::slot-definition-name
@@ -252,8 +273,7 @@
 
 (test insert-dao-base
   (with-test-connection
-  (dao-test-table-fixture)
-    (protect
+    (with-dao-test-table-fixture
       (progn
         (insert-dao (make-instance 'test-data :a "unbound-stuff-here"))
         (is (equal (query "select * from dao_test")
@@ -267,14 +287,11 @@
                    '((1 "unbound-stuff-here" NIL 0 0))))
         (insert-dao (make-instance 'test-data :a "bar" :b t :c 17 :d 13.2))
         (is (equal (query "select * from dao_test")
-                   '((1 "unbound-stuff-here" NIL 0 0) (2 "bar" T 17 66/5)))))
-      (with-test-connection
-         (execute (:drop-table 'dao-test :cascade))))))
+                   '((1 "unbound-stuff-here" NIL 0 0) (2 "bar" T 17 66/5))))))))
 
 (test save-dao-base
   (with-test-connection
-    (dao-test-table-fixture)
-    (protect
+    (with-dao-test-table-fixture
      (let ((dao (make-instance 'test-data :a "quux")))
        (is (save-dao dao)) ; returns a boolean to indicate a new row was inserted
        (setf (test-a dao) "bar")
@@ -283,14 +300,11 @@
        (is (equal (test-d dao)
                   0))
        (is (not (save-dao dao))) ; returns boolean nil showing no new row was inserted
-       (is (equal (test-a (get-dao 'test-data (test-id dao))) "bar")))
-     (with-test-connection
-         (execute (:drop-table 'dao-test :cascade))))))
+       (is (equal (test-a (get-dao 'test-data (test-id dao))) "bar"))))))
 
 (test save-dao-with-transaction
   (with-test-connection
-    (dao-test-table-fixture)
-    (protect
+    (with-dao-test-table-fixture
       (let ((dao (make-instance 'test-data :a "quux")))
         (with-transaction ()
           (save-dao dao))
@@ -305,14 +319,11 @@
                     '((1 "quux" NIL 0 0))))
          (is (not (save-dao/transaction dao)))
          (is (equal (query "select * from dao_test")
-                    '((1 "bar" NIL 0 0))))))
-     (with-test-connection
-         (execute (:drop-table 'dao-test :cascade))))))
+                    '((1 "bar" NIL 0 0)))))))))
 
 (test save-dao-with-same-key
   (with-test-connection
-    (dao-test-table-fixture)
-    (protect
+    (with-dao-test-table-fixture
      (let ((dao (make-instance 'test-data :a "quux")))
        (save-dao dao)
        (is (equal (test-id dao)
@@ -322,14 +333,11 @@
        (setf (test-a dao) "bar")
        (save-dao dao)
        (is (equal (query "select * from dao_test")
-                  '((1 "bar" NIL 0 0)))))
-     (with-test-connection
-         (execute (:drop-table 'dao-test :cascade))))))
+                  '((1 "bar" NIL 0 0))))))))
 
 (test save-dao-smaller-than-table
   (with-test-connection
-    (dao-test-table-fixture)
-    (protect
+    (with-dao-test-table-fixture
       (let ((short-dao (make-instance 'test-data-short :a "first short")))
        (save-dao short-dao)
        (is (equalp (query (:select '* :from 'dao-test) :alists)
@@ -337,26 +345,20 @@
         (setf *ignore-unknown-columns* t)
         (is (equal (test-a (get-dao 'test-data-short 1))
                    "first short"))
-        (setf *ignore-unknown-columns* nil))
-      (with-test-connection
-         (execute (:drop-table 'dao-test :cascade))))))
+        (setf *ignore-unknown-columns* nil)))))
 
 (test save-short-dao-with-bad-col-type
   (with-test-connection
-    (dao-test-table-fixture)
-    (protect
+    (with-dao-test-table-fixture
      (let ((dao-short-wrong (make-instance 'test-data-short-wrong-col-type :a 12.75)))
        (save-dao dao-short-wrong)
        (is (equalp (query (:select '* :from 'dao-test) :alists)
-                   '(((:ID . 1) (:A . "12.75") (:B) (:C . 0) (:D . 0))))))
-     (with-test-connection
-         (execute (:drop-table 'dao-test :cascade))))))
+                   '(((:ID . 1) (:A . "12.75") (:B) (:C . 0) (:D . 0)))))))))
 
 (test save-dao-with-bad-col-type
   "Tests saving a dao when slot d, accessor test-d has a text col-type and the table is numeric."
   (with-test-connection
-    (dao-test-table-fixture)
-    (protect
+    (with-dao-test-table-fixture
       (progn
         (let ((dao-d-string (make-instance 'test-data-d-string :a "D string" :b nil :c 14
                                                                :d "abcd")))
@@ -368,15 +370,13 @@
           (setf (test-d dao-d-string) 18.75)
           (save-dao dao-d-string)
           (is (equal (query (:select '* :from 'dao-test))
-                     '((1 "D string" NIL 14 75/4))))))
-      (with-test-connection
-        (execute (:drop-table 'dao-test :cascade))))))
+                     '((1 "D string" NIL 14 75/4)))))))))
 
 (test save-dao-with-col-identity
   "Note the difference between make-instance and make-dao"
   (with-test-connection
     (dao-test-table-fixture-references)
-    (protect
+    (with-dao-test-table-fixture-references
       (let ((dao (make-dao 'test-data-department :department-name "Math")))
         (is (equal (query "select * from departments")
                    '((1 "Math"))))
@@ -392,7 +392,7 @@
         (is (equal (query "select * from departments")
                    '((1 "German") (2 "Philosophy") (3 "Economics"))))
         (let ((dao (make-instance 'test-data-department :department-name "Geopolitics")))
-                    (upsert-dao dao))
+          (upsert-dao dao))
         (is (equal (query "select * from departments")
                    '((1 "German") (2 "Philosophy") (3 "Economics") (4 "Geopolitics"))))))))
 
@@ -400,8 +400,7 @@
   "Demonstrates that daos do not enforce slot types. The database will enforce the slot types
 so there is a single source of type truth."
   (with-test-connection
-    (dao-test-table-fixture)
-    (protect
+    (with-dao-test-table-fixture
       (progn
         (let ((dao-d-string (make-instance 'test-data-d-string :a "D string" :b nil :c 14
                                                                :d "18.75")))
@@ -416,28 +415,22 @@ so there is a single source of type truth."
                    'TEST-DATA-D-STRING))
         (is (equal (test-d (query (:select '* :from 'dao-test)
                                   (:dao test-data-d-string :single)))
-                   75/4)))
-      (with-test-connection
-        (execute (:drop-table 'dao-test :cascade))))))
+                   75/4))))))
 
 (test update-dao
-    (with-test-connection
-    (dao-test-table-fixture)
-    (protect
+  (with-test-connection
+    (with-dao-test-table-fixture
       (progn
         (save-dao (make-instance 'test-data :id 1 :a "bar"))
         ;; error signaled next line due to trying to update using a dao with unbounded slots
         (signals error (update-dao (make-instance 'test-data :id 1 :a "bar")))
         (update-dao (make-instance 'test-data :id 1 :a "bar" :b t :c 17 :d 13.2))
         (is (equal (query "select * from dao_test")
-                   '((1 "bar" T 17 66/5)))))
-      (with-test-connection
-        (execute (:drop-table 'dao-test :cascade))))))
+                   '((1 "bar" T 17 66/5))))))))
 
 (test save-upsert-dao-with-serial
   (with-test-connection
-    (dao-test-table-fixture)
-    (protect
+    (with-dao-test-table-fixture
      (let ((dao (make-instance 'test-data :a "quux")))
        (save-dao dao)
        (is (equal (query "select * from dao_test")
@@ -456,8 +449,7 @@ so there is a single source of type truth."
 
 (test save-upsert-dao-not-serial
   (with-test-connection
-    (dao-test-table-fixture-not-serial-key)
-    (protect
+    (with-dao-test-table-fixture-not-serial-key
      (let ((dao (make-instance 'test-data-not-serial-key :id 1 :username "duck")))
        (signals error (save-dao dao)) ; unbound department-id
        (setf (department-id dao) 12)
@@ -502,39 +494,31 @@ so there is a single source of type truth."
                                                  :id 1 :username "turkey" :department-id 43)))
        ;; still no turkey to update
        (is (equal (query "select * from users1")
-                  '((1 "goose" 17) (1 "duck" 3) (1 "chicken" 3) (1 "penguin" 43))))))
-    (query (:drop-table :if-exists 'users1 :cascade))))
+                  '((1 "goose" 17) (1 "duck" 3) (1 "chicken" 3) (1 "penguin" 43))))))))
 
 (test dao-create-table-with-references
   (is (equal (dao-table-definition 'test-data-col-identity-with-references)
              "CREATE TABLE usersr (id INTEGER NOT NULL PRIMARY KEY generated always as identity, username TEXT NOT NULL, department_id INTEGER NOT NULL REFERENCES departments(id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)"))
   (with-test-connection
-    (dao-test-table-fixture-references)
-    (protect
+    (with-dao-test-table-fixture-references
       (progn
         (signals error (insert-dao (make-instance 'test-data--col-identity-with-references
                                                   :username "user-1" :department-id 1)))
-        (format t "Departments ~a~%" (query "select * from departments"))
         (insert-dao (make-instance 'test-data-department :department-name "department 1"
                                                          :department-id 1))
-        (format t "Departments ~a~%" (query "select * from departments"))
         (insert-dao (make-instance 'test-data-col-identity-with-references
                                    :username "user-1" :department-id 1))
         (is (equal (query "select * from usersr")
                    '((1 "user-1" 1))))
         (is (equal (username (get-dao 'test-data-col-identity-with-references 1))
-                   "user-1")))
-      (progn
-        (query (:drop-table :if-exists 'usersr :cascade))
-        (query (:drop-table :if-exists 'departments :cascade))))))
+                   "user-1"))))))
 
 (test query-drop-table-1
   (with-test-connection
-  (dao-test-table-fixture)
-    (protect
-     (is (member :dao-test (with-test-connection (pomo:list-tables))))
+    (with-dao-test-table-fixture
+     (is (member :dao-test (pomo:list-tables)))
      (pomo:query (:drop-table :dao-test))
-     (is (not (member :dao-test (with-test-connection (pomo:list-tables))))))))
+     (is (not (member :dao-test (pomo:list-tables)))))))
 
 (defclass test-col-name ()
   ((a :col-type string :col-name aa :initarg :a :accessor test-a)
@@ -572,7 +556,7 @@ so there is a single source of type truth."
     (execute "CREATE TEMPORARY TABLE test_col_name (aa text primary key default md5(random()::text), bb text not null, c text not null,
               \"from\" text not null, \"to\" text not null)")
     (let ((o (make-instance 'test-col-name :b "2" :c "3" :d "Reykjavík" :e "Garðabær")))
-      (fiveam:finishes
+      (finishes
         (insert-dao o)))))
 
 ;;; For threading tests
@@ -594,6 +578,7 @@ so there is a single source of type truth."
 
 (test dao-class-threads
   (with-test-connection
+    (with-dao-test-table-fixture
       (unless (pomo:table-exists-p 'dao-test)
         (execute (dao-table-definition 'test-data)))
     (let ((item (make-instance 'test-data :a "test-name" :b t :c 0))
@@ -614,8 +599,7 @@ so there is a single source of type truth."
                                  (upsert-dao item))))))
                   threads))
       (mapc #'bt:join-thread threads)
-      (is (eq 0 (test-c item))))
-    (execute (:drop-table 'dao-test :cascade))))
+      (is (eq 0 (test-c item)))))))
 
 (test reserved-column-names-defclass
   (with-test-connection
@@ -667,8 +651,7 @@ so there is a single source of type truth."
 
 (test fetch-defaults
   (with-test-connection
-    (dao-test-table-fixture)
-    (protect
+    (with-dao-test-table-fixture
       (let ((dao (make-instance 'test-data :a "something"))
             (short-dao (make-instance 'test-data-short)))
         (signals error (test-b  dao))    ; unbound slot b
@@ -679,8 +662,7 @@ so there is a single source of type truth."
                   0))
         (signals error (test-id short-dao))
         (pomo:fetch-defaults short-dao)
-        (signals error (test-id short-dao)))
-      (execute (:drop-table 'dao-test :cascade)))))
+        (signals error (test-id short-dao))))))
 
 (test generate-dao-query
   (is (equal (pomo::generate-dao-query 'test-data)
@@ -688,21 +670,18 @@ so there is a single source of type truth."
 
 (test select-dao
   (with-test-connection
-    (dao-test-table-fixture)
-    (protect
+    (with-dao-test-table-fixture
       (progn
         (make-dao 'test-data :a "dao1")
         (make-dao 'test-data :a "dao2")
         (is (equal (query "select * from dao_test")
                    '((1 "dao1" NIL 0 0) (2 "dao2" NIL 0 0))))
         (is (equal (mapcar #'test-a (select-dao 'test-data))
-                   '("dao1" "dao2"))))
-      (execute (:drop-table 'dao-test :cascade)))))
+                   '("dao1" "dao2")))))))
 
 (test do-select-dao
   (with-test-connection
-    (dao-test-table-fixture)
-    (protect
+    (with-dao-test-table-fixture
       (progn
         (make-dao 'test-data :a "dao1")
         (make-dao 'test-data :a "dao2")
@@ -716,5 +695,4 @@ so there is a single source of type truth."
               ;; without a new connection, this errors because the previous connection is not done
               (update-dao dao))))
         (is (equal (query "select * from dao_test")
-                   '((1 "dao1" NIL 2 0) (2 "dao2" NIL 2 0)))))
-      (execute (:drop-table 'dao-test :cascade)))))
+                   '((1 "dao1" NIL 2 0) (2 "dao2" NIL 2 0))))))))

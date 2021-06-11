@@ -49,7 +49,7 @@ No guarantee is given with respect to resolution or timing on any item.
 - [ ]   Named Prepared Statement explicit arglist
 - [ ]   SQL Read Table Review (comments requested on any work that should be done here)
 - [ ]   Row Reader Review (comments requested on any work that should be done here)
-- [ ]   Allow parameters to be passed as binary to postgresql
+- [X]   Allow parameters to be passed as binary to postgresql
 
 ## Connections/Reconnections and Transactions
 - [ ]   Ensure transactions can deal with reconnections/restarts
@@ -62,7 +62,7 @@ No guarantee is given with respect to resolution or timing on any item.
 - [ ]   Creation of new datatypes
 - [ ]   Pooling with external pooling applications
 
-## Armed Bear Isuses
+## Armed Bear Issues
 - [ ]   What is the problem with :null
 - [ ]   Armed Bear issues with unicode. See e.g. icelandic cities in test-s-sql
 

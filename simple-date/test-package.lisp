@@ -2,4 +2,3 @@
 
 (defpackage :simple-date-tests
   (:use :common-lisp :fiveam :simple-date))
-
