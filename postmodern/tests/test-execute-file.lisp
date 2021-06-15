@@ -1,11 +1,11 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN-TESTS; -*-
 (in-package :postmodern-tests)
 
-(fiveam:def-suite :postmodern-execute-file
+(def-suite :postmodern-execute-file
     :description "Execute file suite for postmodern"
     :in :postmodern)
 
-(fiveam:in-suite :postmodern-execute-file)
+(in-suite :postmodern-execute-file)
 
 (defparameter good-file (asdf:system-relative-pathname :postmodern "postmodern/tests/test-execute-file.sql"))
 (defparameter bad-file (asdf:system-relative-pathname :postmodern "postmodern/tests/test-execute-file-broken.sql"))

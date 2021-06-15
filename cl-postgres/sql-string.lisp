@@ -15,13 +15,6 @@ textual format for binary data."
                       (princ (digit-char (ldb (byte 3 0) byte) 8) out))
                     (princ (code-char byte) out))))))
 
-(defparameter *silently-truncate-ratios* t "Given a ratio, a stream and a
-digital-length-limit, if *silently-truncate-ratios* is true,
-will return a potentially truncated ratio. If false and the digital-length-limit
-is reached, it will throw an error noting the loss of precision and offering to
-continue or reset *silently-truncate-ratios* to true. Code contributed by
-Attila Lendvai.")
-
 (defun write-ratio-as-floating-point (number stream digit-length-limit)
   "Given a ratio, a stream and a digital-length-limit, if
 *silently-truncate-ratios* is true, will return a potentially truncated ratio.
@@ -39,7 +32,8 @@ the loss of precision and offering to continue or reset
                                    number digit-length-limit '*silently-truncate-ratios*))
                     (continue ()
                               :report (lambda (stream)
-                                        (write-string "Ignore this precision loss and continue" stream))
+                                        (write-string "Ignore this precision loss and continue"
+                                                      stream))
                               (setf silently-truncate? t))
                     (disable-assertion ()
                                        :report (lambda (stream)
@@ -70,10 +64,6 @@ the loss of precision and offering to continue or reset
                  (multiple-value-bind (quotient rem) (floor (* remainder 10))
                    (princ quotient stream)
                    (setf remainder rem)))))))))
-
-(defparameter *silently-truncate-rationals* t "When a rational number is passed into a query (as per to-sql-string), but it
-can not be expressed within 38 decimal digits (for example 1/3), it will be truncated, and lose some precision. Set this variable to nil to suppress
-that behaviour and raise an error instead.")
 
 (defun write-quoted (string out)
   (write-char #\" out)
@@ -159,5 +149,15 @@ used by S-SQL.)")
   (:documentation "Conversion function used to turn a lisp value into a value
 that PostgreSQL understands when sent through its socket connection. May return
 a string or a (vector (unsigned-byte 8)).")
+  (:method ((arg integer))
+    (int-to-vector arg))
+  (:method ((arg single-float))
+    (int32-to-vector (cl-postgres-ieee-floats:encode-float32 arg)))
+  #-clisp   (:method ((arg double-float)) ;; CLISP doesn't allow methods on double-float
+              (int64-to-vector (cl-postgres-ieee-floats:encode-float64 arg)))
   (:method (arg)
-    (to-sql-string arg)))
+    (cond ((typep arg 'boolean)
+           (if arg (int8-to-vector 1)
+               (int8-to-vector 0)))
+;;          ((typep arg 'uuid-string) (uuid-to-byte-array arg))
+          (t (to-sql-string arg)))))

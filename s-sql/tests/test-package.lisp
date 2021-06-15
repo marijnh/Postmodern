@@ -2,5 +2,5 @@
 
 (defpackage :s-sql-tests
   (:use :common-lisp :fiveam :s-sql
-        :cl-postgres :cl-postgres-error :cl-postgres-tests :postmodern)
+        :cl-postgres-error :cl-postgres-tests :postmodern)
   (:shadow #:with-test-connection))

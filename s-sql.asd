@@ -9,13 +9,14 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
-  :version "1.32.9"
+  :version "1.33.0"
   :depends-on ("cl-postgres"
                "alexandria")
   :components
   ((:module "s-sql"
-	    :components ((:file "package")
-			 (:file "s-sql"))))
+	  :components ((:file "package")
+                 (:file "config" :depends-on ("package"))
+			           (:file "s-sql" :depends-on ("package" "config")))))
   :in-order-to ((test-op (test-op "s-sql/tests"))))
 
 (defsystem "s-sql/tests"

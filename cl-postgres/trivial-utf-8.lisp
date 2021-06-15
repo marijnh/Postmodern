@@ -59,7 +59,8 @@ utf-8 representation."
            #.*optimize*)
   (let ((buffer (make-array (+ (the fixnum (utf-8-byte-length string))
                                (if null-terminate 1 0))
-                            :element-type '(unsigned-byte 8)))
+                            :element-type '(unsigned-byte 8)
+                            :initial-element 0))
         (position 0)
         (string (coerce string 'simple-string)))
     (declare (type (array (unsigned-byte 8)) buffer)
@@ -179,7 +180,9 @@ max amount of characters or bytes to read."
   (declare (type stream input)
            (type fixnum byte-length char-length)
            #.*optimize*)
-  (let ((buffer (make-array 4 :element-type '(unsigned-byte 8)))
+  (let ((buffer (make-array 4
+                            :element-type '(unsigned-byte 8)
+                            :initial-element 0))
         (bytes-read 0)
         (string (make-array 64 :element-type 'character
                             :adjustable t :fill-pointer 0)))

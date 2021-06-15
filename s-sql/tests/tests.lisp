@@ -3,14 +3,14 @@
 
 ;; Adjust the above to some db/user/pass/host/[port] combination that
 ;; refers to a valid postgresql database, then after loading the file,
-;; run the tests with (fiveam:run! :cl-postgres)
+;; run the tests with (run! :cl-postgres)
 
-(fiveam:def-suite :s-sql
+(def-suite :s-sql
   :description "Master suite for s-sql")
 
-(fiveam:in-suite :s-sql)
+(in-suite :s-sql)
 
-(fiveam:def-suite :s-sql-base
+(def-suite :s-sql-base
   :description "Base suite for s-sql"
   :in :s-sql)
 
@@ -34,11 +34,11 @@
 (defmacro protect (&body body)
   `(unwind-protect (progn ,@(butlast body)) ,(car (last body))))
 
-(fiveam:def-suite :s-sql-base
+(def-suite :s-sql-base
   :description "Base test suite for s-sql"
   :in :s-sql)
 
-(fiveam:in-suite :s-sql-base)
+(in-suite :s-sql-base)
 
 (test connect-sanity
   (with-test-connection
@@ -192,8 +192,7 @@ and a - to indicate it does not take any elements."
              '("Results " "Alpha1 " "Ceta3 " "Beta2 ")))
   (signals sql-error (s-sql::split-on-keywords ((a1 * ?) (b2 ?) (c3 ? *))
                          '(:a1 "Alpha1 "  :c3 "Ceta3 ")
-                       `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2)))
-           '("Results " "Alpha1 " "Ceta3 "))
+                       `("Results " ,@(when a1 a1) ,@(when c3 c3) ,@(when b2 b2))))
   (is (equal (s-sql::split-on-keywords ((a1 * ?) (c3 ? *))
                  '(:a1 "Alpha1 " :b2 "Beta2" :c3 "Ceta3 ")
                `("Results " ,@(when a1 a1) ,@(when c3 c3)))

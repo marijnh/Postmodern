@@ -2,20 +2,6 @@
 (in-package :cl-postgres)
 
 (defparameter *current-query* nil)
-(defparameter *query-log* nil "When debugging, it can be helpful to inspect the
-queries that are being sent to the database. Set this variable to an output
-stream value (*standard-output*, for example) to have CL-postgres log every
-query it makes.")
-(defparameter *query-callback* 'log-query "When profiling or debugging, the
-*query-log* may not give enough information, or reparsing its output may not be
-feasible. This variable may be set to a designator of function taking two
-arguments. This function will be then called after every query, and receive
-query string and internal time units (as in (CL:GET-INTERNAL-REAL-TIME)) spent
-in query as its arguments.
-
-Default value of this variable is 'LOG-QUERY, which takes care of *QUERY-LOG*
-processing. If you provide custom query callback and wish to keep *QUERY-LOG*
-functionality, you will have to call LOG-QUERY from your callback function")
 
 (defun log-query (query time-units)
   "This function is default value of *QUERY-CALLBACK* and logs queries
@@ -193,6 +179,7 @@ giving them a database-connection-error superclass."))
 (deferror "0A" feature-not-supported)
 (deferror "22" data-exception)
 (deferror "22012" db-division-by-zero data-exception)
+(deferror "22021" invalid-byte-sequence data-exception)
 (deferror "22007" invalid-datetime-format data-exception)
 (deferror "22003" numeric-value-out-of-range data-exception)
 (deferror "22P01" floating-point-exception data-exception)

@@ -63,16 +63,6 @@ form of yyyy-mm-dd hh:mm:ss:ms"
 ;;;; MIT License
 ;;; Symbols
 
-(defparameter +json-lisp-symbol-tokens+
-  '(("true" . t)
-    ("null" . nil)
-    ("false" . nil))
-  "Mapping between JSON literal names and Lisp boolean values.")
-
-(defvar *json-symbols-package* (find-package 'keyword)
-  "The package where JSON Object keys etc. are interned.
-Default KEYWORD, NIL = use current *PACKAGE*.")
-
 (defun json-intern (string)
   "Intern STRING in the current *JSON-SYMBOLS-PACKAGE*."
   (intern string (or *json-symbols-package* *package*)))
@@ -102,27 +92,12 @@ exist."
                    (or *json-symbols-package* *package*))
       (unknown-symbol-error string)))
 
-(defvar *json-identifier-name-to-lisp* 'camel-case-to-lisp
-  "Designator for a function which maps string (a JSON Object key) to
-string (name of a Lisp symbol).")
-
-(defvar *lisp-identifier-name-to-json* 'lisp-to-camel-case
-  "Designator for a function which maps string (name of a Lisp symbol)
-to string (e. g. JSON Object key).")
-
-(defvar *identifier-name-to-key* 'json-intern
-  "Designator for a function which, during decoding, maps the *json-identifier-name-to-lisp*
--transformed key to the value it will have in the result object.")
-
 (defun map-slots (function object)
   "Call FUNCTION on the name and value of every bound slot in OBJECT."
   (loop for slot in (class-slots (class-of object))
     for slot-name = (slot-definition-name slot)
     if (slot-boundp object slot-name)
       do (funcall function slot-name (slot-value object slot-name))))
-
-(defvar *json-output* (make-synonym-stream '*standard-output*)
-  "The default output stream for encoding operations.")
 
 (define-condition unencodable-value-error (type-error)
   ((context :accessor unencodable-value-error-context :initarg :context))
@@ -195,14 +170,6 @@ and the result is written as String."
           (write-json-string s stream)))))
 
 ;;; The code below is from Hans Hübner's YASON (with modifications).
-
-(defvar *json-aggregate-context* nil
-  "NIL outside of any aggregate environment, 'ARRAY or 'OBJECT within
-the respective environments.")
-
-(defvar *json-aggregate-first* t
-  "T when the first member of a JSON Object or Array is encoded,
-afterwards NIL.")
 
 (defun next-aggregate-member (context stream)
   "Between two members of an Object or Array, print a comma separator."
@@ -367,8 +334,6 @@ as itself, or a nil value as a json null-value"
       (:alist (encode-json-alist (cdr s) stream))
       (:plist (encode-json-plist (cdr s) stream)))
     nil))
-
-(defparameter *json-list-encoder-fn* 'encode-json-list-guessing-encoder)
 
 (defun use-guessing-encoder ()
   (setf *json-list-encoder-fn* 'encode-json-list-guessing-encoder))

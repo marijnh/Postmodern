@@ -18,6 +18,7 @@ all the configuration parameters for the connection."))
    (user :initarg :user :reader connection-user)
    (password :initarg :password :reader connection-password)
    (use-ssl :initarg :ssl :reader connection-use-ssl)
+   (use-binary :initarg :binary :accessor connection-use-binary :initform nil)
    (service :initarg :service :accessor connection-service)
    (application-name :initarg :application-name :accessor connection-application-name)
    (socket :initarg :socket :accessor connection-socket)
@@ -29,23 +30,22 @@ all the configuration parameters for the connection."))
 login information in order to be able to automatically re-establish a
 connection when it is somehow closed."))
 
-(defvar *retry-connect-times* 5
-  "How many times do we try to connect again. Borrowed from pgloader")
-
-(defvar *retry-connect-delay* 0.5
-  "How many seconds to wait before trying to connect again. Borrowed from
-pgloader")
-
 (defun get-postgresql-version (connection)
   "Retrieves the version number of the connected postgresql database as a
-string."
-  (gethash "server_version" (connection-parameters connection)))
+string. Some installations of Postgresql add additional information after the base
+version number, so hopefully this gets rid of the unwanted info."
+  (first
+   (split-sequence:split-sequence #\space
+                                  (gethash "server_version"
+                                           (connection-parameters connection)))))
 
 (defun postgresql-version-at-least (desired-version connection)
   "Takes a postgresql version number which should be a string with the major and
 minor versions separated by a period e.g. '12.2' or '9.6.17'. Checks against the
 connection understanding of the running postgresql version and returns t if the
 running version is the requested version or newer."
+  (when (numberp desired-version)
+    (setf desired-version (write-to-string desired-version)))
   (flet ((validate-input (str)
            (unless (or (not (stringp desired-version))
                        (= 0 (length str)))
@@ -87,6 +87,16 @@ connections and error processing with respect to prepared statements."
   (list (gethash "pid" (slot-value connection 'parameters))
         (gethash "secret-key" (slot-value connection 'parameters))))
 
+(defun use-binary-parameters (db-connection param)
+  "Accepts a database connection and nil or t. The default for cl-postgres/Postmodern
+is pass parameters to Postgresql as text (not in binary format). This is how it has
+been since the beginning of Postmodern and the default is set this way in order to
+avoid breaking existing user code. You can set Postmodern to pass integer, float
+or boolean parameters to Postgresql in binary format on a connection basis when
+the connection is created or you can use this function to change the existing connection
+to use or not use binary parameter passing."
+  (setf (connection-use-binary db-connection) param))
+
 (defun database-open-p (connection)
   "Returns a boolean indicating whether the given connection is currently
 connected."
@@ -94,7 +104,9 @@ connected."
        (open-stream-p (connection-socket connection))))
 
 (defun open-database (database user password host
-                      &optional (port 5432) (use-ssl :no) (service "postgres") (application-name ""))
+                      &optional (port 5432) (use-ssl :no)
+                        (service "postgres") (application-name "")
+                        (use-binary nil))
   "Create and open a connection for the specified server, database, and user.
 use-ssl may be :no, :try, :yes, or :full; where :try means 'if the server
 supports it'. :require uses provided ssl certificate with no verification.
@@ -115,6 +127,7 @@ connect using a Unix domain socket instead of a TCP socket."
                                                   :user user :password password
                                                   :socket nil :db database
                                                   :ssl use-ssl
+                                                  :binary use-binary
                                                   :service service
                                                   :application-name application-name))
         (connection-attempts 0))
@@ -264,8 +277,10 @@ if it isn't."
                      finished t)
             (unless finished
               (ensure-socket-is-closed socket)))
-          (maphash (lambda (id query)
-                     (prepare-query conn id query))
+          (maphash (lambda (id query-param-list)
+                     (prepare-query conn id
+                                    (first query-param-list)
+                                    (second query-param-list)))
                    (connection-meta conn)))
       #-(or allegro cl-postgres.features:sbcl-available ccl)
       (usocket:socket-error (e) (add-restart e))
@@ -380,27 +395,56 @@ value."
   (check-type query string)
   (with-reconnect-restart connection
     (using-connection connection
-                      (send-query (connection-socket connection) query row-reader))))
+      (send-query (connection-socket connection) query row-reader))))
 
-(defun prepare-query (connection name query)
-  "Parse and plan the given query, and store it under the given name. Note that
-prepared statements are per-connection, so they can only be executed through
-the same connection that prepared them."
+(defun prepare-query (connection name query &optional parameters)
+  "Parse and plan the given query, and store it with Postgresql under the given name.
+Note that prepared statements are per-connection, so they can only be executed
+through the same connection that prepared them. Also note that while the Postmodern package
+will also stored the prepared query in the connection-meta slot of the connection, but
+cl-postgres prepare-query does not. If the name is an empty string, Postgresql will not
+store it as a reusable query. To make this useful in cl-postgres while
+(connection-use-binary connection) is true, you need to pass a list of parameters with
+the same type as you will be using when you call (exec-prepared).
+
+For example:
+
+    (prepare-query connection \"test6\" \"select $1, $2\" '(1 T))
+    (exec-prepared connection \"test6\" '(42 nil) 'list-row-reader)"
+
   (check-type query string)
   (check-type name string)
   (with-reconnect-restart connection
     (using-connection connection
-                      (send-parse (connection-socket connection) name query)
-                      (values))))
+                      (send-parse (connection-socket connection) name query parameters
+                                  (connection-use-binary connection))
+      (values))))
 
 (defun unprepare-query (connection name)
   "Close the prepared query given by name by closing the session connection.
-Does not remove the query from the meta slot in connection."
+Does not remove the query from the meta slot in connection. This is not the same as
+keeping the connection open and sending Postgresql query to deallocate the named
+prepared query."
   (check-type name string)
   (with-reconnect-restart connection
     (using-connection connection
                       (send-close (connection-socket connection) name)
                       (values))))
+
+(defun find-postgresql-prepared-query (connection name)
+  "Returns a list of (name, query, parameters) for a named prepared query.
+Note the somewhat similar Postmodern version (find-postgresql-prepared-statement name) only
+returns the query, not the parameters or name."
+  (let* ((prepared-queries
+          (exec-query connection
+                      "select name, statement, parameter_types from pg_prepared_statements"
+                      'list-row-reader))
+         (query (find name prepared-queries :key 'first :test 'equal))
+         (len (if (and (stringp (third query)))
+                  (length (third query))
+                  0)))
+    (when query (setf (third query) (subseq (third query) 1 (decf len))))
+    query))
 
 (defun exec-prepared (connection name parameters
                       &optional (row-reader 'ignore-row-reader))
@@ -415,8 +459,14 @@ row-reader to the result."
   (check-type parameters list)
   (with-reconnect-restart connection
     (using-connection connection
-                      (send-execute (connection-socket connection)
-                                    name parameters row-reader))))
+      (handler-case
+          (send-execute (connection-socket connection)
+                        name parameters row-reader (connection-use-binary connection))
+        (cl-postgres-error::invalid-byte-sequence (error)
+          (error "~A ~%Did you specify the types of parameters to be passed when
+you created the prepared statement? This error typically happens in this context
+when you are passing parameters to a prepared statement in a binary format but
+Postgresql is expecting the parameters to be in text format." error))))))
 
 ;; A row-reader that returns a list of (field-name . field-value)
 ;; alist for the returned rows.

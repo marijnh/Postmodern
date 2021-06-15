@@ -4,7 +4,7 @@ A Common Lisp PostgreSQL programming interface
 
 ---
 
-Version 1.38
+Version 1.33.0
 
 Postmodern is a Common Lisp library for interacting with [PostgreSQL](http://www.postgresql.org) databases. It is under active development. Features are:
 
@@ -58,8 +58,7 @@ Finally, Postmodern itself is a wrapper around these packages and provides highe
 
 Postmodern is released under a zlib-style license. Which approximately means you can use the code in whatever way you like, except for passing it off as your own or releasing a modified version without indication that it is not the original.
 
-The functions execute-file.lisp were ported from [[https://github.com/dimitri/pgloader][pgloader]] with grateful thanks to
-Dimitri Fontaine and are released under a BSD-3 license.
+The functions execute-file.lisp were ported from [pgloader](https://github.com/dimitri/pgloader) with grateful thanks to Dimitri Fontaine and are released under a BSD-3 license.
 
 ## Download and installation
 
@@ -83,7 +82,7 @@ Assuming you have already installed it, first load and use the system:
 ```
 
 If you have a PostgreSQL server running on localhost, with a database called 'testdb' on it, which is accessible for user 'foucault' with password 'surveiller', there are two basic ways to connect
-to a database. If your role/application/database(s) looks like a 1:1 relationship, you can connect like this:
+to a database. If your role/application/database(s) looks like a 1:1 relationship and you are not using threads, you can connect like this:
 
 ```lisp
 (connect-toplevel "testdb" "foucault" "surveiller" "localhost")
@@ -103,14 +102,14 @@ If the Postgresql server is running on a port other than 5432, you would also pa
 Ssl connections would similarly use the keyword parameter :use-ssl and pass :yes, :no or :try
 
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
-many:1, (in other words, changing connections) then with-connection form which establishes a connection with a lexical scope is more appropriate.
+many:1, (in other words, changing connections) or you are using threads (each thread will need to have its own connection) then with-connection form which establishes a connection with a lexical scope is more appropriate.
 
 ```lisp
 (with-connection '("testdb" "foucault" "surveiller" "localhost")
     ...)
 ```
 
-For example, if you are creating a database, you need to have established a connection
+If you are creating a database, you need to have established a connection
 to a currently existing database (typically "postgres"). Assuming the foucault role
 is a superuser and you want to stay in a development connection with your new database
 afterwards, you would first use with-connection to connect to postgres, create the
@@ -129,10 +128,13 @@ Note: (create-database) functionality is new to postmodern v. 1.32. Setting the
 anyone who you have not explicitly given permission (except other superusers).
 
 A word about Postgresql connections. Postgresql connections are not lightweight
-threads. They actually consume about 10 MB of memory per connection and Postgresql
-can be tuned to limit the number of connections allowed at any one time. In
+threads. They actually consume about 10 MB of memory per connection.  In
 addition, any connections which require security (ssl or scram authentication)
 will take additiona time and create more overhead.
+
+Postgresql can be tuned to limit the number of connections allowed at any one time. It defaults to 100. The parameter is set in the postgresql.conf file. Depending on the size of your server and what you are doing, the sweet spot generally seems to be between 200-400 connections before you need to bring in connection pooling.
+
+If your application is threaded, each thread should use its own connection. Connections are stateful and attempts to use the same connection for multiple threads will
 
 If you have an application like a web app which will make many connections, you also
 generally do not want to create and drop connections for every query. The usual solution
@@ -524,6 +526,12 @@ values to that scale. For more detail, see <https://www.postgresql.org/docs/curr
 
 ---
 
+### Passing Parameters as Text or Binary
+
+See [index.html#passing-binary-parameters](https://marijnhaverbeke.nl/postmodern/index.html#passing-binary-parameters)
+
+---
+
 ### Arrays
 
 See [array-notes.html](https://marijnhaverbeke.nl/postmodern/array-notes.html)
@@ -633,7 +641,7 @@ It is highly suggested that you do not use words that are reserved by Postgresql
 ## Feature Requests
 
 Postmodern is under active development so issues and feature requests should
-be flagged on [[https://github.com/marijnh/Postmodern](Postmodern's site on github).
+be flagged on [https://github.com/marijnh/Postmodern](Postmodern's site on github).
 
 ## Resources
 

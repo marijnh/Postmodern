@@ -160,20 +160,30 @@
 (declaim (ftype (function (index) octet-vector) make-octet-vector)
          (inline make-octet-vector))
 (defun make-octet-vector (len)
-  (make-array (the index len) :element-type 'octet))
+  (make-array (the index len)
+              :element-type 'octet
+              :initial-element 0))
 
-(defun pad-octet-array (arry &optional (len 32))
-  "Takes an octet-array and, if it is shorter than the len parameter, pads it to
-the len parameter by adds 0 entries at the beginning."
-  (let ((len-arry (length arry)))
-    (if (= len-arry len)
-        arry
-        (let ((initial-index (- len len-arry 1))
-              (oct-array (make-octet-vector len)))
-          (loop for x across arry counting x into y do
-            (setf (aref oct-array (+ y initial-index)) x))
-          oct-array))))
-
+;; pjb suggestion. Also
+;;sabra: errors such as Array index -8 out of bounds for #(0 … 0) .  may be cryptic.  Better provide a condition with an error message such: vector too long for pad-octet-vector.
+(defun pad-octet-vector (vector &optional (desired-length 32))
+  "Takes an octet-vector and, if it is shorter than the SIZE parameter,
+pads it to the SIZE parameter by adding 0 entries at the beginning."
+  (let ((length (length vector)))
+    (if (= desired-length length)
+        vector
+        (let ((result (make-octet-vector desired-length)))
+          (replace result vector :start1 (- desired-length length))))))
+#|
+;; no-defun-allowed + beach + flip214 suggestion
+(defun pad-octet-vector (vector &key (desired-length 32) (padding 0))
+  (let ((vector-length (length vector)))
+    (if (>= vector-length length)
+        vector
+        (replace (make-array desired-length :initial-element padding)
+                 vector
+                 :start1 (- desired-length vector-length)))))
+|#
 (defun gen-client-nonce (&optional (nonce-length 32))
   "Generate a random alphanumeric nonce with a default length of 32."
   (let* ((chars "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
@@ -308,7 +318,7 @@ response. Parsing had ~a results instead of 3" num-of-split)))
   (let* ((int (logxor (ironclad:octets-to-integer client-key)
                       (ironclad:octets-to-integer client-signature)))
          (octet-arry (ironclad:integer-to-octets int)))
-    (pad-octet-array octet-arry 32)))
+    (pad-octet-vector octet-arry 32)))
 
 (defun get-server-key (salted-password &optional (message "Server Key"))
   (gen-client-signature salted-password message))
