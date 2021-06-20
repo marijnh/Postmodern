@@ -17,7 +17,10 @@
    #:dao-table-name #:dao-table-definition
    #:\!dao-def #:*ignore-unknown-columns*
    #:class-finalized-p
-   #:finalize-inheritance)
+   #:finalize-inheritance
+   #:find-dao-column-slot
+   #:col-type-text-p
+   #:find-col-type)
 
   (:export
    #:connect

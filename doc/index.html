@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-06-10 Thu 08:33 -->
+<!-- 2021-06-17 Thu 10:25 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern</title>
@@ -250,8 +250,8 @@
 <ul>
 <li><a href="#e5c68251-0ca6-4f96-8d36-175cec626eeb">Timezones and Simple-Date and Local-Time</a>
 <ul>
-<li><a href="#org40dda31">Simple-Date Library Use</a></li>
-<li><a href="#org54c52ac">Local-Time Library Use</a></li>
+<li><a href="#org915f4e6">Simple-Date Library Use</a></li>
+<li><a href="#org35b93e1">Local-Time Library Use</a></li>
 </ul>
 </li>
 <li><a href="#bdf9ddb0-5f95-4807-8862-8970b35bd142">Portability</a></li>
@@ -1346,14 +1346,17 @@ As of version 1.33, Postmodern provides an optional setting in the database conn
 The default for cl-postgres/Postmodern is to continue to pass parameters to Postgresql as text (not in binary format) in order to avoid breaking existing user code. If you want to pass parameters to Postgresql in binary format, you can either provide the keyword parameter :use-binary in creating a connection like so:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">  (connect <span style="color: #e67128;">"test-db"</span> <span style="color: #e67128;">"test-user"</span> <span style="color: #e67128;">"test-password"</span> <span style="color: #e67128;">"192.168.5.223"</span>
-           <span style="color: #23d7d7;">:port</span> 5434 <span style="color: #23d7d7;">:pooled-p</span> t <span style="color: #23d7d7;">:use-ssl</span> try <span style="color: #23d7d7;">:application-name</span> <span style="color: #e67128;">"test-app"</span> <span style="color: #23d7d7;">:use-binary</span> t)
-<span style="color: #74af68;">#+end_src:</span>
-<span style="color: #74af68;">or</span> use the postmodern =with-connection= macro:
-<span style="color: #74af68;">#+begin_src lisp</span>
-  (<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"database-name"</span> <span style="color: #e67128;">"user-name"</span> <span style="color: #e67128;">"user-password"</span> <span style="color: #e67128;">"localhost or IP address"</span>
-                     <span style="color: #23d7d7;">:use-binary</span> t [any other keyword parameters you want to apply])
-    ...)
+<pre class="src src-lisp">(connect <span style="color: #e67128;">"test-db"</span> <span style="color: #e67128;">"test-user"</span> <span style="color: #e67128;">"test-password"</span> <span style="color: #e67128;">"192.168.5.223"</span>
+         <span style="color: #23d7d7;">:port</span> 5434 <span style="color: #23d7d7;">:pooled-p</span> t <span style="color: #23d7d7;">:use-ssl</span> try <span style="color: #23d7d7;">:application-name</span> <span style="color: #e67128;">"test-app"</span> <span style="color: #23d7d7;">:use-binary</span> t)
+</pre>
+</div>
+<p>
+or use the postmodern <code>with-connection</code> macro:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"database-name"</span> <span style="color: #e67128;">"user-name"</span> <span style="color: #e67128;">"user-password"</span> <span style="color: #e67128;">"localhost or IP address"</span>
+                   <span style="color: #23d7d7;">:use-binary</span> t [any other keyword parameters you want to apply])
+  ...)
 </pre>
 </div>
 <p>
@@ -1520,9 +1523,9 @@ Now the s-sql version:
 </pre>
 </div>
 </div>
-<div id="outline-container-org40dda31" class="outline-4">
-<h4 id="org40dda31">Simple-Date Library Use</h4>
-<div class="outline-text-4" id="text-org40dda31">
+<div id="outline-container-org915f4e6" class="outline-4">
+<h4 id="org915f4e6">Simple-Date Library Use</h4>
+<div class="outline-text-4" id="text-org915f4e6">
 <p>
 The Simple-date add-on library (not enabled by default)
 provides types (CLOS classes) for dates, timestamps, and intervals
@@ -1644,9 +1647,9 @@ used to convert it to proper UTC timestamp.
 </div>
 </div>
 
-<div id="outline-container-org54c52ac" class="outline-4">
-<h4 id="org54c52ac">Local-Time Library Use</h4>
-<div class="outline-text-4" id="text-org54c52ac">
+<div id="outline-container-org35b93e1" class="outline-4">
+<h4 id="org35b93e1">Local-Time Library Use</h4>
+<div class="outline-text-4" id="text-org35b93e1">
 <p>
 For those who want to use local-time, to enable the local-time reader:
 </p>

@@ -1517,7 +1517,7 @@ Example:
    :PROPERTIES:
    :CUSTOM_ID: macro-query-dao
    :END:
-→ list
+→ list of daos
 
 Execute the given query (which can be either a string or an S-SQL expression)
 and return the result as DAOs of the given type. If the query contains
@@ -1529,7 +1529,7 @@ class, or be bound through with-column-writers.
    :PROPERTIES:
    :CUSTOM_ID: function-do-query-dao
    :END:
-→ list
+→ list of daos
 
 Like query-dao, but iterates over the results rather than returning them.
 For each matching DAO, body is evaluated with type-var bound to the instance.
@@ -1698,6 +1698,79 @@ matches the column name).
 An example of using this is to add some non-column slots to a DAO class, and use
 query-dao within a with-column-writers form to pull in extra information about
 the objects, and immediately store it in the new instances.
+
+Another example would be to convert something that is in one format in Postgresql
+e.g. a string to something else in your dao. Suppose your dao has slots that contain
+a regular list, an alist and a plist but for whatever reason the data is stored in
+Postgresql as text:
+#+begin_src lisp
+(defclass listy ()
+  ((id :col-type integer :col-identity t :accessor id)
+   (name :col-type text :col-unique t :col-check (:<> 'name "")
+         :initarg :name :accessor name)
+   (rlist :col-type text :initarg :rlist :accessor rlist)
+   (alist :col-type text :initarg :alist :accessor alist)
+   (plist :col-type text :initarg :plist :accessor plist))
+  (:metaclass dao-class)
+  (:table-name listy))
+#+end_src
+* Dao Export and Import Functions (Postmodern v. 1.33.1 and newer)
+   :PROPERTIES:
+   :CUSTOM_ID: dao-export-and-import-functions
+   :END:
+There may be times when the values in a dao slot do not have comparable types in Postgresql. For example, assume you have slots that you want to contain lists. Postgresql does not have a "list" data type. Postgresql arrays must be homogeneous but CL lists do not have that limitation. What to do?
+
+One method would be to use text columns or jsonb columns in Postgresql and have functions that convert as necessary going back and forth. In the following examples we will use text columns in Postgresql and write CL list data to string when we "export" the data to Postgresql and then convert from string when we "import" the data from Postgresql into a dao-class instance.
+
+Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import which refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot.
+#+begin_src lisp
+(defclass listy ()
+  ((id :col-type integer :col-identity t :accessor id)
+   (name :col-type text :col-unique t :col-check (:<> 'name "")
+         :initarg :name :accessor name)
+   (rlist :type list :col-type (or text db-null) :initarg :rlist :accessor rlist
+          :col-export list-to-string :col-import dao-string-to-list)
+   (alist :type alist :col-type (or text db-null) :initarg :alist :accessor alist
+          :col-export list-to-string :col-import dao-string-to-alist)
+   (plist :type plist :col-type (or text db-null) :initarg :plist :accessor plist
+          :col-export list-to-string :col-import dao-string-to-plist))
+  (:metaclass dao-class)
+  (:table-name listy))
+#+end_src
+Now we need to define the import functions, paying attention to how we want to handle :NULL values. The export function needs to accept a dao-class object, the value that we are converting from the Postgresql type to the CL type we want in the slot and it will need to be hard coded to that slot.
+#+begin_src lisp
+(defun string-to-list (str)
+  "Take a string representation of a list and return an lisp list.
+Note that you need to handle :NULLs - I am making them unbound in this example"
+  (cond ((eq str :NULL)
+         :NULL)
+        (str
+         (with-input-from-string (s str) (read s)))
+        (t nil)))
+
+(defun dao-string-to-list (dao str)
+  (if (eq str :NULL)
+      (slot-makunbound dao 'rlist)
+      (setf (slot-value dao 'rlist)
+            (string-to-list str))))
+
+(defun dao-string-to-alist (dao str)
+  (if (eq str :NULL)
+      (slot-makunbound dao 'alist)
+      (setf (slot-value dao 'alist)
+            (string-to-list str))))
+
+(defun dao-string-to-plist (dao str)
+  (if (eq str :NULL)
+      (slot-makunbound dao 'plist)
+      (setf (slot-value dao 'plist)
+            (string-to-list str))))
+#+end_src
+And now we need to define the export function. In our example we are just going to be using format to write the CL value to a string. You are responsible for writing an export function that does what you need. This example just tells Postgresql to insert a string "unknown" if the slot value is not a list. You would need more error checking and condition handling.
+#+begin_src lisp
+(defun list-to-string (str)
+  (if (listp str) (format nil "~a" str) "unknown"))
+#+end_src
 
 * Table definition and creation using a dao
   :PROPERTIES:

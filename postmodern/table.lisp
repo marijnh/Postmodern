@@ -153,10 +153,22 @@ Returns a symbol."))
 
 (defun dao-column-slots (class)
   "Enumerate the slots in a class that refer to table rows."
-  (mapcar 'slot-column
+  (cond ((closer-mop:classp class)
+         (mapcar 'slot-column
           (remove-if-not (lambda (x) (typep x 'effective-column-slot))
                          (class-slots class))))
+        ((symbolp class)
+         (mapcar 'slot-column
+          (remove-if-not (lambda (x) (typep x 'effective-column-slot))
+                         (class-slots (find-class class)))))
+        ((typep class 'dao-class)
+         (mapcar 'slot-column
+          (remove-if-not (lambda (x) (typep x 'effective-column-slot))
+                         (class-slots (class-of class)))))
+        (t nil)))
+
 (defun dao-column-fields (class)
+  "Returns a list of symbols of the names of the slots in a class."
   (mapcar 'slot-definition-name (dao-column-slots class)))
 
 (defun dao-table-name (class)
@@ -214,6 +226,8 @@ such a class)."
    (col-interval :initarg :col-interval :reader column-interval)
    (col-check :initarg :col-check :reader column-check)
    (col-references :initarg :col-references :reader column-references)
+   (col-export :initarg :col-export :initform nil :reader column-export)
+   (col-import :initarg :col-import :initform nil :reader column-import)
    (ghost :initform nil :initarg :ghost :reader ghost)
    (sql-name :reader slot-sql-name))
   (:documentation "Type of slots that refer to database columns."))
@@ -384,6 +398,86 @@ Returns dao if there were unbound slots with default values, nil otherwise."))
 (defun %eval (code)
   (funcall (compile nil `(lambda () ,code))))
 
+(defun set-to-class (class)
+  "Take an imput that may be a symbol, actual class or dao object and returns the actual class."
+  (cond ((symbolp class)
+         (find-class class))
+        ((closer-mop:classp class)
+         class)
+        ((typep (class-of class) 'dao-class)
+         (class-of class))
+        (t nil)))
+
+(defun find-dao-column-slot (class column-name)
+  "Given a class and a symbol returns the dao-column-slot class for the column
+named by that symbol (not the sql_column_name)."
+  (setf class (set-to-class class))
+  (find column-name (dao-column-slots class) :key #'slot-definition-name))
+
+(defun col-type-text-p (column-slot)
+  "Returns t if a column-slot has text as a type. Could be text or (or text db-null)"
+  (when (and column-slot (typep column-slot 'direct-column-slot))
+    (let ((col-type (column-type column-slot)))
+      (cond ((and (listp col-type) (member 'text col-type))
+             t)
+            ((eq col-type 'text)
+             t)
+            (t nil)))))
+
+(defun find-col-type (class column-name)
+  "Returns the col-type for a class and a column-name.
+The column name must be a symbol"
+  (setf class (set-to-class class))
+  (when class
+    (let ((column-slot (find-dao-column-slot class column-name)))
+     (if column-slot
+         (column-type column-slot)
+         nil))))
+
+(defun find-export-function (class column-name)
+  "Returns the export function, if any, for a class and a column-name.
+Column name must be a symbol"
+  (setf class (set-to-class class))
+  (when class
+    (let ((column-slot (find-dao-column-slot class column-name)))
+     (if column-slot
+         (column-export column-slot)
+         nil))))
+
+(defun collect-export-functions (class)
+  "Collects the export functions for a class (if any) and returns a list of lists of form
+ (sql_name_of_field . export-function)"
+  (setf class (set-to-class class))
+  (loop for x in (dao-column-slots class)
+        when (column-export x)
+          collect
+        (cons (slot-sql-name x) (fdefinition (column-export x)))))
+
+(defun collect-import-functions (class)
+    "Collects the export functions for a class (if any) and returns a list of lists of form
+ (sql_name_of_field . export-function)"
+  (setf class (set-to-class class))
+  (loop for x in (dao-column-slots class)
+        when (column-import x)
+          collect
+        (cons (slot-sql-name x) (fdefinition (column-import x)))))
+
+(defun find-import-function (class column-name)
+  "Returns the export function, if any, for a class and a column-name.
+Column name must be a symbol"
+  (cond ((symbolp class)
+         (setf class (find-class class)))
+        ((closer-mop:classp class)
+         class)
+        ((typep (class-of class) 'dao-class)
+         (setf class (class-of class)))
+        (t (setf class nil)))
+  (when class
+    (let ((column-slot (find-dao-column-slot class column-name)))
+     (if column-slot
+         (column-import column-slot)
+         nil))))
+
 (defun build-dao-methods (class)
   "Synthesise a number of methods for a newly defined DAO class.
 \(Done this way because some of them are not defined in every
@@ -417,7 +511,13 @@ or accessor or reader.)"
                        :append (list (field-sql-name field) '$$)))
                (slot-values (object &rest slots)
                  (loop :for slot :in (apply 'append slots)
-                       :collect (slot-value object slot))))
+                       :collect ;(slot-value object slot)
+                       (if (and (slot-boundp object slot)
+                                (slot-value object slot)
+                                (find-export-function object slot))
+                           (funcall  (find-export-function object slot)
+                                     (slot-value object slot))
+                           (slot-value object slot)))))
         ;; When there is no primary key, a lot of methods make no sense.
         (when key-fields
           (let ((tmpl (sql-template `(:select (:exists (:select t :from ,table-name
@@ -467,7 +567,8 @@ or accessor or reader.)"
         (defmethod insert-dao ((object ,class))
           (let (bound unbound)
             (loop :for field :in fields
-                  :do (if (slot-boundp object field)
+                  :do
+                     (if (slot-boundp object field)
                           (push field bound)
                           (push field unbound)))
             (let* ((fields (remove-if (lambda (x) (member x ghost-fields))
@@ -476,7 +577,13 @@ or accessor or reader.)"
                            `(:insert-into ,table-name
                              :set ,@(loop for field in fields
                                           collect (field-sql-name field)
-                                          collect (slot-value object field))
+                                          collect
+                                          (if (and (slot-boundp object field)
+                                                   (slot-value object field)
+                                                   (col-type-text-p
+                                                    (find-dao-column-slot object field)))
+                                              (format nil "~a" (slot-value object field))
+                                              (slot-value object field)))
                              ,@(when unbound (cons :returning
                                                    (mapcar #'field-sql-name
                                                            unbound))))))
@@ -549,7 +656,8 @@ about the objects, and immediately store it in the new instances."
           :for writer := (cdr (assoc (field-name field)
                                      column-map
                                      :test #'string=))
-          :do (etypecase writer
+          :do
+             (etypecase writer
                 (null (if *ignore-unknown-columns*
                           (funcall result-next-field-generator-fn field)
                           (error "No slot named ~a in class ~a. DAO out of sync with table, or incorrect query used."
@@ -564,9 +672,12 @@ about the objects, and immediately store it in the new instances."
 (defun dao-row-reader (class)
   "Defines a row-reader for objects of a given class."
   (row-reader (query-fields)
-    (let ((column-map (append *custom-column-writers* (dao-column-map class))))
+    (let ((column-map (append *custom-column-writers*
+                              (collect-import-functions class)
+                              (dao-column-map class))))
       (loop :while (next-row)
             :collect (dao-from-fields class column-map query-fields #'next-field)))))
+
 
 (defun save-dao (dao)
   "Tries to insert the given dao using insert-dao. If the dao has unbound slots,
@@ -708,6 +819,12 @@ Example:
                (dao-row-reader-with-body (,type ,type-var)
                  ,@body)))
 
+(defun list-to-column (col-type)
+  "If a col-type is a list, alist or plist, will set the Postgresql column to text."
+  (if (member col-type '(list alist plist))
+      'text
+    col-type))
+
 (defun dao-table-definition (table)
   "Given a DAO class, or the name of one, this will produce an SQL query
 string with a definition of the table. This is just the bare simple definition,
@@ -728,7 +845,7 @@ own queries to add them, in which case look to s-sql's create-table function."
                    ,(loop :for slot :in (dao-column-slots table)
                           :unless (ghost slot)
                             :collect `(,(slot-definition-name slot)
-                                       :type ,(column-type slot)
+                                       :type ,(list-to-column (column-type slot))
                                        ,@(cond ((slot-boundp slot 'col-identity)
                                                 `(:primary-key "generated always as identity"))
                                                ((slot-boundp slot 'col-primary-key)

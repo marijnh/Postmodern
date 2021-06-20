@@ -1,3 +1,5 @@
+# Changelog v. 1.33.1
+
 # Changelog v. 1.33.0
 This version of Postmodern now provides the ability to pass parameters to Postgresql in binary format IF that format is available for that datatype. Currently this means int2, int4, int8, float, double-float (except clisp) and boolean. Rational numbers continue to be passed as text.
 

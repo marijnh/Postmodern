@@ -636,14 +636,14 @@ You can specify the type and Postgresql will attempt to follow that:
 #+begin_src lisp
 (query "select $1::integer" 1 :single)
 1
-#+END_SRC
+#+end_src
 As of version 1.33, Postmodern provides an optional setting in the database connection object which will cause Postmodern to pass parameters to Postgresql in binary format if that format is available for that datatype. Currently this means int2, int4, int8, float, double-float (except clisp) and boolean. Rational numbers continue to be passed as text.
 
 The default for cl-postgres/Postmodern is to continue to pass parameters to Postgresql as text (not in binary format) in order to avoid breaking existing user code. If you want to pass parameters to Postgresql in binary format, you can either provide the keyword parameter :use-binary in creating a connection like so:
 #+begin_src lisp
   (connect "test-db" "test-user" "test-password" "192.168.5.223"
            :port 5434 :pooled-p t :use-ssl try :application-name "test-app" :use-binary t)
-#+end_src:
+#+end_src
 or use the postmodern =with-connection= macro:
 #+begin_src lisp
   (with-connection '("database-name" "user-name" "user-password" "localhost or IP address"
