@@ -280,48 +280,34 @@ Consider the following dao-class definition. We have added additional column key
    (name :col-type text :col-unique t :col-check (:<> 'name "")
          :initarg :name :accessor name)
    (rlist :type list :col-type (or text db-null) :initarg :rlist :accessor rlist
-          :col-export list-to-string :col-import dao-string-to-list)
+          :col-export list-to-string :col-import string-to-list)
    (alist :type alist :col-type (or text db-null) :initarg :alist :accessor alist
-          :col-export list-to-string :col-import dao-string-to-alist)
+          :col-export list-to-string :col-import string-to-alist)
    (plist :type plist :col-type (or text db-null) :initarg :plist :accessor plist
-          :col-export list-to-string :col-import dao-string-to-plist))
+          :col-export list-to-string :col-import string-to-plist))
   (:metaclass dao-class)
   (:table-name listy))
 #+end_src
-Now we need to define the import functions. The import function must be provided three parameters:
-
-- The actual dao object
-- The field or slot name
-- The value it is going to be receiving from the database query
-
-When writing your import functions, pay attention to how you want to handle nil or :NULL values
-as well as how you might want to error check the conversion from a Postgresql datatype to a CL datatype.
+Now we need to define the import functions. When writing your import functions, pay attention to how you want to handle nil or :NULL values as well as how you might want to error check the conversion from a Postgresql datatype to a CL datatype.
 #+begin_src lisp
   (defun string-to-list (str)
-    "This is just a helper function for the import function. Take a string representation of a list
-     and returns an lisp list. :NULL is just passed on and anything else I have decided should just be nil."
+    "Take a string representation of a list and return a lisp list.
+  Note that you need to handle :NULLs.
+  Field needs to be a symbol"
     (cond ((eq str :NULL)
            :NULL)
           (str
-           (with-input-from-string (s str) (read s)))
+           (with-input-from-string (s str)
+             (read s)))
           (t nil)))
-
-  (defun dao-string-to-list (dao field val)
-    "Field needs to be a symbol. In this example if I am getting a :NULL back from the database with respect
-     to a particular column I am making the slot unbound. You should choose the appropriate response for your application."
-    (if (eq val :NULL)
-        (slot-makunbound dao field) ; Do we really want to make the field unbound for every :NULL?
-        (setf (slot-value dao field)
-              (string-to-list val))))
-
-  (defun list-to-string (str)
-    (if (listp str)
-        (format nil "~a" str) "unknown"))
 #+end_src
 And now we need to define the export function. In our example we are just going to be using format to write the CL value to a string. You are responsible for writing an export function that does what you need. This example just tells Postgresql to insert a string "unknown" if the slot value is not a list. You would need more error checking and condition handling.
 #+begin_src lisp
-(defun list-to-string (val)
-  (if (listp val) (format nil "~a" val) "unknown"))
+  (defun list-to-string (val)
+    "Simply uses (format ..) to write a list out as a string"
+    (if (listp val)
+        (format nil "~a" val)
+        "unknown"))
 #+end_src
 
 ** method dao-keys (class)

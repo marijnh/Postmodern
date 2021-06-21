@@ -690,10 +690,10 @@ about the objects, and immediately store it in the new instances."
                            (if (and import-function-symbol
                                     (eq writer
                                         (fdefinition import-function-symbol)))
-                               (funcall writer instance
-                                        (field-name-to-slot-name
-                                         class (field-name field))
-                                        (funcall result-next-field-generator-fn field))
+                               (setf (slot-value instance (field-name-to-slot-name
+                                                           class (field-name field)))
+                                     (funcall writer
+                                              (funcall result-next-field-generator-fn field)))
                                (funcall writer instance
                                         (funcall result-next-field-generator-fn field)))))))
     (initialize-instance instance)

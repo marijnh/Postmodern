@@ -737,11 +737,11 @@ in =dao-table-definition= in creating tables."
    (name :col-type text :col-unique t :col-check (:<> 'name "")
          :initarg :name :accessor name)
    (r-list :type list :col-type (or text db-null) :initarg :r-list :accessor r-list
-          :col-export list-to-string :col-import dao-string-to-list)
+          :col-export list-to-string :col-import string-to-list)
    (a-list :type alist :col-type (or text db-null) :initarg :a-list :accessor a-list
-          :col-export list-to-string :col-import dao-string-to-list)
+          :col-export list-to-string :col-import string-to-list)
    (p-list :type plist :col-type (or text db-null) :initarg :p-list :accessor p-list
-          :col-export list-to-string :col-import dao-string-to-list))
+          :col-export list-to-string :col-import string-to-list))
   (:metaclass dao-class)
   (:table-name listy))
 
@@ -770,18 +770,15 @@ in =dao-table-definition= in creating tables."
      (unwind-protect (progn ,@body)
        (execute (:drop-table :if-exists 'listy :cascade)))))
 
-(defun dao-string-to-list (dao field str)
+(defun string-to-list (str)
   "Take a string representation of a list and return a lisp list.
-Note that you need to handle :NULLs - I am making them unbound in this example.
+Note that you need to handle :NULLs.
 Field needs to be a symbol"
-  (if (eq str :NULL)
-      (slot-makunbound dao field) ; Do we really want to make the field unbound for every :NULL?
-      (setf (slot-value dao field)
-            (cond ((eq str :NULL)
-                   :NULL)
-                  (str
-                   (with-input-from-string (s str) (read s)))
-                  (t nil)))))
+  (cond ((eq str :NULL)
+         :NULL)
+        (str
+         (with-input-from-string (s str) (read s)))
+        (t nil)))
 
 (defun list-to-string (str)
   (if (listp str) (format nil "~a" str) "unknown"))
@@ -851,7 +848,8 @@ Field needs to be a symbol"
                  '((A 1) (B 2) (C 3))))
       (is (equal (r-list (get-dao 'listy 2))
                  '(A B C)))
-      (signals error (a-list (get-dao 'listy 2))))))
+      (is (equal (a-list (get-dao 'listy 2))
+                 :NULL)))))
 
 (test dao-get-with-bad-import
   (with-test-connection
@@ -887,7 +885,8 @@ Field needs to be a symbol"
                  '(A B C)))
       (is (equal (p-list (first (query-dao 'listy "select * from listy where id=2")))
                  '(A 1 B 2 C 3)))
-      (signals error (a-list (first (query-dao 'listy "select * from listy where id=2")))))))
+      (is (equal (a-list (first (query-dao 'listy "select * from listy where id=2")))
+                 :NULL)))))
 
 ;; update a table from a modified dao
 (test dao-update-export
@@ -935,11 +934,11 @@ Field needs to be a symbol"
    (name :col-type text :col-unique t :col-check (:<> 'name "")
          :initarg :name :accessor name)
    (r-list :type list :col-type (or text db-null) :initarg :r-list :accessor rlist
-           :col-export list-to-string :col-import dao-string-to-list)
+           :col-export list-to-string :col-import string-to-list)
    (a-list :type alist :col-type (or text db-null) :initarg :a-list :accessor alist
-           :col-export list-to-string :col-import dao-string-to-list)
+           :col-export list-to-string :col-import string-to-list)
    (p-list :type plist :col-type (or text db-null) :initarg :p-list :accessor plist
-           :col-export list-to-string :col-import dao-string-to-list))
+           :col-export list-to-string :col-import string-to-list))
   (:metaclass dao-class)
   (:table-name listy))
 
@@ -1003,7 +1002,8 @@ Field needs to be a symbol"
                  '((A 1) (B 2) (C 3))))
       (is (equal (rlist (get-dao 'listy-modified-accessor 2))
                  '(A B C)))
-      (signals error (alist (get-dao 'listy-modified-accessor 2))))))
+      (is (equal (alist (get-dao 'listy-modified-accessor 2))
+                 :NULL)))))
 
 (test select-dao-with-import-modified
   (with-test-connection
@@ -1038,9 +1038,10 @@ Field needs to be a symbol"
                   (first
                    (query-dao 'listy-modified-accessor "select * from listy where id=2")))
                  '(A 1 B 2 C 3)))
-      (signals error (alist
-                      (first
-                       (query-dao 'listy-modified-accessor "select * from listy where id=2")))))))
+      (is (equal (alist
+                  (first
+                   (query-dao 'listy-modified-accessor "select * from listy where id=2")))
+                 :NULL)))))
 
 ;; update a table from a modified dao
 (test dao-update-export-modified
@@ -1092,11 +1093,11 @@ Field needs to be a symbol"
    (name :col-type text :col-unique t :col-check (:<> 'name "")
          :initarg :name :accessor name)
    (r_list :type list :col-type (or text db-null) :initarg :r_list :accessor rlist
-           :col-export list-to-string :col-import dao-string-to-list)
+           :col-export list-to-string :col-import string-to-list)
    (a_list :type alist :col-type (or text db-null) :initarg :a_list :accessor alist
-           :col-export list-to-string :col-import dao-string-to-list)
+           :col-export list-to-string :col-import string-to-list)
    (p_list :type plist :col-type (or text db-null) :initarg :p_list :accessor plist
-           :col-export list-to-string :col-import dao-string-to-list))
+           :col-export list-to-string :col-import string-to-list))
   (:metaclass dao-class)
   (:table-name listy))
 
@@ -1160,7 +1161,8 @@ Field needs to be a symbol"
                  '((A 1) (B 2) (C 3))))
       (is (equal (rlist (get-dao 'listy-underscore 2))
                  '(A B C)))
-      (signals error (alist (get-dao 'listy-underscore 2))))))
+      (is (equal (alist (get-dao 'listy-underscore 2))
+                 :NULL)))))
 
 (test select-dao-with-import-underscore
   (with-test-connection
@@ -1195,9 +1197,11 @@ Field needs to be a symbol"
                   (first
                    (query-dao 'listy-underscore "select * from listy where id=2")))
                  '(A 1 B 2 C 3)))
-      (signals error (alist
-                      (first
-                       (query-dao 'listy-underscore "select * from listy where id=2")))))))
+      (is (equal
+           (alist
+             (first
+              (query-dao 'listy-underscore "select * from listy where id=2")))
+           :NULL)))))
 
 ;; update a table from a underscore dao
 (test dao-update-export-underscore

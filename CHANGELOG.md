@@ -1,4 +1,49 @@
 # Changelog v. 1.33.1
+Dao Export and Import Functions (Postmodern v. 1.33.1 and newer)
+
+There may be times when the types of values in a dao slot do not have comparable types in Postgresql. For purposes of the following example, assume you have slots that you want to contain lists. Postgresql does not have a "list" data type. Postgresql arrays must be homogeneous but CL lists do not have that limitation. What to do?
+
+One method would be to use text columns or jsonb columns in Postgresql and have functions that convert as necessary going back and forth. In the following example we will use text columns in Postgresql and write CL list data to string when we "export" the data to Postgresql and then convert from string when we "import" the data from Postgresql into a dao-class instance.
+
+Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import which refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot.
+
+```lisp
+    (defclass listy ()
+      ((id :col-type integer :col-identity t :accessor id)
+       (name :col-type text :col-unique t :col-check (:<> 'name "")
+             :initarg :name :accessor name)
+       (rlist :type list :col-type (or text db-null) :initarg :rlist :accessor rlist
+              :col-export list-to-string :col-import string-to-list)
+       (alist :type alist :col-type (or text db-null) :initarg :alist :accessor alist
+              :col-export list-to-string :col-import string-to-alist)
+       (plist :type plist :col-type (or text db-null) :initarg :plist :accessor plist
+              :col-export list-to-string :col-import string-to-plist))
+      (:metaclass dao-class)
+      (:table-name listy))
+```
+
+Now we need to define the import functions. When writing your import functions, pay attention to how you want to handle nil or :NULL values as well as how you might want to error check the conversion from a Postgresql datatype to a CL datatype.
+
+```lisp
+    (defun string-to-list (str)
+      "Take a string representation of a list and return a lisp list.
+    Note that you need to handle :NULLs. Field needs to be a symbol"
+      (cond ((eq str :NULL)
+             :NULL)
+            (str
+             (with-input-from-string (s str) (read s)))
+            (t nil)))
+```
+
+And now we need to define the export function. In our example we are just going to be using format to write the CL value to a string. You are responsible for writing an export function that does what you need. This example just tells Postgresql to insert a string "unknown" if the slot value is not a list. You would need more error checking and condition handling.
+
+```lisp
+    (defun list-to-string (val)
+      "Simply uses (format ..) to write a list out as a string"
+      (if (listp val)
+          (format nil "~a" val)
+          "unknown"))
+```
 
 # Changelog v. 1.33.0
 This version of Postmodern now provides the ability to pass parameters to Postgresql in binary format IF that format is available for that datatype. Currently this means int2, int4, int8, float, double-float (except clisp) and boolean. Rational numbers continue to be passed as text.
@@ -7,6 +52,7 @@ The flag is set in the database connection object. (Thank you Cyrus Harmon for s
 
 If a query to Postgresql does not have a table column which would allow Postgresql to determine the correct datatype and you do not specify differently, Postgresql will treat the parameters passed with the query as text. The default text setting with results:
 
+```lisp
     (query "select $1" 1 :single)
     "1"
     (query "select $1" 1.5 :single)
@@ -17,14 +63,18 @@ If a query to Postgresql does not have a table column which would allow Postgres
     "false"
     (query "select $1" :NULL :single)
     :NULL
+```
 
 You can specify parameter type as so:
 
+```lisp
     (query "select $1::integer" 1 :single)
     1
+```
 
 Setting the use-binary slot in the database connection object to t has the following results:
 
+```lisp
     (query "select $1" 1 :single)
     1
     (query "select $1" 1.5 :single)
@@ -35,21 +85,25 @@ Setting the use-binary slot in the database connection object to t has the follo
     NIL
     (query "select $1" :NULL :single)
     :NULL
+```
 
 The default for cl-postgres/Postmodern is to continue to pass parameters to Postgresql as text (not in binary format) in order to avoid breaking existing user code. If you want to pass parameters to Postgresql in binary format and want to set that up when you are making the database connection, the following examples may help. We continue the difference in the signatures (cl-postgres using optional parameters and postmodern using keyword parameters) because of the expected downstream breakage if we shifted cl-postgres:open-database to using keyword parameters.
 
 The signature for opening a database in cl-postgres:
 
+```lisp
     (defun open-database (database user password host
                           &optional (port 5432) (use-ssl :no)
                           (service "postgres") (application-name "")
                           (use-binary nil))
         ...)
+```
 
 or your favorite macro.
 
 In postmodern you have the connect function or the with-connection macro:
 
+```lisp
     (defun connect (database-name user-name password host
                     &key (port 5432) pooled-p
                     (use-ssl *default-use-ssl*)
@@ -62,12 +116,15 @@ In postmodern you have the connect function or the with-connection macro:
       `(let ((*database* (apply #'connect ,spec)))
          (unwind-protect (progn ,@body)
            (disconnect *database*))))
+```
 
 In any case, you can set the flag after the connection is established with the use-binary-parameters function:
 
+```lisp
     (pomo:use-binary-parameters *database* t)
 
     (cl-postgres:use-binary-parameters some-database-connection t)
+```
 
 Using binary parameters does tighten type checking when using prepared queries. You will not be able to use prepared queries with varying formats. In other words, if you have a prepared query that you pass an integer as the first parameter and a string as the second parameter the first time it is used, any subsequent uses of that prepared query during that session will also have to pass an integer as the first parameter and a string as the second parameter.
 
@@ -75,13 +132,15 @@ Benchmarking does indicate a slight speed and consing benefit to passing paramet
 
 In addition, this version also adds the ability to have queries returned as vectors of vectors, using a vectors keyword.
 
+```lisp
     (query "select id, some_int, some_text from tests_data :where id = 1" :vectors)
-    or
+;; or
     (query (:select 'id 'some-int 'some-text :from 'test-data)
          :vectors)
     #(#(1 2147483645 "text one")
       #(2 0 "text two")
       #(3 3 "text three"))
+```
 
 Like :array-hash, if there is no result it will return an empty array, not nil.
 # Changelog v. 1.32.9
@@ -117,6 +176,7 @@ S-SQL Enhancements
 ## :Update
 without the :columns parameter, :update requires alternating column value like so:
 
+```lisp
     (query (:update 'weather
             :set 'temp-lo (:+ 'temp-lo 1)
                  'temp-hi (:+ 'temp-lo 15)
@@ -124,9 +184,11 @@ without the :columns parameter, :update requires alternating column value like s
             :where (:and (:= 'city "San Francisco")
                          (:= 'date "2003-07-03"))
             :returning 'temp-lo 'temp-hi 'prcp))
+```
 
 :update now accepts a :columns parameter. This allows the use of either :set or :select (both of which need to be enclosed in a form) to provide the values, allowing update queries like:
 
+```lisp
     (query (:update 'weather
             :columns 'temp-lo 'temp-hi 'prcp
                      (:set (:+ 'temp-lo 1)  (:+ 'temp-lo 15) :DEFAULT)
@@ -138,16 +200,19 @@ without the :columns parameter, :update requires alternating column value like s
                      (:select 'x.datname 'x.encoding
                      :from (:as 'pg-database 'x)
                      :where (:= 'x.oid 't1.oid))))
+```
 
 ## :Insert-into
 Insert-into also now accepts a :columns parameter which allows more precise use of select to insert values into specific row(s). A sample query could look like:
 
+```lisp
     (query (:insert-into 't11
             :columns 'region 'subregion 'country
             (:select (:as 'region-name 'region)
                      (:as 'sub-region-name 'subregion)
                      'country
              :from 'regions)))
+```
 
 ## Joins
 ### Lateral Joins
@@ -163,6 +228,7 @@ Joins are now expanded to include lateral joins. So addition join types are
 ### Ordinality
 Selects can now use :with-ordinality or :with-ordinality-as parameters. Postgresql will give the new ordinality column the name of ordinality. :with-ordinality-as allows you to set different names for the columns in the result set.
 
+```lisp
     (query (:select '*
             :from (:generate-series 4 1 -1)
             :with-ordinality))
@@ -171,7 +237,7 @@ Selects can now use :with-ordinality or :with-ordinality-as parameters. Postgres
     (query (:select 't1.*
             :from (:json-object-keys "{\"a1\":\"1\",\"a2\":\"2\",\"a3\":\"3\"}")
             :with-ordinality-as (:t1 'keys 'n)
-
+```
 
 ## New Utility copy-from-csv
 Just a convenience function. It runs the psql copy command from inside lisp using uiop:run-program
