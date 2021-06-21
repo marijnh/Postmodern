@@ -22,7 +22,6 @@ extensions like lispy SQL and database access objects in a quite different way.
 This library was written because the CLSQL approach did not really work for
 me. Your mileage may vary.
 
-
 * Dependencies
   :PROPERTIES:
   :ID:       216c43d0-57ff-4ae3-a302-6d04a3d79665
@@ -195,7 +194,7 @@ That last argument, :single, indicates that we want the result not as a list
 of lists (for the result rows), but as a single value, since we know that we
 are only selecting one value. Some other options are :rows, :row, :column, :alists,
 :plists, :array-hash, :json-strs, :json-str, :json-array-str, :dao and :none.
-Their precise effect is documented in the [[file:postmodern.html][Postmodern reference manual under [[file:postmodern.html#querying][Queries
+Their precise effect is documented in the [[file:postmodern.html][Postmodern reference manual]] under [[file:postmodern.html#querying][Queries]]
 
 You do not have to pull in the whole result of a query at once, you can
 also iterate over it with the doquery macro:
@@ -532,14 +531,18 @@ types included in Postmodern, and the CL-postgres reference might be useful
 if you just want a low-level library for talking to a PostgreSQL server.
 
 - [[file:postmodern.html][Postmodern]]
-
 - [[file:s-sql.html][S-SQL]]
+- [[file:simple-date.html][Simple-date]]
+- [[file:cl-postgres.html][CL-postgres]]
+
+Some specific topics in more detail
 
 - [[file:array-notes.html][Array-Notes]]
-
-- [[file:simple-date.html][Simple-date]]
-
-- [[file:cl-postgres.html][CL-postgres]]
+- [[file:create-tables.html][Creating Tables]]
+- [[file:dao-classes.html][Database Access Object (Dao) Classes]]
+- [[file:dynamic-queries.html][Dynamic Queries]]
+- [[file:interval-notes.html][Interval Notes]]
+- [[file:isolation-notes.html][Isolation Notes]]
 
 * Data Types
   :PROPERTIES:
@@ -578,7 +581,7 @@ values to that scale. For more detail, see https://www.postgresql.org/docs/curre
 | PG Type          | Sample Postmodern Return Value                                              | Lisp Type (per sbcl)                 |
 |------------------+-----------------------------------------------------------------------------+--------------------------------------|
 | boolean          | T                                                                           | BOOLEAN                              |
-| boolean          | NIL  *Note: within Postgresql this will show 'f'                            | BOOLEAN                              |
+| boolean          | NIL  (Note: within Postgresql this will show 'f')                           | BOOLEAN                              |
 | int2             | 273                                                                         | (INTEGER 0 4611686018427387903)      |
 | int4             | 2                                                                           | (INTEGER 0 4611686018427387903)      |
 | char             | A                                                                           | (VECTOR CHARACTER 64)                |

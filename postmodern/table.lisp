@@ -408,12 +408,6 @@ Returns dao if there were unbound slots with default values, nil otherwise."))
          (class-of class))
         (t nil)))
 
-(defun find-dao-column-slot (class column-name)
-  "Given a class and a symbol returns the dao-column-slot class for the column
-named by that symbol (not the sql_column_name)."
-  (setf class (set-to-class class))
-  (find column-name (dao-column-slots class) :key #'slot-definition-name))
-
 (defun col-type-text-p (column-slot)
   "Returns t if a column-slot has text as a type. Could be text or (or text db-null)"
   (when (and column-slot (typep column-slot 'direct-column-slot))
@@ -434,10 +428,14 @@ The column name must be a symbol"
          (column-type column-slot)
          nil))))
 
+;; Note: Export functions need only take a value parameter and return
+;; a value parameter
+
 (defun find-export-function (class column-name)
   "Returns the export function, if any, for a class and a column-name.
 Column name must be a symbol"
   (setf class (set-to-class class))
+  (when (stringp column-name) (setf column-name (from-sql-name column-name)))
   (when class
     (let ((column-slot (find-dao-column-slot class column-name)))
      (if column-slot
@@ -451,32 +449,55 @@ Column name must be a symbol"
   (loop for x in (dao-column-slots class)
         when (column-export x)
           collect
-        (cons (slot-sql-name x) (fdefinition (column-export x)))))
+          (cons (slot-sql-name x) (fdefinition (column-export x)))))
+
+;; Note: Import functions need to take a dao, a slot-name
+;; and the imported value
+
+(defun find-import-function (class column-name)
+  "Returns the import function, if any, for a class and a column-name.
+Column name must be a symbol"
+  (setf class (set-to-class class))
+  (when class
+    (when (stringp column-name)
+      (setf column-name (field-name-to-slot-name class column-name)))
+    (when column-name
+      (let ((col-slot (find-dao-column-slot class column-name)))
+       (if col-slot
+           (column-import col-slot)
+           nil)))))
 
 (defun collect-import-functions (class)
-    "Collects the export functions for a class (if any) and returns a list of lists of form
+  "Collects the import functions for a class (if any) and returns a list of lists of form
  (sql_name_of_field . export-function)"
   (setf class (set-to-class class))
   (loop for x in (dao-column-slots class)
         when (column-import x)
           collect
-        (cons (slot-sql-name x) (fdefinition (column-import x)))))
+          (cons (slot-sql-name x) (fdefinition (column-import x)))))
 
-(defun find-import-function (class column-name)
-  "Returns the export function, if any, for a class and a column-name.
-Column name must be a symbol"
-  (cond ((symbolp class)
-         (setf class (find-class class)))
-        ((closer-mop:classp class)
-         class)
-        ((typep (class-of class) 'dao-class)
-         (setf class (class-of class)))
-        (t (setf class nil)))
-  (when class
-    (let ((column-slot (find-dao-column-slot class column-name)))
-     (if column-slot
-         (column-import column-slot)
-         nil))))
+(defun find-dao-column-slot (class column-name)
+  "Given a class and a symbol returns the dao-column-slot class for the column
+named by that symbol (not the sql_column_name)."
+  (setf class (set-to-class class))
+  (find column-name (dao-column-slots class) :key #'slot-definition-name))
+
+(defun field-name-to-slot-name (class field-name)
+  "Takes a Postgresql column name and tries to match it to a dao slot name.
+This is trying to deal with the hyphens and underscores problem."
+  (let ((slot-names (mapcar 'string-downcase (dao-column-fields class))))
+    (cond ((find field-name slot-names :test 'equal)
+           (intern (if (eq (readtable-case *readtable*) :upcase)
+                       (string-upcase field-name)
+                       field-name)))
+          ((find (cl-ppcre:regex-replace-all "_" field-name "-")
+                 slot-names
+                 :test 'equal)
+           (setf field-name (cl-ppcre:regex-replace-all "_" field-name "-"))
+           (intern (if (eq (readtable-case *readtable*) :upcase)
+                       (string-upcase field-name)
+                       field-name)))
+          (t nil))))
 
 (defun build-dao-methods (class)
   "Synthesise a number of methods for a newly defined DAO class.
@@ -515,7 +536,7 @@ or accessor or reader.)"
                        (if (and (slot-boundp object slot)
                                 (slot-value object slot)
                                 (find-export-function object slot))
-                           (funcall  (find-export-function object slot)
+                           (funcall (find-export-function object slot)
                                      (slot-value object slot))
                            (slot-value object slot)))))
         ;; When there is no primary key, a lot of methods make no sense.
@@ -580,9 +601,9 @@ or accessor or reader.)"
                                           collect
                                           (if (and (slot-boundp object field)
                                                    (slot-value object field)
-                                                   (col-type-text-p
-                                                    (find-dao-column-slot object field)))
-                                              (format nil "~a" (slot-value object field))
+                                                   (find-export-function object field))
+                                              (funcall (find-export-function object field)
+                                                       (slot-value object field))
                                               (slot-value object field)))
                              ,@(when unbound (cons :returning
                                                    (mapcar #'field-sql-name
@@ -658,19 +679,29 @@ about the objects, and immediately store it in the new instances."
                                      :test #'string=))
           :do
              (etypecase writer
-                (null (if *ignore-unknown-columns*
-                          (funcall result-next-field-generator-fn field)
-                          (error "No slot named ~a in class ~a. DAO out of sync with table, or incorrect query used."
-                                 (field-name field) (class-name class))))
-                (symbol (setf (slot-value instance writer)
-                              (funcall result-next-field-generator-fn field)))
-                (function (funcall writer instance
-                                   (funcall result-next-field-generator-fn field)))))
+               (null (if *ignore-unknown-columns*
+                         (funcall result-next-field-generator-fn field)
+                         (error "No slot named ~a in class ~a. DAO out of sync with table, or incorrect query used."
+                                (field-name field) (class-name class))))
+               (symbol (setf (slot-value instance writer)
+                             (funcall result-next-field-generator-fn field)))
+               (function (let ((import-function-symbol
+                                 (find-import-function instance (field-name field))))
+                           (if (and import-function-symbol
+                                    (eq writer
+                                        (fdefinition import-function-symbol)))
+                               (funcall writer instance
+                                        (field-name-to-slot-name
+                                         class (field-name field))
+                                        (funcall result-next-field-generator-fn field))
+                               (funcall writer instance
+                                        (funcall result-next-field-generator-fn field)))))))
     (initialize-instance instance)
     instance))
 
 (defun dao-row-reader (class)
-  "Defines a row-reader for objects of a given class."
+  "Defines a row-reader for objects of a given class. Note that query fields are the
+Postgresql column names, not the dao slot names."
   (row-reader (query-fields)
     (let ((column-map (append *custom-column-writers*
                               (collect-import-functions class)

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-06-17 Thu 10:25 -->
+<!-- 2021-06-21 Mon 15:35 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern</title>
@@ -250,8 +250,8 @@
 <ul>
 <li><a href="#e5c68251-0ca6-4f96-8d36-175cec626eeb">Timezones and Simple-Date and Local-Time</a>
 <ul>
-<li><a href="#org915f4e6">Simple-Date Library Use</a></li>
-<li><a href="#org35b93e1">Local-Time Library Use</a></li>
+<li><a href="#org3de46d1">Simple-Date Library Use</a></li>
+<li><a href="#org355dab0">Local-Time Library Use</a></li>
 </ul>
 </li>
 <li><a href="#bdf9ddb0-5f95-4807-8862-8970b35bd142">Portability</a></li>
@@ -289,7 +289,6 @@ extensions like lispy SQL and database access objects in a quite different way.
 This library was written because the CLSQL approach did not really work for
 me. Your mileage may vary.
 </p>
-
 
 <div id="outline-container-6887e7c3-c818-469a-b5f1-10a4b578b90b" class="outline-2">
 <h2 id="6887e7c3-c818-469a-b5f1-10a4b578b90b">Dependencies</h2>
@@ -542,7 +541,7 @@ That last argument, :single, indicates that we want the result not as a list
 of lists (for the result rows), but as a single value, since we know that we
 are only selecting one value. Some other options are :rows, :row, :column, :alists,
 :plists, :array-hash, :json-strs, :json-str, :json-array-str, :dao and :none.
-Their precise effect is documented in the [[<a href="postmodern.html">postmodern.html</a>][Postmodern reference manual under [[<a href="postmodern.html#querying">postmodern.html#querying</a>][Queries
+Their precise effect is documented in the <a href="postmodern.html">Postmodern reference manual</a> under <a href="postmodern.html#querying">Queries</a>
 </p>
 
 <p>
@@ -981,14 +980,22 @@ if you just want a low-level library for talking to a PostgreSQL server.
 
 <ul class="org-ul">
 <li><a href="postmodern.html">Postmodern</a></li>
-
 <li><a href="s-sql.html">S-SQL</a></li>
-
-<li><a href="array-notes.html">Array-Notes</a></li>
-
 <li><a href="simple-date.html">Simple-date</a></li>
-
 <li><a href="cl-postgres.html">CL-postgres</a></li>
+</ul>
+
+<p>
+Some specific topics in more detail
+</p>
+
+<ul class="org-ul">
+<li><a href="array-notes.html">Array-Notes</a></li>
+<li><a href="create-tables.html">Creating Tables</a></li>
+<li><a href="dao-classes.html">Database Access Object (Dao) Classes</a></li>
+<li><a href="dynamic-queries.html">Dynamic Queries</a></li>
+<li><a href="interval-notes.html">Interval Notes</a></li>
+<li><a href="isolation-notes.html">Isolation Notes</a></li>
 </ul>
 </div>
 </div>
@@ -1124,7 +1131,7 @@ values to that scale. For more detail, see <a href="https://www.postgresql.org/d
 
 <tr>
 <td class="org-left">boolean</td>
-<td class="org-left">NIL  *Note: within Postgresql this will show 'f'</td>
+<td class="org-left">NIL  (Note: within Postgresql this will show 'f')</td>
 <td class="org-left">BOOLEAN</td>
 </tr>
 
@@ -1523,9 +1530,9 @@ Now the s-sql version:
 </pre>
 </div>
 </div>
-<div id="outline-container-org915f4e6" class="outline-4">
-<h4 id="org915f4e6">Simple-Date Library Use</h4>
-<div class="outline-text-4" id="text-org915f4e6">
+<div id="outline-container-org3de46d1" class="outline-4">
+<h4 id="org3de46d1">Simple-Date Library Use</h4>
+<div class="outline-text-4" id="text-org3de46d1">
 <p>
 The Simple-date add-on library (not enabled by default)
 provides types (CLOS classes) for dates, timestamps, and intervals
@@ -1647,9 +1654,9 @@ used to convert it to proper UTC timestamp.
 </div>
 </div>
 
-<div id="outline-container-org35b93e1" class="outline-4">
-<h4 id="org35b93e1">Local-Time Library Use</h4>
-<div class="outline-text-4" id="text-org35b93e1">
+<div id="outline-container-org355dab0" class="outline-4">
+<h4 id="org355dab0">Local-Time Library Use</h4>
+<div class="outline-text-4" id="text-org355dab0">
 <p>
 For those who want to use local-time, to enable the local-time reader:
 </p>

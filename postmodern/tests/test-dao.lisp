@@ -61,7 +61,7 @@
 
 (defclass test-data-not-serial-key ()
   ((id :col-type integer :initarg :id :accessor id)
-   (username :col-type text :unique t  :initarg :username :accessor username)
+   (username :col-type text :col-unique t  :initarg :username :accessor username)
    (department-id :col-type integer :initarg :department-id :accessor department-id))
   (:metaclass dao-class)
   (:table-name users1)
@@ -69,7 +69,7 @@
 
 (defclass test-data-col-identity ()
   ((id :col-type integer :col-identity t :accessor id)
-   (username :col-type text :unique t  :initarg :username :accessor username)
+   (username :col-type text :col-unique t  :initarg :username :accessor username)
    (department-id :col-type integer :initarg :department-id :accessor department-id))
   (:metaclass dao-class)
   (:table-name users1)
@@ -77,21 +77,21 @@
 
 (defclass test-data-col-primary-key ()
   ((id :col-type integer  :accessor id)
-   (username :col-type text :col-primary-key t :unique t  :initarg :username :accessor username)
+   (username :col-type text :col-primary-key t :col-unique t  :initarg :username :accessor username)
    (department-id :col-type integer :initarg :department-id :accessor department-id))
   (:metaclass dao-class)
   (:table-name users1))
 
 (defclass test-data-col-identity-no-keys ()
   ((id :col-type integer :col-identity t :accessor id)
-   (username :col-type text :unique t  :initarg :username :accessor username)
+   (username :col-type text :col-unique t  :initarg :username :accessor username)
    (department-id :col-type integer :initarg :department-id :accessor department-id))
   (:metaclass dao-class)
   (:table-name users1))
 
 (defclass test-data-col-identity-with-references ()
   ((id :col-type integer :col-identity t :accessor id)
-   (username :col-type text :unique t :initarg :username :accessor username)
+   (username :col-type text :col-unique t :initarg :username :accessor username)
    (department-id :col-type integer :col-references ((departments id))
                   :initarg :department-id :accessor department-id))
   (:metaclass dao-class)
@@ -99,7 +99,7 @@
 
 (defclass test-data-department ()
   ((id :col-type integer :col-identity t :accessor id)
-   (department-name :col-type text :unique t :initarg :department-name :accessor department-name))
+   (department-name :col-type text :col-unique t :initarg :department-name :accessor department-name))
   (:metaclass dao-class)
   (:table-name departments))
 
@@ -270,6 +270,18 @@
   (is (equal (class-name
               (class-of (first (pomo::dao-superclasses (find-class 'test-data-col-identity)))))
                'dao-class)))
+
+(test identity-collate-check-default-unique
+  (defclass col-de ()
+    ((id :col-type integer :col-identity t :accessor id)
+     (name :col-type text :col-unique t :col-check (:<> 'name "")
+           :initarg :name :accessor name :col-collate "de_DE.utf8")
+     (data :col-type integer :col-default 12 :accessor data
+           :initarg :data))
+    (:metaclass dao-class)
+    (:table-name col-de))
+  (is (equal (dao-table-definition 'col-de)
+             "CREATE TABLE col_de (id INTEGER NOT NULL PRIMARY KEY generated always as identity, name TEXT NOT NULL UNIQUE  COLLATE \"de_DE.utf8\" CHECK (name <> E''), data INTEGER NOT NULL DEFAULT 12)")))
 
 (test insert-dao-base
   (with-test-connection
@@ -498,7 +510,7 @@ so there is a single source of type truth."
 
 (test dao-create-table-with-references
   (is (equal (dao-table-definition 'test-data-col-identity-with-references)
-             "CREATE TABLE usersr (id INTEGER NOT NULL PRIMARY KEY generated always as identity, username TEXT NOT NULL, department_id INTEGER NOT NULL REFERENCES departments(id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)"))
+             "CREATE TABLE usersr (id INTEGER NOT NULL PRIMARY KEY generated always as identity, username TEXT NOT NULL UNIQUE , department_id INTEGER NOT NULL REFERENCES departments(id) MATCH SIMPLE ON DELETE RESTRICT ON UPDATE RESTRICT)"))
   (with-test-connection
     (with-dao-test-table-fixture-references
       (progn
@@ -530,7 +542,10 @@ so there is a single source of type truth."
   (:keys a))
 
 (test dao-class-col-name
-  "Test the use of col-name in daos"
+  "Test the use of col-name in daos. In other words, you want a slot name that is
+different from the database table's column name. This tells Postmodern what that
+database table column's name when getting data from a table. This is NOT used
+in =dao-table-definition= in creating tables."
   (with-test-connection
     (execute "CREATE TEMPORARY TABLE test_col_name (aa text primary key, bb text not null, c text not null,
               \"from\" text not null, \"to\" text not null)")
@@ -721,12 +736,25 @@ so there is a single source of type truth."
   ((id :col-type integer :col-identity t :accessor id)
    (name :col-type text :col-unique t :col-check (:<> 'name "")
          :initarg :name :accessor name)
-   (rlist :type list :col-type (or text db-null) :initarg :rlist :accessor rlist
+   (r-list :type list :col-type (or text db-null) :initarg :r-list :accessor r-list
           :col-export list-to-string :col-import dao-string-to-list)
-   (alist :type alist :col-type (or text db-null) :initarg :alist :accessor alist
-          :col-export list-to-string :col-import dao-string-to-alist)
-   (plist :type plist :col-type (or text db-null) :initarg :plist :accessor plist
-          :col-export list-to-string :col-import dao-string-to-plist))
+   (a-list :type alist :col-type (or text db-null) :initarg :a-list :accessor a-list
+          :col-export list-to-string :col-import dao-string-to-list)
+   (p-list :type plist :col-type (or text db-null) :initarg :p-list :accessor p-list
+          :col-export list-to-string :col-import dao-string-to-list))
+  (:metaclass dao-class)
+  (:table-name listy))
+
+(defclass listy-bad-import-export ()
+  ((id :col-type integer :col-identity t :accessor id)
+   (name :col-type text :col-unique t :col-check (:<> 'name "")
+         :initarg :name :accessor name)
+   (r-list :type list :col-type (or text db-null) :initarg :r-list :accessor r-list
+          :col-export list1-to-string :col-import dao1-string-to-list)
+   (a-list :type alist :col-type (or text db-null) :initarg :a-list :accessor a-list
+          :col-export list-to-string :col-import dao-string-to-list)
+   (p-list :type plist :col-type (or text db-null) :initarg :p-list :accessor p-list
+          :col-export list-to-string :col-import dao-string-to-list))
   (:metaclass dao-class)
   (:table-name listy))
 
@@ -742,32 +770,18 @@ so there is a single source of type truth."
      (unwind-protect (progn ,@body)
        (execute (:drop-table :if-exists 'listy :cascade)))))
 
-(defun string-to-list (str)
-  "Take a string representation of a list and return an lisp list.
-Note that you need to handle :NULLs - I am making them unbound in this example"
-  (cond ((eq str :NULL)
-         :NULL)
-        (str
-         (with-input-from-string (s str) (read s)))
-        (t nil)))
-
-(defun dao-string-to-list (dao str)
+(defun dao-string-to-list (dao field str)
+  "Take a string representation of a list and return a lisp list.
+Note that you need to handle :NULLs - I am making them unbound in this example.
+Field needs to be a symbol"
   (if (eq str :NULL)
-      (slot-makunbound dao 'rlist)
-      (setf (slot-value dao 'rlist)
-            (string-to-list str))))
-
-(defun dao-string-to-alist (dao str)
-  (if (eq str :NULL)
-      (slot-makunbound dao 'alist)
-      (setf (slot-value dao 'alist)
-            (string-to-list str))))
-
-(defun dao-string-to-plist (dao str)
-  (if (eq str :NULL)
-      (slot-makunbound dao 'plist)
-      (setf (slot-value dao 'plist)
-            (string-to-list str))))
+      (slot-makunbound dao field) ; Do we really want to make the field unbound for every :NULL?
+      (setf (slot-value dao field)
+            (cond ((eq str :NULL)
+                   :NULL)
+                  (str
+                   (with-input-from-string (s str) (read s)))
+                  (t nil)))))
 
 (defun list-to-string (str)
   (if (listp str) (format nil "~a" str) "unknown"))
@@ -777,120 +791,455 @@ Note that you need to handle :NULLs - I am making them unbound in this example"
 (test dao-insert-export
   (with-test-connection
     (with-dao-export-import-table-fixture
-      (insert-dao (make-instance 'listy :name "first" :rlist '(a b c)
-                                        :alist '((a 1) (b 2) (c 3))
-                                        :plist '(a 1 b 2 c 3)))
-      (insert-dao (make-instance 'listy :name "second" :rlist '(a b c)
-                                        :plist '(a 1 b 2 c 3)))
-      (is (equal (query "select rlist from listy where id = 1" :single)
+      (insert-dao (make-instance 'listy :name "first" :r-list '(a b c)
+                                        :a-list '((a 1) (b 2) (c 3))
+                                        :p-list '(a 1 b 2 c 3)))
+      (insert-dao (make-instance 'listy :name "second" :r-list '(a b c)
+                                        :p-list '(a 1 b 2 c 3)))
+      (is (equal (query "select r_list from listy where id = 1" :single)
                  "(A B C)"))
-      (is (equal (query "select alist from listy where id = 1" :single)
+      (is (equal (query "select a_list from listy where id = 1" :single)
                  "((A 1) (B 2) (C 3))"))
-      (is (equal (query "select plist from listy where id = 1" :single)
+      (is (equal (query "select p_list from listy where id = 1" :single)
                  "(A 1 B 2 C 3)"))
-      (is (equal (query "select name, alist from listy where id = 2")
+      (is (equal (query "select name, a_list from listy where id = 2")
                  '(("second" :NULL)))))))
+
+(test dao-insert-bad-export
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (signals error
+        (insert-dao
+         (make-instance 'listy-bad-import-export :name "first" :r-list '(a b c)
+                                                 :a-list '((a 1) (b 2) (c 3))
+                                                 :p-list '(a 1 b 2 c 3)))))))
 
 ;; save-dao version of above
 (test dao-save-export
   (with-test-connection
     (with-dao-export-import-table-fixture
-      (save-dao (make-instance 'listy :name "first" :rlist '(a b c)
-                                      :alist '((a 1) (b 2) (c 3))
-                                      :plist '(a 1 b 2 c 3)))
-      (save-dao (make-instance 'listy :name "second" :rlist '(a b c)
-                                      :plist '(a 1 b 2 c 3)))
-      (is (equal (query "select rlist from listy where id = 1" :single)
+      (save-dao (make-instance 'listy :name "first" :r-list '(a b c)
+                                      :a-list '((a 1) (b 2) (c 3))
+                                      :p-list '(a 1 b 2 c 3)))
+      (save-dao (make-instance 'listy :name "second" :r-list '(a b c)
+                                      :p-list '(a 1 b 2 c 3)))
+      (is (equal (query "select r_list from listy where id = 1" :single)
                  "(A B C)"))
-      (is (equal (query "select alist from listy where id = 1" :single)
+      (is (equal (query "select a_list from listy where id = 1" :single)
                  "((A 1) (B 2) (C 3))"))
-      (is (equal (query "select plist from listy where id = 1" :single)
+      (is (equal (query "select p_list from listy where id = 1" :single)
                  "(A 1 B 2 C 3)"))
-      (is (equal (query "select name, alist from listy where id = 2")
+      (is (equal (query "select name, a_list from listy where id = 2")
                  '(("second" :NULL)))))))
 
 ;; import data from a table into a dao, using an import function
 (test dao-get-with-import
   (with-test-connection
     (with-dao-export-import-table-fixture
-      (insert-dao (make-instance 'listy :name "first" :rlist '(a b c)
-                                        :alist '((a 1) (b 2) (c 3))
-                                        :plist '(a 1 b 2 c 3)))
-      (insert-dao (make-instance 'listy :name "second" :rlist '(a b c)
-                                        :plist '(a 1 b 2 c 3)))
+      (insert-dao (make-instance 'listy :name "first" :r-list '(a b c)
+                                        :a-list '((a 1) (b 2) (c 3))
+                                        :p-list '(a 1 b 2 c 3)))
+      (insert-dao (make-instance 'listy :name "second" :r-list '(a b c)
+                                        :p-list '(a 1 b 2 c 3)))
       (is (equal (name (get-dao 'listy 1))
                  "first"))
-      (is (equal (rlist (get-dao 'listy 1))
+      (is (equal (r-list (get-dao 'listy 1))
                  '(A B C)))
-      (is (equal (rlist (get-dao 'listy 1))
+      (is (equal (r-list (get-dao 'listy 1))
                  '(a b  C)))
-      (is (equal (alist (get-dao 'listy 1))
+      (is (equal (a-list (get-dao 'listy 1))
                  '((A 1) (B 2) (C 3))))
-      (is (equal (rlist (get-dao 'listy 2))
+      (is (equal (r-list (get-dao 'listy 2))
                  '(A B C)))
-      (signals error (alist (get-dao 'listy 2))))))
+      (signals error (a-list (get-dao 'listy 2))))))
+
+(test dao-get-with-bad-import
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao (make-instance 'listy :name "first" :r-list '(a b c)
+                                        :a-list '((a 1) (b 2) (c 3))
+                                        :p-list '(a 1 b 2 c 3)))
+      (signals error (get-dao 'listy-bad-import-export 1)))))
+
 
 (test select-dao-with-import
   (with-test-connection
     (with-dao-export-import-table-fixture
-      (insert-dao (make-instance 'listy :name "first" :rlist '(a b c)
-                                        :alist '((a 1) (b 2) (c 3))
-                                        :plist '(a 1 b 2 c 3)))
-      (insert-dao (make-instance 'listy :name "second" :rlist '(a b c)
-                                        :plist '(a 1 b 2 c 3)))
-      (is (equal (rlist (first (select-dao 'listy)))
+      (insert-dao (make-instance 'listy :name "first" :r-list '(a b c)
+                                        :a-list '((a 1) (b 2) (c 3))
+                                        :p-list '(a 1 b 2 c 3)))
+      (insert-dao (make-instance 'listy :name "second" :r-list '(a b c)
+                                        :p-list '(a 1 b 2 c 3)))
+      (is (equal (r-list (first (select-dao 'listy)))
                  '(A B C)))
-      (is (equal (plist (second (select-dao 'listy)))
+      (is (equal (p-list (second (select-dao 'listy)))
                  '(A 1 B 2 C 3))))))
 
 (test query-dao-with-import
   (with-test-connection
     (with-dao-export-import-table-fixture
-      (insert-dao (make-instance 'listy :name "first" :rlist '(a b c)
-                                        :alist '((a 1) (b 2) (c 3))
-                                        :plist '(a 1 b 2 c 3)))
-      (insert-dao (make-instance 'listy :name "second" :rlist '(a b c)
-                                        :plist '(a 1 b 2 c 3)))
-      (is (equal (rlist (first (query-dao 'listy "select * from listy where id=1")))
+      (insert-dao (make-instance 'listy :name "first" :r-list '(a b c)
+                                        :a-list '((a 1) (b 2) (c 3))
+                                        :p-list '(a 1 b 2 c 3)))
+      (insert-dao (make-instance 'listy :name "second" :r-list '(a b c)
+                                        :p-list '(a 1 b 2 c 3)))
+      (is (equal (r-list (first (query-dao 'listy "select * from listy where id=1")))
                  '(A B C)))
-      (is (equal (plist (first (query-dao 'listy "select * from listy where id=2")))
+      (is (equal (p-list (first (query-dao 'listy "select * from listy where id=2")))
                  '(A 1 B 2 C 3)))
-      (signals error (alist (first (query-dao 'listy "select * from listy where id=2")))))))
+      (signals error (a-list (first (query-dao 'listy "select * from listy where id=2")))))))
 
 ;; update a table from a modified dao
 (test dao-update-export
   (with-test-connection
     (with-dao-export-import-table-fixture
-      (insert-dao (make-instance 'listy :name "first" :rlist '(a b c)
-                                        :alist '((a 1) (b 2) (c 3))
-                                        :plist '(a 1 b 2 c 3)))
-      (insert-dao (make-instance 'listy :name "second" :rlist '(a b c)
-                                        :plist '(a 1 b 2 c 3)))
+      (insert-dao (make-instance 'listy :name "first" :r-list '(a b c)
+                                        :a-list '((a 1) (b 2) (c 3))
+                                        :p-list '(a 1 b 2 c 3)))
+      (insert-dao (make-instance 'listy :name "second" :r-list '(a b c)
+                                        :p-list '(a 1 b 2 c 3)))
+      (insert-dao (make-instance 'listy :name "third" :r-list nil
+                                        :p-list '(a 1 b 2 c 3)))
       (let ((dao1 (get-dao 'listy 1))
             (dao2 (get-dao 'listy 2)))
-        (setf (rlist dao1) '(e f g))
+        (setf (r-list dao1) '(e f g))
         (update-dao dao1)
-        (is (equal (query "select rlist from listy where id = 1" :single)
+        (is (equal (query "select r_list from listy where id = 1" :single)
                    "(E F G)"))
-        (setf (plist dao2) '("e" 1 f 4 g 7))
-        (setf (alist dao2) nil)
+        (setf (p-list dao2) '("e" 1 f 4 g 7))
+        (setf (a-list dao2) nil)
         (update-dao dao2)
-        (is (equal (query "select plist from listy where id = 2" :single)
+        (is (equal (query "select p_list from listy where id = 2" :single)
                    "(e 1 F 4 G 7)"))
-        (is (equal (query "select alist from listy where id = 2" :single)
-                   nil))))))
+        (is (equal (query "select a_list from listy where id = 2" :single)
+                   "false"))))))
 
 ;; upsert with an export function
 (test dao-upsert-export
   (with-test-connection
     (with-dao-export-import-table-fixture
-      (insert-dao (make-instance 'listy :name "first" :rlist '(a b c)
-                                        :alist '((a 1) (b 2) (c 3))
-                                        :plist '(a 1 b 2 c 3)))
-      (insert-dao (make-instance 'listy :name "second" :rlist '(a b c)
-                                        :plist '(a 1 b 2 c 3)))
-      (upsert-dao (make-instance 'listy :name "third" :rlist '(a b c)
-                                        :alist '(("a" 11) (b 12) (c "13c"))
-                                        :plist '(a 1 b 2 c 3)))
-      (is (equal (query "select alist from listy where id = 3" :single)
+      (insert-dao (make-instance 'listy :name "first" :r-list '(a b c)
+                                        :a-list '((a 1) (b 2) (c 3))
+                                        :p-list '(a 1 b 2 c 3)))
+      (insert-dao (make-instance 'listy :name "second" :r-list '(a b c)
+                                        :p-list '(a 1 b 2 c 3)))
+      (upsert-dao (make-instance 'listy :name "third" :r-list '(a b c)
+                                        :a-list '(("a" 11) (b 12) (c "13c"))
+                                        :p-list '(a 1 b 2 c 3)))
+      (is (equal (query "select a_list from listy where id = 3" :single)
+                 "((a 11) (B 12) (C 13c))")))))
+
+
+(defclass listy-modified-accessor ()
+  ((id :col-type integer :col-identity t :accessor id)
+   (name :col-type text :col-unique t :col-check (:<> 'name "")
+         :initarg :name :accessor name)
+   (r-list :type list :col-type (or text db-null) :initarg :r-list :accessor rlist
+           :col-export list-to-string :col-import dao-string-to-list)
+   (a-list :type alist :col-type (or text db-null) :initarg :a-list :accessor alist
+           :col-export list-to-string :col-import dao-string-to-list)
+   (p-list :type plist :col-type (or text db-null) :initarg :p-list :accessor plist
+           :col-export list-to-string :col-import dao-string-to-list))
+  (:metaclass dao-class)
+  (:table-name listy))
+
+(test dao-insert-export-modified
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao (make-instance
+                   'listy-modified-accessor :name "first" :r-list '(a b c)
+                   :a-list '((a 1) (b 2) (c 3))
+                   :p-list '(a 1 b 2 c 3)))
+      (insert-dao (make-instance
+                   'listy-modified-accessor :name "second" :r-list '(a b c)
+                   :p-list '(a 1 b 2 c 3)))
+      (is (equal (query "select r_list from listy where id = 1" :single)
+                 "(A B C)"))
+      (is (equal (query "select a_list from listy where id = 1" :single)
+                 "((A 1) (B 2) (C 3))"))
+      (is (equal (query "select p_list from listy where id = 1" :single)
+                 "(A 1 B 2 C 3)"))
+      (is (equal (query "select name, a_list from listy where id = 2")
+                 '(("second" :NULL)))))))
+
+;; save-dao version of above
+(test dao-save-export-modified
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (save-dao (make-instance
+                 'listy-modified-accessor :name "first" :r-list '(a b c)
+                 :a-list '((a 1) (b 2) (c 3))
+                 :p-list '(a 1 b 2 c 3)))
+      (save-dao (make-instance
+                 'listy-modified-accessor :name "second" :r-list '(a b c)
+                 :p-list '(a 1 b 2 c 3)))
+      (is (equal (query "select r_list from listy where id = 1" :single)
+                 "(A B C)"))
+      (is (equal (query "select a_list from listy where id = 1" :single)
+                 "((A 1) (B 2) (C 3))"))
+      (is (equal (query "select p_list from listy where id = 1" :single)
+                 "(A 1 B 2 C 3)"))
+      (is (equal (query "select name, a_list from listy where id = 2")
+                 '(("second" :NULL)))))))
+
+;; import data from a table into a dao, using an import function
+(test dao-get-with-import-modified
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao
+       (make-instance 'listy-modified-accessor :name "first" :r-list '(a b c)
+                                               :a-list '((a 1) (b 2) (c 3))
+                                               :p-list '(a 1 b 2 c 3)))
+      (insert-dao
+       (make-instance 'listy-modified-accessor :name "second" :r-list '(a b c)
+                                               :p-list '(a 1 b 2 c 3)))
+      (is (equal (name (get-dao 'listy-modified-accessor 1))
+                 "first"))
+      (is (equal (rlist (get-dao 'listy-modified-accessor 1))
+                 '(A B C)))
+      (is (equal (rlist (get-dao 'listy-modified-accessor 1))
+                 '(a b  C)))
+      (is (equal (alist (get-dao 'listy-modified-accessor 1))
+                 '((A 1) (B 2) (C 3))))
+      (is (equal (rlist (get-dao 'listy-modified-accessor 2))
+                 '(A B C)))
+      (signals error (alist (get-dao 'listy-modified-accessor 2))))))
+
+(test select-dao-with-import-modified
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao
+       (make-instance 'listy-modified-accessor :name "first" :r-list '(a b c)
+                                               :a-list '((a 1) (b 2) (c 3))
+                                               :p-list '(a 1 b 2 c 3)))
+      (insert-dao
+       (make-instance 'listy-modified-accessor :name "second" :r-list '(a b c)
+                                               :p-list '(a 1 b 2 c 3)))
+      (is (equal (rlist (first (select-dao 'listy-modified-accessor)))
+                 '(A B C)))
+      (is (equal (plist (second (select-dao 'listy-modified-accessor)))
+                 '(A 1 B 2 C 3))))))
+
+(test query-dao-with-import-modified
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao
+       (make-instance 'listy-modified-accessor :name "first" :r-list '(a b c)
+                                               :a-list '((a 1) (b 2) (c 3))
+                                               :p-list '(a 1 b 2 c 3)))
+      (insert-dao
+       (make-instance 'listy-modified-accessor :name "second" :r-list '(a b c)
+                                               :p-list '(a 1 b 2 c 3)))
+      (is (equal (rlist
+                  (first
+                   (query-dao 'listy-modified-accessor "select * from listy where id=1")))
+                 '(A B C)))
+      (is (equal (plist
+                  (first
+                   (query-dao 'listy-modified-accessor "select * from listy where id=2")))
+                 '(A 1 B 2 C 3)))
+      (signals error (alist
+                      (first
+                       (query-dao 'listy-modified-accessor "select * from listy where id=2")))))))
+
+;; update a table from a modified dao
+(test dao-update-export-modified
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao
+       (make-instance 'listy-modified-accessor :name "first" :r-list '(a b c)
+                                               :a-list '((a 1) (b 2) (c 3))
+                                               :p-list '(a 1 b 2 c 3)))
+      (insert-dao
+       (make-instance 'listy-modified-accessor :name "second" :r-list '(a b c)
+                                               :p-list '(a 1 b 2 c 3)))
+
+      (insert-dao (make-instance 'listy-modified-accessor :name "third" :r-list nil
+                                                          :p-list '(a 1 b 2 c 3)))
+      (let ((dao1 (get-dao 'listy-modified-accessor 1))
+            (dao2 (get-dao 'listy-modified-accessor 2)))
+        (setf (rlist dao1) '(e f g))
+        (update-dao dao1)
+        (is (equal (query "select r_list from listy where id = 1" :single)
+                   "(E F G)"))
+        (setf (plist dao2) '("e" 1 f 4 g 7))
+        (setf (alist dao2) nil)
+        (update-dao dao2)
+        (is (equal (query "select p_list from listy where id = 2" :single)
+                   "(e 1 F 4 G 7)"))
+        (is (equal (query "select a_list from listy where id = 2" :single)
+                   "false"))))))
+
+;; upsert with an export function
+(test dao-upsert-export-modified
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao
+       (make-instance 'listy-modified-accessor :name "first" :r-list '(a b c)
+                                               :a-list '((a 1) (b 2) (c 3))
+                                               :p-list '(a 1 b 2 c 3)))
+      (insert-dao
+       (make-instance 'listy-modified-accessor :name "second" :r-list '(a b c)
+                                               :p-list '(a 1 b 2 c 3)))
+      (upsert-dao (make-instance 'listy-modified-accessor :name "third" :r-list '(a b c)
+                                                          :a-list '(("a" 11) (b 12) (c "13c"))
+                                                          :p-list '(a 1 b 2 c 3)))
+      (is (equal (query "select a_list from listy where id = 3" :single)
+                 "((a 11) (B 12) (C 13c))")))))
+
+(defclass listy-underscore ()
+  ((id :col-type integer :col-identity t :accessor id)
+   (name :col-type text :col-unique t :col-check (:<> 'name "")
+         :initarg :name :accessor name)
+   (r_list :type list :col-type (or text db-null) :initarg :r_list :accessor rlist
+           :col-export list-to-string :col-import dao-string-to-list)
+   (a_list :type alist :col-type (or text db-null) :initarg :a_list :accessor alist
+           :col-export list-to-string :col-import dao-string-to-list)
+   (p_list :type plist :col-type (or text db-null) :initarg :p_list :accessor plist
+           :col-export list-to-string :col-import dao-string-to-list))
+  (:metaclass dao-class)
+  (:table-name listy))
+
+(test dao-insert-export-underscore
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao (make-instance
+                   'listy-underscore :name "first" :r_list '(a b c)
+                   :a_list '((a 1) (b 2) (c 3))
+                   :p_list '(a 1 b 2 c 3)))
+      (insert-dao (make-instance
+                   'listy-underscore :name "second" :r_list '(a b c)
+                   :p_list '(a 1 b 2 c 3)))
+      (is (equal (query "select r_list from listy where id = 1" :single)
+                 "(A B C)"))
+      (is (equal (query "select a_list from listy where id = 1" :single)
+                 "((A 1) (B 2) (C 3))"))
+      (is (equal (query "select p_list from listy where id = 1" :single)
+                 "(A 1 B 2 C 3)"))
+      (is (equal (query "select name, a_list from listy where id = 2")
+                 '(("second" :NULL)))))))
+
+;; save-dao version of above
+(test dao-save-export-underscore
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (save-dao (make-instance
+                 'listy-underscore :name "first" :r_list '(a b c)
+                 :a_list '((a 1) (b 2) (c 3))
+                 :p_list '(a 1 b 2 c 3)))
+      (save-dao (make-instance
+                 'listy-underscore :name "second" :r_list '(a b c)
+                 :p_list '(a 1 b 2 c 3)))
+      (is (equal (query "select r_list from listy where id = 1" :single)
+                 "(A B C)"))
+      (is (equal (query "select a_list from listy where id = 1" :single)
+                 "((A 1) (B 2) (C 3))"))
+      (is (equal (query "select p_list from listy where id = 1" :single)
+                 "(A 1 B 2 C 3)"))
+      (is (equal (query "select name, a_list from listy where id = 2")
+                 '(("second" :NULL)))))))
+
+;; import data from a table into a dao, using an import function
+(test dao-get-with-import-underscore
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao
+       (make-instance 'listy-underscore :name "first" :r_list '(a b c)
+                                               :a_list '((a 1) (b 2) (c 3))
+                                               :p_list '(a 1 b 2 c 3)))
+      (insert-dao
+       (make-instance 'listy-underscore :name "second" :r_list '(a b c)
+                                               :p_list '(a 1 b 2 c 3)))
+      (is (equal (name (get-dao 'listy-underscore 1))
+                 "first"))
+      (is (equal (rlist (get-dao 'listy-underscore 1))
+                 '(A B C)))
+      (is (equal (rlist (get-dao 'listy-underscore 1))
+                 '(a b  C)))
+      (is (equal (alist (get-dao 'listy-underscore 1))
+                 '((A 1) (B 2) (C 3))))
+      (is (equal (rlist (get-dao 'listy-underscore 2))
+                 '(A B C)))
+      (signals error (alist (get-dao 'listy-underscore 2))))))
+
+(test select-dao-with-import-underscore
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao
+       (make-instance 'listy-underscore :name "first" :r_list '(a b c)
+                                               :a_list '((a 1) (b 2) (c 3))
+                                               :p_list '(a 1 b 2 c 3)))
+      (insert-dao
+       (make-instance 'listy-underscore :name "second" :r_list '(a b c)
+                                               :p_list '(a 1 b 2 c 3)))
+      (is (equal (rlist (first (select-dao 'listy-underscore)))
+                 '(A B C)))
+      (is (equal (plist (second (select-dao 'listy-underscore)))
+                 '(A 1 B 2 C 3))))))
+
+(test query-dao-with-import-underscore
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao
+       (make-instance 'listy-underscore :name "first" :r_list '(a b c)
+                                               :a_list '((a 1) (b 2) (c 3))
+                                               :p_list '(a 1 b 2 c 3)))
+      (insert-dao
+       (make-instance 'listy-underscore :name "second" :r_list '(a b c)
+                                               :p_list '(a 1 b 2 c 3)))
+      (is (equal (rlist
+                  (first
+                   (query-dao 'listy-underscore "select * from listy where id=1")))
+                 '(A B C)))
+      (is (equal (plist
+                  (first
+                   (query-dao 'listy-underscore "select * from listy where id=2")))
+                 '(A 1 B 2 C 3)))
+      (signals error (alist
+                      (first
+                       (query-dao 'listy-underscore "select * from listy where id=2")))))))
+
+;; update a table from a underscore dao
+(test dao-update-export-underscore
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao
+       (make-instance 'listy-underscore :name "first" :r_list '(a b c)
+                                               :a_list '((a 1) (b 2) (c 3))
+                                               :p_list '(a 1 b 2 c 3)))
+      (insert-dao
+       (make-instance 'listy-underscore :name "second" :r_list '(a b c)
+                                               :p_list '(a 1 b 2 c 3)))
+
+      (insert-dao (make-instance 'listy-underscore :name "third" :r_list nil
+                                                          :p_list '(a 1 b 2 c 3)))
+      (let ((dao1 (get-dao 'listy-underscore 1))
+            (dao2 (get-dao 'listy-underscore 2)))
+        (setf (rlist dao1) '(e f g))
+        (update-dao dao1)
+        (is (equal (query "select r_list from listy where id = 1" :single)
+                   "(E F G)"))
+        (setf (plist dao2) '("e" 1 f 4 g 7))
+        (setf (alist dao2) nil)
+        (update-dao dao2)
+        (is (equal (query "select p_list from listy where id = 2" :single)
+                   "(e 1 F 4 G 7)"))
+        (is (equal (query "select a_list from listy where id = 2" :single)
+                   "false"))))))
+
+;; upsert with an export function
+(test dao-upsert-export-underscore
+  (with-test-connection
+    (with-dao-export-import-table-fixture
+      (insert-dao
+       (make-instance 'listy-underscore :name "first" :r_list '(a b c)
+                                               :a_list '((a 1) (b 2) (c 3))
+                                               :p_list '(a 1 b 2 c 3)))
+      (insert-dao
+       (make-instance 'listy-underscore :name "second" :r_list '(a b c)
+                                               :p_list '(a 1 b 2 c 3)))
+      (upsert-dao (make-instance 'listy-underscore :name "third" :r_list '(a b c)
+                                                          :a_list '(("a" 11) (b 12) (c "13c"))
+                                                          :p_list '(a 1 b 2 c 3)))
+      (is (equal (query "select a_list from listy where id = 3" :single)
                  "((a 11) (B 12) (C 13c))")))))

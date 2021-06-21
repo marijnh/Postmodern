@@ -1,0 +1,2171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2021-06-21 Mon 15:28 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Creating Tables</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="Sabra Crolleton">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
+<script type="text/javascript">
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
+<!--/*--><![CDATA[/*><!--*/
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
+</script>
+</head>
+<body>
+<div id="content">
+<header>
+<h1 class="title">Creating Tables</h1>
+</header><nav id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#daos">Database access objects</a>
+<ul>
+<li><a href="#class-dao-class">metaclass dao-class</a>
+<ul>
+<li><a href="#class-dao-class-slots">Slot Options</a></li>
+<li><a href="#class-dao-class-slots-table-options">Table options</a></li>
+<li><a href="#org881815a">Dao Definition Examples</a></li>
+</ul>
+</li>
+<li><a href="#dao-export-and-import-functions">Dao Export and Import Functions (Postmodern v. 1.33.1 and newer)</a></li>
+<li><a href="#method-dao-keys-class">method dao-keys (class)</a></li>
+<li><a href="#method-dao-keys-dao">method dao-keys (dao)</a></li>
+<li><a href="#method-find-primary-key-column">method find-primary-key-column</a></li>
+<li><a href="#method-dao-exists-p">method dao-exists-p (dao)</a></li>
+<li><a href="#method-make-dao">method make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)</a></li>
+<li><a href="#method-fetch-defaults">method fetch-defaults (dao)</a></li>
+<li><a href="#method-find-primary-key-column">method find-primary-key-column (class)</a></li>
+<li><a href="#macro-define-dao-finalization">macro define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)</a></li>
+<li><a href="#method-get-dao">method get-dao (type &amp;rest keys)</a></li>
+<li><a href="#macro-select-dao">macro select-dao (type &amp;optional (test t) &amp;rest sort)</a></li>
+<li><a href="#macro-do-select-dao">macro do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)</a></li>
+<li><a href="#macro-query-dao">macro query-dao (type query &amp;rest args)</a></li>
+<li><a href="#function-do-query-dao">function do-query-dao (((type type-var) query &amp;rest args) &amp;body body)</a></li>
+<li><a href="#variable-ignore-unknown-columns">variable <code>*ignore-unknown-columns*</code></a></li>
+<li><a href="#method-insert-dao">method insert-dao (dao)</a></li>
+<li><a href="#method-update-dao">method update-dao (dao)</a></li>
+<li><a href="#function-save-dao">function save-dao (dao)</a></li>
+<li><a href="#function-save-dao-transaction">function save-dao/transaction (dao)</a></li>
+<li><a href="#method-upsert-dao">method upsert-dao (dao)</a></li>
+<li><a href="#method-delete-dao">method delete-dao (dao)</a></li>
+<li><a href="#function-dao-table-name">function dao-table-name (class)</a></li>
+<li><a href="#function-dao-table-definition">function dao-table-definition (class)</a></li>
+<li><a href="#macro-with-column-writers">macro with-column-writers ((&amp;rest writers) &amp;body body)</a></li>
+</ul>
+</li>
+<li><a href="#table-definition">Table definition and creation using a dao</a>
+<ul>
+<li><a href="#macro-deftable">macro deftable (name &amp;body definition)</a></li>
+<li><a href="#variable-table-name">variable <code>*table-name*</code></a></li>
+<li><a href="#variable-table-symbol">variable <code>*table-symbol*</code></a></li>
+<li><a href="#function-_dao-def">function !dao-def ()</a></li>
+<li><a href="#function-_index">function !index (&amp;rest columns), !unique-index (&amp;rest columns)</a></li>
+<li><a href="#function-_foreign">function !foreign (target fields &amp;rest target-fields/on-delete/on-update/deferrable/initially-deferred)</a></li>
+<li><a href="#function-_unique">function !unique (target-fields &amp;key deferrable initially-deferred)</a></li>
+<li><a href="#function-create-table">function create-table (symbol)</a></li>
+<li><a href="#function-create-all-tables">function create-all-tables ()</a></li>
+<li><a href="#function-create-package-tables">function create-package-tables (package)</a></li>
+<li><a href="#variable-table-name">variables <code>*table-name*</code>, <code>*table-symbol*</code></a></li>
+<li><a href="#function-drop-table">function drop-table (table-name &amp;key if-exists cascade)</a></li>
+<li><a href="#out-of-sync-dao-objects">Out of Sync Dao Objects</a></li>
+<li><a href="#multi-table-dao-class-object">Introduction to Multi-table dao class objects</a>
+<ul>
+<li><a href="#multi-table-dao-class-object-simple-version">Simple Version</a></li>
+<li><a href="#multi-table-dao-class-object-less-simple-version">Less Simple Version</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</nav>
+
+
+<div id="outline-container-daos" class="outline-2">
+<h2 id="daos">Database access objects</h2>
+<div class="outline-text-2" id="text-daos">
+<p>
+Postmodern contains a simple system for defining CLOS classes that represent
+rows in the database. This is not intended as a full-fledged object-relational
+magic system ― while serious ORM systems have their place, they are notoriously
+hard to get right, and are outside of the scope of a humble SQL library like
+this. See <a href="dao-classes.html">Dao Classes</a> for more detail.
+</p>
+</div>
+
+<div id="outline-container-class-dao-class" class="outline-3">
+<h3 id="class-dao-class">metaclass dao-class</h3>
+<div class="outline-text-3" id="text-class-dao-class">
+<p>
+You can work directly with the database or you can use a simple
+database-access-class (aka dao) which would cover all the fields in a row.
+</p>
+
+<p>
+Postmodern allows you to have a relatively simple but straight forward matching
+of clos classes to a database table. At the heart of Postmodern's DAO system is
+the dao-class metaclass. It allows you to define classes for your
+database-access objects as regular CLOS classes. Some of the slots in these
+classes will refer to columns in the database.
+</p>
+</div>
+<div id="outline-container-class-dao-class-slots" class="outline-4">
+<h4 id="class-dao-class-slots">Slot Options</h4>
+<div class="outline-text-4" id="text-class-dao-class-slots">
+<p>
+The slot definitions in a table have several additional optional keyword parameters:
+</p>
+
+<ul class="org-ul">
+<li>:col-type
+To specify that a slot refers to a column, give it a :col-type option containing
+an S-SQL type expression (useful if you want to be able to derive a table
+definition from the class definition). The (or db-null integer) form is used to
+indicate a column can have NULL values otherwise the column will be treated as NOT NULL.</li>
+
+<li><p>
+:col-default
+When using  <code>dao-table-definition</code>, having :col-default in a slot definition will
+tell Postgresql to use this default value if no value is provided when inserting
+a new row. In the following example, Postgresql would insert the default value
+of 12 if no value was provided when inserting a new row.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">col-default</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+   (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:col-check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
+         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name <span style="color: #23d7d7;">:col-collate</span> <span style="color: #e67128;">"de_DE.utf8"</span>)
+   (data <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-default</span> 12 <span style="color: #23d7d7;">:accessor</span> data
+         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:data</span>))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> col-default))
+</pre>
+</div></li>
+
+<li>:col-identity
+Often used for an id slot when you are going to define a Postgresql table by
+referring to this dao and you want the primary key to be an identity column automatically
+generated by Postgresql. This column must have a :col-type integer.</li>
+
+<li><p>
+:col-primary-key
+When using  <code>dao-table-definition</code>, specifying :col-primary-key in a slot
+definition will tell Postgresql that this column is the primary key for the
+table. You will also need to set :unique to t for this column. In the
+following example, the username is the primary key, not the id column.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-col-primary-key</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> integer  <span style="color: #23d7d7;">:accessor</span> id)
+   (username <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-primary-key</span> t <span style="color: #23d7d7;">:col-unique</span> t  <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:username</span> <span style="color: #23d7d7;">:accessor</span> username)
+   (department-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:department-id</span> <span style="color: #23d7d7;">:accessor</span> department-id))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> users1))
+</pre>
+</div></li>
+
+<li>:col-unique
+When you want to specify that the values in the table column associated with
+this slot must be unique. See an example in the username slot definition in
+the discussion of :col-primary-key immediately above.</li>
+
+<li>:col-export
+Specifies a function name to be called when you have to convert a slot value
+from a CL datatype to a Postgresql datatype that Postmodern does not automatically handle.
+More about this <a href="postmodern.html#dao-export-and-import-functions">below</a>.</li>
+
+<li>:col-import
+Specifies a function name to be called when you have to convert a slot value
+from a Postgresql datatype to a CL datatype that Postmodern does not automatically handle.
+More about this <a href="postmodern.html#dao-export-and-import-functions">below</a>.</li>
+
+<li><p>
+:col-name
+You can use the :col-name initarg (whose unevaluated value will be passed to to-sql-name)
+to specify the slot's column's name. In other words, you want a slot name that is different from the database table's column name. This tells Postmodern what that database table column's name when getting data from a table. This is NOT used in <code>dao-table-definition</code> in creating tables.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-col-name</span> ()
+  ((a <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-name</span> aa <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:a</span> <span style="color: #23d7d7;">:accessor</span> test-a)
+   (b <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-name</span> bb <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:b</span> <span style="color: #23d7d7;">:accessor</span> test-b)
+   (c <span style="color: #23d7d7;">:col-type</span> string              <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:c</span> <span style="color: #23d7d7;">:accessor</span> test-c)
+   (from <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-name</span> from <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:d</span> <span style="color: #23d7d7;">:accessor</span> test-d)
+   (to-destination <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-name</span> to <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:e</span> <span style="color: #23d7d7;">:accessor</span> test-e))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:keys</span> a))
+</pre>
+</div></li>
+
+<li>:col-collate
+When using  <code>dao-table-definition</code>, having :col-collate in a slot definition will
+tell Postgresql to use this collation when sorting this column. You can have
+different collations in different columns of the same table. In the following
+example, Postgresql would use a German UTF8 collation in the name column.</li>
+</ul>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">col-collate</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+   (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:col-check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
+         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name <span style="color: #23d7d7;">:col-collate</span> <span style="color: #e67128;">"de_DE.utf8"</span>)
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> col-collate))
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><p>
+:col-check
+When using  <code>dao-table-definition</code>, having :col-check in a slot definition will
+tell Postgresql to ensure that any data entered into that column must meet
+certain requirements. In the following example, Postgresql would ensure
+that values in the name column can never be an empty string.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">col-check</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+   (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:col-check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
+         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name <span style="color: #23d7d7;">:col-collate</span> <span style="color: #e67128;">"de_DE.utf8"</span>)
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> col-check))
+</pre>
+</div></li>
+
+<li><p>
+:col-references
+This specifies that the column references a column in another table.
+In the following example, the department-id slot references the id column in
+the departments table:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-col-identity-with-references</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+   (username <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:unique</span> t <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:username</span> <span style="color: #23d7d7;">:accessor</span> username)
+   (department-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-references</span> ((departments id))
+                  <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:department-id</span> <span style="color: #23d7d7;">:accessor</span> department-id))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> usersr))
+</pre>
+</div></li>
+
+<li>:col-</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-class-dao-class-slots-table-options" class="outline-4">
+<h4 id="class-dao-class-slots-table-options">Table options</h4>
+<div class="outline-text-4" id="text-class-dao-class-slots-table-options">
+<p>
+DAO class definitions support two extra class options: :table-name to give the
+name of the table that the class refers to (defaults to the class name),
+and :keys to provide a set of primary keys for the table if they have not been
+specified in a single column. If more than one key is provided, this creates a
+multi-column primary key and all keys must be specified when using operations
+such as update-dao and get-dao. When no primary keys are defined, operations
+such as update-dao and get-dao will not work.
+</p>
+
+<p>
+IMPORTANT: Class finalization for a dao class instance are wrapped with a thread
+lock. However, any time you are using threads and a class that inherits from
+other classes, you should ensure that classes are finalized before you start
+generating threads that create new instances of that class.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org881815a" class="outline-4">
+<h4 id="org881815a">Dao Definition Examples</h4>
+<div class="outline-text-4" id="text-org881815a">
+<p>
+Simple example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">users</span> ()
+  ((name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name)
+   (creditcard <span style="color: #23d7d7;">:col-type</span> (or db-null integer) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:card</span> <span style="color: #23d7d7;">:col-default</span> <span style="color: #23d7d7;">:null</span>)
+   (score <span style="color: #23d7d7;">:col-type</span> bigint <span style="color: #23d7d7;">:col-default</span> 0 <span style="color: #23d7d7;">:accessor</span> score))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:keys</span> name))
+</pre>
+</div>
+<p>
+In this case the name of the users will be treated as the primary key and the
+database table is assumed to be users. (It might be worth noting that "user" is
+a reserved word for Postgresql and using reserved words, while possible using
+quotes, is generally not worth the additional trouble they cause.)
+</p>
+
+<p>
+The name and score slots cannot be null, but the creditcard slot can be null
+and actually defaults to null. The :col-default :null specification ensures that
+the default in the database for this field is null, but it does not bound the
+slot to a default form. Thus, making an instance of the class without
+initializing this slot will leave it in an unbound state.
+</p>
+
+<p>
+An example of a class where the keys are set as multiple column keys is here:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">points</span> ()
+  ((x <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:x</span>
+      <span style="color: #23d7d7;">:reader</span> point-x)
+   (y <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:y</span>
+      <span style="color: #23d7d7;">:reader</span> point-y)
+   (value <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:value</span>
+          <span style="color: #23d7d7;">:accessor</span> value))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:keys</span> x y))
+</pre>
+</div>
+
+<p>
+In this case, retrieving a points record would look like the following where
+12 and 34 would be the values you are looking to find in the x column and y
+column respectively.:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(get-dao 'points 12 34)
+</pre>
+</div>
+
+<p>
+Now look at a slightly more complex example.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">country</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
+         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:reader</span> country-name)
+   (inhabitants <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:inhabitants</span>
+                <span style="color: #23d7d7;">:accessor</span> country-inhabitants)
+   (sovereign <span style="color: #23d7d7;">:col-type</span> (or db-null string) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:sovereign</span>
+              <span style="color: #23d7d7;">:accessor</span> country-sovereign)
+   (region-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-references</span> ((regions id))
+              <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-id</span> <span style="color: #23d7d7;">:accessor</span> region-id))
+  (<span style="color: #23d7d7;">:documentation</span> <span style="color: #e67128;">"Dao class for a countries record."</span>)
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> countries))
+</pre>
+</div>
+<p>
+In this example we have an id column which is specified to be an identity column.
+Postgresql will automatically generate a sequence of of integers and this will
+be the primary key.
+</p>
+
+<p>
+We have a name column which is specified as unique and is not null.
+</p>
+
+<p>
+We have a region-id column which references the id column in the regions table.
+This is a foreign key constraint and Postgresql will not accept inserting a
+country into the database unless there is an existing region table with an id
+that matches this number. Postgresql will also not allow deleting a region if
+there are countries that reference that region's id. If we wanted Postgresql to
+delete countries when regions are deleted, that column would be specified as:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(region-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-references</span> ((regions id) <span style="color: #23d7d7;">:cascade</span>)
+           <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-id</span> <span style="color: #23d7d7;">:accessor</span> region-id)
+</pre>
+</div>
+<p>
+Now you can see why the double parens.
+</p>
+
+<p>
+We also specified that the table name is not "country" but "countries".
+(Some style guides recommend that table names be plural and references to rows
+be singular.)
+</p>
+
+<p>
+When inheriting from DAO classes, a subclass' set of columns also contains all
+the columns of its superclasses. The primary key for such a class is the union
+of its own keys and all the keys from its superclasses. Classes inheriting from
+DAO classes should probably always use the dao-class metaclass themselves.
+</p>
+
+<p>
+When a DAO is created with make-instance, the :fetch-defaults keyword argument
+can be passed, which, when T, will cause a query to fetch the default values for
+all slots that refers to columns with defaults and were not bound through
+initargs. In some cases, such as serial and identity columns, which have an
+implicit default, this will not work. You can work around this by creating
+your own sequence, e.g. "my_sequence", and defining a (:nextval "my_sequence")
+default.
+</p>
+
+<p>
+Finally, DAO class slots can have an option :ghost t to specify them as ghost
+slots. These are selected when retrieving instances, but not written when
+updating or inserting, or even included in the table definition. The only known
+use for this to date is for creating the table with (oids=true), and specify a
+slot like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(oid <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:ghost</span> t <span style="color: #23d7d7;">:accessor</span> get-oid)
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-dao-export-and-import-functions" class="outline-3">
+<h3 id="dao-export-and-import-functions">Dao Export and Import Functions (Postmodern v. 1.33.1 and newer)</h3>
+<div class="outline-text-3" id="text-dao-export-and-import-functions">
+<p>
+There may be times when the types of values in a dao slot do not have comparable types in Postgresql. For purposes of the following example, assume you have slots that you want to contain lists. Postgresql does not have a "list" data type. Postgresql arrays must be homogeneous but CL lists do not have that limitation. What to do?
+</p>
+
+<p>
+One method would be to use text columns or jsonb columns in Postgresql and have functions that convert as necessary going back and forth. In the following example we will use text columns in Postgresql and write CL list data to string when we "export" the data to Postgresql and then convert from string when we "import" the data from Postgresql into a dao-class instance.
+</p>
+
+<p>
+Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import which refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">listy</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+   (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:col-check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
+         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name)
+   (rlist <span style="color: #23d7d7;">:type</span> list <span style="color: #23d7d7;">:col-type</span> (or text db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:rlist</span> <span style="color: #23d7d7;">:accessor</span> rlist
+          <span style="color: #23d7d7;">:col-export</span> list-to-string <span style="color: #23d7d7;">:col-import</span> dao-string-to-list)
+   (alist <span style="color: #23d7d7;">:type</span> alist <span style="color: #23d7d7;">:col-type</span> (or text db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:alist</span> <span style="color: #23d7d7;">:accessor</span> alist
+          <span style="color: #23d7d7;">:col-export</span> list-to-string <span style="color: #23d7d7;">:col-import</span> dao-string-to-alist)
+   (plist <span style="color: #23d7d7;">:type</span> plist <span style="color: #23d7d7;">:col-type</span> (or text db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:plist</span> <span style="color: #23d7d7;">:accessor</span> plist
+          <span style="color: #23d7d7;">:col-export</span> list-to-string <span style="color: #23d7d7;">:col-import</span> dao-string-to-plist))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> listy))
+</pre>
+</div>
+<p>
+Now we need to define the import functions. The import function must be provided three parameters:
+</p>
+
+<ul class="org-ul">
+<li>The actual dao object</li>
+<li>The field or slot name</li>
+<li>The value it is going to be receiving from the database query</li>
+</ul>
+
+<p>
+When writing your import functions, pay attention to how you want to handle nil or :NULL values
+as well as how you might want to error check the conversion from a Postgresql datatype to a CL datatype.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">string-to-list</span> (str)
+  <span style="color: #e67128;">"This is just a helper function for the import function. Take a string representation of a list</span>
+<span style="color: #e67128;">   and returns an lisp list. :NULL is just passed on and anything else I have decided should just be nil."</span>
+  (<span style="color: #ffad29; font-weight: bold;">cond</span> ((eq str <span style="color: #23d7d7;">:NULL</span>)
+         <span style="color: #23d7d7;">:NULL</span>)
+        (str
+         (<span style="color: #ffad29; font-weight: bold;">with-input-from-string</span> (s str) (read s)))
+        (t nil)))
+
+(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">dao-string-to-list</span> (dao field val)
+  <span style="color: #e67128;">"Field needs to be a symbol. In this example if I am getting a :NULL back from the database with respect</span>
+<span style="color: #e67128;">   to a particular column I am making the slot unbound. You should choose the appropriate response for your application."</span>
+  (<span style="color: #ffad29; font-weight: bold;">if</span> (eq val <span style="color: #23d7d7;">:NULL</span>)
+      (slot-makunbound dao field) <span style="color: #74af68;">; Do we really want to make the field unbound for every :NULL?</span>
+      (setf (slot-value dao field)
+            (string-to-list val))))
+
+(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">list-to-string</span> (str)
+  (<span style="color: #ffad29; font-weight: bold;">if</span> (listp str)
+      (format nil <span style="color: #e67128;">"~a"</span> str) <span style="color: #e67128;">"unknown"</span>))
+</pre>
+</div>
+<p>
+And now we need to define the export function. In our example we are just going to be using format to write the CL value to a string. You are responsible for writing an export function that does what you need. This example just tells Postgresql to insert a string "unknown" if the slot value is not a list. You would need more error checking and condition handling.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">list-to-string</span> (val)
+  (<span style="color: #ffad29; font-weight: bold;">if</span> (listp val) (format nil <span style="color: #e67128;">"~a"</span> val) <span style="color: #e67128;">"unknown"</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-method-dao-keys-class" class="outline-3">
+<h3 id="method-dao-keys-class">method dao-keys (class)</h3>
+<div class="outline-text-3" id="text-method-dao-keys-class">
+<p>
+→ list
+</p>
+
+<p>
+Returns list of slot names that are the primary key of DAO class. This is likely
+interesting if you have primary keys which are composed of more than one slot.
+Pay careful attention to situations where the primary key not only has more than
+one column, but they are actually in a different order than they are in the
+database table itself. You can check this with the internal
+find-primary-key-info function. Obviously the table needs to have been defined.
+The class must be quoted.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(pomo:find-primary-key-info 'country1)
+
+((<span style="color: #e67128;">"name"</span> <span style="color: #e67128;">"text"</span>) (<span style="color: #e67128;">"id"</span> <span style="color: #e67128;">"integer"</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-method-dao-keys-dao" class="outline-3">
+<h3 id="method-dao-keys-dao">method dao-keys (dao)</h3>
+<div class="outline-text-3" id="text-method-dao-keys-dao">
+<p>
+→ list
+</p>
+
+<p>
+Returns list of values that are the primary key of dao. Explicit keys takes
+priority over col-identity which takes priority over col-primary-key.
+</p>
+
+<p>
+This is likely interesting if you have primary keys which are composed of
+more than one slot. Pay careful attention to situations where the primary key
+not only has more than one column, but they are actually in a different order
+than they are in the database table itself.  Obviously the table needs to have
+been defined. You can provide a quoted class-name or an instance of a dao.
+</p>
+</div>
+</div>
+
+<div id="outline-container-method-find-primary-key-column" class="outline-3">
+<h3 id="method-find-primary-key-column">method find-primary-key-column</h3>
+<div class="outline-text-3" id="text-method-find-primary-key-column">
+<p>
+→ symbol
+</p>
+
+<p>
+Loops through a class's column definitions and returns the first column name
+that has bound either col-identity or col-primary-key.
+</p>
+</div>
+</div>
+
+<div id="outline-container-method-dao-exists-p" class="outline-3">
+<h3 id="method-dao-exists-p">method dao-exists-p (dao)</h3>
+<div class="outline-text-3" id="text-method-dao-exists-p">
+<p>
+→ boolean
+</p>
+
+<p>
+Test whether a row with the same primary key as the given dao exists in the
+database. Will also return NIL when any of the key slots in the object are
+unbound.
+</p>
+</div>
+</div>
+
+<div id="outline-container-method-make-dao" class="outline-3">
+<h3 id="method-make-dao">method make-dao (type &amp;rest args &amp;key &amp;allow-other-keys)</h3>
+<div class="outline-text-3" id="text-method-make-dao">
+<p>
+→ dao
+</p>
+
+<p>
+Combines make-instance with insert-dao. Make the instance of the given class and
+insert it into the database, returning the created dao.
+</p>
+</div>
+</div>
+
+<div id="outline-container-method-fetch-defaults" class="outline-3">
+<h3 id="method-fetch-defaults">method fetch-defaults (dao)</h3>
+<div class="outline-text-3" id="text-method-fetch-defaults">
+<p>
+→ dao if there were unbound slots with default values, otherwise nil
+</p>
+
+<p>
+Used to fetch the default values of an object on creation.
+An example would be creating a dao object with unbounded slots.
+Fetch-defaults could then be used to fetch the default values from the database
+and bind the unbound slots which have default values. E.g.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data <span style="color: #23d7d7;">:a</span> 23)))
+  (pomo:fetch-defaults dao))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-method-find-primary-key-column" class="outline-3">
+<h3 id="method-find-primary-key-column">method find-primary-key-column (class)</h3>
+<div class="outline-text-3" id="text-method-find-primary-key-column">
+<p>
+→ symbol
+</p>
+
+<p>
+Loops through a class's column definitions and returns
+the first column name that has bound either col-identity or col-primary-key.
+Returns a symbol.
+</p>
+</div>
+</div>
+
+<div id="outline-container-macro-define-dao-finalization" class="outline-3">
+<h3 id="macro-define-dao-finalization">macro define-dao-finalization (((dao-name class) &amp;rest keyword-args) &amp;body body)</h3>
+<div class="outline-text-3" id="text-macro-define-dao-finalization">
+<p>
+Create an :around-method for make-dao. The body is executed in a lexical
+environment where dao-name is bound to a freshly created and inserted DAO. The
+representation of the DAO in the database is then updated to reflect changes
+that body might have introduced. Useful for processing values of slots with the
+type serial, which are unknown before insert-dao.
+</p>
+</div>
+</div>
+
+<div id="outline-container-method-get-dao" class="outline-3">
+<h3 id="method-get-dao">method get-dao (type &amp;rest keys)</h3>
+<div class="outline-text-3" id="text-method-get-dao">
+<p>
+→ dao
+</p>
+
+<p>
+Get the single DAO object from the row that has the given primary key values, or NIL
+if no such row exists. Objects created by this function will have
+initialize-instance called on them (after loading in the values from the
+database) without any arguments ― even :default-initargs are skipped. The same
+goes for select-dao and query-dao.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(get-dao 'country <span style="color: #e67128;">"The Netherlands"</span>)
+#&lt;COUNTRY {1010F0DCF3}&gt;
+</pre>
+</div>
+
+<p>
+From an sql perspective, the standard call to get-dao translates as:
+</p>
+<div class="org-src-container">
+<pre class="src src-sql"><span style="color: #ffad29; font-weight: bold;">select</span> * <span style="color: #ffad29; font-weight: bold;">from</span> <span style="color: #ffad29; font-weight: bold;">table</span>
+</pre>
+</div>
+
+<p>
+NOTE: if you have added fields to the database table without updating the class
+definition, get-dao and select-dao will throw errors. This may cause your
+application to appear to hang unless you have the necessary condition handling
+in your code. Usually this will only happen during development, so throwing an
+error is not a bad idea. If you want to ignore the errors,
+set <code>*ignore-unknown-columns*</code> to t.
+</p>
+</div>
+</div>
+
+<div id="outline-container-macro-select-dao" class="outline-3">
+<h3 id="macro-select-dao">macro select-dao (type &amp;optional (test t) &amp;rest sort)</h3>
+<div class="outline-text-3" id="text-macro-select-dao">
+<p>
+→ list
+</p>
+
+<p>
+Select DAO objects for the rows in the associated table for which the given
+test (either an S-SQL expression or a string) holds. When sorting arguments are
+given, which can also be S-SQL forms or strings, these are used to sort the
+result.
+</p>
+
+<p>
+(Note that, if you want to sort, you have to pass the test argument.)
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(select-dao 'country)
+(#&lt;COUNTRY {101088F6F3}&gt; #&lt;COUNTRY {101088FAA3}&gt;)
+2
+
+(select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'inhabitants 50000000))
+NIL
+0
+
+(select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'inhabitants 5000000))
+(#&lt;COUNTRY {10108AD293}&gt;)
+1
+
+(select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'inhabitants 5000))
+(#&lt;COUNTRY {10108CA773}&gt; #&lt;COUNTRY {10108CAB23}&gt;)
+2
+
+(select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'inhabitants 5000) 'name) <span style="color: #74af68;">;sorted by name</span>
+(#&lt;COUNTRY {10108EF423}&gt; #&lt;COUNTRY {10108EF643}&gt;)
+
+(mapcar 'country-name (select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'inhabitants 5000) 'name))
+(<span style="color: #e67128;">"Croatia"</span> <span style="color: #e67128;">"The Netherlands"</span>)
+
+(mapcar 'country-name (select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'inhabitants 5000)))
+(<span style="color: #e67128;">"The Netherlands"</span> <span style="color: #e67128;">"Croatia"</span>)
+</pre>
+</div>
+<p>
+If for some reason, you wanted the list in reverse alphabetical order, then:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'id  0) (<span style="color: #23d7d7;">:desc</span> 'name))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-macro-do-select-dao" class="outline-3">
+<h3 id="macro-do-select-dao">macro do-select-dao (((type type-var) &amp;optional (test t) &amp;rest sort) &amp;body body)</h3>
+<div class="outline-text-3" id="text-macro-do-select-dao">
+<p>
+Like select-dao, but iterates over the results rather than returning them.
+For each matching DAO, body is evaluated with type-var bound to the DAO
+instance.
+</p>
+
+<p>
+Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">do-select-dao</span> (('user user) (<span style="color: #23d7d7;">:&gt;</span> 'score 10000) 'name)
+  (pushnew user high-scorers))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-macro-query-dao" class="outline-3">
+<h3 id="macro-query-dao">macro query-dao (type query &amp;rest args)</h3>
+<div class="outline-text-3" id="text-macro-query-dao">
+<p>
+→ list of daos
+</p>
+
+<p>
+Execute the given query (which can be either a string or an S-SQL expression)
+and return the result as DAOs of the given type. If the query contains
+placeholders ($1, $2, etc) their values can be given as extra arguments. The
+names of the fields returned by the query must either match slots in the DAO
+class, or be bound through with-column-writers.
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-do-query-dao" class="outline-3">
+<h3 id="function-do-query-dao">function do-query-dao (((type type-var) query &amp;rest args) &amp;body body)</h3>
+<div class="outline-text-3" id="text-function-do-query-dao">
+<p>
+→ list of daos
+</p>
+
+<p>
+Like query-dao, but iterates over the results rather than returning them.
+For each matching DAO, body is evaluated with type-var bound to the instance.
+</p>
+
+<p>
+Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">do-query-dao</span> (('user user) (<span style="color: #23d7d7;">:order-by</span> (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'user <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&gt;</span> 'score 10000)) 'name))
+  (pushnew user high-scorers))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-variable-ignore-unknown-columns" class="outline-3">
+<h3 id="variable-ignore-unknown-columns">variable <code>*ignore-unknown-columns*</code></h3>
+<div class="outline-text-3" id="text-variable-ignore-unknown-columns">
+<p>
+Normally, when get-dao, select-dao, or query-dao finds a column in the database
+that's not in the DAO class, it will raise an error. Setting this variable to a
+non-NIL will cause it to simply ignore the unknown column. This allows you to create
+daos which are subsets of a table.
+</p>
+</div>
+</div>
+
+<div id="outline-container-method-insert-dao" class="outline-3">
+<h3 id="method-insert-dao">method insert-dao (dao)</h3>
+<div class="outline-text-3" id="text-method-insert-dao">
+<p>
+→ dao
+</p>
+
+<p>
+Insert the given dao into the database. Column slots of the object which are
+unbound implies the database defaults. Hence, if these columns has no defaults
+defined in the database, the the insertion of the dao will be failed. (This
+feature only works on PostgreSQL 8.2 and up.)
+</p>
+</div>
+</div>
+
+<div id="outline-container-method-update-dao" class="outline-3">
+<h3 id="method-update-dao">method update-dao (dao)</h3>
+<div class="outline-text-3" id="text-method-update-dao">
+<p>
+→ dao
+</p>
+
+<p>
+Update the representation of the given dao in the database to the values in the
+object. This is not defined for tables that do not have any non-primary-key
+columns. Raises an error when no row matching the dao exists.
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-save-dao" class="outline-3">
+<h3 id="function-save-dao">function save-dao (dao)</h3>
+<div class="outline-text-3" id="text-function-save-dao">
+<p>
+→ boolean
+</p>
+
+<p>
+Tries to insert the given dao using insert-dao. If the dao has unbound slots,
+those slots will be updated and bound by default data triggered by the
+database. If this raises a unique key violation error, it tries to update it by
+using update-dao instead. In this case, if the dao has unbound slots, updating
+will fail with an unbound slots error.
+</p>
+
+<p>
+Be aware that there is a possible race condition here ― if some other process
+deletes the row at just the right moment, the update fails as well. Returns a
+boolean telling you whether a new row was inserted.
+</p>
+
+<p>
+This function is unsafe to use inside of a transaction ― when a row with the
+given keys already exists, the transaction will be aborted. Use
+save-dao/transaction instead in such a situation.
+</p>
+
+<p>
+See also: upsert-dao.
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-save-dao-transaction" class="outline-3">
+<h3 id="function-save-dao-transaction">function save-dao/transaction (dao)</h3>
+<div class="outline-text-3" id="text-function-save-dao-transaction">
+<p>
+→ boolean
+</p>
+
+<p>
+The transaction safe version of save-dao. Tries to insert the given dao using
+insert-dao. If this raises a unique key violation error, it tries to update it
+by using update-dao instead. If the dao has unbound slots, updating will fail
+with an unbound slots error. If the dao has unbound slots, those slots will be
+updated and bound by default data triggered by the database.
+</p>
+
+<p>
+Be aware that there is a possible race condition here ― if some other process
+deletes the row at just the right moment, the update fails as well. Returns a
+boolean telling you whether a new row was inserted.
+</p>
+
+<p>
+Acts exactly like save-dao, except that it protects its attempt to insert the
+object with a rollback point, so that a failure will not abort the transaction.
+</p>
+
+<p>
+See also: upsert-dao.
+</p>
+</div>
+</div>
+
+<div id="outline-container-method-upsert-dao" class="outline-3">
+<h3 id="method-upsert-dao">method upsert-dao (dao)</h3>
+<div class="outline-text-3" id="text-method-upsert-dao">
+<p>
+→ dao
+</p>
+
+<p>
+Like save-dao or save-dao/transaction but using a different method that doesn't
+involve a database exception. This is safe to use both in and outside a
+transaction, though it's advisable to always do it in a transaction to prevent
+a race condition. The way it works is:
+</p>
+
+<p>
+If the object contains unbound slots, we call insert-dao directly, thus the
+behavior is like save-dao.
+</p>
+
+<p>
+Otherwise we try to update a record with the same primary key. If the PostgreSQL
+returns a non-zero number of rows updated it treated as the record is already
+exists in the database, and we stop here.
+</p>
+
+<p>
+If the PostgreSQL returns a zero number of rows updated, it treated as the
+record does not exist and we call insert-dao.
+</p>
+
+<p>
+The race condition might occur at step 3 if there's no transaction: if UPDATE
+returns zero number of rows updated and another thread inserts the record at
+that moment, the insertion implied by step 3 will fail.
+</p>
+
+<p>
+Note, that triggers and rules may affect the number of inserted or updated rows
+returned by PostgreSQL, so zero or non-zero number of affected rows may not
+actually indicate the existence of record in the database.
+</p>
+
+<p>
+This method returns two values: the DAO object and a boolean (T if the object
+was inserted, NIL if it was updated).
+</p>
+
+<p>
+IMPORTANT: This is not the same as insert on conflict (sometimes called an upsert)
+in Postgresq. An upsert in Postgresql terms is an insert with a fallback of updating
+the row if the insert key conflicts with an already existing row. An upsert-dao
+in Postmodern terms is the reverse. First you try updating an existing object. If
+there is no existing object to oupdate, then you insert a new object.
+</p>
+</div>
+</div>
+
+<div id="outline-container-method-delete-dao" class="outline-3">
+<h3 id="method-delete-dao">method delete-dao (dao)</h3>
+<div class="outline-text-3" id="text-method-delete-dao">
+<p>
+Delete the given dao from the database.
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-dao-table-name" class="outline-3">
+<h3 id="function-dao-table-name">function dao-table-name (class)</h3>
+<div class="outline-text-3" id="text-function-dao-table-name">
+<p>
+→ string
+</p>
+
+<p>
+Get the name of the table associated with the given DAO class (or symbol naming
+such a class).
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-dao-table-definition" class="outline-3">
+<h3 id="function-dao-table-definition">function dao-table-definition (class)</h3>
+<div class="outline-text-3" id="text-function-dao-table-definition">
+<p>
+→ string
+</p>
+
+<p>
+Given a DAO class, or the name of one, this will produce an SQL query string
+with a definition of the table. This is just the bare simple definition, so if
+you need any extra indices or or constraints, you'll have to write your own
+queries to add them, in which case look to s-sql's create-table function.
+</p>
+</div>
+</div>
+
+<div id="outline-container-macro-with-column-writers" class="outline-3">
+<h3 id="macro-with-column-writers">macro with-column-writers ((&amp;rest writers) &amp;body body)</h3>
+<div class="outline-text-3" id="text-macro-with-column-writers">
+<p>
+Provides control over the way get-dao, select-dao, and query-dao read values
+from the database. This is not commonly needed, but can be used to reduce the
+amount of queries a system makes. writers should be a list of alternating column
+names (strings or symbols) and writers, where writers are either symbols
+referring to a slot in the objects, or functions taking two arguments ― an
+instance and a value ― which can be used to somehow store the value in the new
+instance. When any DAO-fetching function is called in the body, and columns
+matching the given names are encountered in the result, the writers are used
+instead of the default behaviour (try and store the value in the slot that
+matches the column name).
+</p>
+
+<p>
+An example of using this is to add some non-column slots to a DAO class, and use
+query-dao within a with-column-writers form to pull in extra information about
+the objects, and immediately store it in the new instances.
+</p>
+
+<p>
+Another example would be to convert something that is in one format in Postgresql
+e.g. a string to something else in your dao. Suppose your dao has slots that contain
+a regular list, an alist and a plist but for whatever reason the data is stored in
+Postgresql as text:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">listy</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+   (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:col-check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
+         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name)
+   (rlist <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:rlist</span> <span style="color: #23d7d7;">:accessor</span> rlist)
+   (alist <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:alist</span> <span style="color: #23d7d7;">:accessor</span> alist)
+   (plist <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:plist</span> <span style="color: #23d7d7;">:accessor</span> plist))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> listy))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-table-definition" class="outline-2">
+<h2 id="table-definition">Table definition and creation using a dao</h2>
+<div class="outline-text-2" id="text-table-definition">
+<p>
+It can be useful to have the SQL statements needed to build an application's
+tables available from the source code, to do things like automatically deploying
+a database. The following macro and functions allow you to group sets of SQL
+statements under symbols, with some shortcuts for common elements
+in table definitions.
+</p>
+</div>
+
+<div id="outline-container-macro-deftable" class="outline-3">
+<h3 id="macro-deftable">macro deftable (name &amp;body definition)</h3>
+<div class="outline-text-3" id="text-macro-deftable">
+<p>
+Define a table. name can be either a symbol or a (symbol string) list. In the
+first case, the table name is derived from the symbol's name by S-SQL's rules.
+In the second case, the name is given explicitly. The body of definitions can
+contain anything that evaluates to a string, as well as S-SQL expressions. The
+variables <code>*table-name*</code> and <code>*table-symbol*</code> are bound to the relevant values in
+the body. Note that the evaluation of the definition is ordered, so you'll
+generally want to create your table first and then define indices on it.
+</p>
+</div>
+</div>
+
+<div id="outline-container-variable-table-name" class="outline-3">
+<h3 id="variable-table-name">variable <code>*table-name*</code></h3>
+<div class="outline-text-3" id="text-variable-table-name">
+<p>
+Used inside deftable to find the name of the table being defined.
+</p>
+</div>
+</div>
+
+<div id="outline-container-variable-table-symbol" class="outline-3">
+<h3 id="variable-table-symbol">variable <code>*table-symbol*</code></h3>
+<div class="outline-text-3" id="text-variable-table-symbol">
+<p>
+Used inside deftable to find the symbol naming the table being defined.
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-_dao-def" class="outline-3">
+<h3 id="function-_dao-def">function !dao-def ()</h3>
+<div class="outline-text-3" id="text-function-_dao-def">
+<p>
+Should only be used inside a deftable form. Define this table using the
+corresponding DAO class' slots. Adds the result of calling dao-table-definition
+on <b>table-symbol</b> to the definition.
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-_index" class="outline-3">
+<h3 id="function-_index">function !index (&amp;rest columns), !unique-index (&amp;rest columns)</h3>
+<div class="outline-text-3" id="text-function-_index">
+<p>
+Used inside a deftable form. Define an index on the table being defined. The
+columns can be given as symbols or strings.
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-_foreign" class="outline-3">
+<h3 id="function-_foreign">function !foreign (target fields &amp;rest target-fields/on-delete/on-update/deferrable/initially-deferred)</h3>
+<div class="outline-text-3" id="text-function-_foreign">
+<p>
+Used inside a deftable form. Add a foreign key to the table being defined.
+target-table is the referenced table. columns is a list of column names or
+single name in this table, and, if the columns have different names in the
+referenced table, target-columns must be another list of column names or single
+column name of the target-table, or :primary-key to denote the column(s) of the
+target-table's primary key as referenced column(s).
+</p>
+
+<p>
+The on-delete and on-update arguments can be used to specify ON DELETE and ON
+UPDATE actions, as per the keywords allowed in create-table. In addition, the
+deferrable and initially-deferred arguments can be used to indicate whether
+constraint checking can be deferred until the current transaction completed, and
+whether this should be done by default. Note that none of these are
+really &amp;key arguments, but rather are picked out of a &amp;rest arg at runtime, so
+that they can be specified even when target-columns is not given.
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-_unique" class="outline-3">
+<h3 id="function-_unique">function !unique (target-fields &amp;key deferrable initially-deferred)</h3>
+<div class="outline-text-3" id="text-function-_unique">
+<p>
+Constrains one or more columns to only contain unique (combinations of) values,
+with deferrable and initially-deferred defined as in !foreign
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-create-table" class="outline-3">
+<h3 id="function-create-table">function create-table (symbol)</h3>
+<div class="outline-text-3" id="text-function-create-table">
+<p>
+Takes the name of a dao-class and creates the table identified by symbol by
+executing all forms in its definition as found in the <code>*tables*</code> list.
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-create-all-tables" class="outline-3">
+<h3 id="function-create-all-tables">function create-all-tables ()</h3>
+<div class="outline-text-3" id="text-function-create-all-tables">
+<p>
+Creates all defined tables.
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-create-package-tables" class="outline-3">
+<h3 id="function-create-package-tables">function create-package-tables (package)</h3>
+<div class="outline-text-3" id="text-function-create-package-tables">
+<p>
+Creates all tables identified by symbols interned in the given package.
+</p>
+</div>
+</div>
+
+<div id="outline-container-variable-table-name" class="outline-3">
+<h3 id="variable-table-name">variables <code>*table-name*</code>, <code>*table-symbol*</code></h3>
+<div class="outline-text-3" id="text-variable-table-name">
+<p>
+Used inside deftable to find the name of the table being defined.
+</p>
+
+<p>
+Used inside deftable to find the symbol naming the table being defined.
+</p>
+</div>
+</div>
+
+<div id="outline-container-function-drop-table" class="outline-3">
+<h3 id="function-drop-table">function drop-table (table-name &amp;key if-exists cascade)</h3>
+<div class="outline-text-3" id="text-function-drop-table">
+<p>
+If a table exists, drop a table. Available additional key parameters
+are :if-exists and :cascade.
+</p>
+</div>
+</div>
+
+<div id="outline-container-out-of-sync-dao-objects" class="outline-3">
+<h3 id="out-of-sync-dao-objects">Out of Sync Dao Objects</h3>
+<div class="outline-text-3" id="text-out-of-sync-dao-objects">
+<p>
+What Happens when dao classes are out of sync with the database table?
+Let's establish our baseline
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:accessor</span> test-id)
+   (a <span style="color: #23d7d7;">:col-type</span> (or (varchar 100) db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:a</span> <span style="color: #23d7d7;">:accessor</span> test-a)
+   (b <span style="color: #23d7d7;">:col-type</span> boolean <span style="color: #23d7d7;">:col-default</span> nil <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:b</span> <span style="color: #23d7d7;">:accessor</span> test-b)
+   (c <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-default</span> 0 <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:c</span> <span style="color: #23d7d7;">:accessor</span> test-c)
+   (d <span style="color: #23d7d7;">:col-type</span> numeric <span style="color: #23d7d7;">:col-default</span> 0.0 <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:d</span> <span style="color: #23d7d7;">:accessor</span> test-d))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> dao-test)
+  (<span style="color: #23d7d7;">:keys</span> id))
+
+#&lt;DAO-CLASS S-SQL-TESTS::TEST-DATA&gt;
+
+(execute (dao-table-definition 'test-data))
+</pre>
+</div>
+
+<p>
+Now we define a class that uses the same table, but does not have all the columns.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-short</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:accessor</span> test-id)
+   (a <span style="color: #23d7d7;">:col-type</span> (or (varchar 100) db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:a</span> <span style="color: #23d7d7;">:accessor</span> test-a))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> dao-test)
+  (<span style="color: #23d7d7;">:keys</span> id))
+</pre>
+</div>
+
+<p>
+We create an instance of the shortened class and try to save it, then
+check the results.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data-short <span style="color: #23d7d7;">:a</span> <span style="color: #e67128;">"first short"</span>)))
+  (save-dao dao))
+
+(query (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'dao-test) <span style="color: #23d7d7;">:alists</span>)
+(((<span style="color: #23d7d7;">:ID</span> . 1) (<span style="color: #23d7d7;">:A</span> . <span style="color: #e67128;">"first short"</span>) (<span style="color: #23d7d7;">:B</span>) (<span style="color: #23d7d7;">:C</span> . 0) (<span style="color: #23d7d7;">:D</span> . 0)))
+</pre>
+</div>
+
+<p>
+It was a successful save, and we see that the missing columns took their
+default values.
+</p>
+
+<p>
+Now we define a shortened class, but the a slot is now numeric or null
+instead of a string and try to save it and check it.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-short-wrong-1</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:accessor</span> test-id)
+   (a <span style="color: #23d7d7;">:col-type</span> (or numeric db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:a</span> <span style="color: #23d7d7;">:accessor</span> test-a))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> dao-test)
+  (<span style="color: #23d7d7;">:keys</span> id))
+
+(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data-short-wrong-1 <span style="color: #23d7d7;">:a</span> 12.75)))
+  (save-dao dao))
+
+(query (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'dao-test) <span style="color: #23d7d7;">:alists</span>)
+
+(((<span style="color: #23d7d7;">:ID</span> . 1) (<span style="color: #23d7d7;">:A</span> . <span style="color: #e67128;">"first short"</span>) (<span style="color: #23d7d7;">:B</span>) (<span style="color: #23d7d7;">:C</span> . 0) (<span style="color: #23d7d7;">:D</span> . 0))
+ ((<span style="color: #23d7d7;">:ID</span> . 2) (<span style="color: #23d7d7;">:A</span> . <span style="color: #e67128;">"12.75"</span>) (<span style="color: #23d7d7;">:B</span>) (<span style="color: #23d7d7;">:C</span> . 0) (<span style="color: #23d7d7;">:D</span> . 0))
+</pre>
+</div>
+
+<p>
+Notice that the 12.75 has been converted into a string when it was saved.
+Postgresql did this automatically. Anything going into a text or varchar
+column will be converted to a string.
+</p>
+
+<p>
+Now we will go the other way and define a dao with the right number
+of columns, but col d is a string when the database expects a numeric
+and check that.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-d-string</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:accessor</span> test-id)
+   (a <span style="color: #23d7d7;">:col-type</span> (or (varchar 100) db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:a</span> <span style="color: #23d7d7;">:accessor</span> test-a)
+   (b <span style="color: #23d7d7;">:col-type</span> boolean <span style="color: #23d7d7;">:col-default</span> nil <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:b</span> <span style="color: #23d7d7;">:accessor</span> test-b)
+   (c <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-default</span> 0 <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:c</span> <span style="color: #23d7d7;">:accessor</span> test-c)
+   (d <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-default</span> <span style="color: #e67128;">""</span> <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:d</span> <span style="color: #23d7d7;">:accessor</span> test-d))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> dao-test)
+  (<span style="color: #23d7d7;">:keys</span> id))
+
+(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data-d-string <span style="color: #23d7d7;">:a</span> <span style="color: #e67128;">"D string"</span> <span style="color: #23d7d7;">:b</span> nil <span style="color: #23d7d7;">:c</span> 14
+                                              <span style="color: #23d7d7;">:d</span> <span style="color: #e67128;">"Trying string"</span>)))
+  (save-dao dao))
+
+Database error 22P02: invalid input syntax for type numeric: <span style="color: #e67128;">"Trying string"</span>
+QUERY: INSERT INTO dao_test (d, c, b, a) VALUES (E'Trying string', 14, false, E'D string') RETURNING id
+[Condition of type DATA-EXCEPTION]
+
+</pre>
+</div>
+<p>
+Ok. That threw a data exception. What happens if we try to force a numeric into
+an integer column?
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data-d-string <span style="color: #23d7d7;">:a</span> <span style="color: #e67128;">"D string"</span> <span style="color: #23d7d7;">:b</span> nil <span style="color: #23d7d7;">:c</span> 14.37
+                                              <span style="color: #23d7d7;">:d</span> 18.78)))
+  (save-dao dao))
+
+Database error 22P02: invalid input syntax for type integer: <span style="color: #e67128;">"14.37"</span>
+[Condition of type CL-POSTGRES-ERROR:DATA-EXCEPTION]
+
+</pre>
+</div>
+<p>
+Ok. Postgresql is enforcing the types.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data-d-string <span style="color: #23d7d7;">:a</span> <span style="color: #e67128;">"D string"</span> <span style="color: #23d7d7;">:b</span> nil <span style="color: #23d7d7;">:c</span> 14
+                                              <span style="color: #23d7d7;">:d</span> 18.78)))
+  (save-dao dao))
+
+(query (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'dao-test) <span style="color: #23d7d7;">:alists</span>)
+(((<span style="color: #23d7d7;">:ID</span> . 1) (<span style="color: #23d7d7;">:A</span> . <span style="color: #e67128;">"first short"</span>) (<span style="color: #23d7d7;">:B</span>) (<span style="color: #23d7d7;">:C</span> . 0) (<span style="color: #23d7d7;">:D</span> . 0))
+ ((<span style="color: #23d7d7;">:ID</span> . 2) (<span style="color: #23d7d7;">:A</span> . <span style="color: #e67128;">"12.75"</span>) (<span style="color: #23d7d7;">:B</span>) (<span style="color: #23d7d7;">:C</span> . 0) (<span style="color: #23d7d7;">:D</span> . 0))
+ ((<span style="color: #23d7d7;">:ID</span> . 3) (<span style="color: #23d7d7;">:A</span> . <span style="color: #e67128;">"D string"</span>) (<span style="color: #23d7d7;">:B</span>) (<span style="color: #23d7d7;">:C</span> . 14) (<span style="color: #23d7d7;">:D</span> . 939/50)))
+</pre>
+</div>
+
+<p>
+Notice that postmodern returned a ratio 939/50 for the numeric 18.78.
+</p>
+
+<p>
+We have looked at saving daos. Now look at returning a dao from the database
+where the dao definition is different than the table definition.
+First checking to see if we can get a correct dao back.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(get-dao 'test-data 3)
+#&lt;TEST-DATA {100C82AA33}&gt;
+</pre>
+</div>
+<p>
+Ok. That worked as expected.
+</p>
+
+<p>
+Second using a shortened dao that is correct in type of columns, but
+incorrect n the number of columns compared to the database table.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(get-dao 'test-data-short 3)
+No slot named b in class TEST-DATA-SHORT. DAO out of sync with table, or
+incorrect query used.
+[Condition of type SIMPLE-ERROR]
+
+Restarts:
+0: [RETRY] Retry SLIME REPL evaluation request.
+1: [*ABORT] Return to SLIME's top level.
+2: [ABORT] abort thread (#&lt;THREAD <span style="color: #e67128;">"new-repl-thread"</span> RUNNING {100C205083}&gt;)
+
+</pre>
+</div>
+<p>
+Not only did it throw an exception, but I needed to actually use an interrupt
+from the repl to get back in operation. And then use (reconnect <code>*database*</code>).
+Very Bad result.
+</p>
+
+<p>
+THIS ERROR IS CONTROLLABLE BY THE VARIABLE <code>*IGNORE-UNKNOWN-COLUMNS*</code>
+</p>
+
+<p>
+Now if we setf the default global variable <code>*ignore-unknown-columns*</code> to t
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(setf *ignore-unknown-columns* t)
+
+(get-dao 'test-data-short 3)
+#&lt;TEST-DATA-SHORT {10054DFED3}&gt;
+
+(describe (get-dao 'test-data-short 3))
+#&lt;TEST-DATA-SHORT {100B249783}&gt;
+[standard-object]
+
+Slots with <span style="color: #23d7d7;">:INSTANCE</span> allocation:
+ID                             = 3
+A                              = <span style="color: #e67128;">"D string"</span>
+</pre>
+</div>
+<p>
+We now have a dao that is a subset of the database table it pulled from.
+Just to validate that:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'dao-test <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id 3)))
+
+((3 <span style="color: #e67128;">"D string"</span> NIL 14 939/50))
+</pre>
+</div>
+<p>
+Just to be thorough, let's use a dao that has more slots than the database table.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-long</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:accessor</span> test-id)
+   (a <span style="color: #23d7d7;">:col-type</span> (or (varchar 100) db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:a</span> <span style="color: #23d7d7;">:accessor</span> test-a)
+   (b <span style="color: #23d7d7;">:col-type</span> boolean <span style="color: #23d7d7;">:col-default</span> nil <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:b</span> <span style="color: #23d7d7;">:accessor</span> test-b)
+   (c <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-default</span> 0 <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:c</span> <span style="color: #23d7d7;">:accessor</span> test-c)
+   (d <span style="color: #23d7d7;">:col-type</span> numeric <span style="color: #23d7d7;">:col-default</span> 0.0 <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:d</span> <span style="color: #23d7d7;">:accessor</span> test-d)
+   (e <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-default</span> <span style="color: #e67128;">"sell by date"</span> <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:e</span> <span style="color: #23d7d7;">:accessor</span> test-e))
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> dao-test)
+  (<span style="color: #23d7d7;">:keys</span> id))
+</pre>
+</div>
+<p>
+Now if we make an instance of this dao and try to save it in the dao-class table:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data-long <span style="color: #23d7d7;">:a</span> <span style="color: #e67128;">"first short"</span> <span style="color: #23d7d7;">:d</span> 37.3)))
+  (save-dao dao))
+
+Database error 42703: column <span style="color: #e67128;">"e"</span> does not exist
+QUERY: INSERT INTO dao_test (d, a)  VALUES ($1, $2) RETURNING e, c, b, id
+[Condition of type CL-POSTGRES-ERROR:UNDEFINED-COLUMN]
+</pre>
+</div>
+<p>
+Postgresql rejected the attempted insert with an undefined column error.
+</p>
+</div>
+</div>
+<div id="outline-container-multi-table-dao-class-object" class="outline-3">
+<h3 id="multi-table-dao-class-object">Introduction to Multi-table dao class objects</h3>
+<div class="outline-text-3" id="text-multi-table-dao-class-object">
+<p>
+Postmodern's dao-class objects are not required to be tied down to a specific
+table. They can be used simply as classes to hold data for whatever purpose your
+application may use.
+</p>
+
+<p>
+For this introduction, we will use two sets of tables: (1) country-d and
+region-d and (2) country-n and region-n. In each case the country table will
+have a foreign key tied to a region.
+</p>
+
+<p>
+A foreign key is a "constraint" referencing a primary key in another table. The
+table containing the foreign key is the referencing or child table and the table
+referenced by the foreign key is the referenced or parent table. The foreign key
+enforces a requirement that the child table column refering to another table
+must refer to a row that exists in the other table. In other words, you cannot
+create a row in table country-d that references a region-d name "Transylvania"
+if the region-d name "Transylvania" does not yet exist in the region-d table. At
+the same time, you could not later delete the region-d row with "Transylvania"
+if the country-d row referencing it still exists.
+</p>
+
+<p>
+Do you remember the slightly more complicated version of country from earlier on
+the page?
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">country</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
+         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:reader</span> country-name)
+   (inhabitants <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:inhabitants</span>
+                <span style="color: #23d7d7;">:accessor</span> country-inhabitants)
+   (sovereign <span style="color: #23d7d7;">:col-type</span> (or db-null string) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:sovereign</span>
+              <span style="color: #23d7d7;">:accessor</span> country-sovereign)
+   (region-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-references</span> ((regions id))
+              <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-id</span> <span style="color: #23d7d7;">:accessor</span> region-id))
+  (<span style="color: #23d7d7;">:documentation</span> <span style="color: #e67128;">"Dao class for a countries record."</span>)
+  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+  (<span style="color: #23d7d7;">:table-name</span> countries))
+</pre>
+</div>
+<p>
+That one specified a foreign key reference in the region-id column, so we
+cannot insert the data from a country dao unless there is already a region
+table with an id column equal to the region-id in the country dao.
+</p>
+
+<p>
+Lets look at two slightly different ways of handling countries and regions.
+</p>
+
+<p>
+In our first set of tables, country-d will have a region column that references
+the name column in a region-d table (so the name column in region-d must be the
+primary key for region-d).
+</p>
+
+<p>
+This looks relatively straight forward and it is in this simple case. Things
+start getting more complicated if you start having to reference a table where
+there are many items with the same name. An example would be tracking library
+books. There may be multiple copies of a book title, but you need to know which
+book was checked out to which library patron. In these types of situations, the
+primary key cannot be the name of the region, it needs to reference some
+particular id.
+</p>
+
+<p>
+In our second set of tables, country-n will have a region-id column that
+references an id column in a region-d table (so the id column in region-d must
+be the primary key for region-d).
+</p>
+</div>
+
+<div id="outline-container-multi-table-dao-class-object-simple-version" class="outline-4">
+<h4 id="multi-table-dao-class-object-simple-version">Simple Version</h4>
+<div class="outline-text-4" id="text-multi-table-dao-class-object-simple-version">
+<p>
+Lets start by declaring our classes and we will use the deftable make to create
+a definition for our tables that gets stored in the <code>*tables*</code> special variable.
+We can then use the (create-table 'class-name) function to create the table in
+the database.
+</p>
+
+<p>
+Just to be slightly different, we are going to declare the classes without the
+:col-reference and :col-unique modifiers and put those into the (deftable) macro
+call. We will set the id as a serial in the -d version because we want to use
+name as the primary key and seting id as an identity would cause it to be the
+primary key.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">region-d</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:reader</span> region-id)
+   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> region-name))
+  (<span style="color: #23d7d7;">:metaclass</span> pomo:dao-class)
+  (<span style="color: #23d7d7;">:keys</span> name))
+
+(deftable region-d
+  (!dao-def)
+  (!unique 'name))
+
+(create-table 'region-d)
+
+(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">country-d</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:reader</span> country-id)
+   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span>
+         <span style="color: #23d7d7;">:reader</span> country-name)
+   (region-name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-name</span> <span style="color: #23d7d7;">:accessor</span> region-name))
+   (<span style="color: #23d7d7;">:metaclass</span> pomo:dao-class)
+   (<span style="color: #23d7d7;">:keys</span> name))
+
+(deftable country-d
+  (!dao-def)
+  (!unique 'name)
+  (!foreign 'region-d 'region-name 'name))
+
+(create-table 'country-d)
+</pre>
+</div>
+<p>
+The new function !foreign insde the deftable adds a foreign key which requires
+that a region with that id already exist before you can insert a country.
+By the way, because of the foreign key constraint, postgresql will require that
+the region-d table be created before the country-d table.
+</p>
+
+<p>
+Look at <code>*tables*</code> for a moment:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">*tables*
+((REGION-D . #&lt;FUNCTION (<span style="color: #ffad29; font-weight: bold;">LAMBDA</span> ()) {534D126B}&gt;)
+ (COUNTRY-D . #&lt;FUNCTION (<span style="color: #ffad29; font-weight: bold;">LAMBDA</span> ()) {52A1484B}&gt;))
+</pre>
+</div>
+<p>
+The region-d lambda looks like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">LAMBDA</span> ()
+    (<span style="color: #ffad29; font-weight: bold;">LET</span> ((*TABLE-NAME* <span style="color: #e67128;">"region_d"</span>) (*TABLE-SYMBOL* 'REGION-D))
+      (<span style="color: #ffad29; font-weight: bold;">DOLIST</span> (STAT (LIST (!DAO-DEF) (!UNIQUE 'NAME))) (EXECUTE STAT))))
+</pre>
+</div>
+<p>
+The country-d lambda looks like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">LAMBDA</span> ()
+    (<span style="color: #ffad29; font-weight: bold;">LET</span> ((*TABLE-NAME* <span style="color: #e67128;">"country_d"</span>) (*TABLE-SYMBOL* 'COUNTRY-D))
+      (<span style="color: #ffad29; font-weight: bold;">DOLIST</span>
+          (STAT
+           (LIST (!DAO-DEF) (!UNIQUE 'NAME)
+                 (!FOREIGN 'REGION-D 'REGION-NAME 'NAME)))
+        (EXECUTE STAT))))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-multi-table-dao-class-object-less-simple-version" class="outline-4">
+<h4 id="multi-table-dao-class-object-less-simple-version">Less Simple Version</h4>
+<div class="outline-text-4" id="text-multi-table-dao-class-object-less-simple-version">
+<p>
+In the -n version, we are going to use the id columns as the primary key.
+We will not need to tell deftable t
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">region-n</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:reader</span> region-id)
+   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> region-name))
+  (<span style="color: #23d7d7;">:metaclass</span> pomo:dao-class))
+
+(deftable region-n
+  (!dao-def)
+  (!unique 'name))
+
+(create-table 'region-n)
+
+(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">country-n</span> ()
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:reader</span> country-id)
+   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span>
+         <span style="color: #23d7d7;">:reader</span> country-name)
+   (region-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-id</span> <span style="color: #23d7d7;">:accessor</span> region-id))
+   (<span style="color: #23d7d7;">:metaclass</span> dao-class))
+
+(deftable country-n
+  (!dao-def)
+  (!unique 'name)
+  (!foreign 'region-n 'region-id 'id))
+
+(create-table 'country-n)
+</pre>
+</div>
+<p>
+How do you find the region-id? While we set the primary key as name for both
+country and region in the simple version, it will be a little more work in the
+less simple version. Lets start by inserting a couple of regions and we will
+stick with the dao method for the moment:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(insert-dao (make-instance 'region-d <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Western Europe"</span>))
+(insert-dao (make-instance 'region-n <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Western Europe"</span>))
+(insert-dao (make-instance 'region-d <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Southern Europe"</span>))
+(insert-dao (make-instance 'region-n <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Southern Europe"</span>))
+</pre>
+</div>
+
+<p>
+Now we can add a few countries to country-d:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(insert-dao (make-instance 'country-d <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"The Netherlands"</span>
+                                      <span style="color: #23d7d7;">:region-name</span> <span style="color: #e67128;">"Western Europe"</span>))
+
+(insert-dao (make-instance 'country-d <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Croatia"</span>
+                                      <span style="color: #23d7d7;">:region-name</span> <span style="color: #e67128;">"Southern Europe"</span>))
+</pre>
+</div>
+<p>
+Now we can add a few countries to country-n, remembering that for this version,
+name is not the primary key so how to get the region dao with the name "Western Europe"? For region-d
+it is easy because the name is the primary key. So
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(get-dao 'region-d <span style="color: #e67128;">"Western Europe"</span>)
+#&lt;REGION-D {100A322D43}&gt;
+</pre>
+</div>
+<p>
+For region-n it is a little more complicated because the primary key is the id
+column, not the name column. So there are a couple of ways to do it. First is
+select-dao which will return a list of daos meeting a test criteria, in a sorted
+order if that third parameter is also provided. Eg.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(select-dao 'region-n (<span style="color: #23d7d7;">:=</span> 'id 1))
+(#&lt;REGION-N {100AAC6E13}&gt;)
+
+(select-dao 'region-n (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"Western Europe"</span>))
+(#&lt;REGION-N {100A813CF3}&gt;)
+
+(select-dao 'region-n t 'name)
+(#&lt;REGION-N {100AC90FA3}&gt; #&lt;REGION-N {100AC911B3}&gt;)
+</pre>
+</div>
+
+<p>
+Another method with is query-dao, which takes a row and inserts it into a dao.
+That gets us a list of daos meeting the select criteria.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query-dao 'region-n <span style="color: #e67128;">"select * from region_n where name = 'Western Europe'"</span>)
+(#&lt;REGION {1009E75E63}&gt;)
+</pre>
+</div>
+<p>
+or, using s-sql expression
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query-dao 'region-n (<span style="color: #23d7d7;">:select</span> '*
+                      <span style="color: #23d7d7;">:from</span> 'region-n
+                      <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"Western Europe"</span>)))
+(#&lt;REGION-D {100A50DA13}&gt;)
+</pre>
+</div>
+
+<p>
+Here are two different ways of generating the region-id so we can insert a new dao
+into country-n:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(insert-dao
+  (make-instance 'country-n
+                 <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"The Netherlands"</span>
+                 <span style="color: #23d7d7;">:region-id</span> (region-id
+                              (first (select-dao 'region-n
+                                                 (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"Western Europe"</span>))))))
+#&lt;COUNTRY-N {1002AD79B3}&gt;
+
+(insert-dao
+  (make-instance 'country-n
+                 <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Croatia"</span>
+                 <span style="color: #23d7d7;">:region-id</span> (query (<span style="color: #23d7d7;">:select</span> 'id
+                                    <span style="color: #23d7d7;">:from</span> 'region-n
+                                    <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"Southern Europe"</span>))
+                             <span style="color: #23d7d7;">:single</span>)))
+#&lt;COUNTRY-N {1002ADE2B3}&gt;
+</pre>
+</div>
+<p>
+But the returned row need not be the result from a single table. Suppose we
+create a third table that has population by year and inserted a couple of rows.
+This time we will do it with s-sql.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'country-population ((id <span style="color: #23d7d7;">:type</span> bigserial)
+                                          (country-id <span style="color: #23d7d7;">:type</span> integer)
+                                          (year <span style="color: #23d7d7;">:type</span> integer)
+                                          (population <span style="color: #23d7d7;">:type</span> integer))))
+
+(<span style="color: #ffad29; font-weight: bold;">let</span> ((country-id (query (<span style="color: #23d7d7;">:select</span> 'id
+                          <span style="color: #23d7d7;">:from</span> 'country-d
+                          <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"The Netherlands"</span>))
+                         <span style="color: #23d7d7;">:single</span>)))
+  (query (<span style="color: #23d7d7;">:insert-rows-into</span> 'country-population
+          <span style="color: #23d7d7;">:columns</span> 'country-id 'year 'population
+          <span style="color: #23d7d7;">:values</span> `((,country-id 2014 16830000)
+                    (,country-id 2015 16900000)
+                    (,country-id 2016 16980000)
+                    (,country-id 2017 17080000)))))
+
+(<span style="color: #ffad29; font-weight: bold;">let</span> ((country-id (query (<span style="color: #23d7d7;">:select</span> 'id
+                          <span style="color: #23d7d7;">:from</span> 'country-d
+                          <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"Croatia"</span>))
+                         <span style="color: #23d7d7;">:single</span>)))
+  (query (<span style="color: #23d7d7;">:insert-rows-into</span> 'country-population
+          <span style="color: #23d7d7;">:columns</span> 'country-id 'year 'population
+          <span style="color: #23d7d7;">:values</span> `((,country-id 2014 4255518)
+                    (,country-id 2015 4232873)
+                    (,country-id 2016 4208611)
+                    (,country-id 2017 4182846)))))
+</pre>
+</div>
+<p>
+Now we create a class that pulls from all three tables (country, region and
+country-population).
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">country-with-population</span> ()
+  ((country-name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:country-name</span>
+           <span style="color: #23d7d7;">:reader</span> country-name)
+     (region-name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-name</span> <span style="color: #23d7d7;">:accessor</span> region-name)
+     (year <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:year</span> <span style="color: #23d7d7;">:reader</span> year)
+     (population <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:population</span> <span style="color: #23d7d7;">:reader</span> population))
+     (<span style="color: #23d7d7;">:metaclass</span> dao-class)
+     (<span style="color: #23d7d7;">:keys</span> country-name))
+</pre>
+</div>
+<p>
+Can we use query-dao to get a list of country-with-population daos with the most
+recent population data? The answer is yes. That would give us a class that maybe
+our application can use without having to worry about constantly going back to
+the database to look for the region's name or whatever.
+</p>
+
+<p>
+Of course you still need to get the data into the class instances. You could
+write the following one time as a function to generate your list of countries
+with the most recent population data. Note that you need to rename the columns
+to the appropriate initarg name (e.g. 'country-n.name is selected as
+'country-name). You do not need to worry about the order of the selected rows.
+So long as the selections are renamed properly, the slots will be populated
+properly.
+</p>
+
+<p>
+In the data that we have in the system, we happen to know that the years
+available are the same for every country. In that case, we just want the
+information for the maximum year. One way to do that would be:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query-dao 'country-with-population
+                 (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:as</span> 'country-n.name 'country-name)
+                          'year
+                          (<span style="color: #23d7d7;">:as</span> 'region-n.name 'region-name)
+                          'population
+                      <span style="color: #23d7d7;">:from</span> 'country-n
+                      <span style="color: #23d7d7;">:inner-join</span> 'region-n
+                      <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.region-id 'region-n.id)
+                      <span style="color: #23d7d7;">:inner-join</span> 'country-population
+                      <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.id 'country-population.country-id)
+                      <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'year (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:max</span> 'year)
+                                        <span style="color: #23d7d7;">:from</span> 'country-population))))
+</pre>
+</div>
+<p>
+But what happens if the data is not the same for both countries? Lets drop the
+2017 population data row for Croatia and make sure it still returns the most
+current year that we have for both countries.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:delete-from</span> 'country-population
+        <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:and</span> (<span style="color: #23d7d7;">:=</span> 'country-id 2)
+                     (<span style="color: #23d7d7;">:=</span> 'year 2017))))
+</pre>
+</div>
+<p>
+If we run the same query from above, we only get an instance for The Netherlands
+because that was the only data available for the maximum year (2017). We need to
+approach the data slightly differently.Because this is postmodern and we only
+care about the Postgresql database, we can use its DISTINCT ON extension to the
+SQL standard.
+</p>
+
+<p>
+See <a href="https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT">https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT</a>
+for more documentation.
+</p>
+
+<p>
+The following query will pull the most recent year for both countries. How did
+that happen? We limited the select clause to distinct country names so we would
+only pull one of each country, then ordered the result by country-name, but most
+importantly by year descending.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query-dao 'country-with-population
+                 (<span style="color: #23d7d7;">:order-by</span> (<span style="color: #23d7d7;">:select</span>  (<span style="color: #23d7d7;">:as</span> 'country-n.name 'country-name)
+                                      'year
+                                      (<span style="color: #23d7d7;">:as</span> 'region-n.name 'region-name)
+                                      'population
+                             <span style="color: #23d7d7;">:distinct-on</span> 'country-n.name
+                             <span style="color: #23d7d7;">:from</span> 'country-n
+                             <span style="color: #23d7d7;">:inner-join</span> 'region-n
+                             <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.region-id 'region-n.id)
+                             <span style="color: #23d7d7;">:inner-join</span> 'country-population
+                             <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.id
+                                     'country-population.country-id))
+                     'country-name
+                     (<span style="color: #23d7d7;">:desc</span> 'year)))
+(#&lt;COUNTRY-WITH-POPULATION {1009AFAEC3}&gt;
+ #&lt;COUNTRY-WITH-POPULATION {1009AFC963}&gt;)
+</pre>
+</div>
+<p>
+At this point you could write a function that gets a country-with-population dao
+pulling the most recent population year from the database:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">get-country-with-most-recent-population</span> (country)
+  (car (query-dao 'country-with-population
+                  (<span style="color: #23d7d7;">:order-by</span> (<span style="color: #23d7d7;">:select</span>  (<span style="color: #23d7d7;">:as</span> 'country-n.name 'country-name)
+                                       'year
+                                       (<span style="color: #23d7d7;">:as</span> 'region-n.name 'region-name)
+                                       'population
+                                       <span style="color: #23d7d7;">:distinct-on</span> 'country-n.name
+                                       <span style="color: #23d7d7;">:from</span> 'country-n
+                                       <span style="color: #23d7d7;">:inner-join</span> 'region-n
+                                       <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.region-id
+                                               'region-n.id)
+                                       <span style="color: #23d7d7;">:inner-join</span> 'country-population
+                                       <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.id
+                                               'country-population.country-id)
+                                       <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'country-n.name '$1))
+                             'country-name
+                             (<span style="color: #23d7d7;">:desc</span> 'year))
+                  country)))
+</pre>
+</div>
+<p>
+Obviously it is not get-dao, which is simpler but just pulls everything in a
+single row from a table and this pulls just the data you want from three
+different tables and it is bespoken for that class. Because get-dao is a generic
+function, with the normal method being applied when passing a symbol, you could
+write a new method for get-dao that would apply if you passed it an actual
+country-with-population class instance.
+</p>
+
+<p>
+If you want to display fields in a record which matches a dao class that you
+have set up, you can call get-dao with the name of table and the primary key.
+In this example, the table is "countries and the primary key happens to be the
+field "id" with a value of 1.
+</p>
+
+<p>
+For example, assume we pull a dao object out of our country-n table for
+Croatia:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(describe (get-dao 'country-n 2))
+#&lt;COUNTRY-N {1005BF7273}&gt;
+  [standard-object]
+
+Slots with <span style="color: #23d7d7;">:INSTANCE</span> allocation:
+  ID                             = 2
+  NAME                           = <span style="color: #e67128;">"Croatia"</span>
+  REGION-ID                      = 2
+</pre>
+</div>
+<p>
+Notice that the region-id field has an integer value. This works. But assume it
+has a slot of region-id, which refers to an id in the table "regions" and you
+want the name of the region displayed rather than the region-id. There is a hack
+using with-column-writers which essentially writes the name into the link slot.
+Now, we write a function that uses the with-column-writers macro and pull in the
+actual region name from the regions table.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">get-country2</span> (country-name )
+  (first (<span style="color: #ffad29; font-weight: bold;">with-column-writers</span>
+         ('region-n 'region-id)
+         (query-dao 'country-n
+                    (<span style="color: #23d7d7;">:select</span> 'country-n.* (<span style="color: #23d7d7;">:as</span> 'region-n.name 'region-n)
+                             <span style="color: #23d7d7;">:from</span> 'country-n
+                             <span style="color: #23d7d7;">:left-join</span> 'region-n
+                             <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.region-id 'region-n.id)
+                             <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'country-n.name country-name))))))
+
+(describe (get-country2 <span style="color: #e67128;">"Croatia"</span>))
+#&lt;COUNTRIES {1003AD23D1}&gt;
+  [standard-object]
+(describe (get-country2 <span style="color: #e67128;">"Croatia"</span>))
+#&lt;COUNTRY-N {100593DF03}&gt;
+  [standard-object]
+
+Slots with <span style="color: #23d7d7;">:INSTANCE</span> allocation:
+  ID                             = 2
+  NAME                           = <span style="color: #e67128;">"Croatia"</span>
+  REGION-ID                      = <span style="color: #e67128;">"Southern Europe"</span>
+
+
+(region-id (get-country2 <span style="color: #e67128;">"Croatia"</span>))
+<span style="color: #e67128;">"Southern Europe"</span>
+</pre>
+</div>
+
+<p>
+Normally calling the accessor region-id would return an integer, but now it is
+returning the name of the region. if you are using the dao as a simple way to
+get the relevant data out of the database and you are just going to display
+this value, this saves you from having to make additional database calls.
+Otherwise, you would have to make an additional call to get the information
+from all the foreign tables.
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

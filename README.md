@@ -4,7 +4,7 @@ A Common Lisp PostgreSQL programming interface
 
 ---
 
-Version 1.33.0
+Version 1.33.1
 
 Postmodern is a Common Lisp library for interacting with [PostgreSQL](http://www.postgresql.org) databases. It is under active development. Features are:
 
@@ -183,7 +183,7 @@ You do not have to pull in the whole result of a query at once, you can also ite
     (format t "On this row, x = ~A and y = ~A.~%" x y))
 ```
 
-You can work directly with the database or you can use a simple database-access-class (aka dao) which would cover all the columns in a row. This is what a database-access class looks like:
+You can work directly with the database or you can use a simple [database-access-class](https://marijnhaverbeke.nl/postmodern/dao-classes.html) (aka dao) which would cover all the columns in a row. This is what a database-access class looks like:
 
 ```lisp
 (defclass country ()
@@ -342,7 +342,7 @@ described above. Using the slightly more complicated version of the country dao 
 
 This defines our table in the database. execute works like query, but does not expect any results back.
 
-See [Introduction to Multi-table dao class objects](doc/postmodern.html) in the postmodern.org or postmodern.html manual for a further discussion of multi-table use of daos.
+See [Introduction to Multi-table dao class objects](doc/dao-classes.html#multi-table-dao-class-object) in the postmodern.org or postmodern.html manual for a further discussion of multi-table use of daos.
 
 ### Inserting Data
 
@@ -458,10 +458,21 @@ Other authentication methods have not been tested. Please let us know if there i
 
 The reference manuals for the different components of Postmodern are kept in separate files. For using the library in the most straightforward way, you only really need to read the Postmodern reference and glance over the S-SQL reference. The simple-date reference explains the time-related data types included in Postmodern, and the CL-postgres reference might be useful if you just want a low-level library for talking to a PostgreSQL server.
 
+- [Postmodern - Index Page](https://marijnhaverbeke.nl/postmodern/index.html)
 - [Postmodern](https://marijnhaverbeke.nl/postmodern/postmodern.html)
 - [S-SQL](https://marijnhaverbeke.nl/postmodern/s-sql.html)
 - [Simple-date](https://marijnhaverbeke.nl/postmodern/simple-date.html)
 - [CL-postgres](https://marijnhaverbeke.nl/postmodern/cl-postgres.html)
+
+Some specific topics in more detail:
+
+- [Array Notes](https://marijnhaverbeke.nl/postmodern/array-notes.html)
+- [Creating Tables](https://marijnhaverbeke.nl/postmodern/create-tables.html)
+- [Dao Classes](https://marijnhaverbeke.nl/postmodern/dao-classes.html)
+- [Dynamic Queries](https://marijnhaverbeke.nl/postmodern/dynamic-queries.html)
+- [Interval Notes](https://marijnhaverbeke.nl/postmodern/interval-notes.html)
+- [Isolation Notes](https://marijnhaverbeke.nl/postmodern/isolation-notes.html)
+
 
 ## Data Types
 
