@@ -23,10 +23,10 @@ Some specific topics in more detail
 
 - [[file:array-notes.html][Array-Notes]]
 - [[file:create-tables.html][Creating Tables]] (sql, s-sql and using dao classes)
+- [[file:dao-classes.html#table-definition][Creating Tables using dao classes]]
 - [[file:dynamic-queries.html][Dynamic Queries]]
 - [[file:interval-notes.html][Interval Notes]]
 - [[file:isolation-notes.html][Isolation Notes]]
-
 
 * Connecting
 :PROPERTIES:
@@ -272,6 +272,7 @@ You can set the flag for Postmodern to pass parameters in binary form to Postgre
 :PROPERTIES:
 :CUSTOM_ID: querying
 :END:
+For queries involving dao-classes, see [[file:dao-classes.html#query-and-selection][Dao Query and Selection]]
 ** macro query (query &rest args/format)
 :PROPERTIES:
 :CUSTOM_ID: macro-query
@@ -1009,7 +1010,7 @@ and there cannot be any current connections to the database.
   :CUSTOM_ID: table-definition
   :END:
 
-  See [[file:dao-classes.html#table-definition][Table definition and creation using a dao]]
+  See: [[file:dao-classes.html#table-definition][Creating Tables using dao classes]]
 
 * Roles
   :PROPERTIES:

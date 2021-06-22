@@ -5,18 +5,18 @@ There may be times when the types of values in a dao slot do not have comparable
 
 One method would be to use text columns or jsonb columns in Postgresql and have functions that convert as necessary going back and forth. In the following example we will use text columns in Postgresql and write CL list data to string when we "export" the data to Postgresql and then convert from string when we "import" the data from Postgresql into a dao-class instance.
 
-Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import which refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot.
+Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import. These parameters refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot on import from the database.
 
 ```lisp
     (defclass listy ()
       ((id :col-type integer :col-identity t :accessor id)
        (name :col-type text :col-unique t :col-check (:<> 'name "")
              :initarg :name :accessor name)
-       (rlist :type list :col-type (or text db-null) :initarg :rlist :accessor rlist
+       (rlist :col-type (or text db-null) :initarg :rlist :accessor rlist
               :col-export list-to-string :col-import string-to-list)
-       (alist :type alist :col-type (or text db-null) :initarg :alist :accessor alist
+       (alist :col-type (or text db-null) :initarg :alist :accessor alist
               :col-export list-to-string :col-import string-to-alist)
-       (plist :type plist :col-type (or text db-null) :initarg :plist :accessor plist
+       (plist :col-type (or text db-null) :initarg :plist :accessor plist
               :col-export list-to-string :col-import string-to-plist))
       (:metaclass dao-class)
       (:table-name listy))
@@ -27,7 +27,7 @@ Now we need to define the import functions. When writing your import functions, 
 ```lisp
     (defun string-to-list (str)
       "Take a string representation of a list and return a lisp list.
-    Note that you need to handle :NULLs. Field needs to be a symbol"
+    Note that you need to handle :NULLs."
       (cond ((eq str :NULL)
              :NULL)
             (str

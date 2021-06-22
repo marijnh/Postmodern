@@ -176,23 +176,73 @@
                '(1)))
     (is (member :dao-test (list-tables)))
     (is (null (select-dao 'test-data)))
-    (protect
-     (let ((dao (make-instance 'test-data :a "quux")))
-       (signals error (test-id dao))
-       (insert-dao dao)
-       (is (dao-exists-p dao))
-       (let* ((id (test-id dao))
-              (database-dao (get-dao 'test-data id)))
-         (is (not (null database-dao)))
-         (is (eql (test-id dao) (test-id database-dao)))
-         (is (string= (test-a database-dao) "quux"))
-         (setf (test-b dao) t)
-         (update-dao dao)
-         (let ((new-database-dao (get-dao 'test-data id)))
-           (is (eq (test-b new-database-dao) t))
-           (is (eq (test-b database-dao) nil))
-           (delete-dao dao)))
-       (is (not (select-dao 'test-data))))))))
+    (let ((dao (make-instance 'test-data :a "quux")))
+      (signals error (test-id dao))
+      (insert-dao dao)
+      (is (dao-exists-p dao))
+      (let* ((id (test-id dao))
+             (database-dao (get-dao 'test-data id)))
+        (is (not (null database-dao)))
+        (is (eql (test-id dao) (test-id database-dao)))
+        (is (string= (test-a database-dao) "quux"))
+        (setf (test-b dao) t)
+        (update-dao dao)
+        (let ((new-database-dao (get-dao 'test-data id)))
+          (is (eq (test-b new-database-dao) t))
+          (is (eq (test-b database-dao) nil))
+          (delete-dao dao)))
+      (is (not (select-dao 'test-data)))))))
+
+(test dao-class-1
+  (with-test-connection
+    (with-dao-test-table-fixture
+      (let ((dao (make-instance 'test-data)))
+        (insert-dao dao))
+      (let ((new-dao (get-dao 'test-data 1)))
+        (is (equal (test-a new-dao) ; This is a nullable or varchar column
+                   :null))
+        (is (equal (test-b new-dao) ; This is the boolean column
+                   nil))
+        (is (equal (test-c new-dao)
+                   0))
+        (setf (test-d new-dao) 1)
+        (update-dao new-dao))
+      (let ((new-dao (get-dao 'test-data 1)))
+        (is (equal (test-d new-dao)
+                   1))))))
+
+(defclass test-data-nil ()
+  ((id :col-type serial :initarg :id :accessor test-id)
+   (a :col-type (or text db-null) :initarg :a :accessor test-a)
+   (b :col-type text :initarg :b :accessor test-b))
+  (:metaclass postmodern:dao-class)
+  (:table-name dao-test-nil)
+  (:keys id))
+
+
+(defun dao-test-nil-table-fixture ()
+  "Drops and recreates the dao-test table"
+  (when (table-exists-p 'dao-test-nil)
+    (query (:drop-table :if-exists 'dao-test-nil :cascade)))
+  (execute (dao-table-definition 'test-data-nil)))
+
+(defmacro with-dao-test-nil-table-fixture (&body body)
+  `(progn
+     (dao-test-nil-table-fixture)
+     (unwind-protect (progn ,@body)
+       (execute (:drop-table :if-exists 'dao-test-nil :cascade)))))
+
+(test dao-class-nil
+  (with-test-connection
+    (with-dao-test-nil-table-fixture
+      (let ((dao (make-instance 'test-data-nil)))
+        ;; column b cannot be null, this will, however, increment the serial count
+        (signals error (insert-dao dao))
+        (setf (test-b dao) nil)
+        (setf (test-a dao) nil)
+        (let ((id (test-id (insert-dao dao))))
+          (is (equal (query "select a, b from dao_test_nil where id = $1" id)
+                     '(("false" "false")))))))))
 
 (test dao-keys
   "Explicit keys takes priority over col-identity which takes priority over col-primary-key"
@@ -286,20 +336,19 @@
 (test insert-dao-base
   (with-test-connection
     (with-dao-test-table-fixture
-      (progn
-        (insert-dao (make-instance 'test-data :a "unbound-stuff-here"))
-        (is (equal (query "select * from dao_test")
-                   '((1 "unbound-stuff-here" NIL 0 0))))
-        ;; The following will trigger a duplicate key error
-        (signals error (insert-dao (make-instance 'test-data :id 1 :a "unbound-stuff-here")))
-        (is (equal (query "select * from dao_test")
-                   '((1 "unbound-stuff-here" NIL 0 0))))
-        (signals error (insert-dao (make-instance 'test-data :id 1 :a "bar" :b t :c 17 :d 13.2)))
-        (is (equal (query "select * from dao_test")
-                   '((1 "unbound-stuff-here" NIL 0 0))))
-        (insert-dao (make-instance 'test-data :a "bar" :b t :c 17 :d 13.2))
-        (is (equal (query "select * from dao_test")
-                   '((1 "unbound-stuff-here" NIL 0 0) (2 "bar" T 17 66/5))))))))
+      (insert-dao (make-instance 'test-data :a "unbound-stuff-here"))
+      (is (equal (query "select * from dao_test")
+                 '((1 "unbound-stuff-here" NIL 0 0))))
+      ;; The following will trigger a duplicate key error
+      (signals error (insert-dao (make-instance 'test-data :id 1 :a "unbound-stuff-here")))
+      (is (equal (query "select * from dao_test")
+                 '((1 "unbound-stuff-here" NIL 0 0))))
+      (signals error (insert-dao (make-instance 'test-data :id 1 :a "bar" :b t :c 17 :d 13.2)))
+      (is (equal (query "select * from dao_test")
+                 '((1 "unbound-stuff-here" NIL 0 0))))
+      (insert-dao (make-instance 'test-data :a "bar" :b t :c 17 :d 13.2))
+      (is (equal (query "select * from dao_test")
+                 '((1 "unbound-stuff-here" NIL 0 0) (2 "bar" T 17 66/5)))))))
 
 (test save-dao-base
   (with-test-connection
@@ -772,8 +821,7 @@ in =dao-table-definition= in creating tables."
 
 (defun string-to-list (str)
   "Take a string representation of a list and return a lisp list.
-Note that you need to handle :NULLs.
-Field needs to be a symbol"
+Note that you need to handle :NULLs."
   (cond ((eq str :NULL)
          :NULL)
         (str
@@ -781,7 +829,9 @@ Field needs to be a symbol"
         (t nil)))
 
 (defun list-to-string (str)
-  (if (listp str) (format nil "~a" str) "unknown"))
+  (if (listp str)
+      (format nil "~a" str)
+      "unknown"))
 
 ;; export data from a dao to a table using an export function
 ;; with and without null values

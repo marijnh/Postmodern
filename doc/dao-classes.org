@@ -1,33 +1,136 @@
-#+TITLE: Creating Tables
+#+TITLE: DAO Classes
 #+OPTIONS: num:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
 #+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
-
-* Database access objects
+* Overview
 :PROPERTIES:
 :CUSTOM_ID: daos
-:END:
-Postmodern contains a simple system for defining CLOS classes that represent
-rows in the database. This is not intended as a full-fledged object-relational
-magic system ― while serious ORM systems have their place, they are notoriously
-hard to get right, and are outside of the scope of a humble SQL library like
-this. See [[file:dao-classes.html][Dao Classes]] for more detail.
-
-** metaclass dao-class
-:PROPERTIES:
-:CUSTOM_ID: class-dao-class
 :END:
 You can work directly with the database or you can use a simple
 database-access-class (aka dao) which would cover all the fields in a row.
 
 Postmodern allows you to have a relatively simple but straight forward matching
-of clos classes to a database table. At the heart of Postmodern's DAO system is
-the dao-class metaclass. It allows you to define classes for your
-database-access objects as regular CLOS classes. Some of the slots in these
-classes will refer to columns in the database.
-*** Slot Options
+of clos classes to a database table. In its simplest form, a dao object would contain
+the values of the rows of a database table. This is not intended as a full-fledged
+object-relational magic system ― while serious ORM systems have their place, they
+are notoriously hard to get right, and are outside of the scope of a humble SQL
+library like this.
+
+At the heart of Postmodern's DAO system is the dao-class metaclass. It allows you to
+define classes for your database-access objects as regular CLOS classes. Some of the
+slots in these classes will refer to columns in the database.
+* Metaclass dao-class
+:PROPERTIES:
+:CUSTOM_ID: class-dao-class
+:END:
+** Basic Dao Definition Examples
+A simple dao definition could look like this:
+#+BEGIN_SRC lisp
+  (defclass users ()
+    ((name :col-type string :initarg :name :accessor name)
+     (creditcard :col-type (or db-null integer) :initarg :card :col-default :null)
+     (score :col-type bigint :col-default 0 :accessor score))
+    (:metaclass dao-class)
+    (:keys name))
+#+END_SRC
+In this case the name of the users will be treated as the primary key (the :keys
+parameter at the end) and the database table is assumed to be named users because
+that is the name of the class and there was no :table-name parameter provided.
+(It might be worth noting that "user" is a reserved word for Postgresql and using
+reserved words, while possible using quotes, is generally not worth the additional
+trouble they cause.)
+
+The name and score slots cannot be null because :col-type does not provide for db-null
+as an optiona. The creditcard slot can be null and actually defaults to null.
+The :col-default :null specification ensures that the default in the database for
+this field is null, but it does not bound the slot to a default form. Thus, making
+an instance of the class without initializing this slot will leave it in an unbound
+state.
+
+An example of a class where the keys are set as multiple column keys is here:
+#+BEGIN_SRC lisp
+  (defclass points ()
+    ((x :col-type integer :initarg :x
+        :reader point-x)
+     (y :col-type integer :initarg :y
+        :reader point-y)
+     (value :col-type integer :initarg :value
+            :accessor value))
+    (:metaclass dao-class)
+    (:keys x y))
+#+END_SRC
+
+In this case, retrieving a points record would look like the following where
+12 and 34 would be the values you are looking to find in the x column and y
+column respectively.:
+
+#+BEGIN_SRC lisp
+  (get-dao 'points 12 34)
+#+END_SRC
+
+Now look at a slightly more complex example.
+#+BEGIN_SRC lisp
+  (defclass country ()
+    ((id :col-type integer :col-identity t :accessor id)
+     (name :col-type string :col-unique t :check (:<> 'name "")
+           :initarg :name :reader country-name)
+     (inhabitants :col-type integer :initarg :inhabitants
+                  :accessor country-inhabitants)
+     (sovereign :col-type (or db-null string) :initarg :sovereign
+                :accessor country-sovereign)
+     (region-id :col-type integer :col-references ((regions id))
+                :initarg :region-id :accessor region-id))
+    (:documentation "Dao class for a countries record.")
+    (:metaclass dao-class)
+    (:table-name countries))
+#+END_SRC
+In this example we have an id column which is specified to be an identity column.
+Postgresql will automatically generate a sequence of of integers and this will
+be the primary key.
+
+We have a name column which is specified as unique and is not null.
+
+We have a region-id column which references the id column in the regions table.
+This is a foreign key constraint and Postgresql will not accept inserting a
+country into the database unless there is an existing region table with an id
+that matches this number. Postgresql will also not allow deleting a region if
+there are countries that reference that region's id. If we wanted Postgresql to
+delete countries when regions are deleted, that column would be specified as:
+#+BEGIN_SRC lisp
+  (region-id :col-type integer :col-references ((regions id) :cascade)
+             :initarg :region-id :accessor region-id)
+#+END_SRC
+Now you can see why the double parens.
+
+We also specified that the table name is not "country" but "countries".
+(Some style guides recommend that table names be plural and references to rows
+be singular.)
+
+When inheriting from DAO classes, a subclass' set of columns also contains all
+the columns of its superclasses. The primary key for such a class is the union
+of its own keys and all the keys from its superclasses. Classes inheriting from
+DAO classes should probably always use the dao-class metaclass themselves.
+
+When a DAO is created with make-instance, the :fetch-defaults keyword argument
+can be passed, which, when T, will cause a query to fetch the default values for
+all slots that refers to columns with defaults and were not bound through
+initargs. In some cases, such as serial and identity columns, which have an
+implicit default, this will not work. You can work around this by creating
+your own sequence, e.g. "my_sequence", and defining a (:nextval "my_sequence")
+default.
+
+Finally, DAO class slots can have an option :ghost t to specify them as ghost
+slots. These are selected when retrieving instances, but not written when
+updating or inserting, or even included in the table definition. The only known
+use for this to date is for creating the table with (oids=true), and specify a
+slot like this:
+#+BEGIN_SRC lisp
+  (oid :col-type integer :ghost t :accessor get-oid)
+#+END_SRC
+
+** Slot Options
 :PROPERTIES:
 :CUSTOM_ID: class-dao-class-slots
 :END:
@@ -147,7 +250,7 @@ The slot definitions in a table have several additional optional keyword paramet
   #+end_src
 
 - :col-
-*** Table options
+** Table options
 :PROPERTIES:
 :CUSTOM_ID: class-dao-class-slots-table-options
 :END:
@@ -164,107 +267,23 @@ lock. However, any time you are using threads and a class that inherits from
 other classes, you should ensure that classes are finalized before you start
 generating threads that create new instances of that class.
 
-*** Dao Definition Examples
-Simple example:
-#+BEGIN_SRC lisp
-  (defclass users ()
-    ((name :col-type string :initarg :name :accessor name)
-     (creditcard :col-type (or db-null integer) :initarg :card :col-default :null)
-     (score :col-type bigint :col-default 0 :accessor score))
-    (:metaclass dao-class)
-    (:keys name))
-#+END_SRC
-In this case the name of the users will be treated as the primary key and the
-database table is assumed to be users. (It might be worth noting that "user" is
-a reserved word for Postgresql and using reserved words, while possible using
-quotes, is generally not worth the additional trouble they cause.)
 
-The name and score slots cannot be null, but the creditcard slot can be null
-and actually defaults to null. The :col-default :null specification ensures that
-the default in the database for this field is null, but it does not bound the
-slot to a default form. Thus, making an instance of the class without
-initializing this slot will leave it in an unbound state.
+* Dao Query and Selection
+:PROPERTIES:
+:CUSTOM_ID: query-and-selection
+:END:
+The base query and selection methods and macros are:
 
-An example of a class where the keys are set as multiple column keys is here:
-#+BEGIN_SRC lisp
-  (defclass points ()
-    ((x :col-type integer :initarg :x
-        :reader point-x)
-     (y :col-type integer :initarg :y
-        :reader point-y)
-     (value :col-type integer :initarg :value
-            :accessor value))
-    (:metaclass dao-class)
-    (:keys x y))
-#+END_SRC
+- [[#method-get-dao][get-dao]] A method that create an instance of a dao object class based on a query of the rows of a database table based on its primary keys.
+- [[#macro-select-dao][select-dao]]: A macro to select dao objects for the rows in the associated table for which the given test (either an S-SQL expression or a string) holds. When sorting arguments are given, which can also be S-SQL forms or strings, these are used to sort the result.
+- [[#macro-do-select-dao][do-select-dao]]: A macro like =select-dao= but iterates over the results rather than returning them.
+- [[#macro-query-dao][query-dao]]: A macro that executes a given query and returns the results as daos of a given type.
+- [[#function-do-query-dao][do-query-dao]]: A function which operates like =query-dao= but iterates over the results rather than returning them.
+* Dao Reference
+:PROPERTIES:
+:CUSTOM_ID: dao-reference
+:END:
 
-In this case, retrieving a points record would look like the following where
-12 and 34 would be the values you are looking to find in the x column and y
-column respectively.:
-
-#+BEGIN_SRC lisp
-  (get-dao 'points 12 34)
-#+END_SRC
-
-Now look at a slightly more complex example.
-#+BEGIN_SRC lisp
-  (defclass country ()
-    ((id :col-type integer :col-identity t :accessor id)
-     (name :col-type string :col-unique t :check (:<> 'name "")
-           :initarg :name :reader country-name)
-     (inhabitants :col-type integer :initarg :inhabitants
-                  :accessor country-inhabitants)
-     (sovereign :col-type (or db-null string) :initarg :sovereign
-                :accessor country-sovereign)
-     (region-id :col-type integer :col-references ((regions id))
-                :initarg :region-id :accessor region-id))
-    (:documentation "Dao class for a countries record.")
-    (:metaclass dao-class)
-    (:table-name countries))
-#+END_SRC
-In this example we have an id column which is specified to be an identity column.
-Postgresql will automatically generate a sequence of of integers and this will
-be the primary key.
-
-We have a name column which is specified as unique and is not null.
-
-We have a region-id column which references the id column in the regions table.
-This is a foreign key constraint and Postgresql will not accept inserting a
-country into the database unless there is an existing region table with an id
-that matches this number. Postgresql will also not allow deleting a region if
-there are countries that reference that region's id. If we wanted Postgresql to
-delete countries when regions are deleted, that column would be specified as:
-#+BEGIN_SRC lisp
-  (region-id :col-type integer :col-references ((regions id) :cascade)
-             :initarg :region-id :accessor region-id)
-#+END_SRC
-Now you can see why the double parens.
-
-We also specified that the table name is not "country" but "countries".
-(Some style guides recommend that table names be plural and references to rows
-be singular.)
-
-When inheriting from DAO classes, a subclass' set of columns also contains all
-the columns of its superclasses. The primary key for such a class is the union
-of its own keys and all the keys from its superclasses. Classes inheriting from
-DAO classes should probably always use the dao-class metaclass themselves.
-
-When a DAO is created with make-instance, the :fetch-defaults keyword argument
-can be passed, which, when T, will cause a query to fetch the default values for
-all slots that refers to columns with defaults and were not bound through
-initargs. In some cases, such as serial and identity columns, which have an
-implicit default, this will not work. You can work around this by creating
-your own sequence, e.g. "my_sequence", and defining a (:nextval "my_sequence")
-default.
-
-Finally, DAO class slots can have an option :ghost t to specify them as ghost
-slots. These are selected when retrieving instances, but not written when
-updating or inserting, or even included in the table definition. The only known
-use for this to date is for creating the table with (oids=true), and specify a
-slot like this:
-#+BEGIN_SRC lisp
-  (oid :col-type integer :ghost t :accessor get-oid)
-#+END_SRC
 ** Dao Export and Import Functions (Postmodern v. 1.33.1 and newer)
    :PROPERTIES:
    :CUSTOM_ID: dao-export-and-import-functions
@@ -273,7 +292,7 @@ There may be times when the types of values in a dao slot do not have comparable
 
 One method would be to use text columns or jsonb columns in Postgresql and have functions that convert as necessary going back and forth. In the following example we will use text columns in Postgresql and write CL list data to string when we "export" the data to Postgresql and then convert from string when we "import" the data from Postgresql into a dao-class instance.
 
-Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import which refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot.
+Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import. These parameters refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot on import from the database..
 #+begin_src lisp
 (defclass listy ()
   ((id :col-type integer :col-identity t :accessor id)
@@ -292,8 +311,7 @@ Now we need to define the import functions. When writing your import functions, 
 #+begin_src lisp
   (defun string-to-list (str)
     "Take a string representation of a list and return a lisp list.
-  Note that you need to handle :NULLs.
-  Field needs to be a symbol"
+  Note that you need to handle :NULLs."
     (cond ((eq str :NULL)
            :NULL)
           (str
@@ -301,7 +319,7 @@ Now we need to define the import functions. When writing your import functions, 
              (read s)))
           (t nil)))
 #+end_src
-And now we need to define the export function. In our example we are just going to be using format to write the CL value to a string. You are responsible for writing an export function that does what you need. This example just tells Postgresql to insert a string "unknown" if the slot value is not a list. You would need more error checking and condition handling.
+And now we need to define the export function. In our example we are just going to be using format to write the CL value to a string. You are responsible for writing an export function that does what you need. This example just tells Postgresql to insert a string "unknown" if the slot value is not a list. In real life you would need more error checking and condition handling.
 #+begin_src lisp
   (defun list-to-string (val)
     "Simply uses (format ..) to write a list out as a string"
@@ -815,7 +833,7 @@ Used inside deftable to find the symbol naming the table being defined.
 If a table exists, drop a table. Available additional key parameters
 are :if-exists and :cascade.
 
-** Out of Sync Dao Objects
+* Out of Sync Dao Objects
 :PROPERTIES:
 :CUSTOM_ID: out-of-sync-dao-objects
 :END:
@@ -1005,7 +1023,7 @@ Now if we make an instance of this dao and try to save it in the dao-class table
   [Condition of type CL-POSTGRES-ERROR:UNDEFINED-COLUMN]
 #+END_SRC
 Postgresql rejected the attempted insert with an undefined column error.
-** Introduction to Multi-table dao class objects
+* Introduction to Multi-table dao class objects
   :PROPERTIES:
   :CUSTOM_ID: multi-table-dao-class-object
   :END:
