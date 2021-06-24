@@ -9,10 +9,11 @@
   :ID:       70d15d79-199f-45cf-beaf-c5cad9fca3cf
   :CUSTOM_ID: 54ddf54b-c26b-4242-a996-0e803aeb9801
   :END:
-Postmodern offers two ways to create postgresql database tables. Which one
+Postmodern offers multiple ways to create postgresql database tables. Which one
 you choose depends on two things:
 
-- Do you start by creating dao classes first or are you even using dao classes?
+- Do you start by creating [[file:dao-classes.html][dao classes]] first or are you even using dao classes?
+  If yes, then also see [[file:dao-classes.html#table-definition][Creating Tables using dao classes]]
 
 - Databases are data and transaction management systems, not just data storage. How much detailed table specification do you need?
 
@@ -28,8 +29,8 @@ sql-operators :create-table and :create-extended-table. The api signature
 differs slightly in order to ensure backwards compatibility and, as you might
 expect, :create-extended-table gives you more options.
 
-But first, we should talk about basic database table creation
-and why do we care about different options.
+But first we should talk about basic database table creation and why do we care
+about different options.
 
 * Basic Postgresql Database Tables
   :PROPERTIES:
@@ -315,7 +316,6 @@ table whose entries are never updated, complete packing is the best choice,
 but in heavily updated tables smaller fillfactors are appropriate. This
 parameter cannot be set for TOAST tables."
 
-
 ** Timestamps with and without timezones
    :PROPERTIES:
    :ID:       08e399fb-51d0-425a-9349-c1400fed8f76
@@ -545,3 +545,6 @@ examples.
          ()
          ((:partition-by-range (:extract 'year 'logdate)(:extract 'month 'logdate)))))
 #+END_SRC
+
+* Table Creation With Dao Classes
+ See: [[file:dao-classes.html#table-definition][Creating Tables using dao classes]]

@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-07-03 Fri 22:11 -->
+<!-- 2021-06-22 Tue 13:40 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Creating Tables</title>
 <meta name="generator" content="Org mode">
+<meta name="author" content="Sabra Crolleton">
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
   .title  { text-align: center;
@@ -37,7 +38,7 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
+    overflow: auto;
     padding-top: 1.2em;
   }
   pre.src:before {
@@ -49,7 +50,7 @@
     padding: 3px;
     border: 1px solid black;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
@@ -158,6 +159,19 @@
   .footdef  { margin-bottom: 1em; }
   .figure { padding: 1em; }
   .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
   .inlinetask {
     padding: 10px;
     border: 2px solid gray;
@@ -180,50 +194,26 @@
 <link rel="stylesheet" type="text/css" href="style.css" />
 <style>pre.src{background:#343131;color:white;} </style>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2017 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 </head>
 <body>
@@ -259,20 +249,22 @@ for the JavaScript code in this tag.
 <li><a href="#015c6b92-dd5f-400b-bd8d-d2d08e76a166">Partitions (not fully implemented)</a></li>
 </ul>
 </li>
+<li><a href="#org6b881c7">Table Creation With Dao Classes</a></li>
 </ul>
 </div>
 </nav>
 
-<div id="outline-container-orgc3b9fd8" class="outline-2">
-<h2 id="54ddf54b-c26b-4242-a996-0e803aeb9801"><a id="orgc3b9fd8"></a><a id="ID-70d15d79-199f-45cf-beaf-c5cad9fca3cf"></a>Introduction to Table Creation in Postmodern</h2>
+<div id="outline-container-54ddf54b-c26b-4242-a996-0e803aeb9801" class="outline-2">
+<h2 id="54ddf54b-c26b-4242-a996-0e803aeb9801">Introduction to Table Creation in Postmodern</h2>
 <div class="outline-text-2" id="text-54ddf54b-c26b-4242-a996-0e803aeb9801">
 <p>
-Postmodern offers two ways to create postgresql database tables. Which one
+Postmodern offers multiple ways to create postgresql database tables. Which one
 you choose depends on two things:
 </p>
 
 <ul class="org-ul">
-<li>Do you start by creating dao classes first or are you even using dao classes?</li>
+<li>Do you start by creating <a href="dao-classes.html">dao classes</a> first or are you even using dao classes?
+If yes, then also see <a href="dao-classes.html#table-definition">Creating Tables using dao classes</a></li>
 
 <li>Databases are data and transaction management systems, not just data storage. How much detailed table specification do you need?</li>
 </ul>
@@ -294,14 +286,14 @@ expect, :create-extended-table gives you more options.
 </p>
 
 <p>
-But first, we should talk about basic database table creation
-and why do we care about different options.
+But first we should talk about basic database table creation and why do we care
+about different options.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org9ab657f" class="outline-2">
-<h2 id="14330eed-440e-4f07-ab6f-5e2711ef4002"><a id="org9ab657f"></a><a id="ID-61d21d1c-ad6c-4318-b7b9-efb99c5bcde9"></a>Basic Postgresql Database Tables</h2>
+<div id="outline-container-14330eed-440e-4f07-ab6f-5e2711ef4002" class="outline-2">
+<h2 id="14330eed-440e-4f07-ab6f-5e2711ef4002">Basic Postgresql Database Tables</h2>
 <div class="outline-text-2" id="text-14330eed-440e-4f07-ab6f-5e2711ef4002">
 <p>
 The full postgresql sql specification can be found <a href="https://www.postgresql.org/docs/current/static/sql-createtable.html">here</a>.
@@ -329,14 +321,14 @@ required to create a postgresql database table.
 </div>
 </div>
 
-<div id="outline-container-orge3102d0" class="outline-2">
-<h2 id="1d23daae-8768-40c7-80ce-61c95b9d4aea"><a id="orge3102d0"></a><a id="ID-f64d29c1-32d0-45bf-9331-a62436b2cc73"></a>Postmodern Create-Table</h2>
+<div id="outline-container-1d23daae-8768-40c7-80ce-61c95b9d4aea" class="outline-2">
+<h2 id="1d23daae-8768-40c7-80ce-61c95b9d4aea">Postmodern Create-Table</h2>
 <div class="outline-text-2" id="text-1d23daae-8768-40c7-80ce-61c95b9d4aea">
 </div>
 </div>
 
-<div id="outline-container-org6fe7e83" class="outline-2">
-<h2 id="c390e5db-0539-4bfa-b7b6-9b38dcdd9ae2"><a id="org6fe7e83"></a><a id="ID-7fa25539-cb93-4244-83af-330feb94d990"></a>S-SQL Create-Table</h2>
+<div id="outline-container-c390e5db-0539-4bfa-b7b6-9b38dcdd9ae2" class="outline-2">
+<h2 id="c390e5db-0539-4bfa-b7b6-9b38dcdd9ae2">S-SQL Create-Table</h2>
 <div class="outline-text-2" id="text-c390e5db-0539-4bfa-b7b6-9b38dcdd9ae2">
 <p>
 At this minimum level, the :create-table and :create-extended-table calls are
@@ -344,13 +336,13 @@ exactly the same. Let's walk through a simple example:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'films-at-eleven
-          ((code <span style="color: #98fb98; font-weight: bold;">:type</span> (or (string 5) db-null) <span style="color: #98fb98; font-weight: bold;">:constraint</span> 'firstkey <span style="color: #98fb98; font-weight: bold;">:primary-key</span> t)
-           (title <span style="color: #98fb98; font-weight: bold;">:type</span> (varchar 40))
-           (did <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
-           (date-prod <span style="color: #98fb98; font-weight: bold;">:type</span> (or date db-null))
-           (kind <span style="color: #98fb98; font-weight: bold;">:type</span> (or (varchar 10) db-null))
-           (len <span style="color: #98fb98; font-weight: bold;">:type</span> (or interval db-null) <span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #98fb98; font-weight: bold;">:hour-to-minute</span>))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'films-at-eleven
+          ((code <span style="color: #23d7d7;">:type</span> (or (string 5) db-null) <span style="color: #23d7d7;">:constraint</span> 'firstkey <span style="color: #23d7d7;">:primary-key</span> t)
+           (title <span style="color: #23d7d7;">:type</span> (varchar 40))
+           (did <span style="color: #23d7d7;">:type</span> integer)
+           (date-prod <span style="color: #23d7d7;">:type</span> (or date db-null))
+           (kind <span style="color: #23d7d7;">:type</span> (or (varchar 10) db-null))
+           (len <span style="color: #23d7d7;">:type</span> (or interval db-null) <span style="color: #23d7d7;">:interval</span> <span style="color: #23d7d7;">:hour-to-minute</span>))))
 
 </pre>
 </div>
@@ -414,8 +406,8 @@ of the potential time interval.
 </p>
 </div>
 
-<div id="outline-container-org9e3e7ec" class="outline-3">
-<h3 id="efb71d2a-2318-47d3-8f04-b5fe2172178d"><a id="org9e3e7ec"></a><a id="ID-a33bcc61-0866-4de5-85c5-63c48550ec5f"></a>Table Names Parameter</h3>
+<div id="outline-container-efb71d2a-2318-47d3-8f04-b5fe2172178d" class="outline-3">
+<h3 id="efb71d2a-2318-47d3-8f04-b5fe2172178d">Table Names Parameter</h3>
 <div class="outline-text-3" id="text-efb71d2a-2318-47d3-8f04-b5fe2172178d">
 <p>
 The following discussion on table names is the same for both :create-table
@@ -433,17 +425,17 @@ accept the table-name as a variable.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'distributors-in-hell
-         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'distributors-in-hell
+         ((did <span style="color: #23d7d7;">:type</span> (or integer db-null)))))
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (distributors-in-hell)
-         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
+(query (<span style="color: #23d7d7;">:create-table</span> (distributors-in-hell)
+         ((did <span style="color: #23d7d7;">:type</span> (or integer db-null)))))
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #cd8162;">"distributors-in-hell"</span>)
-         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
+(query (<span style="color: #23d7d7;">:create-table</span> (<span style="color: #e67128;">"distributors-in-hell"</span>)
+         ((did <span style="color: #23d7d7;">:type</span> (or integer db-null)))))
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'public.distributors-in-hell
-         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
+(query (<span style="color: #23d7d7;">:create-table</span> 'public.distributors-in-hell
+         ((did <span style="color: #23d7d7;">:type</span> (or integer db-null)))))
 </pre>
 </div>
 
@@ -453,14 +445,14 @@ qualifiers - if-not-exists, temp, and unlogged.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #98fb98; font-weight: bold;">:if-not-exists</span> 'distributors-in-hell)
-          ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> (<span style="color: #23d7d7;">:if-not-exists</span> 'distributors-in-hell)
+          ((did <span style="color: #23d7d7;">:type</span> (or integer db-null)))))
 </pre>
 </div>
 </div>
 
-<div id="outline-container-orgb083a70" class="outline-4">
-<h4 id="034f548e-0318-40fc-90c5-63fb310936e4"><a id="orgb083a70"></a><a id="ID-01951f3c-0e2b-4567-8545-44e0584d0fa7"></a>Temporary and Unlogged Tables</h4>
+<div id="outline-container-034f548e-0318-40fc-90c5-63fb310936e4" class="outline-4">
+<h4 id="034f548e-0318-40fc-90c5-63fb310936e4">Temporary and Unlogged Tables</h4>
 <div class="outline-text-4" id="text-034f548e-0318-40fc-90c5-63fb310936e4">
 <p>
 Temporary tables exists only for the duration of the session and are unlogged.
@@ -472,14 +464,14 @@ E.g.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #98fb98; font-weight: bold;">:temp</span> 'distributors-in-hell)
-         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> (<span style="color: #23d7d7;">:temp</span> 'distributors-in-hell)
+         ((did <span style="color: #23d7d7;">:type</span> (or integer db-null)))))
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #98fb98; font-weight: bold;">:temp</span> (<span style="color: #98fb98; font-weight: bold;">:if-not-exists</span> 'distributors-in-hell))
-         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
+(query (<span style="color: #23d7d7;">:create-table</span> (<span style="color: #23d7d7;">:temp</span> (<span style="color: #23d7d7;">:if-not-exists</span> 'distributors-in-hell))
+         ((did <span style="color: #23d7d7;">:type</span> (or integer db-null)))))
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #98fb98; font-weight: bold;">:temp</span> <span style="color: #98fb98; font-weight: bold;">:if-not-exists</span> 'distributors-in-hell)
-         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
+(query (<span style="color: #23d7d7;">:create-table</span> (<span style="color: #23d7d7;">:temp</span> <span style="color: #23d7d7;">:if-not-exists</span> 'distributors-in-hell)
+         ((did <span style="color: #23d7d7;">:type</span> (or integer db-null)))))
 </pre>
 </div>
 
@@ -491,16 +483,16 @@ table. E.g.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> (<span style="color: #98fb98; font-weight: bold;">:unlogged</span> 'distributors-in-hell)
-         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> (<span style="color: #23d7d7;">:unlogged</span> 'distributors-in-hell)
+         ((did <span style="color: #23d7d7;">:type</span> (or integer db-null)))))
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org76a5197" class="outline-3">
-<h3 id="df4fd2b0-1928-4fa9-9c70-c2060cdec5ff"><a id="org76a5197"></a><a id="ID-675aaa13-4be0-458f-b004-789fac521dc4"></a>Using Identity Columns</h3>
+<div id="outline-container-df4fd2b0-1928-4fa9-9c70-c2060cdec5ff" class="outline-3">
+<h3 id="df4fd2b0-1928-4fa9-9c70-c2060cdec5ff">Using Identity Columns</h3>
 <div class="outline-text-3" id="text-df4fd2b0-1928-4fa9-9c70-c2060cdec5ff">
 <p>
 Postgresql version 10 added identity columns. These are auto-incrementing
@@ -532,50 +524,42 @@ Note: The data type used for identity columns must be one of smallint, int or bi
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'color
-         ((color-id <span style="color: #98fb98; font-weight:
-         bold;">:type</span> int <span style="color: #98fb98;
-         font-weight: bold;">:generated-as-identity-always t</span>)
-          (color-name <span style="color: #98fb98; font-weight: bold;">:type</span> varchar))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'color
+         ((color-id <span style="color: #23d7d7;">:type</span> int <span style="color: #23d7d7;">:generated-as-identity-always</span> t)
+          (color-name <span style="color: #23d7d7;">:type</span> varchar))))
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'color
-         ((color-id <span style="color: #98fb98; font-weight:
-         bold;">:type</span> int <span style="color: #98fb98;
-         font-weight: bold;">:generated-as-identity-by-default t</span>)
-          (color-name <span style="color: #98fb98; font-weight: bold;">:type</span> varchar))))
+(query (<span style="color: #23d7d7;">:create-table</span> 'color
+         ((color-id <span style="color: #23d7d7;">:type</span> int <span style="color: #23d7d7;">:generated-as-identity-by-default</span> t)
+          (color-name <span style="color: #23d7d7;">:type</span> varchar))))
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'color
-         ((color-id <span style="color: #98fb98; font-weight:
-         bold;">:type</span> int <span style="color: #98fb98;
-         font-weight: bold;">:identity-always t</span>)
-          (color-name <span style="color: #98fb98; font-weight: bold;">:type</span> varchar))))
+(query (<span style="color: #23d7d7;">:create-table</span> 'color
+         ((color-id <span style="color: #23d7d7;">:type</span> int <span style="color: #23d7d7;">:identity-always</span> t)
+          (color-name <span style="color: #23d7d7;">:type</span> varchar))))
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'color
-         ((color-id <span style="color: #98fb98; font-weight:
-         bold;">:type</span> int <span style="color: #98fb98;
-         font-weight: bold;">:identity-by-default t</span>)
-          (color-name <span style="color: #98fb98; font-weight: bold;">:type</span> varchar))))
+(query (<span style="color: #23d7d7;">:create-table</span> 'color
+         ((color-id <span style="color: #23d7d7;">:type</span> int <span style="color: #23d7d7;">:identity-by-default</span> t)
+          (color-name <span style="color: #23d7d7;">:type</span> varchar))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org2a45a01" class="outline-3">
-<h3 id="3b09fa31-255b-4769-9d8f-085201e66a02"><a id="org2a45a01"></a><a id="ID-04eff0b7-ac42-40f9-887c-f4fcff7cc4d5"></a>Array Columns</h3>
+<div id="outline-container-3b09fa31-255b-4769-9d8f-085201e66a02" class="outline-3">
+<h3 id="3b09fa31-255b-4769-9d8f-085201e66a02">Array Columns</h3>
 <div class="outline-text-3" id="text-3b09fa31-255b-4769-9d8f-085201e66a02">
 <p>
 The following shows the creation of a table with a two dimensional array
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'array-int
-       ((vector <span style="color: #98fb98; font-weight: bold;">:type</span> (or int[][] db-null)))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'array-int
+       ((vector <span style="color: #23d7d7;">:type</span> (or int[][] db-null)))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org9b9b4d6" class="outline-3">
-<h3 id="205f09d2-9357-4512-949a-3dcaaae6808f"><a id="org9b9b4d6"></a><a id="ID-a62455db-395a-4757-b573-f7cd2a267bd0"></a>Check Constraints</h3>
+<div id="outline-container-205f09d2-9357-4512-949a-3dcaaae6808f" class="outline-3">
+<h3 id="205f09d2-9357-4512-949a-3dcaaae6808f">Check Constraints</h3>
 <div class="outline-text-3" id="text-205f09d2-9357-4512-949a-3dcaaae6808f">
 <p>
 You can put a contraint on a table row that specifies values must meet
@@ -585,21 +569,21 @@ level.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'distributors
-         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null) <span style="color: #98fb98; font-weight: bold;">:check</span> (<span style="color: #98fb98; font-weight: bold;">:&gt;</span> 'did 100))
-          (name <span style="color: #98fb98; font-weight: bold;">:type</span> (or (varchar 40) db-null)))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'distributors
+         ((did <span style="color: #23d7d7;">:type</span> (or integer db-null) <span style="color: #23d7d7;">:check</span> (<span style="color: #23d7d7;">:&gt;</span> 'did 100))
+          (name <span style="color: #23d7d7;">:type</span> (or (varchar 40) db-null)))))
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'distributors
-         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-          (name <span style="color: #98fb98; font-weight: bold;">:type</span> (or (varchar 40) db-null)))
-         (<span style="color: #98fb98; font-weight: bold;">:constraint</span> con1 <span style="color: #98fb98; font-weight: bold;">:check</span> (<span style="color: #98fb98; font-weight: bold;">:and</span> (<span style="color: #98fb98; font-weight: bold;">:&gt;</span> 'did 100) (<span style="color: #98fb98; font-weight: bold;">:&lt;&gt;</span> 'name <span style="color: #cd8162;">""</span>)))))
+(query (<span style="color: #23d7d7;">:create-table</span> 'distributors
+         ((did <span style="color: #23d7d7;">:type</span> (or integer db-null))
+          (name <span style="color: #23d7d7;">:type</span> (or (varchar 40) db-null)))
+         (<span style="color: #23d7d7;">:constraint</span> con1 <span style="color: #23d7d7;">:check</span> (<span style="color: #23d7d7;">:and</span> (<span style="color: #23d7d7;">:&gt;</span> 'did 100) (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org9639ecf" class="outline-3">
-<h3 id="e2ed3fbc-6193-4db8-b2ea-cf29d0fe849e"><a id="org9639ecf"></a><a id="ID-87783379-e1bf-485a-865e-05aa539ec871"></a>Unique Constraints</h3>
+<div id="outline-container-e2ed3fbc-6193-4db8-b2ea-cf29d0fe849e" class="outline-3">
+<h3 id="e2ed3fbc-6193-4db8-b2ea-cf29d0fe849e">Unique Constraints</h3>
 <div class="outline-text-3" id="text-e2ed3fbc-6193-4db8-b2ea-cf29d0fe849e">
 <p>
 You can ensure that a column or a combination of columns is unique
@@ -617,20 +601,20 @@ version.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'person
-       ((id <span style="color: #98fb98; font-weight: bold;">:type</span> serial <span style="color: #98fb98; font-weight: bold;">:primary-key</span> t)
-        (first-name <span style="color: #98fb98; font-weight: bold;">:type</span> (varchar 50))
-        (last-name <span style="color: #98fb98; font-weight: bold;">:type</span> (varchar 50))
-        (email <span style="color: #98fb98; font-weight: bold;">:type</span> (varchar 50) <span style="color: #98fb98; font-weight: bold;">:unique</span> t))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'person
+       ((id <span style="color: #23d7d7;">:type</span> serial <span style="color: #23d7d7;">:primary-key</span> t)
+        (first-name <span style="color: #23d7d7;">:type</span> (varchar 50))
+        (last-name <span style="color: #23d7d7;">:type</span> (varchar 50))
+        (email <span style="color: #23d7d7;">:type</span> (varchar 50) <span style="color: #23d7d7;">:unique</span> t))))
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'films
-         ((code <span style="color: #98fb98; font-weight: bold;">:type</span> (or (string 5) db-null))
-          (title <span style="color: #98fb98; font-weight: bold;">:type</span> (or (varchar 40) db-null))
-          (did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-          (date-prod <span style="color: #98fb98; font-weight: bold;">:type</span> (or date db-null))
-          (kind <span style="color: #98fb98; font-weight: bold;">:type</span> (or (varchar 10) db-null))
-          (len <span style="color: #98fb98; font-weight: bold;">:type</span> (or interval db-null) <span style="color: #98fb98; font-weight: bold;">:interval</span> <span style="color: #98fb98; font-weight: bold;">:hour-to-minute</span>))
-         (<span style="color: #98fb98; font-weight: bold;">:constraint</span> production <span style="color: #98fb98; font-weight: bold;">:unique</span> 'date-prod)))
+(query (<span style="color: #23d7d7;">:create-table</span> 'films
+         ((code <span style="color: #23d7d7;">:type</span> (or (string 5) db-null))
+          (title <span style="color: #23d7d7;">:type</span> (or (varchar 40) db-null))
+          (did <span style="color: #23d7d7;">:type</span> (or integer db-null))
+          (date-prod <span style="color: #23d7d7;">:type</span> (or date db-null))
+          (kind <span style="color: #23d7d7;">:type</span> (or (varchar 10) db-null))
+          (len <span style="color: #23d7d7;">:type</span> (or interval db-null) <span style="color: #23d7d7;">:interval</span> <span style="color: #23d7d7;">:hour-to-minute</span>))
+         (<span style="color: #23d7d7;">:constraint</span> production <span style="color: #23d7d7;">:unique</span> 'date-prod)))
 </pre>
 </div>
 
@@ -641,10 +625,10 @@ complexity, however, requires the :create-extended-table method.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-extended-table</span> 'distributors
-         ((did <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-          (name <span style="color: #98fb98; font-weight: bold;">:type</span> (or (varchar 40) db-null)))
-         ((<span style="color: #98fb98; font-weight: bold;">:unique</span> did <span style="color: #98fb98; font-weight: bold;">:with</span> (<span style="color: #98fb98; font-weight: bold;">:=</span> 'fillfactor 70)))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-extended-table</span> 'distributors
+         ((did <span style="color: #23d7d7;">:type</span> (or integer db-null))
+          (name <span style="color: #23d7d7;">:type</span> (or (varchar 40) db-null)))
+         ((<span style="color: #23d7d7;">:unique</span> did <span style="color: #23d7d7;">:with</span> (<span style="color: #23d7d7;">:=</span> 'fillfactor 70)))))
 </pre>
 </div>
 <p>
@@ -666,9 +650,8 @@ parameter cannot be set for TOAST tables."
 </div>
 </div>
 
-
-<div id="outline-container-org3149882" class="outline-3">
-<h3 id="7d0b525b-827f-41db-8523-e62da8fbe52b"><a id="org3149882"></a><a id="ID-08e399fb-51d0-425a-9349-c1400fed8f76"></a>Timestamps with and without timezones</h3>
+<div id="outline-container-7d0b525b-827f-41db-8523-e62da8fbe52b" class="outline-3">
+<h3 id="7d0b525b-827f-41db-8523-e62da8fbe52b">Timestamps with and without timezones</h3>
 <div class="outline-text-3" id="text-7d0b525b-827f-41db-8523-e62da8fbe52b">
 <p>
 Ah, the bane of many programmers' existence - dates and times.
@@ -708,8 +691,8 @@ The following examples are fairly self explanatory.
 </div>
 
 
-<div id="outline-container-org32d8e4b" class="outline-3">
-<h3 id="05423b5d-c101-4244-bc7e-5b05e257d03a"><a id="org32d8e4b"></a><a id="ID-e65bef5a-bae8-4b47-a66f-37f6e71d9fdb"></a>Adding Foreign Keys</h3>
+<div id="outline-container-05423b5d-c101-4244-bc7e-5b05e257d03a" class="outline-3">
+<h3 id="05423b5d-c101-4244-bc7e-5b05e257d03a">Adding Foreign Keys</h3>
 <div class="outline-text-3" id="text-05423b5d-c101-4244-bc7e-5b05e257d03a">
 <p>
 Foreign keys are a constraint. If a column is set with a foreign key referencing
@@ -727,8 +710,8 @@ a table.
 </p>
 </div>
 
-<div id="outline-container-org6943aee" class="outline-4">
-<h4 id="5bc3ebb3-b34c-4490-b4d4-a3d404b636a7"><a id="org6943aee"></a><a id="ID-02e06fce-1b41-4edd-aa1d-f9b3cc665d00"></a>Defining Foreign Keys at the Column Level</h4>
+<div id="outline-container-5bc3ebb3-b34c-4490-b4d4-a3d404b636a7" class="outline-4">
+<h4 id="5bc3ebb3-b34c-4490-b4d4-a3d404b636a7">Defining Foreign Keys at the Column Level</h4>
 <div class="outline-text-4" id="text-5bc3ebb3-b34c-4490-b4d4-a3d404b636a7">
 <p>
 First with foreign key on the column. Use the keyword :references and specify
@@ -736,13 +719,13 @@ the table name  and the relevant column within the subform. You will see why
 the subform in a minute.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'so-items
-          ((item-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
-           (so-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null) <span style="color: #98fb98; font-weight: bold;">:references</span> ((so-headers id)))
-           (product-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-           (qty <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-           (net-price <span style="color: #98fb98; font-weight: bold;">:type</span> (or numeric db-null)))
-          (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> item-id so-id)))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'so-items
+          ((item-id <span style="color: #23d7d7;">:type</span> integer)
+           (so-id <span style="color: #23d7d7;">:type</span> (or integer db-null) <span style="color: #23d7d7;">:references</span> ((so-headers id)))
+           (product-id <span style="color: #23d7d7;">:type</span> (or integer db-null))
+           (qty <span style="color: #23d7d7;">:type</span> (or integer db-null))
+           (net-price <span style="color: #23d7d7;">:type</span> (or numeric db-null)))
+          (<span style="color: #23d7d7;">:primary-key</span> item-id so-id)))
 </pre>
 </div>
 
@@ -752,13 +735,13 @@ fit into that same subform.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'so-items
-          ((item-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
-           (so-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null) <span style="color: #98fb98; font-weight: bold;">:references</span> ((so-headers id p1 p2)))
-           (product-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-           (qty <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-           (net-price <span style="color: #98fb98; font-weight: bold;">:type</span> (or numeric db-null)))
-          (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> item-id so-id)))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'so-items
+          ((item-id <span style="color: #23d7d7;">:type</span> integer)
+           (so-id <span style="color: #23d7d7;">:type</span> (or integer db-null) <span style="color: #23d7d7;">:references</span> ((so-headers id p1 p2)))
+           (product-id <span style="color: #23d7d7;">:type</span> (or integer db-null))
+           (qty <span style="color: #23d7d7;">:type</span> (or integer db-null))
+           (net-price <span style="color: #23d7d7;">:type</span> (or numeric db-null)))
+          (<span style="color: #23d7d7;">:primary-key</span> item-id so-id)))
 </pre>
 </div>
 
@@ -833,21 +816,21 @@ the foreign key constraint can be performed more efficiently."
 So now examples with specifying the on-delete and on-update actions.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'so-items
-         ((item-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
-          (so-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)
-                 <span style="color: #98fb98; font-weight: bold;">:references</span> ((so-headers id) <span style="color: #98fb98; font-weight: bold;">:no-action</span> <span style="color: #98fb98; font-weight: bold;">:no-action</span>))
-          (product-id <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-          (qty <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-          (net-price <span style="color: #98fb98; font-weight: bold;">:type</span> (or numeric db-null)))
-         (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> item-id so-id)))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'so-items
+         ((item-id <span style="color: #23d7d7;">:type</span> integer)
+          (so-id <span style="color: #23d7d7;">:type</span> (or integer db-null)
+                 <span style="color: #23d7d7;">:references</span> ((so-headers id) <span style="color: #23d7d7;">:no-action</span> <span style="color: #23d7d7;">:no-action</span>))
+          (product-id <span style="color: #23d7d7;">:type</span> (or integer db-null))
+          (qty <span style="color: #23d7d7;">:type</span> (or integer db-null))
+          (net-price <span style="color: #23d7d7;">:type</span> (or numeric db-null)))
+         (<span style="color: #23d7d7;">:primary-key</span> item-id so-id)))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org0c146e3" class="outline-4">
-<h4 id="7d033701-5e20-43b7-9142-2cf5c1e50317"><a id="org0c146e3"></a><a id="ID-43ffc1bf-5497-41f2-af15-2c3128745b55"></a>Defining Foreign Keys at the Table Level</h4>
+<div id="outline-container-7d033701-5e20-43b7-9142-2cf5c1e50317" class="outline-4">
+<h4 id="7d033701-5e20-43b7-9142-2cf5c1e50317">Defining Foreign Keys at the Table Level</h4>
 <div class="outline-text-4" id="text-7d033701-5e20-43b7-9142-2cf5c1e50317">
 <p>
 Instead of specifying the foreign keys at the column level, you can specify
@@ -863,44 +846,44 @@ non-default actions specified.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'account-role
-         ((user-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
-          (role-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
-          (grant-date <span style="color: #98fb98; font-weight: bold;">:type</span> (or timestamp-without-time-zone db-null)))
-         (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> user-id role-id)
-         (<span style="color: #98fb98; font-weight: bold;">:constraint</span> account-role-role-id-fkey
-                      <span style="color: #98fb98; font-weight: bold;">:foreign-key</span> (role-id) (role role-id))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'account-role
+         ((user-id <span style="color: #23d7d7;">:type</span> integer)
+          (role-id <span style="color: #23d7d7;">:type</span> integer)
+          (grant-date <span style="color: #23d7d7;">:type</span> (or timestamp-without-time-zone db-null)))
+         (<span style="color: #23d7d7;">:primary-key</span> user-id role-id)
+         (<span style="color: #23d7d7;">:constraint</span> account-role-role-id-fkey
+                      <span style="color: #23d7d7;">:foreign-key</span> (role-id) (role role-id))))
 
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'account-role
-         ((user-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
-          (role-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
-          (grant-date <span style="color: #98fb98; font-weight: bold;">:type</span> (or timestamp-without-time-zone db-null)))
-         (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> user-id role-id)
-         (<span style="color: #98fb98; font-weight: bold;">:constraint</span> account-role-role-id-fkey
-                      <span style="color: #98fb98; font-weight: bold;">:foreign-key</span> (role-id) (role role-id) <span style="color: #98fb98; font-weight: bold;">:no-action</span> <span style="color: #98fb98; font-weight: bold;">:no-action</span>)))
+(query (<span style="color: #23d7d7;">:create-table</span> 'account-role
+         ((user-id <span style="color: #23d7d7;">:type</span> integer)
+          (role-id <span style="color: #23d7d7;">:type</span> integer)
+          (grant-date <span style="color: #23d7d7;">:type</span> (or timestamp-without-time-zone db-null)))
+         (<span style="color: #23d7d7;">:primary-key</span> user-id role-id)
+         (<span style="color: #23d7d7;">:constraint</span> account-role-role-id-fkey
+                      <span style="color: #23d7d7;">:foreign-key</span> (role-id) (role role-id) <span style="color: #23d7d7;">:no-action</span> <span style="color: #23d7d7;">:no-action</span>)))
 </pre>
 </div>
 <p>
 Additional foreign keys can easily be added:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-table</span> 'account-role
-         ((user-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
-          (role-id <span style="color: #98fb98; font-weight: bold;">:type</span> integer)
-          (grant-date <span style="color: #98fb98; font-weight: bold;">:type</span> (or timestamp-without-time-zone db-null)))
-         (<span style="color: #98fb98; font-weight: bold;">:primary-key</span> user-id role-id)
-         (<span style="color: #98fb98; font-weight: bold;">:constraint</span> account-role-role-id-fkey
-                      <span style="color: #98fb98; font-weight: bold;">:foreign-key</span> (role-id) (role role-id))
-         (<span style="color: #98fb98; font-weight: bold;">:constraint</span> account-role-user-id-fkey
-                      <span style="color: #98fb98; font-weight: bold;">:foreign-key</span> (user-id) (users user-id))))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'account-role
+         ((user-id <span style="color: #23d7d7;">:type</span> integer)
+          (role-id <span style="color: #23d7d7;">:type</span> integer)
+          (grant-date <span style="color: #23d7d7;">:type</span> (or timestamp-without-time-zone db-null)))
+         (<span style="color: #23d7d7;">:primary-key</span> user-id role-id)
+         (<span style="color: #23d7d7;">:constraint</span> account-role-role-id-fkey
+                      <span style="color: #23d7d7;">:foreign-key</span> (role-id) (role role-id))
+         (<span style="color: #23d7d7;">:constraint</span> account-role-user-id-fkey
+                      <span style="color: #23d7d7;">:foreign-key</span> (user-id) (users user-id))))
 </pre>
 </div>
 </div>
 </div>
 </div>
-<div id="outline-container-orge697e12" class="outline-3">
-<h3 id="1aff79ef-749e-4229-82e4-81dceabb72b5"><a id="orge697e12"></a><a id="ID-a9eb931c-2b9f-4bd1-a17d-e46d891d667d"></a>Using Tablespaces</h3>
+<div id="outline-container-1aff79ef-749e-4229-82e4-81dceabb72b5" class="outline-3">
+<h3 id="1aff79ef-749e-4229-82e4-81dceabb72b5">Using Tablespaces</h3>
 <div class="outline-text-3" id="text-1aff79ef-749e-4229-82e4-81dceabb72b5">
 <p>
 Tablespaces require use of the create-extended-table method. Note that the
@@ -915,18 +898,18 @@ partitions and storage parameters. This is only partially implemented.
 Tablespaces are documented at <a href="https://www.postgresql.org/docs/current/manage-ag-tablespaces.html">https://www.postgresql.org/docs/current/manage-ag-tablespaces.html</a>
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-extended-table</span> 'cinemas
-       ((id <span style="color: #98fb98; font-weight: bold;">:type</span> serial) (name <span style="color: #98fb98; font-weight: bold;">:type</span> (or text db-null))
-        (location <span style="color: #98fb98; font-weight: bold;">:type</span> (or text db-null)))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-extended-table</span> 'cinemas
+       ((id <span style="color: #23d7d7;">:type</span> serial) (name <span style="color: #23d7d7;">:type</span> (or text db-null))
+        (location <span style="color: #23d7d7;">:type</span> (or text db-null)))
        ()
-       ((<span style="color: #98fb98; font-weight: bold;">:tablespace</span> diskvol1))))
+       ((<span style="color: #23d7d7;">:tablespace</span> diskvol1))))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org7665641" class="outline-3">
-<h3 id="015c6b92-dd5f-400b-bd8d-d2d08e76a166"><a id="org7665641"></a><a id="ID-2bc90e7a-1a03-4d15-a2fd-cb11d83de8a1"></a>Partitions (not fully implemented)</h3>
+<div id="outline-container-015c6b92-dd5f-400b-bd8d-d2d08e76a166" class="outline-3">
+<h3 id="015c6b92-dd5f-400b-bd8d-d2d08e76a166">Partitions (not fully implemented)</h3>
 <div class="outline-text-3" id="text-015c6b92-dd5f-400b-bd8d-d2d08e76a166">
 <p>
 The following are two very simple examples of use of partitions. You should
@@ -935,24 +918,33 @@ examples.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #98fb98; font-weight: bold;">:create-extended-table</span> 'measurement
-         ((logdate <span style="color: #98fb98; font-weight: bold;">:type</span> date)
-          (peaktemp <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-          (unitsales <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-extended-table</span> 'measurement
+         ((logdate <span style="color: #23d7d7;">:type</span> date)
+          (peaktemp <span style="color: #23d7d7;">:type</span> (or integer db-null))
+          (unitsales <span style="color: #23d7d7;">:type</span> (or integer db-null)))
          ()
-         ((<span style="color: #98fb98; font-weight: bold;">:partition-by-range</span> 'logdate))))
+         ((<span style="color: #23d7d7;">:partition-by-range</span> 'logdate))))
 
-<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">Create a range partitioned table with multiple columns in the partition key:</span>
+<span style="color: #74af68;">;; </span><span style="color: #74af68;">Create a range partitioned table with multiple columns in the partition key:</span>
 
-(query (<span style="color: #98fb98; font-weight: bold;">:create-extended-table</span> 'measurement-year-month
-         ((logdate <span style="color: #98fb98; font-weight: bold;">:type</span> date)
-          (peaktemp <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null))
-          (unitsales <span style="color: #98fb98; font-weight: bold;">:type</span> (or integer db-null)))
+(query (<span style="color: #23d7d7;">:create-extended-table</span> 'measurement-year-month
+         ((logdate <span style="color: #23d7d7;">:type</span> date)
+          (peaktemp <span style="color: #23d7d7;">:type</span> (or integer db-null))
+          (unitsales <span style="color: #23d7d7;">:type</span> (or integer db-null)))
          ()
-         ((<span style="color: #98fb98; font-weight: bold;">:partition-by-range</span> (<span style="color: #98fb98; font-weight: bold;">:extract</span> 'year 'logdate)(<span style="color: #98fb98; font-weight: bold;">:extract</span> 'month 'logdate)))))
+         ((<span style="color: #23d7d7;">:partition-by-range</span> (<span style="color: #23d7d7;">:extract</span> 'year 'logdate)(<span style="color: #23d7d7;">:extract</span> 'month 'logdate)))))
 </pre>
 </div>
 </div>
+</div>
+</div>
+
+<div id="outline-container-org6b881c7" class="outline-2">
+<h2 id="org6b881c7">Table Creation With Dao Classes</h2>
+<div class="outline-text-2" id="text-org6b881c7">
+<p>
+See: <a href="dao-classes.html#table-definition">Creating Tables using dao classes</a>
+</p>
 </div>
 </div>
 </div>

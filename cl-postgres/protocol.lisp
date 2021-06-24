@@ -629,8 +629,7 @@ looks like:
 
 Obviously, row readers should not do things with the database connection
 like, say, close it or start a new query, since it still reading out the
-results from the current query.Create a row-reader, using the given name
-for the fields argument and the given body for reading the rows. A row reader
+results from the current query. A row reader
 is a function that is used to do something with the results of a query. It has
 two local functions: next-row and next-field, the first should be called
 once per row and will return a boolean indicating whether there are
