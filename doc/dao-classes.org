@@ -28,12 +28,14 @@ slots in these classes will refer to columns in the database.
 ** Basic Dao Definition Examples
 A simple dao definition could look like this:
 #+BEGIN_SRC lisp
-  (defclass users ()
-    ((name :col-type string :initarg :name :accessor name)
-     (creditcard :col-type (or db-null integer) :initarg :card :col-default :null)
-     (score :col-type bigint :col-default 0 :accessor score))
-    (:metaclass dao-class)
-    (:keys name))
+      (defclass users ()
+        ((name :col-type string :initarg :name :accessor name)
+         (creditcard :col-type (or db-null integer) :initarg :card :col-default :null)
+         (score :col-type bigint :col-default 0 :accessor score)
+         (payment-history :col-type (or (array integer) db-null)
+                          :initarg :payment-history :accessor payment-history))
+        (:metaclass dao-class)
+        (:keys name))
 #+END_SRC
 In this case the name of the users will be treated as the primary key (the :keys
 parameter at the end) and the database table is assumed to be named users because
@@ -42,12 +44,22 @@ that is the name of the class and there was no :table-name parameter provided.
 reserved words, while possible using quotes, is generally not worth the additional
 trouble they cause.)
 
-The name and score slots cannot be null because :col-type does not provide for db-null
-as an optiona. The creditcard slot can be null and actually defaults to null.
+In our example, the name and score slots cannot be null because :col-type does not provide for db-null as an optiona. The creditcard slot can be null and actually defaults to null.
 The :col-default :null specification ensures that the default in the database for
 this field is null, but it does not bound the slot to a default form. Thus, making
 an instance of the class without initializing this slot will leave it in an unbound
 state.
+
+The payment-history slot is matched to a Postgresql column named =payment_history=
+(remember that Postgresql uses underscores rather than hyphens) and that Postgresql
+column is an array of integers. If we wanted a two dimensional array of integers,
+the col-type would look like:
+#+begin_src lisp
+:col-type (or (array (array integer)) db-null)
+#+end_src
+If the value contained in the Postgresql slot payment-history is a common lisp array,
+Postmodern will seamless handle the conversion to and from the common lisp array and
+the Postgresql array.
 
 An example of a class where the keys are set as multiple column keys is here:
 #+BEGIN_SRC lisp
@@ -106,7 +118,12 @@ Now you can see why the double parens.
 
 We also specified that the table name is not "country" but "countries".
 (Some style guides recommend that table names be plural and references to rows
-be singular.)
+be singular.) NOTE: You can provide a fully qualified table name. In other words,
+if you have
+#+begin_src lisp
+(:table-name a.countries)
+#+end_src
+Postmodern will look for the countries table in the "A" schema.
 
 When inheriting from DAO classes, a subclass' set of columns also contains all
 the columns of its superclasses. The primary key for such a class is the union
@@ -292,40 +309,60 @@ There may be times when the types of values in a dao slot do not have comparable
 
 One method would be to use text columns or jsonb columns in Postgresql and have functions that convert as necessary going back and forth. In the following example we will use text columns in Postgresql and write CL list data to string when we "export" the data to Postgresql and then convert from string when we "import" the data from Postgresql into a dao-class instance.
 
-Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import. These parameters refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot on import from the database..
+Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import. These parameters refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot on import from the database.
+
+To make things slightly more interesting, we have two slots which are going to contain
+lists, but one will export to a Postgresql column that contains strings and the other
+will export to a Postgresql column that contains arrays of integers.
 #+begin_src lisp
-(defclass listy ()
-  ((id :col-type integer :col-identity t :accessor id)
-   (name :col-type text :col-unique t :col-check (:<> 'name "")
-         :initarg :name :accessor name)
-   (rlist :type list :col-type (or text db-null) :initarg :rlist :accessor rlist
-          :col-export list-to-string :col-import string-to-list)
-   (alist :type alist :col-type (or text db-null) :initarg :alist :accessor alist
-          :col-export list-to-string :col-import string-to-alist)
-   (plist :type plist :col-type (or text db-null) :initarg :plist :accessor plist
-          :col-export list-to-string :col-import string-to-plist))
-  (:metaclass dao-class)
-  (:table-name listy))
+  (defclass listy ()
+    ((id :col-type integer :col-identity t :accessor id)
+     (name :col-type text :col-unique t :col-check (:<> 'name "")
+           :initarg :name :accessor name)
+     (r-list :col-type (or text db-null) :initarg :r-list :accessor r-list
+             :col-export list->string :col-import string->list)
+     (l-array :col-type (or (array integer) db-null)
+              :initarg :l-array :accessor l-array
+              :col-export list->arr :col-import array->list))
+    (:metaclass dao-class)
+    (:table-name listy))
 #+end_src
-Now we need to define the import functions. When writing your import functions, pay attention to how you want to handle nil or :NULL values as well as how you might want to error check the conversion from a Postgresql datatype to a CL datatype.
+Now we are going to define the import functions. When writing your import functions, pay attention to how you want to handle nil or :NULL values as well as how you might want to error check the conversion from a Postgresql datatype to a CL datatype. Just to show some of the
+differences, we are going to translate :NULL strings in Postgresql to :NULL in common lisp
+and we are going to translate :NULL arrays in Postgresql to nil in common lisp.
 #+begin_src lisp
-  (defun string-to-list (str)
+  (defun string->list (str)
     "Take a string representation of a list and return a lisp list.
-  Note that you need to handle :NULLs."
+    Note that you need to handle :NULLs."
     (cond ((eq str :NULL)
            :NULL)
           (str
-           (with-input-from-string (s str)
-             (read s)))
+           (with-input-from-string (s str) (read s)))
+          (t nil)))
+
+  (defun array->list (arry)
+    "Here we have decided that we want the list be be nil rather than :NULL if the array is empty."
+    (cond ((eq arry :NULL)
+           nil)
+          ((vectorp arry)
+           (coerce arry 'list))
           (t nil)))
 #+end_src
-And now we need to define the export function. In our example we are just going to be using format to write the CL value to a string. You are responsible for writing an export function that does what you need. This example just tells Postgresql to insert a string "unknown" if the slot value is not a list. In real life you would need more error checking and condition handling.
+And now the export functions. In our example we are just going to be using format to write the CL value to a string unless it is not a list. You are responsible for writing an export function that does what you need. This example just tells Postgresql to insert :NULL if the slot value is not a list. In real life you would need more error checking and condition handling.
+
+The list to array export function inserts :NULL if not a list and otherwise coerces the
+list to a vector so that Postgresql will accept it as an array.
 #+begin_src lisp
-  (defun list-to-string (val)
-    "Simply uses (format ..) to write a list out as a string"
-    (if (listp val)
-        (format nil "~a" val)
-        "unknown"))
+  (defun list->string (lst)
+    "Here we have decided to insert :null if the input list is nil."
+    (if (listp lst)
+        (format nil "~a" lst)
+        :null))
+
+  (defun list->arr (lst)
+    (if (null lst)
+        :null
+        (coerce lst 'vector)))
 #+end_src
 
 ** method dao-keys (class)

@@ -5,32 +5,38 @@
 #+OPTIONS: ^:nil
 
 [[file:s-sql.html][Return to s-sql.html]]
+[[file:dao-classes.html][Return to dao-classes.html]]
+[[file:postmodern.html][Return to postmodern.html]]
+
 * Summary
   :PROPERTIES:
-  :ID:       25ed4f42-9f8d-43e0-93df-593e8af1d200
+  :ID:       array-summary
   :END:
+Arrays are a first class datatype within postgresql. The contents can only be of a single
+datatype. Postgresql will enforce that typing. They can be multidimensional. The starting index is 1, not 0. Regardless of whether you specify an array length when you create a table,
+Postgresql will always treat them as variable length.
+
 Postmodern/s-sql can be used to insert common lisp arrays into postgresql databases,
 pull postgresql database arrays out of databases into a common lisp array,
 and generally engage in all the ways that sql can use postgresql arrays.
 Postgresql arrays are documented at https://www.postgresql.org/docs/current/static/arrays.html
 and https://www.postgresql.org/docs/current/static/functions-array.html.
 
+The Postmodern dao-classes can also have slots that are common lisp arrays with the same utility.
+
 This page will go into more detail on how to use the available operators and functions
 in s-sql.
 
 * Use cases for arrays in a database
   :PROPERTIES:
-  :ID:       9d616ea8-b581-4d78-b83f-2a1bb550c5a7
+  :ID:       array-use-cases
   :END:
 
 ** General Usage
    :PROPERTIES:
-   :ID:       e5fa6a9b-8773-473a-aa9c-7bdaf3aa203e
+   :ID:       general-array-usage
    :END:
-Arrays are a first class datatype within postgresql. The contents can only be of a single
-datatype and postgresql will enforce that typing. You can either use arrays as a datatype
-stored in the database or there may be reasons why you want to use them as an intermediate
-datatype in a query.
+You can either use arrays as a datatype stored in the database or there may be reasons why you want to use them as an intermediate datatype in a query.
 
 There is a bit of controversy over the use of the array datatype in a database. There are those
 who adamantly oppose it, claiming that it is a violation of 1NF form (normalization).
@@ -180,7 +186,7 @@ See also [[https://www.compose.com/articles/take-a-dip-into-postgresql-arrays/]]
 
 ** Rules of Thumb - Do Not Use Arrays If:
    :PROPERTIES:
-   :ID:       1022eae8-7780-44e5-874e-207df82a4bea
+   :ID:       do-not-use-arrays-if
    :END:
 
 - Do not use arrays where you need to maintain integrity for foreign relationships. That is what
@@ -192,21 +198,17 @@ foreign keys are for.
 that the ORM can utilize arrays.
 
 
-
 ** Data Type Enforcement
    :PROPERTIES:
-   :ID:       58701df2-c03f-4326-9cc9-efa7f2fa4f5b
+   :ID:       data-type-enforcement
    :END:
-Compared to jsonb, postgresql arrays allow you to enforce
-the data type. This can be critical in both maintaining
-the integrity of your data as well as optimization
-in your appliction code. This database enforeced type
-safety does not, however, enforce the dimensionality
-of the array.
+Compared to jsonb, postgresql arrays enforce the data type. This can be critical in both maintaining the integrity of your data as well as optimization in your appliction code.
+This database enforced type safety does not, however, enforce the dimensionality of
+the array.
 
 ** Indices on Arrays
    :PROPERTIES:
-   :ID:       b8b2a4c0-60c7-429b-9bcd-f98763438b7d
+   :ID:       array-indices
    :END:
 It is highly recommended that you use GIN or GIST indexes to search
 for items in array column. You should remember that GIST indices are
@@ -215,7 +217,7 @@ lossy while GIN indices are lossless.
 
 * S-SQL Array Support
   :PROPERTIES:
-  :ID:       aa6cb2e2-fc06-4948-92e7-3f378aca5ee3
+  :ID:       s-sql-array-support
   :END:
 S-sql can feel a little messy with respect to arrays but that
 is in large part because (a) sql dealing with arrays is messy and
@@ -292,28 +294,28 @@ Example:
 #+END_SRC
 ** General Usage Examples
    :PROPERTIES:
-   :ID:       1b396eff-19d5-4653-be90-8c6406dffa60
+   :ID:       s-sql-array-general-usage-examples
    :END:
 Just to make these usage examples really simple, we will use the
 simplest use case version discussed above, with a tags array in a table
 with the name of the item. In this case the name is the name of a
-receipe and the tags are ingredients that either go in the receipe
-or accompany the receipe.
+recipe and the tags are ingredients that either go in the recipe
+or accompany the recipe.
 
 First to create the table and the indexes. The index on 'name is the
 default B-tree index. The index on the tags is a GIN index.
 
 #+BEGIN_SRC sql
-(query (:create-table receipes
+(query (:create-table recipes
                        ((name :type text)
                         (tags :type text[] :default "{}"))))
 
-(query (:create-unique-index 'receipe-tags-id-name
-                              :on "receipes"
+(query (:create-unique-index 'recipe-tags-id-name
+                              :on "recipes"
                               :fields 'name))
 
-(query (:create-index 'receipe-tags-id-tags
-                       :on "receipes"
+(query (:create-index 'recipe-tags-id-tags
+                       :on "recipes"
                        :using gin
                        :fields 'tags))
 #+END_SRC
@@ -322,7 +324,7 @@ passing in lisp arrays and it is automatically inserted in the table
 as a postgresql array.
 #+BEGIN_SRC lisp
 (query (:insert-rows-into
-        'receipes
+        'recipes
         :columns 'name 'tags
         :values
         '(("Fattoush" #("greens" "pita bread" "olive oil" "garlic" "lemon" "salt" "spices"))
@@ -337,7 +339,6 @@ as a postgresql array.
           ("Kunafeh" #("cheese" "sugar syrup" "pistachios"))
           ("Baklava" #("filo dough" "honey" "nuts")))))
 #+END_SRC
-
 
 This will automatically insert the required square brackets into the sql statement
 being passed to postgresql. This automatic translation between lisp and
@@ -356,8 +357,8 @@ S-sql version
 
 First we can start by checking for records that have a specific tag
 #+BEGIN_SRC lisp
-(query (:select 'receipe-id 'tags
-                :from 'receipe-tags-array
+(query (:select 'recipe-id 'tags
+                :from 'recipe-tags-array
                 :where (:@> 'tags
                             (:array[] "bulgur"))))
 (("Tabbouleh" #("bulgur" "tomatoes" "onions" "parsley"))
@@ -371,8 +372,8 @@ a lisp array.
 
 Extending this to checking for items with two specific tags:
 #+BEGIN_SRC lisp
-(query (:select 'receipe-id 'tags
-                :from 'receipe-tags-array
+(query (:select 'recipe-id 'tags
+                :from 'recipe-tags-array
                 :where (:@> 'tags
                             (:array[] "bulgur" "parsley"))))
 
@@ -384,7 +385,7 @@ acts as an 'or' logical test:
 #+BEGIN_SRC lisp
 (let ((tst-arry #("parsley" "cheese")))
   (query (:order-by (:select '*
-                             :from 'receipes
+                             :from 'recipes
                              :where (:&& 'tags tst-arry))
                     'name)))
 '(("Manakeesh"
@@ -400,7 +401,7 @@ acts as an 'or' logical test:
 Validating that this is returning a vector:
 #+BEGIN_SRC lisp
 (type-of (query (:select 'tags
-                         :from 'receipes
+                         :from 'recipes
                          :where (:= 'name "Manakeesh"))
                 :single))
 
@@ -409,7 +410,7 @@ Validating that this is returning a vector:
 We can also check the length of the array or cardinality:
 #+BEGIN_SRC lisp
 (query (:select (:cardinality 'tags)
-                :from 'receipes
+                :from 'recipes
                 :where (:= 'name "Manakeesh"))
        :single)
 #+END_SRC
@@ -417,7 +418,7 @@ We can also check the length of the array or cardinality:
 Updating the array can be done either explicitly:
 #+BEGIN_SRC lisp
 ;;; Update array with an lisp array (changing onion to onions in the one row where it is singular
-(query (:update 'receipes
+(query (:update 'recipes
                 :set 'tags #("raw meat" "bulgur" "onions" "spices" "pita bread")
                 :where (:= 'name "Kibbe nayeh")))
 #+END_SRC
@@ -425,7 +426,7 @@ or passing in a lisp variable:
 #+BEGIN_SRC lisp
 ;;; checking passing a lisp array as a variable
 (let ((lisp-arry #("wine" "garlic" "soy sauce")))
-  (query (:update 'receipes
+  (query (:update 'recipes
                   :set 'tags '$1
                   :where (:= 'name 11))
          lisp-arry))
@@ -440,13 +441,13 @@ starting point).
 
 #+BEGIN_SRC lisp
 (query (:select (:[] 'tags 2)
-                :from 'receipes
+                :from 'recipes
                 :where (:= 'name 3)))
 
 '(("olive oil"))
 
 (query (:select (:[] 'tags 2 3)
-                :from 'receipes
+                :from 'recipes
                 :where (:= 'name 3)))
 
 '((#("olive oil" "eggplant")))
@@ -491,7 +492,7 @@ the distinct tags in a list of lists where every list has a single tag entry.
 #+BEGIN_SRC lisp
 (query (:order-by
         (:select (:as (:unnest 'tags) 'tag) :distinct
-                 :from 'receipes)
+                 :from 'recipes)
         'tag))
 
 '(("bulgur") ("cheese") ("chicken") ("chickpeas") ("cucumbers") ("eggplant")
@@ -508,7 +509,7 @@ We can use with and group-by operators to count the unique tags:
         (:with
          (:as 'p
               (:select (:as (:unnest 'tags) 'tag)
-                       :from 'receipes))
+                       :from 'recipes))
          (:select 'tag (:as (:count 'tag) 'cnt)
                   :from 'p
                   :group-by 'tag))
@@ -524,11 +525,11 @@ We can use with and group-by operators to count the unique tags:
 
 Yes, there are array-append, array-replace etc operators
 #+BEGIN_SRC lisp
-(query (:update 'receipes
+(query (:update 'recipes
                 :set 'tags (:array-append 'tags "appended-items")
                 :where (:= 'name "Kibbe nayeh")))
 
-(query (:update 'receipes
+(query (:update 'recipes
                 :set 'tags (:array-replace 'tags "spices" "chocolate")))
 #+END_SRC
 The above two versions checked all the row, even those without the target string,
@@ -537,7 +538,7 @@ effectively the equivalent of not using the index.
 You can use a different operator that more effectively uses the GIN index and
 just touches the rows with the targeted string in the array:
 #+BEGIN_SRC lisp
-(query (:update 'receipes
+(query (:update 'recipes
                 :set 'tags (:array-replace 'tags  "chocolate" "spices")
                 :where (:<@ "{\"chocolate\"}" 'tags)))
 #+END_SRC
@@ -551,27 +552,27 @@ To show the difference, look at the sql statements that are generated by the two
 operators :any* and :any
 #+BEGIN_SRC lisp
 (sql (:select '*
-                :from 'receipes
+                :from 'recipes
                 :where (:= "chicken" (:any* 'tags ))))
 
-"(SELECT * FROM receipes WHERE (E'chicken' = ANY(tags)))"
+"(SELECT * FROM recipes WHERE (E'chicken' = ANY(tags)))"
 
 (sql (:select '*
-                :from 'receipes
+                :from 'recipes
                 :where (:= "chicken" (:any 'tags ))))
 
-"(SELECT * FROM receipes WHERE (E'chicken' = ANY tags))"
+"(SELECT * FROM recipes WHERE (E'chicken' = ANY tags))"
 #+END_SRC
 
 In the following two cases we want to use ':any*'. In the first simple query,
-we are looking for everything in the rows where the name of the receipe is in
+we are looking for everything in the rows where the name of the recipe is in
 the lisp array we passed in.
 
 In the second query we look for all the rows where the string "chicken"
 appears in any of the tag arrays.
 #+BEGIN_SRC lisp
 (query (:select '*
-                :from 'receipes
+                :from 'recipes
                 :where (:= 'name (:any* '$1)))
        #("Trout" "Shish Taouk" "Hamburger"))
 
@@ -580,7 +581,7 @@ appears in any of the tag arrays.
      "pita bread")))
 
 (query (:select '*
-                :from 'receipes
+                :from 'recipes
                 :where (:= '$1 (:any* 'tags )))
        "chicken")
 
@@ -594,7 +595,7 @@ the or operator which looks like :&&.
 #+BEGIN_SRC lisp
 (query (:order-by
         (:select '*
-                 :from 'receipes
+                 :from 'recipes
                  :where (:&& 'tags (:array[] '$1 '$2)))
         'name)
        "parsley" "cheese")
@@ -622,7 +623,7 @@ We are looking for rows from the database table which contain the elements
 of an array composed of the two strings passed in as parameters.
 #+BEGIN_SRC lisp
 (query (:order-by
-        (:select '* :from 'receipes
+        (:select '* :from 'recipes
                  :where (:<@ (:array[] '$1 '$2)
                              'tags))
         'name)
@@ -633,7 +634,7 @@ of an array composed of the two strings passed in as parameters.
      "olives")))
 
 (query (:order-by
-        (:select '* :from 'receipes
+        (:select '* :from 'recipes
                  :where (:@> 'tags
                              (:array[] '$1 '$2)))
         'name)
@@ -649,7 +650,7 @@ the small two element array we are passing in. The answer is nil.
 
 #+BEGIN_SRC lisp
 (query (:order-by
-        (:select '* :from 'receipes
+        (:select '* :from 'recipes
                  :where (:@> (:array[] '$1 '$2)
                              'tags))
         'name)
@@ -658,7 +659,7 @@ the small two element array we are passing in. The answer is nil.
 nil
 
 (query (:order-by
-        (:select '* :from 'receipes
+        (:select '* :from 'recipes
                  :where (:<@ 'tags
                              (:array[] '$1 '$2)))
         'name)
@@ -666,13 +667,17 @@ nil
 
 nil
 #+END_SRC
+* Dao Class Support for Arrays
+  :PROPERTIES:
+  :ID:       dao-class-support
+  :END:
 * Array Operators
   :PROPERTIES:
-  :ID:       0b311d6a-57e5-44b3-aa03-321274cd4800
+  :ID:       array-operators
   :END:
 ** Array Comparison Operators
    :PROPERTIES:
-   :ID:       cbdab925-dd3b-4531-8844-29f5f5e61b01
+   :ID:       array-comparison-operators
    :END:
 
 Per postgresql [[https://www.postgresql.org/docs/current/static/functions-array.html][documentation]] array comparisons compare the array contents
@@ -1121,7 +1126,7 @@ Like all the aggregate functions, you can pass :filter, :distinct or :order-by
 (in that order) as additional parameters.
 
 #+BEGIN_SRC lisp
-(query (:select (:array-agg 'name) :from 'receipes) :single)
+(query (:select (:array-agg 'name) :from 'recipes) :single)
 
 #("Fattoush" "Shawarma" "Baba Ghanoush" "Shish Taouk" "Kibbe nayeh" "Manakeesh"
   "Fakafek" "Tabbouleh" "Kofta" "Kunafeh" "Baklava")

@@ -79,6 +79,7 @@
    #:get-search-path
    #:get-database-comment
    #:encode-json-to-string
+   #:load-uuid-extension
 
    ;; Prepared Statement Functions
    #:*allow-overwriting-prepared-statements*
