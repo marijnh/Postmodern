@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-07-11 Sun 09:24 -->
+<!-- 2021-07-17 Sat 15:09 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DAO Classes</title>
@@ -227,7 +227,7 @@
 <li><a href="#daos">Overview</a></li>
 <li><a href="#class-dao-class">Metaclass dao-class</a>
 <ul>
-<li><a href="#org01a1e09">Basic Dao Definition Examples</a></li>
+<li><a href="#orgeac445e">Basic Dao Definition Examples</a></li>
 <li><a href="#class-dao-class-slots">Slot Options</a></li>
 <li><a href="#class-dao-class-slots-table-options">Table options</a></li>
 </ul>
@@ -320,9 +320,9 @@ slots in these classes will refer to columns in the database.
 <h2 id="class-dao-class">Metaclass dao-class</h2>
 <div class="outline-text-2" id="text-class-dao-class">
 </div>
-<div id="outline-container-org01a1e09" class="outline-3">
-<h3 id="org01a1e09">Basic Dao Definition Examples</h3>
-<div class="outline-text-3" id="text-org01a1e09">
+<div id="outline-container-orgeac445e" class="outline-3">
+<h3 id="orgeac445e">Basic Dao Definition Examples</h3>
+<div class="outline-text-3" id="text-orgeac445e">
 <p>
 A simple dao definition could look like this:
 </p>
@@ -618,7 +618,7 @@ the departments table:
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-col-identity-with-references</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id <span style="color: #23d7d7;">:col-primary-key</span> t)
    (username <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:unique</span> t <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:username</span> <span style="color: #23d7d7;">:accessor</span> username)
    (department-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-references</span> ((departments id))
                   <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:department-id</span> <span style="color: #23d7d7;">:accessor</span> department-id))
@@ -698,7 +698,7 @@ will export to a Postgresql column that contains arrays of integers.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">listy</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id <span style="color: #23d7d7;">:col-primary-key</span> t)
    (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:col-check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
          <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name)
    (r-list <span style="color: #23d7d7;">:col-type</span> (or text db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:r-list</span> <span style="color: #23d7d7;">:accessor</span> r-list

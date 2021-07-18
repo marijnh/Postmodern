@@ -258,7 +258,7 @@ The slot definitions in a table have several additional optional keyword paramet
   the departments table:
   #+begin_src lisp
     (defclass test-data-col-identity-with-references ()
-      ((id :col-type integer :col-identity t :accessor id)
+      ((id :col-type integer :col-identity t :accessor id :col-primary-key t)
        (username :col-type text :unique t :initarg :username :accessor username)
        (department-id :col-type integer :col-references ((departments id))
                       :initarg :department-id :accessor department-id))
@@ -316,7 +316,7 @@ lists, but one will export to a Postgresql column that contains strings and the 
 will export to a Postgresql column that contains arrays of integers.
 #+begin_src lisp
   (defclass listy ()
-    ((id :col-type integer :col-identity t :accessor id)
+    ((id :col-type integer :col-identity t :accessor id :col-primary-key t)
      (name :col-type text :col-unique t :col-check (:<> 'name "")
            :initarg :name :accessor name)
      (r-list :col-type (or text db-null) :initarg :r-list :accessor r-list

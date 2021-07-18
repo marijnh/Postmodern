@@ -1,0 +1,420 @@
+#+TITLE: Json From Postgresql/Postmodern
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+#+OPTIONS: toc:2
+
+* Intro
+
+Suppose the front end of an app needs data as a json string and you need to get the data out of a database and convert it to that format. There are several ways to do that. We will look at doing it with basic sql, s-sql and a dao class. For purposes of this note, we are not looking at jsonb type columns in Postgresql.
+
+To make things a little more interesting, we are going to have a private column which we do not want to pass to the front-end, a Postgresql point datatype column and we will have a geometry type (using postgis) to compare that to the point type. If you do not have postgis installed, you can find installation instruction here: [[https://postgis.net/install/]] or just read the the postgis stuff without trying to run the code.
+
+I am going to use the local-time library to deal with dates, so we need to do a little housework on that side as well.
+#+begin_src lisp
+(ql:quickload '(local-time cl-postgres+local-time))
+(local-time:set-local-time-cl-postgres-readers)
+#+end_src
+
+* The Basic SQL Version
+:PROPERTIES:
+:CUSTOM_ID: sql-version
+:END:
+Assuming you already have a database to use, let's create a couple of tables and insert some data.
+#+begin_src lisp
+  (pomo:query "CREATE TABLE departments (
+        department_id bigint primary key,
+        name text
+        )")
+
+  (pomo:query "CREATE TABLE employees (
+          employee_id serial primary key,
+          department_id integer references departments(department_id),
+          name text,
+          start_date date,
+          contact text[],
+          private text,
+          lat_long point,
+          geom geometry(point, 4326)json-from-p
+          );")
+
+  (pomo:query "INSERT INTO departments
+     (department_id, name)
+    VALUES
+     (1, 'spatial'),
+     (2, 'cloud')")
+
+  (pomo:query "INSERT INTO employees
+   (department_id, name, start_date, contact, private, lat_long, geom)
+  VALUES
+   (1, 'Maja',   '2018/09/02', '{"084-767-734","071-334-8473"}', 'not allowed',
+   '(59.334591, 18.063240)', 'POINT(59.334591 18.063240)'),
+   (1, 'Liam', '2019/09/02', '{"084-767-734","071-334-8472"}','private',
+   '(57.708870, 11.974560)','POINT(57.708870 11.974560)'),
+   (2, 'Matteo',  '2019/11/01', '{"084-767-734","071-334-8476"}', 'burn before reading',
+     '(58.283489,12.285821)','POINT(58.283489 12.285821)'),
+   (2, 'Astrid',    '2020/10/01',  '{"084-767-734","071-334-8465"}', 'abandon all hope',
+    '(57.751442, 16.628838)', 'POINT(57.751442 16.628838)');")
+#+end_src
+One difference to note is that the data for the lat_long point data type has a comma, but the geom geometry data type does not have a comma. No, I do not know why the syntax difference.
+
+I want to flag something that can surprise people. The lat_long column is a Postgresql point datatype. That means it is an array. As you may recall, Postgresql arrays start at 1, not 0. Except here. If you wanted just the latitude for the row with the employee_id of 1, you would actually call for array 0.
+#+begin_src lisp
+  (pomo:query "select lat_long[0] from employees where employee_id=1" :single)
+  59.334591d0
+#+end_src
+If you wanted to get the latitude and longitude in a list, it would look like:
+#+begin_src lisp
+(pomo:query "select lat_long[0], lat_long[1] from employees where employee_id=1")
+((59.334591d0 18.06324d0))
+#+end_src
+
+If you ran a basic query to see how Postgresql was storing that geometry type, it would look something like this:
+
+#+begin_src lisp
+  (pomo:query "select geom from employees where employee_id=1" :single)
+"0101000020E61000009A44BDE0D3AA4D408ECC237F30103240"
+#+end_src
+To actually get the separate latitude and longitude from the geom column, you need to use Postgresql functions st_x and st_y like so:
+#+begin_src lisp
+(query "select st_x(geom), st_y(geom) from employees where employee_id=1")
+((59.334591d0 18.06324d0))
+#+end_src
+
+Now on to getting this information as json. Postgresql gives you a json generator function that takes a tuple and returns a json dictionary. So, for example:
+#+begin_src lisp
+(query "select row_to_json(employees) from employees where employee_id=1")
+(("{\"employee_id\":1,
+    \"department_id\":1,
+    \"name\":\"Maja\",
+    \"start_date\":\"2018-09-02\",
+    \"contact\":[\"084-767-734\",\"071-334-8473\"],
+    \"private\":\"not allowed\",
+    \"lat_long\":\"(59.334591,18.06324)\",
+    \"geom\":{\"type\":\"Point\",\"coordinates\":[59.334591,18.06324]}}"))
+#+end_src
+You can see that it would automatically break out the geom data. However, as written, it has the fatal flaw of also collecting the private info. That can get solved with a slight modification:
+#+begin_src lisp
+(query "select row_to_json(e)
+        from
+          (select employee_id, department_id, name, start_date, contact, lat_long, geom
+           from employees where employee_id=1) e")
+(("{\"employee_id\":1,
+ \"department_id\":1,
+ \"name\":\"Maja\",
+ \"start_date\":\"2018-09-02\",
+ \"contact\":[\"084-767-734\",\"071-334-8473\"],
+ \"lat_long\":\"(59.334591,18.06324)\",
+ \"geom\":{\"type\":\"Point\",\"coordinates\":[59.334591,18.06324]}}"))
+#+end_src
+You can also aggregate rows using the Postgresql json_agg function.
+#+begin_src lisp
+(query "select json_agg(e)
+        from
+          (select employee_id, department_id, name, start_date, contact, lat_long, geom
+           from employees)
+        e")
+#+end_src
+You could skip the Postgresql json function and ask Postmodern to return the query as a json object expressed as a string. One thing to note is that Postmodern will return the labels as camelCase rather than Postgresql returning them as underscores:
+#+begin_src lisp
+    (query "select employee_id, department_id, name, start_date, contact, lat_long, geom
+            from employees
+            where employee_id=1"
+           :json-str)
+   "{\"employeeId\":1,\"departmentId\":1,\"name\":\"Maja\",\"startDate\":\"{2018-09-01T20:00:00.000000-04:00}\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"latLong\":[59.334591,18.06324],\"geom\":\"0101000020E61000009A44BDE0D3AA4D408ECC237F30103240\"}"
+#+end_src
+You would need to do a little more work in order to get the desired latitude and longitude out of the geom value.
+#+begin_src lisp
+  (query "select employee_id, department_id, name, start_date, contact, lat_long, st_x(geom) as lat, st_y(geom) as long
+               from employees where employee_id=1" :json-str)
+
+  "{\"employeeId\":1,\"departmentId\":1,\"name\":\"Maja\",\"startDate\":\"{2018-09-01T20:00:00.000000-04:00}\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"latLong\":[59.334591,18.06324],\"lat\":59.334591,\"long\":18.06324}"
+ #+end_src
+Both the Postgresql function and the Postmodern return type approach can be applied to the end result of more complicated queries with joins, CTEs and other tools of the trade. Which is actually why we have the department table in this example. Instead of having the department-id in the json we are sending to the front end, let's have the department name.
+
+First the using the Postgresql =row-to-json= function:
+#+begin_src lisp
+  (query "select row_to_json(e)
+          from  (select employee_id, departments.name as department_name, employees.name as employee_name,
+                        start_date, contact, lat_long, geom
+                 from employees
+                 left join departments
+                 on departments.department_id = employees.department_id
+                 where employee_id=1) e")
+  (("{\"employee_id\":1,\"department_name\":\"spatial\",\"employee_name\":\"Maja\",\"start_date\":\"2018-09-02\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"lat_long\":\"(59.334591,18.06324)\",\"geom\":{\"type\":\"Point\",\"coordinates\":[59.334591,18.06324]}}"))
+#+end_src
+Now the sql using the Postmodern :json-str keyword parameter for query:
+#+begin_src lisp
+(query "select employee_id, departments.name as department_name, employees.name as employee_name,
+               start_date, contact, lat_long, geom
+        from employees
+        left join departments
+        on departments.department_id = employees.department_id
+        where employee_id=1"
+     :json-str))
+"{\"employeeId\":1,\"departmentName\":\"spatial\",\"employeeName\":\"Maja\",\"startDate\":\"{2018-09-01T20:00:00.000000-04:00}\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"latLong\":[59.334591,18.06324],\"geom\":\"0101000020E61000009A44BDE0D3AA4D408ECC237F30103240\"}"
+#+end_src
+
+* The Basic S-SQL Version
+:PROPERTIES:
+:CUSTOM_ID: s-sql-version
+:END:
+Assuming you already have a database to use, let's create a couple of tables and insert some data.
+#+begin_src lisp
+  (pomo:query (:create-table 'departments
+                             ((department-id :type (or pomo:db-null bigint) :primary-key t)
+                              (name :type (or pomo:db-null text)))))
+
+  (pomo:query (:create-table employees
+                             ((employee_id :type serial :primary-key t)
+                              (department_id :type (or pomo:db-null integer) :references ((departments department_id)))
+                              (name :type (or pomo:db-null text))
+                              (start_date :type (or pomo:db-null date))
+                              (contact :type (or pomo:db-null text[]))
+                              (private :type (or pomo:db-null text))
+                              (lat_long :type (or pomo:db-null point))
+                              (geom :type (or pomo:db-null (geometry point 4326))))))
+
+  (pomo:query (:insert-rows-into 'departments
+               :columns 'deparment-id 'name
+               :values '((1 "spatial") (2 "cloud"))))
+
+(pomo:sql (:insert-rows-into 'employees
+               :columns 'department-id 'name 'start-date 'contact 'private 'lat_long 'geom
+               :values
+         '((1 "Maja"   "2018/09/02" #("084-767-734""071-334-8473") "not allowed"
+         "(59.334591, 18.063240)" "POINT(59.334591 18.063240)")
+         (1 "Liam" "2019/09/02" #("084-767-734" "071-334-8472") "private"
+         "(57.708870, 11.974560)" "POINT(57.708870 11.974560)")
+         (2 "Matteo"  "2019/11/01" #("084-767-734""071-334-8476") "burn before reading"
+            "(58.28348912.285821)" "POINT(58.283489 12.285821)")
+         (2 "Astrid"    "2020/10/01"  #("084-767-734""071-334-8465") "abandon all hope"
+            "(57.751442, 16.628838)" "POINT(57.751442 16.628838)"))))
+#+end_src
+One difference to note is that the data for the lat_long point data type has a comma, but the geom geometry data type does not have a comma. No, I do not know why the syntax difference in Postgresql (Postmodern needs it to properly match Postgresql's syntax here).
+
+I want to flag something that can surprise people. The lat_long column is a Postgresql point datatype. That means it is an array. As you may recall, Postgresql arrays start at 1, not 0. Except here. If you wanted just the latitude for the row with the employee_id of 1, you would actually call for array 0.
+#+begin_src lisp
+(pomo:query (:select (:[] 'lat_long 0) :from 'employees :where (:= 'employee_id 1)) :single)
+59.334591d0
+#+end_src
+If you wanted the latitude and longitude in alist, the query would look like:
+#+begin_src lisp
+  (pomo:query (:select (:[] 'lat_long 0) (:[] 'lat_long 1) :from 'employees :where (:= 'employee_id 1)))
+  ((59.334591d0 18.06324d0))
+#+end_src
+If you ran a basic query to see how Postgresql was storing that geometry type, it would look something like this:
+#+begin_src lisp
+  (pomo:query (:select 'geom :from 'employees :where (:= 'employee-id 1)) :single)
+    "0101000020E61000009A44BDE0D3AA4D408ECC237F30103240"
+#+end_src
+To actually get the separate latitude and longitude from the geom column, you need to use Postgresql functions st_x and st_y like so:
+#+begin_src lisp
+(with-connection *dba-connection* (query (:select (:st-x 'geom) (:st-y 'geom) :from 'employees :where (:= 'employee_id 1))))
+((59.334591d0 18.06324d0))
+#+end_src
+Now on to getting this information as json. Postgresql gives you a json generator function that takes a tuple and returns a json dictionary. So, for example:
+#+begin_src lisp
+(pomo:query (:select (:row-to-json 'employees) :from 'employees :where (:= 'employee-id 1)))
+  (("{\"employee_id\":1,
+      \"department_id\":1,
+      \"name\":\"Maja\",
+      \"start_date\":\"2018-09-02\",
+      \"contact\":[\"084-767-734\",\"071-334-8473\"],
+      \"private\":\"not allowed\",
+      \"lat_long\":\"(59.334591,18.06324)\",
+      \"geom\":{\"type\":\"Point\",\"coordinates\":[59.334591,18.06324]}}"))
+#+end_src
+You can see that it would automatically break out the geom data. However, as written, it has the fatal flaw of also collecting the private info. That can get solved with a slight modification:
+#+begin_src lisp
+  (query (:select (:row-to-json 'e)
+          :from (:as (:select 'employee-id 'department-id 'name 'start-date 'contact
+                              'lat-long 'geom
+                      :from 'employees
+                      :where (:= 'employee-id 1))
+                     'e)))
+  (("{\"employee_id\":1,
+     \"department_id\":1,
+     \"name\":\"Maja\",
+     \"start_date\":\"2018-09-02\",
+     \"contact\":[\"084-767-734\",\"071-334-8473\"],
+     \"lat_long\":\"(59.334591,18.06324)\",
+     \"geom\":{\"type\":\"Point\",\"coordinates\":[59.334591,18.06324]}}"))
+#+end_src
+You can also aggregate rows using the Postgresql json_agg function.
+#+begin_src lisp
+  (query (:select (:json-agg 'e)
+          :from (:as (:select 'employee-id 'department-id 'name 'start-date 'contact
+                              'lat-long 'geom
+                      :from 'employees)
+                     'e)))
+#+end_src
+You could skip the Postgresql json function and ask Postmodern to return the query as a json object expressed as a string. One thing to note is that Postmodern will return the labels as camelCase rather than Postgresql returning them as underscores:
+#+begin_src lisp
+  (query (:select 'employee-id 'department-id 'name 'start-date 'contact 'lat-long 'geom
+          :from 'employees
+          :where (:= 'employee-id 1)) :json-str)
+
+"{\"employeeId\":1,\"departmentId\":1,\"name\":\"Maja\",\"startDate\":\"{2018-09-01T20:00:00.000000-04:00}\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"latLong\":[59.334591,18.06324],\"geom\":\"0101000020E61000009A44BDE0D3AA4D408ECC237F30103240\"}"
+#+end_src
+You would need to do a little more work in order to get the desired latitude and longitude out of the geom value.
+#+begin_src lisp
+  (query (:select 'employee-id 'department-id 'name 'start-date 'contact 'lat-long
+                  (:st-x 'geom) (:st-y 'geom)
+                  :from 'employees
+                  :where (:= 'employee-id 1))
+         :json-str)
+  "{\"employeeId\":1,\"departmentId\":1,\"name\":\"Maja\",\"startDate\":\"{2018-09-01T20:00:00.000000-04:00}\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"latLong\":[59.334591,18.06324],\"stX\":59.334591,\"stY\":18.06324}"
+#+end_src
+Both the Postgresql function and the Postmodern return type approach can be applied to the end result of more complicated queries with joins, CTEs and other tools of the trade. Which is actually why we have the department table in this example. Instead of having the department-id in the json we are sending to the front end, let's have the department name.
+
+First the s-sql using the Postgresql =row-to-json= function:
+#+begin_src lisp
+  (query (:select (:row-to-json 'e)
+          :from (:as (:select 'employee-id (:as 'departments.name 'department_name)
+                              (:as 'employees.name 'employee-name)
+                              'start-date 'contact 'lat-long
+                              (:st-x 'geom) (:st-y 'geom)
+                      :from 'employees
+                      :left-join 'departments
+                      :on (:= 'departments.department-id 'employees.department-id)
+                      :where (:= 'employee-id 1))
+                 'e)))
+
+ (("{\"employee_id\":1,\"department_name\":\"spatial\",\"employee_name\":\"Maja\",\"start_date\":\"2018-09-02\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"lat_long\":\"(59.334591,18.06324)\",\"st_x\":59.334591,\"st_y\":18.06324}"))
+#+end_src
+Now the s-sql using the Postmodern :json-str keyword parameter for query:
+#+begin_src lisp
+  (query (:select 'employee-id (:as 'departments.name 'department-name)
+                  (:as 'employees.name 'employee-name)
+                  'start-date 'contact 'lat-long (:st-x 'geom) (:st-y 'geom)
+          :from 'employees
+          :left-join 'departments
+          :on (:= 'departments.department-id 'employees.department-id)
+          :where (:= 'employee-id 1))
+         :json-str)
+  "{\"employeeId\":1,\"departmentName\":\"spatial\",\"employeeName\":\"Maja\",\"startDate\":\"{2018-09-01T20:00:00.000000-04:00}\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"latLong\":[59.334591,18.06324],\"stX\":59.334591,\"stY\":18.06324}"
+#+end_src
+
+* The Basic Dao-class Version
+:PROPERTIES:
+:CUSTOM_ID: dao-class-version
+:END:
+Assuming you already have a database to use, let's create a couple of dao classes, their associated tables and insert some data. Assume we decide we want to keep the geom as a list of latitude and longitude in the geom slot. That means we need import and export functions.
+#+begin_src lisp
+  (defclass departments ()
+    ((department-id :col-type serial :initarg :department-id :accessor department-id
+                    :col-primary-key t)
+     (name :col-type (or text pomo:db-null) :initarg :name :accessor name))
+    (:metaclass pomo:dao-class))
+
+  (pomo:execute (dao-table-definition 'departments))
+
+  (defclass employees ()
+    ((employee-id :col-type serial :initarg :employee-id :accessor employee-id
+                  :col-primary-key t)
+     (department-id :col-type integer :initarg :department-id :accessor department-id
+                    :col-references ((departments department-id)))
+     (name :col-type text :initarg name :accessor name)
+     (start-date :col-type (or date pomo:db-null) :initarg start-date :accessor start-date)
+     (contact :col-type (or pomo:db-null (array text)) :initarg contact :accessor contact)
+     (private :col-type (or pomo:db-null text) :initarg private :accessor private)
+     (lat-long :col-type (or pomo:db-null point) :initarg lat-long :accessor lat-long)
+     (geom :col-type (or pomo:db-null (geometry point 4326)) :initarg geom :accessor geom
+           :col-import geom->wkb-point))
+    (:metaclass pomo:dao-class))
+
+  ;; make-doa creates an instance of the dao and saves it in the database
+  (pomo:make-dao 'departments :department-id 1 :name "spatial")
+  (pomo:make-dao 'departments :department-id 2 :name "cloud")
+
+  (pomo:make-dao 'employees :department-id 1 :name "Maja" :start-date "2018/09/02"
+                            :contact #("084-767-734","071-334-8473")
+                            :private "not allowed" :lat-long "(59.334591, 18.063240)"
+                            :geom "POINT(59.334591 18.063240)")
+
+  (pomo:make-dao 'employees :department-id 1 :name "Liam" :start-date "2019/09/02"
+                            :contact #("084-767-734","071-334-8472")
+                            :private "private" :lat-long "(57.708870, 11.974560)"
+                            :geom "POINT((57.708870 11.974560)")
+
+  (pomo:make-dao 'employees :department-id 2 :name "Matteo" :start-date "2019/11/01"
+                            :contact #("084-767-734","071-334-8476")
+                            :private "burn before reading" :lat-long "(58.283489, 12.285821)"
+                            :geom "POINT(58.283489 12.285821)")
+
+  (pomo:make-dao 'employees :department-id 2 :name "Astrid" :start-date "2020/10/01"
+                            :contact #("084-767-734","071-334-8465")
+                            :private "abandon all hope" :lat-long "(57.751442, 16.628838)"
+                            :geom "POINT(57.751442 16.628838)")
+           #+end_src
+One difference to note is that the data for the lat_long point data type has a comma, but the geom geometry data type does not have a comma. No, I do not know why the syntax difference.
+
+Now the problem. If you ran a basic query to see how Postgresql was storing that geometry type, it would look something like this:
+
+#+begin_src lisp
+  (pomo:query "select geom from employees where employee_id=1" :single)
+"0101000020E61000009A44BDE0D3AA4D408ECC237F30103240"
+#+end_src
+
+We need import and export functions that implement the opengis specification in order to implement the import and export functions for the geom slot. See [[https://www.ogc.org/standards/sfs]]. Fortunately J.P. Larocue created the cl-wkb package (accessed via quicklisp with quickloading the
+[[https://github.com/filonenko-mikhail/cl-ewkb][cl-ewkb system]]) and we can create an import function with a combination of using ironclad's hex-string-to-byte-array and cl-wkb's decode function. So let's do that.
+#+begin_src lisp
+  (defun geom->wkb-point (input)
+    "Takes a hexstring that represents a geometry point from postgresql and returns a cl-wkb:point class instance"
+    (cl-wkb:decode (ironclad:hex-string-to-byte-array input)))
+#+end_src
+Now we can check whether we succeeded by seeing whether the x point is the latitude we expected:
+#+begin_src lisp
+  (cl-wkb:x (geom (pomo:get-dao 'employees 1)))
+59.334591d0
+#+end_src
+
+We still need to get from the dao-class to json. You could do something like just run cl-json's =encode-json=function on a dao-object like so:
+#+begin_src lisp
+  (cl-json:encode-json (pomo:get-dao 'employees 1))
+
+  {"employeeId":1,
+   "departmentId":1,
+   "name":"Maja",
+   "startDate":{"day":6759,"sec":0,"nsec":0},
+   "contact":["084-767-734","071-334-8473"],
+   "private":"not allowed",
+   "latLong":[59.334591,18.06324],
+   "geom":{"geomtype":536870913,"srid":4326,"pointPrimitive":{"x":59.334591,"y":18.06324,"z":0.0,"m":0.0}}}
+#+end_src
+Looking at the result, we have two issues. First, the start date seems to have lost its senses. Second, it is collecting and passing on the private data to the front end, which we explicitly did not want to do.
+
+Just checking on the date situation:
+#+begin_src lisp
+(start-date (pomo:get-dao 'employees 1)))
+@2018-09-01T20:00:00.000000-04:00
+#+end_src
+That works, so it is something on the cl-json side that we will have to work around. Let's turn to the private data issue.
+
+One solution would be to create a dao-class that is only a subset of the employees table (minus the private data) and set =pomo:*ignore-unknonw-columns*= to t. (If we did not set =pomo:*ignore-unknonw-columns*=, we would generate an error complaining that the dao
+was not in sync with the table.) Let's do that:
+#+begin_src lisp
+    (defclass employees-minus-private ()
+              ((employee-id :col-type serial :initarg :employee-id :accessor employee-id :col-primary-key t)
+               (department-id :col-type integer :initarg :department-id :accessor department-id :col-references ((departments department-id)))
+               (name :col-type text :initarg name :accessor name)
+               (start-date :col-type (or date pomo:db-null) :initarg start-date :accessor start-date)
+               (contact :col-type (or pomo:db-null (array text)) :initarg contact :accessor contact)
+               (lat-long :col-type (or pomo:db-null point) :initarg lat-long :accessor lat-long)
+               (geom :col-type (or pomo:db-null (geometry point 4326)) :initarg geom :accessor geom
+                     :col-import geom->wkb-point))
+              (:table-name employees)
+              (:metaclass pomo:dao-class))
+
+  (setf pomo:*IGNORE-UNKNOWN-COLUMNS* t)
+   #+end_src
+   And now cl-json generates a json string without the
+   #+begin_src lisp
+     (cl-json:encode-json (pomo:get-dao 'employees-minus-private 1))
+     {"employeeId":1,"departmentId":1,"name":"Maja","startDate":3744835200,"contact":["084-767-734","071-334-8473"],"latLong":[59.334591,18.06324],"geom":{"geomtype":536870913,"srid":4326,"pointPrimitive":{"x":59.334591,"y":18.06324,"z":0.0,"m":0.0}}}
+   #+end_src
+If you are using a different CL json library, you would have to write your own functions to convert from a dao-class object to something that, e.g. jonathan or jsown could use.
+
+Handling joins in a dao-class are more complicated - the Postmodern dao-class is intended to be simple, not recreate Hibernate or SQLAlchemy. You can see an example at [[https://marijnhaverbeke.nl/postmodern/dao-classes.html#multi-table-dao-class-object]].
