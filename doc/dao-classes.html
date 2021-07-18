@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-06-22 Tue 13:41 -->
+<!-- 2021-07-17 Sat 15:09 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DAO Classes</title>
@@ -227,7 +227,7 @@
 <li><a href="#daos">Overview</a></li>
 <li><a href="#class-dao-class">Metaclass dao-class</a>
 <ul>
-<li><a href="#org188c137">Basic Dao Definition Examples</a></li>
+<li><a href="#orgeac445e">Basic Dao Definition Examples</a></li>
 <li><a href="#class-dao-class-slots">Slot Options</a></li>
 <li><a href="#class-dao-class-slots-table-options">Table options</a></li>
 </ul>
@@ -320,9 +320,9 @@ slots in these classes will refer to columns in the database.
 <h2 id="class-dao-class">Metaclass dao-class</h2>
 <div class="outline-text-2" id="text-class-dao-class">
 </div>
-<div id="outline-container-org188c137" class="outline-3">
-<h3 id="org188c137">Basic Dao Definition Examples</h3>
-<div class="outline-text-3" id="text-org188c137">
+<div id="outline-container-orgeac445e" class="outline-3">
+<h3 id="orgeac445e">Basic Dao Definition Examples</h3>
+<div class="outline-text-3" id="text-orgeac445e">
 <p>
 A simple dao definition could look like this:
 </p>
@@ -330,7 +330,9 @@ A simple dao definition could look like this:
 <pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">users</span> ()
   ((name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name)
    (creditcard <span style="color: #23d7d7;">:col-type</span> (or db-null integer) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:card</span> <span style="color: #23d7d7;">:col-default</span> <span style="color: #23d7d7;">:null</span>)
-   (score <span style="color: #23d7d7;">:col-type</span> bigint <span style="color: #23d7d7;">:col-default</span> 0 <span style="color: #23d7d7;">:accessor</span> score))
+   (score <span style="color: #23d7d7;">:col-type</span> bigint <span style="color: #23d7d7;">:col-default</span> 0 <span style="color: #23d7d7;">:accessor</span> score)
+   (payment-history <span style="color: #23d7d7;">:col-type</span> (or (array integer) db-null)
+                    <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:payment-history</span> <span style="color: #23d7d7;">:accessor</span> payment-history))
   (<span style="color: #23d7d7;">:metaclass</span> dao-class)
   (<span style="color: #23d7d7;">:keys</span> name))
 </pre>
@@ -345,12 +347,27 @@ trouble they cause.)
 </p>
 
 <p>
-The name and score slots cannot be null because :col-type does not provide for db-null
-as an optiona. The creditcard slot can be null and actually defaults to null.
+In our example, the name and score slots cannot be null because :col-type does not provide for db-null as an optiona. The creditcard slot can be null and actually defaults to null.
 The :col-default :null specification ensures that the default in the database for
 this field is null, but it does not bound the slot to a default form. Thus, making
 an instance of the class without initializing this slot will leave it in an unbound
 state.
+</p>
+
+<p>
+The payment-history slot is matched to a Postgresql column named <code>payment_history</code>
+(remember that Postgresql uses underscores rather than hyphens) and that Postgresql
+column is an array of integers. If we wanted a two dimensional array of integers,
+the col-type would look like:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp"><span style="color: #23d7d7;">:col-type</span> (or (array (array integer)) db-null)
+</pre>
+</div>
+<p>
+If the value contained in the Postgresql slot payment-history is a common lisp array,
+Postmodern will seamless handle the conversion to and from the common lisp array and
+the Postgresql array.
 </p>
 
 <p>
@@ -429,7 +446,15 @@ Now you can see why the double parens.
 <p>
 We also specified that the table name is not "country" but "countries".
 (Some style guides recommend that table names be plural and references to rows
-be singular.)
+be singular.) NOTE: You can provide a fully qualified table name. In other words,
+if you have
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #23d7d7;">:table-name</span> a.countries)
+</pre>
+</div>
+<p>
+Postmodern will look for the countries table in the "A" schema.
 </p>
 
 <p>
@@ -593,7 +618,7 @@ the departments table:
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-col-identity-with-references</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id <span style="color: #23d7d7;">:col-primary-key</span> t)
    (username <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:unique</span> t <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:username</span> <span style="color: #23d7d7;">:accessor</span> username)
    (department-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-references</span> ((departments id))
                   <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:department-id</span> <span style="color: #23d7d7;">:accessor</span> department-id))
@@ -663,47 +688,71 @@ One method would be to use text columns or jsonb columns in Postgresql and have 
 </p>
 
 <p>
-Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import. These parameters refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot on import from the database..
+Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import. These parameters refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot on import from the database.
+</p>
+
+<p>
+To make things slightly more interesting, we have two slots which are going to contain
+lists, but one will export to a Postgresql column that contains strings and the other
+will export to a Postgresql column that contains arrays of integers.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">listy</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
+  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id <span style="color: #23d7d7;">:col-primary-key</span> t)
    (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:col-check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
          <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name)
-   (rlist <span style="color: #23d7d7;">:type</span> list <span style="color: #23d7d7;">:col-type</span> (or text db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:rlist</span> <span style="color: #23d7d7;">:accessor</span> rlist
-          <span style="color: #23d7d7;">:col-export</span> list-to-string <span style="color: #23d7d7;">:col-import</span> string-to-list)
-   (alist <span style="color: #23d7d7;">:type</span> alist <span style="color: #23d7d7;">:col-type</span> (or text db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:alist</span> <span style="color: #23d7d7;">:accessor</span> alist
-          <span style="color: #23d7d7;">:col-export</span> list-to-string <span style="color: #23d7d7;">:col-import</span> string-to-alist)
-   (plist <span style="color: #23d7d7;">:type</span> plist <span style="color: #23d7d7;">:col-type</span> (or text db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:plist</span> <span style="color: #23d7d7;">:accessor</span> plist
-          <span style="color: #23d7d7;">:col-export</span> list-to-string <span style="color: #23d7d7;">:col-import</span> string-to-plist))
+   (r-list <span style="color: #23d7d7;">:col-type</span> (or text db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:r-list</span> <span style="color: #23d7d7;">:accessor</span> r-list
+           <span style="color: #23d7d7;">:col-export</span> list-&gt;string <span style="color: #23d7d7;">:col-import</span> string-&gt;list)
+   (l-array <span style="color: #23d7d7;">:col-type</span> (or (array integer) db-null)
+            <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:l-array</span> <span style="color: #23d7d7;">:accessor</span> l-array
+            <span style="color: #23d7d7;">:col-export</span> list-&gt;arr <span style="color: #23d7d7;">:col-import</span> array-&gt;list))
   (<span style="color: #23d7d7;">:metaclass</span> dao-class)
   (<span style="color: #23d7d7;">:table-name</span> listy))
 </pre>
 </div>
 <p>
-Now we need to define the import functions. When writing your import functions, pay attention to how you want to handle nil or :NULL values as well as how you might want to error check the conversion from a Postgresql datatype to a CL datatype.
+Now we are going to define the import functions. When writing your import functions, pay attention to how you want to handle nil or :NULL values as well as how you might want to error check the conversion from a Postgresql datatype to a CL datatype. Just to show some of the
+differences, we are going to translate :NULL strings in Postgresql to :NULL in common lisp
+and we are going to translate :NULL arrays in Postgresql to nil in common lisp.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">string-to-list</span> (str)
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">string-&gt;list</span> (str)
   <span style="color: #e67128;">"Take a string representation of a list and return a lisp list.</span>
-<span style="color: #e67128;">Note that you need to handle :NULLs."</span>
+<span style="color: #e67128;">  Note that you need to handle :NULLs."</span>
   (<span style="color: #ffad29; font-weight: bold;">cond</span> ((eq str <span style="color: #23d7d7;">:NULL</span>)
          <span style="color: #23d7d7;">:NULL</span>)
         (str
-         (<span style="color: #ffad29; font-weight: bold;">with-input-from-string</span> (s str)
-           (read s)))
+         (<span style="color: #ffad29; font-weight: bold;">with-input-from-string</span> (s str) (read s)))
+        (t nil)))
+
+(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">array-&gt;list</span> (arry)
+  <span style="color: #e67128;">"Here we have decided that we want the list be be nil rather than :NULL if the array is empty."</span>
+  (<span style="color: #ffad29; font-weight: bold;">cond</span> ((eq arry <span style="color: #23d7d7;">:NULL</span>)
+         nil)
+        ((vectorp arry)
+         (coerce arry 'list))
         (t nil)))
 </pre>
 </div>
 <p>
-And now we need to define the export function. In our example we are just going to be using format to write the CL value to a string. You are responsible for writing an export function that does what you need. This example just tells Postgresql to insert a string "unknown" if the slot value is not a list. In real life you would need more error checking and condition handling.
+And now the export functions. In our example we are just going to be using format to write the CL value to a string unless it is not a list. You are responsible for writing an export function that does what you need. This example just tells Postgresql to insert :NULL if the slot value is not a list. In real life you would need more error checking and condition handling.
+</p>
+
+<p>
+The list to array export function inserts :NULL if not a list and otherwise coerces the
+list to a vector so that Postgresql will accept it as an array.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">list-to-string</span> (val)
-  <span style="color: #e67128;">"Simply uses (format ..) to write a list out as a string"</span>
-  (<span style="color: #ffad29; font-weight: bold;">if</span> (listp val)
-      (format nil <span style="color: #e67128;">"~a"</span> val)
-      <span style="color: #e67128;">"unknown"</span>))
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">list-&gt;string</span> (lst)
+  <span style="color: #e67128;">"Here we have decided to insert :null if the input list is nil."</span>
+  (<span style="color: #ffad29; font-weight: bold;">if</span> (listp lst)
+      (format nil <span style="color: #e67128;">"~a"</span> lst)
+      <span style="color: #23d7d7;">:null</span>))
+
+(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">list-&gt;arr</span> (lst)
+  (<span style="color: #ffad29; font-weight: bold;">if</span> (null lst)
+      <span style="color: #23d7d7;">:null</span>
+      (coerce lst 'vector)))
 </pre>
 </div>
 </div>

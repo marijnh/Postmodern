@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2021-07-18 Sun 09:21 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Json From Postgresql/Postmodern</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="Sabra Crolleton">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
+<script type="text/javascript">
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
+<!--/*--><![CDATA[/*><!--*/
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
+</script>
+</head>
+<body>
+<div id="content">
+<header>
+<h1 class="title">Json From Postgresql/Postmodern</h1>
+</header><nav id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgb72468a">Intro</a></li>
+<li><a href="#sql-version">The Basic SQL Version</a></li>
+<li><a href="#s-sql-version">The Basic S-SQL Version</a></li>
+<li><a href="#dao-class-version">The Basic Dao-class Version</a></li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-orgb72468a" class="outline-2">
+<h2 id="orgb72468a">Intro</h2>
+<div class="outline-text-2" id="text-orgb72468a">
+<p>
+Suppose the front end of an app needs data as a json string and you need to get the data out of a database and convert it to that format. There are several ways to do that. We will look at doing it with basic sql, s-sql and a dao class. For purposes of this note, we are not looking at jsonb type columns in Postgresql.
+</p>
+
+<p>
+To make things a little more interesting, we are going to have a private column which we do not want to pass to the front-end, a Postgresql point datatype column and we will have a geometry type (using postgis) to compare that to the point type. If you do not have postgis installed, you can find installation instruction here: <a href="https://postgis.net/install/">https://postgis.net/install/</a> or just read the the postgis stuff without trying to run the code.
+</p>
+
+<p>
+I am going to use the local-time library to deal with dates, so we need to do a little housework on that side as well.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(ql:quickload '(local-time cl-postgres+local-time))
+(local-time:set-local-time-cl-postgres-readers)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sql-version" class="outline-2">
+<h2 id="sql-version">The Basic SQL Version</h2>
+<div class="outline-text-2" id="text-sql-version">
+<p>
+Assuming you already have a database to use, let's create a couple of tables and insert some data.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(pomo:query <span style="color: #e67128;">"CREATE TABLE departments (</span>
+<span style="color: #e67128;">      department_id bigint primary key,</span>
+<span style="color: #e67128;">      name text</span>
+<span style="color: #e67128;">      )"</span>)
+
+(pomo:query <span style="color: #e67128;">"CREATE TABLE employees (</span>
+<span style="color: #e67128;">        employee_id serial primary key,</span>
+<span style="color: #e67128;">        department_id integer references departments(department_id),</span>
+<span style="color: #e67128;">        name text,</span>
+<span style="color: #e67128;">        start_date date,</span>
+<span style="color: #e67128;">        contact text[],</span>
+<span style="color: #e67128;">        private text,</span>
+<span style="color: #e67128;">        lat_long point,</span>
+<span style="color: #e67128;">        geom geometry(point, 4326)json-from-p</span>
+<span style="color: #e67128;">        );"</span>)
+
+(pomo:query <span style="color: #e67128;">"INSERT INTO departments</span>
+<span style="color: #e67128;">   (department_id, name)</span>
+<span style="color: #e67128;">  VALUES</span>
+<span style="color: #e67128;">   (1, 'spatial'),</span>
+<span style="color: #e67128;">   (2, 'cloud')"</span>)
+
+(pomo:query <span style="color: #e67128;">"INSERT INTO employees</span>
+<span style="color: #e67128;"> (department_id, name, start_date, contact, private, lat_long, geom)</span>
+<span style="color: #e67128;">VALUES</span>
+<span style="color: #e67128;"> (1, 'Maja',   '2018/09/02', '{"</span>084-767-734<span style="color: #e67128;">","</span>071-334-8473<span style="color: #e67128;">"}', 'not allowed',</span>
+<span style="color: #e67128;"> '(59.334591, 18.063240)', 'POINT(59.334591 18.063240)'),</span>
+<span style="color: #e67128;"> (1, 'Liam', '2019/09/02', '{"</span>084-767-734<span style="color: #e67128;">","</span>071-334-8472<span style="color: #e67128;">"}','private',</span>
+<span style="color: #e67128;"> '(57.708870, 11.974560)','POINT(57.708870 11.974560)'),</span>
+<span style="color: #e67128;"> (2, 'Matteo',  '2019/11/01', '{"</span>084-767-734<span style="color: #e67128;">","</span>071-334-8476<span style="color: #e67128;">"}', 'burn before reading',</span>
+<span style="color: #e67128;">   '(58.283489,12.285821)','POINT(58.283489 12.285821)'),</span>
+<span style="color: #e67128;"> (2, 'Astrid',    '2020/10/01',  '{"</span>084-767-734<span style="color: #e67128;">","</span>071-334-8465<span style="color: #e67128;">"}', 'abandon all hope',</span>
+<span style="color: #e67128;">  '(57.751442, 16.628838)', 'POINT(57.751442 16.628838)');"</span>)
+</pre>
+</div>
+<p>
+One difference to note is that the data for the lat_long point data type has a comma, but the geom geometry data type does not have a comma. No, I do not know why the syntax difference.
+</p>
+
+<p>
+I want to flag something that can surprise people. The lat_long column is a Postgresql point datatype. That means it is an array. As you may recall, Postgresql arrays start at 1, not 0. Except here. If you wanted just the latitude for the row with the employee_id of 1, you would actually call for array 0.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(pomo:query <span style="color: #e67128;">"select lat_long[0] from employees where employee_id=1"</span> <span style="color: #23d7d7;">:single</span>)
+59.334591d0
+</pre>
+</div>
+<p>
+If you wanted to get the latitude and longitude in a list, it would look like:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(pomo:query <span style="color: #e67128;">"select lat_long[0], lat_long[1] from employees where employee_id=1"</span>)
+((59.334591d0 18.06324d0))
+</pre>
+</div>
+
+<p>
+If you ran a basic query to see how Postgresql was storing that geometry type, it would look something like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">  (pomo:query <span style="color: #e67128;">"select geom from employees where employee_id=1"</span> <span style="color: #23d7d7;">:single</span>)
+<span style="color: #e67128;">"0101000020E61000009A44BDE0D3AA4D408ECC237F30103240"</span>
+</pre>
+</div>
+<p>
+To actually get the separate latitude and longitude from the geom column, you need to use Postgresql functions st_x and st_y like so:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select st_x(geom), st_y(geom) from employees where employee_id=1"</span>)
+((59.334591d0 18.06324d0))
+</pre>
+</div>
+
+<p>
+Now on to getting this information as json. Postgresql gives you a json generator function that takes a tuple and returns a json dictionary. So, for example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select row_to_json(employees) from employees where employee_id=1"</span>)
+((<span style="color: #e67128;">"{\"employee_id\":1,</span>
+<span style="color: #e67128;">    \"department_id\":1,</span>
+<span style="color: #e67128;">    \"name\":\"Maja\",</span>
+<span style="color: #e67128;">    \"start_date\":\"2018-09-02\",</span>
+<span style="color: #e67128;">    \"contact\":[\"084-767-734\",\"071-334-8473\"],</span>
+<span style="color: #e67128;">    \"private\":\"not allowed\",</span>
+<span style="color: #e67128;">    \"lat_long\":\"(59.334591,18.06324)\",</span>
+<span style="color: #e67128;">    \"geom\":{\"type\":\"Point\",\"coordinates\":[59.334591,18.06324]}}"</span>))
+</pre>
+</div>
+<p>
+You can see that it would automatically break out the geom data. However, as written, it has the fatal flaw of also collecting the private info. That can get solved with a slight modification:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select row_to_json(e)</span>
+<span style="color: #e67128;">        from</span>
+<span style="color: #e67128;">          (select employee_id, department_id, name, start_date, contact, lat_long, geom</span>
+<span style="color: #e67128;">           from employees where employee_id=1) e"</span>)
+((<span style="color: #e67128;">"{\"employee_id\":1,</span>
+<span style="color: #e67128;"> \"department_id\":1,</span>
+<span style="color: #e67128;"> \"name\":\"Maja\",</span>
+<span style="color: #e67128;"> \"start_date\":\"2018-09-02\",</span>
+<span style="color: #e67128;"> \"contact\":[\"084-767-734\",\"071-334-8473\"],</span>
+<span style="color: #e67128;"> \"lat_long\":\"(59.334591,18.06324)\",</span>
+<span style="color: #e67128;"> \"geom\":{\"type\":\"Point\",\"coordinates\":[59.334591,18.06324]}}"</span>))
+</pre>
+</div>
+<p>
+You can also aggregate rows using the Postgresql json_agg function.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select json_agg(e)</span>
+<span style="color: #e67128;">        from</span>
+<span style="color: #e67128;">          (select employee_id, department_id, name, start_date, contact, lat_long, geom</span>
+<span style="color: #e67128;">           from employees)</span>
+<span style="color: #e67128;">        e"</span>)
+</pre>
+</div>
+<p>
+You could skip the Postgresql json function and ask Postmodern to return the query as a json object expressed as a string. One thing to note is that Postmodern will return the labels as camelCase rather than Postgresql returning them as underscores:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp"> (query <span style="color: #e67128;">"select employee_id, department_id, name, start_date, contact, lat_long, geom</span>
+<span style="color: #e67128;">         from employees</span>
+<span style="color: #e67128;">         where employee_id=1"</span>
+        <span style="color: #23d7d7;">:json-str</span>)
+<span style="color: #e67128;">"{\"employeeId\":1,\"departmentId\":1,\"name\":\"Maja\",\"startDate\":\"{2018-09-01T20:00:00.000000-04:00}\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"latLong\":[59.334591,18.06324],\"geom\":\"0101000020E61000009A44BDE0D3AA4D408ECC237F30103240\"}"</span>
+</pre>
+</div>
+<p>
+You would need to do a little more work in order to get the desired latitude and longitude out of the geom value.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select employee_id, department_id, name, start_date, contact, lat_long, st_x(geom) as lat, st_y(geom) as long</span>
+<span style="color: #e67128;">             from employees where employee_id=1"</span> <span style="color: #23d7d7;">:json-str</span>)
+
+<span style="color: #e67128;">"{\"employeeId\":1,\"departmentId\":1,\"name\":\"Maja\",\"startDate\":\"{2018-09-01T20:00:00.000000-04:00}\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"latLong\":[59.334591,18.06324],\"lat\":59.334591,\"long\":18.06324}"</span>
+</pre>
+</div>
+<p>
+Both the Postgresql function and the Postmodern return type approach can be applied to the end result of more complicated queries with joins, CTEs and other tools of the trade. Which is actually why we have the department table in this example. Instead of having the department-id in the json we are sending to the front end, let's have the department name.
+</p>
+
+<p>
+First the using the Postgresql <code>row-to-json</code> function:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select row_to_json(e)</span>
+<span style="color: #e67128;">        from  (select employee_id, departments.name as department_name, employees.name as employee_name,</span>
+<span style="color: #e67128;">                      start_date, contact, lat_long, geom</span>
+<span style="color: #e67128;">               from employees</span>
+<span style="color: #e67128;">               left join departments</span>
+<span style="color: #e67128;">               on departments.department_id = employees.department_id</span>
+<span style="color: #e67128;">               where employee_id=1) e"</span>)
+((<span style="color: #e67128;">"{\"employee_id\":1,\"department_name\":\"spatial\",\"employee_name\":\"Maja\",\"start_date\":\"2018-09-02\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"lat_long\":\"(59.334591,18.06324)\",\"geom\":{\"type\":\"Point\",\"coordinates\":[59.334591,18.06324]}}"</span>))
+</pre>
+</div>
+<p>
+Now the sql using the Postmodern :json-str keyword parameter for query:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select employee_id, departments.name as department_name, employees.name as employee_name,</span>
+<span style="color: #e67128;">               start_date, contact, lat_long, geom</span>
+<span style="color: #e67128;">        from employees</span>
+<span style="color: #e67128;">        left join departments</span>
+<span style="color: #e67128;">        on departments.department_id = employees.department_id</span>
+<span style="color: #e67128;">        where employee_id=1"</span>
+     <span style="color: #23d7d7;">:json-str</span>))
+<span style="color: #e67128;">"{\"employeeId\":1,\"departmentName\":\"spatial\",\"employeeName\":\"Maja\",\"startDate\":\"{2018-09-01T20:00:00.000000-04:00}\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"latLong\":[59.334591,18.06324],\"geom\":\"0101000020E61000009A44BDE0D3AA4D408ECC237F30103240\"}"</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-s-sql-version" class="outline-2">
+<h2 id="s-sql-version">The Basic S-SQL Version</h2>
+<div class="outline-text-2" id="text-s-sql-version">
+<p>
+Assuming you already have a database to use, let's create a couple of tables and insert some data.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (pomo:query (<span style="color: #23d7d7;">:create-table</span> 'departments
+                             ((department-id <span style="color: #23d7d7;">:type</span> (or pomo:db-null bigint) <span style="color: #23d7d7;">:primary-key</span> t)
+                              (name <span style="color: #23d7d7;">:type</span> (or pomo:db-null text)))))
+
+  (pomo:query (<span style="color: #23d7d7;">:create-table</span> employees
+                             ((employee_id <span style="color: #23d7d7;">:type</span> serial <span style="color: #23d7d7;">:primary-key</span> t)
+                              (department_id <span style="color: #23d7d7;">:type</span> (or pomo:db-null integer) <span style="color: #23d7d7;">:references</span> ((departments department_id)))
+                              (name <span style="color: #23d7d7;">:type</span> (or pomo:db-null text))
+                              (start_date <span style="color: #23d7d7;">:type</span> (or pomo:db-null date))
+                              (contact <span style="color: #23d7d7;">:type</span> (or pomo:db-null text[]))
+                              (private <span style="color: #23d7d7;">:type</span> (or pomo:db-null text))
+                              (lat_long <span style="color: #23d7d7;">:type</span> (or pomo:db-null point))
+                              (geom <span style="color: #23d7d7;">:type</span> (or pomo:db-null (geometry point 4326))))))
+
+  (pomo:query (<span style="color: #23d7d7;">:insert-rows-into</span> 'departments
+               <span style="color: #23d7d7;">:columns</span> 'deparment-id 'name
+               <span style="color: #23d7d7;">:values</span> '((1 <span style="color: #e67128;">"spatial"</span>) (2 <span style="color: #e67128;">"cloud"</span>))))
+
+(pomo:sql (<span style="color: #23d7d7;">:insert-rows-into</span> 'employees
+               <span style="color: #23d7d7;">:columns</span> 'department-id 'name 'start-date 'contact 'private 'lat_long 'geom
+               <span style="color: #23d7d7;">:values</span>
+         '((1 <span style="color: #e67128;">"Maja"</span>   <span style="color: #e67128;">"2018/09/02"</span> #(<span style="color: #e67128;">"084-767-734""071-334-8473"</span>) <span style="color: #e67128;">"not allowed"</span>
+         <span style="color: #e67128;">"(59.334591, 18.063240)"</span> <span style="color: #e67128;">"POINT(59.334591 18.063240)"</span>)
+         (1 <span style="color: #e67128;">"Liam"</span> <span style="color: #e67128;">"2019/09/02"</span> #(<span style="color: #e67128;">"084-767-734"</span> <span style="color: #e67128;">"071-334-8472"</span>) <span style="color: #e67128;">"private"</span>
+         <span style="color: #e67128;">"(57.708870, 11.974560)"</span> <span style="color: #e67128;">"POINT(57.708870 11.974560)"</span>)
+         (2 <span style="color: #e67128;">"Matteo"</span>  <span style="color: #e67128;">"2019/11/01"</span> #(<span style="color: #e67128;">"084-767-734""071-334-8476"</span>) <span style="color: #e67128;">"burn before reading"</span>
+            <span style="color: #e67128;">"(58.28348912.285821)"</span> <span style="color: #e67128;">"POINT(58.283489 12.285821)"</span>)
+         (2 <span style="color: #e67128;">"Astrid"</span>    <span style="color: #e67128;">"2020/10/01"</span>  #(<span style="color: #e67128;">"084-767-734""071-334-8465"</span>) <span style="color: #e67128;">"abandon all hope"</span>
+            <span style="color: #e67128;">"(57.751442, 16.628838)"</span> <span style="color: #e67128;">"POINT(57.751442 16.628838)"</span>))))
+</pre>
+</div>
+<p>
+One difference to note is that the data for the lat_long point data type has a comma, but the geom geometry data type does not have a comma. No, I do not know why the syntax difference in Postgresql (Postmodern needs it to properly match Postgresql's syntax here).
+</p>
+
+<p>
+I want to flag something that can surprise people. The lat_long column is a Postgresql point datatype. That means it is an array. As you may recall, Postgresql arrays start at 1, not 0. Except here. If you wanted just the latitude for the row with the employee_id of 1, you would actually call for array 0.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(pomo:query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:[]</span> 'lat_long 0) <span style="color: #23d7d7;">:from</span> 'employees <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'employee_id 1)) <span style="color: #23d7d7;">:single</span>)
+59.334591d0
+</pre>
+</div>
+<p>
+If you wanted the latitude and longitude in alist, the query would look like:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(pomo:query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:[]</span> 'lat_long 0) (<span style="color: #23d7d7;">:[]</span> 'lat_long 1) <span style="color: #23d7d7;">:from</span> 'employees <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'employee_id 1)))
+((59.334591d0 18.06324d0))
+</pre>
+</div>
+<p>
+If you ran a basic query to see how Postgresql was storing that geometry type, it would look something like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(pomo:query (<span style="color: #23d7d7;">:select</span> 'geom <span style="color: #23d7d7;">:from</span> 'employees <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'employee-id 1)) <span style="color: #23d7d7;">:single</span>)
+  <span style="color: #e67128;">"0101000020E61000009A44BDE0D3AA4D408ECC237F30103240"</span>
+</pre>
+</div>
+<p>
+To actually get the separate latitude and longitude from the geom column, you need to use Postgresql functions st_x and st_y like so:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">with-connection</span> *dba-connection* (query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:st-x</span> 'geom) (<span style="color: #23d7d7;">:st-y</span> 'geom) <span style="color: #23d7d7;">:from</span> 'employees <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'employee_id 1))))
+((59.334591d0 18.06324d0))
+</pre>
+</div>
+<p>
+Now on to getting this information as json. Postgresql gives you a json generator function that takes a tuple and returns a json dictionary. So, for example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(pomo:query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:row-to-json</span> 'employees) <span style="color: #23d7d7;">:from</span> 'employees <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'employee-id 1)))
+  ((<span style="color: #e67128;">"{\"employee_id\":1,</span>
+<span style="color: #e67128;">      \"department_id\":1,</span>
+<span style="color: #e67128;">      \"name\":\"Maja\",</span>
+<span style="color: #e67128;">      \"start_date\":\"2018-09-02\",</span>
+<span style="color: #e67128;">      \"contact\":[\"084-767-734\",\"071-334-8473\"],</span>
+<span style="color: #e67128;">      \"private\":\"not allowed\",</span>
+<span style="color: #e67128;">      \"lat_long\":\"(59.334591,18.06324)\",</span>
+<span style="color: #e67128;">      \"geom\":{\"type\":\"Point\",\"coordinates\":[59.334591,18.06324]}}"</span>))
+</pre>
+</div>
+<p>
+You can see that it would automatically break out the geom data. However, as written, it has the fatal flaw of also collecting the private info. That can get solved with a slight modification:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:row-to-json</span> 'e)
+        <span style="color: #23d7d7;">:from</span> (<span style="color: #23d7d7;">:as</span> (<span style="color: #23d7d7;">:select</span> 'employee-id 'department-id 'name 'start-date 'contact
+                            'lat-long 'geom
+                    <span style="color: #23d7d7;">:from</span> 'employees
+                    <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'employee-id 1))
+                   'e)))
+((<span style="color: #e67128;">"{\"employee_id\":1,</span>
+<span style="color: #e67128;">   \"department_id\":1,</span>
+<span style="color: #e67128;">   \"name\":\"Maja\",</span>
+<span style="color: #e67128;">   \"start_date\":\"2018-09-02\",</span>
+<span style="color: #e67128;">   \"contact\":[\"084-767-734\",\"071-334-8473\"],</span>
+<span style="color: #e67128;">   \"lat_long\":\"(59.334591,18.06324)\",</span>
+<span style="color: #e67128;">   \"geom\":{\"type\":\"Point\",\"coordinates\":[59.334591,18.06324]}}"</span>))
+</pre>
+</div>
+<p>
+You can also aggregate rows using the Postgresql json_agg function.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:json-agg</span> 'e)
+        <span style="color: #23d7d7;">:from</span> (<span style="color: #23d7d7;">:as</span> (<span style="color: #23d7d7;">:select</span> 'employee-id 'department-id 'name 'start-date 'contact
+                            'lat-long 'geom
+                    <span style="color: #23d7d7;">:from</span> 'employees)
+                   'e)))
+</pre>
+</div>
+<p>
+You could skip the Postgresql json function and ask Postmodern to return the query as a json object expressed as a string. One thing to note is that Postmodern will return the labels as camelCase rather than Postgresql returning them as underscores:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (query (<span style="color: #23d7d7;">:select</span> 'employee-id 'department-id 'name 'start-date 'contact 'lat-long 'geom
+          <span style="color: #23d7d7;">:from</span> 'employees
+          <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'employee-id 1)) <span style="color: #23d7d7;">:json-str</span>)
+
+<span style="color: #e67128;">"{\"employeeId\":1,\"departmentId\":1,\"name\":\"Maja\",\"startDate\":\"{2018-09-01T20:00:00.000000-04:00}\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"latLong\":[59.334591,18.06324],\"geom\":\"0101000020E61000009A44BDE0D3AA4D408ECC237F30103240\"}"</span>
+</pre>
+</div>
+<p>
+You would need to do a little more work in order to get the desired latitude and longitude out of the geom value.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'employee-id 'department-id 'name 'start-date 'contact 'lat-long
+                (<span style="color: #23d7d7;">:st-x</span> 'geom) (<span style="color: #23d7d7;">:st-y</span> 'geom)
+                <span style="color: #23d7d7;">:from</span> 'employees
+                <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'employee-id 1))
+       <span style="color: #23d7d7;">:json-str</span>)
+<span style="color: #e67128;">"{\"employeeId\":1,\"departmentId\":1,\"name\":\"Maja\",\"startDate\":\"{2018-09-01T20:00:00.000000-04:00}\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"latLong\":[59.334591,18.06324],\"stX\":59.334591,\"stY\":18.06324}"</span>
+</pre>
+</div>
+<p>
+Both the Postgresql function and the Postmodern return type approach can be applied to the end result of more complicated queries with joins, CTEs and other tools of the trade. Which is actually why we have the department table in this example. Instead of having the department-id in the json we are sending to the front end, let's have the department name.
+</p>
+
+<p>
+First the s-sql using the Postgresql <code>row-to-json</code> function:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp"> (query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:row-to-json</span> 'e)
+         <span style="color: #23d7d7;">:from</span> (<span style="color: #23d7d7;">:as</span> (<span style="color: #23d7d7;">:select</span> 'employee-id (<span style="color: #23d7d7;">:as</span> 'departments.name 'department_name)
+                             (<span style="color: #23d7d7;">:as</span> 'employees.name 'employee-name)
+                             'start-date 'contact 'lat-long
+                             (<span style="color: #23d7d7;">:st-x</span> 'geom) (<span style="color: #23d7d7;">:st-y</span> 'geom)
+                     <span style="color: #23d7d7;">:from</span> 'employees
+                     <span style="color: #23d7d7;">:left-join</span> 'departments
+                     <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'departments.department-id 'employees.department-id)
+                     <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'employee-id 1))
+                'e)))
+
+((<span style="color: #e67128;">"{\"employee_id\":1,\"department_name\":\"spatial\",\"employee_name\":\"Maja\",\"start_date\":\"2018-09-02\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"lat_long\":\"(59.334591,18.06324)\",\"st_x\":59.334591,\"st_y\":18.06324}"</span>))
+</pre>
+</div>
+<p>
+Now the s-sql using the Postmodern :json-str keyword parameter for query:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'employee-id (<span style="color: #23d7d7;">:as</span> 'departments.name 'department-name)
+                (<span style="color: #23d7d7;">:as</span> 'employees.name 'employee-name)
+                'start-date 'contact 'lat-long (<span style="color: #23d7d7;">:st-x</span> 'geom) (<span style="color: #23d7d7;">:st-y</span> 'geom)
+        <span style="color: #23d7d7;">:from</span> 'employees
+        <span style="color: #23d7d7;">:left-join</span> 'departments
+        <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'departments.department-id 'employees.department-id)
+        <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'employee-id 1))
+       <span style="color: #23d7d7;">:json-str</span>)
+<span style="color: #e67128;">"{\"employeeId\":1,\"departmentName\":\"spatial\",\"employeeName\":\"Maja\",\"startDate\":\"{2018-09-01T20:00:00.000000-04:00}\",\"contact\":[\"084-767-734\",\"071-334-8473\"],\"latLong\":[59.334591,18.06324],\"stX\":59.334591,\"stY\":18.06324}"</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-dao-class-version" class="outline-2">
+<h2 id="dao-class-version">The Basic Dao-class Version</h2>
+<div class="outline-text-2" id="text-dao-class-version">
+<p>
+Assuming you already have a database to use, let's create a couple of dao classes, their associated tables and insert some data. Assume we decide we want to keep the geom as a list of latitude and longitude in the geom slot. That means we need import and export functions.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">departments</span> ()
+  ((department-id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:department-id</span> <span style="color: #23d7d7;">:accessor</span> department-id
+                  <span style="color: #23d7d7;">:col-primary-key</span> t)
+   (name <span style="color: #23d7d7;">:col-type</span> (or text pomo:db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name))
+  (<span style="color: #23d7d7;">:metaclass</span> pomo:dao-class))
+
+(pomo:execute (dao-table-definition 'departments))
+
+(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">employees</span> ()
+  ((employee-id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:employee-id</span> <span style="color: #23d7d7;">:accessor</span> employee-id
+                <span style="color: #23d7d7;">:col-primary-key</span> t)
+   (department-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:department-id</span> <span style="color: #23d7d7;">:accessor</span> department-id
+                  <span style="color: #23d7d7;">:col-references</span> ((departments department-id)))
+   (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:initarg</span> name <span style="color: #23d7d7;">:accessor</span> name)
+   (start-date <span style="color: #23d7d7;">:col-type</span> (or date pomo:db-null) <span style="color: #23d7d7;">:initarg</span> start-date <span style="color: #23d7d7;">:accessor</span> start-date)
+   (contact <span style="color: #23d7d7;">:col-type</span> (or pomo:db-null (array text)) <span style="color: #23d7d7;">:initarg</span> contact <span style="color: #23d7d7;">:accessor</span> contact)
+   (private <span style="color: #23d7d7;">:col-type</span> (or pomo:db-null text) <span style="color: #23d7d7;">:initarg</span> private <span style="color: #23d7d7;">:accessor</span> private)
+   (lat-long <span style="color: #23d7d7;">:col-type</span> (or pomo:db-null point) <span style="color: #23d7d7;">:initarg</span> lat-long <span style="color: #23d7d7;">:accessor</span> lat-long)
+   (geom <span style="color: #23d7d7;">:col-type</span> (or pomo:db-null (geometry point 4326)) <span style="color: #23d7d7;">:initarg</span> geom <span style="color: #23d7d7;">:accessor</span> geom
+         <span style="color: #23d7d7;">:col-import</span> geom-&gt;wkb-point))
+  (<span style="color: #23d7d7;">:metaclass</span> pomo:dao-class))
+
+<span style="color: #74af68;">;; </span><span style="color: #74af68;">make-doa creates an instance of the dao and saves it in the database</span>
+(pomo:make-dao 'departments <span style="color: #23d7d7;">:department-id</span> 1 <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"spatial"</span>)
+(pomo:make-dao 'departments <span style="color: #23d7d7;">:department-id</span> 2 <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"cloud"</span>)
+
+(pomo:make-dao 'employees <span style="color: #23d7d7;">:department-id</span> 1 <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Maja"</span> <span style="color: #23d7d7;">:start-date</span> <span style="color: #e67128;">"2018/09/02"</span>
+                          <span style="color: #23d7d7;">:contact</span> #(<span style="color: #e67128;">"084-767-734"</span>,<span style="color: #e67128;">"071-334-8473"</span>)
+                          <span style="color: #23d7d7;">:private</span> <span style="color: #e67128;">"not allowed"</span> <span style="color: #23d7d7;">:lat-long</span> <span style="color: #e67128;">"(59.334591, 18.063240)"</span>
+                          <span style="color: #23d7d7;">:geom</span> <span style="color: #e67128;">"POINT(59.334591 18.063240)"</span>)
+
+(pomo:make-dao 'employees <span style="color: #23d7d7;">:department-id</span> 1 <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Liam"</span> <span style="color: #23d7d7;">:start-date</span> <span style="color: #e67128;">"2019/09/02"</span>
+                          <span style="color: #23d7d7;">:contact</span> #(<span style="color: #e67128;">"084-767-734"</span>,<span style="color: #e67128;">"071-334-8472"</span>)
+                          <span style="color: #23d7d7;">:private</span> <span style="color: #e67128;">"private"</span> <span style="color: #23d7d7;">:lat-long</span> <span style="color: #e67128;">"(57.708870, 11.974560)"</span>
+                          <span style="color: #23d7d7;">:geom</span> <span style="color: #e67128;">"POINT((57.708870 11.974560)"</span>)
+
+(pomo:make-dao 'employees <span style="color: #23d7d7;">:department-id</span> 2 <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Matteo"</span> <span style="color: #23d7d7;">:start-date</span> <span style="color: #e67128;">"2019/11/01"</span>
+                          <span style="color: #23d7d7;">:contact</span> #(<span style="color: #e67128;">"084-767-734"</span>,<span style="color: #e67128;">"071-334-8476"</span>)
+                          <span style="color: #23d7d7;">:private</span> <span style="color: #e67128;">"burn before reading"</span> <span style="color: #23d7d7;">:lat-long</span> <span style="color: #e67128;">"(58.283489, 12.285821)"</span>
+                          <span style="color: #23d7d7;">:geom</span> <span style="color: #e67128;">"POINT(58.283489 12.285821)"</span>)
+
+(pomo:make-dao 'employees <span style="color: #23d7d7;">:department-id</span> 2 <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Astrid"</span> <span style="color: #23d7d7;">:start-date</span> <span style="color: #e67128;">"2020/10/01"</span>
+                          <span style="color: #23d7d7;">:contact</span> #(<span style="color: #e67128;">"084-767-734"</span>,<span style="color: #e67128;">"071-334-8465"</span>)
+                          <span style="color: #23d7d7;">:private</span> <span style="color: #e67128;">"abandon all hope"</span> <span style="color: #23d7d7;">:lat-long</span> <span style="color: #e67128;">"(57.751442, 16.628838)"</span>
+                          <span style="color: #23d7d7;">:geom</span> <span style="color: #e67128;">"POINT(57.751442 16.628838)"</span>)
+</pre>
+</div>
+<p>
+One difference to note is that the data for the lat_long point data type has a comma, but the geom geometry data type does not have a comma. No, I do not know why the syntax difference.
+</p>
+
+<p>
+Now the problem. If you ran a basic query to see how Postgresql was storing that geometry type, it would look something like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">  (pomo:query <span style="color: #e67128;">"select geom from employees where employee_id=1"</span> <span style="color: #23d7d7;">:single</span>)
+<span style="color: #e67128;">"0101000020E61000009A44BDE0D3AA4D408ECC237F30103240"</span>
+</pre>
+</div>
+
+<p>
+We need import and export functions that implement the opengis specification in order to implement the import and export functions for the geom slot. See <a href="https://www.ogc.org/standards/sfs">https://www.ogc.org/standards/sfs</a>. Fortunately J.P. Larocue created the cl-wkb package (accessed via quicklisp with quickloading the
+<a href="https://github.com/filonenko-mikhail/cl-ewkb">cl-ewkb system</a>) and we can create an import function with a combination of using ironclad's hex-string-to-byte-array and cl-wkb's decode function. So let's do that.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">geom-&gt;wkb-point</span> (input)
+  <span style="color: #e67128;">"Takes a hexstring that represents a geometry point from postgresql and returns a cl-wkb:point class instance"</span>
+  (cl-wkb:decode (ironclad:hex-string-to-byte-array input)))
+</pre>
+</div>
+<p>
+Now we can check whether we succeeded by seeing whether the x point is the latitude we expected:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (cl-wkb:x (geom (pomo:get-dao 'employees 1)))
+59.334591d0
+</pre>
+</div>
+
+<p>
+We still need to get from the dao-class to json. You could do something like just run cl-json's =encode-json=function on a dao-object like so:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(cl-json:encode-json (pomo:get-dao 'employees 1))
+
+{<span style="color: #e67128;">"employeeId"</span><span style="color: #23d7d7;">:1</span>,
+ <span style="color: #e67128;">"departmentId"</span><span style="color: #23d7d7;">:1</span>,
+ <span style="color: #e67128;">"name"</span>:<span style="color: #e67128;">"Maja"</span>,
+ <span style="color: #e67128;">"startDate"</span><span style="color: #23d7d7;">:{</span><span style="color: #e67128;">"day"</span><span style="color: #23d7d7;">:6759</span>,<span style="color: #e67128;">"sec"</span><span style="color: #23d7d7;">:0</span>,<span style="color: #e67128;">"nsec"</span><span style="color: #23d7d7;">:0}</span>,
+ <span style="color: #e67128;">"contact"</span><span style="color: #23d7d7;">:[</span><span style="color: #e67128;">"084-767-734"</span>,<span style="color: #e67128;">"071-334-8473"</span>],
+ <span style="color: #e67128;">"private"</span>:<span style="color: #e67128;">"not allowed"</span>,
+ <span style="color: #e67128;">"latLong"</span><span style="color: #23d7d7;">:[59.334591</span>,18.06324],
+ <span style="color: #e67128;">"geom"</span><span style="color: #23d7d7;">:{</span><span style="color: #e67128;">"geomtype"</span><span style="color: #23d7d7;">:536870913</span>,<span style="color: #e67128;">"srid"</span><span style="color: #23d7d7;">:4326</span>,<span style="color: #e67128;">"pointPrimitive"</span><span style="color: #23d7d7;">:{</span><span style="color: #e67128;">"x"</span><span style="color: #23d7d7;">:59.334591</span>,<span style="color: #e67128;">"y"</span><span style="color: #23d7d7;">:18.06324</span>,<span style="color: #e67128;">"z"</span><span style="color: #23d7d7;">:0.0</span>,<span style="color: #e67128;">"m"</span><span style="color: #23d7d7;">:0.0}}}</span>
+</pre>
+</div>
+<p>
+Looking at the result, we have two issues. First, the start date seems to have lost its senses. Second, it is collecting and passing on the private data to the front end, which we explicitly did not want to do.
+</p>
+
+<p>
+Just checking on the date situation:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(start-date (pomo:get-dao 'employees 1)))
+@2018-09-01T20:00:00.000000-04:00
+</pre>
+</div>
+<p>
+That works, so it is something on the cl-json side that we will have to work around. Let's turn to the private data issue.
+</p>
+
+<p>
+One solution would be to create a dao-class that is only a subset of the employees table (minus the private data) and set <code>pomo:*ignore-unknonw-columns*</code> to t. (If we did not set <code>pomo:*ignore-unknonw-columns*</code>, we would generate an error complaining that the dao
+was not in sync with the table.) Let's do that:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">employees-minus-private</span> ()
+            ((employee-id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:employee-id</span> <span style="color: #23d7d7;">:accessor</span> employee-id <span style="color: #23d7d7;">:col-primary-key</span> t)
+             (department-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:department-id</span> <span style="color: #23d7d7;">:accessor</span> department-id <span style="color: #23d7d7;">:col-references</span> ((departments department-id)))
+             (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:initarg</span> name <span style="color: #23d7d7;">:accessor</span> name)
+             (start-date <span style="color: #23d7d7;">:col-type</span> (or date pomo:db-null) <span style="color: #23d7d7;">:initarg</span> start-date <span style="color: #23d7d7;">:accessor</span> start-date)
+             (contact <span style="color: #23d7d7;">:col-type</span> (or pomo:db-null (array text)) <span style="color: #23d7d7;">:initarg</span> contact <span style="color: #23d7d7;">:accessor</span> contact)
+             (lat-long <span style="color: #23d7d7;">:col-type</span> (or pomo:db-null point) <span style="color: #23d7d7;">:initarg</span> lat-long <span style="color: #23d7d7;">:accessor</span> lat-long)
+             (geom <span style="color: #23d7d7;">:col-type</span> (or pomo:db-null (geometry point 4326)) <span style="color: #23d7d7;">:initarg</span> geom <span style="color: #23d7d7;">:accessor</span> geom
+                   <span style="color: #23d7d7;">:col-import</span> geom-&gt;wkb-point))
+            (<span style="color: #23d7d7;">:table-name</span> employees)
+            (<span style="color: #23d7d7;">:metaclass</span> pomo:dao-class))
+
+(setf pomo:*IGNORE-UNKNOWN-COLUMNS* t)
+</pre>
+</div>
+<p>
+And now cl-json generates a json string without the
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(cl-json:encode-json (pomo:get-dao 'employees-minus-private 1))
+{<span style="color: #e67128;">"employeeId"</span><span style="color: #23d7d7;">:1</span>,<span style="color: #e67128;">"departmentId"</span><span style="color: #23d7d7;">:1</span>,<span style="color: #e67128;">"name"</span>:<span style="color: #e67128;">"Maja"</span>,<span style="color: #e67128;">"startDate"</span><span style="color: #23d7d7;">:3744835200</span>,<span style="color: #e67128;">"contact"</span><span style="color: #23d7d7;">:[</span><span style="color: #e67128;">"084-767-734"</span>,<span style="color: #e67128;">"071-334-8473"</span>],<span style="color: #e67128;">"latLong"</span><span style="color: #23d7d7;">:[59.334591</span>,18.06324],<span style="color: #e67128;">"geom"</span><span style="color: #23d7d7;">:{</span><span style="color: #e67128;">"geomtype"</span><span style="color: #23d7d7;">:536870913</span>,<span style="color: #e67128;">"srid"</span><span style="color: #23d7d7;">:4326</span>,<span style="color: #e67128;">"pointPrimitive"</span><span style="color: #23d7d7;">:{</span><span style="color: #e67128;">"x"</span><span style="color: #23d7d7;">:59.334591</span>,<span style="color: #e67128;">"y"</span><span style="color: #23d7d7;">:18.06324</span>,<span style="color: #e67128;">"z"</span><span style="color: #23d7d7;">:0.0</span>,<span style="color: #e67128;">"m"</span><span style="color: #23d7d7;">:0.0}}}</span>
+</pre>
+</div>
+<p>
+If you are using a different CL json library, you would have to write your own functions to convert from a dao-class object to something that, e.g. jonathan or jsown could use.
+</p>
+
+<p>
+Handling joins in a dao-class are more complicated - the Postmodern dao-class is intended to be simple, not recreate Hibernate or SQLAlchemy. You can see an example at <a href="https://marijnhaverbeke.nl/postmodern/dao-classes.html#multi-table-dao-class-object">https://marijnhaverbeke.nl/postmodern/dao-classes.html#multi-table-dao-class-object</a>.
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

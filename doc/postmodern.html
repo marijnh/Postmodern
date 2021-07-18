@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-06-22 Tue 13:40 -->
+<!-- 2021-07-18 Sun 09:14 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern Reference Manual</title>
@@ -246,7 +246,7 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org735be02">Overview</a></li>
+<li><a href="#orga6c17ae">Overview</a></li>
 <li><a href="#connecting">Connecting</a>
 <ul>
 <li><a href="#class-database-connection">class database-connection</a></li>
@@ -335,7 +335,7 @@
 <li><a href="#database-information">Database Information</a>
 <ul>
 <li><a href="#funciton-add-comment">function add-comment (type name comment &amp;optional (second-name ""))</a></li>
-<li><a href="#orge86d334">find-comments (type identifier)</a></li>
+<li><a href="#org29ffe95">find-comments (type identifier)</a></li>
 <li><a href="#function-get-database-comment">function get-database-comment (database-name)</a></li>
 <li><a href="#function-postgresql-version">function postgresql-version ()</a></li>
 <li><a href="#function-database-version">function database-version ()</a></li>
@@ -351,6 +351,7 @@
 <li><a href="#function-list-available-collations">function list-available-collations ()</a></li>
 <li><a href="#list-available-extensions">function list-available-extensions ()</a></li>
 <li><a href="#function-list-installed-extensions">function list-installed-extensions ()</a></li>
+<li><a href="#function-load-uuid-extensin">function load-uuid-extension ()</a></li>
 <li><a href="#function-list-templates">function list-templates ()</a></li>
 <li><a href="#function-change-toplevel-database">function change-toplevel-database (new-database user password host)</a></li>
 <li><a href="#function-cache-hit-ratio">function cache-hit-ratio ()</a></li>
@@ -426,7 +427,7 @@
 <li><a href="#function-get-table-comment">function get-table-comment (table-name &amp;optional schema-name)</a></li>
 <li><a href="#function-get-column-comments">function get-column-comments (database schema table)</a></li>
 <li><a href="#rename-table">function rename-table (old-name new-name)</a></li>
-<li><a href="#org505330d">function rename-column (table-name old-name new-name)</a></li>
+<li><a href="#org01d6470">function rename-column (table-name old-name new-name)</a></li>
 </ul>
 </li>
 <li><a href="#tablespaces">Tablespaces</a>
@@ -493,9 +494,9 @@
 </div>
 </nav>
 
-<div id="outline-container-org735be02" class="outline-2">
-<h2 id="org735be02">Overview</h2>
-<div class="outline-text-2" id="text-org735be02">
+<div id="outline-container-orga6c17ae" class="outline-2">
+<h2 id="orga6c17ae">Overview</h2>
+<div class="outline-text-2" id="text-orga6c17ae">
 <p>
 This is the reference manual for the component named postmodern, which is part
 of a library of the same name.
@@ -526,6 +527,7 @@ Some specific topics in more detail
 <li><a href="dynamic-queries.html">Dynamic Queries</a></li>
 <li><a href="interval-notes.html">Interval Notes</a></li>
 <li><a href="isolation-notes.html">Isolation Notes</a></li>
+<li><a href="json-from-postgres.html">Json From Postgresql/Postmodern</a></li>
 </ul>
 </div>
 </div>
@@ -973,7 +975,7 @@ instead. Any of the following formats can be used, with the default being :rows:
 </tr>
 
 <tr>
-<td class="org-left">:json-strs</td>
+<td class="org-left">:json-str</td>
 <td class="org-left">Return a single string where the row returned is a json object expressed as a string</td>
 </tr>
 
@@ -998,9 +1000,9 @@ instead. Any of the following formats can be used, with the default being :rows:
 Some Examples:
 </p>
 </div>
-<div id="outline-container-org28e6bef" class="outline-4">
-<h4 id="org28e6bef">Default</h4>
-<div class="outline-text-4" id="text-org28e6bef">
+<div id="outline-container-org429d624" class="outline-4">
+<h4 id="org429d624">Default</h4>
+<div class="outline-text-4" id="text-org429d624">
 <p>
 The default is :lists
 </p>
@@ -1011,9 +1013,9 @@ The default is :lists
 </div>
 </div>
 </div>
-<div id="outline-container-org975f220" class="outline-4">
-<h4 id="org975f220">Single</h4>
-<div class="outline-text-4" id="text-org975f220">
+<div id="outline-container-orgdcb4d7d" class="outline-4">
+<h4 id="orgdcb4d7d">Single</h4>
+<div class="outline-text-4" id="text-orgdcb4d7d">
 <p>
 Returns a single field. Will throw an error if the queries returns more than one field or more than one row
 </p>
@@ -1024,9 +1026,9 @@ Returns a single field. Will throw an error if the queries returns more than one
 </div>
 </div>
 </div>
-<div id="outline-container-orgc71724c" class="outline-4">
-<h4 id="orgc71724c">List</h4>
-<div class="outline-text-4" id="text-orgc71724c">
+<div id="outline-container-org0717323" class="outline-4">
+<h4 id="org0717323">List</h4>
+<div class="outline-text-4" id="text-org0717323">
 <p>
 Returns a list containing the selected fields. Will throw an error if the query returns more than one row
 </p>
@@ -1037,9 +1039,9 @@ Returns a list containing the selected fields. Will throw an error if the query 
 </div>
 </div>
 </div>
-<div id="outline-container-org0f79809" class="outline-4">
-<h4 id="org0f79809">Lists</h4>
-<div class="outline-text-4" id="text-org0f79809">
+<div id="outline-container-org94848a3" class="outline-4">
+<h4 id="org94848a3">Lists</h4>
+<div class="outline-text-4" id="text-org94848a3">
 <p>
 This is the default
 </p>
@@ -1050,9 +1052,9 @@ This is the default
 </div>
 </div>
 </div>
-<div id="outline-container-orgaf4ceed" class="outline-4">
-<h4 id="orgaf4ceed">Alist</h4>
-<div class="outline-text-4" id="text-orgaf4ceed">
+<div id="outline-container-org64d030d" class="outline-4">
+<h4 id="org64d030d">Alist</h4>
+<div class="outline-text-4" id="text-org64d030d">
 <p>
 Returns an alist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
 </p>
@@ -1063,9 +1065,9 @@ Returns an alist containing the field name as a keyword and the selected fields.
 </div>
 </div>
 </div>
-<div id="outline-container-org27213c1" class="outline-4">
-<h4 id="org27213c1">Str-alist</h4>
-<div class="outline-text-4" id="text-org27213c1">
+<div id="outline-container-orga9e713c" class="outline-4">
+<h4 id="orga9e713c">Str-alist</h4>
+<div class="outline-text-4" id="text-orga9e713c">
 <p>
 Returns an alist containing the field name as a lower case string and the selected fields. Will throw an error if the query returns more than one row.
 </p>
@@ -1076,9 +1078,9 @@ Returns an alist containing the field name as a lower case string and the select
 </div>
 </div>
 </div>
-<div id="outline-container-org466f673" class="outline-4">
-<h4 id="org466f673">Alists</h4>
-<div class="outline-text-4" id="text-org466f673">
+<div id="outline-container-org0f34e9f" class="outline-4">
+<h4 id="org0f34e9f">Alists</h4>
+<div class="outline-text-4" id="text-org0f34e9f">
 <p>
 Returns a list of alists containing the field name as a keyword and the selected fields.
 </p>
@@ -1090,9 +1092,9 @@ Returns a list of alists containing the field name as a keyword and the selected
 </div>
 </div>
 </div>
-<div id="outline-container-orgd5bd0eb" class="outline-4">
-<h4 id="orgd5bd0eb">Str-alists</h4>
-<div class="outline-text-4" id="text-orgd5bd0eb">
+<div id="outline-container-orgb696a52" class="outline-4">
+<h4 id="orgb696a52">Str-alists</h4>
+<div class="outline-text-4" id="text-orgb696a52">
 <p>
 Returns a list of alists containing the field name as a lower case string and the selected fields.
 </p>
@@ -1104,9 +1106,9 @@ Returns a list of alists containing the field name as a lower case string and th
 </div>
 </div>
 </div>
-<div id="outline-container-orgd32c385" class="outline-4">
-<h4 id="orgd32c385">Plist</h4>
-<div class="outline-text-4" id="text-orgd32c385">
+<div id="outline-container-orgf10cba2" class="outline-4">
+<h4 id="orgf10cba2">Plist</h4>
+<div class="outline-text-4" id="text-orgf10cba2">
 <p>
 Returns a plist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
 </p>
@@ -1117,9 +1119,9 @@ Returns a plist containing the field name as a keyword and the selected fields. 
 </div>
 </div>
 </div>
-<div id="outline-container-orgd8fa883" class="outline-4">
-<h4 id="orgd8fa883">Plists</h4>
-<div class="outline-text-4" id="text-orgd8fa883">
+<div id="outline-container-orgbd96e3f" class="outline-4">
+<h4 id="orgbd96e3f">Plists</h4>
+<div class="outline-text-4" id="text-orgbd96e3f">
 <p>
 Returns a list of plists containing the field name as a keyword and the selected fields.
 </p>
@@ -1130,9 +1132,9 @@ Returns a list of plists containing the field name as a keyword and the selected
 </div>
 </div>
 </div>
-<div id="outline-container-org4bbf91d" class="outline-4">
-<h4 id="org4bbf91d">Vectors</h4>
-<div class="outline-text-4" id="text-org4bbf91d">
+<div id="outline-container-org80005fd" class="outline-4">
+<h4 id="org80005fd">Vectors</h4>
+<div class="outline-text-4" id="text-org80005fd">
 <p>
 Returns a vector of vectors where each internal vector is a returned row from the query. The field names are not included. NOTE: It will return an empty vector instead of NIL if there is no result.
 </p>
@@ -1150,9 +1152,9 @@ Returns a vector of vectors where each internal vector is a returned row from th
 </div>
 </div>
 </div>
-<div id="outline-container-orgfa36694" class="outline-4">
-<h4 id="orgfa36694">Array-hash</h4>
-<div class="outline-text-4" id="text-orgfa36694">
+<div id="outline-container-org6d65ffd" class="outline-4">
+<h4 id="org6d65ffd">Array-hash</h4>
+<div class="outline-text-4" id="text-org6d65ffd">
 <p>
 Returns a vector of hashtables where each hash table is a returned row from the query with field name as the key expressed as a lower case string.
 </p>
@@ -1170,9 +1172,9 @@ Returns a vector of hashtables where each hash table is a returned row from the 
 </div>
 </div>
 </div>
-<div id="outline-container-orge426f94" class="outline-4">
-<h4 id="orge426f94">Dao</h4>
-<div class="outline-text-4" id="text-orge426f94">
+<div id="outline-container-orgd1e3d3e" class="outline-4">
+<h4 id="orgd1e3d3e">Dao</h4>
+<div class="outline-text-4" id="text-orgd1e3d3e">
 <p>
 Returns a list of daos of the type specified
 </p>
@@ -1186,9 +1188,9 @@ Returns a list of daos of the type specified
 </div>
 </div>
 </div>
-<div id="outline-container-orgcde3036" class="outline-4">
-<h4 id="orgcde3036">Column</h4>
-<div class="outline-text-4" id="text-orgcde3036">
+<div id="outline-container-orgd8954f4" class="outline-4">
+<h4 id="orgd8954f4">Column</h4>
+<div class="outline-text-4" id="text-orgd8954f4">
 <p>
 Returns a list of field values of a single field. Will throw an error if more than one field is selected
 </p>
@@ -1202,9 +1204,9 @@ Returns a list of field values of a single field. Will throw an error if more th
 </div>
 </div>
 </div>
-<div id="outline-container-orgaf172ec" class="outline-4">
-<h4 id="orgaf172ec">Json-strs</h4>
-<div class="outline-text-4" id="text-orgaf172ec">
+<div id="outline-container-org887d853" class="outline-4">
+<h4 id="org887d853">Json-strs</h4>
+<div class="outline-text-4" id="text-org887d853">
 <p>
 Return a list of strings where the row returned is a json object expressed as a string
 </p>
@@ -1242,9 +1244,9 @@ The following is an example with a simple-date timestamp.
 </div>
 </div>
 </div>
-<div id="outline-container-org3387eae" class="outline-4">
-<h4 id="org3387eae">Json-str</h4>
-<div class="outline-text-4" id="text-org3387eae">
+<div id="outline-container-org4e9259b" class="outline-4">
+<h4 id="org4e9259b">Json-str</h4>
+<div class="outline-text-4" id="text-org4e9259b">
 <p>
 Return a single string where the row returned is a json object expressed as a string
 </p>
@@ -1259,9 +1261,9 @@ As with :json-strs, this will also work for either simple-date or local-time tim
 </div>
 </div>
 
-<div id="outline-container-orgc77de1a" class="outline-4">
-<h4 id="orgc77de1a">Json-array-str</h4>
-<div class="outline-text-4" id="text-orgc77de1a">
+<div id="outline-container-orge26bc35" class="outline-4">
+<h4 id="orge26bc35">Json-array-str</h4>
+<div class="outline-text-4" id="text-orge26bc35">
 <p>
 Return a string containing a json array, each element in the array is a selected row expressed as a json object. NOTE: If there is no result, this will return a string with an empty json array.
 </p>
@@ -1278,9 +1280,9 @@ As with :json-strs, this will also work for either simple-date or local-time tim
 </p>
 </div>
 </div>
-<div id="outline-container-orgc06eec1" class="outline-4">
-<h4 id="orgc06eec1">Second value returned</h4>
-<div class="outline-text-4" id="text-orgc06eec1">
+<div id="outline-container-orgac26709" class="outline-4">
+<h4 id="orgac26709">Second value returned</h4>
+<div class="outline-text-4" id="text-orgac26709">
 <p>
 If the database returns information about the amount rows that were affected,
 such as with updating or deleting queries, this is returned as a second value.
@@ -2330,9 +2332,9 @@ Example usage where two identifiers are required would be constraints:
 </div>
 </div>
 
-<div id="outline-container-orge86d334" class="outline-3">
-<h3 id="orge86d334">find-comments (type identifier)</h3>
-<div class="outline-text-3" id="text-orge86d334">
+<div id="outline-container-org29ffe95" class="outline-3">
+<h3 id="org29ffe95">find-comments (type identifier)</h3>
+<div class="outline-text-3" id="text-org29ffe95">
 <p>
 Returns the comments attached to a particular database object. The allowed
 types are :database :schema :table :columns (all the columns in a table)
@@ -2566,6 +2568,24 @@ database.
 </p>
 </div>
 </div>
+
+<div id="outline-container-function-load-uuid-extensin" class="outline-3">
+<h3 id="function-load-uuid-extensin">function load-uuid-extension ()</h3>
+<div class="outline-text-3" id="text-function-load-uuid-extensin">
+<p>
+Loads the Postgresql uuid-ossp contrib module. Once loaded, you can call uuid
+generation functions such as uuid_generate_v4 within a query. E.g.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span style="color: #e67128;">"select uuid_generate_v4()"</span>)
+</pre>
+</div>
+<p>
+It will be skipped if it is already loaded. See Postgresql documentation at <a href="https://www.postgresql.org/docs/current/uuid-ossp.htmlList">https://www.postgresql.org/docs/current/uuid-ossp.htmlList</a> for more details.
+</p>
+</div>
+</div>
+
 <div id="outline-container-function-list-templates" class="outline-3">
 <h3 id="function-list-templates">function list-templates ()</h3>
 <div class="outline-text-3" id="text-function-list-templates">
@@ -3487,9 +3507,9 @@ tables from one schema to another. Returns t if successful
 </div>
 </div>
 
-<div id="outline-container-org505330d" class="outline-3">
-<h3 id="org505330d">function rename-column (table-name old-name new-name)</h3>
-<div class="outline-text-3" id="text-org505330d">
+<div id="outline-container-org01d6470" class="outline-3">
+<h3 id="org01d6470">function rename-column (table-name old-name new-name)</h3>
+<div class="outline-text-3" id="text-org01d6470">
 <p>
 → boolean
 </p>

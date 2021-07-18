@@ -156,15 +156,15 @@ Returns a symbol."))
   (cond ((closer-mop:classp class)
          (mapcar 'slot-column
           (remove-if-not (lambda (x) (typep x 'effective-column-slot))
-                         (class-slots class))))
+                         (closer-mop:class-slots class))))
         ((symbolp class)
          (mapcar 'slot-column
           (remove-if-not (lambda (x) (typep x 'effective-column-slot))
-                         (class-slots (find-class class)))))
+                         (closer-mop:class-slots (find-class class)))))
         ((typep class 'dao-class)
          (mapcar 'slot-column
           (remove-if-not (lambda (x) (typep x 'effective-column-slot))
-                         (class-slots (class-of class)))))
+                         (closer-mop:class-slots (class-of class)))))
         (t nil)))
 
 (defun dao-column-fields (class)
@@ -478,26 +478,46 @@ Column name must be a symbol"
 
 (defun find-dao-column-slot (class column-name)
   "Given a class and a symbol returns the dao-column-slot class for the column
-named by that symbol (not the sql_column_name)."
-  (setf class (set-to-class class))
-  (find column-name (dao-column-slots class) :key #'slot-definition-name))
+named by that symbol (not the sql_column_name). Column name can be a symbol or
+a string."
+  (cond ((symbolp column-name)
+         (find (string-downcase (symbol-name column-name))
+               (dao-column-slots class)
+               :key #'slot-definition-name-as-string
+               :test 'equal))
+        ((stringp column-name)
+         (find (string-downcase column-name)
+               (dao-column-slots class)
+               :key #'slot-definition-name-as-string
+               :test 'equal))
+        (t nil)))
+
+(defun slot-definition-name-as-string (slot)
+  "Given a dao slot, this returns a downcased string of the name of a slot
+without the package name for use in find functions."
+  (string-downcase (symbol-name (closer-mop:slot-definition-name slot))))
 
 (defun field-name-to-slot-name (class field-name)
-  "Takes a Postgresql column name and tries to match it to a dao slot name.
-This is trying to deal with the hyphens and underscores problem."
-  (let ((slot-names (mapcar 'string-downcase (dao-column-fields class))))
-    (cond ((find field-name slot-names :test 'equal)
-           (intern (if (eq (readtable-case *readtable*) :upcase)
-                       (string-upcase field-name)
-                       field-name)))
-          ((find (cl-ppcre:regex-replace-all "_" field-name "-")
-                 slot-names
-                 :test 'equal)
-           (setf field-name (cl-ppcre:regex-replace-all "_" field-name "-"))
-           (intern (if (eq (readtable-case *readtable*) :upcase)
-                       (string-upcase field-name)
-                       field-name)))
-          (t nil))))
+  "Takes a Postgresql column name and tries to match it to a dao slot name symbol.
+This is trying to deal with the hyphens and underscores problem where
+Postgresql table field names cannot use hyphens but that is normal CL
+practice. The slot name symbol will be the full package::slot-name. field-name
+must be a string."
+  (let ((slot (find field-name
+                         (dao-column-slots class)
+                         :key #'slot-definition-name-as-string
+                         :test 'equal)))
+    (if slot
+        (closer-mop:slot-definition-name slot)
+        (progn
+          (setf field-name (cl-ppcre:regex-replace-all "_" field-name "-"))
+          (setf slot (find field-name
+                         (dao-column-slots class)
+                         :key #'slot-definition-name-as-string
+                         :test 'equal))
+          (if slot
+              (closer-mop:slot-definition-name slot)
+              nil)))))
 
 (defun build-dao-methods (class)
   "Synthesise a number of methods for a newly defined DAO class.
@@ -532,9 +552,8 @@ or accessor or reader.)"
                        :append (list (field-sql-name field) '$$)))
                (slot-values (object &rest slots)
                  (loop :for slot :in (apply 'append slots)
-                       :collect ;(slot-value object slot)
+                       :collect
                        (if (and (slot-boundp object slot)
-                                (slot-value object slot)
                                 (find-export-function object slot))
                            (funcall (find-export-function object slot)
                                      (slot-value object slot))
@@ -600,7 +619,6 @@ or accessor or reader.)"
                                           collect (field-sql-name field)
                                           collect
                                           (if (and (slot-boundp object field)
-                                                   (slot-value object field)
                                                    (find-export-function object field))
                                               (funcall (find-export-function object field)
                                                        (slot-value object field))
@@ -687,15 +705,28 @@ about the objects, and immediately store it in the new instances."
                              (funcall result-next-field-generator-fn field)))
                (function (let ((import-function-symbol
                                  (find-import-function instance (field-name field))))
-                           (if (and import-function-symbol
+                           (cond ((and import-function-symbol
                                     (eq writer
                                         (fdefinition import-function-symbol)))
                                (setf (slot-value instance (field-name-to-slot-name
                                                            class (field-name field)))
-                                     (funcall writer
-                                              (funcall result-next-field-generator-fn field)))
+                                     (funcall import-function-symbol
+                                              (funcall result-next-field-generator-fn field))))
+                              ((and import-function-symbol
+                                    (not (functionp import-function-symbol)))
+                               (setf (slot-value instance (field-name-to-slot-name
+                                                           class (field-name field)))
+                                     (funcall (fdefinition import-function-symbol)
+                                              (funcall result-next-field-generator-fn field))))
+                              ((and import-function-symbol
+                                    (functionp import-function-symbol))
+                               (setf (slot-value instance (field-name-to-slot-name
+                                                           class (field-name field)))
+                                     (funcall import-function-symbol
+                                              (funcall result-next-field-generator-fn field))))
+                              (t
                                (funcall writer instance
-                                        (funcall result-next-field-generator-fn field)))))))
+                                        (funcall result-next-field-generator-fn field))))))))
     (initialize-instance instance)
     instance))
 

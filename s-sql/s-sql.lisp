@@ -186,8 +186,9 @@ for declaring a type to be an integer that may be null."
   (:documentation "Transform a lisp type into a string containing something
 SQL understands. Default is to just use the type symbol's name.")
   (:method ((lisp-type symbol) &rest args)
-    (declare (ignore args))
-    (substitute #\Space #\- (symbol-name lisp-type) :test #'char=))
+    (cond ((and args (equal (symbol-name lisp-type) "GEOMETRY")) ; geometry type from postgis
+           (format nil "geometry (~{~a~^, ~})" args))
+          (t (substitute #\Space #\- (symbol-name lisp-type) :test #'char=))))
   (:method ((lisp-type (eql 'string)) &rest args)
     (cond (args (format nil "CHAR(~A)" (car args)))
           (t "TEXT")))

@@ -27,6 +27,7 @@ Some specific topics in more detail
 - [[file:dynamic-queries.html][Dynamic Queries]]
 - [[file:interval-notes.html][Interval Notes]]
 - [[file:isolation-notes.html][Isolation Notes]]
+- [[file:json-from-postgres.html][Json From Postgresql/Postmodern]]
 
 * Connecting
 :PROPERTIES:
@@ -301,7 +302,7 @@ instead. Any of the following formats can be used, with the default being :rows:
 | :vectors	    | Return a vector of vectors, each vector containing the values for a row. (This is only the plural) |
 | :array-hash         | Return an array of hashtables which map column names to hash table keys     |
 | :json-strs          | Return a list of strings where each row is a json object expressed as a string  |
-| :json-strs          | Return a single string where the row returned is a json object expressed as a string           |
+| :json-str           | Return a single string where the row returned is a json object expressed as a string           |
 | :json-array-str     | Return a string containing a json array, each element in the array is a selected row expressed as a json object |
 | (:dao type)	       | Return a list of DAOs of the given type. The names of the fields returned by the query must match slots in the DAO class the same way as with query-dao. |
 | (:dao type :single) | 	Return a single DAO of the given type. |
@@ -1408,6 +1409,19 @@ currently connected database. The extensions may or may not be installed.
 
 List the postgresql extensions which are installed in the currently connected
 database.
+
+** function load-uuid-extension ()
+   :PROPERTIES:
+   :CUSTOM_ID: function-load-uuid-extensin
+   :END:
+
+Loads the Postgresql uuid-ossp contrib module. Once loaded, you can call uuid
+generation functions such as uuid_generate_v4 within a query. E.g.
+#+begin_src lisp
+  (query "select uuid_generate_v4()")
+#+end_src
+It will be skipped if it is already loaded. See Postgresql documentation at https://www.postgresql.org/docs/current/uuid-ossp.htmlList for more details.
+
 ** function list-templates ()
    :PROPERTIES:
    :CUSTOM_ID: function-list-templates

@@ -54,7 +54,7 @@
                          (test-op "cl-postgres/simple-date-tests"))))
 
 (defsystem "cl-postgres/tests"
-  :depends-on ("cl-postgres" "fiveam")
+  :depends-on ("cl-postgres" "fiveam" "uiop")
   :components
   ((:module "cl-postgres/tests"
     :components ((:file "test-package")

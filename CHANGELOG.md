@@ -1,3 +1,10 @@
+# Changelog v. 1.33.2
+
+Fix bug in export functions when user tries to export nil into a database
+
+Fix bug in import functions when functions are called but the current package has changed.
+Note to self. Pay attention to needs for fully qualified symbols (including package names) and how to test them for equality.
+
 # Changelog v. 1.33.1
 Dao Export and Import Functions (Postmodern v. 1.33.1 and newer)
 
