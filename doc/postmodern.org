@@ -70,8 +70,8 @@ Use-binary defaults to nil. If set to T, then Postmodern will pass integer, floa
 The following example connects to a database named test-db running on a server at the ip
 address 192.168.5.223 with the non-standard port 5434 using a pooled connection, trying to use ssh if the server accepts that and falling back to an unencrypted connection if not, with an application name of "test-app".
 #+begin_src lisp
-  (connect "test-db" "test-user" "test-password" "192.168.5.223"
-           :port 5434 :pooled-p t :use-ssl try :application-name "test-app" :use-binary t)
+  (connect "test_db" "test-user" "test-password" "192.168.5.223"
+           :port 5434 :pooled-p t :use-ssl :try :application-name "test-app" :use-binary t)
 #+end_src
 Postmodern as of version 1.33.0 provides the ability to pass parameters to Postgresql in binary format IF that format is available for that datatype. Currently this means int2, int4, int8, float, double-float (except clisp) and boolean. Rational numbers continue to be passed as text.
 
@@ -119,7 +119,7 @@ In postmodern you have the connect function or you can use the with-connection m
 #+end_src
 So often you would connect something like this:
 #+begin_src lisp
-  (with-connection '("database-name" "user-name" "user-password" "localhost or IP address"
+  (with-connection '("database_name" "user-name" "user-password" "localhost or IP address"
                      :use-binary t)
     ...)
 #+end_src
@@ -198,11 +198,11 @@ Examples:
   (with-connection '("test_database" "sabra" "some_strange_password_here" "localhost")
     (list-tables))
 
-  (with-connection '("test-db" "test-user" "test-password" "192.168.5.223"
+  (with-connection '("test_db" "test-user" "test-password" "192.168.5.223"
                      :port 5434 :pooled-p t :use-ssl try :application-name "test-app")
     (list-tables))
 
-  (with-connection '("test-db" "test-user" "test-password" "192.168.5.223"
+  (with-connection '("test_db" "test-user" "test-password" "192.168.5.223"
                      :port 5434 :pooled-p t :use-ssl try :application-name "test-app"
                      :use-binary t)
     (list-tables))

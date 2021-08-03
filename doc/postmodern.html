@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-07-18 Sun 09:14 -->
+<!-- 2021-08-03 Tue 10:58 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern Reference Manual</title>
@@ -246,7 +246,7 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orga6c17ae">Overview</a></li>
+<li><a href="#orgad53c85">Overview</a></li>
 <li><a href="#connecting">Connecting</a>
 <ul>
 <li><a href="#class-database-connection">class database-connection</a></li>
@@ -335,7 +335,7 @@
 <li><a href="#database-information">Database Information</a>
 <ul>
 <li><a href="#funciton-add-comment">function add-comment (type name comment &amp;optional (second-name ""))</a></li>
-<li><a href="#org29ffe95">find-comments (type identifier)</a></li>
+<li><a href="#orgc966fe7">find-comments (type identifier)</a></li>
 <li><a href="#function-get-database-comment">function get-database-comment (database-name)</a></li>
 <li><a href="#function-postgresql-version">function postgresql-version ()</a></li>
 <li><a href="#function-database-version">function database-version ()</a></li>
@@ -427,7 +427,7 @@
 <li><a href="#function-get-table-comment">function get-table-comment (table-name &amp;optional schema-name)</a></li>
 <li><a href="#function-get-column-comments">function get-column-comments (database schema table)</a></li>
 <li><a href="#rename-table">function rename-table (old-name new-name)</a></li>
-<li><a href="#org01d6470">function rename-column (table-name old-name new-name)</a></li>
+<li><a href="#orga7fad51">function rename-column (table-name old-name new-name)</a></li>
 </ul>
 </li>
 <li><a href="#tablespaces">Tablespaces</a>
@@ -494,9 +494,9 @@
 </div>
 </nav>
 
-<div id="outline-container-orga6c17ae" class="outline-2">
-<h2 id="orga6c17ae">Overview</h2>
-<div class="outline-text-2" id="text-orga6c17ae">
+<div id="outline-container-orgad53c85" class="outline-2">
+<h2 id="orgad53c85">Overview</h2>
+<div class="outline-text-2" id="text-orgad53c85">
 <p>
 This is the reference manual for the component named postmodern, which is part
 of a library of the same name.
@@ -589,8 +589,8 @@ The following example connects to a database named test-db running on a server a
 address 192.168.5.223 with the non-standard port 5434 using a pooled connection, trying to use ssh if the server accepts that and falling back to an unencrypted connection if not, with an application name of "test-app".
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(connect <span style="color: #e67128;">"test-db"</span> <span style="color: #e67128;">"test-user"</span> <span style="color: #e67128;">"test-password"</span> <span style="color: #e67128;">"192.168.5.223"</span>
-         <span style="color: #23d7d7;">:port</span> 5434 <span style="color: #23d7d7;">:pooled-p</span> t <span style="color: #23d7d7;">:use-ssl</span> try <span style="color: #23d7d7;">:application-name</span> <span style="color: #e67128;">"test-app"</span> <span style="color: #23d7d7;">:use-binary</span> t)
+<pre class="src src-lisp">(connect <span style="color: #e67128;">"test_db"</span> <span style="color: #e67128;">"test-user"</span> <span style="color: #e67128;">"test-password"</span> <span style="color: #e67128;">"192.168.5.223"</span>
+         <span style="color: #23d7d7;">:port</span> 5434 <span style="color: #23d7d7;">:pooled-p</span> t <span style="color: #23d7d7;">:use-ssl</span> <span style="color: #23d7d7;">:try</span> <span style="color: #23d7d7;">:application-name</span> <span style="color: #e67128;">"test-app"</span> <span style="color: #23d7d7;">:use-binary</span> t)
 </pre>
 </div>
 <p>
@@ -659,7 +659,7 @@ In postmodern you have the connect function or you can use the with-connection m
 So often you would connect something like this:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"database-name"</span> <span style="color: #e67128;">"user-name"</span> <span style="color: #e67128;">"user-password"</span> <span style="color: #e67128;">"localhost or IP address"</span>
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"database_name"</span> <span style="color: #e67128;">"user-name"</span> <span style="color: #e67128;">"user-password"</span> <span style="color: #e67128;">"localhost or IP address"</span>
                    <span style="color: #23d7d7;">:use-binary</span> t)
   ...)
 </pre>
@@ -773,11 +773,11 @@ Examples:
 <pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"test_database"</span> <span style="color: #e67128;">"sabra"</span> <span style="color: #e67128;">"some_strange_password_here"</span> <span style="color: #e67128;">"localhost"</span>)
   (list-tables))
 
-(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"test-db"</span> <span style="color: #e67128;">"test-user"</span> <span style="color: #e67128;">"test-password"</span> <span style="color: #e67128;">"192.168.5.223"</span>
+(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"test_db"</span> <span style="color: #e67128;">"test-user"</span> <span style="color: #e67128;">"test-password"</span> <span style="color: #e67128;">"192.168.5.223"</span>
                    <span style="color: #23d7d7;">:port</span> 5434 <span style="color: #23d7d7;">:pooled-p</span> t <span style="color: #23d7d7;">:use-ssl</span> try <span style="color: #23d7d7;">:application-name</span> <span style="color: #e67128;">"test-app"</span>)
   (list-tables))
 
-(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"test-db"</span> <span style="color: #e67128;">"test-user"</span> <span style="color: #e67128;">"test-password"</span> <span style="color: #e67128;">"192.168.5.223"</span>
+(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"test_db"</span> <span style="color: #e67128;">"test-user"</span> <span style="color: #e67128;">"test-password"</span> <span style="color: #e67128;">"192.168.5.223"</span>
                    <span style="color: #23d7d7;">:port</span> 5434 <span style="color: #23d7d7;">:pooled-p</span> t <span style="color: #23d7d7;">:use-ssl</span> try <span style="color: #23d7d7;">:application-name</span> <span style="color: #e67128;">"test-app"</span>
                    <span style="color: #23d7d7;">:use-binary</span> t)
   (list-tables))
@@ -1000,9 +1000,9 @@ instead. Any of the following formats can be used, with the default being :rows:
 Some Examples:
 </p>
 </div>
-<div id="outline-container-org429d624" class="outline-4">
-<h4 id="org429d624">Default</h4>
-<div class="outline-text-4" id="text-org429d624">
+<div id="outline-container-org2841140" class="outline-4">
+<h4 id="org2841140">Default</h4>
+<div class="outline-text-4" id="text-org2841140">
 <p>
 The default is :lists
 </p>
@@ -1013,9 +1013,9 @@ The default is :lists
 </div>
 </div>
 </div>
-<div id="outline-container-orgdcb4d7d" class="outline-4">
-<h4 id="orgdcb4d7d">Single</h4>
-<div class="outline-text-4" id="text-orgdcb4d7d">
+<div id="outline-container-org1f4a021" class="outline-4">
+<h4 id="org1f4a021">Single</h4>
+<div class="outline-text-4" id="text-org1f4a021">
 <p>
 Returns a single field. Will throw an error if the queries returns more than one field or more than one row
 </p>
@@ -1026,9 +1026,9 @@ Returns a single field. Will throw an error if the queries returns more than one
 </div>
 </div>
 </div>
-<div id="outline-container-org0717323" class="outline-4">
-<h4 id="org0717323">List</h4>
-<div class="outline-text-4" id="text-org0717323">
+<div id="outline-container-org54ebbc9" class="outline-4">
+<h4 id="org54ebbc9">List</h4>
+<div class="outline-text-4" id="text-org54ebbc9">
 <p>
 Returns a list containing the selected fields. Will throw an error if the query returns more than one row
 </p>
@@ -1039,9 +1039,9 @@ Returns a list containing the selected fields. Will throw an error if the query 
 </div>
 </div>
 </div>
-<div id="outline-container-org94848a3" class="outline-4">
-<h4 id="org94848a3">Lists</h4>
-<div class="outline-text-4" id="text-org94848a3">
+<div id="outline-container-org9673d2c" class="outline-4">
+<h4 id="org9673d2c">Lists</h4>
+<div class="outline-text-4" id="text-org9673d2c">
 <p>
 This is the default
 </p>
@@ -1052,9 +1052,9 @@ This is the default
 </div>
 </div>
 </div>
-<div id="outline-container-org64d030d" class="outline-4">
-<h4 id="org64d030d">Alist</h4>
-<div class="outline-text-4" id="text-org64d030d">
+<div id="outline-container-orgbb292ae" class="outline-4">
+<h4 id="orgbb292ae">Alist</h4>
+<div class="outline-text-4" id="text-orgbb292ae">
 <p>
 Returns an alist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
 </p>
@@ -1065,9 +1065,9 @@ Returns an alist containing the field name as a keyword and the selected fields.
 </div>
 </div>
 </div>
-<div id="outline-container-orga9e713c" class="outline-4">
-<h4 id="orga9e713c">Str-alist</h4>
-<div class="outline-text-4" id="text-orga9e713c">
+<div id="outline-container-orgdca0df5" class="outline-4">
+<h4 id="orgdca0df5">Str-alist</h4>
+<div class="outline-text-4" id="text-orgdca0df5">
 <p>
 Returns an alist containing the field name as a lower case string and the selected fields. Will throw an error if the query returns more than one row.
 </p>
@@ -1078,9 +1078,9 @@ Returns an alist containing the field name as a lower case string and the select
 </div>
 </div>
 </div>
-<div id="outline-container-org0f34e9f" class="outline-4">
-<h4 id="org0f34e9f">Alists</h4>
-<div class="outline-text-4" id="text-org0f34e9f">
+<div id="outline-container-org20423b3" class="outline-4">
+<h4 id="org20423b3">Alists</h4>
+<div class="outline-text-4" id="text-org20423b3">
 <p>
 Returns a list of alists containing the field name as a keyword and the selected fields.
 </p>
@@ -1092,9 +1092,9 @@ Returns a list of alists containing the field name as a keyword and the selected
 </div>
 </div>
 </div>
-<div id="outline-container-orgb696a52" class="outline-4">
-<h4 id="orgb696a52">Str-alists</h4>
-<div class="outline-text-4" id="text-orgb696a52">
+<div id="outline-container-org847d465" class="outline-4">
+<h4 id="org847d465">Str-alists</h4>
+<div class="outline-text-4" id="text-org847d465">
 <p>
 Returns a list of alists containing the field name as a lower case string and the selected fields.
 </p>
@@ -1106,9 +1106,9 @@ Returns a list of alists containing the field name as a lower case string and th
 </div>
 </div>
 </div>
-<div id="outline-container-orgf10cba2" class="outline-4">
-<h4 id="orgf10cba2">Plist</h4>
-<div class="outline-text-4" id="text-orgf10cba2">
+<div id="outline-container-org473427a" class="outline-4">
+<h4 id="org473427a">Plist</h4>
+<div class="outline-text-4" id="text-org473427a">
 <p>
 Returns a plist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
 </p>
@@ -1119,9 +1119,9 @@ Returns a plist containing the field name as a keyword and the selected fields. 
 </div>
 </div>
 </div>
-<div id="outline-container-orgbd96e3f" class="outline-4">
-<h4 id="orgbd96e3f">Plists</h4>
-<div class="outline-text-4" id="text-orgbd96e3f">
+<div id="outline-container-orgc2253da" class="outline-4">
+<h4 id="orgc2253da">Plists</h4>
+<div class="outline-text-4" id="text-orgc2253da">
 <p>
 Returns a list of plists containing the field name as a keyword and the selected fields.
 </p>
@@ -1132,9 +1132,9 @@ Returns a list of plists containing the field name as a keyword and the selected
 </div>
 </div>
 </div>
-<div id="outline-container-org80005fd" class="outline-4">
-<h4 id="org80005fd">Vectors</h4>
-<div class="outline-text-4" id="text-org80005fd">
+<div id="outline-container-org0cadffa" class="outline-4">
+<h4 id="org0cadffa">Vectors</h4>
+<div class="outline-text-4" id="text-org0cadffa">
 <p>
 Returns a vector of vectors where each internal vector is a returned row from the query. The field names are not included. NOTE: It will return an empty vector instead of NIL if there is no result.
 </p>
@@ -1152,9 +1152,9 @@ Returns a vector of vectors where each internal vector is a returned row from th
 </div>
 </div>
 </div>
-<div id="outline-container-org6d65ffd" class="outline-4">
-<h4 id="org6d65ffd">Array-hash</h4>
-<div class="outline-text-4" id="text-org6d65ffd">
+<div id="outline-container-org9d426b6" class="outline-4">
+<h4 id="org9d426b6">Array-hash</h4>
+<div class="outline-text-4" id="text-org9d426b6">
 <p>
 Returns a vector of hashtables where each hash table is a returned row from the query with field name as the key expressed as a lower case string.
 </p>
@@ -1172,9 +1172,9 @@ Returns a vector of hashtables where each hash table is a returned row from the 
 </div>
 </div>
 </div>
-<div id="outline-container-orgd1e3d3e" class="outline-4">
-<h4 id="orgd1e3d3e">Dao</h4>
-<div class="outline-text-4" id="text-orgd1e3d3e">
+<div id="outline-container-orgbe4cfcd" class="outline-4">
+<h4 id="orgbe4cfcd">Dao</h4>
+<div class="outline-text-4" id="text-orgbe4cfcd">
 <p>
 Returns a list of daos of the type specified
 </p>
@@ -1188,9 +1188,9 @@ Returns a list of daos of the type specified
 </div>
 </div>
 </div>
-<div id="outline-container-orgd8954f4" class="outline-4">
-<h4 id="orgd8954f4">Column</h4>
-<div class="outline-text-4" id="text-orgd8954f4">
+<div id="outline-container-orgcac67df" class="outline-4">
+<h4 id="orgcac67df">Column</h4>
+<div class="outline-text-4" id="text-orgcac67df">
 <p>
 Returns a list of field values of a single field. Will throw an error if more than one field is selected
 </p>
@@ -1204,9 +1204,9 @@ Returns a list of field values of a single field. Will throw an error if more th
 </div>
 </div>
 </div>
-<div id="outline-container-org887d853" class="outline-4">
-<h4 id="org887d853">Json-strs</h4>
-<div class="outline-text-4" id="text-org887d853">
+<div id="outline-container-org54de871" class="outline-4">
+<h4 id="org54de871">Json-strs</h4>
+<div class="outline-text-4" id="text-org54de871">
 <p>
 Return a list of strings where the row returned is a json object expressed as a string
 </p>
@@ -1244,9 +1244,9 @@ The following is an example with a simple-date timestamp.
 </div>
 </div>
 </div>
-<div id="outline-container-org4e9259b" class="outline-4">
-<h4 id="org4e9259b">Json-str</h4>
-<div class="outline-text-4" id="text-org4e9259b">
+<div id="outline-container-org354070e" class="outline-4">
+<h4 id="org354070e">Json-str</h4>
+<div class="outline-text-4" id="text-org354070e">
 <p>
 Return a single string where the row returned is a json object expressed as a string
 </p>
@@ -1261,9 +1261,9 @@ As with :json-strs, this will also work for either simple-date or local-time tim
 </div>
 </div>
 
-<div id="outline-container-orge26bc35" class="outline-4">
-<h4 id="orge26bc35">Json-array-str</h4>
-<div class="outline-text-4" id="text-orge26bc35">
+<div id="outline-container-org14fd5e7" class="outline-4">
+<h4 id="org14fd5e7">Json-array-str</h4>
+<div class="outline-text-4" id="text-org14fd5e7">
 <p>
 Return a string containing a json array, each element in the array is a selected row expressed as a json object. NOTE: If there is no result, this will return a string with an empty json array.
 </p>
@@ -1280,9 +1280,9 @@ As with :json-strs, this will also work for either simple-date or local-time tim
 </p>
 </div>
 </div>
-<div id="outline-container-orgac26709" class="outline-4">
-<h4 id="orgac26709">Second value returned</h4>
-<div class="outline-text-4" id="text-orgac26709">
+<div id="outline-container-org86cb495" class="outline-4">
+<h4 id="org86cb495">Second value returned</h4>
+<div class="outline-text-4" id="text-org86cb495">
 <p>
 If the database returns information about the amount rows that were affected,
 such as with updating or deleting queries, this is returned as a second value.
@@ -2332,9 +2332,9 @@ Example usage where two identifiers are required would be constraints:
 </div>
 </div>
 
-<div id="outline-container-org29ffe95" class="outline-3">
-<h3 id="org29ffe95">find-comments (type identifier)</h3>
-<div class="outline-text-3" id="text-org29ffe95">
+<div id="outline-container-orgc966fe7" class="outline-3">
+<h3 id="orgc966fe7">find-comments (type identifier)</h3>
+<div class="outline-text-3" id="text-orgc966fe7">
 <p>
 Returns the comments attached to a particular database object. The allowed
 types are :database :schema :table :columns (all the columns in a table)
@@ -3507,9 +3507,9 @@ tables from one schema to another. Returns t if successful
 </div>
 </div>
 
-<div id="outline-container-org01d6470" class="outline-3">
-<h3 id="org01d6470">function rename-column (table-name old-name new-name)</h3>
-<div class="outline-text-3" id="text-org01d6470">
+<div id="outline-container-orga7fad51" class="outline-3">
+<h3 id="orga7fad51">function rename-column (table-name old-name new-name)</h3>
+<div class="outline-text-3" id="text-orga7fad51">
 <p>
 → boolean
 </p>
