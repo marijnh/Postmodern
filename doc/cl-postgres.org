@@ -63,7 +63,7 @@ Use-binary defaults to nil. This relates to how Postmodern passes the parameters
 
 If a query to Postgresql does not have a table column which would allow Postgresql to determine the correct datatype and you do not specify differently, Postgresql will treat the parameters passed with a prepared query as text. The default cl-postgres connection will have results like the following examples:
 #+begin_src lisp
-  (defparameter *connect-spec* '("database-name" "user-name" "user-password" "localhost" 5432 :no "postgres" "some-app-name" nil))
+  (defparameter *connect-spec* '("database_name" "user_name" "user_password" "localhost" 5432 :no "postgres" "some_app_name" nil))
   (defmacro connect-now (&body body)
     `(let ((connection (apply 'open-database *connect-spec*)))
        (unwind-protect (progn ,@body)
@@ -108,7 +108,7 @@ Still in the default setting, you can specify parameter type as so:
 #+end_src
 Setting the use-binary slot in the database connection object to t (the last optional parameter) will allow you to pass parameters as binary BUT Postgresql insists on knowing the type of parameters you will be passing in a prepared query. If you do not pass a list of sample parameters, Postgresql will treat all parameters passed in the exec-prepared function required to be text and will throw an error, typically insufficient data left in message. Unlike Postmodern, cl-postgres does not keep a copy of prepared statements in the database connection object. Thus any error checking would require making a second call to Postgresql to find out what it has in the way of prepared statement parameters will lose any efficiency which would otherwise be gained by passing parameters in binary form.
 #+begin_src lisp
-    (setf *connect-spec* '("database-name" "user-name" "user-password" "localhost" 5432 :no "postgres" "some-app-name" t))
+    (setf *connect-spec* '("database_name" "user-name" "user-password" "localhost" 5432 :no "postgres" "some-app-name" t))
 
   (connect-now
    (prepare-query connection "test6" "select $1, $2, $3" '(1 nil 1.0))

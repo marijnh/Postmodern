@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-06-08 Tue 20:46 -->
+<!-- 2021-08-03 Tue 10:58 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cl-Postgres Reference Manual</title>
@@ -391,7 +391,7 @@ Use-binary defaults to nil. This relates to how Postmodern passes the parameters
 If a query to Postgresql does not have a table column which would allow Postgresql to determine the correct datatype and you do not specify differently, Postgresql will treat the parameters passed with a prepared query as text. The default cl-postgres connection will have results like the following examples:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defparameter</span> <span style="color: #dbdb95;">*connect-spec*</span> '(<span style="color: #e67128;">"database-name"</span> <span style="color: #e67128;">"user-name"</span> <span style="color: #e67128;">"user-password"</span> <span style="color: #e67128;">"localhost"</span> 5432 <span style="color: #23d7d7;">:no</span> <span style="color: #e67128;">"postgres"</span> <span style="color: #e67128;">"some-app-name"</span> nil))
+<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defparameter</span> <span style="color: #dbdb95;">*connect-spec*</span> '(<span style="color: #e67128;">"database_name"</span> <span style="color: #e67128;">"user_name"</span> <span style="color: #e67128;">"user_password"</span> <span style="color: #e67128;">"localhost"</span> 5432 <span style="color: #23d7d7;">:no</span> <span style="color: #e67128;">"postgres"</span> <span style="color: #e67128;">"some_app_name"</span> nil))
 (<span style="color: #ffad29; font-weight: bold;">defmacro</span> <span style="color: #00ede1; font-weight: bold;">connect-now</span> (<span style="color: #34cae2;">&amp;body</span> body)
   `(<span style="color: #ffad29; font-weight: bold;">let</span> ((connection (apply 'open-database *connect-spec*)))
      (<span style="color: #ffad29; font-weight: bold;">unwind-protect</span> (<span style="color: #ffad29; font-weight: bold;">progn</span> ,@body)
@@ -442,7 +442,7 @@ Still in the default setting, you can specify parameter type as so:
 Setting the use-binary slot in the database connection object to t (the last optional parameter) will allow you to pass parameters as binary BUT Postgresql insists on knowing the type of parameters you will be passing in a prepared query. If you do not pass a list of sample parameters, Postgresql will treat all parameters passed in the exec-prepared function required to be text and will throw an error, typically insufficient data left in message. Unlike Postmodern, cl-postgres does not keep a copy of prepared statements in the database connection object. Thus any error checking would require making a second call to Postgresql to find out what it has in the way of prepared statement parameters will lose any efficiency which would otherwise be gained by passing parameters in binary form.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">    (setf *connect-spec* '(<span style="color: #e67128;">"database-name"</span> <span style="color: #e67128;">"user-name"</span> <span style="color: #e67128;">"user-password"</span> <span style="color: #e67128;">"localhost"</span> 5432 <span style="color: #23d7d7;">:no</span> <span style="color: #e67128;">"postgres"</span> <span style="color: #e67128;">"some-app-name"</span> t))
+<pre class="src src-lisp">    (setf *connect-spec* '(<span style="color: #e67128;">"database_name"</span> <span style="color: #e67128;">"user-name"</span> <span style="color: #e67128;">"user-password"</span> <span style="color: #e67128;">"localhost"</span> 5432 <span style="color: #23d7d7;">:no</span> <span style="color: #e67128;">"postgres"</span> <span style="color: #e67128;">"some-app-name"</span> t))
 
   (connect-now
    (prepare-query connection <span style="color: #e67128;">"test6"</span> <span style="color: #e67128;">"select $1, $2, $3"</span> '(1 nil 1.0))
