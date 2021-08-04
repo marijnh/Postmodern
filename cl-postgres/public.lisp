@@ -26,6 +26,7 @@ all the configuration parameters for the connection."))
    (available :initform t :accessor connection-available)
    (parameters :accessor connection-parameters)
    (timestamp-format :accessor connection-timestamp-format))
+  (:default-initargs :application-name "postmodern-default")
   (:documentation "Representation of a database connection. Contains
 login information in order to be able to automatically re-establish a
 connection when it is somehow closed."))
@@ -105,7 +106,7 @@ connected."
 
 (defun open-database (database user password host
                       &optional (port 5432) (use-ssl :no)
-                        (service "postgres") (application-name "")
+                        (service "postgres") (application-name "postmodern-default")
                         (use-binary nil))
   "Create and open a connection for the specified server, database, and user.
 use-ssl may be :no, :try, :yes, or :full; where :try means 'if the server
