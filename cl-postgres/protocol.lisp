@@ -198,7 +198,6 @@ be matched against it."
 (defun authenticate (socket conn)
   "Try to initiate a connection. Caller should close the socket if this raises
 a condition."
-
   (let ((gss-context nil)
         (gss-init-function nil)
         (user (connection-user conn))
@@ -210,6 +209,7 @@ a condition."
         (client-nonce nil)
         (client-initial-response nil)
         (expected-server-signature nil))
+
     (unless (eq use-ssl :no)
       (if (eq use-ssl :try)
               (let ((old-socket socket)
@@ -219,6 +219,7 @@ a condition."
               (setf socket (initiate-ssl socket (member use-ssl '(:require :yes :full))
                                   (member use-ssl '(:yes :full))
                                   (if (eq use-ssl :full) hostname)))))
+    (when (equal application-name "") (setf application-name "postmodern-default"))
     (startup-message socket user database application-name)
     (force-output socket)
     (labels ((init-gss-msg (in-buffer)
@@ -271,10 +272,10 @@ a condition."
                                  expected-server-signature))
                  (cerror "Server signature not validated. Something is wrong"
                          (cdar (split-server-response in-buffer))))))
-
       (loop
         (message-case socket :length-sym size       ;; Authentication message
-                      (#\R (let ((type (read-uint4 socket)))
+          (#\R (let ((type (read-uint4 socket)))
+
                              (ecase type
                                (0 (return))
                                (2 (error 'database-error
@@ -303,12 +304,15 @@ a condition."
                                (9 ) ; auth_required_sspi or auth_req_sspi sspi
                                     ;negotiate without wrap() see postgresql
                                     ; source code src/libpq/pqcomm.h
-                               (10 (scram-msg-init
-                                    (read-bytes socket (- size 4)))) ;(read-simple-str socket)
-                               (11 (scram-msg-cont
-                                    (read-bytes socket (- size 4)))) ;auth_sasl_continue or auth_req_sasl_cont
-                               (12 (scram-msg-fin
-                                    (read-bytes socket (- size 4))))))))))
+                               (10 (progn
+                                     (scram-msg-init
+                                      (read-bytes socket (- size 4))))) ;(read-simple-str socket)
+                               (11 (progn
+                                     (scram-msg-cont
+                                      (read-bytes socket (- size 4))))) ;auth_sasl_continue or auth_req_sasl_cont
+                               (12 (progn
+                                     (scram-msg-fin
+                                     (read-bytes socket (- size 4)))))))))))
     (loop
       (message-case socket
                     ;; ReadyForQuery
