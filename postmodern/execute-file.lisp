@@ -203,6 +203,9 @@ should return
 (defparameter multi-line-comment-scanner
   (cl-ppcre:create-scanner "//*.*?/*/" :single-line-mode t))
 
+(defparameter single-line-comment-scanner
+  (cl-ppcre:create-scanner "--.*"))
+
 (defun read-lines (filename &optional (q (make-string-output-stream)))
   "Read lines from given filename and return them in a stream. Recursively
    apply \i include instructions."
@@ -219,7 +222,10 @@ should return
                                       (directory-namestring filename))))
                (read-lines include-filename q))
              (progn
-               (setf line (cl-ppcre::regex-replace "--.*" line "")) ; drop single line comments
+               (setf line (cl-ppcre::regex-replace
+                           single-line-comment-scanner
+                           line
+                           "")) ; drop single line comments
              (format q "~a~%" line)))
       finally (return q))))
 
@@ -234,9 +240,10 @@ should return
 
 (defun read-queries (filename)
   "Read SQL queries in given file and split them, returns a list"
-  (parse-queries (cl-ppcre:regex-replace-all multi-line-comment-scanner
-                                         (get-output-stream-string (read-lines filename))
-                                         "")))
+  (parse-queries (cl-ppcre:regex-replace-all
+                  multi-line-comment-scanner
+                  (get-output-stream-string (read-lines filename))
+                  "")))
 
 (defun execute-file (pathname &optional (print nil))
   "This function will execute sql queries stored in a file. Each sql statement
