@@ -145,13 +145,13 @@ should return
 
                  (:tag (push-new-tag state))
 
-                 (:eot       ; check the tag stack
+                 (:eot                 ; check the tag stack
                   (cond ((= 1 (length (parser-tags state)))
                          ;; it's an opening tag, collect the text now
                          (format-current-tag state)
                          (reset-state state :tagp t))
 
-                        (t   ; are we closing the current tag?
+                        (t          ; are we closing the current tag?
                          (if (maybe-close-tags state)
                              (reset-state state :tagp t)
 
@@ -198,6 +198,11 @@ should return
       (unless (eq :eat (parser-state state))
         (error e)))))
 
+;; For multiple unnested multi-line comments in the same string.
+;; Does not handle nested multi-line comments.
+(defparameter multi-line-comment-scanner
+  (cl-ppcre:create-scanner "//*.*?/*/" :single-line-mode t))
+
 (defun read-lines (filename &optional (q (make-string-output-stream)))
   "Read lines from given filename and return them in a stream. Recursively
    apply \i include instructions."
@@ -213,7 +218,9 @@ should return
                      (merge-pathnames (subseq line 3)
                                       (directory-namestring filename))))
                (read-lines include-filename q))
-             (format q "~a~%" line))
+             (progn
+               (setf line (cl-ppcre::regex-replace "--.*" line "")) ; drop single line comments
+             (format q "~a~%" line)))
       finally (return q))))
 
 (defun parse-queries (file-content)
@@ -227,7 +234,9 @@ should return
 
 (defun read-queries (filename)
   "Read SQL queries in given file and split them, returns a list"
-  (parse-queries (get-output-stream-string (read-lines filename))))
+  (parse-queries (cl-ppcre:regex-replace-all multi-line-comment-scanner
+                                         (get-output-stream-string (read-lines filename))
+                                         "")))
 
 (defun execute-file (pathname &optional (print nil))
   "This function will execute sql queries stored in a file. Each sql statement
