@@ -2188,8 +2188,6 @@ the test file test-execute-file-broken-transaction.sql as an example.
 For debugging purposes, if the optional print parameter is set to t, format will
 print the count of the query and the query to the REPL.
 
-This function does not handle nested multiple line comments.
-
 IMPORTANT NOTE: This utility function assumes that the file containing the sql
 queries can be trusted and bypasses the normal postmodern parameterization of
 queries.

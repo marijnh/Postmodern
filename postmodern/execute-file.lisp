@@ -1,6 +1,61 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
+(defstruct mlc-parser
+  buffer
+  (stream  (make-string-output-stream))
+  (state   :base)
+  (count 0)) ; nest levels. > 0 indicates already in at least one comment
+
+;; comments begin with /* and end with */
+;; possible states:
+;; :base
+;; :mlc (already in a multiline comment)
+;; :mb (maybe beginning a new multiline comment)
+;; :me (maybe ending a multiline comment)
+
+(defun mlc-parse-query (str &optional (state (make-mlc-parser)))
+  (loop for char across str
+    do
+    (case char
+      (#\/ (case (mlc-parser-state state)
+             (:base (setf (mlc-parser-state state) :mb))
+             (:mb ; faked beginning, return to earlier state (:base or :mlc)
+              (if (> (mlc-parser-count state) 0)
+                  (setf (mlc-parser-state state) :mlc)
+                  (progn
+                    (setf (mlc-parser-state state) :base)
+                    (write-char #\/ (mlc-parser-stream state))
+                    (write-char #\/ (mlc-parser-stream state)))))
+             (:mlc  (setf (mlc-parser-state state) :mb))
+             (:me ; actual ending of a comment
+              (decf (mlc-parser-count state))
+              (if (> (mlc-parser-count state) 0)
+                  (progn ; ending nested comment decrement and return to :mlc
+                    (setf (mlc-parser-state state) :mlc))
+                  (progn ; ending only comment level, decrement and return to :base
+                    (setf (mlc-parser-state state) :base))))))
+      (#\* (case (mlc-parser-state state)
+             (:base (write-char char (mlc-parser-stream state)))
+             (:mb   (progn ; actual beginning, increment count, set :mlc
+                      (setf (mlc-parser-state state) :mlc)
+                      (incf (mlc-parser-count state))))
+             (:mlc  (setf (mlc-parser-state state) :me))
+             (:me   (setf (mlc-parser-state state) :mlc))))
+
+      (otherwise (case (mlc-parser-state state)
+                   (:base
+                    (write-char char (mlc-parser-stream state)))
+                   (:mb
+                    (if (> (mlc-parser-count state) 0)
+                        (setf (mlc-parser-state state) :mlc)
+                        (progn
+                          (setf (mlc-parser-state state) :base)
+                          (write-char char (mlc-parser-stream state)))))
+                   (:me (setf (mlc-parser-state state) :mlc)))))
+        :finally (return
+                   (get-output-stream-string (mlc-parser-stream state)))))
+
 (defstruct parser
   filename
   (stream  (make-string-output-stream))
@@ -240,10 +295,8 @@ should return
 
 (defun read-queries (filename)
   "Read SQL queries in given file and split them, returns a list"
-  (parse-queries (cl-ppcre:regex-replace-all
-                  multi-line-comment-scanner
-                  (get-output-stream-string (read-lines filename))
-                  "")))
+  (parse-queries (mlc-parse-query
+                  (get-output-stream-string (read-lines filename)))))
 
 (defun execute-file (pathname &optional (print nil))
   "This function will execute sql queries stored in a file. Each sql statement
