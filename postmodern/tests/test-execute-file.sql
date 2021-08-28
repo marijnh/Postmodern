@@ -16,7 +16,7 @@ with multiple lines
 */
 insert into company_employees (id,name,age,address,salary,join_date) values (3, 'john', 32, 'Toronto', 20100.00,'2005-07-13');
 insert into company_employees (id,name,age,address,salary,join_date) values (4, 'yasmin', 32, 'Mumbai', 20000.00,'2007-03-13');
-/* ;test comment 3 (asterisk in second line of multiline comment)
+/* ;test comment 3 (asterisk in /second/ line of multiline comment)
  * with multiple lines;;
 */
   insert into company_employees (id,name,age,address,salary,join_date) values (5, 'susan', 32, 'Vancouver', 20100.00,'2009-07-13');

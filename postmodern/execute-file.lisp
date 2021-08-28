@@ -201,7 +201,7 @@ should return
 ;; For multiple unnested multi-line comments in the same string.
 ;; Does not handle nested multi-line comments.
 (defparameter multi-line-comment-scanner
-  (cl-ppcre:create-scanner "//*.*?/*/" :single-line-mode t))
+  (cl-ppcre:create-scanner "/[*].*?[*]/"  :single-line-mode t))
 
 (defparameter single-line-comment-scanner
   (cl-ppcre:create-scanner "--.*"))
