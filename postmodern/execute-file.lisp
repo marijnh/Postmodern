@@ -41,7 +41,7 @@
                       (setf (mlc-parser-state state) :mlc)
                       (incf (mlc-parser-count state))))
              (:mlc  (setf (mlc-parser-state state) :me))
-             (:me   (setf (mlc-parser-state state) :mlc))))
+             (:me   (setf (mlc-parser-state state) :me))))
 
       (otherwise (case (mlc-parser-state state)
                    (:base
@@ -252,11 +252,6 @@ should return
     (end-of-file (e)
       (unless (eq :eat (parser-state state))
         (error e)))))
-
-;; For multiple unnested multi-line comments in the same string.
-;; Does not handle nested multi-line comments.
-(defparameter multi-line-comment-scanner
-  (cl-ppcre:create-scanner "/[*].*?[*]/"  :single-line-mode t))
 
 (defparameter single-line-comment-scanner
   (cl-ppcre:create-scanner "--.*"))
