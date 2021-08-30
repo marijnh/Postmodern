@@ -13,18 +13,27 @@ insert into company_employees (id,name,age,address,salary,join_date) values (1, 
 insert into company_employees (id,name,age,address,salary,join_date) values (2, 'ziad', 32, 'Beirut', 20000.00,'2003-03-13');
 /* test' comment 2
 with multiple lines
+  --*/
+/*
+/*
+
 */
-insert into company_employees (id,name,age,address,salary,join_date) values (3, 'john', 32, 'Toronto', 20100.00,'2005-07-13');
+  ***/
+\i tef-1.sql
+
+  insert into company_employees (id,name,age,address,salary,join_date) values (3, 'john', 32, 'Toronto', 20100.00,'2005-07-13');
+  -- Yet another comments
 insert into company_employees (id,name,age,address,salary,join_date) values (4, 'yasmin', 32, 'Mumbai', 20000.00,'2007-03-13');
 /* ;test comment 3 (asterisk in /second/ line of multiline comment)
  * with multiple lines;;
 */
   insert into company_employees (id,name,age,address,salary,join_date) values (5, 'susan', 32, 'Vancouver', 20100.00,'2009-07-13');
 /* ;test comment 4 (asterisk in second line of multiline comment)
- * with multiple lines;;
+ *** with multiple lines;;
   /* test' comment 4-1
    with multiple lines
+  /***/
   */
  * did I say something wrong?
-*/
+--*/
 insert into company_employees (id,name,age,address,salary,join_date) values (6, 'johanna', 32, 'Berlin', 20000.00,'2011-03-13');

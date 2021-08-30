@@ -16,45 +16,57 @@
 
 (defun mlc-parse-query (str &optional (state (make-mlc-parser)))
   (loop for char across str
-    do
-    (case char
-      (#\/ (case (mlc-parser-state state)
-             (:base (setf (mlc-parser-state state) :mb))
-             (:mb ; faked beginning, return to earlier state (:base or :mlc)
-              (if (> (mlc-parser-count state) 0)
-                  (setf (mlc-parser-state state) :mlc)
-                  (progn
-                    (setf (mlc-parser-state state) :base)
-                    (write-char #\/ (mlc-parser-stream state))
-                    (write-char #\/ (mlc-parser-stream state)))))
-             (:mlc  (setf (mlc-parser-state state) :mb))
-             (:me ; actual ending of a comment
-              (decf (mlc-parser-count state))
-              (if (> (mlc-parser-count state) 0)
-                  (progn ; ending nested comment decrement and return to :mlc
-                    (setf (mlc-parser-state state) :mlc))
-                  (progn ; ending only comment level, decrement and return to :base
-                    (setf (mlc-parser-state state) :base))))))
-      (#\* (case (mlc-parser-state state)
-             (:base (write-char char (mlc-parser-stream state)))
-             (:mb   (progn ; actual beginning, increment count, set :mlc
-                      (setf (mlc-parser-state state) :mlc)
-                      (incf (mlc-parser-count state))))
-             (:mlc  (setf (mlc-parser-state state) :me))
-             (:me   (setf (mlc-parser-state state) :me))))
+        do
+           (case char
+             (#\/ (case (mlc-parser-state state)
+                    (:base (setf (mlc-parser-state state) :mb))
+                    (:mb ; faked beginning, return to earlier state (:base or :mlc)
+                     (if (> (mlc-parser-count state) 0)
+                         (setf (mlc-parser-state state) :mlc)
+                         (progn
+                           (setf (mlc-parser-state state) :base)
+                           (write-char #\/ (mlc-parser-stream state))
+                           (write-char #\/ (mlc-parser-stream state)))))
+                    (:mlc  (setf (mlc-parser-state state) :mb))
+                    (:me ; actual ending of a comment
+                     (decf (mlc-parser-count state))
+                     (if (> (mlc-parser-count state) 0)
+                         (progn ; ending nested comment decrement and return to :mlc
+                           (setf (mlc-parser-state state) :mlc))
+                         (progn ; ending only comment level, decrement and return to :base
+                           (setf (mlc-parser-state state) :base))))))
+             (#\* (case (mlc-parser-state state)
+                    (:base (write-char char (mlc-parser-stream state)))
+                    (:mb   (progn ; actual beginning, increment count, set :mlc
+                             (setf (mlc-parser-state state) :mlc)
+                             (incf (mlc-parser-count state))))
+                    (:mlc  (setf (mlc-parser-state state) :me))
+                    (:me   (setf (mlc-parser-state state) :me))))
 
-      (otherwise (case (mlc-parser-state state)
-                   (:base
-                    (write-char char (mlc-parser-stream state)))
-                   (:mb
-                    (if (> (mlc-parser-count state) 0)
-                        (setf (mlc-parser-state state) :mlc)
-                        (progn
-                          (setf (mlc-parser-state state) :base)
-                          (write-char char (mlc-parser-stream state)))))
-                   (:me (setf (mlc-parser-state state) :mlc)))))
+             (otherwise (case (mlc-parser-state state)
+                          (:base
+                           (write-char char (mlc-parser-stream state)))
+                          (:mb
+                           (if (> (mlc-parser-count state) 0)
+                               (setf (mlc-parser-state state) :mlc)
+                               (progn
+                                 (setf (mlc-parser-state state) :base)
+                                 (write-char char (mlc-parser-stream state)))))
+                          (:me (setf (mlc-parser-state state) :mlc)))))
         :finally (return
                    (get-output-stream-string (mlc-parser-stream state)))))
+
+(defparameter single-line-comment-scanner
+  (cl-ppcre:create-scanner "--.*"))
+
+(defun strip-sql-comments (str)
+  "Take a string input, replace all the multi-line comments, then
+replace the single line comments, returning the resulting string."
+  (cl-ppcre::regex-replace-all
+   single-line-comment-scanner
+   (mlc-parse-query
+    str)
+   ""))
 
 (defstruct parser
   filename
@@ -253,13 +265,11 @@ should return
       (unless (eq :eat (parser-state state))
         (error e)))))
 
-(defparameter single-line-comment-scanner
-  (cl-ppcre:create-scanner "--.*"))
-
-(defun read-lines (filename &optional (q (make-string-output-stream)))
-  "Read lines from given filename and return them in a stream. Recursively
-   apply \i include instructions."
-  (with-open-file (s filename :direction :input)
+(defun read-lines (filename &optional (included-files nil) (q (make-string-output-stream)) )
+  "Read a given file and strip the comments. Read lines from the redacted result
+and and return them in a stream. Recursively apply \i include instructions."
+  (with-input-from-string
+      (s (strip-sql-comments (alexandria:read-file-into-string filename)))
     (loop
       for line = (read-line s nil)
       while line
@@ -270,28 +280,29 @@ should return
              (let ((include-filename
                      (merge-pathnames (subseq line 3)
                                       (directory-namestring filename))))
-               (read-lines include-filename q))
-             (progn
-               (setf line (cl-ppcre::regex-replace
-                           single-line-comment-scanner
-                           line
-                           "")) ; drop single line comments
-             (format q "~a~%" line)))
+               (when (not (member include-filename included-files))
+                 (push include-filename included-files)
+                 (read-lines include-filename included-files q )))
+             (format q "~a~%" line))
       finally (return q))))
 
 (defun parse-queries (file-content)
   "Read SQL queries in given string and split them, returns a list"
   (with-input-from-string (s (concatenate 'string file-content ";"))
     (let ((whitespace '(#\Space #\Tab #\Newline #\Linefeed #\Page #\Return)))
-      (flet ((emptyp (query) (every (alexandria:rcurry #'member whitespace) query)))
+      (flet ((emptyp (query)
+               (every (alexandria:rcurry #'member whitespace) query)))
         (loop :for query := (parse-query s)
               :while (and query (not (emptyp query)))
               :collect query)))))
 
 (defun read-queries (filename)
-  "Read SQL queries in given file and split them, returns a list"
-  (parse-queries (mlc-parse-query
-                  (get-output-stream-string (read-lines filename)))))
+  "Read SQL queries in given file and split them, returns a list. Track included
+files so there is no accidental infinite loop."
+  (let ((included-files nil))
+    (parse-queries
+     (get-output-stream-string
+      (read-lines filename included-files)))))
 
 (defun execute-file (pathname &optional (print nil))
   "This function will execute sql queries stored in a file. Each sql statement

@@ -18,7 +18,7 @@
     (pomo:execute-file good-file)
     (is (table-exists-p 'company-employees))
     (is (equal "paul" (query (:select 'name :from 'company-employees :where (:= 'id 1)) :single)))
-    (is (equal 6 (query (:select (:count 'id) :from 'company-employees) :single)))
+    (is (equal 7 (query (:select (:count 'id) :from 'company-employees) :single)))
     (query (:drop-table :if-exists 'company-employees :cascade))))
 
 (test broken-execute-file
