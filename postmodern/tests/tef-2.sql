@@ -2,4 +2,4 @@
 with multiple lines
   --*/
 
-  insert into company_employees (id,name,age,address,salary,join_date) values (8, 'Juan', 32, 'Madrid', 22000.00,'2011-04-13');
+  insert into company_employees (id,name,age,address,include_file,join_date) values (8, 'Juan', 32, 'Madrid', 'tef-2.sql','2011-04-13');

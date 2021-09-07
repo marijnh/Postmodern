@@ -7,25 +7,30 @@
 
 (in-suite :postmodern-execute-file)
 
-(defparameter good-file (asdf:system-relative-pathname :postmodern "postmodern/tests/test-execute-file.sql"))
-(defparameter bad-file (asdf:system-relative-pathname :postmodern "postmodern/tests/test-execute-file-broken.sql"))
-(defparameter bad-file-with-transaction (asdf:system-relative-pathname :postmodern "postmodern/tests/test-execute-file-broken-transaction.sql"))
+(defparameter *good-file* (asdf:system-relative-pathname :postmodern "postmodern/tests/test-execute-file.sql"))
+
+(defparameter *first-include-good-file* (asdf:system-relative-pathname :postmodern "postmodern/tests/test-first-include-execute-file.sql"))
+
+(defparameter *fail-include-file* (asdf:system-relative-pathname :postmodern "postmodern/tests/test-fail-include-execute-file.sql"))
+
+(defparameter *bad-file* (asdf:system-relative-pathname :postmodern "postmodern/tests/test-execute-file-broken.sql"))
+(defparameter *bad-file-with-transaction* (asdf:system-relative-pathname :postmodern "postmodern/tests/test-execute-file-broken-transaction.sql"))
 
 (test simple-execute-file
   (with-test-connection
     (when (table-exists-p 'company-employees)
       (query (:drop-table :if-exists 'company-employees :cascade)))
-    (pomo:execute-file good-file)
+    (pomo:execute-file *good-file*)
     (is (table-exists-p 'company-employees))
-    (is (equal "paul" (query (:select 'name :from 'company-employees :where (:= 'id 1)) :single)))
-    (is (equal 7 (query (:select (:count 'id) :from 'company-employees) :single)))
+    (is (equal "Paul" (query (:select 'name :from 'company-employees :where (:= 'id 1)) :single)))
+    (is (equal 11 (query (:select (:count 'id) :from 'company-employees) :single)))
     (query (:drop-table :if-exists 'company-employees :cascade))))
 
 (test broken-execute-file
   (with-test-connection
     (when (table-exists-p 'company-employees)
       (query (:drop-table :if-exists 'company-employees :cascade)))
-    (signals error (pomo:execute-file bad-file))
+    (signals error (pomo:execute-file *bad-file*))
     (is (table-exists-p 'company-employees))
     (is (equal "paul" (query (:select 'name :from 'company-employees :where (:= 'id 1)) :single)))
 ;; the bad-file should stop executing on the attempt to insert a record with the same id as the first insertion
@@ -36,7 +41,14 @@
   (with-test-connection
     (when (table-exists-p 'company-employees)
       (query (:drop-table :if-exists 'company-employees :cascade)))
-    (signals error (pomo:execute-file bad-file-with-transaction)))
+    (signals error (pomo:execute-file *bad-file-with-transaction*)))
   (with-test-connection
     (is (not (table-exists-p 'company-employees)))
+    (query (:drop-table :if-exists 'company-employees :cascade))))
+
+(test fail-include-execute-file
+  (with-test-connection
+    (when (table-exists-p 'company-employees)
+      (query (:drop-table :if-exists 'company-employees :cascade)))
+    (signals error (pomo:execute-file *fail-include-file*))
     (query (:drop-table :if-exists 'company-employees :cascade))))

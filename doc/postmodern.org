@@ -2180,6 +2180,14 @@ the file will be run independently, but if one statement fails, subsequent
 query statements will not be run, but any statement prior to the failing
 statement will have been commited.
 
+Execute-file allows the sql file to include other sql files, with the
+meta-commands \i or  \include which look for a file location relative to your
+default pathname (current working directory) or \ir or \include_relative which
+look for a file location relative to the initial sql file. If the file is not
+found in the expected location, execute-file will look to see if the requested
+file is in the other possible location. If that does not work, it will trigger
+an error with a restart which allows you to provide a new name for the file.
+
 If you want the standard transction treatment such that all statements succeed
 or no statement succeeds, then ensure that the file starts with a "begin
 transaction" statement and finishes with an "end transaction" statement. See

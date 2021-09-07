@@ -1,73 +1,6 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
-(defstruct mlc-parser
-  buffer
-  (stream  (make-string-output-stream))
-  (state   :base)
-  (count 0)) ; nest levels. > 0 indicates already in at least one comment
-
-;; comments begin with /* and end with */
-;; possible states:
-;; :base
-;; :mlc (already in a multiline comment)
-;; :mb (maybe beginning a new multiline comment)
-;; :me (maybe ending a multiline comment)
-
-(defun mlc-parse-query (str &optional (state (make-mlc-parser)))
-  (loop for char across str
-        do
-           (case char
-             (#\/ (case (mlc-parser-state state)
-                    (:base (setf (mlc-parser-state state) :mb))
-                    (:mb ; faked beginning, return to earlier state (:base or :mlc)
-                     (if (> (mlc-parser-count state) 0)
-                         (setf (mlc-parser-state state) :mlc)
-                         (progn
-                           (setf (mlc-parser-state state) :base)
-                           (write-char #\/ (mlc-parser-stream state))
-                           (write-char #\/ (mlc-parser-stream state)))))
-                    (:mlc  (setf (mlc-parser-state state) :mb))
-                    (:me ; actual ending of a comment
-                     (decf (mlc-parser-count state))
-                     (if (> (mlc-parser-count state) 0)
-                         (progn ; ending nested comment decrement and return to :mlc
-                           (setf (mlc-parser-state state) :mlc))
-                         (progn ; ending only comment level, decrement and return to :base
-                           (setf (mlc-parser-state state) :base))))))
-             (#\* (case (mlc-parser-state state)
-                    (:base (write-char char (mlc-parser-stream state)))
-                    (:mb   (progn ; actual beginning, increment count, set :mlc
-                             (setf (mlc-parser-state state) :mlc)
-                             (incf (mlc-parser-count state))))
-                    (:mlc  (setf (mlc-parser-state state) :me))
-                    (:me   (setf (mlc-parser-state state) :me))))
-
-             (otherwise (case (mlc-parser-state state)
-                          (:base
-                           (write-char char (mlc-parser-stream state)))
-                          (:mb
-                           (if (> (mlc-parser-count state) 0)
-                               (setf (mlc-parser-state state) :mlc)
-                               (progn
-                                 (setf (mlc-parser-state state) :base)
-                                 (write-char char (mlc-parser-stream state)))))
-                          (:me (setf (mlc-parser-state state) :mlc)))))
-        :finally (return
-                   (get-output-stream-string (mlc-parser-stream state)))))
-
-(defparameter single-line-comment-scanner
-  (cl-ppcre:create-scanner "--.*"))
-
-(defun strip-sql-comments (str)
-  "Take a string input, replace all the multi-line comments, then
-replace the single line comments, returning the resulting string."
-  (cl-ppcre::regex-replace-all
-   single-line-comment-scanner
-   (mlc-parse-query
-    str)
-   ""))
-
 (defstruct parser
   filename
   (stream  (make-string-output-stream))
@@ -265,26 +198,201 @@ should return
       (unless (eq :eat (parser-state state))
         (error e)))))
 
-(defun read-lines (filename &optional (included-files nil) (q (make-string-output-stream)) )
+(defstruct mlc-parser
+  buffer
+  (stream  (make-string-output-stream))
+  (state   :base)
+  (count 0)) ; nest levels. > 0 indicates already in at least one comment
+
+;; comments begin with /* and end with */
+;; possible states:
+;; :base
+;; :mlc (already in a multiline comment)
+;; :mb (maybe beginning a new multiline comment)
+;; :me (maybe ending a multiline comment)
+
+(defun mlc-parse-query (str &optional (state (make-mlc-parser)))
+  (loop for char across str
+        do
+           (case char
+             (#\/ (case (mlc-parser-state state)
+                    (:base (setf (mlc-parser-state state) :mb))
+                    (:mb ; faked beginning, return to earlier state (:base or :mlc)
+                     (if (> (mlc-parser-count state) 0)
+                         (progn
+                           (setf (mlc-parser-state state) :mlc))
+                         (progn
+                           (setf (mlc-parser-state state) :base)
+                           (write-char #\/ (mlc-parser-stream state))
+                           (write-char #\/ (mlc-parser-stream state)))))
+                    (:mlc  (setf (mlc-parser-state state) :mb))
+                    (:me ; actual ending of a comment
+                     (decf (mlc-parser-count state))
+                     (if (> (mlc-parser-count state) 0)
+                         (progn ; ending nested comment decrement and return to :mlc
+                           (setf (mlc-parser-state state) :mlc))
+                         (progn ; ending only comment level, decrement and return to :base
+                           (setf (mlc-parser-state state) :base))))))
+             (#\* (case (mlc-parser-state state)
+                    (:base (write-char char (mlc-parser-stream state)))
+                    (:mb   (progn ; actual beginning, increment count, set :mlc
+                             (setf (mlc-parser-state state) :mlc)
+                             (incf (mlc-parser-count state))))
+                    (:mlc  (setf (mlc-parser-state state) :me))
+                    (:me   (setf (mlc-parser-state state) :me))))
+
+             (otherwise (case (mlc-parser-state state)
+                          (:base
+                           (write-char char (mlc-parser-stream state)))
+                          (:mb
+                           (if (> (mlc-parser-count state) 0)
+                               (setf (mlc-parser-state state) :mlc)
+                               (progn
+                                 (write-char #\/ (mlc-parser-stream state))
+                                 (setf (mlc-parser-state state) :base)
+                                 (write-char char (mlc-parser-stream state)))))
+                          (:me (setf (mlc-parser-state state) :mlc)))))
+        :finally (return
+                   (get-output-stream-string (mlc-parser-stream state)))))
+
+(defparameter single-line-comment-scanner
+  (cl-ppcre:create-scanner "--.*"))
+
+(defun remove-sql-comments (str)
+  "Take a string input, replace all the multi-line comments, then
+replace the single line comments, returning the resulting string."
+  (cl-ppcre::regex-replace-all
+   single-line-comment-scanner
+   (mlc-parse-query
+    str)
+   ""))
+
+(define-condition missing-i-file (error)
+  ((%filename :reader filename :initarg :filename)
+   (%base-filename :reader base-filename :initarg :base-filename)
+   ($meta-cmd :reader meta-cmd :initarg :meta-cmd))
+  (:report (lambda (condition stream)
+             (format stream "We tried but failed to find file ~a at the location
+specified by the ~a meta command.
+
+Note that meta-commands \\i or  \\include in the sql file look for a file location
+relative to your default pathname (current working directory), in this case:
+~a.
+
+Meta-commandsd \\ir or \\include_relative look for a file location relative to the
+initial sql file, in this case:
+~a.
+
+ As a fallback, we also looked for it where the ~a meta command would have specified.
+Can you double check that the file actually exists where it is supposed to be?"
+                     (filename condition)
+                     (if (eq (meta-cmd condition) 'i)
+                         "\\i or \\include"
+                         "\\ir or \\include_relative")
+                     (uiop::get-pathname-defaults)
+                     (directory-namestring (base-filename condition))
+                     (if (eq (meta-cmd condition) 'i)
+                         "\\ir or \\include_relative"
+                         "\\i or \\include")))))
+
+(defun line-has-includes (line)
+  "Returns 'i if the first characters in a line are the postgresql include file
+commands: \i or \include. Returns 'ir if the first characters in a line are postgresql
+include commands \ir or \include_relative. Returns nil otherwise."
+  (setf line (string-trim '(#\space #\tab) line))
+  (cond ((and (> (length line) 3)
+              (string= "\\i " (subseq line 0 3)))
+         (values 'i (string-trim '(#\space #\tab) (subseq line 3))))
+         ((and (> (length line) 9)
+              (string= "\\include " (subseq line 0 9)))
+         (values 'i (string-trim '(#\space #\tab) (subseq line 9))))
+        ((and (> (length line) 4)
+              (string= "\\ir " (subseq line 0 4)))
+         (values 'ir (string-trim '(#\space #\tab) (subseq line 4))))
+         ((and (> (length line) 18)
+               (string= "\\include_relative " (subseq line 0 18)))
+          (values 'ir (string-trim '(#\space #\tab) (subseq line 18))))
+         (t nil)))
+
+(defun find-included-filename (meta-cmd new-filename base-filename)
+  "Create full pathname if included using a \ir metacommand or \include_relative."
+  (when new-filename
+    (restart-case
+        (let ((relative-pathname (merge-pathnames new-filename
+                                                  (directory-namestring base-filename)))
+              (working-pathname (merge-pathnames new-filename
+                                                 (uiop::get-pathname-defaults))))
+          (cond ((and (eq meta-cmd 'ir)
+                      (uiop:file-exists-p relative-pathname))
+                 relative-pathname)
+                ((and (eq meta-cmd 'i)
+                      (uiop:file-exists-p working-pathname))
+                 working-pathname)
+                ((and (eq meta-cmd 'ir)
+                      (uiop:file-exists-p working-pathname))
+                 (warn
+                  (format nil "Using fallback to find file based on working directory position"))
+                 working-pathname)
+                ((and (eq meta-cmd 'i)
+                      (uiop:file-exists-p relative-pathname))
+                 (warn
+                  (format nil "Using fallback to find file based on relative directory position"))
+                 relative-pathname)
+                (t (error 'missing-i-file :meta-cmd meta-cmd
+                                          :filename new-filename :base-filename base-filename))))
+      (use-other-values (new-full-filename)
+        :report "Use a different filename location to be included."
+        :interactive (lambda ()
+                       (flet ((get-value ()
+                                (format t "~&Enter new value for sql file to be included: ")
+                                (read-line)))
+                         (list (string (get-value)))))
+        (find-included-filename meta-cmd new-full-filename base-filename)))))
+
+
+(defun read-sql-file (filename &optional (included-files nil) (q (make-string-output-stream)) )
   "Read a given file and strip the comments. Read lines from the redacted result
 and and return them in a stream. Recursively apply \i include instructions."
-  (with-input-from-string
-      (s (strip-sql-comments (alexandria:read-file-into-string filename)))
-    (loop
-      for line = (read-line s nil)
-      while line
-      do (if (or (and (> (length line) 3)
-                      (string= "\\i " (subseq line 0 3)))
-                 (and (> (length line) 4)
-                      (string= "\\ir " (subseq line 0 4))))
-             (let ((include-filename
-                     (merge-pathnames (subseq line 3)
-                                      (directory-namestring filename))))
-               (when (not (member include-filename included-files))
-                 (push include-filename included-files)
-                 (read-lines include-filename included-files q )))
-             (format q "~a~%" line))
-      finally (return q))))
+  (if (uiop:file-exists-p filename)
+      (with-input-from-string
+          (s (remove-sql-comments (alexandria:read-file-into-string filename)))
+        (loop
+          for line = (read-line s nil)
+          while line
+          do
+             (multiple-value-bind (meta-cmd new-filename)
+                 (line-has-includes line)
+               (cond ((or (eq meta-cmd 'i)
+                          (eq meta-cmd 'ir))
+                      (let ((include-filename
+                              (find-included-filename meta-cmd new-filename filename)))
+                        (when new-filename
+                          (if (not (member include-filename included-files))
+                             (progn
+                               (push include-filename included-files)
+                               (read-sql-file include-filename included-files q))
+                             (progn
+                               (warn
+                                (format nil
+                                        "~a: Duplicate attempts to include sql files ~a skipped~%"
+                                        *package* filename))
+                               "")))))
+                     (t (format q "~a~%" line))))
+          finally (return q)))
+      (warn (format nil "~a: file ~a doesn't seem to exist. If this was supposed to be an included file, please note that \\i looks for a file location relative to your default pathname, in this case ~a. \\ir looks for a file location relative to the initial included file location, in the case ~a~%"
+                    *package* filename
+                    (uiop::get-pathname-defaults)
+                    (if filename
+                        (directory-namestring filename)
+                        nil))
+            "")))
+
+(defun read-queries (filename)
+  "Read SQL queries in given file and split them, returns a list. Track included
+files so there is no accidental infinite loop."
+  (parse-queries
+   (get-output-stream-string
+    (read-sql-file filename))))
 
 (defun parse-queries (file-content)
   "Read SQL queries in given string and split them, returns a list"
@@ -296,19 +404,19 @@ and and return them in a stream. Recursively apply \i include instructions."
               :while (and query (not (emptyp query)))
               :collect query)))))
 
-(defun read-queries (filename)
-  "Read SQL queries in given file and split them, returns a list. Track included
-files so there is no accidental infinite loop."
-  (let ((included-files nil))
-    (parse-queries
-     (get-output-stream-string
-      (read-lines filename included-files)))))
-
 (defun execute-file (pathname &optional (print nil))
   "This function will execute sql queries stored in a file. Each sql statement
 in the file will be run independently, but if one statement fails, subsequent
 query statements will not be run, but any statement prior to the failing
 statement will have been commited.
+
+Execute-file allows the sql file to include other sql files, with the
+meta-commands \i or  \include which look for a file location relative to your
+default pathname (current working directory) or \ir or \include_relative which
+look for a file location relative to the initial sql file. If the file is not
+found in the expected location, execute-file will look to see if the requested
+file is in the other possible location. If that does not work, it will trigger
+an error with a restart which allows you to provide a new name for the file.
 
 If you want the standard transction treatment such that all statements succeed
 or no statement succeeds, then ensure that the file starts with a begin
