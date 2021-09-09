@@ -377,7 +377,7 @@ and and return them in a stream. Recursively apply \i include instructions."
                                       "~a: Duplicate attempts to include sql files ~a skipped~%"
                                       *package* filename))
                              ""))))
-                   (t (format q "~a~%" line))))
+                     (format q "~a~%" line)))
           finally (return q)))
       (warn (format nil "~a: file ~a doesn't seem to exist. If this was supposed to be an included file, please note that \\i looks for a file location relative to your default pathname, in this case ~a. \\ir looks for a file location relative to the initial included file location, in the case ~a~%"
                     *package* filename
