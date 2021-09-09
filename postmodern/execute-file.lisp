@@ -270,7 +270,7 @@ replace the single line comments, returning the resulting string."
 (define-condition missing-i-file (error)
   ((%filename :reader filename :initarg :filename)
    (%base-filename :reader base-filename :initarg :base-filename)
-   ($meta-cmd :reader meta-cmd :initarg :meta-cmd))
+   (%meta-cmd :reader meta-cmd :initarg :meta-cmd))
   (:report (lambda (condition stream)
              (format stream "We tried but failed to find file ~a at the location
 specified by the ~a meta command.
@@ -303,16 +303,16 @@ include commands \ir or \include_relative. Returns nil otherwise."
   (cond ((and (> (length line) 3)
               (string= "\\i " (subseq line 0 3)))
          (values 'i (string-trim '(#\space #\tab) (subseq line 3))))
-         ((and (> (length line) 9)
+        ((and (> (length line) 9)
               (string= "\\include " (subseq line 0 9)))
          (values 'i (string-trim '(#\space #\tab) (subseq line 9))))
         ((and (> (length line) 4)
               (string= "\\ir " (subseq line 0 4)))
          (values 'ir (string-trim '(#\space #\tab) (subseq line 4))))
-         ((and (> (length line) 18)
-               (string= "\\include_relative " (subseq line 0 18)))
-          (values 'ir (string-trim '(#\space #\tab) (subseq line 18))))
-         (t nil)))
+        ((and (> (length line) 18)
+              (string= "\\include_relative " (subseq line 0 18)))
+         (values 'ir (string-trim '(#\space #\tab) (subseq line 18))))
+        (t nil)))
 
 (defun find-included-filename (meta-cmd new-filename base-filename)
   "Create full pathname if included using a \ir metacommand or \include_relative."
@@ -362,22 +362,22 @@ and and return them in a stream. Recursively apply \i include instructions."
           do
              (multiple-value-bind (meta-cmd new-filename)
                  (line-has-includes line)
-               (cond ((or (eq meta-cmd 'i)
-                          (eq meta-cmd 'ir))
-                      (let ((include-filename
-                              (find-included-filename meta-cmd new-filename filename)))
-                        (when new-filename
-                          (if (not (member include-filename included-files))
-                             (progn
-                               (push include-filename included-files)
-                               (read-sql-file include-filename included-files q))
-                             (progn
-                               (warn
-                                (format nil
-                                        "~a: Duplicate attempts to include sql files ~a skipped~%"
-                                        *package* filename))
-                               "")))))
-                     (t (format q "~a~%" line))))
+               (if (or (eq meta-cmd 'i)
+                       (eq meta-cmd 'ir))
+                   (let ((include-filename
+                           (find-included-filename meta-cmd new-filename filename)))
+                     (when new-filename
+                       (if (not (member include-filename included-files))
+                           (progn
+                             (push include-filename included-files)
+                             (read-sql-file include-filename included-files q))
+                           (progn
+                             (warn
+                              (format nil
+                                      "~a: Duplicate attempts to include sql files ~a skipped~%"
+                                      *package* filename))
+                             ""))))
+                   (t (format q "~a~%" line))))
           finally (return q)))
       (warn (format nil "~a: file ~a doesn't seem to exist. If this was supposed to be an included file, please note that \\i looks for a file location relative to your default pathname, in this case ~a. \\ir looks for a file location relative to the initial included file location, in the case ~a~%"
                     *package* filename
