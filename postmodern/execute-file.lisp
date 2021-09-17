@@ -409,7 +409,7 @@ include commands \ir or \include_relative. Returns nil otherwise."
 (defun read-sql-file (filename &key (included-files nil)
                                  (output-stream (make-string-output-stream))
                                  (remove-comments t))
-  "Read a given file and strip the comments. Read lines from the redacted result
+  "Read a given file and (default) remove the comments. Read lines from the redacted result
 and return them in a stream. Recursively apply \i include instructions."
   (if (uiop:file-exists-p filename)
       (with-input-from-string
@@ -451,7 +451,9 @@ and return them in a stream. Recursively apply \i include instructions."
 
 (defun read-queries (filename &key (remove-comments t))
   "Read SQL queries in given file and split them, returns a list. Track included
-files so there is no accidental infinite loop."
+files so there is no accidental infinite loop. The default setting is to remove
+sql comments from the file before executing the sql code. If that causes problems,
+the remove-comments parameter can be set to nil."
   (parse-queries
    (get-output-stream-string
     (read-sql-file filename :remove-comments remove-comments))))
@@ -487,6 +489,10 @@ test file test-execute-file-broken-transaction.sql as an example.
 
 For debugging purposes, if the optional print parameter is set to t, format
 will print the count of the query and the query to the REPL.
+
+The default setting is to remove sql comments from the file before executing
+the sql code. If that causes problems, the remove-comments parameter can be
+set to nil.
 
 IMPORTANT NOTE: This utility function assumes that the file containing the
 sql queries can be trusted and bypasses the normal postmodern parameterization

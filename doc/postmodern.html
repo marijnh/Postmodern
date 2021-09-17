@@ -3707,6 +3707,12 @@ print the count of the query and the query to the REPL.
 </p>
 
 <p>
+The default setting is to remove sql comments from the file before executing
+the sql code. If that causes problems, the remove-comments parameter can be
+set to nil.
+</p>
+
+<p>
 IMPORTANT NOTE: This utility function assumes that the file containing the sql
 queries can be trusted and bypasses the normal postmodern parameterization of
 queries.
@@ -3916,7 +3922,10 @@ Read SQL queries in given string and split them, returns a list.
 <h3 id="function-read-queries">function read-queries (filename)</h3>
 <div class="outline-text-3" id="text-function-read-queries">
 <p>
-Read SQL queries in a given file and split them, returns a list.
+Read SQL queries in a given file and split them, returns a list. Track included
+files so there is no accidental infinite loop. The default setting is to remove
+sql comments from the file before executing the sql code. If that causes problems,
+the remove-comments parameter can be set to nil.
 </p>
 </div>
 </div>
