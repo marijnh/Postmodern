@@ -24,12 +24,12 @@
   (is (not (cl-postgres::code-point-printable-ascii-p 163))))
 
 (test char-mapped-to-nothing-p
-  (is (not (cl-postgres::char-mapped-to-nothing-p #\LATIN_CAPITAL_LETTER_O_WITH_DIAERESIS)))
-  (is (cl-postgres::char-mapped-to-nothing-p #\ZERO_WIDTH_SPACE)))
+  (is (not (cl-postgres::char-mapped-to-nothing-p (code-char 214))))
+  (is (cl-postgres::char-mapped-to-nothing-p (code-char 8203))))
 
 (test char-mapped-to-space-p
-  (is (not (cl-postgres::char-mapped-to-space-p #\LATIN_CAPITAL_LETTER_O_WITH_DIAERESIS)))
-  (is (cl-postgres::char-mapped-to-space-p #\ZERO_WIDTH_SPACE))
+  (is (not (cl-postgres::char-mapped-to-space-p (code-char 214))))
+  (is (cl-postgres::char-mapped-to-space-p (code-char 8203)))
   (is (cl-postgres::char-mapped-to-space-p (code-char 5760))))
 
 (test string-mapped-to-nothing-p
@@ -56,8 +56,8 @@
 
 (test saslprep-normalize
   (is (equal (cl-postgres::saslprep-normalize
-              (coerce (vector #\a #\LATIN_CAPITAL_LETTER_O_WITH_DIAERESIS
-                              (code-char 8193) #\c #\ZERO_WIDTH_SPACE
+              (coerce (vector #\a (code-char 214)
+                              (code-char 8193) #\c (code-char 8203)
                               (code-char 65025)
                               (code-char 1214) #\d)
                       'string))
