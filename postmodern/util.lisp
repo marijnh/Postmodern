@@ -6,7 +6,7 @@
 
 (defun valid-sql-character-p (chr)
   "Returns t if chr is letter, underscore, digits or dollar sign"
-  (or (cl-unicode:has-property chr "Letter")
+  (or (uax-15:unicode-letter-p chr)
       (digit-char-p chr)
       (eq chr #\_)
       (eq chr #\$)))
@@ -25,7 +25,7 @@ First test is for a quoted string, which has less restrictions. "
               (notany #'code-char-0-p str))
         str)
         ((and (stringp str)
-              (or (cl-unicode:has-property (char str 0) "Letter")
+              (or (uax-15:unicode-letter-p (char str 0))
                   (eq (char str 0) #\_))
               (every #'valid-sql-character-p str)))
         (t nil)))

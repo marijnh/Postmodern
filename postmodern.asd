@@ -26,7 +26,6 @@
                "s-sql"
                "global-vars"
                "split-sequence"
-               "cl-unicode"
                "uiop"
                (:feature :postmodern-use-mop "closer-mop")
                (:feature :postmodern-thread-safe "bordeaux-threads"))
