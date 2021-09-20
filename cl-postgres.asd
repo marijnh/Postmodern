@@ -27,6 +27,7 @@
     :components ((:file "package")
                  (:file "features")
                  (:file "config")
+                 (:file "oid" :depends-on ("package" "config"))
                  (:file "errors" :depends-on ("package"))
                  (:file "data-types" :depends-on ("package" "config"))
                  (:file "sql-string" :depends-on ("package" "config" "data-types"))
@@ -36,7 +37,6 @@
                  (:file "communicate"
                   :depends-on (#.*string-file* "sql-string" "config"))
                  (:file "messages" :depends-on ("communicate" "config"))
-                 (:file "oid" :depends-on ("package" "config"))
                  (:file "ieee-floats" :depends-on ("config"))
                  (:file "interpret"
                   :depends-on ("oid" "communicate" "ieee-floats" "config"))

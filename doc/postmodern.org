@@ -2180,6 +2180,14 @@ the file will be run independently, but if one statement fails, subsequent
 query statements will not be run, but any statement prior to the failing
 statement will have been commited.
 
+Execute-file allows the sql file to include other sql files, with the
+meta-commands \i or  \include which look for a file location relative to your
+default pathname (current working directory) or \ir or \include_relative which
+look for a file location relative to the initial sql file. If the file is not
+found in the expected location, execute-file will look to see if the requested
+file is in the other possible location. If that does not work, it will trigger
+an error with a restart which allows you to provide a new name for the file.
+
 If you want the standard transction treatment such that all statements succeed
 or no statement succeeds, then ensure that the file starts with a "begin
 transaction" statement and finishes with an "end transaction" statement. See
@@ -2187,6 +2195,10 @@ the test file test-execute-file-broken-transaction.sql as an example.
 
 For debugging purposes, if the optional print parameter is set to t, format will
 print the count of the query and the query to the REPL.
+
+The default setting is to remove sql comments from the file before executing
+the sql code. If that causes problems, the remove-comments parameter can be
+set to nil.
 
 IMPORTANT NOTE: This utility function assumes that the file containing the sql
 queries can be trusted and bypasses the normal postmodern parameterization of
@@ -2337,7 +2349,10 @@ Read SQL queries in given string and split them, returns a list.
    :CUSTOM_ID: function-read-queries
    :END:
 
-Read SQL queries in a given file and split them, returns a list.
+Read SQL queries in a given file and split them, returns a list. Track included
+files so there is no accidental infinite loop. The default setting is to remove
+sql comments from the file before executing the sql code. If that causes problems,
+the remove-comments parameter can be set to nil.
 ** function sql-escape-string (string)
    :PROPERTIES:
    :CUSTOM_ID: function-sql-escape-string
