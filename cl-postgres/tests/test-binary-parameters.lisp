@@ -529,7 +529,7 @@ unless it would have been valid as a text parameter."
                                           (vector-to-hex-string random-bytes)
                                           "\")"))))))))))
 
-(test binary-write-row-array-bytea
+#-abcl (test binary-write-row-array-bytea1
   (with-binary-test-connection
     (exec-query connection "create temporary table test (a bytea)")
     (let ((*random-byte-count* 16))
@@ -545,7 +545,7 @@ unless it would have been valid as a text parameter."
              (is (equalp (exec-query connection "select row(ARRAY[a]) from test;" 'list-row-reader)
                          `(((#(,random-bytes)))))))))))
 
-(test binary-write-row-array-bytea
+(test binary-write-row-array-bytea2
   (with-binary-test-connection
     (with-binary-row-values
       (exec-query connection "create temporary table test (a bytea)")
@@ -680,7 +680,7 @@ unless it would have been valid as a text parameter."
       (is (equalp (exec-query connection "select row((ARRAY[1,3,4])[5:99])" 'list-row-reader)
                   '(((NIL))))))))
 
-(test binary-row-array-nulls-binary-2
+#-abcl  (test binary-row-array-nulls-binary-2
   (with-binary-test-connection
     (cl-postgres::with-binary-row-values
       (is (equalp (exec-query connection "select row(ARRAY[NULL, NULL]);" 'list-row-reader)

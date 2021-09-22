@@ -67,7 +67,8 @@
                          (:file "test-return-types-timestamps" :depends-on ("test-package" "tests"))
                          (:file "test-transactions" :depends-on ("test-package" "tests"))
                          (:file "test-roles" :depends-on ("test-package" "tests"))
-                         (:file "test-dao" :depends-on ("test-package" "tests"))
+                         #-abcl (:file "test-dao" :depends-on ("test-package" "tests"))
+                         #+abcl (:file "abcl-test-dao" :depends-on ("test-package" "tests"))
                          (:file "test-execute-file" :depends-on ("test-package" "tests")))))
 
   :perform (test-op (o c)

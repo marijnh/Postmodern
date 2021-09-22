@@ -221,6 +221,7 @@ for binding data for binary long object columns."
                             (aref param-values i) value)))
                (declare (inline set-param))
                (cond ((eq param :null)
+                      (log:info "messages:bind-message param ~a~%" param)
                       (set-param 0 0 nil))
                      ((typep param '(vector (unsigned-byte 8))) ;param already in binary form
                       (set-param 1 (length param) param))

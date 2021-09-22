@@ -1007,7 +1007,7 @@ To sum the column len of all films and group the results by kind:"
                                       (:set (:set 'd1)
                                             (:set 'd2 'd3)))))
              "(SELECT d1, d2, d3, SUM(v) FROM test_cube GROUP BY GROUPING SETS ((d1), (d2, d3)))"))
-  (is (equal (with-test-connection
+#-abcl  (is (equal (with-test-connection
                (query (:select 'city (:as (:extract 'year 'start-date)  'joining-year)
                                (:as (:count 1) 'employee_count)
                                :from 'employee
@@ -1679,7 +1679,7 @@ To sum the column len of all films and group the results by kind:"
                      :on (:= 1 1)))
                "(SELECT pet, ordinality, tag FROM pets LEFT JOIN LATERAL unnest(tags) WITH ORDINALITY  ON (1 = 1))"))
 
-    (is (equal (query (:select 'pet 'sort-order 'tag
+#-abcl (is (equal (query (:select 'pet 'sort-order 'tag
                        :from 'pets
                        :left-join-lateral (:unnest 'tags)
                        :with-ordinality-as (:f 'tag 'sort-order)
@@ -2461,7 +2461,7 @@ that the table will need to be scanned twice. Everything is a trade-off."
   (with-test-connection
     (is (equalp (query (:select (:regexp_match "foobarbequebaz" "bar.*que")) :single)
                 #("barbeque")))
-    (is (equal (query (:select (:regexp_match "foobarbequebaz" "bar.~que")) :single)
+#-abcl    (is (equal (query (:select (:regexp_match "foobarbequebaz" "bar.~que")) :single)
                :NULL))
     (is (equal (query (:select (:~ "foobarbequebaz" "bar.*que") ) :single)
                t))

@@ -44,6 +44,7 @@ from the socket."
         (size-sym (and (eq (car clauses) :length-sym)
                        (progn (pop clauses)
                               (pop clauses)))))
+
     (flet ((expand-characters (chars)
              (cond ((eq chars t) (setf t-found t) t)
                    ((consp chars) (mapcar #'char-code chars))
@@ -56,6 +57,7 @@ from the socket."
                       (declare (type (unsigned-byte 8) ,char-name)
                                (type (unsigned-byte 32) ,size-name)
                                (ignorable ,size-name))
+         (log:info "protocol:message-case char-name ~a" ,char-name)
                       (case ,char-name
                         (#.(char-code #\A)
                          (get-notification ,socket-name)
@@ -85,8 +87,8 @@ from the socket."
                                  (error 'protocol-error
                                         :message
                                         (format nil
-                                                "Unexpected message received: ~A"
-                                                (code-char ,char-name))))))))))
+                                                "Unexpected message received: ~A ~a"
+                                                (code-char ,char-name) ,char-name)))))))))
            (,iter-name))))))
 
 
@@ -358,6 +360,8 @@ array of field-description objects."
         (declare (ignore table-oid column size type-modifier format)
                  (type string name)
                  (type (unsigned-byte 32) type-id))
+        (log:info "protocol:read-field-description type-id ~a binary? ~a~%"
+                  type-id (interpreter-binary-p interpreter))
         (setf (elt descriptions i)
               (if (interpreter-binary-p interpreter)
                   (make-instance 'field-description
@@ -392,32 +396,49 @@ copy-in/copy-out states \(which are not supported)."
            #.*optimize*)
   (loop
     (message-case socket
-                  ;; CommandComplete
-                  (#\C (let* ((command-tag (read-str socket))
-                              (space (position #\Space command-tag
-                                               :from-end t)))
-                         (when space
-                           (setf *effected-rows*
-                                 (parse-integer command-tag :junk-allowed t
-                                                            :start (1+ space))))
-                         (return-from look-for-row nil)))
-                  ;; CopyInResponse
-                  (#\G (read-uint1 socket)
-                       (skip-bytes socket (* 2 (read-uint2 socket))) ; The field formats
-                       (copy-done-message socket)
-                       (error 'database-error
-                              :message "Copy-in not supported."))
-                  ;; CopyOutResponse
-                  (#\H (read-uint1 socket)
-                       (skip-bytes socket (* 2 (read-uint2 socket))) ; The field formats
-                       (error 'database-error
-                              :message "Copy-out not supported."))
-                  ;; DataRow
-                  (#\D (skip-bytes socket 2)
-                       (return-from look-for-row t))
-                  ;; EmptyQueryResponse
-                  (#\I (warn "Empty query sent.")
-                       (return-from look-for-row nil)))))
+      ;; CommandComplete
+      (#\C (let* ((command-tag (read-str socket))
+                  (space (position #\Space command-tag
+                                   :from-end t)))
+             (log:info "protocol:look-for-row-1 command-tag ~a~%" command-tag)
+             (when space
+               (log:info "protocol:look-for-row-1 have space command-tag ~a~%"
+                         (parse-integer command-tag :junk-allowed t
+                                                :start (1+ space)))
+               (setf *effected-rows*
+                     (parse-integer command-tag :junk-allowed t
+                                                :start (1+ space))))
+             (return-from look-for-row nil)))
+      ;; CopyInResponse
+      (#\G (read-uint1 socket)
+           (skip-bytes socket (* 2 (read-uint2 socket))) ; The field formats
+           (copy-done-message socket)
+           (error 'database-error
+                  :message "Copy-in not supported."))
+      ;; CopyOutResponse
+      (#\H (read-uint1 socket)
+           (skip-bytes socket (* 2 (read-uint2 socket))) ; The field formats
+           (error 'database-error
+                  :message "Copy-out not supported."))
+      ;; DataRow
+      (#\D (skip-bytes socket 2)
+           (return-from look-for-row t))
+      ;; EmptyQueryResponse
+      (#\I (warn "Empty query sent.")
+           (return-from look-for-row nil))
+      #+abcl (#\Return
+              (let* ((command-tag (read-str socket))
+                  (space (position #\Space command-tag
+                                   :from-end t)))
+             (log:info "protocol:look-for-row-3 command-tag ~a~%" command-tag)
+                (when space
+                  (log:info "protocol:look-for-row-1 have space command-tag ~a~%"
+                            (parse-integer command-tag :junk-allowed t
+                                              :start (1+ space)))
+               (setf *effected-rows*
+                     (parse-integer command-tag :junk-allowed t
+                                                :start (1+ space))))
+             (return-from look-for-row nil))))))
 
 (defun try-to-sync (socket sync-sent)
   "Try to re-synchronize a connection by sending a sync message if it
@@ -476,6 +497,7 @@ results."
   (declare (type stream socket)
            (type string query)
            #.*optimize*)
+  (log:info "protocol:send-query1")
   (with-syncing
       (with-query (query)
         (let ((row-description nil))
@@ -504,10 +526,16 @@ results."
           (message-case socket
                         ;; BindComplete
             (#\2))
+          (log:info "protocol:send-query2")
           (returning-effected-rows
            (if row-description
-               (funcall row-reader socket row-description)
-               (look-for-row socket))
+               (progn
+                   (log:info "protocol:send-query3")
+                 (funcall row-reader socket row-description))
+               (progn
+                 (log:info "protocol:send-query 4")
+                 (look-for-row socket)
+                 (log:info "protocol:send-query 5")))
            (message-case socket
                          ;; ReadyForQuery, skipping transaction status
                          (#\Z (read-uint1 socket))))))))
@@ -549,6 +577,7 @@ and apply the given row-reader to the result."
            (type string name)
            (type list parameters)
            #.*optimize*)
+  (log:info "protocol:send-execute")
   (with-syncing
       (let ((row-description nil)
             (n-parameters 0))
@@ -582,7 +611,10 @@ and apply the given row-reader to the result."
         (returning-effected-rows
          (if row-description
              (funcall row-reader socket row-description)
-             (look-for-row socket))
+             (progn
+               (log:info "send-execute-1")
+               (look-for-row socket)
+               (log:info "send-execute-2")))
          (message-case socket
                        ;; CommandComplete
                        (#\C (read-str socket)
