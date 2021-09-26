@@ -64,8 +64,10 @@
                                                   123456789123456987654 'b #\d 12.2
                                                   nil t))
              '(0 21 23 20 0 0 0 700 16 16)))
-  (is (equal (cl-postgres::parameter-list-types '(12413212.98324d0))
-             '(701))))
+  #-clisp (is (equal (cl-postgres::parameter-list-types '(12413212.98324d0))
+                     '(701)))
+  #+clisp (is (equal (cl-postgres::parameter-list-types '(12413212.98324d0))
+                     '(700))))
 
 (test parameter-lists-match-oid-types
   (is (cl-postgres::parameter-lists-match-oid-types-p '(12413212.98324d0) '(124212.98324d0)))
@@ -75,9 +77,15 @@
                                                            '(3)))))
 
 (test param-to-oid
-  (is (equal (loop for x in '(integer int2 int4 int8 boolean t nil float
+  #-clisp (is (equal (loop for x in '(integer int2 int4 int8 boolean t nil float
                               double-float "jeff" 2 2000 12345678909 1.0 2.7d0 "12a")
                    collect (list x (param-to-oid x)))
              '((INTEGER 0) (INT2 0) (INT4 0) (INT8 0) (BOOLEAN 0) (T 16) (NIL 16) (FLOAT 0)
                (DOUBLE-FLOAT 0) ("jeff" 0) (2 21) (2000 21) (12345678909 20) (1.0 700)
-               (2.7d0 701) ("12a" 0)))))
+               (2.7d0 701) ("12a" 0))))
+  #+clisp (is (equal (loop for x in '(integer int2 int4 int8 boolean t nil float
+                              double-float "jeff" 2 2000 12345678909 1.0 2.7d0 "12a")
+                   collect (list x (param-to-oid x)))
+             '((INTEGER 0) (INT2 0) (INT4 0) (INT8 0) (BOOLEAN 0) (T 16) (NIL 16) (FLOAT 0)
+               (DOUBLE-FLOAT 0) ("jeff" 0) (2 21) (2000 21) (12345678909 20) (1.0 700)
+               (2.7d0 700) ("12a" 0)))))

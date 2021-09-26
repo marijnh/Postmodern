@@ -151,7 +151,9 @@ that PostgreSQL understands when sent through its socket connection. May return
 a string or a (vector (unsigned-byte 8)).")
   (:method ((arg integer))
     (int-to-vector arg))
-  (:method ((arg single-float))
+  #-clisp (:method ((arg single-float))
+            (int32-to-vector (cl-postgres-ieee-floats:encode-float32 arg)))
+  #+clisp (:method ((arg float))
     (int32-to-vector (cl-postgres-ieee-floats:encode-float32 arg)))
   #-clisp   (:method ((arg double-float)) ;; CLISP doesn't allow methods on double-float
               (int64-to-vector (cl-postgres-ieee-floats:encode-float64 arg)))
