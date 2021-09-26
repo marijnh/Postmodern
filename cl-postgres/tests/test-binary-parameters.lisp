@@ -529,24 +529,7 @@ unless it would have been valid as a text parameter."
                                           (vector-to-hex-string random-bytes)
                                           "\")"))))))))))
 
-;;; ABCL would fail on this test because it would need *read-row-values-as-binary* to be set to t
-#-abcl (test binary-write-row-array-bytea1
-  (with-binary-test-connection
-    (exec-query connection "create temporary table test (a bytea)")
-    (let ((*random-byte-count* 16))
-      (unwind-protect
-           (let ((random-bytes (make-array *random-byte-count*
-                                           :element-type '(unsigned-byte 8)
-                                           :initial-element 0)))
-             (loop for i below *random-byte-count*
-                   do (setf (aref random-bytes i)
-                            (random #x100)))
-             (prepare-query connection "bytea-insert" "insert into test values ($1)")
-             (exec-prepared connection "bytea-insert" (list random-bytes))
-             (is (equalp (exec-query connection "select row(ARRAY[a]) from test;" 'list-row-reader)
-                         `(((#(,random-bytes)))))))))))
-
-(test binary-write-row-array-bytea2
+(test binary-write-row-array-bytea
   (with-binary-test-connection
     (with-binary-row-values
       (exec-query connection "create temporary table test (a bytea)")
