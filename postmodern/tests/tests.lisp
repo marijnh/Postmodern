@@ -165,7 +165,7 @@
       (is (table-exists-p 'test-data))
       (execute (:insert-into 'test-data :set 'a 1 'b 5.4 'c "foobar"))
       (execute (:insert-into 'test-data :set 'a 2 'b 88 'c :null))
-      #-abcl (is (equal (query (:order-by (:select '* :from 'test-data) 'a))
+      (is (equal (query (:order-by (:select '* :from 'test-data) 'a))
                  '((1 5.4 "foobar")
                    (2 88.0 :null))))
       (execute (:drop-table 'test-data)))

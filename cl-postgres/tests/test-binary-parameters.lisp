@@ -529,6 +529,7 @@ unless it would have been valid as a text parameter."
                                           (vector-to-hex-string random-bytes)
                                           "\")"))))))))))
 
+;;; ABCL would fail on this test because it would need *read-row-values-as-binary* to be set to t
 #-abcl (test binary-write-row-array-bytea1
   (with-binary-test-connection
     (exec-query connection "create temporary table test (a bytea)")
@@ -680,7 +681,7 @@ unless it would have been valid as a text parameter."
       (is (equalp (exec-query connection "select row((ARRAY[1,3,4])[5:99])" 'list-row-reader)
                   '(((NIL))))))))
 
-#-abcl  (test binary-row-array-nulls-binary-2
+(test binary-row-array-nulls-binary-2
   (with-binary-test-connection
     (cl-postgres::with-binary-row-values
       (is (equalp (exec-query connection "select row(ARRAY[NULL, NULL]);" 'list-row-reader)

@@ -45,7 +45,7 @@
     (is (not (null *database*)))))
 
 (defun build-null-test-table ()
-  "Building a simple table just to test the implementation can return :null. ABCL I am looking at you."
+  "Building a simple table just to test the implementation can return :null."
   (with-test-connection
     (query (:drop-table :if-exists 'null-test :cascade))
     (query (:create-table 'null-test ((id :type serial :primary-key t :unique)
@@ -1007,7 +1007,7 @@ To sum the column len of all films and group the results by kind:"
                                       (:set (:set 'd1)
                                             (:set 'd2 'd3)))))
              "(SELECT d1, d2, d3, SUM(v) FROM test_cube GROUP BY GROUPING SETS ((d1), (d2, d3)))"))
-#-abcl  (is (equal (with-test-connection
+  (is (equal (with-test-connection
                (query (:select 'city (:as (:extract 'year 'start-date)  'joining-year)
                                (:as (:count 1) 'employee_count)
                                :from 'employee
@@ -1679,7 +1679,7 @@ To sum the column len of all films and group the results by kind:"
                      :on (:= 1 1)))
                "(SELECT pet, ordinality, tag FROM pets LEFT JOIN LATERAL unnest(tags) WITH ORDINALITY  ON (1 = 1))"))
 
-#-abcl (is (equal (query (:select 'pet 'sort-order 'tag
+    (is (equal (query (:select 'pet 'sort-order 'tag
                        :from 'pets
                        :left-join-lateral (:unnest 'tags)
                        :with-ordinality-as (:f 'tag 'sort-order)
@@ -2359,7 +2359,6 @@ that the table will need to be scanned twice. Everything is a trade-off."
                "DROP VIEW quagmire"))))
 
 ;; Test create-table
-;; Right now having difficulty with abcl and utf8, so separate test for it
 (test reserved-column-names-s-sql
   (with-test-connection
     (when (pomo:table-exists-p 'from-test-data1)
@@ -2461,7 +2460,7 @@ that the table will need to be scanned twice. Everything is a trade-off."
   (with-test-connection
     (is (equalp (query (:select (:regexp_match "foobarbequebaz" "bar.*que")) :single)
                 #("barbeque")))
-#-abcl    (is (equal (query (:select (:regexp_match "foobarbequebaz" "bar.~que")) :single)
+    (is (equal (query (:select (:regexp_match "foobarbequebaz" "bar.~que")) :single)
                :NULL))
     (is (equal (query (:select (:~ "foobarbequebaz" "bar.*que") ) :single)
                t))

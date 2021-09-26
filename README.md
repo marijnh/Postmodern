@@ -625,7 +625,9 @@ the same sample data looks like:
 
 The Lisp code in Postmodern is theoretically portable across implementations,
 and seems to work on all major ones as well as some minor ones such as Genera.
-It is regularly tested on ccl, sbcl, ecl and cmucl. ABCL currently has issues with utf-8 and :null.
+It is regularly tested on ccl, sbcl, ecl and cmucl.
+
+ABCL version 1.8.0 broke the dao class inheritance. See [https://abcl.org/trac/ticket/479](https://abcl.org/trac/ticket/479). Everything other than dao-classes works.
 
 Please let us know if it does not work on the implementation that you normally use. Implementations that do not have meta-object protocol support will not have DAOs, but all other parts of the library should work (all widely used implementations do support this).
 

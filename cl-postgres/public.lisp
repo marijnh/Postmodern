@@ -504,12 +504,3 @@ Postgresql is expecting the parameters to be in text format." error))))))
                   :do
                      (next-field field)))
   (values))
-
-(def-row-reader debug-row-reader (fields)
-  (loop :while (next-row)
-        :do (loop :for field :across fields
-                  :do
-                  (log:info "public:debug-row-reader field-name ~a field-type ~a interpreter "
-                  (field-name field)(field-type field))
-                     (next-field field)))
-  (values))

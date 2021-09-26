@@ -8,7 +8,6 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun integer-reader-name (bytes signed)
     (intern (with-standard-io-syntax
-              (log:info "communicate:integer-reader-name bytes ~a signed ~a" bytes signed)
               (format nil "~a~a~a~a" '#:read- (if signed "" '#:u)
                       '#:int bytes))))
   (defun integer-writer-name (bytes signed)
@@ -18,7 +17,6 @@
 
 (defmacro integer-reader (bytes)
   "Create a function to read integers from a binary stream."
-  (log:info "integer-reader bytes ~a" bytes)
   (let ((bits (* bytes 8)))
     (labels ((return-form (signed)
                (if signed

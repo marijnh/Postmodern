@@ -63,7 +63,7 @@ postmodern meta connection and in Postgresql"
 
             ;; CHANGE HERE TO SIGNALS ERROR
 
-#-abcl            (is (equal (funcall select-int :null)
+            (is (equal (funcall select-int :null)
                        :NULL)) ;mismatched parameter types if the connection is set for binary
             ;; parameter passing
             ;; the funcall creates the prepared statements logged in the postmodern connection
@@ -203,7 +203,7 @@ postmodern meta connection and in Postgresql"
     (with-non-binary-fixture
         (without-binary
           (defprepared select1 "select c from test_data where a = $1" :single)
-       #-abcl   (is (eq :null (funcall 'select1 2)))
+          (is (eq :null (funcall 'select1 2)))
           (drop-prepared-statement "all")
           (is (equal 0 (length (list-prepared-statements t))))
           (is (equal 0 (length (list-postmodern-prepared-statements t))))
@@ -211,7 +211,7 @@ postmodern meta connection and in Postgresql"
           (defprepared select1 "select c from test_data where a = $1" :single)
           (disconnect *database*)
           (signals error (query "select c from test_data where a = 2" :single))
-      #-abcl    (is (eq :null (funcall 'select1 2)))))))
+          (is (eq :null (funcall 'select1 2)))))))
 
 (test prepare-5
   "Test to ensure that we do not recreate the statement each time it is funcalled"
@@ -393,13 +393,13 @@ postmodern meta connection and in Postgresql"
       ;; Defprepared does not change the prepared statements logged in the postmodern connection or
       ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
       (defprepared select-1 "select c from test_data where a = $1" :single)
-#-abcl      (is (eq :null (funcall 'select-1 2)))
+      (is (eq :null (funcall 'select-1 2)))
       ;; recreate select1, then drop the connection and call select1
       (disconnect *database*)
       (signals error (query "select c from test_data where a = 2" :single))
       (signals error (query "select c from test_data where a = 2" :single))
       (signals error (funcall 'select-1 "2a"))
-#-abcl      (is (eq :null (funcall 'select-1 2)))))))
+      (is (eq :null (funcall 'select-1 2)))))))
 
 (test prepare-reserved-words
   (with-test-connection
@@ -434,7 +434,7 @@ postmodern meta connection and in Postgresql"
 
             ;; CHANGE HERE TO SIGNALS ERROR if bnary
 
-#-abcl            (is (equal (funcall select-int :null)
+            (is (equal (funcall select-int :null)
                        :NULL))
             ;; the funcall creates the prepared statements logged in the postmodern connection
             ;; and the postgresql connection
@@ -600,15 +600,15 @@ postmodern meta connection and in Postgresql"
     (with-non-binary-fixture
     (without-binary
       (defprepared select1 "select c from test_data where a = $1" :single)
-#-abcl      (is (eq :null (funcall 'select1 2)))
+      (is (eq :null (funcall 'select1 2)))
       (drop-prepared-statement "all")
       (is (equal 0 (length (list-prepared-statements t))))
       (is (equal 0 (length (list-postmodern-prepared-statements t))))
       ;; recreate select1, then drop the connection and call select1
       (defprepared select1 "select c from test_data where a = $1" :single)
       (disconnect *database*)
-#-abcl      (is (eq :null (query "select c from test_data where a = 2" :single)))
-#-abcl      (is (eq :null (funcall 'select1 2)))
+      (is (eq :null (query "select c from test_data where a = 2" :single)))
+      (is (eq :null (funcall 'select1 2)))
       (drop-prepared-statement "all")))))
 
 (test prepare-5-pooled
@@ -800,13 +800,13 @@ postmodern meta connection and in Postgresql"
       ;; Defprepared does not change the prepared statements logged in the postmodern connection or
       ;; in the postgresql connection. That will happen when the prepared statement is funcalled.
       (defprepared select-1 "select c from test_data where a = $1" :single)
-#-abcl      (is (eq :null (funcall 'select-1 2)))
+      (is (eq :null (funcall 'select-1 2)))
       ;; recreate select1, then drop the connection and call select1
       (disconnect *database*)
-#-abcl      (is (eq :null (query "select c from test_data where a = 2" :single)))
+      (is (eq :null (query "select c from test_data where a = 2" :single)))
       (signals error (funcall 'select-1 "2a"))
-#-abcl      (is (eq :null (funcall 'select-1 2)))
-#-abcl      (is (eq :null (select-1 2)))
+      (is (eq :null (funcall 'select-1 2)))
+      (is (eq :null (select-1 2)))
       (drop-prepared-statement "all")))))
 
 (test prepare-reserved-words-pooled

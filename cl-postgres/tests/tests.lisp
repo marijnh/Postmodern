@@ -769,7 +769,7 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
       (is (equalp (exec-query connection "select row((ARRAY[1,3,4])[5:99])" 'list-row-reader)
                   '(((NIL))))))))
 
-#-abcl (test row-array-nulls-binary-2
+(test row-array-nulls-binary-2
   (with-test-connection
     (cl-postgres::with-binary-row-values
       (is (equalp (exec-query connection "select row(ARRAY[NULL, NULL]);" 'list-row-reader)

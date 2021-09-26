@@ -20,7 +20,6 @@ case you can create separate read tables.")
   "This interpreter is used for types that we have no specific
 interpreter for -- it just reads the value as a string. \(Values of
 unknown types are passed in text form.)"
-  (log:info "interpret:interpret-as-text")
   (enc-read-string stream :byte-length size))
 
 (defclass type-interpreter ()
@@ -38,7 +37,6 @@ unknown types are passed in text form.)"
 (defun interpreter-binary-p (interp)
   "If the interpreter's use-binary field is a function, call it and
 return the value, otherwise, return T or nil as appropriate."
-  (log:info "interpret:interpreter-binary-p param ~a~%" interp)
   (let ((val (type-interpreter-use-binary interp)))
     (typecase val
       (function (funcall val))
@@ -47,7 +45,6 @@ return the value, otherwise, return T or nil as appropriate."
 (defun interpreter-reader (interp)
   "Determine if we went the text or binary reader for this type
 interpreter and return the appropriate reader."
-  (log:info "interpret:interpreter-reader param ~a~%" interp)
   (if (interpreter-binary-p interp)
       (type-interpreter-binary-reader interp)
       (type-interpreter-text-reader interp)))
@@ -59,7 +56,6 @@ interpreter and return the appropriate reader."
   (defun get-type-interpreter (oid)
     "Returns a type-interpreter containing interpretation rules for
 this type."
-    (log:info "interpret:get-type-interpreter oid ~a~%" oid)
     (gethash oid *sql-readtable* default-interpreter)))
 
 (defun set-sql-reader (oid function &key (table *sql-readtable*) binary-p)
@@ -103,7 +99,6 @@ interpreted as an array of the given type."
         (size-name (gensym))
         (length-used 0))
     (flet ((read-type (type &optional modifier)
-             (log:info "interpret:binary-reader type ~a" type)
              (ecase type
                (bytes `(read-bytes ,stream-name (- ,size-name ,length-used)))
                (string `(enc-read-string ,stream-name
@@ -128,14 +123,11 @@ interpreted as an array of the given type."
                   (ignorable ,size-name))
          ,(if (consp fields)
               (progn
-                (log:info "interpret:binary-reader 2 fields ~a" fields)
                 `(let ,(loop :for field :in fields
                             :collect `(,(first field)
                                        ,(apply #'read-type (cdr field))))
                   ,@value))
-              (progn
-                (log:info "interpret:binary-reader 3 fields ~a" fields)
-                (read-type fields (car value))))))))
+              (read-type fields (car value)))))))
 
 (defmacro define-interpreter (oid name fields &body value)
   "Shorthand for defining binary readers."
@@ -166,17 +158,14 @@ interpreted as an array of the given type."
 
 (defun read-row-value (stream size)
   (declare (type stream stream)
-           (type integer size)
-;           (ignore size)
-           )
-  (log:info "interpret:read-row-value-1 size ~a~%" size)
+           (type integer size))
   (let ((num-fields (read-uint4 stream)))
     (loop for i below num-fields
           collect (let ((oid (read-uint4 stream))
                         (size (read-int4 stream)))
                     (declare (type (signed-byte 32) size))
-                    (log:info "interpret:read-row-value-2 oid ~a size ~a~%" oid size)
-                    (if (eq size -1)
+                    (if #-abcl (eq size -1)
+                        #+abcl (eql size -1)
                         :null
                         (funcall (interpreter-reader (get-type-interpreter oid))
                                  stream size))))))
@@ -207,7 +196,6 @@ executing body so that row values will be returned as t."
 (defun read-binary-bits (stream size)
   (declare (type stream stream)
            (type integer size))
-  (log:info "interpret:read-binary-bits size ~a~%" size)
   (let ((byte-count (- size 4))
         (bit-count (read-uint4 stream)))
     (let ((bit-bytes (read-bytes stream byte-count))
@@ -226,14 +214,10 @@ executing body so that row values will be returned as t."
 
 (defun read-binary-array-value (stream size)
   (declare (type stream stream)
-           (type integer size)
-;           (ignore size)
-           )
-  (log:info "interpret:read-binary-array-value-1 size ~a~%" size)
+           (type integer size))
   (let ((num-dims (read-uint4 stream))
         (has-null (read-uint4 stream))
         (element-type (read-uint4 stream)))
-    (log:info "interpret:read-binary-array-value-2 has-null ~a element-type ~a~%" has-null element-type)
     (cond
       ((zerop num-dims)
        ;; Should we return nil or a (make-array nil) when num-dims is
@@ -252,7 +236,8 @@ executing body so that row values will be returned as t."
                  do (let ((size (read-int4 stream)))
                       (declare (type (signed-byte 32) size))
                       (setf (row-major-aref results i)
-                            (if (eq size -1)
+                            (if #-abcl (eq size -1)
+                                #+abcl (eql size -1)
                                 :null
                                 (funcall
                                  (interpreter-reader
@@ -478,7 +463,6 @@ e.g.
     (declare (type string value))
     (let ((pos 0))
       (declare (type fixnum pos))
-      (log:info "read-array-value transform ~a~%" transform)
       (labels ((readelt ()
                  (case (char value pos)
                    (#\" (interpret
