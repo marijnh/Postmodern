@@ -44,6 +44,7 @@ different than the query statement provided to ensure-prepared.")
 ;; Query Parameters
 (defparameter *result-styles*
   '((:none ignore-row-reader all-rows)
+    (:debug cl-postgres::debug-row-reader all-rows)
     (:lists list-row-reader all-rows)
     (:list list-row-reader single-row)
     (:rows list-row-reader all-rows)

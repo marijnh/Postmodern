@@ -7,8 +7,8 @@
 ;; Change this to enable/disable unicode manually (mind that it won't
 ;; work unless your implementation supports it).
 (defparameter *unicode*
-  #+(or sb-unicode unicode ics openmcl-unicode-strings) t
-  #-(or sb-unicode unicode ics openmcl-unicode-strings) nil)
+  #+(or sb-unicode unicode ics openmcl-unicode-strings abcl) t
+  #-(or sb-unicode unicode ics openmcl-unicode-strings abcl) nil)
 (defparameter *string-file* (if *unicode* "strings-utf-8" "strings-ascii"))
 
 (defsystem "cl-postgres"
@@ -16,7 +16,7 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
-  :version "1.33.1"
+  :version "1.33.2"
   :depends-on ("md5" "split-sequence" "ironclad" "cl-base64" "uax-15"
                      (:feature (:or :sbcl :allegro :ccl :clisp :genera
                                 :armedbear :cmucl :lispworks)

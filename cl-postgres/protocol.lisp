@@ -44,6 +44,7 @@ from the socket."
         (size-sym (and (eq (car clauses) :length-sym)
                        (progn (pop clauses)
                               (pop clauses)))))
+
     (flet ((expand-characters (chars)
              (cond ((eq chars t) (setf t-found t) t)
                    ((consp chars) (mapcar #'char-code chars))
@@ -85,8 +86,8 @@ from the socket."
                                  (error 'protocol-error
                                         :message
                                         (format nil
-                                                "Unexpected message received: ~A"
-                                                (code-char ,char-name))))))))))
+                                                "Unexpected message received: ~A ~a"
+                                                (code-char ,char-name) ,char-name)))))))))
            (,iter-name))))))
 
 
@@ -392,32 +393,32 @@ copy-in/copy-out states \(which are not supported)."
            #.*optimize*)
   (loop
     (message-case socket
-                  ;; CommandComplete
-                  (#\C (let* ((command-tag (read-str socket))
-                              (space (position #\Space command-tag
-                                               :from-end t)))
-                         (when space
-                           (setf *effected-rows*
-                                 (parse-integer command-tag :junk-allowed t
-                                                            :start (1+ space))))
-                         (return-from look-for-row nil)))
-                  ;; CopyInResponse
-                  (#\G (read-uint1 socket)
-                       (skip-bytes socket (* 2 (read-uint2 socket))) ; The field formats
-                       (copy-done-message socket)
-                       (error 'database-error
-                              :message "Copy-in not supported."))
-                  ;; CopyOutResponse
-                  (#\H (read-uint1 socket)
-                       (skip-bytes socket (* 2 (read-uint2 socket))) ; The field formats
-                       (error 'database-error
-                              :message "Copy-out not supported."))
-                  ;; DataRow
-                  (#\D (skip-bytes socket 2)
-                       (return-from look-for-row t))
-                  ;; EmptyQueryResponse
-                  (#\I (warn "Empty query sent.")
-                       (return-from look-for-row nil)))))
+      ;; CommandComplete
+      (#\C (let* ((command-tag (read-str socket))
+                  (space (position #\Space command-tag
+                                   :from-end t)))
+             (when space
+               (setf *effected-rows*
+                     (parse-integer command-tag :junk-allowed t
+                                                :start (1+ space))))
+             (return-from look-for-row nil)))
+      ;; CopyInResponse
+      (#\G (read-uint1 socket)
+           (skip-bytes socket (* 2 (read-uint2 socket))) ; The field formats
+           (copy-done-message socket)
+           (error 'database-error
+                  :message "Copy-in not supported."))
+      ;; CopyOutResponse
+      (#\H (read-uint1 socket)
+           (skip-bytes socket (* 2 (read-uint2 socket))) ; The field formats
+           (error 'database-error
+                  :message "Copy-out not supported."))
+      ;; DataRow
+      (#\D (skip-bytes socket 2)
+           (return-from look-for-row t))
+      ;; EmptyQueryResponse
+      (#\I (warn "Empty query sent.")
+           (return-from look-for-row nil)))))
 
 (defun try-to-sync (socket sync-sent)
   "Try to re-synchronize a connection by sending a sync message if it
@@ -603,7 +604,8 @@ and apply the given row-reader to the result."
                                (declare (type field-description field))
                                (let ((size (read-int4 ,socket)))
                                  (declare (type (signed-byte 32) size))
-                                 (if (eq size -1)
+                                 (if #-abcl (eq size -1)
+                                     #+abcl (eql size -1)
                                      :null
                                      (funcall (field-interpreter field)
                                               ,socket size)))))

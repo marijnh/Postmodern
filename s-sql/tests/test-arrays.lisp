@@ -438,7 +438,7 @@ equality tests with arrays requires equalp, not equal."
     (is (equalp (query (:select (:array-replace (:array[] 1 2 5 4) 5 3)) :single)
                 #(1 2 3 4)))
 ;;; checking array-to-string (concatenates array elements using supplied delimiter and optional null string)
-	  (is (equal (query (:select (:array-to-string (:array[] 1 2 3 :NULL 5) "," "*")) :single)
+ 	  (is (equal (query (:select (:array-to-string (:array[] 1 2 3 :NULL 5) "," "*")) :single)
                "1,2,3,*,5"))
 ;;; checking array-upper (returns upper bound of the requested array dimension)
     (is (equal (query (:select (:array-upper (:array[] 1 8 3 7) 1)) :single)

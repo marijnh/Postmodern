@@ -238,11 +238,13 @@ if it isn't."
                       (cond
                         ((equal (connection-host conn) :unix)
                          (assert-unix)
-                         (unix-socket-connect (unix-socket-path *unix-socket-dir* (connection-port conn))))
+                         (unix-socket-connect (unix-socket-path *unix-socket-dir*
+                                                                (connection-port conn))))
                         ((and (stringp (connection-host conn))
                               (char= #\/ (aref (connection-host conn) 0)))
                          (assert-unix)
-                         (unix-socket-connect (unix-socket-path (connection-host conn) (connection-port conn))))
+                         (unix-socket-connect (unix-socket-path (connection-host conn)
+                                                                (connection-port conn))))
                         ((and (pathnamep (connection-host conn))
                               (eql :absolute (pathname-directory (connection-host conn))))
                          (assert-unix)
@@ -499,5 +501,6 @@ Postgresql is expecting the parameters to be in text format." error))))))
 (def-row-reader ignore-row-reader (fields)
   (loop :while (next-row)
         :do (loop :for field :across fields
-                  :do (next-field field)))
+                  :do
+                     (next-field field)))
   (values))

@@ -498,14 +498,16 @@ characters in string S to STREAM."
                  (format stream "\\~C~V,V,'0R" esc radix width code)))))
 
 (eval-when (:compile-toplevel)
-    (if (subtypep 'long-float 'single-float)
+  (if #-clisp (subtypep 'long-float 'single-float)
+      #+clisp (subtypep 'long-float 'float)
         ;; only one float type
         (pushnew :cl-json-only-one-float-type *features*)
         ;; else -- we check here only for the case where there are two
         ;; float types, single- and double- --- we don't consider the
         ;; "only single and short" case.  Could be added if necessary.
         (progn
-          (when (subtypep 'single-float 'short-float)
+          (when #-clisp (subtypep 'single-float 'short-float)
+                #+clisp (subtypep 'float 'short-float)
             (pushnew :cl-json-single-float-is-subsumed *features*))
           (when (subtypep 'long-float 'double-float)
             (pushnew :cl-json-double-float-is-subsumed *features*)))))
@@ -517,7 +519,8 @@ characters in string S to STREAM."
     (real (let ((*read-default-float-format*
                  (etypecase nr
                    (short-float 'short-float)
-                   (rational 'single-float)
+                   #-clisp (rational 'single-float)
+                   #+clisp (rational 'float)
                    #-(or cl-json-single-float-is-subsumed
                          cl-json-only-one-float-type)
                    (single-float 'single-float)

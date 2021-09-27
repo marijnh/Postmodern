@@ -122,10 +122,11 @@ interpreted as an array of the given type."
                   (type integer ,size-name)
                   (ignorable ,size-name))
          ,(if (consp fields)
-              `(let ,(loop :for field :in fields
-                           :collect `(,(first field)
-                                      ,(apply #'read-type (cdr field))))
-                 ,@value)
+              (progn
+                `(let ,(loop :for field :in fields
+                            :collect `(,(first field)
+                                       ,(apply #'read-type (cdr field))))
+                  ,@value))
               (read-type fields (car value)))))))
 
 (defmacro define-interpreter (oid name fields &body value)
@@ -157,14 +158,14 @@ interpreted as an array of the given type."
 
 (defun read-row-value (stream size)
   (declare (type stream stream)
-           (type integer size)
-           (ignore size))
+           (type integer size))
   (let ((num-fields (read-uint4 stream)))
     (loop for i below num-fields
           collect (let ((oid (read-uint4 stream))
                         (size (read-int4 stream)))
                     (declare (type (signed-byte 32) size))
-                    (if (eq size -1)
+                    (if #-abcl (eq size -1)
+                        #+abcl (eql size -1)
                         :null
                         (funcall (interpreter-reader (get-type-interpreter oid))
                                  stream size))))))
@@ -213,8 +214,7 @@ executing body so that row values will be returned as t."
 
 (defun read-binary-array-value (stream size)
   (declare (type stream stream)
-           (type integer size)
-           (ignore size))
+           (type integer size))
   (let ((num-dims (read-uint4 stream))
         (has-null (read-uint4 stream))
         (element-type (read-uint4 stream)))
@@ -236,7 +236,8 @@ executing body so that row values will be returned as t."
                  do (let ((size (read-int4 stream)))
                       (declare (type (signed-byte 32) size))
                       (setf (row-major-aref results i)
-                            (if (eq size -1)
+                            (if #-abcl (eq size -1)
+                                #+abcl (eql size -1)
                                 :null
                                 (funcall
                                  (interpreter-reader
@@ -486,10 +487,13 @@ e.g.
                             (return (interpret (subseq value start pos))))
                           (incf pos))))))
                (interpret (word)
-                 (if (string= word "NULL") :null (funcall transform word))))
+                 (if (string= word "NULL")
+                     :null
+                     (funcall transform word))))
         (let* ((arr (readelt))
                (dim (if arr (loop :for x := arr :then (car x) :while (consp x)
-                                  :collect (length x)) '(0))))
+                                  :collect (length x))
+                        '(0))))
           (make-array dim :initial-contents arr))))))
 
 ;; Working with tables.

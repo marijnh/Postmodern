@@ -1756,12 +1756,16 @@ function. E.g.
 <p>
 The Lisp code in Postmodern is theoretically portable across implementations,
 and seems to work on all major ones as well as some minor ones such as Genera.
-It is regularly tested on ccl, sbcl, ecl and cmucl.
+It is regularly tested on ccl, sbcl, ecl, abcl and cmucl.
 </p>
 
 <p>
-ABCL currently has issues with utf-8 and :null..
+  ABCL version 1.8.0 broke the dao class inheritance. See <a href="https://abcl.org/trac/ticket/479">https://abcl.org/trac/ticket/479</a>.
+  Everything other than dao-classes works.
 </p>
+<p>
+  Clisp currently has issues with executing a file of sql statements (Postmodern's execute-file function).
+  </p>
 
 <p>
 Implementations that do not have meta-object protocol support will not have

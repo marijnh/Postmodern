@@ -20,7 +20,7 @@
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :homepage  "https://github.com/marijnh/Postmodern"
   :license "zlib"
-  :version "1.33.1"
+  :version "1.33.2"
   :depends-on ("alexandria"
                "cl-postgres"
                "s-sql"
@@ -67,7 +67,8 @@
                          (:file "test-return-types-timestamps" :depends-on ("test-package" "tests"))
                          (:file "test-transactions" :depends-on ("test-package" "tests"))
                          (:file "test-roles" :depends-on ("test-package" "tests"))
-                         (:file "test-dao" :depends-on ("test-package" "tests"))
+                         #-abcl (:file "test-dao" :depends-on ("test-package" "tests"))
+                         #+abcl (:file "abcl-test-dao" :depends-on ("test-package" "tests"))
                          (:file "test-execute-file" :depends-on ("test-package" "tests")))))
 
   :perform (test-op (o c)
