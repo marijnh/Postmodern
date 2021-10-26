@@ -882,6 +882,26 @@ applied to a subquery.
                                   (:= 'countries.name "Costa Rica")
                                   (:= 'regions.id 'countries.region-id))))))
 #+END_SRC
+** sql-op :is-false (arg)
+   :PROPERTIES:
+   :CUSTOM_ID: sql-op-is-false
+   :END:
+
+Test whether a boolean value is false.
+#+BEGIN_SRC lisp
+  (query (:select 'ta :from 'a :where (:is-false 'ta)))
+  (select-dao 'account (:is-false 'active))
+#+END_SRC
+** sql-op :is-true (arg)
+   :PROPERTIES:
+   :CUSTOM_ID: sql-op-is-true
+   :END:
+
+Test whether a boolean value is true.
+#+BEGIN_SRC lisp
+  (query (:select 'ta :from 'a :where (:is-true 'ta)))
+  (select-dao 'account (:is-true 'active))
+#+END_SRC
 ** sql-op :is-null (arg)
    :PROPERTIES:
    :CUSTOM_ID: sql-op-is-null

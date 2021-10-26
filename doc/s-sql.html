@@ -303,6 +303,8 @@
 <li><a href="#sql-op-type-form">sql-op :type (form type)</a></li>
 <li><a href="#sql-op-create-composite-type">sql-op :create-composite-type (type-name &amp;rest args)</a></li>
 <li><a href="#sql-op-exists">sql-op :exists (query)</a></li>
+<li><a href="#sql-op-is-false">sql-op :is-false (arg)</a></li>
+<li><a href="#sql-op-is-true">sql-op :is-true (arg)</a></li>
 <li><a href="#sql-op-is-null">sql-op :is-null (arg)</a></li>
 <li><a href="#sql-op-not-null">sql-op :not-null (arg)</a></li>
 <li><a href="#sql-op-in">sql-op :in (value set)</a></li>
@@ -1625,6 +1627,34 @@ applied to a subquery.
 </div>
 </div>
 </div>
+<div id="outline-container-sql-op-is-false" class="outline-3">
+<h3 id="sql-op-is-false">sql-op :is-false (arg)</h3>
+<div class="outline-text-3" id="text-sql-op-is-false">
+<p>
+Test whether a binary value is false.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'ta <span style="color: #23d7d7;">:from</span> 'a <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:is-false</span> 'ta)))
+
+(select-dao 'account (:is-false 'active))</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sql-op-is-true" class="outline-3">
+<h3 id="sql-op-is-true">sql-op :is-true (arg)</h3>
+<div class="outline-text-3" id="text-sql-op-is-true">
+<p>
+Test whether a binary value is true.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'ta <span style="color: #23d7d7;">:from</span> 'a <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:is-true</span> 'ta)))
+
+(select-dao 'account (:is-true 'active))</pre>
+</div>
+</div>
+</div>
+
 <div id="outline-container-sql-op-is-null" class="outline-3">
 <h3 id="sql-op-is-null">sql-op :is-null (arg)</h3>
 <div class="outline-text-3" id="text-sql-op-is-null">
@@ -1637,6 +1667,7 @@ Test whether a value is null.
 </div>
 </div>
 </div>
+
 <div id="outline-container-sql-op-not-null" class="outline-3">
 <h3 id="sql-op-not-null">sql-op :not-null (arg)</h3>
 <div class="outline-text-3" id="text-sql-op-not-null">

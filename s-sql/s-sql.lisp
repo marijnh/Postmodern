@@ -718,6 +718,12 @@ e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
 (def-sql-op :exists (query)
   `("(EXISTS " ,@(sql-expand query) ")"))
 
+(def-sql-op :is-true (arg)
+  `("(" ,@(sql-expand arg) " IS TRUE)"))
+
+(def-sql-op :is-false (arg)
+  `("(" ,@(sql-expand arg) " IS FALSE)"))
+
 (def-sql-op :is-null (arg)
   `("(" ,@(sql-expand arg) " IS NULL)"))
 

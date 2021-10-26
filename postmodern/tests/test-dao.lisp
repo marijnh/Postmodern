@@ -191,7 +191,8 @@
             (is (eq (test-b new-database-dao) t))
             (is (eq (test-b database-dao) nil))
             (delete-dao dao)))
-        (is (not (select-dao 'test-data)))))))
+        (is (not (select-dao 'test-data)))
+        (insert-dao (make-instance 'test-data :id 4 :a "boolean test dao" :b t))))))
 
 (test dao-class-1
   (with-test-connection
@@ -210,6 +211,16 @@
       (let ((new-dao (get-dao 'test-data 1)))
         (is (equal (test-d new-dao)
                    1))))))
+
+(test dao-class-2
+  (with-test-connection
+    (with-dao-test-table-fixture
+      (insert-dao (make-instance 'test-data :id 4 :a "boolean test dao 1" :b t))
+      (insert-dao (make-instance 'test-data :id 5 :a "boolean test dao 2" :b nil))
+      (is (equal (test-a (first (select-dao 'test-data (:is-true 'b))))
+                 "boolean test dao 1"))
+      (is (equal (test-a (first (select-dao 'test-data (:is-false 'b))))
+                 "boolean test dao 2")))))
 
 (defclass test-data-nil ()
   ((id :col-type serial :initarg :id :accessor test-id)
