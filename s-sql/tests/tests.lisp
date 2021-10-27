@@ -2662,3 +2662,34 @@ that the table will need to be scanned twice. Everything is a trade-off."
                                :from (:as (:values (:set 0) (:set 1) (:set 2))
                                           (:t 'x))))
                '((0 0) (1 0) (1 1) (2 0) (2 1) (2 2))))))
+
+(defun build-boolean-table ()
+  (pomo:drop-table 'boolean-test :if-exists t)
+  (query "create table boolean_test (id integer, a boolean, b text)")
+  (query "insert into boolean_test values (1, true, 'I am true')")
+  (query "insert into boolean_test values (2, false, 'I am false')")
+  (query "insert into boolean_test values (3, null, 'I am NULL')"))
+
+(test is-true
+  (is (equal (sql (:select '* :from 'table1 :where (:is-true 'col)))
+             "(SELECT * FROM table1 WHERE (col IS TRUE))"))
+  (with-test-connection
+    (build-boolean-table)
+    (is (equal (query (:select '* :from 'boolean-test :where (:is-true 'a)))
+               '((1 T "I am true"))))))
+
+(test is-false
+  (is (equal (sql (:select '* :from 'table1 :where (:is-false 'col)))
+             "(SELECT * FROM table1 WHERE (col IS FALSE))"))
+  (with-test-connection
+    (build-boolean-table)
+    (is (equal (query (:select '* :from 'boolean-test :where (:is-false 'a)))
+               '((2 NIL "I am false"))))))
+
+(test is-null
+  (is (equal (sql (:select '* :from 'table1 :where (:is-false 'col)))
+             "(SELECT * FROM table1 WHERE (col IS FALSE))"))
+  (with-test-connection
+    (build-boolean-table)
+    (is (equal (query (:select '* :from 'boolean-test :where (:is-null 'a)))
+               '((3 :NULL "I am NULL"))))))
