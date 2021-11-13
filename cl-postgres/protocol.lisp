@@ -213,13 +213,19 @@ a condition."
 
     (unless (eq use-ssl :no)
       (if (eq use-ssl :try)
-              (let ((old-socket socket)
-                    (new-socket (initiate-ssl socket nil nil nil)))
-                (if new-socket (setf socket new-socket)
-                    (setf socket old-socket)))
-              (setf socket (initiate-ssl socket (member use-ssl '(:require :yes :full))
-                                  (member use-ssl '(:yes :full))
-                                  (if (eq use-ssl :full) hostname)))))
+          (let ((old-socket socket)
+                (new-socket (initiate-ssl socket nil nil nil)))
+            (if new-socket (setf socket new-socket)
+                (setf socket old-socket)))
+          (setf socket (initiate-ssl socket (member use-ssl '(:require :yes :full))
+                                     (member use-ssl '(:yes :full))
+                                     (if (eq use-ssl :full) hostname))))
+      (when (listen socket) ; checks for attempted man-in-the-middle attack
+        (ecase *on-evidence-of-man-in-the-middle-attack*
+          (:error (error 'database-error
+                         :message "Postmodern received an unexpectedly large packet in response to the request to use ssl. This may be evidence of an attempt to run a man-in-the-middle type attack. If you want to retry the connect and not throw an error, please set cl-postgres:*on-evidence-of-man-in-the-middle-attack* to :warn or :ignore"))
+          (:warn (warn "Postmodern received an unexpectedly large packet in response to the request to use ssl. This may be evidence of an attempt to run a man-in-the-middle type attack. If you want to some response other than a warning, please set cl-postgres:*on-evidence-of-man-in-the-middle-attack* to :error or :ignore"))
+          (:ignore t))))
     (when (equal application-name "") (setf application-name "postmodern-default"))
     (startup-message socket user database application-name)
     (force-output socket)

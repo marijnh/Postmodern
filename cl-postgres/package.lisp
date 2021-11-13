@@ -78,6 +78,7 @@
            #:parameter-lists-match-oid-types-p
            #:parameter-list-types
            #:param-to-oid
+           #:*on-evidence-of-man-in-the-middle-attack*
            #+(and sbcl unix) #:*unix-socket-dir*))
 
 (defpackage :cl-postgres-error

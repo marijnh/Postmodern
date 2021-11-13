@@ -185,6 +185,13 @@ will look for the socket file.
 When using SSL (see open-database), these can be used to provide client key
 and certificate files. They can be either NIL, for no file, or a pathname.
 
+** variable =*on-evidence-of-man-in-the-middle-attack*=
+   :PROPERTIES:
+   :CUSTOM_ID: variable-on-evidence-of-man-in-the-middle-attack
+   :END:
+
+When establishing an SSL connection, Postmodern will check to see if unexpected extra data was received prior to the connection being encrypted. Unexpected extra data may indicate an attempted man-in-the-middle attack. By default, this variable is set to :error. You can set the response to be a simple warning (by setting this to :warn) or you can set this to :ignore.
+
 ** variable =*retry-connect-times*= (5)
    :PROPERTIES:
    :CUSTOM_ID: variable-retry-connect-times
