@@ -6,6 +6,9 @@
 #+OPTIONS: toc:2
 
 * Overview
+:PROPERTIES:
+:CUSTOM_ID: overview
+:END:
 This is the reference manual for the component named postmodern, which is part
 of a library of the same name.
 
@@ -309,42 +312,63 @@ instead. Any of the following formats can be used, with the default being :rows:
 
 Some Examples:
 *** Default
+:PROPERTIES:
+:CUSTOM_ID: default
+:END:
 The default is :lists
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)))
   ((1 2147483645 "text one") (2 0 "text two"))
 #+END_SRC
 *** Single
+:PROPERTIES:
+:CUSTOM_ID: single
+:END:
 Returns a single field. Will throw an error if the queries returns more than one field or more than one row
 #+BEGIN_SRC lisp
   (query (:select 'text :from 'short-data-type-tests :where (:= 'id 3)) :single)
   "text three"
 #+END_SRC
 *** List
+:PROPERTIES:
+:CUSTOM_ID: list
+:END:
 Returns a list containing the selected fields. Will throw an error if the query returns more than one row
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :list)
   (3 3 "text three")
 #+END_SRC
 *** Lists
+:PROPERTIES:
+:CUSTOM_ID: lists
+:END:
 This is the default
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :lists)
   ((1 2147483645 "text one") (2 0 "text two"))
 #+END_SRC
 *** Alist
+:PROPERTIES:
+:CUSTOM_ID: alist
+:END:
 Returns an alist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'test-data :where (:= 'id 3)) :alist)
   ((:ID . 3) (:INT4 . 3) (:TEXT . "text three"))
 #+END_SRC
 *** Str-alist
+:PROPERTIES:
+:CUSTOM_ID: str-alist
+:END:
 Returns an alist containing the field name as a lower case string and the selected fields. Will throw an error if the query returns more than one row.
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :str-alist)
   (("id" . 3) ("int4" . 3) ("text" . "text three"))
 #+END_SRC
 *** Alists
+:PROPERTIES:
+:CUSTOM_ID: alists
+:END:
 Returns a list of alists containing the field name as a keyword and the selected fields.
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :alists)
@@ -352,6 +376,9 @@ Returns a list of alists containing the field name as a keyword and the selected
    ((:ID . 2) (:INT4 . 0) (:TEXT . "text two")))
 #+END_SRC
 *** Str-alists
+:PROPERTIES:
+:CUSTOM_ID: str-alists
+:END:
 Returns a list of alists containing the field name as a lower case string and the selected fields.
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :str-alists)
@@ -359,18 +386,27 @@ Returns a list of alists containing the field name as a lower case string and th
    (("id" . 2) ("int4" . 0) ("text" . "text two")))
 #+END_SRC
 *** Plist
+:PROPERTIES:
+:CUSTOM_ID: plist
+:END:
 Returns a plist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :plist)
   (:ID 3 :INT4 3 :TEXT "text three")
 #+END_SRC
 *** Plists
+:PROPERTIES:
+:CUSTOM_ID: plists
+:END:
 Returns a list of plists containing the field name as a keyword and the selected fields.
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :plists)
   ((:ID 1 :INT4 2147483645 :TEXT "text one") (:ID 2 :INT4 0 :TEXT "text two"))
 #+END_SRC
 *** Vectors
+:PROPERTIES:
+:CUSTOM_ID: vectors
+:END:
 Returns a vector of vectors where each internal vector is a returned row from the query. The field names are not included. NOTE: It will return an empty vector instead of NIL if there is no result.
 #+begin_src lisp
   (query (:select 'id 'int4 'text :from 'test-data)
@@ -384,6 +420,9 @@ Returns a vector of vectors where each internal vector is a returned row from th
   #()
 #+end_src
 *** Array-hash
+:PROPERTIES:
+:CUSTOM_ID: array-hash
+:END:
 Returns a vector of hashtables where each hash table is a returned row from the query with field name as the key expressed as a lower case string.
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :array-hash)
@@ -397,6 +436,9 @@ Returns a vector of hashtables where each hash table is a returned row from the 
   (("text" . "text two") ("int4" . 0) ("id" . 2))
 #+END_SRC
 *** Dao
+:PROPERTIES:
+:CUSTOM_ID: dao-results
+:END:
 Returns a list of daos of the type specified
 #+BEGIN_SRC lisp
   (query (:select '* :from 'country) (:dao country))
@@ -406,6 +448,9 @@ Returns a list of daos of the type specified
   (#<COUNTRY {1010688943}>)
 #+END_SRC
 *** Column
+:PROPERTIES:
+:CUSTOM_ID: column-results
+:END:
 Returns a list of field values of a single field. Will throw an error if more than one field is selected
 #+BEGIN_SRC lisp
   (query (:select 'id :from 'short-data-type-tests :where (:< 'id 3)) :column)
@@ -415,6 +460,9 @@ Returns a list of field values of a single field. Will throw an error if more th
   (3)
 #+END_SRC
 *** Json-strs
+:PROPERTIES:
+:CUSTOM_ID: json-strs
+:END:
 Return a list of strings where the row returned is a json object expressed as a string
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :json-strs)
@@ -442,6 +490,9 @@ The following is an example with a simple-date timestamp.
     "{\"timestampWithTimeZone\":\"1919-12-30 18:30:54:0\"}")
 #+END_SRC
 *** Json-str
+:PROPERTIES:
+:CUSTOM_ID: json-str
+:END:
 Return a single string where the row returned is a json object expressed as a string
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :json-str)
@@ -450,6 +501,9 @@ Return a single string where the row returned is a json object expressed as a st
 As with :json-strs, this will also work for either simple-date or local-time timestamps
 
 *** Json-array-str
+:PROPERTIES:
+:CUSTOM_ID: json-array-str
+:END:
 Return a string containing a json array, each element in the array is a selected row expressed as a json object. NOTE: If there is no result, this will return a string with an empty json array.
 #+BEGIN_SRC lisp
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :json-array-str)
@@ -460,6 +514,9 @@ Return a string containing a json array, each element in the array is a selected
 #+END_SRC
 As with :json-strs, this will also work for either simple-date or local-time timestamps
 *** Second value returned
+:PROPERTIES:
+:CUSTOM_ID: second-value-returned
+:END:
 If the database returns information about the amount rows that were affected,
 such as with updating or deleting queries, this is returned as a second value.
 
@@ -1258,7 +1315,9 @@ Example usage where two identifiers are required would be constraints:
 #+END_SRC
 
 ** find-comments (type identifier)
-
+:PROPERTIES:
+:CUSTOM_ID: function-find-comments
+:END:
 Returns the comments attached to a particular database object. The allowed
 types are :database :schema :table :columns (all the columns in a table)
 :column (for a single column).
@@ -2059,6 +2118,9 @@ specify the schema in the new-name. You cannot use this function to move
 tables from one schema to another. Returns t if successful
 
 ** function rename-column (table-name old-name new-name)
+:PROPERTIES:
+:CUSTOM_ID: function-rename-column
+:END:
 → boolean
 
 Rename a column in a table. Parameters can be strings or symbols. If the table
