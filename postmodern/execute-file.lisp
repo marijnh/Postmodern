@@ -387,12 +387,12 @@ include commands \ir or \include_relative. Returns nil otherwise."
                 ((and (eq meta-cmd 'ir)
                       (uiop:file-exists-p working-pathname))
                  (warn
-                  (format nil "Using fallback to find file based on working directory position"))
+                  "Postmodern: Using fallback to find file based on working directory position")
                  working-pathname)
                 ((and (eq meta-cmd 'i)
                       (uiop:file-exists-p relative-pathname))
                  (warn
-                  (format nil "Using fallback to find file based on relative directory position"))
+                  "Postmodern: Using fallback to find file based on relative directory position")
                  relative-pathname)
                 (t (error 'missing-i-file :meta-cmd meta-cmd
                                           :filename new-filename :base-filename base-filename))))
@@ -435,19 +435,17 @@ and return them in a stream. Recursively apply \i include instructions."
                                                              :remove-comments remove-comments))
                            (progn
                              (warn
-                              (format nil
-                                      "~a: Duplicate attempts to include sql files ~a skipped~%"
-                                      *package* filename))
+                              "Postmodern: Duplicate attempts to include sql files ~a skipped~%"
+                              filename)
                              ""))))
                      (format output-stream "~a~%" line)))
           :finally (return output-stream)))
-      (warn (format nil "~a: file ~a doesn't seem to exist. If this was supposed to be an included file, please note that \\i looks for a file location relative to your default pathname, in this case ~a. \\ir looks for a file location relative to the initial included file location, in the case ~a~%"
-                    *package* filename
-                    (uiop::get-pathname-defaults)
-                    (if filename
-                        (directory-namestring filename)
-                        nil))
-            "")))
+      (warn "Postmodern: file ~a doesn't seem to exist. If this was supposed to be an included file, please note that \\i looks for a file location relative to your default pathname, in this case ~a. \\ir looks for a file location relative to the initial included file location, in the case ~a~%"
+            filename
+            (uiop::get-pathname-defaults)
+            (if filename
+                (directory-namestring filename)
+                nil))))
 
 (defun read-queries (filename &key (remove-comments t))
   "Read SQL queries in given file and split them, returns a list. Track included
