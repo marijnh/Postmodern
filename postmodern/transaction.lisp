@@ -58,16 +58,22 @@ arguments) to be executed at commit and abort time, respectively."))
      "BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE READ WRITE")
     (t "BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED READ WRITE")))
 
+(defun retry-transaction ()
+  (invoke-restart 'retry-transaction))
+
 (defun call-with-transaction (body &optional (isolation-level *isolation-level*))
-  (let ((transaction (make-instance 'transaction-handle)))
-    (execute (begin-transaction isolation-level))
-    (unwind-protect
-         (multiple-value-prog1
-             (let ((*transaction-level* (1+ *transaction-level*))
-                   (*current-logical-transaction* transaction))
-               (funcall body transaction))
-           (commit-transaction transaction))
-      (abort-transaction transaction))))
+  (tagbody start
+     (restart-case
+         (let ((transaction (make-instance 'transaction-handle)))
+           (execute (begin-transaction isolation-level))
+           (unwind-protect
+                (multiple-value-prog1
+                    (let ((*transaction-level* (1+ *transaction-level*))
+                          (*current-logical-transaction* transaction))
+                      (funcall body transaction))
+                  (commit-transaction transaction))
+             (abort-transaction transaction)))
+       (retry-transaction () (go start)))))
 
 (defmacro with-transaction ((&optional name isolation-level) &body body)
   "Execute the given body within a database transaction, committing it when the
