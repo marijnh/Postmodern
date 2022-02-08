@@ -62,7 +62,7 @@ arguments) to be executed at commit and abort time, respectively."))
   "Invokes the retry-transaction restart, if found."
   (let ((restart (find-restart 'retry-transaction condition)))
     (if (null restart)
-        (error "Attempting to invoke-restart RETRY-TRANSACTION but not such restart is active. Are you in the transaction block?")
+        (error "Attempting to invoke-restart RETRY-TRANSACTION but no such restart is active. Are you in the transaction block?")
         (invoke-restart restart))))
 
 (defun call-with-transaction (body &optional (isolation-level *isolation-level*))
