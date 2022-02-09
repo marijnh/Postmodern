@@ -65,6 +65,7 @@
    #:ensure-transaction-with-isolation-level
    #:abort-hooks
    #:commit-hooks
+   #:retry-transaction
    #:deftable
    #:*table-name*
    #:*table-symbol*
