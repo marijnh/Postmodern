@@ -62,7 +62,7 @@ arguments) to be executed at commit and abort time, respectively."))
   "Invokes the retry-transaction restart, if found."
   (let ((restart (find-restart 'retry-transaction condition)))
     (if (null restart)
-        (error "Attempting to invoke-restart RETRY-TRANSACTION but no such restart is active. Are you in the transaction block?")
+        (error "Attempting to invoke-restart RETRY-TRANSACTION but no such restart is active. Are you in a transaction block?")
         (invoke-restart restart))))
 
 (defun call-with-transaction (body &optional (isolation-level *isolation-level*))
@@ -71,11 +71,12 @@ arguments) to be executed at commit and abort time, respectively."))
          (let ((transaction (make-instance 'transaction-handle)))
            (execute (begin-transaction isolation-level))
            (unwind-protect
-                (multiple-value-prog1
-                    (let ((*transaction-level* (1+ *transaction-level*))
-                          (*current-logical-transaction* transaction))
-                      (funcall body transaction))
-                  (commit-transaction transaction))
+                (return-from call-with-transaction
+                  (multiple-value-prog1
+                      (let ((*transaction-level* (1+ *transaction-level*))
+                            (*current-logical-transaction* transaction))
+                        (funcall body transaction))
+                    (commit-transaction transaction)))
              (abort-transaction transaction)))
        (retry-transaction ()
          :report "Retry the current transaction."
