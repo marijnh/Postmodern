@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-06-21 Mon 15:35 -->
+<!-- 2022-02-11 Fri 10:51 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern</title>
@@ -250,8 +250,8 @@
 <ul>
 <li><a href="#e5c68251-0ca6-4f96-8d36-175cec626eeb">Timezones and Simple-Date and Local-Time</a>
 <ul>
-<li><a href="#org3de46d1">Simple-Date Library Use</a></li>
-<li><a href="#org355dab0">Local-Time Library Use</a></li>
+<li><a href="#orga2d6dea">Simple-Date Library Use</a></li>
+<li><a href="#org58574b4">Local-Time Library Use</a></li>
 </ul>
 </li>
 <li><a href="#bdf9ddb0-5f95-4807-8862-8970b35bd142">Portability</a></li>
@@ -265,7 +265,7 @@
 </div>
 </nav>
 <p>
-Version 1.33.3
+Version 1.33.4
 </p>
 
 <p>
@@ -1530,9 +1530,9 @@ Now the s-sql version:
 </pre>
 </div>
 </div>
-<div id="outline-container-org3de46d1" class="outline-4">
-<h4 id="org3de46d1">Simple-Date Library Use</h4>
-<div class="outline-text-4" id="text-org3de46d1">
+<div id="outline-container-orga2d6dea" class="outline-4">
+<h4 id="orga2d6dea">Simple-Date Library Use</h4>
+<div class="outline-text-4" id="text-orga2d6dea">
 <p>
 The Simple-date add-on library (not enabled by default)
 provides types (CLOS classes) for dates, timestamps, and intervals
@@ -1654,9 +1654,9 @@ used to convert it to proper UTC timestamp.
 </div>
 </div>
 
-<div id="outline-container-org355dab0" class="outline-4">
-<h4 id="org355dab0">Local-Time Library Use</h4>
-<div class="outline-text-4" id="text-org355dab0">
+<div id="outline-container-org58574b4" class="outline-4">
+<h4 id="org58574b4">Local-Time Library Use</h4>
+<div class="outline-text-4" id="text-org58574b4">
 <p>
 For those who want to use local-time, to enable the local-time reader:
 </p>
@@ -1760,12 +1760,13 @@ It is regularly tested on ccl, sbcl, ecl, abcl and cmucl.
 </p>
 
 <p>
-  ABCL version 1.8.0 broke the dao class inheritance. See <a href="https://abcl.org/trac/ticket/479">https://abcl.org/trac/ticket/479</a>.
-  Everything other than dao-classes works.
+ABCL version 1.8.0 broke the dao class inheritance. See <a href="https://abcl.org/trac/ticket/479">https://abcl.org/trac/ticket/479</a>.
+Everything other than dao-classes works.
 </p>
+
 <p>
-  Clisp currently has issues with executing a file of sql statements (Postmodern's execute-file function).
-  </p>
+Clisp currently has issues with executing a file of sql statements (Postmodern's execute-file function).
+</p>
 
 <p>
 Implementations that do not have meta-object protocol support will not have
