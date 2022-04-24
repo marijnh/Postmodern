@@ -99,7 +99,16 @@ If the Postgresql server is running on a port other than 5432, you would also pa
 (connect-toplevel "testdb" "foucault" "surveiller" "localhost" :port 5434)
 ```
 
-Ssl connections would similarly use the keyword parameter :use-ssl and pass :yes, :no or :try
+Ssl connections would similarly use the keyword parameter :use-ssl and pass :yes, :no, :try, :require or :full
+
+
+- :try means if the server supports it
+- :require means use provided ssl certificate with no verification
+- :yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname
+- :full means expect a CA-signed cert for the supplied hostname and verify the server hostname
+
+When using ssl, you can set the cl-postgres exported variables \*ssl-certificate-file\*,  \*ssl-key-file\* and  \*ssl-root-ca-file\* to provide client key, certificate files
+and root ca files. They can be either NIL, for no file, or a pathname.
 
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
 many:1, (in other words, changing connections) or you are using threads (each thread will need to have its own connection) then with-connection form which establishes a connection with a lexical scope is more appropriate.
@@ -134,7 +143,7 @@ will take additiona time and create more overhead.
 
 Postgresql can be tuned to limit the number of connections allowed at any one time. It defaults to 100. The parameter is set in the postgresql.conf file. Depending on the size of your server and what you are doing, the sweet spot generally seems to be between 200-400 connections before you need to bring in connection pooling.
 
-If your application is threaded, each thread should use its own connection. Connections are stateful and attempts to use the same connection for multiple threads will
+If your application is threaded, each thread should use its own connection. Connections are stateful and attempts to use the same connection for multiple threads will likely have problems.
 
 If you have an application like a web app which will make many connections, you also
 generally do not want to create and drop connections for every query. The usual solution

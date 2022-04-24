@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-01-21 Fri 15:02 -->
+<!-- 2022-04-02 Sat 13:13 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern Reference Manual</title>
@@ -568,8 +568,11 @@ and defaults to the value of <code>*default-use-ssl*</code>
 <li>:yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname</li>
 <li>:full means expect a CA-signed cert for the supplied hostname and verify the server hostname</li>
 </ul>
+
 <p>
-If you set it to anything other than :no be sure to also load the CL+SSL library.
+If you set it to anything other than :no be sure to also load the CL+SSL library. When using ssl, you can set the cl-postgres exported variables <code>*ssl-certificate-file*</code>,  <code>*ssl-key-file*</code>
+and  <code>*ssl-root-ca-file*</code> to provide client key, certificate files
+and root ca files. They can be either NIL, for no file, or a pathname.
 </p>
 
 <p>

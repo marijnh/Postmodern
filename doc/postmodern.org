@@ -62,7 +62,10 @@ and defaults to the value of =*default-use-ssl*=
 - :require means use provided ssl certificate with no verification
 - :yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname
 - :full means expect a CA-signed cert for the supplied hostname and verify the server hostname
-If you set it to anything other than :no be sure to also load the CL+SSL library.
+
+If you set it to anything other than :no be sure to also load the CL+SSL library. When using ssl, you can set the cl-postgres exported variables =*ssl-certificate-file*=,  =*ssl-key-file*=
+and  =*ssl-root-ca-file*= to provide client key, certificate files
+and root ca files. They can be either NIL, for no file, or a pathname.
 
 Service defaults to "postgres".
 

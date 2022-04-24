@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-02-11 Fri 10:51 -->
+<!-- 2022-04-02 Sat 13:13 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmodern</title>
@@ -250,8 +250,8 @@
 <ul>
 <li><a href="#e5c68251-0ca6-4f96-8d36-175cec626eeb">Timezones and Simple-Date and Local-Time</a>
 <ul>
-<li><a href="#orga2d6dea">Simple-Date Library Use</a></li>
-<li><a href="#org58574b4">Local-Time Library Use</a></li>
+<li><a href="#orgad0d64e">Simple-Date Library Use</a></li>
+<li><a href="#org104debd">Local-Time Library Use</a></li>
 </ul>
 </li>
 <li><a href="#bdf9ddb0-5f95-4807-8862-8970b35bd142">Portability</a></li>
@@ -432,6 +432,11 @@ pass :no, :try, :require, :yes, or :full
 </ul>
 
 <p>
+When using ssl, you can set the cl-postgres exported variables <code>*ssl-certificate-file*</code>,  <code>*ssl-key-file*</code> and  <code>*ssl-root-ca-file*</code> to provide client key, certificate files
+and root ca files. They can be either NIL, for no file, or a pathname.
+</p>
+
+<p>
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
 many:1, (in other words, changing connections) or you are using threads (each thread must have its own connection) then with Postmodern you can use the <code>with-connection</code> form which establishes a connection with a lexical scope is more appropriate.
 </p>
@@ -477,7 +482,7 @@ Postgresql can be tuned to limit the number of connections allowed at any one ti
 </p>
 
 <p>
-If your application is threaded, each thread should use its own connection. Connections are stateful and attempts to use the same connection for multiple threads will
+If your application is threaded, each thread should use its own connection. Connections are stateful and attempts to use the same connection for multiple threads will likely have problems.
 </p>
 
 <p>
@@ -1530,9 +1535,9 @@ Now the s-sql version:
 </pre>
 </div>
 </div>
-<div id="outline-container-orga2d6dea" class="outline-4">
-<h4 id="orga2d6dea">Simple-Date Library Use</h4>
-<div class="outline-text-4" id="text-orga2d6dea">
+<div id="outline-container-orgad0d64e" class="outline-4">
+<h4 id="orgad0d64e">Simple-Date Library Use</h4>
+<div class="outline-text-4" id="text-orgad0d64e">
 <p>
 The Simple-date add-on library (not enabled by default)
 provides types (CLOS classes) for dates, timestamps, and intervals
@@ -1654,9 +1659,9 @@ used to convert it to proper UTC timestamp.
 </div>
 </div>
 
-<div id="outline-container-org58574b4" class="outline-4">
-<h4 id="org58574b4">Local-Time Library Use</h4>
-<div class="outline-text-4" id="text-org58574b4">
+<div id="outline-container-org104debd" class="outline-4">
+<h4 id="org104debd">Local-Time Library Use</h4>
+<div class="outline-text-4" id="text-org104debd">
 <p>
 For those who want to use local-time, to enable the local-time reader:
 </p>
