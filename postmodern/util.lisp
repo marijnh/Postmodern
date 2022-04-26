@@ -886,10 +886,12 @@ the names will be returned as strings with underscores converted to hyphens."
                                  WHERE (table_schema = $1))
                                  ORDER BY table_name)"
                     (to-sql-name schema-name))))))
+    (setf result (alexandria:flatten result))
     (if strings-p
-        (mapcar 'to-sql-name result)
-        result)
-    (alexandria:flatten result)))
+        (mapcar (lambda (x)
+                  (substitute #\- #\_ x))
+                result)
+        result)))
 
 (defun list-tables (&optional (strings-p nil))
   "DEPRECATED FOR LIST-ALL-TABLES. Return a list of the tables in the public
