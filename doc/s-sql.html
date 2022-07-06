@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-04-25 Sun 12:36 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2022-07-06 Wed 06:10 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>S-SQL Reference Manual</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="Sabra Crolleton">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -39,21 +40,21 @@
   pre.src {
     position: relative;
     overflow: auto;
-    padding-top: 1.2em;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
   pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -189,32 +190,9 @@
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
   .org-svg { width: 90%; }
-  /*]]>*/-->
 </style>
 <link rel="stylesheet" type="text/css" href="style.css" />
 <style>pre.src{background:#343131;color:white;} </style>
-<script type="text/javascript">
-// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
-<!--/*--><![CDATA[/*><!--*/
-     function CodeHighlightOn(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.add("code-highlighted");
-         target.classList.add("code-highlighted");
-       }
-     }
-     function CodeHighlightOff(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.remove("code-highlighted");
-         target.classList.remove("code-highlighted");
-       }
-     }
-    /*]]>*///-->
-// @license-end
-</script>
 <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         displayAlign: "center",
@@ -235,16 +213,15 @@
              }
 });
 </script>
-<script type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
 </head>
 <body>
-<div id="content">
+<div id="content" class="content">
 <header>
 <h1 class="title">S-SQL Reference Manual</h1>
-</header><nav id="table-of-contents">
+</header><nav id="table-of-contents" role="doc-toc">
 <h2>Table of Contents</h2>
-<div id="text-table-of-contents">
+<div id="text-table-of-contents" role="doc-toc">
 <ul>
 <li><a href="#interface">Interface</a>
 <ul>
@@ -373,14 +350,14 @@
 <li><a href="#sql-op-variance">sql-op :variance (&amp;rest args)</a></li>
 <li><a href="#sql-op-var-pop">sql-op :var-pop (&amp;rest args)</a></li>
 <li><a href="#sql-op-var-samp">sql-op :var-samp (&amp;rest args)</a></li>
-<li><a href="#org2555f16">sql-op :range-between (&amp;rest args)</a></li>
-<li><a href="#orgfb601b4">sql-op :rows-between (&amp;rest args)</a></li>
+<li><a href="#org54b48f2">sql-op :range-between (&amp;rest args)</a></li>
+<li><a href="#org58a5871">sql-op :rows-between (&amp;rest args)</a></li>
 <li><a href="#sql-op-over">sql-op :over (form &amp;rest args)</a></li>
 <li><a href="#sql-op-partition-by">sql-op :partition-by (&amp;rest args)</a></li>
 <li><a href="#sql-op-window">sql-op :window (form)</a></li>
 <li><a href="#sql-op-with">sql-op :with (&amp;rest args)</a></li>
 <li><a href="#sql-op-with-recursive">sql-op :with-recursive (&amp;rest args)</a></li>
-<li><a href="#org6f9c3d3">sql-op :with-ordinality, :with-ordinality-as</a></li>
+<li><a href="#org4765d57">sql-op :with-ordinality, :with-ordinality-as</a></li>
 </ul>
 </li>
 <li><a href="#table-functions">Table Functions</a>
@@ -1361,6 +1338,9 @@ Going back to our earlier example, remember that I said that unless you use a su
 ((<span style="color: #e67128;">"Bermuda"</span>) (<span style="color: #e67128;">"Greenland"</span>))
 </pre>
 </div>
+<p>
+IMPORTANT: If you are trying to use a list in a parameterized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
+</p>
 </div>
 </div>
 
@@ -1496,9 +1476,9 @@ out the quotes entirely).
         <span style="color: #23d7d7;">:alists</span>)
 
 (((<span style="color: #23d7d7;">:COUNTRY</span> . <span style="color: #e67128;">"Belize"</span>) (<span style="color: #23d7d7;">:REGION</span> . <span style="color: #e67128;">"Central America"</span>)) ((<span style="color: #23d7d7;">:COUNTRY</span> . <span style="color: #e67128;">"Costa Rica"</span>)
-(<span style="color: #23d7d7;">:REGION</span> . <span style="color: #e67128;">"Central America"</span>)) ((<span style="color: #23d7d7;">:COUNTRY</span> . <span style="color: #e67128;">"El Salvador"</span>)
-(<span style="color: #23d7d7;">:REGION</span> . <span style="color: #e67128;">"Central America"</span>)) ((<span style="color: #23d7d7;">:COUNTRY</span> . <span style="color: #e67128;">"Guatemala"</span>)
-(<span style="color: #23d7d7;">:REGION</span> . <span style="color: #e67128;">"Central America"</span>)) ((<span style="color: #23d7d7;">:COUNTRY</span> . <span style="color: #e67128;">"Panama"</span>) (<span style="color: #23d7d7;">:REGION</span> . <span style="color: #e67128;">"Central America"</span>))
+(<span style="color: #23d7d7;">:REGION</span> . <span style="color: #e67128;">"Central America"</span>)) <span style="color: #ff4242; font-weight: bold;">((</span><span style="color: #ff4242; font-weight: bold;">:COUNTRY</span><span style="color: #ff4242; font-weight: bold;"> . </span><span style="color: #ff4242; font-weight: bold;">"El Salvador"</span><span style="color: #ff4242; font-weight: bold;">)</span>
+(<span style="color: #23d7d7;">:REGION</span> . <span style="color: #e67128;">"Central America"</span>)) <span style="color: #ff4242; font-weight: bold;">((</span><span style="color: #ff4242; font-weight: bold;">:COUNTRY</span><span style="color: #ff4242; font-weight: bold;"> . </span><span style="color: #ff4242; font-weight: bold;">"Guatemala"</span><span style="color: #ff4242; font-weight: bold;">)</span>
+(<span style="color: #23d7d7;">:REGION</span> . <span style="color: #e67128;">"Central America"</span>)) <span style="color: #ff4242; font-weight: bold;">((</span><span style="color: #ff4242; font-weight: bold;">:COUNTRY</span><span style="color: #ff4242; font-weight: bold;"> . </span><span style="color: #ff4242; font-weight: bold;">"Panama"</span><span style="color: #ff4242; font-weight: bold;">) (</span><span style="color: #ff4242; font-weight: bold;">:REGION</span><span style="color: #ff4242; font-weight: bold;"> . </span><span style="color: #ff4242; font-weight: bold;">"Central America"</span><span style="color: #ff4242; font-weight: bold;">))</span>
 ((<span style="color: #23d7d7;">:COUNTRY</span> . <span style="color: #e67128;">"Nicaragua"</span>) (<span style="color: #23d7d7;">:REGION</span> . <span style="color: #e67128;">"Central America"</span>)))
 </pre>
 </div>
@@ -1631,30 +1611,28 @@ applied to a subquery.
 <h3 id="sql-op-is-false">sql-op :is-false (arg)</h3>
 <div class="outline-text-3" id="text-sql-op-is-false">
 <p>
-Test whether a binary value is false.
+Test whether a boolean value is false.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'ta <span style="color: #23d7d7;">:from</span> 'a <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:is-false</span> 'ta)))
-
-(select-dao 'account (:is-false 'active))</pre>
+(select-dao 'account (<span style="color: #23d7d7;">:is-false</span> 'active))
+</pre>
 </div>
 </div>
 </div>
-
 <div id="outline-container-sql-op-is-true" class="outline-3">
 <h3 id="sql-op-is-true">sql-op :is-true (arg)</h3>
 <div class="outline-text-3" id="text-sql-op-is-true">
 <p>
-Test whether a binary value is true.
+Test whether a boolean value is true.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'ta <span style="color: #23d7d7;">:from</span> 'a <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:is-true</span> 'ta)))
-
-(select-dao 'account (:is-true 'active))</pre>
+(select-dao 'account (<span style="color: #23d7d7;">:is-true</span> 'active))
+</pre>
 </div>
 </div>
 </div>
-
 <div id="outline-container-sql-op-is-null" class="outline-3">
 <h3 id="sql-op-is-null">sql-op :is-null (arg)</h3>
 <div class="outline-text-3" id="text-sql-op-is-null">
@@ -1667,7 +1645,6 @@ Test whether a value is null.
 </div>
 </div>
 </div>
-
 <div id="outline-container-sql-op-not-null" class="outline-3">
 <h3 id="sql-op-not-null">sql-op :not-null (arg)</h3>
 <div class="outline-text-3" id="text-sql-op-not-null">
@@ -1699,8 +1676,12 @@ Test whether a value is in a set of values.
                 <span style="color: #23d7d7;">:group-by</span> 'region 'product))
 </pre>
 </div>
+<p>
+IMPORTANT: If you are trying to use a list in a parameterized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
+</p>
 </div>
 </div>
+
 <div id="outline-container-sql-op-not-in" class="outline-3">
 <h3 id="sql-op-not-in">sql-op :not-in (value set)</h3>
 <div class="outline-text-3" id="text-sql-op-not-in">
@@ -1781,7 +1762,7 @@ Note that the responses will still come back in a list of lists
 </p>
 
 <p>
-IMPORTANT: If you are trying to use a list in a parametized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
+IMPORTANT: If you are trying to use a list in a parameterized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
 </p>
 </div>
 </div>
@@ -2744,9 +2725,9 @@ Window Functions
 </p>
 </div>
 </div>
-<div id="outline-container-org2555f16" class="outline-3">
-<h3 id="org2555f16">sql-op :range-between (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org2555f16">
+<div id="outline-container-org54b48f2" class="outline-3">
+<h3 id="org54b48f2">sql-op :range-between (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org54b48f2">
 <p>
 Range-between allows window functions to apply to different segments of a result set.
 It accepts the following keywords: :order-by, :rows-between, :range-between,
@@ -2774,9 +2755,9 @@ An example which calculates a running total could look like this:
 </div>
 </div>
 
-<div id="outline-container-orgfb601b4" class="outline-3">
-<h3 id="orgfb601b4">sql-op :rows-between (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgfb601b4">
+<div id="outline-container-org58a5871" class="outline-3">
+<h3 id="org58a5871">sql-op :rows-between (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org58a5871">
 <p>
 Rows-between allows window functions to apply to different segments of a result set.
 It accepts the following keywords:
@@ -2977,9 +2958,9 @@ Recursive modifier to a WITH statement, allowing the query to refer to its own o
 </div>
 </div>
 </div>
-<div id="outline-container-org6f9c3d3" class="outline-3">
-<h3 id="org6f9c3d3">sql-op :with-ordinality, :with-ordinality-as</h3>
-<div class="outline-text-3" id="text-org6f9c3d3">
+<div id="outline-container-org4765d57" class="outline-3">
+<h3 id="org4765d57">sql-op :with-ordinality, :with-ordinality-as</h3>
+<div class="outline-text-3" id="text-org4765d57">
 <p>
 Selects can use :with-ordinality or :with-ordinality-as parameters. Postgresql will give the new ordinality column the name of ordinality. :with-ordinality-as allows you to set different names for the columns in the result set.
 </p>
@@ -4000,6 +3981,10 @@ to an sql injection attack.
 </p>
 
 <p>
+IMPORTANT: If you are trying to use a list in a parameterized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
+</p>
+
+<p>
 If you are not using s-sql, then it becomes easy. The query macro
 assumes that everything that is not a list starting with a keyword will
 evaluate to a string. That means you can build it with a simple format
@@ -4048,8 +4033,8 @@ For purposes of this example, we will use the following employee table:
 <div class="outline-text-5" id="text-symbols-in-variables">
 </div>
 <ul class="org-ul">
-<li><a id="orgb3aab1e"></a>Select Statements<br>
-<div class="outline-text-6" id="text-orgb3aab1e">
+<li><a id="org96239ab"></a>Select Statements<br>
+<div class="outline-text-6" id="text-org96239ab">
 <p>
 Consider the following two toy examples where we determine the table and columns
 to be selected using symbols (either keyword or quoted) inside variables.
@@ -4073,8 +4058,8 @@ string constants in the middle of a select statement.
 </div>
 </li>
 
-<li><a id="org0a3c30e"></a>Update Statements<br>
-<div class="outline-text-6" id="text-org0a3c30e">
+<li><a id="org3094e00"></a>Update Statements<br>
+<div class="outline-text-6" id="text-org3094e00">
 <p>
 This works with update statements as well
 </p>
@@ -4087,8 +4072,8 @@ This works with update statements as well
 </div>
 </div>
 </li>
-<li><a id="orga8790bf"></a>Insert Statements<br>
-<div class="outline-text-6" id="text-orga8790bf">
+<li><a id="orgcdd9f92"></a>Insert Statements<br>
+<div class="outline-text-6" id="text-orgcdd9f92">
 <p>
 This works with insert-into statements as well
 </p>
@@ -4109,8 +4094,8 @@ This works with insert-into statements as well
 </li>
 </ul>
 </li>
-<li><a id="org7846f41"></a>Delete Statements<br>
-<div class="outline-text-5" id="text-org7846f41">
+<li><a id="org9244f20"></a>Delete Statements<br>
+<div class="outline-text-5" id="text-org9244f20">
 <p>
 This works with delete statements as well
 </p>
