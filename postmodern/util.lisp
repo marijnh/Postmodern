@@ -1072,7 +1072,7 @@ to be the public schema. Returns t or nil."
 
 (defun rename-column (table old-name new-name)
   "Rename a column in a table. Parameters can be strings or symbols. If the table
-is not in the public schema, it needs to be fully qualified - e.g. schema.table.
+is not in the public schema, it needs to be fully qualified - e.g. schema.table.column
 Returns t if successful."
   (setf table (to-sql-name table))
   (setf old-name (to-sql-name old-name))
