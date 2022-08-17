@@ -67,7 +67,7 @@
     (is (equal (sql (:select (:to-char (:* 900 (:type "1 second" interval)) "HH24:MI:SS")))
                "(SELECT to_char((900 * E'1 second'::INTERVAL), E'HH24:MI:SS'))"))
     (is (equal (query (:select (:extract "hour" (:type "2001-02-16 20:38:40" timestamp))) :single)
-        20.0d0))
+        20))
     (is (equal (query (:select (:isfinite (:type "2001-02-16" date))) :single) t))
     (is (equal (query (:select (:justify_days (:type  "35 days" interval))) :single)
                '((:MONTHS 1) (:DAYS 5) (:SECONDS 0) (:USECONDS 0))))
@@ -146,21 +146,21 @@
   (with-test-connection
     (is (equal
          (query (:select (:extract "minute" (:interval "5 hours 21 minutes"))) :single)
-         21.0d0))
+         21))
     (is (equal
          (query (:select (:extract "hour" (:interval "35 hours 21 minutes"))) :single)
-         35.0d0))
+         35))
     (is (equal (query (:select (:extract "day" (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second"))) :single)
-               4.0d0))
+               4))
     (is (equal
          (query (:select (:extract "year" (:interval "6 years 5 months 4 days 3 hours 2 minutes 1 second"))) :single)
-         6.0d0))
+         6))
     (is (equal
          (query (:select (:extract "year" (:interval "6 years 15 months 4 days 3 hours 2 minutes 1 second"))) :single)
-         7.0d0))
+         7))
     (is (equal
          (query (:select (:extract "month" (:interval "6 years 15 months 4 days 3 hours 2 minutes 1 second"))) :single)
-         3.0d0))))
+         3))))
 
 (test interval-addition
   "Testing interval addition"
@@ -275,28 +275,28 @@
   (with-test-connection
     (is (equal
          (query (:select (:extract "year" (:timestamp "2016-12-31 13:30:15"))) :single)
-         2016.0d0))
+         2016))
     (is (equal
          (query (:select (:extract "quarter" (:timestamp "2016-12-31 13:30:15"))) :single)
-         4.0d0))
+         4))
     (is (equal
          (query (:select (:extract "month" (:timestamp "2016-12-31 13:30:15"))) :single)
-         12.0d0))
+         12))
     (is (equal
          (query (:select (:extract "day" (:timestamp "2016-12-31 13:30:15"))) :single)
-         31.0d0))
+         31))
     (is (equal
          (query (:select (:extract "century" (:timestamp "2016-12-31 13:30:15"))) :single)
-         21.0d0))
+         21))
     (is (equal
          (query (:select (:extract "dow" (:timestamp "2016-12-31 13:30:15"))) :single)
-         6.0d0))
+         6))
     (is (equal
          (query (:select (:extract "doy" (:timestamp "2016-12-31 13:30:15"))) :single)
-         366.0d0))
+         366))
     (is (equal
          (query (:select (:extract "hour" (:timestamp "2016-12-31 13:30:15"))) :single)
-         13.0d0))
+         13))
     (is (equal
          (query (:select (:extract "minute" (:timestamp "2016-12-31 13:30:15"))) :single)
-         30.0d0))))
+         30))))

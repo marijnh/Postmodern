@@ -1008,14 +1008,15 @@ To sum the column len of all films and group the results by kind:"
                                             (:set 'd2 'd3)))))
              "(SELECT d1, d2, d3, SUM(v) FROM test_cube GROUP BY GROUPING SETS ((d1), (d2, d3)))"))
   (is (equal (with-test-connection
-               (query (:select 'city (:as (:extract 'year 'start-date)  'joining-year)
-                               (:as (:count 1) 'employee_count)
-                               :from 'employee
-                               :group-by (:grouping-sets (:set 'city (:extract 'year 'start-date))))))
-             '(("Vancouver" :NULL 3) ("New York" :NULL 3) ("Toronto" :NULL 3)
-               (:NULL 2001.0d0 1) (:NULL 1997.0d0 1) (:NULL 1994.0d0 1) (:NULL 2000.0d0 1)
-               (:NULL 2002.0d0 1) (:NULL 1996.0d0 1) (:NULL 1995.0d0 1) (:NULL 1998.0d0 1)
-               (:NULL 1999.0d0 1))))
+               (query (:order-by
+                       (:select 'city (:as (:extract 'year 'start-date)  'joining-year)
+                                (:as (:count 1) 'employee_count)
+                        :from 'employee
+                        :group-by (:grouping-sets (:set 'city (:extract 'year 'start-date))))
+                       'city (:desc 'joining-year))))
+             '(("New York" :NULL 3) ("Toronto" :NULL 3) ("Vancouver" :NULL 3) (:NULL 2002 1)
+ (:NULL 2001 1) (:NULL 2000 1) (:NULL 1999 1) (:NULL 1998 1) (:NULL 1997 1)
+ (:NULL 1996 1) (:NULL 1995 1) (:NULL 1994 1))))
   (is (equal (sql (:select 'appnumber 'day (:sum 'inserts) (:sum 'updates)
                            (:sum 'deletes) (:sum 'transactions)
                            :from 'db-details
