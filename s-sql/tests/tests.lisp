@@ -1015,8 +1015,8 @@ To sum the column len of all films and group the results by kind:"
                         :group-by (:grouping-sets (:set 'city (:extract 'year 'start-date))))
                        'city (:desc 'joining-year))))
              '(("New York" :NULL 3) ("Toronto" :NULL 3) ("Vancouver" :NULL 3) (:NULL 2002 1)
- (:NULL 2001 1) (:NULL 2000 1) (:NULL 1999 1) (:NULL 1998 1) (:NULL 1997 1)
- (:NULL 1996 1) (:NULL 1995 1) (:NULL 1994 1))))
+               (:NULL 2001 1) (:NULL 2000 1) (:NULL 1999 1) (:NULL 1998 1) (:NULL 1997 1)
+               (:NULL 1996 1) (:NULL 1995 1) (:NULL 1994 1))))
   (is (equal (sql (:select 'appnumber 'day (:sum 'inserts) (:sum 'updates)
                            (:sum 'deletes) (:sum 'transactions)
                            :from 'db-details
