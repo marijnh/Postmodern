@@ -128,7 +128,7 @@ message definitions themselves stay readable."
 (defun parse-message-binary-parameters (s name query parameters)
   "Like parse-message but specifically when binary parameters are parsed."
   (declare (type stream s)
-           (optimize (speed 3) (safety 0) (space 1) (debug 1)
+           (optimize (speed 3) (space 1) (debug 1)
                      (compilation-speed 0)))
   (let ((len (length parameters)))
     (write-uint1 s 80)
