@@ -321,13 +321,14 @@
 
 (test default-privileges-1
   (with-test-connection
-    (let ((port (cl-postgres::connection-port *database*)))
+      (let ((port (cl-postgres::connection-port *database*))
+            (superuser-name (cl-postgres::connection-user *database*)))
       (when (schema-exists-p "a")
         (drop-schema "a" :cascade t))
       (when (schema-exists-p "b")
         (drop-schema "b" :cascade t))
-      (when (role-exists-p "a") (drop-role "a"))
-      (when (role-exists-p "b") (drop-role "b"))
+      (when (role-exists-p "a") (drop-role "a" superuser-name))
+      (when (role-exists-p "b") (drop-role "b" superuser-name))
       (create-role "a" "a")
       (create-schema "a" "a")
       (alter-role-search-path "a" "a")
@@ -365,13 +366,14 @@
 
 (test default-privileges-2
   (with-test-connection
-    (let ((port (cl-postgres::connection-port *database*)))
+      (let ((port (cl-postgres::connection-port *database*))
+            (superuser-name (cl-postgres::connection-user *database*)))
     (when (schema-exists-p "a")
       (drop-schema "a" :cascade t))
     (when (schema-exists-p "b")
       (drop-schema "b" :cascade t))
-    (when (role-exists-p "a") (drop-role "a"))
-    (when (role-exists-p "b") (drop-role "b"))
+    (when (role-exists-p "a") (drop-role "a" superuser-name))
+    (when (role-exists-p "b") (drop-role "b" superuser-name))
     (create-role "a" "a")
     (create-schema "a" "a")
     (alter-role-search-path "a" "a")

@@ -298,7 +298,8 @@ connection limit = ~a"
                              (cl-postgres::connection-host *database*)
                              :port (cl-postgres::connection-port *database*)
                              :use-ssl (cl-postgres::connection-use-ssl *database*))
-                (query "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;")))
+    (when (member "pg_stat_statements" (list-available-extensions) :test #'equal)
+        (query "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"))))
 
 (defun drop-database (database)
   "Drop the specified database. The database parameter can be a string or a
