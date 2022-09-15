@@ -18,7 +18,7 @@
   :license "zlib"
   :version "1.33.4"
   :depends-on ("md5" "split-sequence" "ironclad" "cl-base64" "uax-15"
-                     (:feature (:or :sbcl :allegro :ccl :clisp :genera
+                     (:feature (:or :allegro :ccl :clisp :genera
                                 :armedbear :cmucl :lispworks)
                                "usocket")
                      (:feature :sbcl (:require :sb-bsd-sockets)))
