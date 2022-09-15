@@ -52,6 +52,10 @@ use-ssl may be :no, :try, :require, :yes, or :full
 If you set it to anything other than :no be sure to also load the CL+SSL library.
 When it is anything but :no, you must have the CL+SSL package loaded to initiate the connection.
 
+When using ssl, you can set the exported variables =*ssl-certificate-file*=,  =*ssl-key-file*=
+and  =*ssl-root-ca-file*= to provide client key, certificate files
+and root ca files. They can be either NIL, for no file, or a pathname.
+
 On SBCL and Clozure CL, the value :unix may be passed for host, in order to
 connect using a Unix domain socket instead of a TCP socket.
 
@@ -181,9 +185,12 @@ will look for the socket file.
    :PROPERTIES:
    :CUSTOM_ID: variable-ssl-key-files
    :END:
-
-When using SSL (see open-database), these can be used to provide client key
-and certificate files. They can be either NIL, for no file, or a pathname.
+** variable =*ssl-root-ca-file*=
+   :PROPERTIES:
+   :CUSTOM_ID: variable-ssl-root-ca-files
+   :END:
+When using SSL (see open-database), these can be used to provide client key, certificate files
+and root ca files. They can be either NIL, for no file, or a pathname.
 
 ** variable =*on-evidence-of-man-in-the-middle-attack*=
    :PROPERTIES:

@@ -117,6 +117,9 @@ pass :no, :try, :require, :yes, or :full
 - :yes means verify that the server cert is issued by a trusted CA, but does not verify the server hostname
 - :full means expect a CA-signed cert for the supplied hostname and verify the server hostname
 
+When using ssl, you can set the cl-postgres exported variables =*ssl-certificate-file*=,  =*ssl-key-file*= and  =*ssl-root-ca-file*= to provide client key, certificate files
+and root ca files. They can be either NIL, for no file, or a pathname.
+
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
 many:1, (in other words, changing connections) or you are using threads (each thread must have its own connection) then with Postmodern you can use the =with-connection= form which establishes a connection with a lexical scope is more appropriate.
 #+BEGIN_SRC lisp
@@ -148,7 +151,7 @@ more overhead.
 
 Postgresql can be tuned to limit the number of connections allowed at any one time. It defaults to 100. The parameter is set in the postgresql.conf file. Depending on the size of your server and what you are doing, the sweet spot generally seems to be between 200-400 connections before you need to bring in connection pooling.
 
-If your application is threaded, each thread should use its own connection. Connections are stateful and attempts to use the same connection for multiple threads will
+If your application is threaded, each thread should use its own connection. Connections are stateful and attempts to use the same connection for multiple threads will likely have problems.
 
 If you have an application like a web app which will make many connections, you also
 generally do not want to create and drop connections for every query. The usual solution
@@ -162,7 +165,7 @@ To use postmodern's simple connection pooler, the =with-connection= call would l
 #+END_SRC
 
 The maximum number of connections in the pool is set in the special variable
-*max-pool-size*, which defaults to nil (no maximum).
+=*max-pool-size*=, which defaults to nil (no maximum).
 
 Now for a basic sanity test which does not need a database connection at all:
 

@@ -24,7 +24,10 @@ a query.")
 (defparameter *ssl-key-file* nil
   "When set to a filename, this file will be used as client key for
   SSL connections.")
-
+(defparameter *ssl-root-ca-file* nil
+  "Should be a path to a root certificate file, typically a pem file.
+It is used for SSL connections when you want to verify the host using a
+root ca.")
 
 (defmacro message-case (socket &body clauses)
   "Helper macro for reading messages from the server. A list of cases
@@ -168,7 +171,9 @@ database-error condition."
 
 ;; The let is used to remember that we have found the
 ;; cl+ssl:make-ssl-client-stream function before.
-(let ((make-ssl-stream nil))
+
+(let ((make-ssl-stream nil)
+      (verify-root-ca nil))
   (defun initiate-ssl (socket required verify hostname)
     "Initiate SSL handshake with the PostgreSQL server, and wrap the socket in
 an SSL stream. When require is true, an error will be raised when the server
@@ -179,7 +184,11 @@ be matched against it."
         (error 'database-error
                :message "CL+SSL is not loaded. Load it to enable SSL."))
       (setf make-ssl-stream (intern
-                             (string '#:make-ssl-client-stream) :cl+ssl)))
+                             (string '#:make-ssl-client-stream) :cl+ssl))
+      (setf verify-root-ca (intern
+                            (string '#:ssl-load-global-verify-locations) :cl+ssl))
+      (when (and verify *ssl-root-ca-file*)
+        (funcall verify-root-ca *ssl-root-ca-file*)))
     (ssl-request-message socket)
     (force-output socket)
     (ecase (read-byte socket)

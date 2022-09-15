@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-08-03 Tue 10:58 -->
+<!-- 2022-04-02 Sat 13:13 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cl-Postgres Reference Manual</title>
@@ -236,6 +236,7 @@
 <li><a href="#variable-unix-socket-dir">variable <code>*unix-socket-dir*</code></a></li>
 <li><a href="#variable-ssl-certificate-file">variable <code>*ssl-certificate-file*</code></a></li>
 <li><a href="#variable-ssl-key-files">variable <code>*ssl-key-file*</code></a></li>
+<li><a href="#variable-ssl-root-ca-files">variable <code>*ssl-root-ca-file*</code></a></li>
 <li><a href="#variable-on-evidence-of-man-in-the-middle-attack">variable <code>*on-evidence-of-man-in-the-middle-attack*</code></a></li>
 <li><a href="#variable-retry-connect-times">variable <code>*retry-connect-times*</code> (5)</a></li>
 <li><a href="#variable-retry-connect-delay">variable <code>*retry-connect-delay*</code> (0.5)</a></li>
@@ -369,6 +370,12 @@ use-ssl may be :no, :try, :require, :yes, or :full
 <p>
 If you set it to anything other than :no be sure to also load the CL+SSL library.
 When it is anything but :no, you must have the CL+SSL package loaded to initiate the connection.
+</p>
+
+<p>
+When using ssl, you can set the exported variables <code>*ssl-certificate-file*</code>,  <code>*ssl-key-file*</code>
+and  <code>*ssl-root-ca-file*</code> to provide client key, certificate files
+and root ca files. They can be either NIL, for no file, or a pathname.
 </p>
 
 <p>
@@ -544,9 +551,14 @@ will look for the socket file.
 <div id="outline-container-variable-ssl-key-files" class="outline-3">
 <h3 id="variable-ssl-key-files">variable <code>*ssl-key-file*</code></h3>
 <div class="outline-text-3" id="text-variable-ssl-key-files">
+</div>
+</div>
+<div id="outline-container-variable-ssl-root-ca-files" class="outline-3">
+<h3 id="variable-ssl-root-ca-files">variable <code>*ssl-root-ca-file*</code></h3>
+<div class="outline-text-3" id="text-variable-ssl-root-ca-files">
 <p>
-When using SSL (see open-database), these can be used to provide client key
-and certificate files. They can be either NIL, for no file, or a pathname.
+When using SSL (see open-database), these can be used to provide client key, certificate files
+and root ca files. They can be either NIL, for no file, or a pathname.
 </p>
 </div>
 </div>
@@ -554,8 +566,8 @@ and certificate files. They can be either NIL, for no file, or a pathname.
 <div id="outline-container-variable-on-evidence-of-man-in-the-middle-attack" class="outline-3">
 <h3 id="variable-on-evidence-of-man-in-the-middle-attack">variable <code>*on-evidence-of-man-in-the-middle-attack*</code></h3>
 <div class="outline-text-3" id="text-variable-on-evidence-of-man-in-the-middle-attack">
-  <p>
-    When establishing an SSL connection, Postmodern will check to see if unexpected extra data was received prior to the connection being encrypted. Unexpected extra data may indicate an attempted man-in-the-middle attack. By default, this variable is set to :error. You can set the response to be a simple warning (by setting this to :warn) or you can set this to :ignore.
+<p>
+When establishing an SSL connection, Postmodern will check to see if unexpected extra data was received prior to the connection being encrypted. Unexpected extra data may indicate an attempted man-in-the-middle attack. By default, this variable is set to :error. You can set the response to be a simple warning (by setting this to :warn) or you can set this to :ignore.
 </p>
 </div>
 </div>

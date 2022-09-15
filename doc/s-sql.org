@@ -664,6 +664,7 @@ Going back to our earlier example, remember that I said that unless you use a su
                                    (:any* South-America))))))
 (("Bermuda") ("Greenland"))
 #+END_SRC
+IMPORTANT: If you are trying to use a list in a parameterized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
 
 ** sql-op :function (name (&rest arg-types) return-type stability body)
    :PROPERTIES:
@@ -937,6 +938,8 @@ Test whether a value is in a set of values.
                 :where (:in 'region (:select 'region :from 'top-regions))
                 :group-by 'region 'product))
 #+END_SRC
+IMPORTANT: If you are trying to use a list in a parameterized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
+
 ** sql-op :not-in (value set)
    :PROPERTIES:
    :CUSTOM_ID: sql-op-not-in
@@ -998,7 +1001,7 @@ Now with selecting from a vector. Note both the use of any* and := instead of :i
 #+END_SRC
 Note that the responses will still come back in a list of lists
 
-IMPORTANT: If you are trying to use a list in a parametized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
+IMPORTANT: If you are trying to use a list in a parameterized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
 
 ** sql-op :array (query)
    :PROPERTIES:
@@ -2722,6 +2725,8 @@ that is not a list starting with a keyword will evaluate to a string.
 In any case you will need to ensure that either you have control over the inputs
 or they still result in parameterized queries. If not you have opened yourself up
 to an sql injection attack.
+
+IMPORTANT: If you are trying to use a list in a parameterized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
 
 If you are not using s-sql, then it becomes easy. The query macro
 assumes that everything that is not a list starting with a keyword will

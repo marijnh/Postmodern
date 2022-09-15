@@ -298,7 +298,8 @@ connection limit = ~a"
                              (cl-postgres::connection-host *database*)
                              :port (cl-postgres::connection-port *database*)
                              :use-ssl (cl-postgres::connection-use-ssl *database*))
-                (query "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;")))
+    (when (member "pg_stat_statements" (list-available-extensions) :test #'equal)
+        (query "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"))))
 
 (defun drop-database (database)
   "Drop the specified database. The database parameter can be a string or a
@@ -886,10 +887,12 @@ the names will be returned as strings with underscores converted to hyphens."
                                  WHERE (table_schema = $1))
                                  ORDER BY table_name)"
                     (to-sql-name schema-name))))))
+    (setf result (alexandria:flatten result))
     (if strings-p
-        (mapcar 'to-sql-name result)
-        result)
-    (alexandria:flatten result)))
+        (mapcar (lambda (x)
+                  (substitute #\- #\_ x))
+                result)
+        result)))
 
 (defun list-tables (&optional (strings-p nil))
   "DEPRECATED FOR LIST-ALL-TABLES. Return a list of the tables in the public
@@ -1070,7 +1073,7 @@ to be the public schema. Returns t or nil."
 
 (defun rename-column (table old-name new-name)
   "Rename a column in a table. Parameters can be strings or symbols. If the table
-is not in the public schema, it needs to be fully qualified - e.g. schema.table.
+is not in the public schema, it needs to be fully qualified - e.g. schema.table.column
 Returns t if successful."
   (setf table (to-sql-name table))
   (setf old-name (to-sql-name old-name))

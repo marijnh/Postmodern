@@ -63,6 +63,7 @@
            #:close-db-writer
            #:*ssl-certificate-file*
            #:*ssl-key-file*
+           #:*ssl-root-ca-file*
            #:*retry-connect-times*
            #:*retry-connect-delay*
            #:string-mapped-to-nothing
@@ -72,7 +73,7 @@
            #:int4
            #:int8
            #:uuid-string
-           #:-uuip-p
+           #:uuip-p
            #:types-match-p
            #:oid-types-match-p
            #:parameter-lists-match-oid-types-p
