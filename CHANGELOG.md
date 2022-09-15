@@ -1,3 +1,12 @@
+# Changelog v. 1.33.5
+Discontinue support for versions of sbcl < 1.2.5 which were compiled without support for bsd-sockets.
+
+Drop unwarrented assumption that the role 'postgres' will always exist when dropping a role resulting in ownership changes of postgresql objects.
+
+Add more documentation on the limitation in s-sql on using lists in a parameterized statement. If you are trying to use a list in a parametized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
+
+Add additional support for ssl connections to allow use of a root certificate for validation. Set \*ssl-root-ca-file* to the pathname for the root certificate.
+
 # Changelog v. 1.33.4
 Fix bug in a warning in execute-file that referred to the current package rather than Postmodern.
 
@@ -605,7 +614,7 @@ Examples:
     and https://www.b-list.org/weblog/2018/feb/11/usernames/
 
     :allow-disallowed-names defaults to nil. If nil, the user name will be checked
-    against *disallowed-role-names*.
+    against \*disallowed-role-names*.
 
     As an aside, if allowing utf8 in names, you might want to think about whether
     you should create second copy of the username in the original casing and normalized
