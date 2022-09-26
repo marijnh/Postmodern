@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-04-02 Sat 13:13 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2022-09-26 Mon 08:09 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Postmodern Reference Manual</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="Sabra Crolleton">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -39,21 +40,21 @@
   pre.src {
     position: relative;
     overflow: auto;
-    padding-top: 1.2em;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
   pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,33 +189,10 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <link rel="stylesheet" type="text/css" href="style.css" />
 <style>pre.src{background:#343131;color:white;} </style>
-<script type="text/javascript">
-// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
-<!--/*--><![CDATA[/*><!--*/
-     function CodeHighlightOn(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.add("code-highlighted");
-         target.classList.add("code-highlighted");
-       }
-     }
-     function CodeHighlightOff(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.remove("code-highlighted");
-         target.classList.remove("code-highlighted");
-       }
-     }
-    /*]]>*///-->
-// @license-end
-</script>
 <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         displayAlign: "center",
@@ -235,16 +213,15 @@
              }
 });
 </script>
-<script type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
 </head>
 <body>
-<div id="content">
+<div id="content" class="content">
 <header>
 <h1 class="title">Postmodern Reference Manual</h1>
-</header><nav id="table-of-contents">
+</header><nav id="table-of-contents" role="doc-toc">
 <h2>Table of Contents</h2>
-<div id="text-table-of-contents">
+<div id="text-table-of-contents" role="doc-toc">
 <ul>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#connecting">Connecting</a>
@@ -1240,7 +1217,7 @@ The following is an example with a simple-date timestamp.
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'timestamp-with-time-zone
         <span style="color: #23d7d7;">:from</span> 'test-data
-        <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #23d7d7;">:json-strs</span>)
+        <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #ff4242; font-weight: bold;">:json-strs</span><span style="color: #ff4242; font-weight: bold;">)</span>
 '(<span style="color: #e67128;">"{\"timestampWithTimeZone\":\"2019-12-30 18:30:54:0\"}"</span>
   <span style="color: #e67128;">"{\"timestampWithTimeZone\":\"1919-12-30 18:30:54:0\"}"</span>)
 </pre>
@@ -2151,8 +2128,18 @@ current database.
 
 <p>
 We will reassign ownership of the objects to the postgres role
-unless otherwise specified in the optional second parameter. Returns t if
-successful. Will not drop the postgres role.
+unless otherwise specified in the optional second parameter. If neither the
+postgresql role nor a provided second parameter actually exist as a role on
+the server, object ownership will be assigned to the role calling (drop-role).
+</p>
+
+<p>
+Returns t if successful. Will not drop the postgres role.
+</p>
+
+<p>
+As a minor matter of note, postgresql allows a role to own objects in databases
+even if it does not have connection rights. This can be useful in setting group roles.
 </p>
 </div>
 </div>

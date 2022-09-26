@@ -416,11 +416,15 @@ every database. Otherwise drop-role will drop objects owned by a role in the
 current database.
 
 We will reassign ownership of the objects to the postgres role
-unless otherwise specified in the optional second parameter. Returns t if
-successful. Will not drop the postgres role.
+unless otherwise specified in the optional second parameter. If neither the
+postgresql role nor a provided second parameter actually exist as a role on
+the server, object ownership will be assigned to the role calling (drop-role).
 
-As a minor matter of note, a role can own objects in databases it is not
-granted connection rights."
+Returns t if successful. Will not drop the postgres role.
+
+As a minor matter of note, Postgresql allows a role to own objects in databases
+even if it does not have connection rights. This can be useful in setting
+group roles."
   (when (symbolp role-name) (setf role-name (to-sql-name role-name)))
   (when (symbolp new-owner) (setf new-owner (to-sql-name new-owner)))
   ;; When the new-owner parameter does not actually exist as a role
