@@ -140,7 +140,8 @@ a single string name or :current, :all or \"all\"."
 
 (defun grant-admin-permissions (schema-name role-name &optional (table-name nil))
   "Grants all privileges to a role for the named schema. If the optional table-name
-parameter is provided, the privileges are only granted with respect to that table."
+parameter is provided, the privileges are only granted with respect to that table
+ (or tables if table-name is a list of table names)."
   (cond ((not table-name)
          (query (format nil "grant all on all tables in schema ~a to ~a"
                         schema-name role-name))
@@ -152,6 +153,10 @@ parameter is provided, the privileges are only granted with respect to that tabl
                         schema-name role-name))
          (loop for x in *execute-privileges-list* do
            (query (format nil x schema-name role-name))))
+        ((listp table-name)
+         (loop for x in table-name do
+               (query (format nil "grant all on table ~a.~a to ~a"
+                        schema-name x role-name))))
         (t
          (query (format nil "grant all on table ~a.~a to ~a"
                         schema-name table-name role-name)))))
@@ -159,7 +164,9 @@ parameter is provided, the privileges are only granted with respect to that tabl
 (defun grant-editor-permissions (schema-name role-name &optional (table-name nil))
   "Grants select, insert, update and delete privileges to a role for the named
 schema. If the optional table-name parameter is provided, the privileges are only
-granted with respect to that table. Note that we are giving some function execute
+granted with respect to that table (or tables if table-name is a list of table names).
+
+Note that we are giving some function execute
 permissions if table-name is nil, but if the table-name is specified, those are
 not provided. Your mileage may vary on how many privileges you want to provide
 to a editor role with access to only a limited number of tables."
@@ -168,17 +175,21 @@ to a editor role with access to only a limited number of tables."
            (query (format nil x schema-name role-name)))
          (loop for x in *execute-privileges-list* do
            (query (format nil x schema-name role-name))))
-        (t
-         (query (format nil "grant select, insert, update, delete on table ~a.~a to ~a"
-                        schema-name table-name role-name)))))
+        ((listp table-name)
+         (loop for x in table-name do
+               (query (format nil "grant select, insert, update, delete on table ~a.~a to ~a"
+                         schema-name x role-name))))
+         (t
+          (query (format nil "grant select, insert, update, delete on table ~a.~a to ~a"
+                         schema-name table-name role-name)))))
 
 (defun grant-readonly-permissions (schema-name role-name &optional (table-name nil))
   "Grants select privileges to a role for the named schema. If the optional
 table-name parameter is provided, the privileges are only granted with respect
-to that table. Note that we are giving some function execute permissions if
-table-name is nil, but if the table-name is specified, those are not provided.
-Your mileage may vary on how many privileges you want to provide to a
-read-only role with access to only a limited number of tables."
+to that table (or tables if table-name is a list of table names). Note that we are
+giving some function execute permissions if table-name is nil, but if the table-name
+is specified, those are not provided. Your mileage may vary on how many privileges
+you want to provide to a read-only role with access to only a limited number of tables."
   (cond ((not table-name)
          (loop for x in *alter-all-default-select-privileges* do
            (let ((query-string (format nil x schema-name role-name)))
@@ -186,6 +197,10 @@ read-only role with access to only a limited number of tables."
          (loop for x in *execute-privileges-list* do
            (let ((query-string (format nil x schema-name role-name)))
              (query query-string))))
+        ((listp table-name)
+         (loop for x in table-name do
+               (query (format nil "grant select on table ~a.~a to ~a"
+                        schema-name x role-name))))
         (t
          (query (format nil "grant select on table ~a.~a to ~a"
                         schema-name table-name role-name)))))
@@ -401,13 +416,22 @@ every database. Otherwise drop-role will drop objects owned by a role in the
 current database.
 
 We will reassign ownership of the objects to the postgres role
-unless otherwise specified in the optional second parameter. Returns t if
-successful. Will not drop the postgres role.
+unless otherwise specified in the optional second parameter. If neither the
+postgresql role nor a provided second parameter actually exist as a role on
+the server, object ownership will be assigned to the role calling (drop-role).
 
-As a minor matter of note, a role can own objects in databases it is not
-granted connection rights."
+Returns t if successful. Will not drop the postgres role.
+
+As a minor matter of note, Postgresql allows a role to own objects in databases
+even if it does not have connection rights. This can be useful in setting
+group roles."
   (when (symbolp role-name) (setf role-name (to-sql-name role-name)))
   (when (symbolp new-owner) (setf new-owner (to-sql-name new-owner)))
+  ;; When the new-owner parameter does not actually exist as a role
+  ;; reassign rights to the role that is currently connected and
+  ;; calling (drop-role)
+  (when (not (role-exists-p new-owner))
+    (setf new-owner (cl-postgres::connection-user *database*)))
   (if (eq database :all)
       (loop for x in (list-databases :names-only t) do
         (with-connection (list x (cl-postgres::connection-user *database*)
