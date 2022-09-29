@@ -102,7 +102,7 @@
                      (query (format nil "reassign owned by ~a to ~a" y superuser-name))
                      (query (format nil "drop owned by ~a" y))))))
       (loop for x in users do (drop-role x))
-      (loop for x in dbs do
+      (loop for x in *test-dbs* do
         (when (and (database-exists-p x)
                    (not (equal x "test")))
           (drop-database x))))))
