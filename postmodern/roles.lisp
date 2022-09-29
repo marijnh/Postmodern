@@ -40,7 +40,7 @@ In PostgreSQL*, you cannot drop a database while clients are connected to it.
 |#
 
 (defun list-database-users ()
-  "List database users (actually 'roles' in Postgresql terminology)."
+  "List database users (Roles who can login)."
   (alexandria:flatten (query (:order-by
                               (:select 'usename :from 'pg_user)
                               'usename))))
@@ -440,19 +440,20 @@ group roles."
                                :port (cl-postgres::connection-port *database*)
                                :use-ssl (cl-postgres::connection-use-ssl *database*))
           (when (and (not (string= role-name "postgres"))
-                     (member role-name (list-database-users) :test #'equal))
+                     (role-exists-p role-name))
             (query (format nil "reassign owned by ~a to ~a" role-name new-owner))
-            (query (format nil "drop owned by ~a" role-name)))))
+            (query (format nil "drop owned by ~a" role-name))
+            (query (format nil "drop role if exists ~a" role-name)))))
       (with-connection (list database (cl-postgres::connection-user *database*)
                              (cl-postgres::connection-password *database*)
                              (cl-postgres::connection-host *database*)
                              :port (cl-postgres::connection-port *database*)
                              :use-ssl (cl-postgres::connection-use-ssl *database*))
         (when (and (not (string= role-name "postgres"))
-                   (member role-name (list-database-users) :test #'equal))
+                   (role-exists-p role-name))
           (query (format nil "reassign owned by ~a to ~a" role-name new-owner))
-          (query (format nil "drop owned by ~a" role-name)))))
-      (query (format nil "drop role if exists ~a" role-name))
+          (query (format nil "drop owned by ~a cascade" role-name))
+          (query (format nil "drop role if exists ~a" role-name)))))
       (not (role-exists-p role-name)))
 
 (defun list-role-permissions (&optional role)
