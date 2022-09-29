@@ -33,6 +33,24 @@
     (push "standard" names)
     names))
 
+(test test-create-role-names
+  (is (equalp (test-create-role-names)
+              '("standard" "readonly_d_all_s_s2_t_all" "readonly_d_all_s_s2_t_t1"
+                "readonly_d_all_s_public_t_all" "readonly_d_all_s_public_t_t1"
+                "readonly_d_d2_s_s2_t_all" "readonly_d_d2_s_s2_t_t1"
+                "readonly_d_d2_s_public_t_all" "readonly_d_d2_s_public_t_t1"
+                "readonly_d_d1_s_s2_t_all" "readonly_d_d1_s_s2_t_t1"
+                "readonly_d_d1_s_public_t_all" "readonly_d_d1_s_public_t_t1"))))
+
+(test list-database-users
+  (with-test-connection
+    (when (not (role-exists-p "role_wo_login"))
+     (query "create role role_wo_login"))
+    (is (not (member "role_wo_login" (list-database-users) :test #'equal)))
+    (is (role-exists-p "role_wo_login"))
+    (drop-role "role_wo_login")
+    (is (not (role-exists-p "role_wo_login")))))
+
 (defparameter *test-dbs* '("d1" "d1_al" "d2" "d2_al" "d3" "d3_al"))
 (defparameter *first-test-dbs* '("d1" "d1_al" "d2" "d2_al"))
 (defparameter *subsequent-test-dbs* '("d3"))
