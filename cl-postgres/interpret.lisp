@@ -220,9 +220,9 @@ executing body so that row values will be returned as t."
         (element-type (read-uint4 stream)))
     (cond
       ((zerop num-dims)
-       ;; Should we return nil or a (make-array nil) when num-dims is
-       ;; 0? Returning nil for now.
-       nil)
+       ;; Should we return nil or a (make-array 0) when num-dims is
+       ;; 0? Based on feedback we will go with making an array of size 0
+        (make-array 0))
       (t
        (let* ((array-dims
                 (loop for i below num-dims

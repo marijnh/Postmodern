@@ -1,4 +1,10 @@
-# Changelog v. 1.33.5
+# Changelog 1.33.6
+Postmodern/cl-postgres now returns an empty array if Postgresql returns an empty array.
+
+The previous behavior had been to return nil, but I have been convinced by a user to make this
+change.
+
+# Changelog 1.33.5
 Discontinue support for versions of sbcl < 1.2.5 which were compiled without support for bsd-sockets.
 
 Drop unwarrented assumption that the role 'postgres' will always exist when dropping a role resulting in ownership changes of postgresql objects.
@@ -7,19 +13,19 @@ Add more documentation on the limitation in s-sql on using lists in a parameteri
 
 Add additional support for ssl connections to allow use of a root certificate for validation. Set \*ssl-root-ca-file* to the pathname for the root certificate.
 
-# Changelog v. 1.33.4
+# Changelog 1.33.4
 Fix bug in a warning in execute-file that referred to the current package rather than Postmodern.
 
 Added retry-transaction restart in the call-with-transaction function
 
-# Changelog v. 1.33.2
+# Changelog 1.33.2
 
 Fix bug in export functions when user tries to export nil into a database
 
 Fix bug in import functions when functions are called but the current package has changed.
 Note to self. Pay attention to needs for fully qualified symbols (including package names) and how to test them for equality.
 
-# Changelog v. 1.33.1
+# Changelog 1.33.1
 Dao Export and Import Functions (Postmodern v. 1.33.1 and newer)
 
 There may be times when the types of values in a dao slot do not have comparable types in Postgresql. For purposes of the following example, assume you have slots that you want to contain lists. Postgresql does not have a "list" data type. Postgresql arrays must be homogeneous but CL lists do not have that limitation. What to do?

@@ -767,7 +767,7 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
   (with-test-connection
     (cl-postgres::with-binary-row-values
       (is (equalp (exec-query connection "select row((ARRAY[1,3,4])[5:99])" 'list-row-reader)
-                  '(((NIL))))))))
+                  '(((#()))))))))
 
 (test row-array-nulls-binary-2
   (with-test-connection
@@ -792,7 +792,7 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
                    connection
                    "select row(a[2:45]) from test"
                    'list-row-reader)
-                  '(((#2A((0 0)))) ((NIL)) ((#2A((2 2)))) ((NIL)) ((NIL))))))))))
+                  '(((#2A((0 0)))) ((#())) ((#2A((2 2)))) ((#())) ((#()))))))))))
 
 (test array-row-text
   (with-test-connection

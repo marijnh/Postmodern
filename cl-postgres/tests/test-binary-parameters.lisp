@@ -662,7 +662,7 @@ unless it would have been valid as a text parameter."
   (with-binary-test-connection
     (cl-postgres::with-binary-row-values
       (is (equalp (exec-query connection "select row((ARRAY[1,3,4])[5:99])" 'list-row-reader)
-                  '(((NIL))))))))
+                  '(((#()))))))))
 
 (test binary-row-array-nulls-binary-2
   (with-binary-test-connection
@@ -687,7 +687,7 @@ unless it would have been valid as a text parameter."
                    connection
                    "select row(a[2:45]) from test"
                    'list-row-reader)
-                  '(((#2A((0 0)))) ((NIL)) ((#2A((2 2)))) ((NIL)) ((NIL))))))))))
+                  '(((#2A((0 0)))) ((#())) ((#2A((2 2)))) ((#())) ((#()))))))))))
 
 (test binary-array-row-text
   (with-binary-test-connection

@@ -1155,6 +1155,6 @@ Like all the aggregate functions, you can pass :filter, :distinct or :order-by
    :PROPERTIES:
    :ID:       c40b6ef9-737b-4341-9ec0-73fddc7eea55
    :END:
-An empty array will be returned by postmodern as nil.
+An empty array will be returned by postmodern as #(). This is a change as of version 1.33.6. Previously an empty array would be returned by postmodern as nil.
 
 [[file:s-sql.html][Return to s-sql.html]]
