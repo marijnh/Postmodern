@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-07-11 Sun 09:24 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2022-10-03 Mon 15:22 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>S-SQL and Postgresql Arrays</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="Sabra Crolleton">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -39,21 +40,21 @@
   pre.src {
     position: relative;
     overflow: auto;
-    padding-top: 1.2em;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
   pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,108 +189,85 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <link rel="stylesheet" type="text/css" href="style.css" />
 <style>pre.src{background:#343131;color:white;} </style>
-<script type="text/javascript">
-// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
-<!--/*--><![CDATA[/*><!--*/
-     function CodeHighlightOn(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.add("code-highlighted");
-         target.classList.add("code-highlighted");
-       }
-     }
-     function CodeHighlightOff(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.remove("code-highlighted");
-         target.classList.remove("code-highlighted");
-       }
-     }
-    /*]]>*///-->
-// @license-end
-</script>
 </head>
 <body>
-<div id="content">
+<div id="content" class="content">
 <header>
 <h1 class="title">S-SQL and Postgresql Arrays</h1>
-</header><nav id="table-of-contents">
+</header><nav id="table-of-contents" role="doc-toc">
 <h2>Table of Contents</h2>
-<div id="text-table-of-contents">
+<div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgd36810a">Summary</a></li>
-<li><a href="#org75ef1b0">Use cases for arrays in a database</a>
+<li><a href="#org5b5e1e9">Summary</a></li>
+<li><a href="#orgb184e03">Use cases for arrays in a database</a>
 <ul>
-<li><a href="#orge7873c4">General Usage</a></li>
-<li><a href="#org4b3cec1">Rules of Thumb - Do Not Use Arrays If:</a></li>
-<li><a href="#org3f33f1b">Data Type Enforcement</a></li>
-<li><a href="#org2fea7a0">Indices on Arrays</a></li>
+<li><a href="#org0501d46">General Usage</a></li>
+<li><a href="#org3a3f1cb">Rules of Thumb - Do Not Use Arrays If:</a></li>
+<li><a href="#org8ff0c90">Data Type Enforcement</a></li>
+<li><a href="#orge4ec121">Indices on Arrays</a></li>
 </ul>
 </li>
-<li><a href="#orgb5cdcba">S-SQL Array Support</a>
+<li><a href="#orga873376">S-SQL Array Support</a>
 <ul>
-<li><a href="#org56e8463">:array (used inside a query calling a subquery, selecting into an array)</a></li>
-<li><a href="#org945577b">:array[] (declares an array and returns an array</a></li>
-<li><a href="#org73afdfb">:[] (used when you want a slice of an array</a></li>
-<li><a href="#org9b63f9c">General Usage Examples</a></li>
+<li><a href="#org111d808">:array (used inside a query calling a subquery, selecting into an array)</a></li>
+<li><a href="#org4725d4e">:array[] (declares an array and returns an array</a></li>
+<li><a href="#org3c67aab">:[] (used when you want a slice of an array</a></li>
+<li><a href="#orgf09a891">General Usage Examples</a></li>
 </ul>
 </li>
-<li><a href="#org2ad6706">Dao Class Support for Arrays</a></li>
-<li><a href="#org1c8a03c">Array Operators</a>
+<li><a href="#org826cf7c">Dao Class Support for Arrays</a></li>
+<li><a href="#org51f254c">Array Operators</a>
 <ul>
-<li><a href="#orga4db3ff">Array Comparison Operators</a>
+<li><a href="#org269876e">Array Comparison Operators</a>
 <ul>
-<li><a href="#org5f5fd39">:= Equality Comparison (Are two arrays equal on an element by element basis)</a></li>
-<li><a href="#org6c16e07">:&lt;&gt; Not Equal Comparison</a></li>
-<li><a href="#org40f8311">:&lt; Less Than Comparison</a></li>
-<li><a href="#orgdeabea2">:&gt; Greater Than Comparison</a></li>
-<li><a href="#org0509480">:&gt;= Greater Than or Equal to Comparison</a></li>
-<li><a href="#orgcd62381">:&lt;= Less Than or Equal To Comparison</a></li>
-<li><a href="#orgff37692">:@&gt; Contains Comparison</a></li>
-<li><a href="#org21574f6">:&lt;@ Is Contained By Comparison</a></li>
-<li><a href="#org6198f17">:&amp;&amp; Has Elements in Common Comparison</a></li>
+<li><a href="#org9047d71">:= Equality Comparison (Are two arrays equal on an element by element basis)</a></li>
+<li><a href="#org1c80249">:&lt;&gt; Not Equal Comparison</a></li>
+<li><a href="#org3fe0011">:&lt; Less Than Comparison</a></li>
+<li><a href="#orgcda6285">:&gt; Greater Than Comparison</a></li>
+<li><a href="#org343dd7c">:&gt;= Greater Than or Equal to Comparison</a></li>
+<li><a href="#org0d854a7">:&lt;= Less Than or Equal To Comparison</a></li>
+<li><a href="#orgeb938b5">:@&gt; Contains Comparison</a></li>
+<li><a href="#orgfa75fef">:&lt;@ Is Contained By Comparison</a></li>
+<li><a href="#org7f73a5a">:&amp;&amp; Has Elements in Common Comparison</a></li>
 </ul>
 </li>
-<li><a href="#org2d8669e">Array Concatenation Operators</a>
+<li><a href="#orgdbea427">Array Concatenation Operators</a>
 <ul>
-<li><a href="#orge162d2a">:|| Concatentation Arrays and Elements</a></li>
-<li><a href="#org597a87a">:|| Concatenation with Multi-Dimensional Arrays</a></li>
+<li><a href="#org7645780">:|| Concatentation Arrays and Elements</a></li>
+<li><a href="#orge2faadb">:|| Concatenation with Multi-Dimensional Arrays</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org15f399a">Array functions</a>
+<li><a href="#org4ae78e1">Array functions</a>
 <ul>
 <li>
 <ul>
-<li><a href="#org0ceb04c">Array-prepend</a></li>
-<li><a href="#org825676b">array-append</a></li>
-<li><a href="#org05084f7">array-cat</a></li>
-<li><a href="#orgecdd61f">array-ndims</a></li>
-<li><a href="#org5e7fc37">array-dims</a></li>
-<li><a href="#orgcbca94b">array-fill</a></li>
-<li><a href="#org14aa248">array-length</a></li>
-<li><a href="#orgaf96c90">array-lower</a></li>
-<li><a href="#org982bf72">array-position</a></li>
-<li><a href="#org86302ea">array-positions</a></li>
-<li><a href="#org64914ee">array-remove</a></li>
-<li><a href="#org3defa23">array-replace</a></li>
-<li><a href="#orgb13453f">array-to-string</a></li>
-<li><a href="#org49216ce">array-upper</a></li>
-<li><a href="#orgdf09f26">cardinality</a></li>
-<li><a href="#orgd9fed40">string-to-array</a></li>
-<li><a href="#org421c3aa">unnest</a></li>
-<li><a href="#org60be0ed">array-agg</a></li>
+<li><a href="#org2774760">Array-prepend</a></li>
+<li><a href="#org553460c">array-append</a></li>
+<li><a href="#org358241c">array-cat</a></li>
+<li><a href="#orgbef29fc">array-ndims</a></li>
+<li><a href="#org34dc0b7">array-dims</a></li>
+<li><a href="#org1c9eb36">array-fill</a></li>
+<li><a href="#org102910e">array-length</a></li>
+<li><a href="#org5974698">array-lower</a></li>
+<li><a href="#orgc5bc7b2">array-position</a></li>
+<li><a href="#org5ae7695">array-positions</a></li>
+<li><a href="#org0923f75">array-remove</a></li>
+<li><a href="#orgd824c3c">array-replace</a></li>
+<li><a href="#org7c3e8c8">array-to-string</a></li>
+<li><a href="#orga7d29a9">array-upper</a></li>
+<li><a href="#orgd589d9f">cardinality</a></li>
+<li><a href="#org0e460cd">string-to-array</a></li>
+<li><a href="#orgfb945cf">unnest</a></li>
+<li><a href="#orgae7d8cb">array-agg</a></li>
 </ul>
 </li>
-<li><a href="#org3dcfcd7">NULL and nil</a></li>
+<li><a href="#org78d4fdc">NULL and nil</a></li>
 </ul>
 </li>
 </ul>
@@ -301,9 +279,9 @@
 <a href="postmodern.html">Return to postmodern.html</a>
 </p>
 
-<div id="outline-container-orgd36810a" class="outline-2">
-<h2 id="orgd36810a">Summary</h2>
-<div class="outline-text-2" id="text-orgd36810a">
+<div id="outline-container-org5b5e1e9" class="outline-2">
+<h2 id="org5b5e1e9">Summary</h2>
+<div class="outline-text-2" id="text-org5b5e1e9">
 <p>
 Arrays are a first class datatype within postgresql. The contents can only be of a single
 datatype. Postgresql will enforce that typing. They can be multidimensional. The starting index is 1, not 0. Regardless of whether you specify an array length when you create a table,
@@ -329,14 +307,14 @@ in s-sql.
 </div>
 </div>
 
-<div id="outline-container-org75ef1b0" class="outline-2">
-<h2 id="org75ef1b0">Use cases for arrays in a database</h2>
-<div class="outline-text-2" id="text-org75ef1b0">
+<div id="outline-container-orgb184e03" class="outline-2">
+<h2 id="orgb184e03">Use cases for arrays in a database</h2>
+<div class="outline-text-2" id="text-orgb184e03">
 </div>
 
-<div id="outline-container-orge7873c4" class="outline-3">
-<h3 id="orge7873c4">General Usage</h3>
-<div class="outline-text-3" id="text-orge7873c4">
+<div id="outline-container-org0501d46" class="outline-3">
+<h3 id="org0501d46">General Usage</h3>
+<div class="outline-text-3" id="text-org0501d46">
 <p>
 You can either use arrays as a datatype stored in the database or there may be reasons why you want to use them as an intermediate datatype in a query.
 </p>
@@ -411,7 +389,7 @@ relationships, e.g.
     tags TEXT[]
 );
 
-<span style="color: #74af68;">-- Select all posts with tag 'kitty'</span>
+<span style="color: #74af68;">-- </span><span style="color: #74af68;">Select all posts with tag 'kitty'</span>
 <span style="color: #ffad29; font-weight: bold;">SELECT</span> * <span style="color: #ffad29; font-weight: bold;">FROM</span> posts <span style="color: #ffad29; font-weight: bold;">WHERE</span> tags @&gt; <span style="color: #e67128;">'{kitty}'</span>;
 </pre>
 </div>
@@ -535,9 +513,9 @@ See also <a href="https://www.compose.com/articles/take-a-dip-into-postgresql-ar
 </div>
 </div>
 
-<div id="outline-container-org4b3cec1" class="outline-3">
-<h3 id="org4b3cec1">Rules of Thumb - Do Not Use Arrays If:</h3>
-<div class="outline-text-3" id="text-org4b3cec1">
+<div id="outline-container-org3a3f1cb" class="outline-3">
+<h3 id="org3a3f1cb">Rules of Thumb - Do Not Use Arrays If:</h3>
+<div class="outline-text-3" id="text-org3a3f1cb">
 <ul class="org-ul">
 <li>Do not use arrays where you need to maintain integrity for foreign relationships. That is what</li>
 </ul>
@@ -557,9 +535,9 @@ that the ORM can utilize arrays.
 </div>
 
 
-<div id="outline-container-org3f33f1b" class="outline-3">
-<h3 id="org3f33f1b">Data Type Enforcement</h3>
-<div class="outline-text-3" id="text-org3f33f1b">
+<div id="outline-container-org8ff0c90" class="outline-3">
+<h3 id="org8ff0c90">Data Type Enforcement</h3>
+<div class="outline-text-3" id="text-org8ff0c90">
 <p>
 Compared to jsonb, postgresql arrays enforce the data type. This can be critical in both maintaining the integrity of your data as well as optimization in your appliction code.
 This database enforced type safety does not, however, enforce the dimensionality of
@@ -568,9 +546,9 @@ the array.
 </div>
 </div>
 
-<div id="outline-container-org2fea7a0" class="outline-3">
-<h3 id="org2fea7a0">Indices on Arrays</h3>
-<div class="outline-text-3" id="text-org2fea7a0">
+<div id="outline-container-orge4ec121" class="outline-3">
+<h3 id="orge4ec121">Indices on Arrays</h3>
+<div class="outline-text-3" id="text-orge4ec121">
 <p>
 It is highly recommended that you use GIN or GIST indexes to search
 for items in array column. You should remember that GIST indices are
@@ -581,9 +559,9 @@ lossy while GIN indices are lossless.
 </div>
 
 
-<div id="outline-container-orgb5cdcba" class="outline-2">
-<h2 id="orgb5cdcba">S-SQL Array Support</h2>
-<div class="outline-text-2" id="text-orgb5cdcba">
+<div id="outline-container-orga873376" class="outline-2">
+<h2 id="orga873376">S-SQL Array Support</h2>
+<div class="outline-text-2" id="text-orga873376">
 <p>
 S-sql can feel a little messy with respect to arrays but that
 is in large part because (a) sql dealing with arrays is messy and
@@ -602,9 +580,9 @@ to know:
 </p>
 </div>
 
-<div id="outline-container-org56e8463" class="outline-3">
-<h3 id="org56e8463">:array (used inside a query calling a subquery, selecting into an array)</h3>
-<div class="outline-text-3" id="text-org56e8463">
+<div id="outline-container-org111d808" class="outline-3">
+<h3 id="org111d808">:array (used inside a query calling a subquery, selecting into an array)</h3>
+<div class="outline-text-3" id="text-org111d808">
 <p>
 The format of the call is:
 </p>
@@ -632,9 +610,9 @@ Example:
 </div>
 </div>
 
-<div id="outline-container-org945577b" class="outline-3">
-<h3 id="org945577b">:array[] (declares an array and returns an array</h3>
-<div class="outline-text-3" id="text-org945577b">
+<div id="outline-container-org4725d4e" class="outline-3">
+<h3 id="org4725d4e">:array[] (declares an array and returns an array</h3>
+<div class="outline-text-3" id="text-org4725d4e">
 <p>
 The format of the call is:
 </p>
@@ -663,9 +641,9 @@ float because the entire array must be the same type.
 </div>
 </div>
 
-<div id="outline-container-org73afdfb" class="outline-3">
-<h3 id="org73afdfb">:[] (used when you want a slice of an array</h3>
-<div class="outline-text-3" id="text-org73afdfb">
+<div id="outline-container-org3c67aab" class="outline-3">
+<h3 id="org3c67aab">:[] (used when you want a slice of an array</h3>
+<div class="outline-text-3" id="text-org3c67aab">
 <p>
 The format of the call is:
 </p>
@@ -686,9 +664,9 @@ Example:
 </div>
 </div>
 </div>
-<div id="outline-container-org9b63f9c" class="outline-3">
-<h3 id="org9b63f9c">General Usage Examples</h3>
-<div class="outline-text-3" id="text-org9b63f9c">
+<div id="outline-container-orgf09a891" class="outline-3">
+<h3 id="orgf09a891">General Usage Examples</h3>
+<div class="outline-text-3" id="text-orgf09a891">
 <p>
 Just to make these usage examples really simple, we will use the
 simplest use case version discussed above, with a tags array in a table
@@ -1152,18 +1130,18 @@ nil
 </div>
 </div>
 </div>
-<div id="outline-container-org2ad6706" class="outline-2">
-<h2 id="org2ad6706">Dao Class Support for Arrays</h2>
-<div class="outline-text-2" id="text-org2ad6706">
+<div id="outline-container-org826cf7c" class="outline-2">
+<h2 id="org826cf7c">Dao Class Support for Arrays</h2>
+<div class="outline-text-2" id="text-org826cf7c">
 </div>
 </div>
-<div id="outline-container-org1c8a03c" class="outline-2">
-<h2 id="org1c8a03c">Array Operators</h2>
-<div class="outline-text-2" id="text-org1c8a03c">
+<div id="outline-container-org51f254c" class="outline-2">
+<h2 id="org51f254c">Array Operators</h2>
+<div class="outline-text-2" id="text-org51f254c">
 </div>
-<div id="outline-container-orga4db3ff" class="outline-3">
-<h3 id="orga4db3ff">Array Comparison Operators</h3>
-<div class="outline-text-3" id="text-orga4db3ff">
+<div id="outline-container-org269876e" class="outline-3">
+<h3 id="org269876e">Array Comparison Operators</h3>
+<div class="outline-text-3" id="text-org269876e">
 <p>
 Per postgresql <a href="https://www.postgresql.org/docs/current/static/functions-array.html">documentation</a> array comparisons compare the array contents
 element-by-element,  using the default B-tree comparison function for the
@@ -1177,9 +1155,9 @@ difference in the dimensionality information determines the sort order.
 Form is (:operator array1 array2)
 </p>
 </div>
-<div id="outline-container-org5f5fd39" class="outline-4">
-<h4 id="org5f5fd39">:= Equality Comparison (Are two arrays equal on an element by element basis)</h4>
-<div class="outline-text-4" id="text-org5f5fd39">
+<div id="outline-container-org9047d71" class="outline-4">
+<h4 id="org9047d71">:= Equality Comparison (Are two arrays equal on an element by element basis)</h4>
+<div class="outline-text-4" id="text-org9047d71">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:=</span> (<span style="color: #23d7d7;">:array[]</span> 1 2 3) (<span style="color: #23d7d7;">:array[]</span> 1 2 3)))
        <span style="color: #23d7d7;">:single</span>)
@@ -1211,9 +1189,9 @@ T
 </div>
 </div>
 
-<div id="outline-container-org6c16e07" class="outline-4">
-<h4 id="org6c16e07">:&lt;&gt; Not Equal Comparison</h4>
-<div class="outline-text-4" id="text-org6c16e07">
+<div id="outline-container-org1c80249" class="outline-4">
+<h4 id="org1c80249">:&lt;&gt; Not Equal Comparison</h4>
+<div class="outline-text-4" id="text-org1c80249">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> (<span style="color: #23d7d7;">:array[]</span> 1 2 3) (<span style="color: #23d7d7;">:array[]</span> 1 2 4)))
        <span style="color: #23d7d7;">:single</span>)
@@ -1223,9 +1201,9 @@ T
 </div>
 </div>
 
-<div id="outline-container-org40f8311" class="outline-4">
-<h4 id="org40f8311">:&lt; Less Than Comparison</h4>
-<div class="outline-text-4" id="text-org40f8311">
+<div id="outline-container-org3fe0011" class="outline-4">
+<h4 id="org3fe0011">:&lt; Less Than Comparison</h4>
+<div class="outline-text-4" id="text-org3fe0011">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:&lt;</span> (<span style="color: #23d7d7;">:array[]</span> 1 2 3) (<span style="color: #23d7d7;">:array[]</span> 1 2 4)))
        <span style="color: #23d7d7;">:single</span>)
@@ -1235,9 +1213,9 @@ T
 </div>
 </div>
 
-<div id="outline-container-orgdeabea2" class="outline-4">
-<h4 id="orgdeabea2">:&gt; Greater Than Comparison</h4>
-<div class="outline-text-4" id="text-orgdeabea2">
+<div id="outline-container-orgcda6285" class="outline-4">
+<h4 id="orgcda6285">:&gt; Greater Than Comparison</h4>
+<div class="outline-text-4" id="text-orgcda6285">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:&gt;</span> (<span style="color: #23d7d7;">:array[]</span> 1 4 3) (<span style="color: #23d7d7;">:array[]</span> 1 2 4)))
        <span style="color: #23d7d7;">:single</span>)
@@ -1247,9 +1225,9 @@ T
 </div>
 </div>
 
-<div id="outline-container-org0509480" class="outline-4">
-<h4 id="org0509480">:&gt;= Greater Than or Equal to Comparison</h4>
-<div class="outline-text-4" id="text-org0509480">
+<div id="outline-container-org343dd7c" class="outline-4">
+<h4 id="org343dd7c">:&gt;= Greater Than or Equal to Comparison</h4>
+<div class="outline-text-4" id="text-org343dd7c">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:&gt;=</span> (<span style="color: #23d7d7;">:array[]</span> 1 4 3) (<span style="color: #23d7d7;">:array[]</span> 1 4 3)))
        <span style="color: #23d7d7;">:single</span>)
@@ -1259,9 +1237,9 @@ T
 </div>
 </div>
 
-<div id="outline-container-orgcd62381" class="outline-4">
-<h4 id="orgcd62381">:&lt;= Less Than or Equal To Comparison</h4>
-<div class="outline-text-4" id="text-orgcd62381">
+<div id="outline-container-org0d854a7" class="outline-4">
+<h4 id="org0d854a7">:&lt;= Less Than or Equal To Comparison</h4>
+<div class="outline-text-4" id="text-org0d854a7">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:&lt;=</span> (<span style="color: #23d7d7;">:array[]</span> 1 2 3) (<span style="color: #23d7d7;">:array[]</span> 1 2 3)))
        <span style="color: #23d7d7;">:single</span>)
@@ -1271,9 +1249,9 @@ T
 </div>
 </div>
 
-<div id="outline-container-orgff37692" class="outline-4">
-<h4 id="orgff37692">:@&gt; Contains Comparison</h4>
-<div class="outline-text-4" id="text-orgff37692">
+<div id="outline-container-orgeb938b5" class="outline-4">
+<h4 id="orgeb938b5">:@&gt; Contains Comparison</h4>
+<div class="outline-text-4" id="text-orgeb938b5">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:@&gt;</span> (<span style="color: #23d7d7;">:array[]</span> 1 4 3) (<span style="color: #23d7d7;">:array[]</span> 3 1)))
        <span style="color: #23d7d7;">:single</span>)
@@ -1286,9 +1264,9 @@ nil
 </div>
 </div>
 </div>
-<div id="outline-container-org21574f6" class="outline-4">
-<h4 id="org21574f6">:&lt;@ Is Contained By Comparison</h4>
-<div class="outline-text-4" id="text-org21574f6">
+<div id="outline-container-orgfa75fef" class="outline-4">
+<h4 id="orgfa75fef">:&lt;@ Is Contained By Comparison</h4>
+<div class="outline-text-4" id="text-orgfa75fef">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:&lt;@</span> (<span style="color: #23d7d7;">:array[]</span> 2 7) (<span style="color: #23d7d7;">:array[]</span> 1 7 4 2 6)))
         <span style="color: #23d7d7;">:single</span>)
@@ -1301,9 +1279,9 @@ nil
 </div>
 </div>
 </div>
-<div id="outline-container-org6198f17" class="outline-4">
-<h4 id="org6198f17">:&amp;&amp; Has Elements in Common Comparison</h4>
-<div class="outline-text-4" id="text-org6198f17">
+<div id="outline-container-org7f73a5a" class="outline-4">
+<h4 id="org7f73a5a">:&amp;&amp; Has Elements in Common Comparison</h4>
+<div class="outline-text-4" id="text-org7f73a5a">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:&amp;&amp;</span> (<span style="color: #23d7d7;">:array[]</span> 1 4 3) (<span style="color: #23d7d7;">:array[]</span> 3 1)))
        <span style="color: #23d7d7;">:single</span>)
@@ -1314,16 +1292,16 @@ T
 </div>
 </div>
 
-<div id="outline-container-org2d8669e" class="outline-3">
-<h3 id="org2d8669e">Array Concatenation Operators</h3>
-<div class="outline-text-3" id="text-org2d8669e">
+<div id="outline-container-orgdbea427" class="outline-3">
+<h3 id="orgdbea427">Array Concatenation Operators</h3>
+<div class="outline-text-3" id="text-orgdbea427">
 <p>
 Form (:|| item1 item2 &#x2026;)
 </p>
 </div>
-<div id="outline-container-orge162d2a" class="outline-4">
-<h4 id="orge162d2a">:|| Concatentation Arrays and Elements</h4>
-<div class="outline-text-4" id="text-orge162d2a">
+<div id="outline-container-org7645780" class="outline-4">
+<h4 id="org7645780">:|| Concatentation Arrays and Elements</h4>
+<div class="outline-text-4" id="text-org7645780">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (:|| 3 (<span style="color: #23d7d7;">:array[]</span> 4 5 6)))
        <span style="color: #23d7d7;">:single</span>)
@@ -1353,9 +1331,9 @@ Form (:|| item1 item2 &#x2026;)
 </div>
 </div>
 
-<div id="outline-container-org597a87a" class="outline-4">
-<h4 id="org597a87a">:|| Concatenation with Multi-Dimensional Arrays</h4>
-<div class="outline-text-4" id="text-org597a87a">
+<div id="outline-container-orge2faadb" class="outline-4">
+<h4 id="orge2faadb">:|| Concatenation with Multi-Dimensional Arrays</h4>
+<div class="outline-text-4" id="text-orge2faadb">
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> (:|| (<span style="color: #23d7d7;">:array[]</span> 1 2 3) (<span style="color: #23d7d7;">:array[]</span> (<span style="color: #23d7d7;">:array[]</span> 4 5 6) (<span style="color: #23d7d7;">:array[]</span> 7 8 9))))
        <span style="color: #23d7d7;">:single</span>)
@@ -1368,14 +1346,14 @@ Form (:|| item1 item2 &#x2026;)
 </div>
 </div>
 
-<div id="outline-container-org15f399a" class="outline-2">
-<h2 id="org15f399a">Array functions</h2>
-<div class="outline-text-2" id="text-org15f399a">
+<div id="outline-container-org4ae78e1" class="outline-2">
+<h2 id="org4ae78e1">Array functions</h2>
+<div class="outline-text-2" id="text-org4ae78e1">
 </div>
 
-<div id="outline-container-org0ceb04c" class="outline-4">
-<h4 id="org0ceb04c">Array-prepend</h4>
-<div class="outline-text-4" id="text-org0ceb04c">
+<div id="outline-container-org2774760" class="outline-4">
+<h4 id="org2774760">Array-prepend</h4>
+<div class="outline-text-4" id="text-org2774760">
 <p>
 Form: (:array-prepend (array1 element))
 Appends an element to the beginning of an array
@@ -1390,9 +1368,9 @@ Appends an element to the beginning of an array
 </div>
 </div>
 
-<div id="outline-container-org825676b" class="outline-4">
-<h4 id="org825676b">array-append</h4>
-<div class="outline-text-4" id="text-org825676b">
+<div id="outline-container-org553460c" class="outline-4">
+<h4 id="org553460c">array-append</h4>
+<div class="outline-text-4" id="text-org553460c">
 <p>
 Form: (:array-append (array1 element))
 Appends an element to the end of an array.
@@ -1407,9 +1385,9 @@ Appends an element to the end of an array.
 </div>
 </div>
 
-<div id="outline-container-org05084f7" class="outline-4">
-<h4 id="org05084f7">array-cat</h4>
-<div class="outline-text-4" id="text-org05084f7">
+<div id="outline-container-org358241c" class="outline-4">
+<h4 id="org358241c">array-cat</h4>
+<div class="outline-text-4" id="text-org358241c">
 <p>
 Form: (:array-cat (array1 array2))
 Concatenates two arrays. No more, no less. Both arrays need to have the same
@@ -1435,9 +1413,9 @@ data type. They do not need to be the same length.
 </div>
 </div>
 
-<div id="outline-container-orgecdd61f" class="outline-4">
-<h4 id="orgecdd61f">array-ndims</h4>
-<div class="outline-text-4" id="text-orgecdd61f">
+<div id="outline-container-orgbef29fc" class="outline-4">
+<h4 id="orgbef29fc">array-ndims</h4>
+<div class="outline-text-4" id="text-orgbef29fc">
 <p>
 Form: (:array-ndims (array))
 Array-ndims returns the number of dimensions of an array.
@@ -1451,9 +1429,9 @@ Array-ndims returns the number of dimensions of an array.
 </div>
 </div>
 
-<div id="outline-container-org5e7fc37" class="outline-4">
-<h4 id="org5e7fc37">array-dims</h4>
-<div class="outline-text-4" id="text-org5e7fc37">
+<div id="outline-container-org34dc0b7" class="outline-4">
+<h4 id="org34dc0b7">array-dims</h4>
+<div class="outline-text-4" id="text-org34dc0b7">
 <p>
 Form: (:array-dims (array1))
 Array-dims returns a text representation of an array's dimensions.
@@ -1467,9 +1445,9 @@ Array-dims returns a text representation of an array's dimensions.
 </div>
 </div>
 
-<div id="outline-container-orgcbca94b" class="outline-4">
-<h4 id="orgcbca94b">array-fill</h4>
-<div class="outline-text-4" id="text-orgcbca94b">
+<div id="outline-container-org1c9eb36" class="outline-4">
+<h4 id="org1c9eb36">array-fill</h4>
+<div class="outline-text-4" id="text-org1c9eb36">
 <p>
 Form: (:array-fill (value array-dimension))
 Array-fill returns an array initialized with supplied value and length.
@@ -1489,9 +1467,9 @@ This only works with one dimensional arrays
 </p>
 </div>
 </div>
-<div id="outline-container-org14aa248" class="outline-4">
-<h4 id="org14aa248">array-length</h4>
-<div class="outline-text-4" id="text-org14aa248">
+<div id="outline-container-org102910e" class="outline-4">
+<h4 id="org102910e">array-length</h4>
+<div class="outline-text-4" id="text-org102910e">
 <p>
 Form: (:array-length (array1 array-dimension))
 Returns the length of the requested array dimension.
@@ -1515,9 +1493,9 @@ dimension.
 </div>
 </div>
 
-<div id="outline-container-orgaf96c90" class="outline-4">
-<h4 id="orgaf96c90">array-lower</h4>
-<div class="outline-text-4" id="text-orgaf96c90">
+<div id="outline-container-org5974698" class="outline-4">
+<h4 id="org5974698">array-lower</h4>
+<div class="outline-text-4" id="text-org5974698">
 <p>
 Form: (:array-lower (&amp;rest args))
 Array-lower returns the lower bound of the requested array dimension.
@@ -1531,9 +1509,9 @@ Array-lower returns the lower bound of the requested array dimension.
 </div>
 </div>
 
-<div id="outline-container-org982bf72" class="outline-4">
-<h4 id="org982bf72">array-position</h4>
-<div class="outline-text-4" id="text-org982bf72">
+<div id="outline-container-orgc5bc7b2" class="outline-4">
+<h4 id="orgc5bc7b2">array-position</h4>
+<div class="outline-text-4" id="text-orgc5bc7b2">
 <p>
 Form: (:array-position (array element starting-point-if-not-one))
 Array-position returns the subscript of the first occurrence of the
@@ -1551,9 +1529,9 @@ Requires postgresql version 9.5 or newer.
 </div>
 
 
-<div id="outline-container-org86302ea" class="outline-4">
-<h4 id="org86302ea">array-positions</h4>
-<div class="outline-text-4" id="text-org86302ea">
+<div id="outline-container-org5ae7695" class="outline-4">
+<h4 id="org5ae7695">array-positions</h4>
+<div class="outline-text-4" id="text-org5ae7695">
 <p>
 Form: (:array-positions (array element))
 Array-positions (note the plural) returns an array of subscripts
@@ -1571,9 +1549,9 @@ Requires postgresql version 9.5 or newer.
 </div>
 </div>
 
-<div id="outline-container-org64914ee" class="outline-4">
-<h4 id="org64914ee">array-remove</h4>
-<div class="outline-text-4" id="text-org64914ee">
+<div id="outline-container-org0923f75" class="outline-4">
+<h4 id="org0923f75">array-remove</h4>
+<div class="outline-text-4" id="text-org0923f75">
 <p>
 Form: (:array-remove (array element))
 Array-remove removes all elements equal to the given value
@@ -1594,9 +1572,9 @@ from the returning set and does not change the underlying data..
 </div>
 </div>
 
-<div id="outline-container-org3defa23" class="outline-4">
-<h4 id="org3defa23">array-replace</h4>
-<div class="outline-text-4" id="text-org3defa23">
+<div id="outline-container-orgd824c3c" class="outline-4">
+<h4 id="orgd824c3c">array-replace</h4>
+<div class="outline-text-4" id="text-orgd824c3c">
 <p>
 Form: (:array-replace (array element-to-be-replaced element-used-as-replacement))
 Array-replaces replaces each array element equal to the given value
@@ -1612,9 +1590,9 @@ with a new value. Requires postgresql 9.3 or newer.
 </div>
 </div>
 
-<div id="outline-container-orgb13453f" class="outline-4">
-<h4 id="orgb13453f">array-to-string</h4>
-<div class="outline-text-4" id="text-orgb13453f">
+<div id="outline-container-org7c3e8c8" class="outline-4">
+<h4 id="org7c3e8c8">array-to-string</h4>
+<div class="outline-text-4" id="text-org7c3e8c8">
 <p>
 Form: (:array-to-string (array delimiter optional-null-string))
 Array-to-string concatenates array elements using supplied
@@ -1631,9 +1609,9 @@ delimiter and optional null string.
 </div>
 
 
-<div id="outline-container-org49216ce" class="outline-4">
-<h4 id="org49216ce">array-upper</h4>
-<div class="outline-text-4" id="text-org49216ce">
+<div id="outline-container-orga7d29a9" class="outline-4">
+<h4 id="orga7d29a9">array-upper</h4>
+<div class="outline-text-4" id="text-orga7d29a9">
 <p>
 Form: (:array-upper (array int))
 Array-upper returns upper bound of the requested array dimension.
@@ -1647,9 +1625,9 @@ Array-upper returns upper bound of the requested array dimension.
 </div>
 </div>
 
-<div id="outline-container-orgdf09f26" class="outline-4">
-<h4 id="orgdf09f26">cardinality</h4>
-<div class="outline-text-4" id="text-orgdf09f26">
+<div id="outline-container-orgd589d9f" class="outline-4">
+<h4 id="orgd589d9f">cardinality</h4>
+<div class="outline-text-4" id="text-orgd589d9f">
 <p>
 Form: (:cardinality (array))
 Returns the total number of elements in the array or 0 if
@@ -1664,9 +1642,9 @@ the array is empty. Requires postgresql 9.4 or newer.
 </div>
 </div>
 
-<div id="outline-container-orgd9fed40" class="outline-4">
-<h4 id="orgd9fed40">string-to-array</h4>
-<div class="outline-text-4" id="text-orgd9fed40">
+<div id="outline-container-org0e460cd" class="outline-4">
+<h4 id="org0e460cd">string-to-array</h4>
+<div class="outline-text-4" id="text-org0e460cd">
 <p>
 Form: (:string-to-array (text delimiter optional-null-string))
 String-to-array splits a string into array elements using
@@ -1682,9 +1660,9 @@ the supplied delimiter and optional null string.
 </div>
 </div>
 
-<div id="outline-container-org421c3aa" class="outline-4">
-<h4 id="org421c3aa">unnest</h4>
-<div class="outline-text-4" id="text-org421c3aa">
+<div id="outline-container-orgfb945cf" class="outline-4">
+<h4 id="orgfb945cf">unnest</h4>
+<div class="outline-text-4" id="text-orgfb945cf">
 <p>
 Form: (:unnest (array))
 Unnest expands an array to a set of rows.
@@ -1703,9 +1681,9 @@ allowed in the from clause of the query. See
 </div>
 </div>
 
-<div id="outline-container-org60be0ed" class="outline-4">
-<h4 id="org60be0ed">array-agg</h4>
-<div class="outline-text-4" id="text-org60be0ed">
+<div id="outline-container-orgae7d8cb" class="outline-4">
+<h4 id="orgae7d8cb">array-agg</h4>
+<div class="outline-text-4" id="text-orgae7d8cb">
 <p>
 Form: (:array-agg (expression))
 Array-agg returns the result in an array (both sql and, in postmodern, a lisp array).
@@ -1750,11 +1728,11 @@ Like all the aggregate functions, you can pass :filter, :distinct or :order-by
 </div>
 
 
-<div id="outline-container-org3dcfcd7" class="outline-3">
-<h3 id="org3dcfcd7">NULL and nil</h3>
-<div class="outline-text-3" id="text-org3dcfcd7">
+<div id="outline-container-org78d4fdc" class="outline-3">
+<h3 id="org78d4fdc">NULL and nil</h3>
+<div class="outline-text-3" id="text-org78d4fdc">
 <p>
-An empty array will be returned by postmodern as nil.
+An empty array will be returned by postmodern as #().
 </p>
 
 <p>

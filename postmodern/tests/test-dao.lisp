@@ -800,10 +800,10 @@ in =dao-table-definition= in creating tables."
     (query (dao-table-definition 'dao-array))
     (insert-dao (make-instance 'dao-array :name "dao1-array" :r-array #()))
     (insert-dao (make-instance 'dao-array :name "dao2-array" :r-array #(1 2 3)))
-    (is (equalp (r-array (get-dao 'dao-array 1)) nil))
+    (is (equalp (r-array (get-dao 'dao-array 1)) #()))
     (is (equalp (r-array (get-dao 'dao-array 2)) #(1 2 3)))
     (is (equalp (query "select r_array from dao_array where id=1" :single)
-                nil))
+                #()))
     (is (equalp (query "select r_array from dao_array where id=2" :single)
                 #(1 2 3)))))
 
