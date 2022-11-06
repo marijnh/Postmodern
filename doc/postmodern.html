@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-09-26 Mon 08:09 -->
+<!-- 2022-11-06 Sun 10:57 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Postmodern Reference Manual</title>
@@ -569,8 +569,8 @@ The following example connects to a database named test-db running on a server a
 address 192.168.5.223 with the non-standard port 5434 using a pooled connection, trying to use ssh if the server accepts that and falling back to an unencrypted connection if not, with an application name of "test-app".
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(connect <span style="color: #e67128;">"test_db"</span> <span style="color: #e67128;">"test-user"</span> <span style="color: #e67128;">"test-password"</span> <span style="color: #e67128;">"192.168.5.223"</span>
-         <span style="color: #23d7d7;">:port</span> 5434 <span style="color: #23d7d7;">:pooled-p</span> t <span style="color: #23d7d7;">:use-ssl</span> <span style="color: #23d7d7;">:try</span> <span style="color: #23d7d7;">:application-name</span> <span style="color: #e67128;">"test-app"</span> <span style="color: #23d7d7;">:use-binary</span> t)
+<pre class="src src-lisp">(connect <span class="org-string">"test_db"</span> <span class="org-string">"test-user"</span> <span class="org-string">"test-password"</span> <span class="org-string">"192.168.5.223"</span>
+         <span class="org-builtin">:port</span> 5434 <span class="org-builtin">:pooled-p</span> t <span class="org-builtin">:use-ssl</span> <span class="org-builtin">:try</span> <span class="org-builtin">:application-name</span> <span class="org-string">"test-app"</span> <span class="org-builtin">:use-binary</span> t)
 </pre>
 </div>
 <p>
@@ -585,23 +585,23 @@ The flag is set in the database connection object. This means it can be set eith
 If a query to Postgresql does not have a table column which would allow Postgresql to determine the correct datatype and you do not specify differently, Postgresql will treat the parameters passed with the query as text. The default text setting with results:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query <span style="color: #e67128;">"select $1"</span> 1 <span style="color: #23d7d7;">:single</span>)
-<span style="color: #e67128;">"1"</span>
-(query <span style="color: #e67128;">"select $1"</span> 1.5 <span style="color: #23d7d7;">:single</span>)
-<span style="color: #e67128;">"1.5"</span>
-(query <span style="color: #e67128;">"select $1"</span> T <span style="color: #23d7d7;">:single</span>)
-<span style="color: #e67128;">"true"</span>
-(query <span style="color: #e67128;">"select $1"</span> nil <span style="color: #23d7d7;">:single</span>)
-<span style="color: #e67128;">"false"</span>
-(query <span style="color: #e67128;">"select $1"</span> <span style="color: #23d7d7;">:NULL</span> <span style="color: #23d7d7;">:single</span>)
-<span style="color: #23d7d7;">:NULL</span>
+<pre class="src src-lisp">(query <span class="org-string">"select $1"</span> 1 <span class="org-builtin">:single</span>)
+<span class="org-string">"1"</span>
+(query <span class="org-string">"select $1"</span> 1.5 <span class="org-builtin">:single</span>)
+<span class="org-string">"1.5"</span>
+(query <span class="org-string">"select $1"</span> T <span class="org-builtin">:single</span>)
+<span class="org-string">"true"</span>
+(query <span class="org-string">"select $1"</span> nil <span class="org-builtin">:single</span>)
+<span class="org-string">"false"</span>
+(query <span class="org-string">"select $1"</span> <span class="org-builtin">:NULL</span> <span class="org-builtin">:single</span>)
+<span class="org-builtin">:NULL</span>
 </pre>
 </div>
 <p>
 You can specify parameter type as so:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query <span style="color: #e67128;">"select $1::integer"</span> 1 <span style="color: #23d7d7;">:single</span>)
+<pre class="src src-lisp">(query <span class="org-string">"select $1::integer"</span> 1 <span class="org-builtin">:single</span>)
 1
 </pre>
 </div>
@@ -609,16 +609,16 @@ You can specify parameter type as so:
 Setting the use-binary slot in the database connection object to t has the following results:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query <span style="color: #e67128;">"select $1"</span> 1 <span style="color: #23d7d7;">:single</span>)
+<pre class="src src-lisp">(query <span class="org-string">"select $1"</span> 1 <span class="org-builtin">:single</span>)
 1
-(query <span style="color: #e67128;">"select $1"</span> 1.5 <span style="color: #23d7d7;">:single</span>)
+(query <span class="org-string">"select $1"</span> 1.5 <span class="org-builtin">:single</span>)
 1.5
-(query <span style="color: #e67128;">"select $1"</span> T <span style="color: #23d7d7;">:single</span>)
+(query <span class="org-string">"select $1"</span> T <span class="org-builtin">:single</span>)
 T
-(query <span style="color: #e67128;">"select $1"</span> nil <span style="color: #23d7d7;">:single</span>)
+(query <span class="org-string">"select $1"</span> nil <span class="org-builtin">:single</span>)
 NIL
-(query <span style="color: #e67128;">"select $1"</span> <span style="color: #23d7d7;">:NULL</span> <span style="color: #23d7d7;">:single</span>)
-<span style="color: #23d7d7;">:NULL</span>
+(query <span class="org-string">"select $1"</span> <span class="org-builtin">:NULL</span> <span class="org-builtin">:single</span>)
+<span class="org-builtin">:NULL</span>
 </pre>
 </div>
 <p>
@@ -629,9 +629,9 @@ The default for Postmodern is to continue to pass parameters to Postgresql as te
 In postmodern you have the connect function or you can use the with-connection macro:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defmacro</span> <span style="color: #00ede1; font-weight: bold;">with-connection</span> (spec <span style="color: #34cae2;">&amp;body</span> body)
-  `(<span style="color: #ffad29; font-weight: bold;">let</span> ((*database* (apply #'connect ,spec)))
-     (<span style="color: #ffad29; font-weight: bold;">unwind-protect</span> (<span style="color: #ffad29; font-weight: bold;">progn</span> ,@body)
+<pre class="src src-lisp">(<span class="org-keyword">defmacro</span> <span class="org-function-name">with-connection</span> (spec <span class="org-type">&amp;body</span> body)
+  `(<span class="org-keyword">let</span> ((*database* (apply #'connect ,spec)))
+     (<span class="org-keyword">unwind-protect</span> (<span class="org-keyword">progn</span> ,@body)
        (disconnect *database*))))
 </pre>
 </div>
@@ -639,8 +639,8 @@ In postmodern you have the connect function or you can use the with-connection m
 So often you would connect something like this:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"database_name"</span> <span style="color: #e67128;">"user-name"</span> <span style="color: #e67128;">"user-password"</span> <span style="color: #e67128;">"localhost or IP address"</span>
-                   <span style="color: #23d7d7;">:use-binary</span> t)
+<pre class="src src-lisp">(<span class="org-keyword">with-connection</span> '(<span class="org-string">"database_name"</span> <span class="org-string">"user-name"</span> <span class="org-string">"user-password"</span> <span class="org-string">"localhost or IP address"</span>
+                   <span class="org-builtin">:use-binary</span> t)
   ...)
 </pre>
 </div>
@@ -750,16 +750,16 @@ which should be list that connect can be applied to.
 Examples:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"test_database"</span> <span style="color: #e67128;">"sabra"</span> <span style="color: #e67128;">"some_strange_password_here"</span> <span style="color: #e67128;">"localhost"</span>)
+<pre class="src src-lisp">(<span class="org-keyword">with-connection</span> '(<span class="org-string">"test_database"</span> <span class="org-string">"sabra"</span> <span class="org-string">"some_strange_password_here"</span> <span class="org-string">"localhost"</span>)
   (list-tables))
 
-(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"test_db"</span> <span style="color: #e67128;">"test-user"</span> <span style="color: #e67128;">"test-password"</span> <span style="color: #e67128;">"192.168.5.223"</span>
-                   <span style="color: #23d7d7;">:port</span> 5434 <span style="color: #23d7d7;">:pooled-p</span> t <span style="color: #23d7d7;">:use-ssl</span> try <span style="color: #23d7d7;">:application-name</span> <span style="color: #e67128;">"test-app"</span>)
+(<span class="org-keyword">with-connection</span> '(<span class="org-string">"test_db"</span> <span class="org-string">"test-user"</span> <span class="org-string">"test-password"</span> <span class="org-string">"192.168.5.223"</span>
+                   <span class="org-builtin">:port</span> 5434 <span class="org-builtin">:pooled-p</span> t <span class="org-builtin">:use-ssl</span> try <span class="org-builtin">:application-name</span> <span class="org-string">"test-app"</span>)
   (list-tables))
 
-(<span style="color: #ffad29; font-weight: bold;">with-connection</span> '(<span style="color: #e67128;">"test_db"</span> <span style="color: #e67128;">"test-user"</span> <span style="color: #e67128;">"test-password"</span> <span style="color: #e67128;">"192.168.5.223"</span>
-                   <span style="color: #23d7d7;">:port</span> 5434 <span style="color: #23d7d7;">:pooled-p</span> t <span style="color: #23d7d7;">:use-ssl</span> try <span style="color: #23d7d7;">:application-name</span> <span style="color: #e67128;">"test-app"</span>
-                   <span style="color: #23d7d7;">:use-binary</span> t)
+(<span class="org-keyword">with-connection</span> '(<span class="org-string">"test_db"</span> <span class="org-string">"test-user"</span> <span class="org-string">"test-password"</span> <span class="org-string">"192.168.5.223"</span>
+                   <span class="org-builtin">:port</span> 5434 <span class="org-builtin">:pooled-p</span> t <span class="org-builtin">:use-ssl</span> try <span class="org-builtin">:application-name</span> <span class="org-string">"test-app"</span>
+                   <span class="org-builtin">:use-binary</span> t)
   (list-tables))
 </pre>
 </div>
@@ -987,8 +987,8 @@ Some Examples:
 The default is :lists
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)))
-((1 2147483645 <span style="color: #e67128;">"text one"</span>) (2 0 <span style="color: #e67128;">"text two"</span>))
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)))
+((1 2147483645 <span class="org-string">"text one"</span>) (2 0 <span class="org-string">"text two"</span>))
 </pre>
 </div>
 </div>
@@ -1000,8 +1000,8 @@ The default is :lists
 Returns a single field. Will throw an error if the queries returns more than one field or more than one row
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id 3)) <span style="color: #23d7d7;">:single</span>)
-<span style="color: #e67128;">"text three"</span>
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id 3)) <span class="org-builtin">:single</span>)
+<span class="org-string">"text three"</span>
 </pre>
 </div>
 </div>
@@ -1013,8 +1013,8 @@ Returns a single field. Will throw an error if the queries returns more than one
 Returns a list containing the selected fields. Will throw an error if the query returns more than one row
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id 3)) <span style="color: #23d7d7;">:list</span>)
-(3 3 <span style="color: #e67128;">"text three"</span>)
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id 3)) <span class="org-builtin">:list</span>)
+(3 3 <span class="org-string">"text three"</span>)
 </pre>
 </div>
 </div>
@@ -1026,8 +1026,8 @@ Returns a list containing the selected fields. Will throw an error if the query 
 This is the default
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #23d7d7;">:lists</span>)
-((1 2147483645 <span style="color: #e67128;">"text one"</span>) (2 0 <span style="color: #e67128;">"text two"</span>))
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin">:lists</span>)
+((1 2147483645 <span class="org-string">"text one"</span>) (2 0 <span class="org-string">"text two"</span>))
 </pre>
 </div>
 </div>
@@ -1039,8 +1039,8 @@ This is the default
 Returns an alist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'test-data <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id 3)) <span style="color: #23d7d7;">:alist</span>)
-((<span style="color: #23d7d7;">:ID</span> . 3) (<span style="color: #23d7d7;">:INT4</span> . 3) (<span style="color: #23d7d7;">:TEXT</span> . <span style="color: #e67128;">"text three"</span>))
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'test-data <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id 3)) <span class="org-builtin">:alist</span>)
+((<span class="org-builtin">:ID</span> . 3) (<span class="org-builtin">:INT4</span> . 3) (<span class="org-builtin">:TEXT</span> . <span class="org-string">"text three"</span>))
 </pre>
 </div>
 </div>
@@ -1052,8 +1052,8 @@ Returns an alist containing the field name as a keyword and the selected fields.
 Returns an alist containing the field name as a lower case string and the selected fields. Will throw an error if the query returns more than one row.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id 3)) <span style="color: #23d7d7;">:str-alist</span>)
-((<span style="color: #e67128;">"id"</span> . 3) (<span style="color: #e67128;">"int4"</span> . 3) (<span style="color: #e67128;">"text"</span> . <span style="color: #e67128;">"text three"</span>))
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id 3)) <span class="org-builtin">:str-alist</span>)
+((<span class="org-string">"id"</span> . 3) (<span class="org-string">"int4"</span> . 3) (<span class="org-string">"text"</span> . <span class="org-string">"text three"</span>))
 </pre>
 </div>
 </div>
@@ -1065,9 +1065,9 @@ Returns an alist containing the field name as a lower case string and the select
 Returns a list of alists containing the field name as a keyword and the selected fields.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #23d7d7;">:alists</span>)
-(((<span style="color: #23d7d7;">:ID</span> . 1) (<span style="color: #23d7d7;">:INT4</span> . 2147483645) (<span style="color: #23d7d7;">:TEXT</span> . <span style="color: #e67128;">"text one"</span>))
- ((<span style="color: #23d7d7;">:ID</span> . 2) (<span style="color: #23d7d7;">:INT4</span> . 0) (<span style="color: #23d7d7;">:TEXT</span> . <span style="color: #e67128;">"text two"</span>)))
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin">:alists</span>)
+(((<span class="org-builtin">:ID</span> . 1) (<span class="org-builtin">:INT4</span> . 2147483645) (<span class="org-builtin">:TEXT</span> . <span class="org-string">"text one"</span>))
+ ((<span class="org-builtin">:ID</span> . 2) (<span class="org-builtin">:INT4</span> . 0) (<span class="org-builtin">:TEXT</span> . <span class="org-string">"text two"</span>)))
 </pre>
 </div>
 </div>
@@ -1079,9 +1079,9 @@ Returns a list of alists containing the field name as a keyword and the selected
 Returns a list of alists containing the field name as a lower case string and the selected fields.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #23d7d7;">:str-alists</span>)
-(((<span style="color: #e67128;">"id"</span> . 1) (<span style="color: #e67128;">"int4"</span> . 2147483645) (<span style="color: #e67128;">"text"</span> . <span style="color: #e67128;">"text one"</span>))
- ((<span style="color: #e67128;">"id"</span> . 2) (<span style="color: #e67128;">"int4"</span> . 0) (<span style="color: #e67128;">"text"</span> . <span style="color: #e67128;">"text two"</span>)))
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin">:str-alists</span>)
+(((<span class="org-string">"id"</span> . 1) (<span class="org-string">"int4"</span> . 2147483645) (<span class="org-string">"text"</span> . <span class="org-string">"text one"</span>))
+ ((<span class="org-string">"id"</span> . 2) (<span class="org-string">"int4"</span> . 0) (<span class="org-string">"text"</span> . <span class="org-string">"text two"</span>)))
 </pre>
 </div>
 </div>
@@ -1093,8 +1093,8 @@ Returns a list of alists containing the field name as a lower case string and th
 Returns a plist containing the field name as a keyword and the selected fields. Will throw an error if the query returns more than one row.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id 3)) <span style="color: #23d7d7;">:plist</span>)
-(<span style="color: #23d7d7;">:ID</span> 3 <span style="color: #23d7d7;">:INT4</span> 3 <span style="color: #23d7d7;">:TEXT</span> <span style="color: #e67128;">"text three"</span>)
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id 3)) <span class="org-builtin">:plist</span>)
+(<span class="org-builtin">:ID</span> 3 <span class="org-builtin">:INT4</span> 3 <span class="org-builtin">:TEXT</span> <span class="org-string">"text three"</span>)
 </pre>
 </div>
 </div>
@@ -1106,8 +1106,24 @@ Returns a plist containing the field name as a keyword and the selected fields. 
 Returns a list of plists containing the field name as a keyword and the selected fields.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #23d7d7;">:plists</span>)
-((<span style="color: #23d7d7;">:ID</span> 1 <span style="color: #23d7d7;">:INT4</span> 2147483645 <span style="color: #23d7d7;">:TEXT</span> <span style="color: #e67128;">"text one"</span>) (<span style="color: #23d7d7;">:ID</span> 2 <span style="color: #23d7d7;">:INT4</span> 0 <span style="color: #23d7d7;">:TEXT</span> <span style="color: #e67128;">"text two"</span>))
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin">:plists</span>)
+((<span class="org-builtin">:ID</span> 1 <span class="org-builtin">:INT4</span> 2147483645 <span class="org-builtin">:TEXT</span> <span class="org-string">"text one"</span>) (<span class="org-builtin">:ID</span> 2 <span class="org-builtin">:INT4</span> 0 <span class="org-builtin">:TEXT</span> <span class="org-string">"text two"</span>))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-column-type" class="outline-4">
+<h4 id="column-type">Columns</h4>
+<div class="outline-text-4" id="text-column-type">
+<p>
+Returns a single column as a list. The first example shows the default value returned without the :column qualifier. The second example shows the result with the column qualifier.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (pomo:query (<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'employee <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 5)))
+((<span class="org-string">"Jason"</span>) (<span class="org-string">"Robert"</span>) (<span class="org-string">"Celia"</span>) (<span class="org-string">"Linda"</span>))
+
+  (pomo:query (<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'employee <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 5)) <span class="org-builtin">:column</span>)
+(<span class="org-string">"Jason"</span> <span class="org-string">"Robert"</span> <span class="org-string">"Celia"</span> <span class="org-string">"Linda"</span>)
 </pre>
 </div>
 </div>
@@ -1119,14 +1135,14 @@ Returns a list of plists containing the field name as a keyword and the selected
 Returns a vector of vectors where each internal vector is a returned row from the query. The field names are not included. NOTE: It will return an empty vector instead of NIL if there is no result.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'test-data)
-       <span style="color: #23d7d7;">:vectors</span>)
-#(#(1 2147483645 <span style="color: #e67128;">"text one"</span>)
-  #(2 0 <span style="color: #e67128;">"text two"</span>)
-  #(3 3 <span style="color: #e67128;">"text three"</span>))
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'test-data)
+       <span class="org-builtin">:vectors</span>)
+#(#(1 2147483645 <span class="org-string">"text one"</span>)
+  #(2 0 <span class="org-string">"text two"</span>)
+  #(3 3 <span class="org-string">"text three"</span>))
 
-(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'test-data <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 1))
-       <span style="color: #23d7d7;">:vectors</span>)
+(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'test-data <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 1))
+       <span class="org-builtin">:vectors</span>)
 #()
 </pre>
 </div>
@@ -1139,15 +1155,15 @@ Returns a vector of vectors where each internal vector is a returned row from th
 Returns a vector of hashtables where each hash table is a returned row from the query with field name as the key expressed as a lower case string.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #23d7d7;">:array-hash</span>)
-#(#&lt;HASH-TABLE <span style="color: #23d7d7;">:TEST</span> EQUAL <span style="color: #23d7d7;">:COUNT</span> 3 {100D982B53}&gt;
-  #&lt;HASH-TABLE <span style="color: #23d7d7;">:TEST</span> EQUAL <span style="color: #23d7d7;">:COUNT</span> 3 {100D982ED3}&gt;)
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin">:array-hash</span>)
+#(#&lt;HASH-TABLE <span class="org-builtin">:TEST</span> EQUAL <span class="org-builtin">:COUNT</span> 3 {100D982B53}&gt;
+  #&lt;HASH-TABLE <span class="org-builtin">:TEST</span> EQUAL <span class="org-builtin">:COUNT</span> 3 {100D982ED3}&gt;)
 
 (alexandria:hash-table-alist
  (aref
-  (query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #23d7d7;">:array-hash</span>)
+  (query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin">:array-hash</span>)
   1))
-((<span style="color: #e67128;">"text"</span> . <span style="color: #e67128;">"text two"</span>) (<span style="color: #e67128;">"int4"</span> . 0) (<span style="color: #e67128;">"id"</span> . 2))
+((<span class="org-string">"text"</span> . <span class="org-string">"text two"</span>) (<span class="org-string">"int4"</span> . 0) (<span class="org-string">"id"</span> . 2))
 </pre>
 </div>
 </div>
@@ -1159,10 +1175,10 @@ Returns a vector of hashtables where each hash table is a returned row from the 
 Returns a list of daos of the type specified
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'country) (<span style="color: #23d7d7;">:dao</span> country))
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'country) (<span class="org-builtin">:dao</span> country))
 (#&lt;COUNTRY {1010464023}&gt; #&lt;COUNTRY {1010465CB3}&gt;)
 
-(query (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'country <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"Croatia"</span>)) (<span style="color: #23d7d7;">:dao</span> country))
+(query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'country <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'name <span class="org-string">"Croatia"</span>)) (<span class="org-builtin">:dao</span> country))
 (#&lt;COUNTRY {1010688943}&gt;)
 </pre>
 </div>
@@ -1175,10 +1191,10 @@ Returns a list of daos of the type specified
 Returns a list of field values of a single field. Will throw an error if more than one field is selected
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #23d7d7;">:column</span>)
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin">:column</span>)
 (1 2)
 
-(query (<span style="color: #23d7d7;">:select</span> 'id <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id 3)) <span style="color: #23d7d7;">:column</span>)
+(query (<span class="org-builtin">:select</span> 'id <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id 3)) <span class="org-builtin">:column</span>)
 (3)
 </pre>
 </div>
@@ -1191,9 +1207,9 @@ Returns a list of field values of a single field. Will throw an error if more th
 Return a list of strings where the row returned is a json object expressed as a string
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #23d7d7;">:json-strs</span>)
-(<span style="color: #e67128;">"{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}"</span>
- <span style="color: #e67128;">"{\"id\":2,\"int4\":0,\"text\":\"text two\"}"</span>)
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin">:json-strs</span>)
+(<span class="org-string">"{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}"</span>
+ <span class="org-string">"{\"id\":2,\"int4\":0,\"text\":\"text two\"}"</span>)
 </pre>
 </div>
 <p>
@@ -1201,13 +1217,13 @@ This will also handle local-time timestamps and simple-date timestamps,
 time-of-day and date. E.g. (with a local-time timestamp)
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'timestamp-with-time-zone
-        <span style="color: #23d7d7;">:from</span> 'test-data
-        <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3))
-       <span style="color: #23d7d7;">:json-strs</span>)
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'timestamp-with-time-zone
+        <span class="org-builtin">:from</span> 'test-data
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3))
+       <span class="org-builtin">:json-strs</span>)
 
-'(<span style="color: #e67128;">"{\"timestampWithTimeZone\":\"{2019-12-30T13:30:54.000000-05:00}\"}"</span>
-  <span style="color: #e67128;">"{\"timestampWithTimeZone\":\"{1919-12-30T13:30:54.000000-05:00}\"}"</span>)
+'(<span class="org-string">"{\"timestampWithTimeZone\":\"{2019-12-30T13:30:54.000000-05:00}\"}"</span>
+  <span class="org-string">"{\"timestampWithTimeZone\":\"{1919-12-30T13:30:54.000000-05:00}\"}"</span>)
 </pre>
 </div>
 
@@ -1215,11 +1231,11 @@ time-of-day and date. E.g. (with a local-time timestamp)
 The following is an example with a simple-date timestamp.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'timestamp-with-time-zone
-        <span style="color: #23d7d7;">:from</span> 'test-data
-        <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #ff4242; font-weight: bold;">:json-strs</span><span style="color: #ff4242; font-weight: bold;">)</span>
-'(<span style="color: #e67128;">"{\"timestampWithTimeZone\":\"2019-12-30 18:30:54:0\"}"</span>
-  <span style="color: #e67128;">"{\"timestampWithTimeZone\":\"1919-12-30 18:30:54:0\"}"</span>)
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'timestamp-with-time-zone
+        <span class="org-builtin">:from</span> 'test-data
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin"><span class="org-warning">:json-strs</span></span><span class="org-warning">)</span>
+'(<span class="org-string">"{\"timestampWithTimeZone\":\"2019-12-30 18:30:54:0\"}"</span>
+  <span class="org-string">"{\"timestampWithTimeZone\":\"1919-12-30 18:30:54:0\"}"</span>)
 </pre>
 </div>
 </div>
@@ -1231,8 +1247,8 @@ The following is an example with a simple-date timestamp.
 Return a single string where the row returned is a json object expressed as a string
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id 3)) <span style="color: #23d7d7;">:json-str</span>)
-<span style="color: #e67128;">"{\"id\":3,\"int4\":3,\"text\":\"text three\"}"</span>
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id 3)) <span class="org-builtin">:json-str</span>)
+<span class="org-string">"{\"id\":3,\"int4\":3,\"text\":\"text three\"}"</span>
 </pre>
 </div>
 <p>
@@ -1248,11 +1264,11 @@ As with :json-strs, this will also work for either simple-date or local-time tim
 Return a string containing a json array, each element in the array is a selected row expressed as a json object. NOTE: If there is no result, this will return a string with an empty json array.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'short-data-type-tests <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 3)) <span style="color: #23d7d7;">:json-array-str</span>)
-<span style="color: #e67128;">"[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]"</span>
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin">:json-array-str</span>)
+<span class="org-string">"[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]"</span>
 
-(query (<span style="color: #23d7d7;">:select</span> 'id 'int4 'text <span style="color: #23d7d7;">:from</span> 'test-data <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&lt;</span> 'id 1)) <span style="color: #23d7d7;">:json-array-str</span>)
-<span style="color: #e67128;">"[]"</span>
+(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'test-data <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 1)) <span class="org-builtin">:json-array-str</span>)
+<span class="org-string">"[]"</span>
 </pre>
 </div>
 <p>
@@ -1267,6 +1283,63 @@ As with :json-strs, this will also work for either simple-date or local-time tim
 If the database returns information about the amount rows that were affected,
 such as with updating or deleting queries, this is returned as a second value.
 </p>
+</div>
+</div>
+<div id="outline-container-parameterized-queries" class="outline-4">
+<h4 id="parameterized-queries">Parameterized Queries</h4>
+<div class="outline-text-4" id="text-parameterized-queries">
+<p>
+Query handles parameterized queries as well. The following examples show query with raw sql and then using s-sql and using the :column qualifier:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (pomo:query <span class="org-string">"select name from employee where id &lt; $1"</span>
+              4 <span class="org-builtin">:column</span>)
+(<span class="org-string">"Jason"</span> <span class="org-string">"Robert"</span> <span class="org-string">"Celia"</span>)
+
+  (pomo:query <span class="org-string">"select name from employee where id &lt; $1 and city= $2"</span>
+              4 <span class="org-string">"Toronto"</span> <span class="org-builtin">:column</span>)
+(<span class="org-string">"Celia"</span>)
+
+  (pomo:query (<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'employee <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id '$1))
+              4 <span class="org-builtin">:column</span>)
+(<span class="org-string">"Jason"</span> <span class="org-string">"Robert"</span> <span class="org-string">"Celia"</span>)
+
+(pomo:query (<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'employee
+                           <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:&lt;</span> 'id '$1)
+                                        (<span class="org-builtin">:=</span> 'city '$2)))
+            4 <span class="org-string">"Toronto"</span> <span class="org-builtin">:column</span>)
+(<span class="org-string">"Celia"</span>)
+</pre>
+</div>
+<p>
+IMPORTANT: LISTS AND VECTORS IN PARAMETERIZED QUERIES: For Postmodern versions before 1.33.7, you cannot use a list in a parameterized statement. You have to convert the list to a vector and use :any rather than :in. The following examples use raw sql.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span class="org-string">"select * from employee where id = any($1)"</span>
+       #(1 3 4))
+</pre>
+</div>
+<p>
+Beginning in Postmodern v. 1.33.7 you can also pass a list as the parmeterized value but you still must use :any rather than :in.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span class="org-string">"select * from employee where id = any($1)"</span>
+       '(1 3 4))
+</pre>
+</div>
+<p>
+Using s-sql, you need to use any* rather than any. See <a href="s-sql.html#sql-op-any">S-SQL</a> for more details. The following examples also use the :column qualifier.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(pomo:query (<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'employee <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id (<span class="org-builtin">:any*</span> '$1)))
+            #(1 3) <span class="org-builtin">:column</span>)
+ '(<span class="org-string">"Jason"</span> <span class="org-string">"Celia"</span>)
+ <span class="org-comment-delimiter">;; </span><span class="org-comment">Beginning with Postmodern version 1.33.7 you can also use lists</span>
+(pomo:query (<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'employee <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id (<span class="org-builtin">:any*</span> '$1)))
+            '(1 3) <span class="org-builtin">:column</span>)
+ '(<span class="org-string">"Jason"</span> <span class="org-string">"Celia"</span>)
+</pre>
+</div>
 </div>
 </div>
 </div>
@@ -1298,10 +1371,10 @@ arguments.
 An example using s-sql:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(doquery (<span style="color: #23d7d7;">:select</span> 'name 'score <span style="color: #23d7d7;">:from</span> 'scores) (n s)
+<pre class="src src-lisp">(doquery (<span class="org-builtin">:select</span> 'name 'score <span class="org-builtin">:from</span> 'scores) (n s)
   (incf (gethash n scores) s))
 
-(doquery ((<span style="color: #23d7d7;">:select</span> 'name <span style="color: #23d7d7;">:from</span> 'scores <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&gt;</span> 'score '$1)) 100) (name)
+(doquery ((<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'scores <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'score '$1)) 100) (name)
   (print name))
 </pre>
 </div>
@@ -1309,10 +1382,10 @@ An example using s-sql:
 The same examples using plain sql:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(doquery <span style="color: #e67128;">"select name, score from scores"</span> (n s)
+<pre class="src src-lisp">(doquery <span class="org-string">"select name, score from scores"</span> (n s)
   (incf (gethash n scores) s))
 
-(doquery ((<span style="color: #23d7d7;">:select</span> 'name <span style="color: #23d7d7;">:from</span> 'scores <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&gt;</span> 'score '$1)) 100) (name)
+(doquery ((<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'scores <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'score '$1)) 100) (name)
   (print name))
 </pre>
 </div>
@@ -1336,10 +1409,10 @@ query.)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((select-two (prepare (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:type</span> '$1 'integer) (<span style="color: #23d7d7;">:type</span> '$2 'string)))))
-  (funcall select-two 1 <span style="color: #e67128;">"a"</span>))
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((select-two (prepare (<span class="org-builtin">:select</span> (<span class="org-builtin">:type</span> '$1 'integer) (<span class="org-builtin">:type</span> '$2 'string)))))
+  (funcall select-two 1 <span class="org-string">"a"</span>))
 
-(<span style="color: #ffad29; font-weight: bold;">let</span> ((getpid (prepare <span style="color: #e67128;">"select pg_backend_oid()"</span> <span style="color: #23d7d7;">:single</span>)))
+(<span class="org-keyword">let</span> ((getpid (prepare <span class="org-string">"select pg_backend_oid()"</span> <span class="org-builtin">:single</span>)))
   (funcall getpid))
 </pre>
 </div>
@@ -1368,7 +1441,7 @@ statements triggering a duplicate-prepared-statement error.
 Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((select-int (prepare (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:type</span> '$1 integer)) <span style="color: #23d7d7;">:single</span>)))
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((select-int (prepare (<span class="org-builtin">:select</span> (<span class="org-builtin">:type</span> '$1 integer)) <span class="org-builtin">:single</span>)))
   (funcall select-int 10))
 </pre>
 </div>
@@ -1393,9 +1466,9 @@ Example:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(defprepared 'select1 <span style="color: #e67128;">"select a from test_data where c = $1"</span> <span style="color: #23d7d7;">:single</span>)
+<pre class="src src-lisp">(defprepared 'select1 <span class="org-string">"select a from test_data where c = $1"</span> <span class="org-builtin">:single</span>)
 
-(funcall 'select1 <span style="color: #e67128;">"foobar"</span>)
+(funcall 'select1 <span class="org-string">"foobar"</span>)
 </pre>
 </div>
 </div>
@@ -1409,12 +1482,12 @@ Like defprepared, but allows to specify names of the function arguments in a
 lambda list as well as arguments supplied to the query.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(defprepared-with-names user-messages (user <span style="color: #34cae2;">&amp;key</span> (limit 10))
-  (<span style="color: #e67128;">"select * from messages</span>
-<span style="color: #e67128;">    where user_id = $1</span>
-<span style="color: #e67128;">    order by date desc</span>
-<span style="color: #e67128;">    limit $2"</span> (user-id user) limit)
-  <span style="color: #23d7d7;">:plists</span>)
+<pre class="src src-lisp">(defprepared-with-names user-messages (user <span class="org-type">&amp;key</span> (limit 10))
+  (<span class="org-string">"select * from messages</span>
+<span class="org-string">    where user_id = $1</span>
+<span class="org-string">    order by date desc</span>
+<span class="org-string">    limit $2"</span> (user-id user) limit)
+  <span class="org-builtin">:plists</span>)
 </pre>
 </div>
 </div>
@@ -1449,21 +1522,21 @@ quoted or a string) and &#x2026; simply indicates other statements would be
 expected here:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">with-transaction</span> ()
-  (execute (<span style="color: #23d7d7;">:insert-into</span> 'test-data <span style="color: #23d7d7;">:set</span> 'value 77))
+<pre class="src src-lisp">(<span class="org-keyword">with-transaction</span> ()
+  (execute (<span class="org-builtin">:insert-into</span> 'test-data <span class="org-builtin">:set</span> 'value 77))
   ...)
 
-(<span style="color: #ffad29; font-weight: bold;">with-transaction</span> (george)
-  (execute (<span style="color: #23d7d7;">:insert-into</span> 'test-data <span style="color: #23d7d7;">:set</span> 'value 22))
+(<span class="org-keyword">with-transaction</span> (george)
+  (execute (<span class="org-builtin">:insert-into</span> 'test-data <span class="org-builtin">:set</span> 'value 22))
   ...)
 
-(<span style="color: #ffad29; font-weight: bold;">with-transaction</span> (george <span style="color: #23d7d7;">:read-committed-rw</span>)
-  (execute (<span style="color: #23d7d7;">:insert-into</span> 'test-data <span style="color: #23d7d7;">:set</span> 'value 33))
-  (query (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'test-data))
+(<span class="org-keyword">with-transaction</span> (george <span class="org-builtin">:read-committed-rw</span>)
+  (execute (<span class="org-builtin">:insert-into</span> 'test-data <span class="org-builtin">:set</span> 'value 33))
+  (query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'test-data))
   ...)
 
-(<span style="color: #ffad29; font-weight: bold;">with-transaction</span> (<span style="color: #23d7d7;">:serializable</span>)
-  (execute (<span style="color: #23d7d7;">:insert-into</span> 'test-data <span style="color: #23d7d7;">:set</span> 'value 44))
+(<span class="org-keyword">with-transaction</span> (<span class="org-builtin">:serializable</span>)
+  (execute (<span class="org-builtin">:insert-into</span> 'test-data <span class="org-builtin">:set</span> 'value 44))
   ...)
 </pre>
 </div>
@@ -1532,41 +1605,41 @@ release-savepoint.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(execute (<span style="color: #23d7d7;">:create-table</span> test-data ((value <span style="color: #23d7d7;">:type</span> integer))))
+<pre class="src src-lisp">(execute (<span class="org-builtin">:create-table</span> test-data ((value <span class="org-builtin">:type</span> integer))))
 
-(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">test12</span> (x <span style="color: #34cae2;">&amp;optional</span> (y nil))
-  (<span style="color: #ffad29; font-weight: bold;">with-logical-transaction</span> (lt1 <span style="color: #23d7d7;">:read-committed-rw</span>)
-    (execute (<span style="color: #23d7d7;">:insert-into</span> 'test-data <span style="color: #23d7d7;">:set</span> 'value 0))
-    (<span style="color: #ffad29; font-weight: bold;">with-savepoint</span> sp1
-      (execute (<span style="color: #23d7d7;">:insert-into</span> 'test-data <span style="color: #23d7d7;">:set</span> 'value 1))
-      (format t <span style="color: #e67128;">"1-1. ~a Savepoint-name ~a~%"</span> (query <span style="color: #e67128;">"select * from test_data"</span>)
+(<span class="org-keyword">defun</span> <span class="org-function-name">test12</span> (x <span class="org-type">&amp;optional</span> (y nil))
+  (<span class="org-keyword">with-logical-transaction</span> (lt1 <span class="org-builtin">:read-committed-rw</span>)
+    (execute (<span class="org-builtin">:insert-into</span> 'test-data <span class="org-builtin">:set</span> 'value 0))
+    (<span class="org-keyword">with-savepoint</span> sp1
+      (execute (<span class="org-builtin">:insert-into</span> 'test-data <span class="org-builtin">:set</span> 'value 1))
+      (format t <span class="org-string">"1-1. ~a Savepoint-name ~a~%"</span> (query <span class="org-string">"select * from test_data"</span>)
               (pomo::savepoint-name sp1))
-      (<span style="color: #ffad29; font-weight: bold;">if</span> (&lt; x 0)
+      (<span class="org-keyword">if</span> (&lt; x 0)
           (rollback-savepoint sp1)
           (release-savepoint sp1))
-      (format t <span style="color: #e67128;">"1-2. ~a~%"</span> (query <span style="color: #e67128;">"select * from test_data"</span>)))
-    (<span style="color: #ffad29; font-weight: bold;">with-savepoint</span> sp2
-      (execute (<span style="color: #23d7d7;">:insert-into</span> 'test-data <span style="color: #23d7d7;">:set</span> 'value 2))
-      (format t <span style="color: #e67128;">"2-1. ~a Savepoint-name ~a~%"</span> (query <span style="color: #e67128;">"select * from test_data"</span>)
+      (format t <span class="org-string">"1-2. ~a~%"</span> (query <span class="org-string">"select * from test_data"</span>)))
+    (<span class="org-keyword">with-savepoint</span> sp2
+      (execute (<span class="org-builtin">:insert-into</span> 'test-data <span class="org-builtin">:set</span> 'value 2))
+      (format t <span class="org-string">"2-1. ~a Savepoint-name ~a~%"</span> (query <span class="org-string">"select * from test_data"</span>)
               (pomo::savepoint-name sp2))
-      (<span style="color: #ffad29; font-weight: bold;">with-savepoint</span> sp3
-        (execute (<span style="color: #23d7d7;">:insert-into</span> 'test-data <span style="color: #23d7d7;">:set</span> 'value 3))
-        (format t <span style="color: #e67128;">"3-1. ~a Savepoint-name ~a~%"</span> (query <span style="color: #e67128;">"select * from test_data"</span>)
+      (<span class="org-keyword">with-savepoint</span> sp3
+        (execute (<span class="org-builtin">:insert-into</span> 'test-data <span class="org-builtin">:set</span> 'value 3))
+        (format t <span class="org-string">"3-1. ~a Savepoint-name ~a~%"</span> (query <span class="org-string">"select * from test_data"</span>)
                 (pomo::savepoint-name sp3))
-        (<span style="color: #ffad29; font-weight: bold;">if</span> (&gt; x 0)
+        (<span class="org-keyword">if</span> (&gt; x 0)
             (rollback-savepoint sp3)
             (release-savepoint sp3))
-        (format t <span style="color: #e67128;">"3-2. ~a~%"</span> (query <span style="color: #e67128;">"select * from test_data"</span>))
-        (<span style="color: #ffad29; font-weight: bold;">when</span> y (rollback-savepoint sp2))
-        (format t <span style="color: #e67128;">"3-3. ~a~%"</span> (query <span style="color: #e67128;">"select * from test_data"</span>)))
-      (<span style="color: #ffad29; font-weight: bold;">if</span> (= x 0)
+        (format t <span class="org-string">"3-2. ~a~%"</span> (query <span class="org-string">"select * from test_data"</span>))
+        (<span class="org-keyword">when</span> y (rollback-savepoint sp2))
+        (format t <span class="org-string">"3-3. ~a~%"</span> (query <span class="org-string">"select * from test_data"</span>)))
+      (<span class="org-keyword">if</span> (= x 0)
           (rollback-savepoint sp2)
           (release-savepoint sp2))
-      (format t <span style="color: #e67128;">"2-2. ~a~%"</span> (query <span style="color: #e67128;">"select * from test_data"</span>)))
-    (format t <span style="color: #e67128;">"4. ~a~%"</span> (query <span style="color: #e67128;">"select * from test_data"</span>))
-    (<span style="color: #ffad29; font-weight: bold;">when</span> (string= y <span style="color: #e67128;">"abrt"</span>)
+      (format t <span class="org-string">"2-2. ~a~%"</span> (query <span class="org-string">"select * from test_data"</span>)))
+    (format t <span class="org-string">"4. ~a~%"</span> (query <span class="org-string">"select * from test_data"</span>))
+    (<span class="org-keyword">when</span> (string= y <span class="org-string">"abrt"</span>)
       (abort-transaction lt1))
-    (format t <span style="color: #e67128;">"5. ~a~%"</span> (query <span style="color: #e67128;">"select * from test_data"</span>))))
+    (format t <span class="org-string">"5. ~a~%"</span> (query <span class="org-string">"select * from test_data"</span>))))
 </pre>
 </div>
 </div>
@@ -1670,20 +1743,20 @@ expected here:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">with-logical-transaction</span> ()
-  (execute (<span style="color: #23d7d7;">:insert-into</span> 'test-data <span style="color: #23d7d7;">:set</span> 'value 77))
+<pre class="src src-lisp">(<span class="org-keyword">with-logical-transaction</span> ()
+  (execute (<span class="org-builtin">:insert-into</span> 'test-data <span class="org-builtin">:set</span> 'value 77))
   ...)
 
-(<span style="color: #ffad29; font-weight: bold;">with-logical-transaction</span> (george)
-  (execute (<span style="color: #23d7d7;">:insert-into</span> 'test-data <span style="color: #23d7d7;">:set</span> 'value 22))
+(<span class="org-keyword">with-logical-transaction</span> (george)
+  (execute (<span class="org-builtin">:insert-into</span> 'test-data <span class="org-builtin">:set</span> 'value 22))
   ...)
 
-(<span style="color: #ffad29; font-weight: bold;">with-logical-transaction</span> (george <span style="color: #23d7d7;">:read-committed-rw</span>)
-  (execute (<span style="color: #23d7d7;">:insert-into</span> 'test-data <span style="color: #23d7d7;">:set</span> 'value 33))
+(<span class="org-keyword">with-logical-transaction</span> (george <span class="org-builtin">:read-committed-rw</span>)
+  (execute (<span class="org-builtin">:insert-into</span> 'test-data <span class="org-builtin">:set</span> 'value 33))
   ...)
 
-(<span style="color: #ffad29; font-weight: bold;">with-logical-transaction</span> (<span style="color: #23d7d7;">:serializable</span>)
-  (execute (<span style="color: #23d7d7;">:insert-into</span> 'test-data <span style="color: #23d7d7;">:set</span> 'value 44))
+(<span class="org-keyword">with-logical-transaction</span> (<span class="org-builtin">:serializable</span>)
+  (execute (<span class="org-builtin">:insert-into</span> 'test-data <span class="org-builtin">:set</span> 'value 44))
   ...)
 </pre>
 </div>
@@ -1955,8 +2028,8 @@ of the database rather than template1 which may contain encoding specific or loc
 specific data.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(create-database 'testdb <span style="color: #23d7d7;">:limit-public-access</span> t
-                         <span style="color: #23d7d7;">:comment</span> <span style="color: #e67128;">"This database is for testing silly theories"</span>)
+<pre class="src src-lisp">(create-database 'testdb <span class="org-builtin">:limit-public-access</span> t
+                         <span class="org-builtin">:comment</span> <span class="org-string">"This database is for testing silly theories"</span>)
 </pre>
 </div>
 </div>
@@ -2303,11 +2376,11 @@ Attempts to add a comment to a particular database object. The first parameter i
 Example usage would be:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(add-comment <span style="color: #23d7d7;">:database</span> 'my-database-name <span style="color: #e67128;">"Does anyone actually use this database?"</span>)
+<pre class="src src-lisp">(add-comment <span class="org-builtin">:database</span> 'my-database-name <span class="org-string">"Does anyone actually use this database?"</span>)
 
-(add-comment <span style="color: #23d7d7;">:column</span> 'country-locations.name <span style="color: #e67128;">"Is what it looks like - the name of a country"</span>)
+(add-comment <span class="org-builtin">:column</span> 'country-locations.name <span class="org-string">"Is what it looks like - the name of a country"</span>)
 
-(add-comment <span style="color: #23d7d7;">:column</span> <span style="color: #e67128;">"country_locations.name"</span> <span style="color: #e67128;">"Is what it looks like - the name of a country"</span>)
+(add-comment <span class="org-builtin">:column</span> <span class="org-string">"country_locations.name"</span> <span class="org-string">"Is what it looks like - the name of a country"</span>)
 </pre>
 </div>
 
@@ -2315,7 +2388,7 @@ Example usage would be:
 Example usage where two identifiers are required would be constraints:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(add-comment <span style="color: #23d7d7;">:constraint</span> 'constraint1  <span style="color: #e67128;">"Some kind of constraint descriptions here"</span>
+<pre class="src src-lisp">(add-comment <span class="org-builtin">:constraint</span> 'constraint1  <span class="org-string">"Some kind of constraint descriptions here"</span>
              'country-locations)
 </pre>
 </div>
@@ -2567,7 +2640,7 @@ Loads the Postgresql uuid-ossp contrib module. Once loaded, you can call uuid
 generation functions such as uuid_generate_v4 within a query. E.g.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query <span style="color: #e67128;">"select uuid_generate_v4()"</span>)
+<pre class="src src-lisp">(query <span class="org-string">"select uuid_generate_v4()"</span>)
 </pre>
 </div>
 <p>
@@ -2947,10 +3020,10 @@ Note: The query uses the portable information_schema relations instead of
 pg_tables relations.
 </p>
 <div class="org-src-container">
-<pre class="src src-sql"><span style="color: #ffad29; font-weight: bold;">select</span> <span style="color: #ffad29; font-weight: bold;">schema_name</span>
-<span style="color: #ffad29; font-weight: bold;">from</span> information_schema.schemata
-<span style="color: #ffad29; font-weight: bold;">where</span> <span style="color: #ffad29; font-weight: bold;">schema_name</span> !~ <span style="color: #e67128;">'(pg_*)|information_schema'</span>
-<span style="color: #ffad29; font-weight: bold;">order</span> <span style="color: #ffad29; font-weight: bold;">by</span> <span style="color: #ffad29; font-weight: bold;">schema_name</span> ;
+<pre class="src src-sql"><span class="org-keyword">select</span> <span class="org-keyword">schema_name</span>
+<span class="org-keyword">from</span> information_schema.schemata
+<span class="org-keyword">where</span> <span class="org-keyword">schema_name</span> !~ <span class="org-string">'(pg_*)|information_schema'</span>
+<span class="org-keyword">order</span> <span class="org-keyword">by</span> <span class="org-keyword">schema_name</span> ;
 </pre>
 </div>
 </div>
@@ -3375,20 +3448,20 @@ Example:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'employees2
-                      ((did <span style="color: #23d7d7;">:type</span> (or integer db-null)
-                            <span style="color: #23d7d7;">:primary-key</span> <span style="color: #e67128;">"generated by default as identity"</span>)
-                       (name <span style="color: #23d7d7;">:type</span> (varchar 40) <span style="color: #23d7d7;">:check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>))
-                       (birth-date <span style="color: #23d7d7;">:type</span> date <span style="color: #23d7d7;">:check</span> (<span style="color: #23d7d7;">:&gt;</span> 'birth-date <span style="color: #e67128;">"1900-01-01"</span>))
-                       (start-date <span style="color: #23d7d7;">:type</span> date <span style="color: #23d7d7;">:check</span> (<span style="color: #23d7d7;">:&gt;</span> 'start-date 'birth-date))
-                       (salary <span style="color: #23d7d7;">:type</span> numeric <span style="color: #23d7d7;">:check</span> (<span style="color: #23d7d7;">:&gt;</span> 'salary 0)))))
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'employees2
+                      ((did <span class="org-builtin">:type</span> (or integer db-null)
+                            <span class="org-builtin">:primary-key</span> <span class="org-string">"generated by default as identity"</span>)
+                       (name <span class="org-builtin">:type</span> (varchar 40) <span class="org-builtin">:check</span> (<span class="org-builtin">:&lt;&gt;</span> 'name <span class="org-string">""</span>))
+                       (birth-date <span class="org-builtin">:type</span> date <span class="org-builtin">:check</span> (<span class="org-builtin">:&gt;</span> 'birth-date <span class="org-string">"1900-01-01"</span>))
+                       (start-date <span class="org-builtin">:type</span> date <span class="org-builtin">:check</span> (<span class="org-builtin">:&gt;</span> 'start-date 'birth-date))
+                       (salary <span class="org-builtin">:type</span> numeric <span class="org-builtin">:check</span> (<span class="org-builtin">:&gt;</span> 'salary 0)))))
 
 (list-check-constraints 'employees2)
 
-((<span style="color: #e67128;">"employees2_birth_date_check"</span> <span style="color: #e67128;">"CHECK (birth_date &gt; '1900-01-01'::date)"</span>)
- (<span style="color: #e67128;">"employees2_check"</span> <span style="color: #e67128;">"CHECK (start_date &gt; birth_date)"</span>)
- (<span style="color: #e67128;">"employees2_name_check"</span> <span style="color: #e67128;">"CHECK (name::text &lt;&gt; ''::text)"</span>)
- (<span style="color: #e67128;">"employees2_salary_check"</span> <span style="color: #e67128;">"CHECK (salary &gt; 0::numeric)"</span>))
+((<span class="org-string">"employees2_birth_date_check"</span> <span class="org-string">"CHECK (birth_date &gt; '1900-01-01'::date)"</span>)
+ (<span class="org-string">"employees2_check"</span> <span class="org-string">"CHECK (start_date &gt; birth_date)"</span>)
+ (<span class="org-string">"employees2_name_check"</span> <span class="org-string">"CHECK (name::text &lt;&gt; ''::text)"</span>)
+ (<span class="org-string">"employees2_salary_check"</span> <span class="org-string">"CHECK (salary &gt; 0::numeric)"</span>))
 </pre>
 </div>
 </div>
@@ -3751,8 +3824,8 @@ Convert the given form (a list starting with a keyword) to an SQL query string
 at compile time, according to the rules described here. For example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(sql (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'country <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'a 1)))
- <span style="color: #e67128;">"(SELECT * FROM country WHERE (a = 1))"</span>
+<pre class="src src-lisp">(sql (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'country <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'a 1)))
+ <span class="org-string">"(SELECT * FROM country WHERE (a = 1))"</span>
 </pre>
 </div>
 
@@ -3760,7 +3833,7 @@ at compile time, according to the rules described here. For example:
 but
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(sql '(<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'country <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'a 1)))
+<pre class="src src-lisp">(sql '(<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'country <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'a 1)))
 </pre>
 </div>
 
@@ -3783,7 +3856,7 @@ an SQL query, with the same rules except that symbols in this list do not
 have to be quoted to be interpreted as identifiers. For example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(sql-compile '(<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'country <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'a 1)))
+<pre class="src src-lisp">(sql-compile '(<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'country <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'a 1)))
 
  \"(SELECT * FROM country WHERE (a = 1))\"
 </pre>
@@ -3793,7 +3866,7 @@ have to be quoted to be interpreted as identifiers. For example:
 but
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(sql (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'country <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'a 1)))
+<pre class="src src-lisp">(sql (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'country <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'a 1)))
 </pre>
 </div>
 <p>
@@ -3949,17 +4022,17 @@ properly writes it out it for inclusion in an SQL query. Symbols will be
 converted to SQL names. Examples:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(sql-escape <span style="color: #e67128;">"tr'-x"</span>)
+<pre class="src src-lisp">(sql-escape <span class="org-string">"tr'-x"</span>)
 
-<span style="color: #e67128;">"E'tr''-x'"</span>
+<span class="org-string">"E'tr''-x'"</span>
 
 (sql-escape (/ 1 13))
 
-<span style="color: #e67128;">"0.0769230769230769230769230769230769230"</span>
+<span class="org-string">"0.0769230769230769230769230769230769230"</span>
 
-(sql-escape #(<span style="color: #e67128;">"Baden-Wurttemberg"</span> <span style="color: #e67128;">"Bavaria"</span> <span style="color: #e67128;">"Berlin"</span> <span style="color: #e67128;">"Brandenburg"</span>))
+(sql-escape #(<span class="org-string">"Baden-Wurttemberg"</span> <span class="org-string">"Bavaria"</span> <span class="org-string">"Berlin"</span> <span class="org-string">"Brandenburg"</span>))
 
-<span style="color: #e67128;">"ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']"</span>
+<span class="org-string">"ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']"</span>
 </pre>
 </div>
 </div>

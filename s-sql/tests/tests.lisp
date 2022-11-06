@@ -98,16 +98,17 @@
                      ("Tabbouleh" #("bulgur" "tomatoes" "onions" "parsley"))
                      ("Kofta" #("minced meat" "parsley" "spices" "onions"))
                      ("Kunafeh" #("cheese" "sugar syrup" "pistachios"))
-                     ("Baklava" #("filo dough" "honey" "nuts"))) do
-                       (query (:insert-into 'recipes :set 'name (first x) 'text
-                                            (format nil "~a" (rest x))))
-                       (query
-                        (:insert-into 'recipe-tags-array
-                         :set 'recipe-id
-                         (:select 'recipe-id
-                          :from 'recipes
-                          :where (:= 'recipes.name (first x)))
-                         'tags (second x))))))
+                     ("Baklava" #("filo dough" "honey" "nuts")))
+          do
+             (query (:insert-into 'recipes :set 'name (first x) 'text
+                                  (format nil "~a" (rest x))))
+             (query
+              (:insert-into 'recipe-tags-array
+               :set 'recipe-id
+               (:select 'recipe-id
+                :from 'recipes
+                :where (:= 'recipes.name (first x)))
+               'tags (second x))))))
 
 (defun build-employee-table ()
   "Build employee table for test purposes"
@@ -302,7 +303,13 @@ name."
              "REAL"))
   (signals error (let ((name "float")) (s-sql::to-type-name name))))
 
-(test s-sql:sql-escape-string
+(test s-sql-string
+  (is (equal (s-sql::to-s-sql-string '("alpha" "beta" "ceta" "Tau"))
+             "(\"alpha\",\"beta\",\"ceta\",\"Tau\")"))
+  (is (equal (s-sql::to-s-sql-string '(1 2 3 4))
+             "(1,2,3,4)")))
+
+(test sql-escape-string
   "Testing sql-escape-string. Escape string data so it can be used in a query."
   (is (equal (sql-escape-string "Puss in 'Boots'")
              "E'Puss in ''Boots'''"))
@@ -320,11 +327,21 @@ can be used in a query."
   (is (equal (sql-escape #("Baden-Wurttemberg" "Bavaria" "Berlin" "Brandenburg"))
              "ARRAY[E'Baden-Wurttemberg', E'Bavaria', E'Berlin', E'Brandenburg']"))
   (is (equal (let ((name 'float)) (sql-escape name))
-             "float")))
+             "float"))
+  (is (equal (s-sql:sql-escape #("alpha" "beta" "ceta" "Tau"))
+             "ARRAY[E'alpha', E'beta', E'ceta', E'Tau']"))
+  (is (equal (s-sql:sql-escape '("alpha" "beta" "ceta" "Tau"))
+             "(E'alpha', E'beta', E'ceta', E'Tau')"))
+  (is (equal (s-sql::sql-escape '(1 2 3 4))
+             "(1, 2, 3, 4)"))
+  (is (equal (s-sql::sql-escape #(1 2 3 4))
+             "ARRAY[1, 2, 3, 4]")))
 
 (test sql-expand
   "Testing sql-expand. Compile-time expansion of forms into lists of stuff that evaluates
 to strings \(which will form an SQL query when concatenated)."
+  (is (equal (s-sql::sql-expand '("alpha"))
+             '((SQL-ESCAPE ("alpha")))))
   (is (equal (s-sql::sql-expand (/ 1 13))
              '("0.0769230769230769230769230769230769230")))
   (is (equal (s-sql::sql-expand '("george" "paul" "john" "ringo"))
@@ -338,10 +355,22 @@ to strings \(which will form an SQL query when concatenated)."
   (is (equal (s-sql::sql-expand '(george  "rhythm" :group "Beatles"))
              '((SQL-ESCAPE (GEORGE "rhythm" :GROUP "Beatles")))))
   (is (equal (s-sql::sql-expand '(:= 'facs.facid 1))
-             '("(" "facs.facid" " = " "1" ")"))))
+             '("(" "facs.facid" " = " "1" ")")))
+  (is (equal (s-sql::sql-expand '((1 . (4 5 6))))
+             '((SQL-ESCAPE ((1 4 5 6))))))
+  (is (equal (s-sql::sql-expand '((1 4 5 6)))
+             '((SQL-ESCAPE ((1 4 5 6))))))
+  (is (equal (s-sql::sql-expand '(:default "Triumph"))
+             '("\"default\"" "(" "E'Triumph'" ")")))
+  (is (equal (s-sql::sql-expand '((:default "Triumph")))
+             '((SQL-ESCAPE ((:DEFAULT "Triumph"))))))
+  (is (equal (s-sql::sql-expand '((:criteria "integers") (:default "Triumph")))
+             '((SQL-ESCAPE ((:CRITERIA "integers") (:DEFAULT "Triumph")))) )))
 
 (test sql-expand-list
   "Testing sql-expand-list. Expand a list of elements, adding a separator in between them."
+  (is (equal (s-sql::sql-expand-list '("alpha" "beta" "ceta" "Tau"))
+             '("E'alpha'" ", " "E'beta'" ", " "E'ceta'" ", " "E'Tau'")))
   (is (equal (s-sql::sql-expand-list '(george paul john "ringo" "mary-ann" carol-anne))
              '((SQL-ESCAPE GEORGE) ", " (SQL-ESCAPE PAUL) ", " (SQL-ESCAPE JOHN) ", "
                "E'ringo'" ", " "E'mary-ann'" ", " (SQL-ESCAPE CAROL-ANNE))))
@@ -364,10 +393,20 @@ to strings \(which will form an SQL query when concatenated)."
              '("float")))
   (is (equal (s-sql::sql-expand-names '("george" "paul" "john" "ringo" "mary-ann"))
              '("george" ", " "paul" ", " "john" ", " "ringo" ", " "mary_ann")))
-  (is (equal (s-sql::sql-expand-names '((george. "paul") "john" "ringo" "mary-ann"))
-             '("george." "(" "E'paul'" ")" ", " "john" ", " "ringo" ", " "mary_ann")))
-  (is (equal (s-sql::sql-expand-names '((george  "paul") "john" "ringo" "mary-ann"))
-             '("george" "(" "E'paul'" ")" ", " "john" ", " "ringo" ", " "mary_ann"))))
+  #|
+  ;;; This just demonstrates that sql-expand-names produces bad output when given
+  ;;; an alist.
+  (is (equal (s-sql::sql-expand-names '((george . "paul") "john" "ringo" "carrie-ann"))
+             '("george" "(" ")" ", " "john" ", " "ringo" ", " "carrie_ann")
+;             '("george" "(" "E'paul'" ")" ", " "john" ", " "ringo" ", " "carrie_ann")
+             ))
+|#
+  (is (equal (s-sql::sql-expand-names '((george  "paul") "john" "ringo" "mary-sue"))
+             '("george" "(" "E'paul'" ")" ", " "john" ", " "ringo" ", " "mary_sue")))
+  (is (equal (s-sql::sql-expand-names
+              '((alpha taylor) (beta "kristin") (ceta "jennifer") (Tau . bailey)))
+             '("alpha" "(" "taylor" ")" ", " "beta" "(" "E'kristin'" ")" ", " "ceta" "("
+                      "E'jennifer'" ")" ", " "tau" "(" ")"))))
 
 (test reduce-strings
   "Testing reduce-strings. Join adjacent strings in a list, leave other values intact."
@@ -386,7 +425,12 @@ to strings \(which will form an SQL query when concatenated)."
 (test sql-compile
   "Testing sql-compile"
   (is (equal (sql-compile '(:select 'name :from 'items :where (:= 'id 1)))
-             "(SELECT name FROM items WHERE (id = 1))")))
+             "(SELECT name FROM items WHERE (id = 1))"))
+  (is (equal (sql-compile '(:select 'id 'text
+                            :from 'items
+                            :where (:and (:= 'id 1)
+                                    (:< 'quantity 10))))
+             "(SELECT id, text FROM items WHERE ((id = 1) and (quantity < 10)))")))
 
 (test sql-template
   "Testing sql-template"
@@ -425,6 +469,10 @@ to strings \(which will form an SQL query when concatenated)."
              "(SELECT item FROM item_table WHERE (id = 2))"))
   (is (equal (sql (:select 'item :distinct :from 'item-table :where (:= 'col1 "Albania")))
              "(SELECT DISTINCT item FROM item_table WHERE (col1 = E'Albania'))"))
+  (is (equal (sql (:select 'id 'text :from 'items :where (:and (:= 'id 1) (:< 'quantity 10))))
+             "(SELECT id, text FROM items WHERE ((id = 1) and (quantity < 10)))"))
+  (is (equal (sql (:select 'id 'text :from 'items :where (:and (:= 'id '$1) (:< 'quantity '$2))))
+             "(SELECT id, text FROM items WHERE ((id = $1) and (quantity < $2)))"))
   (is (equal (sql (:select 'item 'groups :from 'item-table 'item-groups
                    :where (:= 'item-table.group-id 'item-groups.id)))
              "(SELECT item, groups FROM item_table, item_groups WHERE (item_table.group_id = item_groups.id))"))
@@ -465,6 +513,41 @@ to strings \(which will form an SQL query when concatenated)."
              "(SELECT ta FROM a WHERE (not (ta IS NULL)))"))
   (is (equal (sql (:select 'ta :from 'a :where (:not-null 'ta)))
              "(SELECT ta FROM a WHERE (ta IS NOT NULL))")))
+
+(test select-in
+  (build-employee-table)
+  (is (equal (sql (:select '* :from 'rental :where (:in 'id '(1 2))))
+             "(SELECT * FROM rental WHERE (id IN (1, 2)))"))
+  (is (equal (sql (:select '* :from 'table1 :where (:in 'name '("alpha" "beta" "ceta"))))
+             "(SELECT * FROM table1 WHERE (name IN (E'alpha', E'beta', E'ceta')))"))
+  (is (equal (sql (:select '* :from 'table1 :where (:in 'id (list 1 2 3))))
+             "(SELECT * FROM table1 WHERE (id IN (1, 2, 3)))"))
+  (is (equal (with-test-connection
+               (query (:select 'id 'name :from 'employee
+                       :where (:in 'id (:select 'id :from 'employee :where (:= 'id 2))))))
+             '((2 "Robert")))))
+
+(test select-not-in
+  (is (equal (sql (:select '* :from 'table1 :where (:not-in 'id '(1 2 3))))
+             "(SELECT * FROM table1 WHERE (id NOT IN (1, 2, 3)))"))
+  (is (equal (sql (:select '* :from 'table1 :where (:not-in 'name '("alpha" "beta" "ceta"))))
+             "(SELECT * FROM table1 WHERE (name NOT IN (E'alpha', E'beta', E'ceta')))")))
+
+(test select-in-set
+  (is (equal (sql (:select '* :from 'table1 :where (:in 'id (:set 1 2 3))))
+             "(SELECT * FROM table1 WHERE (id IN (1, 2, 3)))"))
+  (is (equal (sql (:select '* :from 'table1 :where (:in 'name (:set "alpha" "beta" "tau"))))
+             "(SELECT * FROM table1 WHERE (name IN (E'alpha', E'beta', E'tau')))"))
+  (with-test-connection
+    (signals error (pomo:query (:select 'name :from 'employee
+                                        :where (:in 'id (:set '$1)))
+                               #(1 2 3)))
+    (signals error (pomo:query (:select 'name :from 'employee
+                                        :where (:in 'id (:set '$1)))
+                               (list 1 2 3)))
+    (signals error (pomo:query (:select 'name :from 'employee
+                                        :where (:in 'id (:set '$1)))
+                               '(1 2 3)))))
 
 (test cast
   "Testing cast using cast or type"
@@ -507,11 +590,60 @@ to strings \(which will form an SQL query when concatenated)."
                                          (:t1 'num 'letter))))
              "(SELECT * FROM (VALUES (1, E'one'), (2, E'two'), (3, E'three')) AS t1(num, letter))")))
 
-(test any
+(test select-any
   (is (equal (sql (:select 'sub-region-name :from 'regions :where (:= 'id (:any* '$1))))
              "(SELECT sub_region_name FROM regions WHERE (id = ANY($1)))"))
   (is (equal (sql (:select 'sub-region-name :from 'regions :where (:= 'id (:any '$1))))
-             "(SELECT sub_region_name FROM regions WHERE (id = ANY $1))")))
+             "(SELECT sub_region_name FROM regions WHERE (id = ANY $1))"))
+  (build-employee-table)
+  (with-test-connection
+    ;; Subselect test
+    (is (equal (pomo:query (:select 'name :from 'employee
+                                    :where (:= 'id (:any (:select 'id
+                                                           :from 'employee
+                                                           :where (:< 'id 4)))))
+                           :column)
+               '("Jason" "Robert" "Celia")))
+    (is (equal (pomo:query (:select 'name :from 'employee
+                                    :where (:= 'id (:any* (:select 'id
+                                                           :from 'employee
+                                                           :where (:< 'id 4)))))
+                           :column)
+               '("Jason" "Robert" "Celia")))
+    ;; Parameterization Test
+    (is (equal (pomo:query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+                           #(1 3) :column)
+               '("Jason" "Celia")))
+    (is (equal (pomo:query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+                           '(1 3) :column)
+               '("Jason" "Celia")))
+    (is (equal (pomo:query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+                           (vector 1 3))
+               '(("Jason") ("Celia"))))
+    (is (equal (pomo:query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+                           (list 1 3))
+               '(("Jason") ("Celia"))))
+    (signals error (pomo:query (:select 'name :from 'employees :where (:= 'id (:any '$1)))
+                               #(1 3)))
+    ;; Precalculated Subselect test
+    (is (equal (let ((ids (pomo:query (:select 'id :from 'employee :where (:< 'id 4))
+                                      :column)))
+                 (pomo:query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+                             ids))
+               '(("Jason") ("Robert") ("Celia"))))
+    (is (equal (let ((ids (pomo:query (:select 'id :from 'employee :where (:< 'id 4))
+                                      :column)))
+                 (pomo:query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+                             (coerce ids 'vector)))
+               '(("Jason") ("Robert") ("Celia"))))
+    (signals error (let ((ids (pomo:query (:select 'id :from 'employee :where (:< 'id 4))
+                                          :column)))
+                     (pomo:query (:select 'name :from 'employee :where (:= 'id (:any '$1)))
+                                 ids)))
+    (signals error (let ((ids (pomo:query (:select 'id :from 'employee :where (:< 'id 4))
+                                          :column)))
+                     (pomo:query (:select 'name :from 'employee :where (:= 'id (:any '$1)))
+                                 (coerce ids 'vector))))))
 
 (test select-limit-offset
   (is (equal (sql (:limit (:select 'country :from 'un-m49) 5 10))
@@ -672,8 +804,10 @@ To join the table films with the table distributors:"
                                        (:as 'facs.name 'facility)
                                        :distinct
                                        :from (:as 'cd.members 'mems)
-                                       :inner-join (:as 'cd.bookings 'bks) :on (:= 'mems.memid 'bks.memid)
-                                       :inner-join (:as 'cd.facilities 'facs) :on (:= 'bks.facid 'facs.facid)
+                              :inner-join (:as 'cd.bookings 'bks)
+                              :on (:= 'mems.memid 'bks.memid)
+                              :inner-join (:as 'cd.facilities 'facs)
+                              :on (:= 'bks.facid 'facs.facid)
                                        :where (:in 'bks.facid (:set 0 1)))
                              'member))
              "((SELECT DISTINCT (mems.firstname || E' ' || mems.surname) AS member, facs.name AS facility FROM cd.members AS mems INNER JOIN cd.bookings AS bks ON (mems.memid = bks.memid) INNER JOIN cd.facilities AS facs ON (bks.facid = facs.facid) WHERE (bks.facid IN (0, 1))) ORDER BY member)"))
@@ -694,7 +828,8 @@ To join the table films with the table distributors:"
          (:select (:as (:|| 'mems.firstname " " 'mems.surname) 'member)
                   (:select (:as (:|| 'recs.firstname " " 'recs.surname) 'recommender)
                    :from (:as 'cd.members 'recs)
-                   :where (:= 'recs.memid 'mems.recommendedby)) :distinct
+                   :where (:= 'recs.memid 'mems.recommendedby))
+                  :distinct
                   :from (:as 'cd.members 'mems))
          'member))
        "((SELECT DISTINCT (mems.firstname || E' ' || mems.surname) AS member, (SELECT (recs.firstname || E' ' || recs.surname) AS recommender FROM cd.members AS recs WHERE (recs.memid = mems.recommendedby)) FROM cd.members AS mems) ORDER BY member)"))

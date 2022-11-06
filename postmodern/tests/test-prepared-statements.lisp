@@ -29,6 +29,24 @@
       (is (equal (funcall 'select1 13)
                  "13")))))
 
+(test prepare-any-statement
+  (with-test-connection
+    (without-binary
+      (with-non-binary-fixture
+        (defprepared 'select1_any "select a from test_data where c = any($1)" :single)
+        (defprepared 'select2_any "select c from test_data where a = any($1)" :single)
+        (is (equal (funcall 'select1_any '("bar" "foobar" "foo"))
+                   1))
+        (is (equal (funcall 'select1_any #("bar" "foobar" "foo"))
+                   1))
+        (is (equal (funcall 'select2_any '(1 3 4))
+                   "foobar"))
+        (is (equal (funcall 'select2_any #(1 3 4))
+                   "foobar"))
+        (signals error (eq (funcall 'select2_any '()))) ;passing an empty list will throw an error
+        (is (eq (funcall 'select2_any #())
+                nil))))))
+
 (test prepare-proving-life-limited-to-connection
   (with-test-connection
     (defprepared 'select1 "select $1" :single)

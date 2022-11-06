@@ -321,6 +321,20 @@ Convert a Lisp value to its textual unescaped SQL representation. Returns a
 second value indicating whether this value should be escaped if it is to be
 put directly into a query. Generally any string is going to be designated to be escaped.
 
+As of cl-postgres version 1.33.7 the lisp values handled are:
+- string
+- vector
+- cons (must be a proper list and cannot be an empty list) (added in v. 1.33.7)
+- array
+- integer
+- float (single or double except for clisp which does not have a double float)
+- ratio
+- t
+- nil
+- :null
+
+Anything else will throw an error that this value cannot be converted to a sql literal.
+
 You can define to-sql-string methods for your own datatypes if you want to be
 able to pass them to exec-prepared. When a non-NIL second value is returned,
 this may be T to indicate that the first value should simply be escaped as a

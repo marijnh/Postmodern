@@ -122,13 +122,36 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
       (is (eql d t))
       (is (eql e 9/2)))))
 
-(test sql-strings
+(test to-sql-strings
   (is (string= (to-sql-string :null) "NULL"))
   (is (string= (to-sql-string t) "true"))
+  (is (string= (cl-postgres:to-sql-string '())
+               "false"))
+  (is (string= (cl-postgres:to-sql-string nil)
+               "false"))
+  (is (string= (cl-postgres:to-sql-string (list))
+               "false"))
   (is (string= (to-sql-string 400) "400"))
+  (is (string= (to-sql-string 4.01) "4.01"))
   (is (string= (to-sql-string "foo") "foo"))
   (is (eq t (nth-value 1 (to-sql-string "bar"))))
-  (is (eq nil (nth-value 1 (to-sql-string 10)))))
+  (is (eq nil (nth-value 1 (to-sql-string 10))))
+  (is (string= (to-sql-string #("alpha" "beta"))
+               "{\"alpha\",\"beta\"}"))
+  (is (string= (to-sql-string '("alpha" "beta"))
+               "{\"alpha\",\"beta\"}"))
+  (signals error (cl-postgres:to-sql-string '(a . b)))
+  (signals error (cl-postgres:to-sql-string '(a  b)))
+  (is (string= (cl-postgres:to-sql-string '(1 2))
+               "{1,2}"))
+  (is (string= (cl-postgres:to-sql-string '(1.3 -2.83))
+               "{1.3,-2.83}"))
+  (is (string= (cl-postgres:to-sql-string #(1.3 -2.83))
+               "{1.3,-2.83}"))
+  (is (string= (cl-postgres:to-sql-string 1/3)
+               "0.3333333333333333333333333333333333333"))
+  (is (string= (cl-postgres:to-sql-string #(#(1 2) #(1.3 -2.83)))
+               "{\"{1,2}\",\"{1.3,-2.83}\"}")))
 
 (test date-query
   (with-default-readtable
@@ -239,7 +262,13 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
                '((42 nil "foo"))))
     (prepare-query connection "test4" "select $1")
     (is (equal (exec-prepared connection "test4" '(42) 'list-row-reader)
-               '(("42"))))))
+               '(("42"))))
+    (exec-query connection "create table if not exists cl_postgres_employees (id integer, name text)")
+    (exec-query connection "insert into cl_postgres_employees (id,name) values (1,'Jason'),(2, 'Robert'),(3,'Celia'),(4,'Karen')")
+    (prepare-query connection "t15" "SELECT name FROM cl_postgres_employees WHERE (id = ANY($1))")
+    (is (equal (exec-prepared connection "t15" '((1 2 3)) 'list-row-reader)
+               '(("Jason") ("Robert") ("Celia"))))
+    (exec-query connection "drop table cl_postgres_employees")))
 
 (test unprepare-query
   (with-test-connection

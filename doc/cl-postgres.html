@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-04-02 Sat 13:13 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2022-11-06 Sun 10:58 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Cl-Postgres Reference Manual</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="Sabra Crolleton">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -39,21 +40,21 @@
   pre.src {
     position: relative;
     overflow: auto;
-    padding-top: 1.2em;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
   pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,41 +189,18 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <link rel="stylesheet" type="text/css" href="style.css" />
 <style>pre.src{background:#343131;color:white;} </style>
-<script type="text/javascript">
-// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
-<!--/*--><![CDATA[/*><!--*/
-     function CodeHighlightOn(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.add("code-highlighted");
-         target.classList.add("code-highlighted");
-       }
-     }
-     function CodeHighlightOff(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.remove("code-highlighted");
-         target.classList.remove("code-highlighted");
-       }
-     }
-    /*]]>*///-->
-// @license-end
-</script>
 </head>
 <body>
-<div id="content">
+<div id="content" class="content">
 <header>
 <h1 class="title">Cl-Postgres Reference Manual</h1>
-</header><nav id="table-of-contents">
+</header><nav id="table-of-contents" role="doc-toc">
 <h2>Table of Contents</h2>
-<div id="text-table-of-contents">
+<div id="text-table-of-contents" role="doc-toc">
 <ul>
 <li><a href="#connecting">Connecting</a>
 <ul>
@@ -329,21 +307,21 @@ library, but can be used separately.
 Representation of a database connection. Contains login information in order to be able to automatically re-establish a connection when it is somehow closed.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">database-connection</span> ()
-  ((host <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:host</span> <span style="color: #23d7d7;">:reader</span> connection-host)
-   (port <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:port</span> <span style="color: #23d7d7;">:reader</span> connection-port)
-   (database <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:db</span> <span style="color: #23d7d7;">:reader</span> connection-db)
-   (user <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:user</span> <span style="color: #23d7d7;">:reader</span> connection-user)
-   (password <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:password</span> <span style="color: #23d7d7;">:reader</span> connection-password)
-   (use-ssl <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:ssl</span> <span style="color: #23d7d7;">:reader</span> connection-use-ssl)
-   (use-binary <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:binary</span> <span style="color: #23d7d7;">:accessor</span> connection-use-binary <span style="color: #23d7d7;">:initform</span> nil)
-   (service <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:service</span> <span style="color: #23d7d7;">:accessor</span> connection-service)
-   (application-name <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:application-name</span> <span style="color: #23d7d7;">:accessor</span> connection-application-name)
-   (socket <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:socket</span> <span style="color: #23d7d7;">:accessor</span> connection-socket)
-   (meta <span style="color: #23d7d7;">:initform</span> nil)
-   (available <span style="color: #23d7d7;">:initform</span> t <span style="color: #23d7d7;">:accessor</span> connection-available)
-   (parameters <span style="color: #23d7d7;">:accessor</span> connection-parameters)
-   (timestamp-format <span style="color: #23d7d7;">:accessor</span> connection-timestamp-format)))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">database-connection</span> ()
+  ((host <span class="org-builtin">:initarg</span> <span class="org-builtin">:host</span> <span class="org-builtin">:reader</span> connection-host)
+   (port <span class="org-builtin">:initarg</span> <span class="org-builtin">:port</span> <span class="org-builtin">:reader</span> connection-port)
+   (database <span class="org-builtin">:initarg</span> <span class="org-builtin">:db</span> <span class="org-builtin">:reader</span> connection-db)
+   (user <span class="org-builtin">:initarg</span> <span class="org-builtin">:user</span> <span class="org-builtin">:reader</span> connection-user)
+   (password <span class="org-builtin">:initarg</span> <span class="org-builtin">:password</span> <span class="org-builtin">:reader</span> connection-password)
+   (use-ssl <span class="org-builtin">:initarg</span> <span class="org-builtin">:ssl</span> <span class="org-builtin">:reader</span> connection-use-ssl)
+   (use-binary <span class="org-builtin">:initarg</span> <span class="org-builtin">:binary</span> <span class="org-builtin">:accessor</span> connection-use-binary <span class="org-builtin">:initform</span> nil)
+   (service <span class="org-builtin">:initarg</span> <span class="org-builtin">:service</span> <span class="org-builtin">:accessor</span> connection-service)
+   (application-name <span class="org-builtin">:initarg</span> <span class="org-builtin">:application-name</span> <span class="org-builtin">:accessor</span> connection-application-name)
+   (socket <span class="org-builtin">:initarg</span> <span class="org-builtin">:socket</span> <span class="org-builtin">:accessor</span> connection-socket)
+   (meta <span class="org-builtin">:initform</span> nil)
+   (available <span class="org-builtin">:initform</span> t <span class="org-builtin">:accessor</span> connection-available)
+   (parameters <span class="org-builtin">:accessor</span> connection-parameters)
+   (timestamp-format <span class="org-builtin">:accessor</span> connection-timestamp-format)))
 </pre>
 </div>
 </div>
@@ -399,26 +377,26 @@ Use-binary defaults to nil. This relates to how Postmodern passes the parameters
 If a query to Postgresql does not have a table column which would allow Postgresql to determine the correct datatype and you do not specify differently, Postgresql will treat the parameters passed with a prepared query as text. The default cl-postgres connection will have results like the following examples:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defparameter</span> <span style="color: #dbdb95;">*connect-spec*</span> '(<span style="color: #e67128;">"database_name"</span> <span style="color: #e67128;">"user_name"</span> <span style="color: #e67128;">"user_password"</span> <span style="color: #e67128;">"localhost"</span> 5432 <span style="color: #23d7d7;">:no</span> <span style="color: #e67128;">"postgres"</span> <span style="color: #e67128;">"some_app_name"</span> nil))
-(<span style="color: #ffad29; font-weight: bold;">defmacro</span> <span style="color: #00ede1; font-weight: bold;">connect-now</span> (<span style="color: #34cae2;">&amp;body</span> body)
-  `(<span style="color: #ffad29; font-weight: bold;">let</span> ((connection (apply 'open-database *connect-spec*)))
-     (<span style="color: #ffad29; font-weight: bold;">unwind-protect</span> (<span style="color: #ffad29; font-weight: bold;">progn</span> ,@body)
+<pre class="src src-lisp">(<span class="org-keyword">defparameter</span> <span class="org-variable-name">*connect-spec*</span> '(<span class="org-string">"database_name"</span> <span class="org-string">"user_name"</span> <span class="org-string">"user_password"</span> <span class="org-string">"localhost"</span> 5432 <span class="org-builtin">:no</span> <span class="org-string">"postgres"</span> <span class="org-string">"some_app_name"</span> nil))
+(<span class="org-keyword">defmacro</span> <span class="org-function-name">connect-now</span> (<span class="org-type">&amp;body</span> body)
+  `(<span class="org-keyword">let</span> ((connection (apply 'open-database *connect-spec*)))
+     (<span class="org-keyword">unwind-protect</span> (<span class="org-keyword">progn</span> ,@body)
        (close-database connection))))
 
 (connect-now
- (prepare-query connection <span style="color: #e67128;">"test4"</span> <span style="color: #e67128;">"select $1"</span>)
- (exec-prepared connection <span style="color: #e67128;">"test4"</span> '(42) 'list-row-reader))
-((<span style="color: #e67128;">"42"</span>))
+ (prepare-query connection <span class="org-string">"test4"</span> <span class="org-string">"select $1"</span>)
+ (exec-prepared connection <span class="org-string">"test4"</span> '(42) 'list-row-reader))
+((<span class="org-string">"42"</span>))
 
 (connect-now
- (prepare-query connection <span style="color: #e67128;">"test4"</span> <span style="color: #e67128;">"select $1"</span>)
- (exec-prepared connection <span style="color: #e67128;">"test4"</span> '(T) 'list-row-reader))
-((<span style="color: #e67128;">"true"</span>))
+ (prepare-query connection <span class="org-string">"test4"</span> <span class="org-string">"select $1"</span>)
+ (exec-prepared connection <span class="org-string">"test4"</span> '(T) 'list-row-reader))
+((<span class="org-string">"true"</span>))
 
 (connect-now
- (prepare-query connection <span style="color: #e67128;">"test4"</span> <span style="color: #e67128;">"select $1"</span>)
- (exec-prepared connection <span style="color: #e67128;">"test4"</span> '(nil) 'list-row-reader))
-((<span style="color: #e67128;">"false"</span>))
+ (prepare-query connection <span class="org-string">"test4"</span> <span class="org-string">"select $1"</span>)
+ (exec-prepared connection <span class="org-string">"test4"</span> '(nil) 'list-row-reader))
+((<span class="org-string">"false"</span>))
 </pre>
 </div>
 <p>
@@ -426,23 +404,23 @@ Still in the default setting, you can specify parameter type as so:
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(connect-now
-  (prepare-query connection <span style="color: #e67128;">"test1"</span> <span style="color: #e67128;">"select $1::integer"</span>)
-  (exec-prepared connection <span style="color: #e67128;">"test1"</span> '(42) 'list-row-reader))
+  (prepare-query connection <span class="org-string">"test1"</span> <span class="org-string">"select $1::integer"</span>)
+  (exec-prepared connection <span class="org-string">"test1"</span> '(42) 'list-row-reader))
 ((42))
 
 (connect-now
-  (prepare-query connection <span style="color: #e67128;">"test1"</span> <span style="color: #e67128;">"select $1::float"</span>)
-  (exec-prepared connection <span style="color: #e67128;">"test1"</span> '(42.53) 'list-row-reader))
+  (prepare-query connection <span class="org-string">"test1"</span> <span class="org-string">"select $1::float"</span>)
+  (exec-prepared connection <span class="org-string">"test1"</span> '(42.53) 'list-row-reader))
 ((42.53d0))
 
 (connect-now
-  (prepare-query connection <span style="color: #e67128;">"test1"</span> <span style="color: #e67128;">"select $1::boolean"</span>)
-  (exec-prepared connection <span style="color: #e67128;">"test1"</span> '(T) 'list-row-reader))
+  (prepare-query connection <span class="org-string">"test1"</span> <span class="org-string">"select $1::boolean"</span>)
+  (exec-prepared connection <span class="org-string">"test1"</span> '(T) 'list-row-reader))
 ((T))
 
 (connect-now
-  (prepare-query connection <span style="color: #e67128;">"test1"</span> <span style="color: #e67128;">"select $1::boolean"</span>)
-  (exec-prepared connection <span style="color: #e67128;">"test1"</span> '(nil) 'list-row-reader))
+  (prepare-query connection <span class="org-string">"test1"</span> <span class="org-string">"select $1::boolean"</span>)
+  (exec-prepared connection <span class="org-string">"test1"</span> '(nil) 'list-row-reader))
 ((NIL))
 </pre>
 </div>
@@ -450,11 +428,11 @@ Still in the default setting, you can specify parameter type as so:
 Setting the use-binary slot in the database connection object to t (the last optional parameter) will allow you to pass parameters as binary BUT Postgresql insists on knowing the type of parameters you will be passing in a prepared query. If you do not pass a list of sample parameters, Postgresql will treat all parameters passed in the exec-prepared function required to be text and will throw an error, typically insufficient data left in message. Unlike Postmodern, cl-postgres does not keep a copy of prepared statements in the database connection object. Thus any error checking would require making a second call to Postgresql to find out what it has in the way of prepared statement parameters will lose any efficiency which would otherwise be gained by passing parameters in binary form.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">    (setf *connect-spec* '(<span style="color: #e67128;">"database_name"</span> <span style="color: #e67128;">"user-name"</span> <span style="color: #e67128;">"user-password"</span> <span style="color: #e67128;">"localhost"</span> 5432 <span style="color: #23d7d7;">:no</span> <span style="color: #e67128;">"postgres"</span> <span style="color: #e67128;">"some-app-name"</span> t))
+<pre class="src src-lisp">    (setf *connect-spec* '(<span class="org-string">"database_name"</span> <span class="org-string">"user-name"</span> <span class="org-string">"user-password"</span> <span class="org-string">"localhost"</span> 5432 <span class="org-builtin">:no</span> <span class="org-string">"postgres"</span> <span class="org-string">"some-app-name"</span> t))
 
   (connect-now
-   (prepare-query connection <span style="color: #e67128;">"test6"</span> <span style="color: #e67128;">"select $1, $2, $3"</span> '(1 nil 1.0))
-   (exec-prepared connection <span style="color: #e67128;">"test6"</span> '(42 T 127.89) 'list-row-reader))
+   (prepare-query connection <span class="org-string">"test6"</span> <span class="org-string">"select $1, $2, $3"</span> '(1 nil 1.0))
+   (exec-prepared connection <span class="org-string">"test6"</span> '(42 T 127.89) 'list-row-reader))
 ((42 T 127.89))
 </pre>
 </div>
@@ -638,10 +616,10 @@ about the amount of rows affected, this is returned as a second value.
 Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(exec-query connection <span style="color: #e67128;">"select 1"</span> 'list-row-reader)
+<pre class="src src-lisp">(exec-query connection <span class="org-string">"select 1"</span> 'list-row-reader)
 '((1))
 
-(exec-query connection <span style="color: #e67128;">"select name from employees where id=3"</span> 'list-row-reader)
+(exec-query connection <span class="org-string">"select name from employees where id=3"</span> 'list-row-reader)
 </pre>
 </div>
 </div>
@@ -668,8 +646,8 @@ type as you will be using when you call (exec-prepared).
 The following example shows preparing and executing a query that will accept a boolean parameter:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">  (prepare-query connection <span style="color: #e67128;">"test-bool"</span> <span style="color: #e67128;">"select $1"</span> '(t))
-  (exec-prepared connection <span style="color: #e67128;">"test-bool"</span> '(nil) 'list-row-reader)
+<pre class="src src-lisp">  (prepare-query connection <span class="org-string">"test-bool"</span> <span class="org-string">"select $1"</span> '(t))
+  (exec-prepared connection <span class="org-string">"test-bool"</span> '(nil) 'list-row-reader)
 
 '((nil))
 </pre>
@@ -700,8 +678,8 @@ Again, the number or affected rows is optionally returned as a second value.
 The following example shows preparing and executing a query that will accept an integer and a float in that order:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">  (prepare-query connection <span style="color: #e67128;">"test-prepl"</span> <span style="color: #e67128;">"select $1"</span> '(10 7.4))
-  (exec-prepared connection <span style="color: #e67128;">"test-prep1"</span> '(12 4.2) 'list-row-reader)
+<pre class="src src-lisp">  (prepare-query connection <span class="org-string">"test-prepl"</span> <span class="org-string">"select $1"</span> '(10 7.4))
+  (exec-prepared connection <span class="org-string">"test-prep1"</span> '(12 4.2) 'list-row-reader)
 
 '((nil))
 </pre>
@@ -717,7 +695,7 @@ Close the prepared query given by name by closing the session connection.
 Note: This is not the same as keeping the connection open and sending Postgresql query to deallocate the named prepared query. That can be done with the postmodern package's function:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(drop-prepared-statement (name <span style="color: #34cae2;">&amp;key</span> (location <span style="color: #23d7d7;">:both</span>) (database *database*)
+<pre class="src src-lisp">(drop-prepared-statement (name <span class="org-type">&amp;key</span> (location <span class="org-builtin">:both</span>) (database *database*)
                                        (remove-function t))
 </pre>
 </div>
@@ -735,6 +713,26 @@ Note: This is not the same as keeping the connection open and sending Postgresql
 Convert a Lisp value to its textual unescaped SQL representation. Returns a
 second value indicating whether this value should be escaped if it is to be
 put directly into a query. Generally any string is going to be designated to be escaped.
+</p>
+
+<p>
+As of cl-postgres version 1.33.7 the lisp values handled are:
+</p>
+<ul class="org-ul">
+<li>string</li>
+<li>vector</li>
+<li>cons (must be a proper list and cannot be an empty list) (added in v. 1.33.7)</li>
+<li>array</li>
+<li>integer</li>
+<li>float (single or double except for clisp which does not have a double float)</li>
+<li>ratio</li>
+<li>t</li>
+<li>nil</li>
+<li>:null</li>
+</ul>
+
+<p>
+Anything else will throw an error that this value cannot be converted to a sql literal.
 </p>
 
 <p>
@@ -1043,9 +1041,9 @@ looks like:
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(row-reader (fields)
-  (<span style="color: #ffad29; font-weight: bold;">loop</span> <span style="color: #23d7d7;">:while</span> (next-row)
-        <span style="color: #23d7d7;">:collect</span> (<span style="color: #ffad29; font-weight: bold;">loop</span> <span style="color: #23d7d7;">:for</span> field <span style="color: #23d7d7;">:across</span> fields
-                       <span style="color: #23d7d7;">:collect</span> (next-field field))))
+  (<span class="org-keyword">loop</span> <span class="org-builtin">:while</span> (next-row)
+        <span class="org-builtin">:collect</span> (<span class="org-keyword">loop</span> <span class="org-builtin">:for</span> field <span class="org-builtin">:across</span> fields
+                       <span class="org-builtin">:collect</span> (next-field field))))
 </pre>
 </div>
 
@@ -1369,14 +1367,14 @@ as normal. A variation on this theme could continue trying to reconnect, with
 successively longer pauses.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">call-with-single-reconnect</span> (fun)
-  (<span style="color: #ffad29; font-weight: bold;">let</span> ((reconnected nil))
-    (<span style="color: #ffad29; font-weight: bold;">handler-bind</span>
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">call-with-single-reconnect</span> (fun)
+  (<span class="org-keyword">let</span> ((reconnected nil))
+    (<span class="org-keyword">handler-bind</span>
         ((database-connection-error
-          (<span style="color: #ffad29; font-weight: bold;">lambda</span> (err)
-            (<span style="color: #ffad29; font-weight: bold;">when</span> (not reconnected)
+          (<span class="org-keyword">lambda</span> (err)
+            (<span class="org-keyword">when</span> (not reconnected)
               (setf reconnected t)
-              (invoke-restart <span style="color: #23d7d7;">:reconnect</span>)))))
+              (invoke-restart <span class="org-builtin">:reconnect</span>)))))
       (funcall fun))))
 </pre>
 </div>

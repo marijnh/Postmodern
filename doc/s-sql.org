@@ -584,6 +584,14 @@ Unary operators for bitwise and logical negation.
    :END:
 Any needs to be considered as a special case. Quoting Marijn Haverbeke here,"Postgres has both a function-call-style any and an infix any, and S-SQL's syntax doesn't allow them to be distinguished." As a result, postmodern has a regular :any sql-op and a :any* sql-op, which expand slightly differently.
 
+#+begin_src lisp
+  (sql (:select 'name :from 'employee :where (:= 'id (:any '$1))))
+"(SELECT name FROM employee WHERE (id = ANY $1))"
+
+  (sql (:select 'name :from 'employee :where (:= 'id (:any* '$1))))
+"(SELECT name FROM employee WHERE (id = ANY($1)))"
+#+end_src
+
 In general, the any qualifier in an sql statement looks at a subquery and does a comparison against that subquery. Sticking with our countries table, we have latitude, longitude data for every country (I'm not sure whether my table pulled the capital cities or the geographic center) and some designated a region for each country, so we have a region-id that matches the primary key 'id' in a regions table.
 
 Out of curiosity, let's determine which countries in "North America" have a longitude less than any country in "South America". The standard sql could look like this:
@@ -615,9 +623,9 @@ This can be re-phrased in s-sql as
 (("Bermuda") ("Greenland"))
 #+END_SRC
 
-Subselects work fine in both regular sql and s-sql. If you have already calculated your subselect and put it in a variable, that variable needs to be a vector and whether you should use the :any sql-op or the :any* sql-op depends on your phrasing. (Notice that the second variation has an asterisk). (If you try to use a list, you will trigger an error message that you cannot convert that into an sql literal.)
+Subselects work fine in both regular sql and s-sql. If you have already calculated your subselect and put it in a variable, for versions of Postmodern before 1.33.7 that variable needs to be a vector and whether you should use the :any sql-op or the :any* sql-op depends on your phrasing. (Notice that the second variation has an asterisk). (If you try to use a list, you will trigger an error message that you cannot convert that into an sql literal.) For versions of Postmodern 1.33.7 or higher, you can use a list.
 
-The SQL keyword ANY can be used in a parameterized sql statement if you provide it with a vector. The following two toy examples work in raw sql.
+The SQL keyword ANY can be used in a parameterized sql statement if you provide it with a vector (for Postmodern versions pre 1.33.7) or (for Postmodern versions 1.33.7 or higher) either a vector or a list. The following two toy examples work in RAW sql.
 #+BEGIN_SRC lisp
 (query "select name from countries where id=any($1)"
        (vector 21 22))
@@ -632,21 +640,29 @@ The SQL keyword ANY can be used in a parameterized sql statement if you provide 
 
 Now using s-sql and keeping with the toy example, notice that using :any does not work, but using :any* does work.
 #+BEGIN_SRC lisp
-(let ((toy-query (vector 21 22)))
-  (query (:select 'name
-                  :from 'countries
-                  :where (:= 'id (:any '$1)))
-         toy-query))
-; Evaluation aborted on #<CL-POSTGRES-ERROR:SYNTAX-ERROR-OR-ACCESS-VIOLATION {10030AF6A1}>.
+  (let ((toy-query (vector 21 22)))
+    (query (:select 'name
+                    :from 'countries
+                    :where (:= 'id (:any '$1)))
+           toy-query))
+  ; Evaluation aborted on #<CL-POSTGRES-ERROR:SYNTAX-ERROR-OR-ACCESS-VIOLATION {10030AF6A1}>.
 
-(let ((toy-query (vector 21 22)))
-  (query (:select 'name
-                  :from 'countries
-                  :where (:= 'id (:any* '$1)))
-         toy-query))
-(("Iceland") ("US"))
+  (let ((toy-query (vector 21 22)))
+    (query (:select 'name
+                    :from 'countries
+                    :where (:= 'id (:any* '$1)))
+           toy-query))
+  (("Iceland") ("US"))
+
+  ;; For Postmodern versions 1.33.7 or higher, you can also use a list
+  (let ((toy-query (list 21 22)))
+    (query (:select 'name
+                    :from 'countries
+                    :where (:= 'id (:any* '$1)))
+           toy-query))
+  (("Iceland") ("US"))
 #+END_SRC
-Going back to our earlier example, remember that I said that unless you use a subselect, you need to provide a vector to :any or :any*. A standard query returns a list, not a vector. So you would need to coerce the variable into a vector before you pass it to :any*. See below as an example.
+Going back to our earlier example, remember that I said that for Postmodern versions before 1.33.7 unless you use a subselect, you need to provide a vector to :any or :any*. A standard query returns a list, not a vector. So you would need to coerce the variable into a vector before you pass it to :any*. See below as an example, noting the use of passing a :column parameter to the postmodern query function so that we just get back a list of the longitude, not a list of lists of longitude. For Postmodern versions 1.33.7 or higher, you do not have to coerce it to a vector, but you would still need to pass the :column parameter in the first select.
 #+BEGIN_SRC lisp
 (let ((South-America
        (coerce
@@ -664,7 +680,7 @@ Going back to our earlier example, remember that I said that unless you use a su
                                    (:any* South-America))))))
 (("Bermuda") ("Greenland"))
 #+END_SRC
-IMPORTANT: If you are trying to use a list in a parameterized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
+
 
 ** sql-op :function (name (&rest arg-types) return-type stability body)
    :PROPERTIES:
@@ -938,7 +954,27 @@ Test whether a value is in a set of values.
                 :where (:in 'region (:select 'region :from 'top-regions))
                 :group-by 'region 'product))
 #+END_SRC
-IMPORTANT: If you are trying to use a list in a parameterized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
+Beginning in Postmodern v. 1.33.7, you can use lists with :in.
+#+begin_src lisp
+  (query (:select '* :from 'employee :where (:in 'id '(1 3 4))))
+
+  (let ((emp-ids '(1 2)))
+    (query (:select 'name :from 'employee :where (:in 'id emp-ids))))
+#+end_src
+
+IMPORTANT REGARDING PARAMETERIZED QUERIES: For Postmodern versions before 1.33.7, you cannot use a list in a parameterized statement. You have to convert the list to a vector and use :any* rather than :in. See [[file:s-sql.html#sql-op-any][S-SQL#sql-op-any]] for more details.
+#+begin_src lisp
+ (pomo:query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+             #(1 3) :column)
+  '("Jason" "Celia")
+#+end_src
+  ;; Beginning with Postmodern version 1.33.7 you can also use lists
+#+begin_src lisp
+ (pomo:query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+             '(1 3) :column)
+  '("Jason" "Celia")
+#+end_src
+
 
 ** sql-op :not-in (value set)
    :PROPERTIES:
@@ -946,6 +982,13 @@ IMPORTANT: If you are trying to use a list in a parameterized statement, you can
    :END:
 
 Inverse of the above.
+#+begin_src lisp
+  (query (:select '* :from 'table1 :where (:not-in 'id (:set 1 2 3))))
+#+end_src
+Beginning in Postmodern v. 1.33.7, you can use lists with :in.
+#+begin_src lisp
+  (query (:select '* :from 'table1 :where (:not-in 'name '("alpha" "beta" "ceta"))))
+#+end_src
 
 ** sql-op :set (&rest elements)
    :PROPERTIES:
@@ -978,7 +1021,7 @@ The following are equivalent
                 :where (:in 'id (:set (list 20 21 23)))))
 
 #+END_SRC
-However, the following will generate an error about inability to convert to an sql literal
+However, the following will generate an error.
 
 #+BEGIN_SRC lisp
 (query (:select 'name
@@ -1001,7 +1044,7 @@ Now with selecting from a vector. Note both the use of any* and := instead of :i
 #+END_SRC
 Note that the responses will still come back in a list of lists
 
-IMPORTANT: If you are trying to use a list in a parameterized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
+IMPORTANT: :SET DOES NOT WORK IN PARAMETERIZED QUERIES. YOU NEED TO USE :ANY* RATHER THAN :IN. See [[file:s-sql.html#sql-op-any][S-SQL]] for more details.
 
 ** sql-op :array (query)
    :PROPERTIES:
@@ -2726,7 +2769,7 @@ In any case you will need to ensure that either you have control over the inputs
 or they still result in parameterized queries. If not you have opened yourself up
 to an sql injection attack.
 
-IMPORTANT: If you are trying to use a list in a parameterized statement, you can't. You have to convert the list to a vector and use "any" rather than "in."
+IMPORTANT REGARDING PARAMETERIZED QUERIES: For Postmodern versions before 1.33.7, you cannot use a list in a parameterized statement. You have to convert the list to a vector and use :any* rather than :in. See [[file:s-sql.html#sql-op-any][S-SQL]] for more details.
 
 If you are not using s-sql, then it becomes easy. The query macro
 assumes that everything that is not a list starting with a keyword will

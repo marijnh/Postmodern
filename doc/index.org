@@ -4,7 +4,7 @@
 #+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
-Version 1.33.4
+Version 1.33.7
 
 Postmodern is a Common Lisp library for interacting with [[https://postgresql.org][PostgreSQL databases]].
 Features are:
@@ -167,22 +167,22 @@ To use postmodern's simple connection pooler, the =with-connection= call would l
 The maximum number of connections in the pool is set in the special variable
 =*max-pool-size*=, which defaults to nil (no maximum).
 
-Now for a basic sanity test which does not need a database connection at all:
-
 #+BEGIN_SRC lisp
-(query "select 22, 'Folie et déraison', 4.5")
-;; => ((22 "Folie et déraison" 9/2))
+  (with-connection '("testdb" "foucault" "surveiller" "localhost")
+      (query "select 22, 'Folie et déraison', 4.5"))
+  ;; => ((22 "Folie et déraison" 9/2))
 #+END_SRC
-That should work. query is the basic way to send queries to the database.
-The same query can be expressed like this:
+Qquery is the basic way to send queries to the database. Please see [[file:postmodern.html#querying][the documentation for query]] for details on return types, parameterized queries, etc.
+
+The same query can be expressed in s-sql like this:
 #+BEGIN_SRC lisp
 (query (:select 22 "Folie et déraison" 4.5))
 ;; => ((22 "Folie et déraison" 9/2))
 #+END_SRC
 
 In many contexts, query strings and lists starting with keywords can be used
-interchangeably. The lists will be compiled to SQL. The S-SQL manual describes
-the syntax used by these expressions. Lisp values occurring in them are
+interchangeably. The lists will be compiled to SQL. The [[file:s-sql.html][S-SQL manual]] describes
+the syntax used by these expressions and provides many examples. Lisp values occurring in them are
 automatically escaped. In the above query, only constant values are used, but
 it is possible to transparently use run-time values as well:
 #+BEGIN_SRC lisp
@@ -462,7 +462,7 @@ Staying with the dao class approach, to update Croatia's population, we could do
 ;; => (("The Netherlands" 16800000 "Willem-Alexander")
 ;;     ("Croatia" 4500000 :NULL))
 #+END_SRC
-Please see the documentation for s-sql for more examples of using s-sql rather than daos.
+Please see the [[file:s-sql.html][documentation for s-sql]] for more examples of using s-sql rather than daos.
 
 Next, to demonstrate a bit more of the S-SQL syntax, here is the query the
 utility function list-tables uses to get a list of the tables in a database:
