@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-07-17 Sat 15:09 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2022-11-19 Sat 14:21 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DAO Classes</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="Sabra Crolleton">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -39,21 +40,21 @@
   pre.src {
     position: relative;
     overflow: auto;
-    padding-top: 1.2em;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
   pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,46 +189,23 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <link rel="stylesheet" type="text/css" href="style.css" />
 <style>pre.src{background:#343131;color:white;} </style>
-<script type="text/javascript">
-// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
-<!--/*--><![CDATA[/*><!--*/
-     function CodeHighlightOn(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.add("code-highlighted");
-         target.classList.add("code-highlighted");
-       }
-     }
-     function CodeHighlightOff(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.remove("code-highlighted");
-         target.classList.remove("code-highlighted");
-       }
-     }
-    /*]]>*///-->
-// @license-end
-</script>
 </head>
 <body>
-<div id="content">
+<div id="content" class="content">
 <header>
 <h1 class="title">DAO Classes</h1>
-</header><nav id="table-of-contents">
+</header><nav id="table-of-contents" role="doc-toc">
 <h2>Table of Contents</h2>
-<div id="text-table-of-contents">
+<div id="text-table-of-contents" role="doc-toc">
 <ul>
 <li><a href="#daos">Overview</a></li>
 <li><a href="#class-dao-class">Metaclass dao-class</a>
 <ul>
-<li><a href="#orgeac445e">Basic Dao Definition Examples</a></li>
+<li><a href="#org46f2b57">Basic Dao Definition Examples</a></li>
 <li><a href="#class-dao-class-slots">Slot Options</a></li>
 <li><a href="#class-dao-class-slots-table-options">Table options</a></li>
 </ul>
@@ -320,21 +298,21 @@ slots in these classes will refer to columns in the database.
 <h2 id="class-dao-class">Metaclass dao-class</h2>
 <div class="outline-text-2" id="text-class-dao-class">
 </div>
-<div id="outline-container-orgeac445e" class="outline-3">
-<h3 id="orgeac445e">Basic Dao Definition Examples</h3>
-<div class="outline-text-3" id="text-orgeac445e">
+<div id="outline-container-org46f2b57" class="outline-3">
+<h3 id="org46f2b57">Basic Dao Definition Examples</h3>
+<div class="outline-text-3" id="text-org46f2b57">
 <p>
 A simple dao definition could look like this:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">users</span> ()
-  ((name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name)
-   (creditcard <span style="color: #23d7d7;">:col-type</span> (or db-null integer) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:card</span> <span style="color: #23d7d7;">:col-default</span> <span style="color: #23d7d7;">:null</span>)
-   (score <span style="color: #23d7d7;">:col-type</span> bigint <span style="color: #23d7d7;">:col-default</span> 0 <span style="color: #23d7d7;">:accessor</span> score)
-   (payment-history <span style="color: #23d7d7;">:col-type</span> (or (array integer) db-null)
-                    <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:payment-history</span> <span style="color: #23d7d7;">:accessor</span> payment-history))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:keys</span> name))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">users</span> ()
+  ((name <span class="org-builtin">:col-type</span> string <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span> <span class="org-builtin">:accessor</span> name)
+   (creditcard <span class="org-builtin">:col-type</span> (or db-null integer) <span class="org-builtin">:initarg</span> <span class="org-builtin">:card</span> <span class="org-builtin">:col-default</span> <span class="org-builtin">:null</span>)
+   (score <span class="org-builtin">:col-type</span> bigint <span class="org-builtin">:col-default</span> 0 <span class="org-builtin">:accessor</span> score)
+   (payment-history <span class="org-builtin">:col-type</span> (or (array integer) db-null)
+                    <span class="org-builtin">:initarg</span> <span class="org-builtin">:payment-history</span> <span class="org-builtin">:accessor</span> payment-history))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:keys</span> name))
 </pre>
 </div>
 <p>
@@ -361,7 +339,7 @@ column is an array of integers. If we wanted a two dimensional array of integers
 the col-type would look like:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp"><span style="color: #23d7d7;">:col-type</span> (or (array (array integer)) db-null)
+<pre class="src src-lisp"><span class="org-builtin">:col-type</span> (or (array (array integer)) db-null)
 </pre>
 </div>
 <p>
@@ -374,15 +352,15 @@ the Postgresql array.
 An example of a class where the keys are set as multiple column keys is here:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">points</span> ()
-  ((x <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:x</span>
-      <span style="color: #23d7d7;">:reader</span> point-x)
-   (y <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:y</span>
-      <span style="color: #23d7d7;">:reader</span> point-y)
-   (value <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:value</span>
-          <span style="color: #23d7d7;">:accessor</span> value))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:keys</span> x y))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">points</span> ()
+  ((x <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:initarg</span> <span class="org-builtin">:x</span>
+      <span class="org-builtin">:reader</span> point-x)
+   (y <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:initarg</span> <span class="org-builtin">:y</span>
+      <span class="org-builtin">:reader</span> point-y)
+   (value <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:initarg</span> <span class="org-builtin">:value</span>
+          <span class="org-builtin">:accessor</span> value))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:keys</span> x y))
 </pre>
 </div>
 
@@ -401,19 +379,19 @@ column respectively.:
 Now look at a slightly more complex example.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">country</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
-   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
-         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:reader</span> country-name)
-   (inhabitants <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:inhabitants</span>
-                <span style="color: #23d7d7;">:accessor</span> country-inhabitants)
-   (sovereign <span style="color: #23d7d7;">:col-type</span> (or db-null string) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:sovereign</span>
-              <span style="color: #23d7d7;">:accessor</span> country-sovereign)
-   (region-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-references</span> ((regions id))
-              <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-id</span> <span style="color: #23d7d7;">:accessor</span> region-id))
-  (<span style="color: #23d7d7;">:documentation</span> <span style="color: #e67128;">"Dao class for a countries record."</span>)
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> countries))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">country</span> ()
+  ((id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-identity</span> t <span class="org-builtin">:accessor</span> id)
+   (name <span class="org-builtin">:col-type</span> string <span class="org-builtin">:col-unique</span> t <span class="org-builtin">:check</span> (<span class="org-builtin">:&lt;&gt;</span> 'name <span class="org-string">""</span>)
+         <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span> <span class="org-builtin">:reader</span> country-name)
+   (inhabitants <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:initarg</span> <span class="org-builtin">:inhabitants</span>
+                <span class="org-builtin">:accessor</span> country-inhabitants)
+   (sovereign <span class="org-builtin">:col-type</span> (or db-null string) <span class="org-builtin">:initarg</span> <span class="org-builtin">:sovereign</span>
+              <span class="org-builtin">:accessor</span> country-sovereign)
+   (region-id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-references</span> ((regions id))
+              <span class="org-builtin">:initarg</span> <span class="org-builtin">:region-id</span> <span class="org-builtin">:accessor</span> region-id))
+  (<span class="org-builtin">:documentation</span> <span class="org-doc">"Dao class for a countries record."</span>)
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> countries))
 </pre>
 </div>
 <p>
@@ -435,8 +413,8 @@ there are countries that reference that region's id. If we wanted Postgresql to
 delete countries when regions are deleted, that column would be specified as:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(region-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-references</span> ((regions id) <span style="color: #23d7d7;">:cascade</span>)
-           <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-id</span> <span style="color: #23d7d7;">:accessor</span> region-id)
+<pre class="src src-lisp">(region-id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-references</span> ((regions id) <span class="org-builtin">:cascade</span>)
+           <span class="org-builtin">:initarg</span> <span class="org-builtin">:region-id</span> <span class="org-builtin">:accessor</span> region-id)
 </pre>
 </div>
 <p>
@@ -450,7 +428,7 @@ be singular.) NOTE: You can provide a fully qualified table name. In other words
 if you have
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #23d7d7;">:table-name</span> a.countries)
+<pre class="src src-lisp">(<span class="org-builtin">:table-name</span> a.countries)
 </pre>
 </div>
 <p>
@@ -482,7 +460,7 @@ use for this to date is for creating the table with (oids=true), and specify a
 slot like this:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(oid <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:ghost</span> t <span style="color: #23d7d7;">:accessor</span> get-oid)
+<pre class="src src-lisp">(oid <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:ghost</span> t <span class="org-builtin">:accessor</span> get-oid)
 </pre>
 </div>
 </div>
@@ -510,14 +488,14 @@ a new row. In the following example, Postgresql would insert the default value
 of 12 if no value was provided when inserting a new row.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">col-default</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
-   (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:col-check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
-         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name <span style="color: #23d7d7;">:col-collate</span> <span style="color: #e67128;">"de_DE.utf8"</span>)
-   (data <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-default</span> 12 <span style="color: #23d7d7;">:accessor</span> data
-         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:data</span>))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> col-default))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">col-default</span> ()
+  ((id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-identity</span> t <span class="org-builtin">:accessor</span> id)
+   (name <span class="org-builtin">:col-type</span> text <span class="org-builtin">:col-unique</span> t <span class="org-builtin">:col-check</span> (<span class="org-builtin">:&lt;&gt;</span> 'name <span class="org-string">""</span>)
+         <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span> <span class="org-builtin">:accessor</span> name <span class="org-builtin">:col-collate</span> <span class="org-string">"de_DE.utf8"</span>)
+   (data <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-default</span> 12 <span class="org-builtin">:accessor</span> data
+         <span class="org-builtin">:initarg</span> <span class="org-builtin">:data</span>))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> col-default))
 </pre>
 </div></li>
 
@@ -534,12 +512,12 @@ table. You will also need to set :unique to t for this column. In the
 following example, the username is the primary key, not the id column.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-col-primary-key</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer  <span style="color: #23d7d7;">:accessor</span> id)
-   (username <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-primary-key</span> t <span style="color: #23d7d7;">:col-unique</span> t  <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:username</span> <span style="color: #23d7d7;">:accessor</span> username)
-   (department-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:department-id</span> <span style="color: #23d7d7;">:accessor</span> department-id))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> users1))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">test-data-col-primary-key</span> ()
+  ((id <span class="org-builtin">:col-type</span> integer  <span class="org-builtin">:accessor</span> id)
+   (username <span class="org-builtin">:col-type</span> text <span class="org-builtin">:col-primary-key</span> t <span class="org-builtin">:col-unique</span> t  <span class="org-builtin">:initarg</span> <span class="org-builtin">:username</span> <span class="org-builtin">:accessor</span> username)
+   (department-id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:initarg</span> <span class="org-builtin">:department-id</span> <span class="org-builtin">:accessor</span> department-id))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> users1))
 </pre>
 </div></li>
 
@@ -556,7 +534,7 @@ More about this <a href="postmodern.html#dao-export-and-import-functions">below<
 <li>:col-import
 Specifies a function name to be called when you have to convert a slot value
 from a Postgresql datatype to a CL datatype that Postmodern does not automatically handle.
-More about this <a href="postmodern.html#dao-export-and-import-functions">below</a>.</li>
+More about this <a href="dao-classes.html#dao-export-and-import-functions">below</a>.</li>
 
 <li><p>
 :col-name
@@ -565,14 +543,14 @@ to specify the slot's column's name. In other words, you want a slot name that i
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-col-name</span> ()
-  ((a <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-name</span> aa <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:a</span> <span style="color: #23d7d7;">:accessor</span> test-a)
-   (b <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-name</span> bb <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:b</span> <span style="color: #23d7d7;">:accessor</span> test-b)
-   (c <span style="color: #23d7d7;">:col-type</span> string              <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:c</span> <span style="color: #23d7d7;">:accessor</span> test-c)
-   (from <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-name</span> from <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:d</span> <span style="color: #23d7d7;">:accessor</span> test-d)
-   (to-destination <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-name</span> to <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:e</span> <span style="color: #23d7d7;">:accessor</span> test-e))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:keys</span> a))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">test-col-name</span> ()
+  ((a <span class="org-builtin">:col-type</span> string <span class="org-builtin">:col-name</span> aa <span class="org-builtin">:initarg</span> <span class="org-builtin">:a</span> <span class="org-builtin">:accessor</span> test-a)
+   (b <span class="org-builtin">:col-type</span> string <span class="org-builtin">:col-name</span> bb <span class="org-builtin">:initarg</span> <span class="org-builtin">:b</span> <span class="org-builtin">:accessor</span> test-b)
+   (c <span class="org-builtin">:col-type</span> string              <span class="org-builtin">:initarg</span> <span class="org-builtin">:c</span> <span class="org-builtin">:accessor</span> test-c)
+   (from <span class="org-builtin">:col-type</span> string <span class="org-builtin">:col-name</span> from <span class="org-builtin">:initarg</span> <span class="org-builtin">:d</span> <span class="org-builtin">:accessor</span> test-d)
+   (to-destination <span class="org-builtin">:col-type</span> string <span class="org-builtin">:col-name</span> to <span class="org-builtin">:initarg</span> <span class="org-builtin">:e</span> <span class="org-builtin">:accessor</span> test-e))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:keys</span> a))
 </pre>
 </div></li>
 
@@ -583,12 +561,12 @@ different collations in different columns of the same table. In the following
 example, Postgresql would use a German UTF8 collation in the name column.</li>
 </ul>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">col-collate</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
-   (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:col-check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
-         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name <span style="color: #23d7d7;">:col-collate</span> <span style="color: #e67128;">"de_DE.utf8"</span>)
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> col-collate))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">col-collate</span> ()
+  ((id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-identity</span> t <span class="org-builtin">:accessor</span> id)
+   (name <span class="org-builtin">:col-type</span> text <span class="org-builtin">:col-unique</span> t <span class="org-builtin">:col-check</span> (<span class="org-builtin">:&lt;&gt;</span> 'name <span class="org-string">""</span>)
+         <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span> <span class="org-builtin">:accessor</span> name <span class="org-builtin">:col-collate</span> <span class="org-string">"de_DE.utf8"</span>)
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> col-collate))
 </pre>
 </div>
 
@@ -601,12 +579,12 @@ certain requirements. In the following example, Postgresql would ensure
 that values in the name column can never be an empty string.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">col-check</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
-   (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:col-check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
-         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name <span style="color: #23d7d7;">:col-collate</span> <span style="color: #e67128;">"de_DE.utf8"</span>)
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> col-check))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">col-check</span> ()
+  ((id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-identity</span> t <span class="org-builtin">:accessor</span> id)
+   (name <span class="org-builtin">:col-type</span> text <span class="org-builtin">:col-unique</span> t <span class="org-builtin">:col-check</span> (<span class="org-builtin">:&lt;&gt;</span> 'name <span class="org-string">""</span>)
+         <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span> <span class="org-builtin">:accessor</span> name <span class="org-builtin">:col-collate</span> <span class="org-string">"de_DE.utf8"</span>)
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> col-check))
 </pre>
 </div></li>
 
@@ -617,20 +595,19 @@ In the following example, the department-id slot references the id column in
 the departments table:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-col-identity-with-references</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id <span style="color: #23d7d7;">:col-primary-key</span> t)
-   (username <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:unique</span> t <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:username</span> <span style="color: #23d7d7;">:accessor</span> username)
-   (department-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-references</span> ((departments id))
-                  <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:department-id</span> <span style="color: #23d7d7;">:accessor</span> department-id))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> usersr))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">test-data-col-identity-with-references</span> ()
+  ((id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-identity</span> t <span class="org-builtin">:accessor</span> id <span class="org-builtin">:col-primary-key</span> t)
+   (username <span class="org-builtin">:col-type</span> text <span class="org-builtin">:unique</span> t <span class="org-builtin">:initarg</span> <span class="org-builtin">:username</span> <span class="org-builtin">:accessor</span> username)
+   (department-id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-references</span> ((departments id))
+                  <span class="org-builtin">:initarg</span> <span class="org-builtin">:department-id</span> <span class="org-builtin">:accessor</span> department-id))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> usersr))
 </pre>
 </div></li>
-
-<li>:col-</li>
 </ul>
 </div>
 </div>
+
 <div id="outline-container-class-dao-class-slots-table-options" class="outline-3">
 <h3 id="class-dao-class-slots-table-options">Table options</h3>
 <div class="outline-text-3" id="text-class-dao-class-slots-table-options">
@@ -688,26 +665,45 @@ One method would be to use text columns or jsonb columns in Postgresql and have 
 </p>
 
 <p>
-Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import. These parameters refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot on import from the database.
+One use of the col-import and col-export capabilities is with respect to enums: storing a CL enum as text in the database and then "re-symbolizing them" them again when the DAO classes are read.
 </p>
 
 <p>
-To make things slightly more interesting, we have two slots which are going to contain
-lists, but one will export to a Postgresql column that contains strings and the other
-will export to a Postgresql column that contains arrays of integers.
+Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import. These parameters refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot on import from the database (in this example a symbol). NOTE that you use an unquoted symbol for the functions being specified in :col-export and :col-import.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">orchard</span> ()
+((id <span class="org-builtin">:col-type</span> integer  <span class="org-builtin">:col-identity</span> t <span class="org-builtin">:accessor</span> id <span class="org-builtin">:col-primary-key</span> t)
+ (name <span class="org-builtin">:col-type</span> text <span class="org-builtin">:col-unique</span> t <span class="org-builtin">:col-check</span> (<span class="org-builtin">:&lt;&gt;</span> 'name <span class="org-string">""</span>)
+       <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span> <span class="org-builtin">:accessor</span> name)
+ (orchard-type <span class="org-builtin">:col-type</span> orchard_type_enum
+             <span class="org-builtin">:initarg</span> <span class="org-builtin">:orchard-type</span> <span class="org-builtin">:accessor</span> orchard-type
+             <span class="org-builtin">:col-import</span> intern
+             <span class="org-builtin">:col-export</span> string))
+(<span class="org-builtin">:metaclass</span> dao-class)
+(<span class="org-builtin">:table-name</span> orchards))
+</pre>
+</div>
+<p>
+Here we have the benefit that our export and import functions are already predefined by CL.
+</p>
+
+<p>
+To make things slightly more interesting, we create a different dao which has two slots which are going to contain lists, but one will export to a Postgresql column that contains strings and the other will export to a Postgresql column that contains arrays of integers.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">listy</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id <span style="color: #23d7d7;">:col-primary-key</span> t)
-   (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:col-check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
-         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name)
-   (r-list <span style="color: #23d7d7;">:col-type</span> (or text db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:r-list</span> <span style="color: #23d7d7;">:accessor</span> r-list
-           <span style="color: #23d7d7;">:col-export</span> list-&gt;string <span style="color: #23d7d7;">:col-import</span> string-&gt;list)
-   (l-array <span style="color: #23d7d7;">:col-type</span> (or (array integer) db-null)
-            <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:l-array</span> <span style="color: #23d7d7;">:accessor</span> l-array
-            <span style="color: #23d7d7;">:col-export</span> list-&gt;arr <span style="color: #23d7d7;">:col-import</span> array-&gt;list))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> listy))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">listy</span> ()
+  ((id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-identity</span> t <span class="org-builtin">:accessor</span> id <span class="org-builtin">:col-primary-key</span> t)
+   (name <span class="org-builtin">:col-type</span> text <span class="org-builtin">:col-unique</span> t <span class="org-builtin">:col-check</span> (<span class="org-builtin">:&lt;&gt;</span> 'name <span class="org-string">""</span>)
+         <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span> <span class="org-builtin">:accessor</span> name)
+   (r-list <span class="org-builtin">:col-type</span> (or text db-null) <span class="org-builtin">:initarg</span> <span class="org-builtin">:r-list</span> <span class="org-builtin">:accessor</span> r-list
+           <span class="org-builtin">:col-export</span> list-&gt;string <span class="org-builtin">:col-import</span> string-&gt;list)
+   (l-array <span class="org-builtin">:col-type</span> (or (array integer) db-null)
+            <span class="org-builtin">:initarg</span> <span class="org-builtin">:l-array</span> <span class="org-builtin">:accessor</span> l-array
+            <span class="org-builtin">:col-export</span> list-&gt;arr <span class="org-builtin">:col-import</span> array-&gt;list))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> listy))
 </pre>
 </div>
 <p>
@@ -716,18 +712,18 @@ differences, we are going to translate :NULL strings in Postgresql to :NULL in c
 and we are going to translate :NULL arrays in Postgresql to nil in common lisp.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">string-&gt;list</span> (str)
-  <span style="color: #e67128;">"Take a string representation of a list and return a lisp list.</span>
-<span style="color: #e67128;">  Note that you need to handle :NULLs."</span>
-  (<span style="color: #ffad29; font-weight: bold;">cond</span> ((eq str <span style="color: #23d7d7;">:NULL</span>)
-         <span style="color: #23d7d7;">:NULL</span>)
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">string-&gt;list</span> (str)
+  <span class="org-doc">"Take a string representation of a list and return a lisp list.</span>
+<span class="org-doc">  Note that you need to handle :NULLs."</span>
+  (<span class="org-keyword">cond</span> ((eq str <span class="org-builtin">:NULL</span>)
+         <span class="org-builtin">:NULL</span>)
         (str
-         (<span style="color: #ffad29; font-weight: bold;">with-input-from-string</span> (s str) (read s)))
+         (<span class="org-keyword">with-input-from-string</span> (s str) (read s)))
         (t nil)))
 
-(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">array-&gt;list</span> (arry)
-  <span style="color: #e67128;">"Here we have decided that we want the list be be nil rather than :NULL if the array is empty."</span>
-  (<span style="color: #ffad29; font-weight: bold;">cond</span> ((eq arry <span style="color: #23d7d7;">:NULL</span>)
+(<span class="org-keyword">defun</span> <span class="org-function-name">array-&gt;list</span> (arry)
+  <span class="org-doc">"Here we have decided that we want the list be be nil rather than :NULL if the array is empty."</span>
+  (<span class="org-keyword">cond</span> ((eq arry <span class="org-builtin">:NULL</span>)
          nil)
         ((vectorp arry)
          (coerce arry 'list))
@@ -743,15 +739,15 @@ The list to array export function inserts :NULL if not a list and otherwise coer
 list to a vector so that Postgresql will accept it as an array.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">list-&gt;string</span> (lst)
-  <span style="color: #e67128;">"Here we have decided to insert :null if the input list is nil."</span>
-  (<span style="color: #ffad29; font-weight: bold;">if</span> (listp lst)
-      (format nil <span style="color: #e67128;">"~a"</span> lst)
-      <span style="color: #23d7d7;">:null</span>))
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">list-&gt;string</span> (lst)
+  <span class="org-doc">"Here we have decided to insert :null if the input list is nil."</span>
+  (<span class="org-keyword">if</span> (listp lst)
+      (format nil <span class="org-string">"~a"</span> lst)
+      <span class="org-builtin">:null</span>))
 
-(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">list-&gt;arr</span> (lst)
-  (<span style="color: #ffad29; font-weight: bold;">if</span> (null lst)
-      <span style="color: #23d7d7;">:null</span>
+(<span class="org-keyword">defun</span> <span class="org-function-name">list-&gt;arr</span> (lst)
+  (<span class="org-keyword">if</span> (null lst)
+      <span class="org-builtin">:null</span>
       (coerce lst 'vector)))
 </pre>
 </div>
@@ -777,7 +773,7 @@ The class must be quoted.
 <div class="org-src-container">
 <pre class="src src-lisp">(pomo:find-primary-key-info 'country1)
 
-((<span style="color: #e67128;">"name"</span> <span style="color: #e67128;">"text"</span>) (<span style="color: #e67128;">"id"</span> <span style="color: #e67128;">"integer"</span>))
+((<span class="org-string">"name"</span> <span class="org-string">"text"</span>) (<span class="org-string">"id"</span> <span class="org-string">"integer"</span>))
 </pre>
 </div>
 </div>
@@ -862,7 +858,7 @@ Fetch-defaults could then be used to fetch the default values from the database
 and bind the unbound slots which have default values. E.g.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data <span style="color: #23d7d7;">:a</span> 23)))
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((dao (make-instance 'test-data <span class="org-builtin">:a</span> 23)))
   (pomo:fetch-defaults dao))
 </pre>
 </div>
@@ -911,7 +907,7 @@ database) without any arguments ― even :default-initargs are skipped. The same
 goes for select-dao and query-dao.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(get-dao 'country <span style="color: #e67128;">"The Netherlands"</span>)
+<pre class="src src-lisp">(get-dao 'country <span class="org-string">"The Netherlands"</span>)
 #&lt;COUNTRY {1010F0DCF3}&gt;
 </pre>
 </div>
@@ -920,7 +916,7 @@ goes for select-dao and query-dao.
 From an sql perspective, the standard call to get-dao translates as:
 </p>
 <div class="org-src-container">
-<pre class="src src-sql"><span style="color: #ffad29; font-weight: bold;">select</span> * <span style="color: #ffad29; font-weight: bold;">from</span> <span style="color: #ffad29; font-weight: bold;">table</span>
+<pre class="src src-sql"><span class="org-keyword">select</span> * <span class="org-keyword">from</span> <span class="org-keyword">table</span>
 </pre>
 </div>
 
@@ -957,33 +953,33 @@ result.
 (#&lt;COUNTRY {101088F6F3}&gt; #&lt;COUNTRY {101088FAA3}&gt;)
 2
 
-(select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'inhabitants 50000000))
+(select-dao 'country (<span class="org-builtin">:&gt;</span> 'inhabitants 50000000))
 NIL
 0
 
-(select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'inhabitants 5000000))
+(select-dao 'country (<span class="org-builtin">:&gt;</span> 'inhabitants 5000000))
 (#&lt;COUNTRY {10108AD293}&gt;)
 1
 
-(select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'inhabitants 5000))
+(select-dao 'country (<span class="org-builtin">:&gt;</span> 'inhabitants 5000))
 (#&lt;COUNTRY {10108CA773}&gt; #&lt;COUNTRY {10108CAB23}&gt;)
 2
 
-(select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'inhabitants 5000) 'name) <span style="color: #74af68;">;sorted by name</span>
+(select-dao 'country (<span class="org-builtin">:&gt;</span> 'inhabitants 5000) 'name) <span class="org-comment">;sorted by name</span>
 (#&lt;COUNTRY {10108EF423}&gt; #&lt;COUNTRY {10108EF643}&gt;)
 
-(mapcar 'country-name (select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'inhabitants 5000) 'name))
-(<span style="color: #e67128;">"Croatia"</span> <span style="color: #e67128;">"The Netherlands"</span>)
+(mapcar 'country-name (select-dao 'country (<span class="org-builtin">:&gt;</span> 'inhabitants 5000) 'name))
+(<span class="org-string">"Croatia"</span> <span class="org-string">"The Netherlands"</span>)
 
-(mapcar 'country-name (select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'inhabitants 5000)))
-(<span style="color: #e67128;">"The Netherlands"</span> <span style="color: #e67128;">"Croatia"</span>)
+(mapcar 'country-name (select-dao 'country (<span class="org-builtin">:&gt;</span> 'inhabitants 5000)))
+(<span class="org-string">"The Netherlands"</span> <span class="org-string">"Croatia"</span>)
 </pre>
 </div>
 <p>
 If for some reason, you wanted the list in reverse alphabetical order, then:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(select-dao 'country (<span style="color: #23d7d7;">:&gt;</span> 'id  0) (<span style="color: #23d7d7;">:desc</span> 'name))
+<pre class="src src-lisp">(select-dao 'country (<span class="org-builtin">:&gt;</span> 'id  0) (<span class="org-builtin">:desc</span> 'name))
 </pre>
 </div>
 </div>
@@ -1001,7 +997,7 @@ instance.
 Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">do-select-dao</span> (('user user) (<span style="color: #23d7d7;">:&gt;</span> 'score 10000) 'name)
+<pre class="src src-lisp">(<span class="org-keyword">do-select-dao</span> (('user user) (<span class="org-builtin">:&gt;</span> 'score 10000) 'name)
   (pushnew user high-scorers))
 </pre>
 </div>
@@ -1041,7 +1037,7 @@ For each matching DAO, body is evaluated with type-var bound to the instance.
 Example:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">do-query-dao</span> (('user user) (<span style="color: #23d7d7;">:order-by</span> (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'user <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:&gt;</span> 'score 10000)) 'name))
+<pre class="src src-lisp">(<span class="org-keyword">do-query-dao</span> (('user user) (<span class="org-builtin">:order-by</span> (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'user <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'score 10000)) 'name))
   (pushnew user high-scorers))
 </pre>
 </div>
@@ -1281,15 +1277,15 @@ a regular list, an alist and a plist but for whatever reason the data is stored 
 Postgresql as text:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">listy</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
-   (name <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:col-check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
-         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> name)
-   (rlist <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:rlist</span> <span style="color: #23d7d7;">:accessor</span> rlist)
-   (alist <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:alist</span> <span style="color: #23d7d7;">:accessor</span> alist)
-   (plist <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:plist</span> <span style="color: #23d7d7;">:accessor</span> plist))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> listy))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">listy</span> ()
+  ((id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-identity</span> t <span class="org-builtin">:accessor</span> id)
+   (name <span class="org-builtin">:col-type</span> text <span class="org-builtin">:col-unique</span> t <span class="org-builtin">:col-check</span> (<span class="org-builtin">:&lt;&gt;</span> 'name <span class="org-string">""</span>)
+         <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span> <span class="org-builtin">:accessor</span> name)
+   (rlist <span class="org-builtin">:col-type</span> text <span class="org-builtin">:initarg</span> <span class="org-builtin">:rlist</span> <span class="org-builtin">:accessor</span> rlist)
+   (alist <span class="org-builtin">:col-type</span> text <span class="org-builtin">:initarg</span> <span class="org-builtin">:alist</span> <span class="org-builtin">:accessor</span> alist)
+   (plist <span class="org-builtin">:col-type</span> text <span class="org-builtin">:initarg</span> <span class="org-builtin">:plist</span> <span class="org-builtin">:accessor</span> plist))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> listy))
 </pre>
 </div>
 </div>
@@ -1456,15 +1452,15 @@ What Happens when dao classes are out of sync with the database table?
 Let's establish our baseline
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:accessor</span> test-id)
-   (a <span style="color: #23d7d7;">:col-type</span> (or (varchar 100) db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:a</span> <span style="color: #23d7d7;">:accessor</span> test-a)
-   (b <span style="color: #23d7d7;">:col-type</span> boolean <span style="color: #23d7d7;">:col-default</span> nil <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:b</span> <span style="color: #23d7d7;">:accessor</span> test-b)
-   (c <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-default</span> 0 <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:c</span> <span style="color: #23d7d7;">:accessor</span> test-c)
-   (d <span style="color: #23d7d7;">:col-type</span> numeric <span style="color: #23d7d7;">:col-default</span> 0.0 <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:d</span> <span style="color: #23d7d7;">:accessor</span> test-d))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> dao-test)
-  (<span style="color: #23d7d7;">:keys</span> id))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">test-data</span> ()
+  ((id <span class="org-builtin">:col-type</span> serial <span class="org-builtin">:initarg</span> <span class="org-builtin">:id</span> <span class="org-builtin">:accessor</span> test-id)
+   (a <span class="org-builtin">:col-type</span> (or (varchar 100) db-null) <span class="org-builtin">:initarg</span> <span class="org-builtin">:a</span> <span class="org-builtin">:accessor</span> test-a)
+   (b <span class="org-builtin">:col-type</span> boolean <span class="org-builtin">:col-default</span> nil <span class="org-builtin">:initarg</span> <span class="org-builtin">:b</span> <span class="org-builtin">:accessor</span> test-b)
+   (c <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-default</span> 0 <span class="org-builtin">:initarg</span> <span class="org-builtin">:c</span> <span class="org-builtin">:accessor</span> test-c)
+   (d <span class="org-builtin">:col-type</span> numeric <span class="org-builtin">:col-default</span> 0.0 <span class="org-builtin">:initarg</span> <span class="org-builtin">:d</span> <span class="org-builtin">:accessor</span> test-d))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> dao-test)
+  (<span class="org-builtin">:keys</span> id))
 
 #&lt;DAO-CLASS S-SQL-TESTS::TEST-DATA&gt;
 
@@ -1476,12 +1472,12 @@ Let's establish our baseline
 Now we define a class that uses the same table, but does not have all the columns.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-short</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:accessor</span> test-id)
-   (a <span style="color: #23d7d7;">:col-type</span> (or (varchar 100) db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:a</span> <span style="color: #23d7d7;">:accessor</span> test-a))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> dao-test)
-  (<span style="color: #23d7d7;">:keys</span> id))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">test-data-short</span> ()
+  ((id <span class="org-builtin">:col-type</span> serial <span class="org-builtin">:initarg</span> <span class="org-builtin">:id</span> <span class="org-builtin">:accessor</span> test-id)
+   (a <span class="org-builtin">:col-type</span> (or (varchar 100) db-null) <span class="org-builtin">:initarg</span> <span class="org-builtin">:a</span> <span class="org-builtin">:accessor</span> test-a))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> dao-test)
+  (<span class="org-builtin">:keys</span> id))
 </pre>
 </div>
 
@@ -1490,11 +1486,11 @@ We create an instance of the shortened class and try to save it, then
 check the results.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data-short <span style="color: #23d7d7;">:a</span> <span style="color: #e67128;">"first short"</span>)))
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((dao (make-instance 'test-data-short <span class="org-builtin">:a</span> <span class="org-string">"first short"</span>)))
   (save-dao dao))
 
-(query (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'dao-test) <span style="color: #23d7d7;">:alists</span>)
-(((<span style="color: #23d7d7;">:ID</span> . 1) (<span style="color: #23d7d7;">:A</span> . <span style="color: #e67128;">"first short"</span>) (<span style="color: #23d7d7;">:B</span>) (<span style="color: #23d7d7;">:C</span> . 0) (<span style="color: #23d7d7;">:D</span> . 0)))
+(query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'dao-test) <span class="org-builtin">:alists</span>)
+(((<span class="org-builtin">:ID</span> . 1) (<span class="org-builtin">:A</span> . <span class="org-string">"first short"</span>) (<span class="org-builtin">:B</span>) (<span class="org-builtin">:C</span> . 0) (<span class="org-builtin">:D</span> . 0)))
 </pre>
 </div>
 
@@ -1508,20 +1504,20 @@ Now we define a shortened class, but the a slot is now numeric or null
 instead of a string and try to save it and check it.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-short-wrong-1</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:accessor</span> test-id)
-   (a <span style="color: #23d7d7;">:col-type</span> (or numeric db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:a</span> <span style="color: #23d7d7;">:accessor</span> test-a))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> dao-test)
-  (<span style="color: #23d7d7;">:keys</span> id))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">test-data-short-wrong-1</span> ()
+  ((id <span class="org-builtin">:col-type</span> serial <span class="org-builtin">:initarg</span> <span class="org-builtin">:id</span> <span class="org-builtin">:accessor</span> test-id)
+   (a <span class="org-builtin">:col-type</span> (or numeric db-null) <span class="org-builtin">:initarg</span> <span class="org-builtin">:a</span> <span class="org-builtin">:accessor</span> test-a))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> dao-test)
+  (<span class="org-builtin">:keys</span> id))
 
-(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data-short-wrong-1 <span style="color: #23d7d7;">:a</span> 12.75)))
+(<span class="org-keyword">let</span> ((dao (make-instance 'test-data-short-wrong-1 <span class="org-builtin">:a</span> 12.75)))
   (save-dao dao))
 
-(query (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'dao-test) <span style="color: #23d7d7;">:alists</span>)
+(query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'dao-test) <span class="org-builtin">:alists</span>)
 
-(((<span style="color: #23d7d7;">:ID</span> . 1) (<span style="color: #23d7d7;">:A</span> . <span style="color: #e67128;">"first short"</span>) (<span style="color: #23d7d7;">:B</span>) (<span style="color: #23d7d7;">:C</span> . 0) (<span style="color: #23d7d7;">:D</span> . 0))
- ((<span style="color: #23d7d7;">:ID</span> . 2) (<span style="color: #23d7d7;">:A</span> . <span style="color: #e67128;">"12.75"</span>) (<span style="color: #23d7d7;">:B</span>) (<span style="color: #23d7d7;">:C</span> . 0) (<span style="color: #23d7d7;">:D</span> . 0))
+(((<span class="org-builtin">:ID</span> . 1) (<span class="org-builtin">:A</span> . <span class="org-string">"first short"</span>) (<span class="org-builtin">:B</span>) (<span class="org-builtin">:C</span> . 0) (<span class="org-builtin">:D</span> . 0))
+ ((<span class="org-builtin">:ID</span> . 2) (<span class="org-builtin">:A</span> . <span class="org-string">"12.75"</span>) (<span class="org-builtin">:B</span>) (<span class="org-builtin">:C</span> . 0) (<span class="org-builtin">:D</span> . 0))
 </pre>
 </div>
 
@@ -1537,21 +1533,21 @@ of columns, but col d is a string when the database expects a numeric
 and check that.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-d-string</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:accessor</span> test-id)
-   (a <span style="color: #23d7d7;">:col-type</span> (or (varchar 100) db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:a</span> <span style="color: #23d7d7;">:accessor</span> test-a)
-   (b <span style="color: #23d7d7;">:col-type</span> boolean <span style="color: #23d7d7;">:col-default</span> nil <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:b</span> <span style="color: #23d7d7;">:accessor</span> test-b)
-   (c <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-default</span> 0 <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:c</span> <span style="color: #23d7d7;">:accessor</span> test-c)
-   (d <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-default</span> <span style="color: #e67128;">""</span> <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:d</span> <span style="color: #23d7d7;">:accessor</span> test-d))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> dao-test)
-  (<span style="color: #23d7d7;">:keys</span> id))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">test-data-d-string</span> ()
+  ((id <span class="org-builtin">:col-type</span> serial <span class="org-builtin">:initarg</span> <span class="org-builtin">:id</span> <span class="org-builtin">:accessor</span> test-id)
+   (a <span class="org-builtin">:col-type</span> (or (varchar 100) db-null) <span class="org-builtin">:initarg</span> <span class="org-builtin">:a</span> <span class="org-builtin">:accessor</span> test-a)
+   (b <span class="org-builtin">:col-type</span> boolean <span class="org-builtin">:col-default</span> nil <span class="org-builtin">:initarg</span> <span class="org-builtin">:b</span> <span class="org-builtin">:accessor</span> test-b)
+   (c <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-default</span> 0 <span class="org-builtin">:initarg</span> <span class="org-builtin">:c</span> <span class="org-builtin">:accessor</span> test-c)
+   (d <span class="org-builtin">:col-type</span> text <span class="org-builtin">:col-default</span> <span class="org-string">""</span> <span class="org-builtin">:initarg</span> <span class="org-builtin">:d</span> <span class="org-builtin">:accessor</span> test-d))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> dao-test)
+  (<span class="org-builtin">:keys</span> id))
 
-(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data-d-string <span style="color: #23d7d7;">:a</span> <span style="color: #e67128;">"D string"</span> <span style="color: #23d7d7;">:b</span> nil <span style="color: #23d7d7;">:c</span> 14
-                                              <span style="color: #23d7d7;">:d</span> <span style="color: #e67128;">"Trying string"</span>)))
+(<span class="org-keyword">let</span> ((dao (make-instance 'test-data-d-string <span class="org-builtin">:a</span> <span class="org-string">"D string"</span> <span class="org-builtin">:b</span> nil <span class="org-builtin">:c</span> 14
+                                              <span class="org-builtin">:d</span> <span class="org-string">"Trying string"</span>)))
   (save-dao dao))
 
-Database error 22P02: invalid input syntax for type numeric: <span style="color: #e67128;">"Trying string"</span>
+Database error 22P02: invalid input syntax for type numeric: <span class="org-string">"Trying string"</span>
 QUERY: INSERT INTO dao_test (d, c, b, a) VALUES (E'Trying string', 14, false, E'D string') RETURNING id
 [Condition of type DATA-EXCEPTION]
 
@@ -1562,11 +1558,11 @@ Ok. That threw a data exception. What happens if we try to force a numeric into
 an integer column?
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data-d-string <span style="color: #23d7d7;">:a</span> <span style="color: #e67128;">"D string"</span> <span style="color: #23d7d7;">:b</span> nil <span style="color: #23d7d7;">:c</span> 14.37
-                                              <span style="color: #23d7d7;">:d</span> 18.78)))
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((dao (make-instance 'test-data-d-string <span class="org-builtin">:a</span> <span class="org-string">"D string"</span> <span class="org-builtin">:b</span> nil <span class="org-builtin">:c</span> 14.37
+                                              <span class="org-builtin">:d</span> 18.78)))
   (save-dao dao))
 
-Database error 22P02: invalid input syntax for type integer: <span style="color: #e67128;">"14.37"</span>
+Database error 22P02: invalid input syntax for type integer: <span class="org-string">"14.37"</span>
 [Condition of type CL-POSTGRES-ERROR:DATA-EXCEPTION]
 
 </pre>
@@ -1575,14 +1571,14 @@ Database error 22P02: invalid input syntax for type integer: <span style="color:
 Ok. Postgresql is enforcing the types.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data-d-string <span style="color: #23d7d7;">:a</span> <span style="color: #e67128;">"D string"</span> <span style="color: #23d7d7;">:b</span> nil <span style="color: #23d7d7;">:c</span> 14
-                                              <span style="color: #23d7d7;">:d</span> 18.78)))
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((dao (make-instance 'test-data-d-string <span class="org-builtin">:a</span> <span class="org-string">"D string"</span> <span class="org-builtin">:b</span> nil <span class="org-builtin">:c</span> 14
+                                              <span class="org-builtin">:d</span> 18.78)))
   (save-dao dao))
 
-(query (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'dao-test) <span style="color: #23d7d7;">:alists</span>)
-(((<span style="color: #23d7d7;">:ID</span> . 1) (<span style="color: #23d7d7;">:A</span> . <span style="color: #e67128;">"first short"</span>) (<span style="color: #23d7d7;">:B</span>) (<span style="color: #23d7d7;">:C</span> . 0) (<span style="color: #23d7d7;">:D</span> . 0))
- ((<span style="color: #23d7d7;">:ID</span> . 2) (<span style="color: #23d7d7;">:A</span> . <span style="color: #e67128;">"12.75"</span>) (<span style="color: #23d7d7;">:B</span>) (<span style="color: #23d7d7;">:C</span> . 0) (<span style="color: #23d7d7;">:D</span> . 0))
- ((<span style="color: #23d7d7;">:ID</span> . 3) (<span style="color: #23d7d7;">:A</span> . <span style="color: #e67128;">"D string"</span>) (<span style="color: #23d7d7;">:B</span>) (<span style="color: #23d7d7;">:C</span> . 14) (<span style="color: #23d7d7;">:D</span> . 939/50)))
+(query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'dao-test) <span class="org-builtin">:alists</span>)
+(((<span class="org-builtin">:ID</span> . 1) (<span class="org-builtin">:A</span> . <span class="org-string">"first short"</span>) (<span class="org-builtin">:B</span>) (<span class="org-builtin">:C</span> . 0) (<span class="org-builtin">:D</span> . 0))
+ ((<span class="org-builtin">:ID</span> . 2) (<span class="org-builtin">:A</span> . <span class="org-string">"12.75"</span>) (<span class="org-builtin">:B</span>) (<span class="org-builtin">:C</span> . 0) (<span class="org-builtin">:D</span> . 0))
+ ((<span class="org-builtin">:ID</span> . 3) (<span class="org-builtin">:A</span> . <span class="org-string">"D string"</span>) (<span class="org-builtin">:B</span>) (<span class="org-builtin">:C</span> . 14) (<span class="org-builtin">:D</span> . 939/50)))
 </pre>
 </div>
 
@@ -1617,7 +1613,7 @@ incorrect query used.
 Restarts:
 0: [RETRY] Retry SLIME REPL evaluation request.
 1: [*ABORT] Return to SLIME's top level.
-2: [ABORT] abort thread (#&lt;THREAD <span style="color: #e67128;">"new-repl-thread"</span> RUNNING {100C205083}&gt;)
+2: [ABORT] abort thread (#&lt;THREAD <span class="org-string">"new-repl-thread"</span> RUNNING {100C205083}&gt;)
 
 </pre>
 </div>
@@ -1644,9 +1640,9 @@ Now if we setf the default global variable <code>*ignore-unknown-columns*</code>
 #&lt;TEST-DATA-SHORT {100B249783}&gt;
 [standard-object]
 
-Slots with <span style="color: #23d7d7;">:INSTANCE</span> allocation:
+Slots with <span class="org-builtin">:INSTANCE</span> allocation:
 ID                             = 3
-A                              = <span style="color: #e67128;">"D string"</span>
+A                              = <span class="org-string">"D string"</span>
 </pre>
 </div>
 <p>
@@ -1654,35 +1650,35 @@ We now have a dao that is a subset of the database table it pulled from.
 Just to validate that:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:select</span> '* <span style="color: #23d7d7;">:from</span> 'dao-test <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'id 3)))
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'dao-test <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id 3)))
 
-((3 <span style="color: #e67128;">"D string"</span> NIL 14 939/50))
+((3 <span class="org-string">"D string"</span> NIL 14 939/50))
 </pre>
 </div>
 <p>
 Just to be thorough, let's use a dao that has more slots than the database table.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">test-data-long</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:accessor</span> test-id)
-   (a <span style="color: #23d7d7;">:col-type</span> (or (varchar 100) db-null) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:a</span> <span style="color: #23d7d7;">:accessor</span> test-a)
-   (b <span style="color: #23d7d7;">:col-type</span> boolean <span style="color: #23d7d7;">:col-default</span> nil <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:b</span> <span style="color: #23d7d7;">:accessor</span> test-b)
-   (c <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-default</span> 0 <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:c</span> <span style="color: #23d7d7;">:accessor</span> test-c)
-   (d <span style="color: #23d7d7;">:col-type</span> numeric <span style="color: #23d7d7;">:col-default</span> 0.0 <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:d</span> <span style="color: #23d7d7;">:accessor</span> test-d)
-   (e <span style="color: #23d7d7;">:col-type</span> text <span style="color: #23d7d7;">:col-default</span> <span style="color: #e67128;">"sell by date"</span> <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:e</span> <span style="color: #23d7d7;">:accessor</span> test-e))
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> dao-test)
-  (<span style="color: #23d7d7;">:keys</span> id))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">test-data-long</span> ()
+  ((id <span class="org-builtin">:col-type</span> serial <span class="org-builtin">:initarg</span> <span class="org-builtin">:id</span> <span class="org-builtin">:accessor</span> test-id)
+   (a <span class="org-builtin">:col-type</span> (or (varchar 100) db-null) <span class="org-builtin">:initarg</span> <span class="org-builtin">:a</span> <span class="org-builtin">:accessor</span> test-a)
+   (b <span class="org-builtin">:col-type</span> boolean <span class="org-builtin">:col-default</span> nil <span class="org-builtin">:initarg</span> <span class="org-builtin">:b</span> <span class="org-builtin">:accessor</span> test-b)
+   (c <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-default</span> 0 <span class="org-builtin">:initarg</span> <span class="org-builtin">:c</span> <span class="org-builtin">:accessor</span> test-c)
+   (d <span class="org-builtin">:col-type</span> numeric <span class="org-builtin">:col-default</span> 0.0 <span class="org-builtin">:initarg</span> <span class="org-builtin">:d</span> <span class="org-builtin">:accessor</span> test-d)
+   (e <span class="org-builtin">:col-type</span> text <span class="org-builtin">:col-default</span> <span class="org-string">"sell by date"</span> <span class="org-builtin">:initarg</span> <span class="org-builtin">:e</span> <span class="org-builtin">:accessor</span> test-e))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> dao-test)
+  (<span class="org-builtin">:keys</span> id))
 </pre>
 </div>
 <p>
 Now if we make an instance of this dao and try to save it in the dao-class table:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">let</span> ((dao (make-instance 'test-data-long <span style="color: #23d7d7;">:a</span> <span style="color: #e67128;">"first short"</span> <span style="color: #23d7d7;">:d</span> 37.3)))
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((dao (make-instance 'test-data-long <span class="org-builtin">:a</span> <span class="org-string">"first short"</span> <span class="org-builtin">:d</span> 37.3)))
   (save-dao dao))
 
-Database error 42703: column <span style="color: #e67128;">"e"</span> does not exist
+Database error 42703: column <span class="org-string">"e"</span> does not exist
 QUERY: INSERT INTO dao_test (d, a)  VALUES ($1, $2) RETURNING e, c, b, id
 [Condition of type CL-POSTGRES-ERROR:UNDEFINED-COLUMN]
 </pre>
@@ -1724,19 +1720,19 @@ Do you remember the slightly more complicated version of country from earlier on
 the page?
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">country</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:accessor</span> id)
-   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:col-unique</span> t <span style="color: #23d7d7;">:check</span> (<span style="color: #23d7d7;">:&lt;&gt;</span> 'name <span style="color: #e67128;">""</span>)
-         <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:reader</span> country-name)
-   (inhabitants <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:inhabitants</span>
-                <span style="color: #23d7d7;">:accessor</span> country-inhabitants)
-   (sovereign <span style="color: #23d7d7;">:col-type</span> (or db-null string) <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:sovereign</span>
-              <span style="color: #23d7d7;">:accessor</span> country-sovereign)
-   (region-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-references</span> ((regions id))
-              <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-id</span> <span style="color: #23d7d7;">:accessor</span> region-id))
-  (<span style="color: #23d7d7;">:documentation</span> <span style="color: #e67128;">"Dao class for a countries record."</span>)
-  (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-  (<span style="color: #23d7d7;">:table-name</span> countries))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">country</span> ()
+  ((id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-identity</span> t <span class="org-builtin">:accessor</span> id)
+   (name <span class="org-builtin">:col-type</span> string <span class="org-builtin">:col-unique</span> t <span class="org-builtin">:check</span> (<span class="org-builtin">:&lt;&gt;</span> 'name <span class="org-string">""</span>)
+         <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span> <span class="org-builtin">:reader</span> country-name)
+   (inhabitants <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:initarg</span> <span class="org-builtin">:inhabitants</span>
+                <span class="org-builtin">:accessor</span> country-inhabitants)
+   (sovereign <span class="org-builtin">:col-type</span> (or db-null string) <span class="org-builtin">:initarg</span> <span class="org-builtin">:sovereign</span>
+              <span class="org-builtin">:accessor</span> country-sovereign)
+   (region-id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-references</span> ((regions id))
+              <span class="org-builtin">:initarg</span> <span class="org-builtin">:region-id</span> <span class="org-builtin">:accessor</span> region-id))
+  (<span class="org-builtin">:documentation</span> <span class="org-doc">"Dao class for a countries record."</span>)
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> countries))
 </pre>
 </div>
 <p>
@@ -1790,11 +1786,11 @@ name as the primary key and seting id as an identity would cause it to be the
 primary key.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">region-d</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:reader</span> region-id)
-   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> region-name))
-  (<span style="color: #23d7d7;">:metaclass</span> pomo:dao-class)
-  (<span style="color: #23d7d7;">:keys</span> name))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">region-d</span> ()
+  ((id <span class="org-builtin">:col-type</span> serial <span class="org-builtin">:initarg</span> <span class="org-builtin">:id</span> <span class="org-builtin">:reader</span> region-id)
+   (name <span class="org-builtin">:col-type</span> string <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span> <span class="org-builtin">:accessor</span> region-name))
+  (<span class="org-builtin">:metaclass</span> pomo:dao-class)
+  (<span class="org-builtin">:keys</span> name))
 
 (deftable region-d
   (!dao-def)
@@ -1802,13 +1798,13 @@ primary key.
 
 (create-table 'region-d)
 
-(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">country-d</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> serial <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:reader</span> country-id)
-   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span>
-         <span style="color: #23d7d7;">:reader</span> country-name)
-   (region-name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-name</span> <span style="color: #23d7d7;">:accessor</span> region-name))
-   (<span style="color: #23d7d7;">:metaclass</span> pomo:dao-class)
-   (<span style="color: #23d7d7;">:keys</span> name))
+(<span class="org-keyword">defclass</span> <span class="org-type">country-d</span> ()
+  ((id <span class="org-builtin">:col-type</span> serial <span class="org-builtin">:initarg</span> <span class="org-builtin">:id</span> <span class="org-builtin">:reader</span> country-id)
+   (name <span class="org-builtin">:col-type</span> string <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span>
+         <span class="org-builtin">:reader</span> country-name)
+   (region-name <span class="org-builtin">:col-type</span> string <span class="org-builtin">:initarg</span> <span class="org-builtin">:region-name</span> <span class="org-builtin">:accessor</span> region-name))
+   (<span class="org-builtin">:metaclass</span> pomo:dao-class)
+   (<span class="org-builtin">:keys</span> name))
 
 (deftable country-d
   (!dao-def)
@@ -1830,26 +1826,26 @@ Look at <code>*tables*</code> for a moment:
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">*tables*
-((REGION-D . #&lt;FUNCTION (<span style="color: #ffad29; font-weight: bold;">LAMBDA</span> ()) {534D126B}&gt;)
- (COUNTRY-D . #&lt;FUNCTION (<span style="color: #ffad29; font-weight: bold;">LAMBDA</span> ()) {52A1484B}&gt;))
+((REGION-D . #&lt;FUNCTION (<span class="org-keyword">LAMBDA</span> ()) {534D126B}&gt;)
+ (COUNTRY-D . #&lt;FUNCTION (<span class="org-keyword">LAMBDA</span> ()) {52A1484B}&gt;))
 </pre>
 </div>
 <p>
 The region-d lambda looks like this:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">LAMBDA</span> ()
-    (<span style="color: #ffad29; font-weight: bold;">LET</span> ((*TABLE-NAME* <span style="color: #e67128;">"region_d"</span>) (*TABLE-SYMBOL* 'REGION-D))
-      (<span style="color: #ffad29; font-weight: bold;">DOLIST</span> (STAT (LIST (!DAO-DEF) (!UNIQUE 'NAME))) (EXECUTE STAT))))
+<pre class="src src-lisp">(<span class="org-keyword">LAMBDA</span> ()
+    (<span class="org-keyword">LET</span> ((*TABLE-NAME* <span class="org-string">"region_d"</span>) (*TABLE-SYMBOL* 'REGION-D))
+      (<span class="org-keyword">DOLIST</span> (STAT (LIST (!DAO-DEF) (!UNIQUE 'NAME))) (EXECUTE STAT))))
 </pre>
 </div>
 <p>
 The country-d lambda looks like this:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">LAMBDA</span> ()
-    (<span style="color: #ffad29; font-weight: bold;">LET</span> ((*TABLE-NAME* <span style="color: #e67128;">"country_d"</span>) (*TABLE-SYMBOL* 'COUNTRY-D))
-      (<span style="color: #ffad29; font-weight: bold;">DOLIST</span>
+<pre class="src src-lisp">(<span class="org-keyword">LAMBDA</span> ()
+    (<span class="org-keyword">LET</span> ((*TABLE-NAME* <span class="org-string">"country_d"</span>) (*TABLE-SYMBOL* 'COUNTRY-D))
+      (<span class="org-keyword">DOLIST</span>
           (STAT
            (LIST (!DAO-DEF) (!UNIQUE 'NAME)
                  (!FOREIGN 'REGION-D 'REGION-NAME 'NAME)))
@@ -1866,10 +1862,10 @@ In the -n version, we are going to use the id columns as the primary key.
 We will not need to tell deftable t
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">region-n</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:reader</span> region-id)
-   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span> <span style="color: #23d7d7;">:accessor</span> region-name))
-  (<span style="color: #23d7d7;">:metaclass</span> pomo:dao-class))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">region-n</span> ()
+  ((id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-identity</span> t <span class="org-builtin">:initarg</span> <span class="org-builtin">:id</span> <span class="org-builtin">:reader</span> region-id)
+   (name <span class="org-builtin">:col-type</span> string <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span> <span class="org-builtin">:accessor</span> region-name))
+  (<span class="org-builtin">:metaclass</span> pomo:dao-class))
 
 (deftable region-n
   (!dao-def)
@@ -1877,12 +1873,12 @@ We will not need to tell deftable t
 
 (create-table 'region-n)
 
-(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">country-n</span> ()
-  ((id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:col-identity</span> t <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:id</span> <span style="color: #23d7d7;">:reader</span> country-id)
-   (name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:name</span>
-         <span style="color: #23d7d7;">:reader</span> country-name)
-   (region-id <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-id</span> <span style="color: #23d7d7;">:accessor</span> region-id))
-   (<span style="color: #23d7d7;">:metaclass</span> dao-class))
+(<span class="org-keyword">defclass</span> <span class="org-type">country-n</span> ()
+  ((id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-identity</span> t <span class="org-builtin">:initarg</span> <span class="org-builtin">:id</span> <span class="org-builtin">:reader</span> country-id)
+   (name <span class="org-builtin">:col-type</span> string <span class="org-builtin">:initarg</span> <span class="org-builtin">:name</span>
+         <span class="org-builtin">:reader</span> country-name)
+   (region-id <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:initarg</span> <span class="org-builtin">:region-id</span> <span class="org-builtin">:accessor</span> region-id))
+   (<span class="org-builtin">:metaclass</span> dao-class))
 
 (deftable country-n
   (!dao-def)
@@ -1899,10 +1895,10 @@ less simple version. Lets start by inserting a couple of regions and we will
 stick with the dao method for the moment:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(insert-dao (make-instance 'region-d <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Western Europe"</span>))
-(insert-dao (make-instance 'region-n <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Western Europe"</span>))
-(insert-dao (make-instance 'region-d <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Southern Europe"</span>))
-(insert-dao (make-instance 'region-n <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Southern Europe"</span>))
+<pre class="src src-lisp">(insert-dao (make-instance 'region-d <span class="org-builtin">:name</span> <span class="org-string">"Western Europe"</span>))
+(insert-dao (make-instance 'region-n <span class="org-builtin">:name</span> <span class="org-string">"Western Europe"</span>))
+(insert-dao (make-instance 'region-d <span class="org-builtin">:name</span> <span class="org-string">"Southern Europe"</span>))
+(insert-dao (make-instance 'region-n <span class="org-builtin">:name</span> <span class="org-string">"Southern Europe"</span>))
 </pre>
 </div>
 
@@ -1910,11 +1906,11 @@ stick with the dao method for the moment:
 Now we can add a few countries to country-d:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(insert-dao (make-instance 'country-d <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"The Netherlands"</span>
-                                      <span style="color: #23d7d7;">:region-name</span> <span style="color: #e67128;">"Western Europe"</span>))
+<pre class="src src-lisp">(insert-dao (make-instance 'country-d <span class="org-builtin">:name</span> <span class="org-string">"The Netherlands"</span>
+                                      <span class="org-builtin">:region-name</span> <span class="org-string">"Western Europe"</span>))
 
-(insert-dao (make-instance 'country-d <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Croatia"</span>
-                                      <span style="color: #23d7d7;">:region-name</span> <span style="color: #e67128;">"Southern Europe"</span>))
+(insert-dao (make-instance 'country-d <span class="org-builtin">:name</span> <span class="org-string">"Croatia"</span>
+                                      <span class="org-builtin">:region-name</span> <span class="org-string">"Southern Europe"</span>))
 </pre>
 </div>
 <p>
@@ -1923,7 +1919,7 @@ name is not the primary key so how to get the region dao with the name "Western 
 it is easy because the name is the primary key. So
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(get-dao 'region-d <span style="color: #e67128;">"Western Europe"</span>)
+<pre class="src src-lisp">(get-dao 'region-d <span class="org-string">"Western Europe"</span>)
 #&lt;REGION-D {100A322D43}&gt;
 </pre>
 </div>
@@ -1934,10 +1930,10 @@ select-dao which will return a list of daos meeting a test criteria, in a sorted
 order if that third parameter is also provided. Eg.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(select-dao 'region-n (<span style="color: #23d7d7;">:=</span> 'id 1))
+<pre class="src src-lisp">(select-dao 'region-n (<span class="org-builtin">:=</span> 'id 1))
 (#&lt;REGION-N {100AAC6E13}&gt;)
 
-(select-dao 'region-n (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"Western Europe"</span>))
+(select-dao 'region-n (<span class="org-builtin">:=</span> 'name <span class="org-string">"Western Europe"</span>))
 (#&lt;REGION-N {100A813CF3}&gt;)
 
 (select-dao 'region-n t 'name)
@@ -1950,7 +1946,7 @@ Another method with is query-dao, which takes a row and inserts it into a dao.
 That gets us a list of daos meeting the select criteria.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query-dao 'region-n <span style="color: #e67128;">"select * from region_n where name = 'Western Europe'"</span>)
+<pre class="src src-lisp">(query-dao 'region-n <span class="org-string">"select * from region_n where name = 'Western Europe'"</span>)
 (#&lt;REGION {1009E75E63}&gt;)
 </pre>
 </div>
@@ -1958,9 +1954,9 @@ That gets us a list of daos meeting the select criteria.
 or, using s-sql expression
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query-dao 'region-n (<span style="color: #23d7d7;">:select</span> '*
-                      <span style="color: #23d7d7;">:from</span> 'region-n
-                      <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"Western Europe"</span>)))
+<pre class="src src-lisp">(query-dao 'region-n (<span class="org-builtin">:select</span> '*
+                      <span class="org-builtin">:from</span> 'region-n
+                      <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'name <span class="org-string">"Western Europe"</span>)))
 (#&lt;REGION-D {100A50DA13}&gt;)
 </pre>
 </div>
@@ -1972,19 +1968,19 @@ into country-n:
 <div class="org-src-container">
 <pre class="src src-lisp">(insert-dao
   (make-instance 'country-n
-                 <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"The Netherlands"</span>
-                 <span style="color: #23d7d7;">:region-id</span> (region-id
+                 <span class="org-builtin">:name</span> <span class="org-string">"The Netherlands"</span>
+                 <span class="org-builtin">:region-id</span> (region-id
                               (first (select-dao 'region-n
-                                                 (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"Western Europe"</span>))))))
+                                                 (<span class="org-builtin">:=</span> 'name <span class="org-string">"Western Europe"</span>))))))
 #&lt;COUNTRY-N {1002AD79B3}&gt;
 
 (insert-dao
   (make-instance 'country-n
-                 <span style="color: #23d7d7;">:name</span> <span style="color: #e67128;">"Croatia"</span>
-                 <span style="color: #23d7d7;">:region-id</span> (query (<span style="color: #23d7d7;">:select</span> 'id
-                                    <span style="color: #23d7d7;">:from</span> 'region-n
-                                    <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"Southern Europe"</span>))
-                             <span style="color: #23d7d7;">:single</span>)))
+                 <span class="org-builtin">:name</span> <span class="org-string">"Croatia"</span>
+                 <span class="org-builtin">:region-id</span> (query (<span class="org-builtin">:select</span> 'id
+                                    <span class="org-builtin">:from</span> 'region-n
+                                    <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'name <span class="org-string">"Southern Europe"</span>))
+                             <span class="org-builtin">:single</span>)))
 #&lt;COUNTRY-N {1002ADE2B3}&gt;
 </pre>
 </div>
@@ -1994,29 +1990,29 @@ create a third table that has population by year and inserted a couple of rows.
 This time we will do it with s-sql.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:create-table</span> 'country-population ((id <span style="color: #23d7d7;">:type</span> bigserial)
-                                          (country-id <span style="color: #23d7d7;">:type</span> integer)
-                                          (year <span style="color: #23d7d7;">:type</span> integer)
-                                          (population <span style="color: #23d7d7;">:type</span> integer))))
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'country-population ((id <span class="org-builtin">:type</span> bigserial)
+                                          (country-id <span class="org-builtin">:type</span> integer)
+                                          (year <span class="org-builtin">:type</span> integer)
+                                          (population <span class="org-builtin">:type</span> integer))))
 
-(<span style="color: #ffad29; font-weight: bold;">let</span> ((country-id (query (<span style="color: #23d7d7;">:select</span> 'id
-                          <span style="color: #23d7d7;">:from</span> 'country-d
-                          <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"The Netherlands"</span>))
-                         <span style="color: #23d7d7;">:single</span>)))
-  (query (<span style="color: #23d7d7;">:insert-rows-into</span> 'country-population
-          <span style="color: #23d7d7;">:columns</span> 'country-id 'year 'population
-          <span style="color: #23d7d7;">:values</span> `((,country-id 2014 16830000)
+(<span class="org-keyword">let</span> ((country-id (query (<span class="org-builtin">:select</span> 'id
+                          <span class="org-builtin">:from</span> 'country-d
+                          <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'name <span class="org-string">"The Netherlands"</span>))
+                         <span class="org-builtin">:single</span>)))
+  (query (<span class="org-builtin">:insert-rows-into</span> 'country-population
+          <span class="org-builtin">:columns</span> 'country-id 'year 'population
+          <span class="org-builtin">:values</span> `((,country-id 2014 16830000)
                     (,country-id 2015 16900000)
                     (,country-id 2016 16980000)
                     (,country-id 2017 17080000)))))
 
-(<span style="color: #ffad29; font-weight: bold;">let</span> ((country-id (query (<span style="color: #23d7d7;">:select</span> 'id
-                          <span style="color: #23d7d7;">:from</span> 'country-d
-                          <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'name <span style="color: #e67128;">"Croatia"</span>))
-                         <span style="color: #23d7d7;">:single</span>)))
-  (query (<span style="color: #23d7d7;">:insert-rows-into</span> 'country-population
-          <span style="color: #23d7d7;">:columns</span> 'country-id 'year 'population
-          <span style="color: #23d7d7;">:values</span> `((,country-id 2014 4255518)
+(<span class="org-keyword">let</span> ((country-id (query (<span class="org-builtin">:select</span> 'id
+                          <span class="org-builtin">:from</span> 'country-d
+                          <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'name <span class="org-string">"Croatia"</span>))
+                         <span class="org-builtin">:single</span>)))
+  (query (<span class="org-builtin">:insert-rows-into</span> 'country-population
+          <span class="org-builtin">:columns</span> 'country-id 'year 'population
+          <span class="org-builtin">:values</span> `((,country-id 2014 4255518)
                     (,country-id 2015 4232873)
                     (,country-id 2016 4208611)
                     (,country-id 2017 4182846)))))
@@ -2027,14 +2023,14 @@ Now we create a class that pulls from all three tables (country, region and
 country-population).
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defclass</span> <span style="color: #34cae2;">country-with-population</span> ()
-  ((country-name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:country-name</span>
-           <span style="color: #23d7d7;">:reader</span> country-name)
-     (region-name <span style="color: #23d7d7;">:col-type</span> string <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:region-name</span> <span style="color: #23d7d7;">:accessor</span> region-name)
-     (year <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:year</span> <span style="color: #23d7d7;">:reader</span> year)
-     (population <span style="color: #23d7d7;">:col-type</span> integer <span style="color: #23d7d7;">:initarg</span> <span style="color: #23d7d7;">:population</span> <span style="color: #23d7d7;">:reader</span> population))
-     (<span style="color: #23d7d7;">:metaclass</span> dao-class)
-     (<span style="color: #23d7d7;">:keys</span> country-name))
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">country-with-population</span> ()
+  ((country-name <span class="org-builtin">:col-type</span> string <span class="org-builtin">:initarg</span> <span class="org-builtin">:country-name</span>
+           <span class="org-builtin">:reader</span> country-name)
+     (region-name <span class="org-builtin">:col-type</span> string <span class="org-builtin">:initarg</span> <span class="org-builtin">:region-name</span> <span class="org-builtin">:accessor</span> region-name)
+     (year <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:initarg</span> <span class="org-builtin">:year</span> <span class="org-builtin">:reader</span> year)
+     (population <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:initarg</span> <span class="org-builtin">:population</span> <span class="org-builtin">:reader</span> population))
+     (<span class="org-builtin">:metaclass</span> dao-class)
+     (<span class="org-builtin">:keys</span> country-name))
 </pre>
 </div>
 <p>
@@ -2061,17 +2057,17 @@ information for the maximum year. One way to do that would be:
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query-dao 'country-with-population
-                 (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:as</span> 'country-n.name 'country-name)
+                 (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> 'country-n.name 'country-name)
                           'year
-                          (<span style="color: #23d7d7;">:as</span> 'region-n.name 'region-name)
+                          (<span class="org-builtin">:as</span> 'region-n.name 'region-name)
                           'population
-                      <span style="color: #23d7d7;">:from</span> 'country-n
-                      <span style="color: #23d7d7;">:inner-join</span> 'region-n
-                      <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.region-id 'region-n.id)
-                      <span style="color: #23d7d7;">:inner-join</span> 'country-population
-                      <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.id 'country-population.country-id)
-                      <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'year (<span style="color: #23d7d7;">:select</span> (<span style="color: #23d7d7;">:max</span> 'year)
-                                        <span style="color: #23d7d7;">:from</span> 'country-population))))
+                      <span class="org-builtin">:from</span> 'country-n
+                      <span class="org-builtin">:inner-join</span> 'region-n
+                      <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'country-n.region-id 'region-n.id)
+                      <span class="org-builtin">:inner-join</span> 'country-population
+                      <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'country-n.id 'country-population.country-id)
+                      <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'year (<span class="org-builtin">:select</span> (<span class="org-builtin">:max</span> 'year)
+                                        <span class="org-builtin">:from</span> 'country-population))))
 </pre>
 </div>
 <p>
@@ -2080,9 +2076,9 @@ But what happens if the data is not the same for both countries? Lets drop the
 current year that we have for both countries.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span style="color: #23d7d7;">:delete-from</span> 'country-population
-        <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:and</span> (<span style="color: #23d7d7;">:=</span> 'country-id 2)
-                     (<span style="color: #23d7d7;">:=</span> 'year 2017))))
+<pre class="src src-lisp">(query (<span class="org-builtin">:delete-from</span> 'country-population
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'country-id 2)
+                     (<span class="org-builtin">:=</span> 'year 2017))))
 </pre>
 </div>
 <p>
@@ -2106,19 +2102,19 @@ importantly by year descending.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query-dao 'country-with-population
-                 (<span style="color: #23d7d7;">:order-by</span> (<span style="color: #23d7d7;">:select</span>  (<span style="color: #23d7d7;">:as</span> 'country-n.name 'country-name)
+                 (<span class="org-builtin">:order-by</span> (<span class="org-builtin">:select</span>  (<span class="org-builtin">:as</span> 'country-n.name 'country-name)
                                       'year
-                                      (<span style="color: #23d7d7;">:as</span> 'region-n.name 'region-name)
+                                      (<span class="org-builtin">:as</span> 'region-n.name 'region-name)
                                       'population
-                             <span style="color: #23d7d7;">:distinct-on</span> 'country-n.name
-                             <span style="color: #23d7d7;">:from</span> 'country-n
-                             <span style="color: #23d7d7;">:inner-join</span> 'region-n
-                             <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.region-id 'region-n.id)
-                             <span style="color: #23d7d7;">:inner-join</span> 'country-population
-                             <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.id
+                             <span class="org-builtin">:distinct-on</span> 'country-n.name
+                             <span class="org-builtin">:from</span> 'country-n
+                             <span class="org-builtin">:inner-join</span> 'region-n
+                             <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'country-n.region-id 'region-n.id)
+                             <span class="org-builtin">:inner-join</span> 'country-population
+                             <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'country-n.id
                                      'country-population.country-id))
                      'country-name
-                     (<span style="color: #23d7d7;">:desc</span> 'year)))
+                     (<span class="org-builtin">:desc</span> 'year)))
 (#&lt;COUNTRY-WITH-POPULATION {1009AFAEC3}&gt;
  #&lt;COUNTRY-WITH-POPULATION {1009AFC963}&gt;)
 </pre>
@@ -2128,23 +2124,23 @@ At this point you could write a function that gets a country-with-population dao
 pulling the most recent population year from the database:
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">get-country-with-most-recent-population</span> (country)
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">get-country-with-most-recent-population</span> (country)
   (car (query-dao 'country-with-population
-                  (<span style="color: #23d7d7;">:order-by</span> (<span style="color: #23d7d7;">:select</span>  (<span style="color: #23d7d7;">:as</span> 'country-n.name 'country-name)
+                  (<span class="org-builtin">:order-by</span> (<span class="org-builtin">:select</span>  (<span class="org-builtin">:as</span> 'country-n.name 'country-name)
                                        'year
-                                       (<span style="color: #23d7d7;">:as</span> 'region-n.name 'region-name)
+                                       (<span class="org-builtin">:as</span> 'region-n.name 'region-name)
                                        'population
-                                       <span style="color: #23d7d7;">:distinct-on</span> 'country-n.name
-                                       <span style="color: #23d7d7;">:from</span> 'country-n
-                                       <span style="color: #23d7d7;">:inner-join</span> 'region-n
-                                       <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.region-id
+                                       <span class="org-builtin">:distinct-on</span> 'country-n.name
+                                       <span class="org-builtin">:from</span> 'country-n
+                                       <span class="org-builtin">:inner-join</span> 'region-n
+                                       <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'country-n.region-id
                                                'region-n.id)
-                                       <span style="color: #23d7d7;">:inner-join</span> 'country-population
-                                       <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.id
+                                       <span class="org-builtin">:inner-join</span> 'country-population
+                                       <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'country-n.id
                                                'country-population.country-id)
-                                       <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'country-n.name '$1))
+                                       <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'country-n.name '$1))
                              'country-name
-                             (<span style="color: #23d7d7;">:desc</span> 'year))
+                             (<span class="org-builtin">:desc</span> 'year))
                   country)))
 </pre>
 </div>
@@ -2173,9 +2169,9 @@ Croatia:
 #&lt;COUNTRY-N {1005BF7273}&gt;
   [standard-object]
 
-Slots with <span style="color: #23d7d7;">:INSTANCE</span> allocation:
+Slots with <span class="org-builtin">:INSTANCE</span> allocation:
   ID                             = 2
-  NAME                           = <span style="color: #e67128;">"Croatia"</span>
+  NAME                           = <span class="org-string">"Croatia"</span>
   REGION-ID                      = 2
 </pre>
 </div>
@@ -2188,31 +2184,31 @@ Now, we write a function that uses the with-column-writers macro and pull in the
 actual region name from the regions table.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(<span style="color: #ffad29; font-weight: bold;">defun</span> <span style="color: #00ede1; font-weight: bold;">get-country2</span> (country-name )
-  (first (<span style="color: #ffad29; font-weight: bold;">with-column-writers</span>
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">get-country2</span> (country-name )
+  (first (<span class="org-keyword">with-column-writers</span>
          ('region-n 'region-id)
          (query-dao 'country-n
-                    (<span style="color: #23d7d7;">:select</span> 'country-n.* (<span style="color: #23d7d7;">:as</span> 'region-n.name 'region-n)
-                             <span style="color: #23d7d7;">:from</span> 'country-n
-                             <span style="color: #23d7d7;">:left-join</span> 'region-n
-                             <span style="color: #23d7d7;">:on</span> (<span style="color: #23d7d7;">:=</span> 'country-n.region-id 'region-n.id)
-                             <span style="color: #23d7d7;">:where</span> (<span style="color: #23d7d7;">:=</span> 'country-n.name country-name))))))
+                    (<span class="org-builtin">:select</span> 'country-n.* (<span class="org-builtin">:as</span> 'region-n.name 'region-n)
+                             <span class="org-builtin">:from</span> 'country-n
+                             <span class="org-builtin">:left-join</span> 'region-n
+                             <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'country-n.region-id 'region-n.id)
+                             <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'country-n.name country-name))))))
 
-(describe (get-country2 <span style="color: #e67128;">"Croatia"</span>))
+(describe (get-country2 <span class="org-string">"Croatia"</span>))
 #&lt;COUNTRIES {1003AD23D1}&gt;
   [standard-object]
-(describe (get-country2 <span style="color: #e67128;">"Croatia"</span>))
+(describe (get-country2 <span class="org-string">"Croatia"</span>))
 #&lt;COUNTRY-N {100593DF03}&gt;
   [standard-object]
 
-Slots with <span style="color: #23d7d7;">:INSTANCE</span> allocation:
+Slots with <span class="org-builtin">:INSTANCE</span> allocation:
   ID                             = 2
-  NAME                           = <span style="color: #e67128;">"Croatia"</span>
-  REGION-ID                      = <span style="color: #e67128;">"Southern Europe"</span>
+  NAME                           = <span class="org-string">"Croatia"</span>
+  REGION-ID                      = <span class="org-string">"Southern Europe"</span>
 
 
-(region-id (get-country2 <span style="color: #e67128;">"Croatia"</span>))
-<span style="color: #e67128;">"Southern Europe"</span>
+(region-id (get-country2 <span class="org-string">"Croatia"</span>))
+<span class="org-string">"Southern Europe"</span>
 </pre>
 </div>
 
