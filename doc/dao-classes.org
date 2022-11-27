@@ -207,7 +207,7 @@ The slot definitions in a table have several additional optional keyword paramet
 - :col-import
   Specifies a function name to be called when you have to convert a slot value
   from a Postgresql datatype to a CL datatype that Postmodern does not automatically handle.
-  More about this [[file:postmodern.html#dao-export-and-import-functions][below]].
+  More about this [[file:dao-classes.html#dao-export-and-import-functions][below]].
 
 - :col-name
   You can use the :col-name initarg (whose unevaluated value will be passed to to-sql-name)
@@ -266,7 +266,6 @@ The slot definitions in a table have several additional optional keyword paramet
       (:table-name usersr))
   #+end_src
 
-- :col-
 ** Table options
 :PROPERTIES:
 :CUSTOM_ID: class-dao-class-slots-table-options
@@ -309,11 +308,25 @@ There may be times when the types of values in a dao slot do not have comparable
 
 One method would be to use text columns or jsonb columns in Postgresql and have functions that convert as necessary going back and forth. In the following example we will use text columns in Postgresql and write CL list data to string when we "export" the data to Postgresql and then convert from string when we "import" the data from Postgresql into a dao-class instance.
 
-Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import. These parameters refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot on import from the database.
+One use of the col-import and col-export capabilities is with respect to enums: storing a CL enum as text in the database and then "re-symbolizing them" them again when the DAO classes are read.
 
-To make things slightly more interesting, we have two slots which are going to contain
-lists, but one will export to a Postgresql column that contains strings and the other
-will export to a Postgresql column that contains arrays of integers.
+Consider the following dao-class definition. We have added additional column keyword parameters :col-export and :col-import. These parameters refer to functions which will convert the values from that slot to a valid Postgresql type (in our example, a string) on export to the database and from that Postgresql type to the type we want in this slot on import from the database (in this example a symbol). NOTE that you use an unquoted symbol for the functions being specified in :col-export and :col-import.
+
+#+begin_src lisp
+  (defclass orchard ()
+  ((id :col-type integer  :col-identity t :accessor id :col-primary-key t)
+   (name :col-type text :col-unique t :col-check (:<> 'name "")
+         :initarg :name :accessor name)
+   (orchard-type :col-type orchard_type_enum
+               :initarg :orchard-type :accessor orchard-type
+               :col-import intern
+               :col-export string))
+  (:metaclass dao-class)
+  (:table-name orchards))
+#+end_src
+Here we have the benefit that our export and import functions are already predefined by CL.
+
+To make things slightly more interesting, we create a different dao which has two slots which are going to contain lists, but one will export to a Postgresql column that contains strings and the other will export to a Postgresql column that contains arrays of integers.
 #+begin_src lisp
   (defclass listy ()
     ((id :col-type integer :col-identity t :accessor id :col-primary-key t)

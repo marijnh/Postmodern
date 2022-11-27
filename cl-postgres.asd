@@ -16,7 +16,7 @@
   :author "Marijn Haverbeke <marijnh@gmail.com>"
   :maintainer "Sabra Crolleton <sabra.crolleton@gmail.com>"
   :license "zlib"
-  :version "1.33.6"
+  :version "1.33.7"
   :depends-on ("md5" "split-sequence" "ironclad" "cl-base64" "uax-15"
                      (:feature (:or :allegro :ccl :clisp :genera
                                 :armedbear :cmucl :lispworks)

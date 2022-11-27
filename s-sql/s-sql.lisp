@@ -82,6 +82,87 @@ must appear in the order defined."
                       words))
        ,@body)))
 
+(defgeneric to-s-sql-string (arg)
+  (:documentation "Convert a Lisp value to its textual unescaped SQL
+representation. Returns a second value indicating whether this value should be
+escaped if it is to be put directly into a query. Generally any string is going
+to be designated to be escaped. This method is different from cl-postgres:to-sql-string
+only with respect to its handling of cons lists. That method had been doing double
+duty and now it is limited to passing parameters.
+
+You can define to-s-sql-string methods for your own datatypes.")
+  (:method ((arg string))
+    (values arg t))
+  (:method ((arg vector))
+    (if (typep arg '(vector (unsigned-byte 8)))
+        (values (cl-postgres::escape-bytes arg) t)
+        (values
+         (with-output-to-string (out)
+           (write-char #\{  out)
+           (loop :for sep := "" :then #\, :for x :across arg :do
+              (princ sep out)
+              (multiple-value-bind (string escape) (to-s-sql-string x)
+                (if escape (cl-postgres::write-quoted string out)
+                    (write-string string out))))
+           (write-char #\} out))
+         t)))
+  (:method ((arg cons))                 ;lists, but not nil
+    (if (alexandria:proper-list-p arg)
+        (values
+            (with-output-to-string (out)
+              (write-char #\(  out)
+              (loop :for sep := "" :then #\, :for x :in arg :do
+                (princ sep out)
+                (multiple-value-bind (string escape) (to-s-sql-string x)
+                  (if escape (cl-postgres::write-quoted string out)
+                      (cl-postgres::write-string string out))))
+              (write-char #\) out))
+            nil)
+        (error "Value ~S can not be converted to an SQL literal." arg)))
+  (:method ((arg array))
+    (values
+     (with-output-to-string (out)
+       (labels ((recur (dims off)
+                  (write-char #\{ out)
+                  (if (cdr dims)
+                      (let ((factor (reduce #'* (cdr dims))))
+                        (loop :for i :below (car dims) :for sep := ""
+                                :then #\, :do
+                           (princ sep out)
+                           (recur (cdr dims) (+ off (* factor i)))))
+                      (loop :for sep := "" :then #\, :for i :from off
+                              :below (+ off (car dims)) :do
+                         (princ sep out)
+                         (multiple-value-bind (string escape)
+                             (to-s-sql-string (row-major-aref arg i))
+                           (if escape (cl-postgres::write-quoted string out)
+                               (write-string string out)))))
+                  (write-char #\} out)))
+         (recur (array-dimensions arg) 0)))
+     t))
+  (:method ((arg integer))
+    (princ-to-string arg))
+  (:method ((arg float))
+    (format nil "~f" arg))
+  #-clisp (:method ((arg double-float)) ;; CLISP doesn't allow methods on double-float
+            (format nil "~,,,,,,'EE" arg))
+  (:method ((arg ratio))
+    (with-output-to-string (result)
+      ;; PostgreSQL happily handles 200+ decimal digits, but the SQL standard
+      ;; only requires 38 digits from the NUMERIC type, and Oracle also doesn't
+      ;; handle more. For practical reasons we also draw the line there. If
+      ;; someone needs full rational numbers then
+      ;; 200 wouldn't help them much more than 38...
+      (cl-postgres::write-ratio-as-floating-point arg result 38)))
+  (:method ((arg (eql t)))
+    "true")
+  (:method ((arg (eql nil)))
+    "false")
+  (:method ((arg (eql :null)))
+    "NULL")
+  (:method ((arg t))
+    (error "Value ~S can not be converted to an SQL literal." arg)))
+
 (defun to-sql-name (name &optional (escape-p *escape-sql-names-p*)
                            (ignore-reserved-words nil))
   "Convert a symbol or string into a name that can be a sql table, column, or
@@ -96,8 +177,9 @@ Ignore-reserved-words is only used internally for column names which are allowed
 to be reserved words, but it is not recommended."
   (declare (optimize (speed 3) (debug 0)))
   (let ((*print-pretty* nil)
-        (name (if (and (consp name) (eq (car name) 'quote) (equal (length name)
-                                                                  2))
+        (name (if (and (consp name)
+                       (eq (car name) 'quote)
+                       (equal (length name) 2))
                   (string (cadr name))
                   (string name))))
     (with-output-to-string (*standard-output*)
@@ -280,8 +362,11 @@ Symbols will be converted to SQL names. Examples:
         (call-next-method)
         (format nil "~:['{}'~;ARRAY[~:*~{~A~^, ~}]~]"
                 (map 'list 'sql-escape arg))))
+  (:method ((arg cons))
+    (format nil "(~{~A~^, ~})"
+            (map 'list 'sql-escape arg)))
   (:method ((arg t))
-    (multiple-value-bind (string escape) (cl-postgres:to-sql-string arg)
+    (multiple-value-bind (string escape) (to-s-sql-string arg)
       (if escape
           (sql-escape-string string (and (not (eq escape t)) escape))
           string))))
@@ -290,7 +375,7 @@ Symbols will be converted to SQL names. Examples:
 
 (defun sql-expand (arg)
   "Compile-time expansion of forms into lists of stuff that evaluate
-to strings (which will form a SQL query when concatenated). NEW :default will
+to strings (which will form a SQL query when concatenated).  :default will
 return ' DEFAULT' "
 
   (cond ((eq arg :default) (list " DEFAULT ")) ((and (consp arg) (keywordp (first arg)))
@@ -969,7 +1054,7 @@ Example:
 
 ;; This one has two interfaces. When the elements are known at
 ;; compile-time, they can be given as multiple arguments to the
-;; operator. When they are not, a single argument that evaulates to a
+;; operator. When they are not, a single argument that evaluates to a
 ;; list should be used.
 (def-sql-op :set (&rest elements)
   (if (not elements)

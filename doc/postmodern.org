@@ -406,6 +406,18 @@ Returns a list of plists containing the field name as a keyword and the selected
   (query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :plists)
   ((:ID 1 :INT4 2147483645 :TEXT "text one") (:ID 2 :INT4 0 :TEXT "text two"))
 #+END_SRC
+*** Columns
+:PROPERTIES:
+:CUSTOM_ID: column-type
+:END:
+Returns a single column as a list. The first example shows the default value returned without the :column qualifier. The second example shows the result with the column qualifier.
+#+begin_src lisp
+  (pomo:query (:select 'name :from 'employee :where (:< 'id 5)))
+(("Jason") ("Robert") ("Celia") ("Linda"))
+
+  (pomo:query (:select 'name :from 'employee :where (:< 'id 5)) :column)
+("Jason" "Robert" "Celia" "Linda")
+#+end_src
 *** Vectors
 :PROPERTIES:
 :CUSTOM_ID: vectors
@@ -522,6 +534,50 @@ As with :json-strs, this will also work for either simple-date or local-time tim
 :END:
 If the database returns information about the amount rows that were affected,
 such as with updating or deleting queries, this is returned as a second value.
+*** Parameterized Queries
+:PROPERTIES:
+:CUSTOM_ID: parameterized-queries
+:END:
+Query handles parameterized queries as well. The following examples show query with raw sql and then using s-sql and using the :column qualifier:
+#+begin_src lisp
+  (pomo:query "select name from employee where id < $1"
+              4 :column)
+("Jason" "Robert" "Celia")
+
+  (pomo:query "select name from employee where id < $1 and city= $2"
+              4 "Toronto" :column)
+("Celia")
+
+  (pomo:query (:select 'name :from 'employee :where (:< 'id '$1))
+              4 :column)
+("Jason" "Robert" "Celia")
+
+(pomo:query (:select 'name :from 'employee
+                           :where (:and (:< 'id '$1)
+                                        (:= 'city '$2)))
+            4 "Toronto" :column)
+("Celia")
+#+end_src
+IMPORTANT: LISTS AND VECTORS IN PARAMETERIZED QUERIES: For Postmodern versions before 1.33.7, you cannot use a list in a parameterized statement. You have to convert the list to a vector and use :any rather than :in. The following examples use raw sql.
+#+begin_src lisp
+  (query "select * from employee where id = any($1)"
+         #(1 3 4))
+#+end_src
+Beginning in Postmodern v. 1.33.7 you can also pass a list as the parmeterized value but you still must use :any rather than :in.
+#+begin_src lisp
+  (query "select * from employee where id = any($1)"
+         '(1 3 4))
+#+end_src
+Using s-sql, you need to use any* rather than any. See [[file:s-sql.html#sql-op-any][S-SQL]] for more details. The following examples also use the :column qualifier.
+#+begin_src lisp
+ (pomo:query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+             #(1 3) :column)
+  '("Jason" "Celia")
+  ;; Beginning with Postmodern version 1.33.7 you can also use lists
+ (pomo:query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+             '(1 3) :column)
+  '("Jason" "Celia")
+#+end_src
 
 ** macro execute (query &rest args)
 :PROPERTIES:

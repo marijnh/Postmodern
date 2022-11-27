@@ -29,6 +29,21 @@
       (is (equal (funcall 'select1 13)
                  13)))))
 
+(test binary-prepare-any-statement
+  (with-test-connection
+    (with-binary
+      (with-non-binary-fixture
+        (defprepared 'select1_any "select a from test_data where c = any($1)" :single)
+        (defprepared 'select2_any "select c from test_data where a = any($1)" :single)
+        (is (equal (funcall 'select1_any '("bar" "foobar" "foo"))
+                   1))
+        (is (equal (funcall 'select1_any #("bar" "foobar" "foo"))
+                   1))
+        (is (equal (funcall 'select2_any '(1 3 4))
+                   "foobar"))
+        (is (equal (funcall 'select2_any #(1 3 4))
+                   "foobar"))))))
+
 (test binary-prepare-tracking-statements-1
   (with-test-connection
     (with-binary

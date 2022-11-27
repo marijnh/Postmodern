@@ -67,6 +67,37 @@
     (format nil "~2,'0d:~2,'0d:~2,'0d~@[.~6,'0d~]"
             hours minutes seconds (if (zerop microseconds) nil microseconds))))
 
+(defmethod s-sql::to-s-sql-string ((arg date))
+  (multiple-value-bind (year month day) (decode-date arg)
+    (values (format nil "~4,'0d-~2,'0d-~2,'0d" year month day) "date")))
+
+(defmethod s-sql::to-s-sql-string ((arg timestamp))
+  (multiple-value-bind (year month day hour min sec ms) (decode-timestamp arg)
+    (values
+     (format nil "~4,'0d-~2,'0d-~2,'0d ~2,'0d:~2,'0d:~2,'0d~@[.~3,'0d~]"
+             year month day hour min sec (if (zerop ms) nil ms))
+     "timestamp")))
+
+(defmethod s-sql::to-s-sql-string ((arg interval))
+  (multiple-value-bind (year month day hour min sec ms) (decode-interval arg)
+    (if (= year month day hour min sec ms 0)
+        (values "0 milliseconds" "interval")
+        (flet ((not-zero (x) (if (zerop x) nil x)))
+          (values
+           (format nil "~@[~d years ~]~@[~d months ~]~@[~d days ~]~@[~d hours ~]~@[~d minutes ~]~@[~d seconds ~]~@[~d milliseconds~]"
+                   (not-zero year) (not-zero month) (not-zero day)
+                   (not-zero hour) (not-zero min) (not-zero sec) (not-zero ms))
+           "interval")))))
+
+(defmethod s-sql::to-s-sql-string ((arg time-of-day))
+  (with-accessors ((hours hours)
+                   (minutes minutes)
+                   (seconds seconds)
+                   (microseconds microseconds))
+      arg
+    (format nil "~2,'0d:~2,'0d:~2,'0d~@[.~6,'0d~]"
+            hours minutes seconds (if (zerop microseconds) nil microseconds))))
+
 ;;
 ;; install a copy of the readtable we just modified, leaving our
 ;; readtable safe from further modification, for better or worse.

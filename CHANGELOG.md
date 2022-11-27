@@ -1,3 +1,41 @@
+# Changelog 1.33.7
+Changes in cl-postgres and s-sql to allow use of plain proper lists in parameterized queries. Previously only vectors could be used. The following show examples using both vectors and lists in queries using both raw sql and s-sql.
+```lisp
+    (query "select name from employee where id = any($1)"
+         #(1 3 4))
+    (query "select name from employee where id = any($1)"
+         '(1 3 4))
+
+    (let ((emp-ids #(1 2)))
+       (query "select name from employee where id = any($1)"
+               emp-ids))
+
+    (let ((emp-ids '(1 2)))
+       (query "select name from employee where id = any($1)"
+               emp-ids))
+
+     (query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+             #(1 3) :column)
+      '("Jason" "Celia")
+
+     (query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+             '(1 3) :column)
+      '("Jason" "Celia")
+
+```
+
+Plain proper lists can also now be used in s-sql queries using :in. Previously you needed to use :set
+```lisp
+    (query (:select 'name :from 'employee :where (:in 'id (:set 1 3 4))))
+    '(("Jason") ("Celia") ("Linda"))
+```
+Now you can also provide a list.
+```lisp
+    (let ((emp-ids '(1 2)))
+        (query (:select 'name :from 'employee :where (:in 'id emp-ids))))
+    (("Jason") ("Robert"))
+```
+
 # Changelog 1.33.6
 Postmodern/cl-postgres now returns an empty array if Postgresql returns an empty array.
 

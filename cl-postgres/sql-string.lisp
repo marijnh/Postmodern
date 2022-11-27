@@ -83,7 +83,7 @@ You can define to-sql-string methods for your own datatypes if you want to be
 able to pass them to exec-prepared. When a non-NIL second value is returned,
 this may be T to indicate that the first value should simply be escaped as a
 string, or a second string providing a type prefix for the value. (This is
-used by S-SQL.)")
+different from s-sql::to-s-sql-string only in the handling of cons lists.")
   (:method ((arg string))
     (values arg t))
   (:method ((arg vector))
@@ -98,6 +98,18 @@ used by S-SQL.)")
               (if escape (write-quoted string out) (write-string string out))))
            (write-char #\} out))
          t)))
+  (:method ((arg cons))                 ;lists, but not nil
+    (if (alexandria:proper-list-p arg)
+        (values
+            (with-output-to-string (out)
+              (write-char #\{  out)
+              (loop :for sep := "" :then #\, :for x :in arg :do
+                (princ sep out)
+                (multiple-value-bind (string escape) (to-sql-string x)
+                  (if escape (write-quoted string out) (write-string string out))))
+              (write-char #\} out))
+            t)
+        (error "Value ~S can not be converted to an SQL literal." arg)))
   (:method ((arg array))
     (values
      (with-output-to-string (out)
