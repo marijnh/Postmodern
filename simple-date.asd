@@ -22,7 +22,7 @@
              (uiop:symbol-call :fiveam '#:run! :simple-date)))
 
 (defsystem "simple-date/postgres-glue"
-  :depends-on ("simple-date" "cl-postgres" "cl-postgres/tests")
+  :depends-on ("simple-date" "cl-postgres" "s-sql" "cl-postgres/tests")
   :components
   ((:module "simple-date"
             :components
