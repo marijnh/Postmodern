@@ -161,7 +161,7 @@ You can define to-s-sql-string methods for your own datatypes.")
   (:method ((arg (eql :null)))
     "NULL")
   (:method ((arg t))
-    (error "Value ~S can not be converted to an SQL literal." arg)))
+    (cl-postgres:to-sql-string arg)))
 
 (defun to-sql-name (name &optional (escape-p *escape-sql-names-p*)
                            (ignore-reserved-words nil))
