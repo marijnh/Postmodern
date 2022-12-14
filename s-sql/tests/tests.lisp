@@ -307,7 +307,60 @@ name."
   (is (equal (s-sql::to-s-sql-string '("alpha" "beta" "ceta" "Tau"))
              "(\"alpha\",\"beta\",\"ceta\",\"Tau\")"))
   (is (equal (s-sql::to-s-sql-string '(1 2 3 4))
-             "(1,2,3,4)")))
+             "(1,2,3,4)"))
+  (is (equal (s-sql::to-s-sql-string #("alpha" "beta" "ceta" "Tau"))
+             "{\"alpha\",\"beta\",\"ceta\",\"Tau\"}"))
+  (build-employee-table)
+  (with-test-connection
+    (is (equal (query (:select 'name 'salary
+                                :from 'employee
+                                :where (:in 'name '("Jason" "Robert"))))
+               '(("Jason" 40420) ("Robert" 14420))))
+    (is (equal (let ((emp-ids '(1 2)))
+                 (query (:select 'name
+                         :from 'employee
+                         :where (:in 'id emp-ids))))
+               '(("Jason") ("Robert"))))
+    (is (equal (let ((emp-ids '(1 2)))
+                 (query (:order-by
+                         (:select 'name
+                          :from 'employee
+                          :where (:not-in 'id emp-ids))
+                         'name)))
+               '(("Alison") ("Celia") ("Chris") ("David") ("James") ("Linda") ("Mary"))))
+    (is (equal (let ((a "Jason"))
+                 (query (:select 'name 'salary
+                                 :from 'employee
+                                 :where (:in 'name `(,a "Robert")))))
+               '(("Jason" 40420) ("Robert" 14420))))
+    (is (equal (query (:select 'name
+                            :from 'employee
+                            :where (:= 'id (:any* '$1)))
+                           #(1 3) :column)
+               '("Jason" "Celia")))
+    (is (equal (query (:select 'name
+                       :from 'employee
+                       :where (:= 'id (:any* '$1)))
+                      '(1 3) :column)
+               '("Jason" "Celia")))
+    (is (equal (let ((toy-query (vector 1 2)))
+                 (query (:select 'name
+                         :from 'employee
+                         :where (:= 'id (:any* '$1)))
+                        toy-query))
+               '(("Jason") ("Robert"))))
+    (is (equal (let ((toy-query (list 1 2)))
+                 (query (:select 'name
+                         :from 'employee
+                         :where (:= 'id (:any* '$1)))
+                        toy-query))
+               '(("Jason") ("Robert"))))
+    (is (equal (let ((toy-query '(1 2)))
+                 (query (:select 'name
+                         :from 'employee
+                         :where (:= 'id (:any* '$1)))
+                        toy-query))
+               '(("Jason") ("Robert"))))))
 
 (test sql-escape-string
   "Testing sql-escape-string. Escape string data so it can be used in a query."
