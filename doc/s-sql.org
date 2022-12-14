@@ -964,13 +964,13 @@ Beginning in Postmodern v. 1.33.7, you can use lists with :in.
 
 IMPORTANT REGARDING PARAMETERIZED QUERIES: For Postmodern versions before 1.33.7, you cannot use a list in a parameterized statement. You have to convert the list to a vector and use :any* rather than :in. See [[file:s-sql.html#sql-op-any][S-SQL#sql-op-any]] for more details.
 #+begin_src lisp
- (pomo:query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+ (query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
              #(1 3) :column)
   '("Jason" "Celia")
 #+end_src
   ;; Beginning with Postmodern version 1.33.7 you can also use lists
 #+begin_src lisp
- (pomo:query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
+ (query (:select 'name :from 'employee :where (:= 'id (:any* '$1)))
              '(1 3) :column)
   '("Jason" "Celia")
 #+end_src
