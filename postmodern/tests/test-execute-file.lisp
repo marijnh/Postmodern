@@ -16,10 +16,131 @@
 (defparameter *bad-file* (asdf:system-relative-pathname :postmodern "postmodern/tests/test-execute-file-broken.sql"))
 (defparameter *bad-file-with-transaction* (asdf:system-relative-pathname :postmodern "postmodern/tests/test-execute-file-broken-transaction.sql"))
 
+;; Test Parse Dollar Quoted String Constants
+(test basic-dollar-quote
+  (is (equal (with-input-from-string (s "$$Dianne's horse$$;;")
+               (pomo::parse-query s))
+             "$$Dianne's horse$$"))
+  (is (equal (with-input-from-string (s "SELECT $$ UPPER(';'); $$;")
+            (pomo::parse-query s))
+             "SELECT $$ UPPER(';'); $$"))
+  (is (equal (with-input-from-string (s "DO $$
+DECLARE
+  sql text;
+  dropped int;
+BEGIN
+  SELECT count(*)::int, 'DROP FUNCTION ' || string_agg(oid::regprocedure::text, '; DROP FUNCTION ')
+  FROM pg_proc
+    WHERE proname ='gateway_error' AND pg_function_is_visible(oid)
+  INTO dropped, sql;
+  IF dropped > 0 THEN
+    EXECUTE sql;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;")
+               (pomo::parse-query s))
+"DO $$
+DECLARE
+  sql text;
+  dropped int;
+BEGIN
+  SELECT count(*)::int, 'DROP FUNCTION ' || string_agg(oid::regprocedure::text, '; DROP FUNCTION ')
+  FROM pg_proc
+    WHERE proname ='gateway_error' AND pg_function_is_visible(oid)
+  INTO dropped, sql;
+  IF dropped > 0 THEN
+    EXECUTE sql;
+  END IF;
+END;
+$$ LANGUAGE plpgsql")))
+
+;; PARSE QUERY DOES NOT WORK WITH THE LAST TEST PROPERLY (loses the END;
+(test dollar-quote-with-matching-tags
+  (is (equal (with-input-from-string (s "$a$Dianne's horse$a$;;")
+               (pomo::parse-query s))
+             "$a$Dianne's horse$a$"))
+  (is (equal (with-input-from-string (s "$abc$Dianne's horse$abc$;;")
+               (pomo::parse-query s))
+             "$abc$Dianne's horse$abc$"))
+  (is (equal (with-input-from-string (s "$_$Dianne's horse$_$;;")
+                    (pomo::parse-query s))
+             "$_$Dianne's horse$_$"))
+  (is (equal (with-input-from-string (s "$.$Dianne's horse$.$;;")
+                    (pomo::parse-query s))
+             "$.$Dianne's horse$.$"))
+  (is (equal (with-input-from-string (s "BEGIN
+    RETURN ($1 ~ $q$[\t\r\n\v\\]$q$);
+END;;")
+               (pomo::parse-query s))
+             "BEGIN
+    RETURN ($1 ~ $q$[\t\r\n\v\\]$q$)"))
+)
+
+(test dollar-quote-with-mismatched-tags
+  (signals error (with-input-from-string (s "$a$Dianne's horse$b$;;")
+        (pomo::parse-query s)))
+  (signals error (with-input-from-string (s "$a$Dianne's horse$$;;")
+        (pomo::parse-query s)))
+  (signals error (with-input-from-string (s "$$Dianne's horse$b$;;")
+        (pomo::parse-query s))))
+
+(test dollar-quote-with-parameters-outside-tag
+  (is (equal (with-input-from-string (s "$abc$Dianne's horse$abc$ where id= $1;;")
+               (pomo::parse-query s))
+             "$abc$Dianne's horse$abc$ where id= $1"))
+  (is (equal (with-input-from-string (s "$abc$Dianne's horse$abc$ where id= $1 and name=$2;;")
+               (pomo::parse-query s))
+             "$abc$Dianne's horse$abc$ where id= $1 and name=$2")))
+
+(test dollar-quote-with-parameters-inside-tag
+  (is (equal (with-input-from-string (s "s $_$ ab = $1 cd $_$ s;;")
+               (pomo::parse-query s))
+             "s $_$ ab = $1 cd $_$ s")))
+
+(test dollar-quote-with-internal-statements
+  (is (equal (with-input-from-string (s "CREATE FUNCTION public.film_in_stock(p_film_id integer, p_store_id integer, OUT p_film_count integer) RETURNS SETOF integer
+    LANGUAGE sql
+    AS $_$
+     SELECT inventory_id
+     FROM inventory
+     WHERE film_id = $1
+     AND store_id = $2
+     AND inventory_in_stock(inventory_id);
+$_$;")
+               (pomo::parse-query s))
+             "CREATE FUNCTION public.film_in_stock(p_film_id integer, p_store_id integer, OUT p_film_count integer) RETURNS SETOF integer
+    LANGUAGE sql
+    AS $_$
+     SELECT inventory_id
+     FROM inventory
+     WHERE film_id = $1
+     AND store_id = $2
+     AND inventory_in_stock(inventory_id);
+$_$")))
+
+(test dollar-quote-with-internal-parameters
+  (is (equal (with-input-from-string (s "$abc$Dianne's $1 horse$abc$;;")
+               (pomo::parse-query s))
+             "$abc$Dianne's $1 horse$abc$")))
+
+;; PARSE QUERY DOES NOT WORK WITH THIS TEST PROPERLY
+(test dollar-quote-with-nested-tags
+  (is (equal (with-input-from-string (s "$function$
+BEGIN
+    RETURN ($1 ~ $q$ something here $q$);
+END;
+$function$;")
+               (pomo::parse-query s))
+"$function$
+BEGIN
+    RETURN ($1 ~ $q$ something here $q$);
+END;
+$function$")))
+
 ;; Test Parse Comments
 
 (test basic-multi-line1
-  (is (equal (postmodern::parse-comments " something1 /* comment */ something2")
+  (is (equal (pomo::parse-comments " something1 /* comment */ something2")
              " something1  something2")))
 
 (test basic-multi-line2

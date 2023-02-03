@@ -49,10 +49,13 @@
   (pop (parser-tags p)))
 
 (defmethod reset-state ((p parser) &key tagp)
-  "Depending on the current tags stack, set P state to either :eat or :eqt"
+  "Depending on the current tags stack, set P state to :eat, :ett or :eqt"
   (setf (parser-state p)
         (cond ((null (parser-tags p)) :eat)
-              (tagp :ett)
+              ((or tagp
+                   (> (length (parser-tags p))
+                      0))
+               :ett)
               (t :eqt))))
 
 #|
@@ -143,7 +146,8 @@ should return
                  ((:eat :eqt :edq)
                   (write-char char (parser-stream state)))
 
-                 (:tag (push-new-tag state))
+                 (:tag
+                  (push-new-tag state))
 
                  (:eot                 ; check the tag stack
                   (cond ((= 1 (length (parser-tags state)))
@@ -178,20 +182,23 @@ should return
                                 (setf (parser-state state) :eqt))
 
                                ((member (parser-state state) '(:tag))
-                                ;; only letters are allowed in tags
-                                (if (alpha-char-p char)
-                                    (extend-current-tag state char)
+                                ;; any non-numeric characters are allowed in tags
+                                ;; numeric characters immediately following a $ indicates a parameter
+                                ;; not a tag
+                                (if
+                                 (not (digit-char-p char))
+                                 (extend-current-tag state char)
 
-                                    (progn
-                                      ;; not a tag actually: remove the
-                                      ;; parser-tags entry and push back its
-                                      ;; contents to the main output stream
-                                      (let ((tag (pop-current-tag state)))
-                                        (format (parser-stream state)
-                                                "$~a~c"
-                                                tag
-                                                char))
-                                      (reset-state state)))))))
+                                 (progn
+                                   ;; not a tag actually: remove the
+                                   ;; parser-tags entry and push back its
+                                   ;; contents to the main output stream
+                                   (let ((tag (pop-current-tag state)))
+                                     (format (parser-stream state)
+                                             "$~a~c"
+                                             tag
+                                             char))
+                                   (reset-state state)))))))
         :finally (return
                    (get-output-stream-string (parser-stream state))))
     (end-of-file (e)
