@@ -1,3 +1,15 @@
+# Changelog 1.33.8
+
+Dollar Quoted tags are allowed in files. Prior to Postmodern version 1.33.8 only
+alphabetic characters were allowed in tags. Postgresql documentation and industry
+practice allow any character to be in a dollar quoted tag. Postmodern version 1.33.8
+relaxes the alphabetic character requirement. The only limitation now is that digit
+characters cannot be in the first position in a tag.
+
+This version also fixes a bug in the postmodern function drop-role. Previously if a role
+owned objects in multiple databases, the drop-role function tried to drop the role before
+all owned objects were reassigned owners.
+
 # Changelog 1.33.7
 Changes in cl-postgres and s-sql to allow use of plain proper lists in parameterized queries. Previously only vectors could be used. The following show examples using both vectors and lists in queries using both raw sql and s-sql.
 ```lisp

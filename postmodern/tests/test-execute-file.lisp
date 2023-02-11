@@ -54,11 +54,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql")))
 
-;; PARSE QUERY DOES NOT WORK WITH THE LAST TEST PROPERLY (loses the END;
 (test dollar-quote-with-matching-tags
   (is (equal (with-input-from-string (s "$a$Dianne's horse$a$;;")
                (pomo::parse-query s))
              "$a$Dianne's horse$a$"))
+  (is (equal (with-input-from-string (s "$a$Dianne's horse$a$ ;;")
+               (pomo::parse-query s))
+             "$a$Dianne's horse$a$ "))
+  (is (equal (with-input-from-string (s "$a $Dianne's horse$a $ ;;")
+               (pomo::parse-query s))
+             "$a $Dianne's horse$a $ "))
   (is (equal (with-input-from-string (s "$abc$Dianne's horse$abc$;;")
                (pomo::parse-query s))
              "$abc$Dianne's horse$abc$"))
@@ -73,8 +78,7 @@ $$ LANGUAGE plpgsql")))
 END;;")
                (pomo::parse-query s))
              "BEGIN
-    RETURN ($1 ~ $q$[\t\r\n\v\\]$q$)"))
-)
+    RETURN ($1 ~ $q$[\t\r\n\v\\]$q$)")))
 
 (test dollar-quote-with-mismatched-tags
   (signals error (with-input-from-string (s "$a$Dianne's horse$b$;;")
@@ -89,6 +93,12 @@ END;;")
                (pomo::parse-query s))
              "$abc$Dianne's horse$abc$ where id= $1"))
   (is (equal (with-input-from-string (s "$abc$Dianne's horse$abc$ where id= $1 and name=$2;;")
+               (pomo::parse-query s))
+             "$abc$Dianne's horse$abc$ where id= $1 and name=$2"))
+  (is (equal (with-input-from-string (s "$abc$Dianne's horse$abc$ where id= $1 ;;")
+               (pomo::parse-query s))
+             "$abc$Dianne's horse$abc$ where id= $1 "))
+  (is (equal (with-input-from-string (s "$abc$Dianne's horse$abc$ where id= $1 and name=$2;; ")
                (pomo::parse-query s))
              "$abc$Dianne's horse$abc$ where id= $1 and name=$2")))
 
@@ -123,7 +133,6 @@ $_$")))
                (pomo::parse-query s))
              "$abc$Dianne's $1 horse$abc$")))
 
-;; PARSE QUERY DOES NOT WORK WITH THIS TEST PROPERLY
 (test dollar-quote-with-nested-tags
   (is (equal (with-input-from-string (s "$function$
 BEGIN
@@ -136,6 +145,19 @@ BEGIN
     RETURN ($1 ~ $q$ something here $q$);
 END;
 $function$")))
+
+(test dollar-quote-with-digit-tag
+  (is (equal (with-input-from-string (s "$a1$Dianne's $1 horse$a1$;;")
+               (pomo::parse-query s))
+             "$a1$Dianne's $1 horse$a1$"))
+  (is (equal (with-input-from-string (s "$a12$Dianne's $1 horse$a12$;;")
+               (pomo::parse-query s))
+             "$a12$Dianne's $1 horse$a12$"))
+  (is (equal (with-input-from-string (s "$a1$Dianne's $1 horse$a1$ ;;")
+               (pomo::parse-query s))
+             "$a1$Dianne's $1 horse$a1$ "))
+  (signals error (with-input-from-string (s "$1ab$Dianne's $1 horse$1ab$ ;;")
+                   (pomo::parse-query s))))
 
 ;; Test Parse Comments
 
