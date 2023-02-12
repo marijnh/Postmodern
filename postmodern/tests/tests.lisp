@@ -83,14 +83,18 @@
 (test application-name
       (with-application-connection
           (is (equal
-               (query "select distinct application_name from pg_stat_activity where application_name = 'george'"
+               (query "select distinct application_name from pg_stat_activity
+                       where application_name = 'george'"
                       :single)
                "george"))))
 
+
 (test connection-pool
-   (let* ((db-params (append (prompt-connection-to-postmodern-db-spec
-                                 (cl-postgres-tests:prompt-connection)) '(:pooled-p t)))
+  (let* ((db-params (append (prompt-connection-to-postmodern-db-spec
+                             (cl-postgres-tests:prompt-connection))
+                            '(:pooled-p t)))
          (pooled (apply 'connect db-params)))
+    (format t "~%test-connection-pool db-params ~a" db-params)
     (disconnect pooled)
     (let ((pooled* (apply 'connect db-params)))
       (is (eq pooled pooled*))
@@ -100,6 +104,55 @@
       (is (not (eq pooled pooled*)))
       (disconnect pooled*))
     (clear-connection-pool)))
+
+(defun create-pool-fixture ()
+  (let ((connection-list nil)
+        (db nil))
+    (with-test-connection
+      (let ((dbs (list-databases :names-only t))
+            (base-connection (subseq (prompt-connection-to-postmodern-db-spec
+                                      (cl-postgres-tests:prompt-connection))
+                                     0 6)))
+        (setf base-connection (append base-connection '(:use-ssl :try :pooled-p t)))
+        (loop for y from 0 to 3
+              do (setf db (format nil "tpssl~a" y))
+                 (when (not (member db dbs :test #'equal))
+                   (query (format nil "create database ~a" db)))
+                 (let ((conn (append (list db) (subseq base-connection 1 10))))
+                   (push conn connection-list)
+                   (pomo:with-connection conn
+                     (query (format nil
+                                    "create table if not exists testtable~a (id integer,comment text)"
+                                    y))
+                     (query (format nil
+                                    "insert into testtable~a (id,comment) values (~a,'comment ~a')"
+                                    y y y)))))))))
+
+(defun drop-pool-fixture ()
+  (with-test-connection
+    (loop for x from 0 to 3 do
+      (when (database-exists-p (format nil "tpssl~a" x))
+        (query (format nil "drop database tpssl~a" x))))))
+
+(test connection-pool-multiple-dbs
+  (create-pool-fixture)
+  (let ((ran-list '(2 2 1 2 0 0 2 1 1 1 0 1 1 2 0 1 1 0 0 0 0))
+        (connection-list nil)
+        (db nil))
+    (with-test-connection
+      (let ((base-connection (subseq (prompt-connection-to-postmodern-db-spec
+                                      (cl-postgres-tests:prompt-connection))
+                                     0 6)))
+        (setf base-connection (append base-connection '(:use-ssl :try :pooled-p t)))
+        (loop for y from 0 to 3
+              do (setf db (format nil "tpssl~a" y))
+                 (let ((conn (append (list db) (subseq base-connection 1 10))))
+                   (push conn connection-list)))
+        (loop for x in ran-list do
+          (pomo:with-connection (elt connection-list 0)
+            (is (pomo:list-tables t)))))
+      (clear-connection-pool)))
+  (drop-pool-fixture))
 
 (test reconnect
   (with-test-connection
@@ -122,7 +175,8 @@
   (with-test-connection
     (destructuring-bind (a b c d e f)
         (query (:select 22 (:type 44.5 double-precision) "abcde" t (:type 9/2 (numeric 5 2))
-                        (:[] #("A" "B") 2)) :row)
+                        (:[] #("A" "B") 2))
+               :row)
       (is (eql a 22))
       (is (eql b 44.5d0))
       (is (string= c "abcde"))
@@ -134,7 +188,8 @@
   (with-test-connection
     (is (= (query (:select '*
                    :from (:as (:select (:as 1 'as)) 'where)
-                   :where (:= 'where.as 1)) :single!)
+                   :where (:= 'where.as 1))
+                  :single!)
            1))))
 
 (test time-types

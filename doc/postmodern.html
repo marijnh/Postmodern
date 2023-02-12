@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-11-06 Sun 10:57 -->
+<!-- 2023-02-11 Sat 09:29 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Postmodern Reference Manual</title>
@@ -3773,6 +3773,19 @@ print the count of the query and the query to the REPL.
 The default setting is to remove sql comments from the file before executing
 the sql code. If that causes problems, the remove-comments parameter can be
 set to nil.
+</p>
+
+<p>
+Dollar Quoted tags are allowed in files. Prior to Postmodern version 1.33.8 only
+alphabetic characters were allowed in tags. Postgresql documentation and industry
+practice allow any character to be in a dollar quoted tag. Postmodern version 1.33.8
+relaxes the alphabetic character requirement. The only limitation now is that digit
+characters cannot be in the first position in a tag.
+</p>
+
+<p>
+Execute-file does not support copy-in or copy-out in a file. If you have files
+with that requirement, you will need to fall back on another solution.
 </p>
 
 <p>

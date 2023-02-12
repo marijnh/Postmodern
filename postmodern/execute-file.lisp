@@ -1,6 +1,11 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
+(defun disallowed-tag-char-p (char)
+  "Returns t if char is a character we are going to disallow in a tag"
+  (if (member char '(#\space #\tab #\newline #\linefeed #\page #\return #\backspace #\rubout))
+      t nil))
+
 (defstruct parser
   filename
   (stream  (make-string-output-stream))
@@ -49,10 +54,13 @@
   (pop (parser-tags p)))
 
 (defmethod reset-state ((p parser) &key tagp)
-  "Depending on the current tags stack, set P state to either :eat or :eqt"
+  "Depending on the current tags stack, set P state to :eat, :ett or :eqt"
   (setf (parser-state p)
         (cond ((null (parser-tags p)) :eat)
-              (tagp :ett)
+              ((or tagp
+                   (> (length (parser-tags p))
+                      0))
+               :ett)
               (t :eqt))))
 
 #|
@@ -137,13 +145,13 @@ should return
                            (:eat    (setf (parser-state state) :tag))
                            (:ett    (setf (parser-state state) :tag))
                            (:tag    (setf (parser-state state) :eot)))
-
                ;; we act depending on the NEW state
                (case (parser-state state)
                  ((:eat :eqt :edq)
                   (write-char char (parser-stream state)))
 
-                 (:tag (push-new-tag state))
+                 (:tag
+                  (push-new-tag state))
 
                  (:eot                 ; check the tag stack
                   (cond ((= 1 (length (parser-tags state)))
@@ -151,10 +159,10 @@ should return
                          (format-current-tag state)
                          (reset-state state :tagp t))
 
-                        (t          ; are we closing the current tag?
+                        (t           ; are we closing the current tag?
                          (if (maybe-close-tags state)
-                             (reset-state state :tagp t)
-
+                             (progn
+                               (reset-state state :tagp t))
                              ;; not the same tags, switch state back
                              ;; don't forget to add the opening tag
                              (progn
@@ -167,7 +175,6 @@ should return
 
               (otherwise (cond ((member (parser-state state) '(:eat :eqt :ett :edq))
                                 (write-char char (parser-stream state)))
-
                                ;; see
                                ;; http://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS-ESCAPE
                                ;; we re-inject whatever we read in the \x
@@ -178,25 +185,34 @@ should return
                                 (setf (parser-state state) :eqt))
 
                                ((member (parser-state state) '(:tag))
-                                ;; only letters are allowed in tags
-                                (if (alpha-char-p char)
-                                    (extend-current-tag state char)
+                                ;; any non-numeric characters are allowed in tags
+                                ;; numeric characters immediately following a $ indicates a parameter
+                                ;; not a tag
+                                (if
+                                 (or (not (digit-char-p char))
+                                     (> (length (first (parser-tags state))) 0))
+                                 (extend-current-tag state char)
 
-                                    (progn
-                                      ;; not a tag actually: remove the
-                                      ;; parser-tags entry and push back its
-                                      ;; contents to the main output stream
-                                      (let ((tag (pop-current-tag state)))
-                                        (format (parser-stream state)
-                                                "$~a~c"
-                                                tag
-                                                char))
-                                      (reset-state state)))))))
+                                 (progn
+                                   ;; not a tag actually: remove the
+                                   ;; parser-tags entry and push back its
+                                   ;; contents to the main output stream
+
+                                   (let ((tag (pop-current-tag state)))
+                                     (format (parser-stream state)
+                                             "$~a~c"
+                                             tag
+                                             char))
+                                   (reset-state state)))))))
         :finally (return
                    (get-output-stream-string (parser-stream state))))
     (end-of-file (e)
       (unless (eq :eat (parser-state state))
-        (error e)))))
+        (error
+         (format nil "~a~%~%~a" e
+                 "In this context, look particularly for mismatched dollar quoted tags or a dollar quoted tag
+that starts with a digit. Digits in a dollar quoted tag should not be in the first position
+or they will be confused with parameterized variable positions."))))))
 
 (defstruct comment-parser
   buffer
@@ -223,7 +239,7 @@ should return
 (defun parse-comments (str &optional (state (make-comment-parser)))
   (loop for char across str
         do
-;           (format t "~a ~a~%" char (char-code char))
+
            (case char
              (#\' (case (first (comment-parser-state state))
                     (:base (push :sq (comment-parser-state state))
@@ -247,7 +263,7 @@ should return
                     (:slc )
                     (:sq (write-char char (comment-parser-stream state)))
                     (:sb? (setf (first (comment-parser-state state)) :slc))
-                    (:mb?  ; faked multi-line beginning, return to earlier state
+                    (:mb? ; faked multi-line beginning, return to earlier state
                      (pop (comment-parser-state state))
                      (when (eq (first (comment-parser-state state))
                                :base)
@@ -263,10 +279,10 @@ should return
                            (write-char char (comment-parser-stream state)))
                           (:sb? (pop (comment-parser-state state))
                            (write-char char (comment-parser-stream state)))
-                          (:mb?  ; faked multi-line beginning, return to earlier state
+                          (:mb? ; faked multi-line beginning, return to earlier state
                            (pop (comment-parser-state state))
                            (when (eq (first (comment-parser-state state))
-                               :base)
+                                     :base)
                              (write-char #\/ (comment-parser-stream state))
                              (write-char #\/ (comment-parser-stream state))))
                           (:me? (pop (comment-parser-state state))
@@ -284,8 +300,8 @@ should return
                        (write-char #\/ (comment-parser-stream state))))
                     (:mlc  (push :mb? (comment-parser-state state))
                      )
-                    (:me? ; actual ending of a multi-line comment
-                         ; need to pop both the :me? amd tej :mlc
+                    (:me?     ; actual ending of a multi-line comment
+                                        ; need to pop both the :me? amd tej :mlc
                      (pop (comment-parser-state state))
                      (pop (comment-parser-state state)))))
              (#\* (case (first (comment-parser-state state))
@@ -294,7 +310,7 @@ should return
                     (:mlc ; maybe starting the end of a nested multi-line comment
                      (push :me? (comment-parser-state state)))
                     (:sq (write-char char (comment-parser-stream state)))
-                    (:me? ; fake ending of a multi-line comment
+                    (:me?        ; fake ending of a multi-line comment
                      (pop (comment-parser-state state))
                      (when (eq (first (comment-parser-state state)) :mlc)
                        (push :me? (comment-parser-state state))))))
@@ -307,9 +323,9 @@ should return
                                      :base)
                              (write-char #\/ (comment-parser-stream state))
                              (write-char char (comment-parser-stream state))))
-                          (:me? ; fake ending of a multi-line comment
+                          (:me?  ; fake ending of a multi-line comment
                            (pop (comment-parser-state state)))
-                          (:sb? ; fake single line comment
+                          (:sb?         ; fake single line comment
                            (pop (comment-parser-state state))
                            (write-char #\- (comment-parser-stream state))
                            (write-char char (comment-parser-stream state)))
