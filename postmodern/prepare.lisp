@@ -2,9 +2,9 @@
 (in-package :postmodern)
 
 (define-condition mismatched-parameter-types (error)
-  ((prepared-statement-types :initarg prepared-statement-types
+  ((prepared-statement-types :initarg :prepared-statement-types
                              :reader prepared-statement-types)
-   (parameter-types :initarg parameter-types
+   (parameter-types :initarg :parameter-types
                     :reader parameter-types))
   (:report (lambda (condition stream)
              (format stream "Parameter types ~a do not match prepared statement parameter types ~a"
@@ -70,15 +70,17 @@ overwrite unless postgresql throws a duplicate-prepared-statement error."
                                          (ensure-prepared *database* statement-id
                                                           query overwrite params))
                                         (t
-                                         (let ((prepared-statement-param-types
-                                                 (cl-postgres:parameter-list-types
-                                                  (second
-                                                   (find-postmodern-prepared-statement
-                                                    statement-id))))
-                                               (param-types
-                                                 (cl-postgres::parameter-list-types params)))
-                                           (if (equal prepared-statement-param-types
-                                                      param-types)
+                                         (let* ((saved-prepared-statement
+                                                  (find-postmodern-prepared-statement
+                                                   statement-id))
+                                                (prepared-statement-param-types
+                                                  (cl-postgres:parameter-list-types
+                                                   (second saved-prepared-statement)))
+                                                (param-types
+                                                  (cl-postgres::parameter-list-types params)))
+                                           (if (or (null saved-prepared-statement)
+                                                   (equal prepared-statement-param-types
+                                                          param-types))
                                                (ensure-prepared *database* statement-id
                                                                 query overwrite params)
                                                (error
