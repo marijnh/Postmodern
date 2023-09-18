@@ -1,6 +1,29 @@
 ;;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: POSTMODERN; -*-
 (in-package :postmodern)
 
+(defparameter *direct-column-slot* nil
+  "This is used to communicate the fact that a slot is a column to
+  effective-slot-definition-class.")
+
+(defclass effective-column-slot (standard-effective-slot-definition)
+  ((direct-slot :initform *direct-column-slot* :reader slot-column)))
+
+(defclass direct-column-slot (standard-direct-slot-definition)
+  ((col-type :initarg :col-type :reader column-type)
+   (col-default :initarg :col-default :reader column-default)
+   (col-identity :initarg :col-identity :reader column-identity)
+   (col-unique :initarg :col-unique :reader column-unique)
+   (col-collate :initarg :col-collate :reader column-collate)
+   (col-primary-key :initarg :col-primary-key :reader column-primary-key)
+   (col-interval :initarg :col-interval :reader column-interval)
+   (col-check :initarg :col-check :reader column-check)
+   (col-references :initarg :col-references :reader column-references)
+   (col-export :initarg :col-export :initform nil :reader column-export)
+   (col-import :initarg :col-import :initform nil :reader column-import)
+   (ghost :initform nil :initarg :ghost :reader ghost)
+   (sql-name :reader slot-sql-name))
+  (:documentation "Type of slots that refer to database columns."))
+
 (defclass dao-class (standard-class)
   ((direct-keys :initarg :keys :initform nil :reader direct-keys)
    (effective-keys :reader dao-keys)
@@ -216,21 +239,6 @@ such a class)."
           (list (find-primary-key-column class))))
   (build-dao-methods class))
 
-(defclass direct-column-slot (standard-direct-slot-definition)
-  ((col-type :initarg :col-type :reader column-type)
-   (col-default :initarg :col-default :reader column-default)
-   (col-identity :initarg :col-identity :reader column-identity)
-   (col-unique :initarg :col-unique :reader column-unique)
-   (col-collate :initarg :col-collate :reader column-collate)
-   (col-primary-key :initarg :col-primary-key :reader column-primary-key)
-   (col-interval :initarg :col-interval :reader column-interval)
-   (col-check :initarg :col-check :reader column-check)
-   (col-references :initarg :col-references :reader column-references)
-   (col-export :initarg :col-export :initform nil :reader column-export)
-   (col-import :initarg :col-import :initform nil :reader column-import)
-   (ghost :initform nil :initarg :ghost :reader ghost)
-   (sql-name :reader slot-sql-name))
-  (:documentation "Type of slots that refer to database columns."))
 
 (defmethod shared-initialize :after ((slot direct-column-slot) slot-names
                                      &key col-type col-default
@@ -253,12 +261,6 @@ such a class)."
       (find-class 'direct-column-slot)
       (call-next-method)))
 
-(defparameter *direct-column-slot* nil
-  "This is used to communicate the fact that a slot is a column to
-  effective-slot-definition-class.")
-
-(defclass effective-column-slot (standard-effective-slot-definition)
-  ((direct-slot :initform *direct-column-slot* :reader slot-column)))
 
 (defmethod compute-effective-slot-definition ((class dao-class)
                                               name
