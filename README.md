@@ -4,7 +4,7 @@ A Common Lisp PostgreSQL programming interface
 
 ---
 
-Version 1.33.8
+Version 1.33.9
 
 Postmodern is a Common Lisp library for interacting with [PostgreSQL](http://www.postgresql.org) databases. It is under active development. Features are:
 
