@@ -1,3 +1,5 @@
+# Changelog 1.33.9
+Fixed bug in thread handling when using binary parameters
 # Changelog 1.33.8
 
 Dollar Quoted tags are allowed in files. Prior to Postmodern version 1.33.8 only
