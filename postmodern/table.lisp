@@ -817,6 +817,7 @@ class, or be bound through with-column-writers."
         (column-map (gensym)))
     `(row-reader (,fields)
        (let ((,column-map (append *custom-column-writers*
+                                  (collect-import-functions (find-class ,type))
                                   (dao-column-map (find-class ,type)))))
          (loop :while (next-row)
                :do (let ((,type-var
