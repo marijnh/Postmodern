@@ -31,6 +31,8 @@
            #:exec-prepared
            #:field-name
            #:field-type
+           #:field-table
+           #:field-table-column
            #:row-reader
            #:def-row-reader
            #:next-row

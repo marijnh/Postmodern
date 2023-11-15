@@ -346,9 +346,19 @@ associated with this column."))
 You can, if you really want to, query the pg_types table to find out more about
 the types denoted by OIDs."))
 
+(defgeneric field-table (field)
+  (:documentation "This extracts the PostgreSQL TABLE OID associated
+with this column."))
+
+(defgeneric field-column (field)
+  (:documentation "This extracts the PostgreSQL column number associated
+with this column."))
+
 (defclass field-description ()
   ((name :initarg :name :accessor field-name)
    (type-id :initarg :type-id :accessor field-type)
+   (table-oid :initarg :table-id :accessor field-table)
+   (table-column :initarg :table-column :accessor field-table-column)
    (interpreter :initarg :interpreter :accessor field-interpreter)
    (receive-binary-p :initarg :receive-binary-p :reader field-binary-p))
   (:documentation "Description of a field in a query result."))
@@ -371,18 +381,20 @@ array of field-description objects."
              (type-modifier (read-uint4 socket))
              (format (read-uint2 socket))
              (interpreter (get-type-interpreter type-id)))
-        (declare (ignore table-oid column size type-modifier format)
+        (declare (ignore size type-modifier format)
                  (type string name)
                  (type (unsigned-byte 32) type-id))
         (setf (elt descriptions i)
               (if (interpreter-binary-p interpreter)
                   (make-instance 'field-description
                                  :name name :type-id type-id
+				 :table-id table-oid :table-column column
                                  :interpreter (type-interpreter-binary-reader
                                                interpreter)
                                  :receive-binary-p t)
                   (make-instance 'field-description
                                  :name name :type-id type-id
+				 :table-id table-oid  :table-column column
                                  :interpreter (type-interpreter-text-reader
                                                interpreter)
                                  :receive-binary-p nil)))))
