@@ -665,7 +665,7 @@ It is highly suggested that you do not use words that are reserved by Postgresql
 ## Feature Requests
 
 Postmodern is under active development so issues and feature requests should
-be flagged on [https://github.com/marijnh/Postmodern](Postmodern's site on github).
+be flagged on [Postmodern's site on github](https://github.com/marijnh/Postmodern).
 
 ## Resources
 
