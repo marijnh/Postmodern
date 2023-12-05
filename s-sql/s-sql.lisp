@@ -579,6 +579,9 @@ string."
 ;; hstore operators
 (register-sql-operators :2+-ary :-> :=> :? :?& :?\| :|<@| :|#=| :unary :%% :%#)
 
+;; cube operators
+(register-sql-operators :2+-ary :&& :|@>| :|<@| :-> :~> :<-> :<#> :<=>)
+
 ;;; sql-op :+, :*, :%, :&, :|, :| |, :and, :or, :=, :/, :!=, :<, :>, :<=, :>=,
 ;;;  :^, :union, :union-all,
 ;;;  :intersect, :intersect-all, :except, :except-all (&rest args)
