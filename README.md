@@ -4,7 +4,7 @@ A Common Lisp PostgreSQL programming interface
 
 ---
 
-Version 1.33.9
+Version 1.33.10
 
 Postmodern is a Common Lisp library for interacting with [PostgreSQL](http://www.postgresql.org) databases. It is under active development. Features are:
 
@@ -20,6 +20,7 @@ The biggest differences between this library and CLSQL/CommonSQL or cl-dbi are t
 
 ---
 
+- [Reference](#reference)
 - [Dependencies](#dependencies)
 - [License](#dependencies)
 - [Download and installation](#download-and-installation)
@@ -32,9 +33,30 @@ The biggest differences between this library and CLSQL/CommonSQL or cl-dbi are t
 - [Feature Requests](#feature-requests)
 - [Resources](#resources)
 - [Running tests](#running-tests)
-- [Reference](#reference)
 - [Caveats and to-dos](#caveats-and-to-dos)
 - [Resources](#resources)
+
+## Reference
+
+---
+
+The reference manuals for the different components of Postmodern are kept in separate files. For using the library in the most straightforward way, you only really need to read the Postmodern reference and glance over the S-SQL reference. The simple-date reference explains the time-related data types included in Postmodern, and the CL-postgres reference might be useful if you just want a low-level library for talking to a PostgreSQL server.
+
+- [Postmodern - Index Page](https://marijnhaverbeke.nl/postmodern/index.html)
+- [Postmodern](https://marijnhaverbeke.nl/postmodern/postmodern.html)
+- [S-SQL](https://marijnhaverbeke.nl/postmodern/s-sql.html)
+- [Simple-date](https://marijnhaverbeke.nl/postmodern/simple-date.html)
+- [CL-postgres](https://marijnhaverbeke.nl/postmodern/cl-postgres.html)
+
+Some specific topics in more detail:
+
+- [Array Notes](https://marijnhaverbeke.nl/postmodern/array-notes.html)
+- [Creating Tables](https://marijnhaverbeke.nl/postmodern/create-tables.html)
+- [Dao Classes](https://marijnhaverbeke.nl/postmodern/dao-classes.html)
+- [Dynamic Queries](https://marijnhaverbeke.nl/postmodern/dynamic-queries.html)
+- [Interval Notes](https://marijnhaverbeke.nl/postmodern/interval-notes.html)
+- [Isolation Notes](https://marijnhaverbeke.nl/postmodern/isolation-notes.html)
+- [S-SQL Examples](https://marijnhaverbeke.nl/postmodern/s-sql-examples.html)
 
 ## Dependencies
 
@@ -437,7 +459,7 @@ Next, to demonstrate a bit more of the S-SQL syntax, here is the query the utili
 
 sql is a macro that will simply compile a query, it can be useful for seeing how your queries are expanded or if you want to do something unexpected with them.
 
-As you can see, lists starting with keywords are used to express SQL commands and operators (lists starting with something else will be evaluated and then inserted into the query). Quoted symbols name columns or tables (keywords can also be used but might introduce ambiguities). The syntax supports subqueries, multiple joins, stored procedures, etc. See the S-SQL reference manual for a complete treatment.
+As you can see, lists starting with keywords are used to express SQL commands and operators (lists starting with something else will be evaluated and then inserted into the query). Quoted symbols name columns or tables (keywords can also be used but might introduce ambiguities). The syntax supports subqueries, multiple joins, stored procedures, etc. See the S-SQL reference manual for a complete treatment and the S-SQL Example pages.
 
 Finally, here is an example of the use of prepared statements:
 
@@ -460,28 +482,6 @@ The defprepared macro creates a function that takes the same amount of arguments
 Postmodern can use either md5 or scram-sha-256 authentication. Scram-sha-256 authentication is obviously more secure, but slower than md5, so take that into account if you are planning on opening and closing many connections without using a connection pooling setup..
 
 Other authentication methods have not been tested. Please let us know if there is a authentication method that you believe should be considered.
-
-## Reference
-
----
-
-The reference manuals for the different components of Postmodern are kept in separate files. For using the library in the most straightforward way, you only really need to read the Postmodern reference and glance over the S-SQL reference. The simple-date reference explains the time-related data types included in Postmodern, and the CL-postgres reference might be useful if you just want a low-level library for talking to a PostgreSQL server.
-
-- [Postmodern - Index Page](https://marijnhaverbeke.nl/postmodern/index.html)
-- [Postmodern](https://marijnhaverbeke.nl/postmodern/postmodern.html)
-- [S-SQL](https://marijnhaverbeke.nl/postmodern/s-sql.html)
-- [Simple-date](https://marijnhaverbeke.nl/postmodern/simple-date.html)
-- [CL-postgres](https://marijnhaverbeke.nl/postmodern/cl-postgres.html)
-
-Some specific topics in more detail:
-
-- [Array Notes](https://marijnhaverbeke.nl/postmodern/array-notes.html)
-- [Creating Tables](https://marijnhaverbeke.nl/postmodern/create-tables.html)
-- [Dao Classes](https://marijnhaverbeke.nl/postmodern/dao-classes.html)
-- [Dynamic Queries](https://marijnhaverbeke.nl/postmodern/dynamic-queries.html)
-- [Interval Notes](https://marijnhaverbeke.nl/postmodern/interval-notes.html)
-- [Isolation Notes](https://marijnhaverbeke.nl/postmodern/isolation-notes.html)
-
 
 ## Data Types
 
@@ -664,7 +664,8 @@ It is highly suggested that you do not use words that are reserved by Postgresql
 
 ## Feature Requests
 
-Postmodern is under active development so issues and feature requests should
+
+Postmodern is under periodic development so issues and feature requests should
 be flagged on [Postmodern's site on github](https://github.com/marijnh/Postmodern).
 
 ## Resources

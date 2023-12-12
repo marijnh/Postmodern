@@ -288,10 +288,32 @@ name."
              "RATIO"))
   (is (equal (sql-type-name 'float)
              "REAL"))
+  (signals error (sql-type-name '(A)))
+
   (signals error (sql-type-name 'array))
   (is (equal (sql-type-name 'array 'integer)
              "INTEGER[]"))
-  (signals error (sql-type-name 'array "boulder")))
+  (signals error (sql-type-name 'array "boulder"))
+  (is (equal (s-sql:sql-type-name 'A)
+             "A"))
+  (is (equal (sql-type-name 'int)
+             "INT"))
+  (is (equal (sql-type-name 'integer)
+             "INTEGER"))
+  (is (equal (sql-type-name 'numeric 2 3)
+             "NUMERIC(2, 3)"))
+  (is (equal (sql-type-name 'numeric)
+             "NUMERIC"))
+  (is (equal (sql-type-name 'vector 2 3)
+             "VECTOR(2, 3)"))
+  (is (equal (s-sql::to-type-name 'some-symbol)
+             "SOME_SYMBOL"))
+  (is (equal (s-sql:sql-type-name 'some-symbol 1 3)
+             "SOME_SYMBOL(1, 3)"))
+  (is (equal (s-sql::sql-type-name 'timestamp-with-time-zone)
+             "TIMESTAMP WITH TIME ZONE"))
+  (is (equal (s-sql::sql-type-name 'timestamp-without-time-zone)
+             "TIMESTAMP WITHOUT TIME ZONE")))
 
 (test to-type-name
   "Testing to-type-name. Turn a Lisp type expression into an SQL typename."
@@ -299,9 +321,31 @@ name."
              "REAL"))
   (is (equal (s-sql::to-type-name '(string "5"))
              "CHAR(5)"))
+  (is (equal (s-sql::to-type-name '(string 5))
+             "CHAR(5)"))
   (is (equal (let ((name 'float)) (s-sql::to-type-name name))
              "REAL"))
-  (signals error (let ((name "float")) (s-sql::to-type-name name))))
+  (is (equal (s-sql::to-type-name 'double-float)
+             "DOUBLE PRECISION"))
+  (is (equal (s-sql::to-type-name '(double-float 3 2))
+             "DOUBLE PRECISION"))
+  (is (equal (s-sql::to-type-name '(numeric 3 2))
+             "NUMERIC(3, 2)"))
+  (is (equal (s-sql::to-type-name (list 'numeric 3 2))
+             "NUMERIC(3, 2)"))
+  (signals error (let ((name "float"))
+                   (s-sql::to-type-name name)))
+  (is (equal (s-sql::to-type-name 'some-symbol)
+             "SOME_SYMBOL"))
+  ;; Note in the following result that the string is not denominated as a string.
+  (is (equal (s-sql::to-type-name '(some-symbol "amber" 3))
+             "SOME_SYMBOL(amber, 3)"))
+  (is (equal (s-sql::to-type-name '(:vector 3))
+             "VECTOR(3)"))
+  (is (equal (s-sql::to-type-name '(:vector 3 5))
+             "VECTOR(3, 5)"))
+  (is (equal (s-sql::sql-type-name 'timestamp-without-time-zone)
+             "TIMESTAMP WITHOUT TIME ZONE")))
 
 (test s-sql-string
   (is (equal (s-sql::to-s-sql-string '("alpha" "beta" "ceta" "Tau"))
@@ -418,7 +462,9 @@ to strings \(which will form an SQL query when concatenated)."
   (is (equal (s-sql::sql-expand '((:default "Triumph")))
              '((SQL-ESCAPE ((:DEFAULT "Triumph"))))))
   (is (equal (s-sql::sql-expand '((:criteria "integers") (:default "Triumph")))
-             '((SQL-ESCAPE ((:CRITERIA "integers") (:DEFAULT "Triumph")))) )))
+             '((SQL-ESCAPE ((:CRITERIA "integers") (:DEFAULT "Triumph")))) ))
+  (is (equal (s-sql::sql-expand '((:= fastupdate off) (:= fillfactor 70)))
+             '((SQL-ESCAPE ((:= FASTUPDATE OFF) (:= FILLFACTOR 70)))))))
 
 (test sql-expand-list
   "Testing sql-expand-list. Expand a list of elements, adding a separator in between them."
@@ -492,7 +538,14 @@ to strings \(which will form an SQL query when concatenated)."
 (test expand-sql-op
   "Testing expand-sql-op"
   (is (equal (s-sql::expand-sql-op :max '(1 2 3))
-             '("MAX(" "1" ", " "2" ", " "3" ")"))))
+             '("MAX(" "1" ", " "2" ", " "3" ")")))
+  (is (equal (s-sql::expand-sql-op := '(a 2))
+             '("(" (SQL-ESCAPE A) " = " "2" ")")))
+  (is (equal (s-sql::expand-sql-op := '('a 2))
+             '("(" "a" " = " "2" ")")))
+  ;; Compiling the test will trigger a warning that variable A is defined and not used.
+  (is (equal (let ((a 2)) (s-sql::expand-sql-op := '(a 2)))
+             '("(" (SQL-ESCAPE A) " = " "2" ")"))))
 
 (test make-expander
   "Testing make-expander"
@@ -513,6 +566,20 @@ to strings \(which will form an SQL query when concatenated)."
              '("(" "unary5" " " "E'like'" ")")))
   (is (equal (funcall (s-sql::make-expander :n-or-unary "unary5") '("like" "a"))
              '("(" "E'like'" " unary5 " "E'a'" ")"))))
+
+(test create-composite-type
+  "Testing create-composite-type"
+  (is (equal (sql (:create-composite-type 'inventory-item
+                                          (r double-float)
+                                          (i double precision)))
+             "(CREATE TYPE inventory_item AS (r DOUBLE PRECISION, i DOUBLE PRECISION)"))
+  (is (equal (sql (:create-composite-type 'inventory-item (r string) (i (numeric 5 2))))
+             "(CREATE TYPE inventory_item AS (r TEXT, i NUMERIC(5, 2))"))
+  (is (equal (sql (:create-composite-type 'inventory-item (r text) (i integer)))
+             "(CREATE TYPE inventory_item AS (r TEXT, i INTEGER)"))
+  (is (equal (sql (:create-composite-type 'inventory-item (name string)
+                                          (serial-number bigint) (count smallint)))
+             "(CREATE TYPE inventory_item AS (name TEXT, serial_number BIGINT, count SMALLINT)")))
 
 (test select-simple
   "Testing select modifiers"
@@ -567,6 +634,19 @@ to strings \(which will form an SQL query when concatenated)."
   (is (equal (sql (:select 'ta :from 'a :where (:not-null 'ta)))
              "(SELECT ta FROM a WHERE (ta IS NOT NULL))")))
 
+(test in-itself
+  (is (equal (sql (:in 'id (:set (list 2 7 8))))
+             "(id IN (2, 7, 8))"))
+  ;; In the following,  the quoted list in a real query will cause Postgresql to throw
+  ;; a syntax error because we double up the parentheses.
+  (is (equal (sql (:in 'id (:set '(2 7 8))))
+             "(id IN ((2, 7, 8)))"))
+  ;; The solution is to pass the quoted list in as a variable
+  (is (equal (let ((a (list 2 7 8))) (sql (:in 'id (:set a))))
+             "(id IN (2, 7, 8))"))
+  (is (equal (let ((a '(2 7 8))) (sql (:in 'id (:set a))))
+             "(id IN (2, 7, 8))")))
+
 (test select-in
   (build-employee-table)
   (is (equal (sql (:select '* :from 'rental :where (:in 'id '(1 2))))
@@ -577,7 +657,7 @@ to strings \(which will form an SQL query when concatenated)."
              "(SELECT * FROM table1 WHERE (id IN (1, 2, 3)))"))
   (is (equal (with-test-connection
                (query (:select 'id 'name :from 'employee
-                       :where (:in 'id (:select 'id :from 'employee :where (:= 'id 2))))))
+                                         :where (:in 'id (:select 'id :from 'employee :where (:= 'id 2))))))
              '((2 "Robert")))))
 
 (test select-not-in
@@ -2480,45 +2560,6 @@ To sum the column len of all films and group the results by kind:"
     (is (equal type "char(5)"))
     (is (eq null? t))))
 
-(test create-index
-  "Testing create-index. Available parameters - in order after name -
-are :concurrently, :on, :using, :fields and :where.The advantage to using the
-keyword :concurrently is that writes to the table
-from other sessions are not locked out while the index is is built. The disadvantage is
-that the table will need to be scanned twice. Everything is a trade-off."
-  (is (equal (sql (:create-index 'films_idx :on 'films :fields 'title))
-             "CREATE INDEX films_idx ON films (title)"))
-  (is (equal (sql (:create-index 'films-idx :on "films" :fields 'title))
-             "CREATE INDEX films_idx ON films (title)"))
-  (is (equal (sql (:create-index 'films-idx :on "films" :fields 'title 'id))
-             "CREATE INDEX films_idx ON films (title, id)"))
-  (is (equal (sql (:create-index 'films_idx :on "films" :using gin :fields 'title))
-             "CREATE INDEX films_idx ON films USING gin (title)"))
-  (is (equal (sql (:create-index 'doc-tags-id-tags
-                   :on "doc-tags-array" :using gin :fields 'tags))
-             "CREATE INDEX doc_tags_id_tags ON doc_tags_array USING gin (tags)"))
-  (is (equal (sql (:create-unique-index 'doc-tags-id-doc-id
-                   :on "doc-tags-array"  :fields 'doc-id))
-             "CREATE UNIQUE INDEX doc_tags_id_doc_id ON doc_tags_array (doc_id)"))
-  (is (equal (sql (:create-index 'films-idx :concurrently
-                                 :on "films" :using 'btree :fields 'created-at))
-             "CREATE INDEX CONCURRENTLY films_idx ON films USING btree (created_at)"))
-  (is (equal (sql (:create-index 'films-idx :unique :concurrently :on "films"
-                   :using 'btree :fields 'created-at))
-             "CREATE UNIQUE INDEX CONCURRENTLY films_idx ON films USING btree (created_at)"))
-  (is (equal (sql (:create-index (:if-not-exists 'test-uniq-1-idx)
-                   :on test-uniq :fields 'name))
-             "CREATE INDEX IF NOT EXISTS test_uniq_1_idx ON test_uniq (name)"))
-  (with-test-connection
-    (query (:drop-table :if-exists 'george :cascade))
-    (is (eq (table-exists-p 'george) nil))
-    (query (:create-table 'george ((id :type integer))))
-    (is (eq (table-exists-p 'george) t))
-    (query (:create-index 'george-idx :on 'george :fields 'id))
-    (is (pomo:index-exists-p 'george-idx))
-    (is (pomo:index-exists-p "george-idx"))))
-
-
 (test create-view
   "Testing create-view syntax"
   (is (equal (sql (:create-view 'quagmire (:select 'id 'name :from 'employee)))
@@ -2679,11 +2720,14 @@ that the table will need to be scanned twice. Everything is a trade-off."
                       ("Hit me with your pet shark!")
                       ("He swore he just saw his sushi move."))))
 
-    (is (equalp (query (:select 'id (:regexp-matches 'text "(s[A-z]+)") :from 'text-search))
-                '((1 #("son")) (2 #("sly")) (3 #("stupidity")) (4 #("shark")) (5 #("swore")))))
+    (is (equalp (query (:select 'id (:regexp-matches 'text "(s[A-z]+)")
+                                :from 'text-search))
+                '((1 #("son")) (2 #("sly")) (3 #("stupidity")) (4 #("shark"))
+                  (5 #("swore")))))
     (is (equalp (query (:select 'id (:regexp-matches 'text "(s[A-z]+)" "g")
                                 :from 'text-search))
-                '((1 #("son")) (2 #("sly")) (3 #("stupidity")) (4 #("shark")) (5 #("swore"))
+                '((1 #("son")) (2 #("sly")) (3 #("stupidity")) (4 #("shark"))
+                  (5 #("swore"))
                   (5 #("st")) (5 #("saw")) (5 #("sushi")))))
     (is (equalp (query (:select 'id (:regexp-replace 'text "(s[A-z]+)" "g")
                                 :from 'text-search))
@@ -2693,6 +2737,18 @@ that the table will need to be scanned twice. Everything is a trade-off."
                   (5 "He g he just saw his sushi move."))))
     (is (equalp (query (:select 'id 'text :from 'text-search :where (:~ 'text "sushi")))
                 '((5 "He swore he just saw his sushi move."))))))
+
+(test tsvector
+  (is (equal (sql (:select 'title :from 'pgweb :where (:to-tsvector "english" "friend")))
+             "(SELECT title FROM pgweb WHERE to_tsvector (E'english', E'friend'))")))
+
+(test tsquery
+  (is (equal
+       (sql (:select 'title
+                   :from 'pgweb
+                   :where (:@@ (:to-tsvector "english" 'body)
+                               (:to-tsquery "english" "friend"))))
+       "(SELECT title FROM pgweb WHERE (to_tsvector (E'english', body) @@ to_tsquery (E'english', E'friend')))")))
 
 (test variable-parameters
   (is (equal (let ((column 'latitude))
@@ -2709,6 +2765,7 @@ that the table will need to be scanned twice. Everything is a trade-off."
                                   (:= 'regions.name '$2))
                              (:= 'regions.id 'countries.region-id)))))
              "(SELECT countries.name FROM countries, regions WHERE (((regions.name = $1) or (regions.name = $2)) and (regions.id = countries.region_id)))"))
+  ;; Using strings does not work. The tests with strings are simply to flag changes in development results.
   (is (equal (let ((select "countries.name"))
                (sql (:select select
                      :from 'countries 'regions
@@ -2882,3 +2939,13 @@ that the table will need to be scanned twice. Everything is a trade-off."
     (build-boolean-table)
     (is (equal (query (:select '* :from 'boolean-test :where (:is-null 'a)))
                '((3 :NULL "I am NULL"))))))
+
+(test call
+  (is (equal (sql (:call 'set_x_procedure 1 13))
+             "CALL set_x_procedure(1, 13)"))
+  (is (equal (let ((a 1) (b 2))
+               (sql (:call 'my-proc a b 3)))
+             "CALL my_proc(1, 2, 3)"))
+  (is (equal (let ((a 1) (b 2) (p 'my-proc))
+               (sql (:call p a b 3)))
+             "CALL my_proc(1, 2, 3)")))

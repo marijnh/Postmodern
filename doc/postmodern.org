@@ -1533,10 +1533,16 @@ currently connected database. The extensions may or may not be installed.
 
 List the postgresql extensions which are installed in the currently connected
 database.
+** function load-extension (extension)
+   :PROPERTIES:
+   :CUSTOM_ID: function-load-extension
+   :END:
+
+Loads the Postgresql contrib module or extension provided as a parameter. The parameter provided must be a string. If the extension is not available, Postgresql will throw an error. It will be skipped if it is already loaded.
 
 ** function load-uuid-extension ()
    :PROPERTIES:
-   :CUSTOM_ID: function-load-uuid-extensin
+   :CUSTOM_ID: function-load-uuid-extension
    :END:
 
 Loads the Postgresql uuid-ossp contrib module. Once loaded, you can call uuid

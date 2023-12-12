@@ -82,6 +82,15 @@ must appear in the order defined."
                       words))
        ,@body)))
 
+(defun h-to-u (str)
+;  (to-sql-name str nil t)
+  (cond ((symbolp str)
+         (remove #\'
+                 (string-downcase (substitute #\_ #\- (symbol-name str) :test #'char=))))
+        ((stringp str)
+         (remove #\' (substitute #\_ #\- str :test #'char=)))
+        (t (remove #\' (format nil "~a" str)))))
+
 (defgeneric to-s-sql-string (arg)
   (:documentation "Convert a Lisp value to its textual unescaped SQL
 representation. Returns a second value indicating whether this value should be
@@ -100,24 +109,24 @@ You can define to-s-sql-string methods for your own datatypes.")
          (with-output-to-string (out)
            (write-char #\{  out)
            (loop :for sep := "" :then #\, :for x :across arg :do
-              (princ sep out)
-              (multiple-value-bind (string escape) (to-s-sql-string x)
-                (if escape (cl-postgres::write-quoted string out)
-                    (write-string string out))))
+             (princ sep out)
+             (multiple-value-bind (string escape) (to-s-sql-string x)
+               (if escape (cl-postgres::write-quoted string out)
+                   (write-string string out))))
            (write-char #\} out))
          t)))
   (:method ((arg cons))                 ;lists, but not nil
     (if (alexandria:proper-list-p arg)
         (values
-            (with-output-to-string (out)
-              (write-char #\(  out)
-              (loop :for sep := "" :then #\, :for x :in arg :do
-                (princ sep out)
-                (multiple-value-bind (string escape) (to-s-sql-string x)
-                  (if escape (cl-postgres::write-quoted string out)
-                      (cl-postgres::write-string string out))))
-              (write-char #\) out))
-            nil)
+         (with-output-to-string (out)
+           (write-char #\(  out)
+           (loop :for sep := "" :then #\, :for x :in arg :do
+             (princ sep out)
+             (multiple-value-bind (string escape) (to-s-sql-string x)
+               (if escape (cl-postgres::write-quoted string out)
+                   (cl-postgres::write-string string out))))
+           (write-char #\) out))
+         nil)
         (error "Value ~S can not be converted to an SQL literal." arg)))
   (:method ((arg array))
     (values
@@ -128,15 +137,15 @@ You can define to-s-sql-string methods for your own datatypes.")
                       (let ((factor (reduce #'* (cdr dims))))
                         (loop :for i :below (car dims) :for sep := ""
                                 :then #\, :do
-                           (princ sep out)
-                           (recur (cdr dims) (+ off (* factor i)))))
+                                  (princ sep out)
+                                  (recur (cdr dims) (+ off (* factor i)))))
                       (loop :for sep := "" :then #\, :for i :from off
                               :below (+ off (car dims)) :do
-                         (princ sep out)
-                         (multiple-value-bind (string escape)
-                             (to-s-sql-string (row-major-aref arg i))
-                           (if escape (cl-postgres::write-quoted string out)
-                               (write-string string out)))))
+                                (princ sep out)
+                                (multiple-value-bind (string escape)
+                                    (to-s-sql-string (row-major-aref arg i))
+                                  (if escape (cl-postgres::write-quoted string out)
+                                      (write-string string out)))))
                   (write-char #\} out)))
          (recur (array-dimensions arg) 0)))
      t))
@@ -250,12 +259,14 @@ hyphens."
   '(array (unsigned-byte 8)))
 (deftype text ()
   'string)
+(deftype timestamp-with-time-zone ()
+  'timestamp)
 (deftype varchar (length)
   (declare (ignore length))
   `string)
 (deftype serial () 'integer)
 (deftype serial8 () 'integer)
-
+(deftype tsvector () 'tsvector)
 (deftype db-null ()
   "Type for representing NULL values. Use like (or integer db-null)
 for declaring a type to be an integer that may be null."
@@ -266,11 +277,13 @@ for declaring a type to be an integer that may be null."
 
 (defgeneric sql-type-name (lisp-type &rest args)
   (:documentation "Transform a lisp type into a string containing something
-SQL understands. Default is to just use the type symbol's name.")
+SQL understands. Default is to just use the type symbol's name. This method is indirectly used in :as, :type, :function, :expand-table-column, :alter-table-column and :create-domain. These are further indirectly often used by :select and :create-table operators.")
   (:method ((lisp-type symbol) &rest args)
-    (cond ((and args (equal (symbol-name lisp-type) "GEOMETRY")) ; geometry type from postgis
-           (format nil "geometry (~{~a~^, ~})" args))
-          (t (substitute #\Space #\- (symbol-name lisp-type) :test #'char=))))
+    ;; This should pick up custom types
+    (cond ((and args (symbol-name lisp-type))
+           (format nil "~a(~{~a~^, ~})" (sql-type-name lisp-type) args))
+          (t
+           (substitute #\_ #\- (symbol-name lisp-type) :test #'char=))))
   (:method ((lisp-type (eql 'string)) &rest args)
     (cond (args (format nil "CHAR(~A)" (car args)))
           (t "TEXT")))
@@ -292,12 +305,25 @@ SQL understands. Default is to just use the type symbol's name.")
   (:method ((lisp-type (eql 'double-precision)) &rest args)
     (declare (ignore args))
     "DOUBLE PRECISION")
+  (:method ((lisp-type (eql 'double-precision[])) &rest args)
+    (declare (ignore args))
+    "DOUBLE PRECISION[]")
+  (:method ((lisp-type (eql 'timestamp-with-time-zone)) &rest args)
+    (declare (ignore args))
+    "TIMESTAMP WITH TIME ZONE")
+  (:method ((lisp-type (eql 'timestamp-without-time-zone)) &rest args)
+    (declare (ignore args))
+    "TIMESTAMP WITHOUT TIME ZONE")
   (:method ((lisp-type (eql 'serial)) &rest args)
     (declare (ignore args))
     "SERIAL")
   (:method ((lisp-type (eql 'serial8)) &rest args)
     (declare (ignore args))
     "SERIAL8")
+  (:method ((lisp-type (eql 'pgvector)) &rest args)
+    (cond (args
+           (format nil "vector(~{~a~^, ~})" args))
+          (t "vector()")))
   (:method ((lisp-type (eql 'array)) &rest args)
     (format nil "~a[]" (to-type-name (car args))))
   (:method ((lisp-type (eql 'db-null)) &rest args)
@@ -377,8 +403,8 @@ Symbols will be converted to SQL names. Examples:
   "Compile-time expansion of forms into lists of stuff that evaluate
 to strings (which will form a SQL query when concatenated).  :default will
 return ' DEFAULT' "
-
-  (cond ((eq arg :default) (list " DEFAULT ")) ((and (consp arg) (keywordp (first arg)))
+  (cond ((eq arg :default) (list " DEFAULT "))
+        ((and (consp arg) (keywordp (first arg)))
          (expand-sql-op (car arg) (cdr arg)))
         ((and (consp arg) (eq (first arg) 'quote))
          (list (sql-escape (second arg))))
@@ -608,6 +634,27 @@ return. E.g:
 ((21 \"US-North America\"))"
   `("(" ,@(sql-expand-list args " || ") ")"))
 
+(def-sql-op :text-pattern-ops (arg)
+  `(,@(sql-expand arg) " text_pattern_ops"))
+
+(def-sql-op :jsonb-path-ops (arg)
+  `(,@(sql-expand arg) " jsonb_path_ops"))
+
+(def-sql-op :jsonb-ops (arg)
+  `(,@(sql-expand arg) " jsonb_ops"))
+
+(def-sql-op :array-ops (arg)
+  `(,@(sql-expand arg) " array_ops"))
+
+(def-sql-op :gin-trgm-ops (arg)
+  `(,@(sql-expand arg) " gin_trgm_ops"))
+
+(def-sql-op :to-tsvector (&rest args)
+  `("to_tsvector (" ,@(sql-expand-list args) ")"))
+
+(def-sql-op :to-tsquery (&rest args)
+  `("to_tsquery (" ,@(sql-expand-list args) ")"))
+
 (def-sql-op :asc (arg)
   `(,@(sql-expand arg) " ASC"))
 
@@ -619,6 +666,12 @@ return. E.g:
 
 (def-sql-op :nulls-last (arg)
   `(,@(sql-expand arg) " NULLS LAST"))
+
+(def-sql-op :nulls-distinct (arg)
+  `(,@(sql-expand arg) " NULLS DISTINCT"))
+
+(def-sql-op :nulls-not-distinct (arg)
+  `(,@(sql-expand arg) " NULLS NOT DISTINCT"))
 
 (def-sql-op :as (form name &rest fields)
   `(,@(sql-expand form) " AS " ,@(sql-expand name)
@@ -681,6 +734,10 @@ only applies to seconds."
   (if precision
       `("INTERVAL  " ,@(sql-expand arg) "(" ,@(sql-expand precision) ")")
       `("INTERVAL  " ,@(sql-expand arg))))
+
+(def-sql-op :call (proc &rest args)
+  "Call takes the name of a postgresql procedure (NOTE: Not postgresql function) and the arguments to be passed to that procedure. The procedure name must be quoted or be a variable with a value of a quoted procedure name."
+  `("CALL " ,@ (sql-expand proc) "(" ,@(sql-expand-list args) ")"))
 
 (def-sql-op :current-date ()
   "Provides the current time. The default is universal time. If you want
@@ -809,6 +866,9 @@ e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
 (def-sql-op :is-true (arg)
   `("(" ,@(sql-expand arg) " IS TRUE)"))
 
+(def-sql-op :is-not-true (arg)
+  `("(" ,@(sql-expand arg) " IS NOT TRUE)"))
+
 (def-sql-op :is-false (arg)
   `("(" ,@(sql-expand arg) " IS FALSE)"))
 
@@ -833,16 +893,6 @@ e.g. (make-interval (\"days\" 10)(\"hours\" 4))."
       ,@(sql-expand-list vars)
       ,@(when order-by `(" ORDER BY " ,@(sql-expand-list order-by) ")"))
       ")")))
-
-(define-condition malformed-composite-type-error (error)
-  ((text :initarg :text :reader text)))
-
-(defun cons-to-sql-name-strings (item)
-  "Takes a list of two items and returns a single string separated by a space.
-The items will be converted to sql compatible namestrings."
-  (if (= 2 (length item))
-      (implode " " (mapcar #'to-sql-name item))
-      (error 'malformed-composite-type-error :text item)))
 
 (def-sql-op :count (&rest args)
   "Count returns the number of rows. It can be the number of rows collected
@@ -1916,6 +1966,12 @@ one of which is ~s."
                      type 'db-null))
       (values type nil)))
 
+(defun expand-timestamp (timestamp-symbol)
+  "Write out timestamps"
+  (case timestamp-symbol
+    (timestamp-without-time-zone '("TIMESTAMP WITHOUT TIME ZONE"))
+    (timestamp-with-time-zone '("TIMESTAMP WITH TIME ZONE"))))
+
 (defun expand-interval (option)
   "Provide interval limit options"
   (case option
@@ -2093,7 +2149,8 @@ definition."
                        '(" GENERATED ALWAYS AS IDENTITY "))
                       (:generated-always
                        (when value
-                         `(" GENERATED ALWAYS AS (" ,@(sql-expand-names value) ") STORED")))
+                         `(" GENERATED ALWAYS AS ("
+                           ,@(sql-expand value) ") STORED")))
                       (:primary-key (cond ((and value (stringp value))
                                            `(" PRIMARY KEY " ,value))
                                           ((and value (keywordp value))
@@ -2167,6 +2224,20 @@ would be redundant."
                    (t (sql-error "Unknown table option: ~A" name))))))
         (t (sql-error "Unknown table option: ~A" name))))
 
+(define-condition malformed-composite-type-error (error)
+  ((text :initarg :text :reader text)))
+
+(defun create-composite-col-type-strings (item)
+  "Takes a list of two items and returns a single string separated by a space.
+The items will be converted to sql compatible namestrings."
+  (if (> (length item) 1)
+      (implode " " (loop for x in item
+                         for counter from 1
+                         collect
+                         (if (= 1 counter)
+                             (to-sql-name x)
+                             (to-type-name x))))
+      (error 'malformed-composite-type-error :text item)))
 
 (def-sql-op :create-composite-type (type-name &rest args)
   "Creates a composite type with a type-name and two or more
@@ -2186,7 +2257,7 @@ columns. Sample call would be:
                     " AS ("
                     ,(implode ", "
                               (loop for x in args
-                                    collect (cons-to-sql-name-strings x)))
+                                    collect (create-composite-col-type-strings x)))
                     ")"))
 
 (def-sql-op :create-table (name (&rest columns) &rest options)
@@ -2351,14 +2422,22 @@ have tables without columns that are inherited or partitioned."
         (:owned-by `(" OWNED BY " ,(to-sql-name  argument)))
         (t (sql-error "Unknown ALTER SEQUENCE action ~A" action)))))
 
+(defun expand-field-names (names &optional (sep ", "))
+  (loop :for (name . rest) :on names
+        :if (consp name)
+          :append (sql-expand name)
+        :else
+            :collect (h-to-u name)
+        :if rest :collect sep))
+
 (defun expand-create-index (name args)
   "Available parameters - in order after name - are :concurrently, :on, :using,
- :fields and :where.The advantage to using the keyword :concurrently is that
+ :fields, :with and :where.The advantage to using the keyword :concurrently is that
 writes to the table from other sessions are not locked out while the index is is
 built. The disadvantage is that the table will need to be scanned twice.
 Everything is a trade-off."
   (split-on-keywords ((unique ? -) (concurrently ? -)  (on) (using ?) (fields *)
-                      (where ?))
+                      (with * ?) (where ?))
       args
     `(,@(when unique '("UNIQUE "))
       "INDEX "
@@ -2378,7 +2457,9 @@ Everything is a trade-off."
                                        ((consp (car using))
                                         (to-sql-name (cadar using)))
                                        (t (to-sql-name (car using))))))
-      " (" ,@(sql-expand-names fields) ")"
+      " (" ,@(expand-field-names fields) ")"
+        ,@(when with
+            `(" WITH " ,@(sql-expand-list with)))
       ,@(when where `(" WHERE " ,@(sql-expand (first where)))))))
 
 (def-sql-op :create-index (name &rest args)

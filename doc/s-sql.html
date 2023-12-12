@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-11-06 Sun 10:57 -->
+<!-- 2023-12-11 Mon 19:54 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>S-SQL Reference Manual</title>
@@ -193,27 +193,38 @@
 </style>
 <link rel="stylesheet" type="text/css" href="style.css" />
 <style>pre.src{background:#343131;color:white;} </style>
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        displayAlign: "center",
-        displayIndent: "0em",
-
-        "HTML-CSS": { scale: 100,
-                        linebreaks: { automatic: "false" },
-                        webFont: "TeX"
-                       },
-        SVG: {scale: 100,
-              linebreaks: { automatic: "false" },
-              font: "TeX"},
-        NativeMML: {scale: 100},
-        TeX: { equationNumbers: {autoNumber: "AMS"},
-               MultLineWidth: "85%",
-               TagSide: "right",
-               TagIndent: ".8em"
-             }
-});
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
 </head>
 <body>
 <div id="content" class="content">
@@ -261,8 +272,9 @@
 </li>
 <li><a href="#defined-operators">Defined Operators</a>
 <ul>
-<li><a href="#sql-op-misc">sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</a></li>
+<li><a href="#sql-op-misc">sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :call, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</a></li>
 <li><a href="#sql-op-or">sql-op :or</a></li>
+<li><a href="#sql-op-call">sql-op :call</a></li>
 <li><a href="#sql-op-intersect">sql-op :intersect</a></li>
 <li><a href="#026a2773-c17f-4cb2-a86c-34babf8c48a2">sql-op :union, :union-all</a></li>
 <li><a href="#4f77625f-4b6e-417d-8b56-d76835d6832d">sql-op :except, :except-all</a></li>
@@ -350,14 +362,14 @@
 <li><a href="#sql-op-variance">sql-op :variance (&amp;rest args)</a></li>
 <li><a href="#sql-op-var-pop">sql-op :var-pop (&amp;rest args)</a></li>
 <li><a href="#sql-op-var-samp">sql-op :var-samp (&amp;rest args)</a></li>
-<li><a href="#org5cd9267">sql-op :range-between (&amp;rest args)</a></li>
-<li><a href="#orge13cf16">sql-op :rows-between (&amp;rest args)</a></li>
+<li><a href="#org87f79e3">sql-op :range-between (&amp;rest args)</a></li>
+<li><a href="#orgbbd0080">sql-op :rows-between (&amp;rest args)</a></li>
 <li><a href="#sql-op-over">sql-op :over (form &amp;rest args)</a></li>
 <li><a href="#sql-op-partition-by">sql-op :partition-by (&amp;rest args)</a></li>
 <li><a href="#sql-op-window">sql-op :window (form)</a></li>
 <li><a href="#sql-op-with">sql-op :with (&amp;rest args)</a></li>
 <li><a href="#sql-op-with-recursive">sql-op :with-recursive (&amp;rest args)</a></li>
-<li><a href="#org94aabf6">sql-op :with-ordinality, :with-ordinality-as</a></li>
+<li><a href="#org75b9f8b">sql-op :with-ordinality, :with-ordinality-as</a></li>
 </ul>
 </li>
 <li><a href="#table-functions">Table Functions</a>
@@ -1095,7 +1107,7 @@ The following operators are defined:
 </div>
 
 <div id="outline-container-sql-op-misc" class="outline-3">
-<h3 id="sql-op-misc">sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</h3>
+<h3 id="sql-op-misc">sql-op :+, :*, :%, :&amp;, :|, :||, :and, :or, :=, :/, :!=, :&lt;, :&gt;, :&lt;=, :&gt;=, :^, :union, :union-all, :call, :intersect, :intersect-all, :except, :except-all (&amp;rest args)</h3>
 <div class="outline-text-3" id="text-sql-op-misc">
 <p>
 These are expanded as infix operators. When meaningful, they allow more than
@@ -1134,6 +1146,21 @@ or using parameterized queries
                              (<span class="org-builtin">:=</span> 'regions.name '$2))
                         (<span class="org-builtin">:=</span> 'regions.id 'countries.region-id)))
   <span class="org-string">"North America"</span> <span class="org-string">"Central America"</span>)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sql-op-call" class="outline-3">
+<h3 id="sql-op-call">sql-op :call</h3>
+<div class="outline-text-3" id="text-sql-op-call">
+<p>
+Call calls a Postgresql Procedure. Remember that Postgresql procedures are not called within a select statement. The procedure name must be quoted  or be a variable with a value of a quoted procedure name. Assuming a procedure named set_x_procedure1 exists, an example of calling it with parameters would be:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:call</span> 'set_x_procedure1 1 13))
+
+(<span class="org-keyword">let</span> ((a 1) (b 2) (p 'my-proc))
+  (query (<span class="org-builtin">:call</span> p a b 3)))
 </pre>
 </div>
 </div>
@@ -1706,7 +1733,7 @@ Beginning in Postmodern v. 1.33.7, you can use lists with :in.
 IMPORTANT REGARDING PARAMETERIZED QUERIES: For Postmodern versions before 1.33.7, you cannot use a list in a parameterized statement. You have to convert the list to a vector and use :any* rather than :in. See <a href="s-sql.html#sql-op-any">S-SQL#sql-op-any</a> for more details.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(pomo:query (<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'employee <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id (<span class="org-builtin">:any*</span> '$1)))
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'employee <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id (<span class="org-builtin">:any*</span> '$1)))
             #(1 3) <span class="org-builtin">:column</span>)
  '(<span class="org-string">"Jason"</span> <span class="org-string">"Celia"</span>)
 </pre>
@@ -1715,7 +1742,7 @@ IMPORTANT REGARDING PARAMETERIZED QUERIES: For Postmodern versions before 1.33.7
 ;; Beginning with Postmodern version 1.33.7 you can also use lists
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(pomo:query (<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'employee <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id (<span class="org-builtin">:any*</span> '$1)))
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'employee <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id (<span class="org-builtin">:any*</span> '$1)))
             '(1 3) <span class="org-builtin">:column</span>)
  '(<span class="org-string">"Jason"</span> <span class="org-string">"Celia"</span>)
 </pre>
@@ -2778,9 +2805,9 @@ Window Functions
 </p>
 </div>
 </div>
-<div id="outline-container-org5cd9267" class="outline-3">
-<h3 id="org5cd9267">sql-op :range-between (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org5cd9267">
+<div id="outline-container-org87f79e3" class="outline-3">
+<h3 id="org87f79e3">sql-op :range-between (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-org87f79e3">
 <p>
 Range-between allows window functions to apply to different segments of a result set.
 It accepts the following keywords: :order-by, :rows-between, :range-between,
@@ -2808,9 +2835,9 @@ An example which calculates a running total could look like this:
 </div>
 </div>
 
-<div id="outline-container-orge13cf16" class="outline-3">
-<h3 id="orge13cf16">sql-op :rows-between (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orge13cf16">
+<div id="outline-container-orgbbd0080" class="outline-3">
+<h3 id="orgbbd0080">sql-op :rows-between (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgbbd0080">
 <p>
 Rows-between allows window functions to apply to different segments of a result set.
 It accepts the following keywords:
@@ -3011,9 +3038,9 @@ Recursive modifier to a WITH statement, allowing the query to refer to its own o
 </div>
 </div>
 </div>
-<div id="outline-container-org94aabf6" class="outline-3">
-<h3 id="org94aabf6">sql-op :with-ordinality, :with-ordinality-as</h3>
-<div class="outline-text-3" id="text-org94aabf6">
+<div id="outline-container-org75b9f8b" class="outline-3">
+<h3 id="org75b9f8b">sql-op :with-ordinality, :with-ordinality-as</h3>
+<div class="outline-text-3" id="text-org75b9f8b">
 <p>
 Selects can use :with-ordinality or :with-ordinality-as parameters. Postgresql will give the new ordinality column the name of ordinality. :with-ordinality-as allows you to set different names for the columns in the result set.
 </p>
@@ -3696,19 +3723,60 @@ Example calls would be:
 <p>
 Create an index on a table. After the name of the index the keyword :on should
 follow, with the table name after it. Then the keyword :fields, followed by
-one or more column names. Optionally, a :where clause with a condition can
-be added at the end to make a partial index.
+one or more column names. Other optional parameters are :using (to use index methods other than b-tree) :with (for storage parameters) or :where (for a condition can
+be added at the end to make a partial index). See <a href="s-sql-c.html">S-SQL-C</a> for more examples.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-lisp">(sql (<span class="org-builtin">:create-index</span> 'gin-idx <span class="org-builtin">:on</span> <span class="org-string">"historical-events"</span> <span class="org-builtin">:using</span> gin <span class="org-builtin">:fields</span> 'data))
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'films_idx <span class="org-builtin">:on</span> 'films <span class="org-builtin">:fields</span> 'title))
 
-<span class="org-string">"CREATE INDEX gin_idx ON historical_events USING GIN (data)"</span>
+(query (<span class="org-builtin">:create-index</span> 'films-idx <span class="org-builtin">:on</span> <span class="org-string">"films"</span> <span class="org-builtin">:fields</span> 'title 'id))
+
+(query (<span class="org-builtin">:create-index</span> 'gin-idx <span class="org-builtin">:on</span> <span class="org-string">"historical-events"</span> <span class="org-builtin">:using</span> 'gin <span class="org-builtin">:fields</span> 'data))
+</pre>
+</div>
+<p>
+Expressions can be used in the :fields specification:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'films_idx <span class="org-builtin">:on</span> <span class="org-string">"films"</span> <span class="org-builtin">:fields</span> (<span class="org-builtin">:lower</span> 'title)))
+</pre>
+</div>
+<p>
+Opclasses can be used within the fields specification:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'pointloc2 <span class="org-builtin">:on</span> 'points <span class="org-builtin">:using</span> 'gist
+        <span class="org-builtin">:fields</span> (<span class="org-builtin">:asc</span> (<span class="org-builtin">:box</span> 'location 'location)) (<span class="org-builtin">:nulls-last</span> 'name)))
+</pre>
+</div>
+<p>
+Storage parameters can be set using a :with clause:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'gin-idx <span class="org-builtin">:on</span> 'documents-table <span class="org-builtin">:using</span> gin
+        <span class="org-builtin">:fields</span> 'locations <span class="org-builtin">:with</span> (<span class="org-builtin">:=</span> 'deduplicate-items off) (<span class="org-builtin">:=</span> 'fillfactor 70)))
+</pre>
+</div>
+<p>
+Partial indexes can be set using a :where clause:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'orders_unbilled_idx <span class="org-builtin">:on</span> 'orders <span class="org-builtin">:fields</span> 'order-nr
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:is-not-true</span> 'billed)
+                            (<span class="org-builtin">:&lt;</span> 'order_nr 1000)))))
+</pre>
+</div>
+<p>
+Indexing a jsonb column named metadata:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'items-idx <span class="org-builtin">:on</span> 'test-items <span class="org-builtin">:using</span> 'gin
+        <span class="org-builtin">:fields</span> (<span class="org-builtin">:jsonb-path-ops</span> 'metadata)))
 </pre>
 </div>
 </div>
 </div>
-
 
 <div id="outline-container-sql-op-create-unique-index" class="outline-3">
 <h3 id="sql-op-create-unique-index">sql-op :create-unique-index (name &amp;rest args)</h3>
@@ -4086,8 +4154,8 @@ For purposes of this example, we will use the following employee table:
 <div class="outline-text-5" id="text-symbols-in-variables">
 </div>
 <ul class="org-ul">
-<li><a id="org5fd9468"></a>Select Statements<br>
-<div class="outline-text-6" id="text-org5fd9468">
+<li><a id="orgad6833a"></a>Select Statements<br>
+<div class="outline-text-6" id="text-orgad6833a">
 <p>
 Consider the following two toy examples where we determine the table and columns
 to be selected using symbols (either keyword or quoted) inside variables.
@@ -4111,8 +4179,8 @@ string constants in the middle of a select statement.
 </div>
 </li>
 
-<li><a id="org097acb3"></a>Update Statements<br>
-<div class="outline-text-6" id="text-org097acb3">
+<li><a id="orgf7f373a"></a>Update Statements<br>
+<div class="outline-text-6" id="text-orgf7f373a">
 <p>
 This works with update statements as well
 </p>
@@ -4125,8 +4193,8 @@ This works with update statements as well
 </div>
 </div>
 </li>
-<li><a id="org29bd09a"></a>Insert Statements<br>
-<div class="outline-text-6" id="text-org29bd09a">
+<li><a id="orga2e14db"></a>Insert Statements<br>
+<div class="outline-text-6" id="text-orga2e14db">
 <p>
 This works with insert-into statements as well
 </p>
@@ -4147,8 +4215,8 @@ This works with insert-into statements as well
 </li>
 </ul>
 </li>
-<li><a id="org33a1e93"></a>Delete Statements<br>
-<div class="outline-text-5" id="text-org33a1e93">
+<li><a id="org080262c"></a>Delete Statements<br>
+<div class="outline-text-5" id="text-org080262c">
 <p>
 This works with delete statements as well
 </p>

@@ -4,7 +4,7 @@
 #+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
-Version 1.33.9
+Version 1.33.10
 
 Postmodern is a Common Lisp library for interacting with [[https://postgresql.org][PostgreSQL databases]].
 Features are:
@@ -21,6 +21,33 @@ implementations (it embraces non-standard PostgreSQL features), and approaches
 extensions like lispy SQL and database access objects in a quite different way.
 This library was written because the CLSQL approach did not really work for
 me. Your mileage may vary.
+
+* Reference
+  :PROPERTIES:
+  :ID:       27b39236-15ee-42c3-958a-3c9c903c4567
+  :CUSTOM_ID: 8993c7bd-4ba2-4080-8c5a-ff90de45eca5
+  :END:
+The reference manuals for the different components of Postmodern are kept
+in separate files. For using the library in the most straightforward way,
+you only really need to read the Postmodern reference and glance over the
+S-SQL reference. The simple-date reference explains the time-related data
+types included in Postmodern, and the CL-postgres reference might be useful
+if you just want a low-level library for talking to a PostgreSQL server.
+
+- [[file:postmodern.html][Postmodern]]
+- [[file:s-sql.html][S-SQL]]
+- [[file:simple-date.html][Simple-date]]
+- [[file:cl-postgres.html][CL-postgres]]
+
+Some specific topics in more detail
+
+- [[file:s-sql-examples.html][S-SQL Examples]]
+- [[file:array-notes.html][Array-Notes]]
+- [[file:create-tables.html][Creating Tables]]
+- [[file:dao-classes.html][Database Access Object (Dao) Classes]]
+- [[file:dynamic-queries.html][Dynamic Queries]]
+- [[file:interval-notes.html][Interval Notes]]
+- [[file:isolation-notes.html][Isolation Notes]]
 
 * Dependencies
   :PROPERTIES:
@@ -521,32 +548,6 @@ using a connection pooling setup..
 Other authentication methods have not been tested. Please let us know if there
 is a authentication method that you believe should be considered.
 
-* Reference
-  :PROPERTIES:
-  :ID:       27b39236-15ee-42c3-958a-3c9c903c4567
-  :CUSTOM_ID: 8993c7bd-4ba2-4080-8c5a-ff90de45eca5
-  :END:
-The reference manuals for the different components of Postmodern are kept
-in separate files. For using the library in the most straightforward way,
-you only really need to read the Postmodern reference and glance over the
-S-SQL reference. The simple-date reference explains the time-related data
-types included in Postmodern, and the CL-postgres reference might be useful
-if you just want a low-level library for talking to a PostgreSQL server.
-
-- [[file:postmodern.html][Postmodern]]
-- [[file:s-sql.html][S-SQL]]
-- [[file:simple-date.html][Simple-date]]
-- [[file:cl-postgres.html][CL-postgres]]
-
-Some specific topics in more detail
-
-- [[file:array-notes.html][Array-Notes]]
-- [[file:create-tables.html][Creating Tables]]
-- [[file:dao-classes.html][Database Access Object (Dao) Classes]]
-- [[file:dynamic-queries.html][Dynamic Queries]]
-- [[file:interval-notes.html][Interval Notes]]
-- [[file:isolation-notes.html][Isolation Notes]]
-
 * Data Types
   :PROPERTIES:
   :ID:       d089d05b-4485-4fb5-9097-5a66492bc470
@@ -902,11 +903,8 @@ words are:
    :ID:       50d91126-93f1-4f50-96ad-bd63a7278866
    :CUSTOM_ID: 4ac8f5f4-d3b0-41c5-a222-fe3086049279
    :END:
-Postmodern is under active development so Issues and feature requests should
+Postmodern is under active maintenance so issues and feature requests should
 be flagged on [[https://github.com/marijnh/Postmodern][Postmodern's site on github]].
-
-Some areas that are currently under consideration can be found in the ROADMAP.md
-file.
 
 * Resources
   :PROPERTIES:

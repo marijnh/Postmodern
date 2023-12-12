@@ -1,5 +1,18 @@
+# Changelog 1.33.10
+## Changes to S-SQL
+- Added :call operator to s-sql (so that you can use the s-sql syntax to call a Postgresql procedure) and substantial more s-sql examples in the documentation.
+
+- Fixed bug in create-composite-type that disallowed certain multiword parameters
+- Fixed bug in to-type-name and sql-type-name that precluded custom types
+- Fixed bug in :create-table ability to create generated columns.
+
+- Added cube operators
+
+- Added more documentation examples and tests for s-sql
+
 # Changelog 1.33.9
 Fixed bug in thread handling when using binary parameters
+
 # Changelog 1.33.8
 
 Dollar Quoted tags are allowed in files. Prior to Postmodern version 1.33.8 only
