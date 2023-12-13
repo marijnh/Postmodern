@@ -80,6 +80,7 @@
    #:get-search-path
    #:get-database-comment
    #:encode-json-to-string
+   #:load-extension
    #:load-uuid-extension
 
    ;; Prepared Statement Functions
