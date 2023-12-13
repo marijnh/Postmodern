@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-12-12 Tue 18:35 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>S-SQL Examples C</title>
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">S-SQL Examples C</h1>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#orgfd9c23b">S-SQL Examples Home Page</a></li>
+<li><a href="#call">Call</a></li>
+<li><a href="#case">Case</a></li>
+<li><a href="#cast">Cast</a></li>
+<li><a href="#coalesce">Coalesce</a></li>
+<li><a href="#constraints">Constraints Examples</a></li>
+<li><a href="#count">Count</a></li>
+<li><a href="#create-composite-types">Create-Composite-Types</a></li>
+<li><a href="#create-index">Create-Index</a>
+<ul>
+<li><a href="#create-index-multiple-columns">Multiple Columns</a></li>
+<li><a href="#create-index-with-expression">Using Postgresql Expressions</a></li>
+<li><a href="#create-index-other-methods">GIN, GIST and other non-B-tree indexes</a></li>
+<li><a href="#create-index-opclasses">Indexes with opclass parameters</a>
+<ul>
+<li><a href="#create-index-to-tsvector">To-Tsvector</a></li>
+<li><a href="#create-index-2-ary">2+-ary Operators</a></li>
+</ul>
+</li>
+<li><a href="#create-index-storage-parameters">Indexes with storage parameters</a></li>
+<li><a href="#partial-indexes">Partial Indexes with where clauses</a></li>
+</ul>
+</li>
+<li><a href="#create-table">Create-Table</a>
+<ul>
+<li><a href="#table-names-parameter">Table Names Parameter</a></li>
+<li><a href="#temp-tables">Temporary and Unlogged Tables</a></li>
+<li><a href="#identity-columns">Using Identity Columns</a></li>
+<li><a href="#arrayy-columns">Array Columns</a></li>
+<li><a href="#check-constraints">Check Constraints</a></li>
+<li><a href="#unique-constraints">Unique Constraints</a></li>
+<li><a href="#timestamps">Timestamps with and without timezones</a></li>
+<li><a href="#foreign-keys">Adding Foreign Keys</a>
+<ul>
+<li><a href="#foreign-keys-at-column">Defining Foreign Keys at the Column Level</a></li>
+<li><a href="#foreign-keys-at-table">Defining Foreign Keys at the Table Level</a></li>
+</ul>
+</li>
+<li><a href="#generated-columns">Generated Columns</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-orgfd9c23b" class="outline-2">
+<h2 id="orgfd9c23b"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
+<div class="outline-text-2" id="text-orgfd9c23b">
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><a href="s-sql-a.html">A</a></td>
+<td class="org-left"><a href="s-sql-b.html">B</a></td>
+<td class="org-left"><a href="s-sql-c.html">C</a></td>
+<td class="org-left"><a href="s-sql-d.html">D</a></td>
+<td class="org-left"><a href="s-sql-e.html">E</a></td>
+<td class="org-left"><a href="s-sql-f.html">F</a></td>
+<td class="org-left"><a href="s-sql-g.html">G</a></td>
+<td class="org-left"><a href="s-sql-h.html">H</a></td>
+<td class="org-left"><a href="s-sql-i.html">I</a></td>
+<td class="org-left"><a href="s-sql-j.html">J</a></td>
+<td class="org-left"><a href="s-sql-k.html">K</a></td>
+<td class="org-left"><a href="s-sql-l.html">L</a></td>
+<td class="org-left"><a href="s-sql-m.html">M</a></td>
+<td class="org-left"><a href="s-sql-n.html">N</a></td>
+<td class="org-left"><a href="s-sql-o.html">O</a></td>
+<td class="org-left"><a href="s-sql-p.html">P</a></td>
+<td class="org-left"><a href="s-sql-r.html">R</a></td>
+<td class="org-left"><a href="s-sql-s.html">S</a></td>
+<td class="org-left"><a href="s-sql-t.html">T</a></td>
+<td class="org-left"><a href="s-sql-u.html">U</a></td>
+<td class="org-left"><a href="s-sql-v.html">V</a></td>
+<td class="org-left"><a href="s-sql-w.html">W</a></td>
+<td class="org-left"><a href="s-sql-special-characters.html">Special Characters</a></td>
+<td class="org-left"><a href="calling-postgresql-stored-functions.html">Calling Postgresql Stored Functions and Procedures</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-call" class="outline-2">
+<h2 id="call">Call</h2>
+<div class="outline-text-2" id="text-call">
+<p>
+Call is used to call a Postgresql Procedure. This cannot be used in a select clause. You can pass variables to the operator.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:call</span> 'set_x_procedure 1 13))
+
+(<span class="org-keyword">let</span> ((a 1) (b 2))
+  (query (<span class="org-builtin">:call</span> 'my-proc a b 3)))
+
+(<span class="org-keyword">let</span> ((a 1) (b 2) (p 'my-proc))
+  (query (<span class="org-builtin">:call</span> p a b 3)))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-case" class="outline-2">
+<h2 id="case">Case</h2>
+<div class="outline-text-2" id="text-case">
+<p>
+As you know, case is a conditional expression that you can use to either search for rows in a table when a condition is true or compare a table field to a statement in the case expression. So consider the following where you only look at the first 10 rows in the countries table. The Case expression indicates that if the id is less than five, return the word "Low" and if the id is greater than five, return the word "high". Notice what happens when Denmark, with an id of exactly five, gets returned.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (query (<span class="org-builtin">:select</span> 'id 'name
+                (<span class="org-builtin">:case</span>
+                 ((<span class="org-builtin">:&lt;</span> 'id 5) <span class="org-string">"Low"</span>)
+                 ((<span class="org-builtin">:&gt;</span> 'id 5) <span class="org-string">"High"</span>))
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 10))))
+
+((1 <span class="org-string">"Austria"</span> <span class="org-string">"Low"</span>) (2 <span class="org-string">"Belgium"</span> <span class="org-string">"Low"</span>) (4 <span class="org-string">"Canada"</span> <span class="org-string">"Low"</span>) (5 <span class="org-string">"Denmark"</span> <span class="org-builtin">:NULL</span>)
+ (8 <span class="org-string">"France"</span> <span class="org-string">"High"</span>) (9 <span class="org-string">"Germany"</span> <span class="org-string">"High"</span>) (7 <span class="org-string">"Finland"</span> <span class="org-string">"High"</span>))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-cast" class="outline-2">
+<h2 id="cast">Cast</h2>
+<div class="outline-text-2" id="text-cast">
+<p>
+There are two ways to cast in postmodern. First is the explicit use of cast as in:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:cast</span> (<span class="org-builtin">:as</span> <span class="org-string">"2018-04-19"</span> 'date)) <span class="org-builtin">:from</span> 'roadmap))
+</pre>
+</div>
+
+<p>
+Then there is the use of the type operator which effectively translates into postgresql's :: casting shortcut.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:type</span> <span class="org-string">"2018-04-19"</span> date) <span class="org-builtin">:from</span> 'roadmap))
+</pre>
+</div>
+
+<p>
+Note that the targetted data type is quoted in the explicit use of cast and not quoted when using type.
+</p>
+</div>
+</div>
+
+<div id="outline-container-coalesce" class="outline-2">
+<h2 id="coalesce">Coalesce</h2>
+<div class="outline-text-2" id="text-coalesce">
+<p>
+The COALESCE function in SQL returns the first non-NULL expression among its arguments.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+ (<span class="org-builtin">:order-by</span>
+  (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> 'countries.name  'country)
+           (<span class="org-builtin">:as</span> (<span class="org-builtin">:coalesce</span> 'countries.latitude  999)
+                'latitude)
+           (<span class="org-builtin">:as</span> (<span class="org-builtin">:coalesce</span> 'countries.longitude 999)
+                'longitude)
+   <span class="org-builtin">:from</span> 'countries
+   <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:&gt;</span> 'countries.name '$1)
+                (<span class="org-builtin">:&lt;</span> 'countries.name '$2)))
+  'country)
+ <span class="org-string">"D"</span> <span class="org-string">"F"</span>)
+
+((<span class="org-string">"Denmark"</span> 56 10) (<span class="org-string">"Dominican Republic"</span> 19 -352/5) (<span class="org-string">"EU"</span> 999 999)
+                   (<span class="org-string">"East Timor"</span> -17/2 2511/20)
+                   (<span class="org-string">"Ecuador"</span> -2 -773/10) (<span class="org-string">"Egypt"</span> 27 30)  (<span class="org-string">"El Salvador"</span> 27/2 -1771/20) (<span class="org-string">"Estonia"</span> 59 26) (<span class="org-string">"Ethiopia"</span> 8 38))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-constraints" class="outline-2">
+<h2 id="constraints">Constraints Examples</h2>
+<div class="outline-text-2" id="text-constraints">
+<p>
+Suppose you want to find the constraints on a particular table. You try something like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (query (<span class="org-builtin">:select</span> '*
+                <span class="org-builtin">:from</span> 'information-schema.table-constraints
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'table-name <span class="org-string">"countries"</span>)))
+
+((<span class="org-string">"mydatabase"</span> <span class="org-string">"public"</span> <span class="org-string">"countries_pkey"</span> <span class="org-string">"mydatabase"</span> <span class="org-string">"public"</span> <span class="org-string">"countries"</span> <span class="org-string">"PRIMARY KEY"</span> <span class="org-string">"NO"</span> <span class="org-string">"NO"</span>)
+
+ (<span class="org-string">"mydatabase"</span> <span class="org-string">"public"</span> <span class="org-string">"country_name_uk"</span> <span class="org-string">"mydatabase"</span> <span class="org-string">"public"</span> <span class="org-string">"countries"</span> <span class="org-string">"UNIQUE"</span> <span class="org-string">"NO"</span> <span class="org-string">"NO"</span>)
+
+ (<span class="org-string">"mydatabase"</span> <span class="org-string">"public"</span> <span class="org-string">"country_name_unique"</span> <span class="org-string">"mydatabase"</span> <span class="org-string">"public"</span> <span class="org-string">"countries"</span> <span class="org-string">"UNIQUE"</span> <span class="org-string">"NO"</span> <span class="org-string">"NO"</span>)
+
+ (<span class="org-string">"mydatabase"</span> <span class="org-string">"public"</span> <span class="org-string">"2200_456618_1_not_null"</span> <span class="org-string">"mydatabase"</span> <span class="org-string">"public"</span> <span class="org-string">"countries"</span> <span class="org-string">"CHECK"</span> <span class="org-string">"NO"</span> <span class="org-string">"NO"</span>))
+
+</pre>
+</div>
+
+<p>
+Okay. That looks like it works. At a minimum, it is telling me that the countries table has a primary key named "countries_pkey". Also, for some strange reason, it has two unique constraints named "country_name_uk" and "country_name_unique".
+</p>
+
+<p>
+However consider table names with multiple words separated by underscores. If you are used to postmodern turning everything nicely into hyphens, you might try something like:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'information-schema.table-constraints
+                 <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'table-name <span class="org-string">"countries-hyphenated-for-some-reason"</span>)))
+
+</pre>
+</div>
+
+<p>
+That will not work. Remember that you have to provide the actual string name of the table. Because sql does not like hyphens and demands underscores, the correct query in postmodern would look like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'information-schema.table-constraints
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'table-name <span class="org-string">"countries_hyphenated_for_some_reason"</span>)))
+
+</pre>
+</div>
+
+<p>
+Or you could use s-sql:to-sql-name like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> '*
+              <span class="org-builtin">:from</span> 'information-schema.table-constraints
+              <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'table-name '$1))
+     (s-sql:to-sql-name 'tasks-lists))
+
+</pre>
+</div>
+
+<p>
+The query in this function generates information on the foreign key constraints in a database. Ignoring all the postgresql internal table names, while this looks complicated, the only additional items really here are :[] as the op for getting an array index, :generate-series, and :array-upper
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">describe-foreign-key-constraints</span> ()
+  <span class="org-doc">"Generates a list of lists of information on the foreign key constraints"</span>
+  (query (<span class="org-builtin">:order-by</span> (<span class="org-builtin">:select</span> 'conname
+                             (<span class="org-builtin">:as</span> 'conrelid 'table)
+                             (<span class="org-builtin">:as</span> 'pgc.relname 'tabname)
+                             (<span class="org-builtin">:as</span> 'a.attname 'columns)
+                             (<span class="org-builtin">:as</span> 'confrelid 'foreign-table)
+                             (<span class="org-builtin">:as</span> 'pgf.relname 'ftabname)
+                             (<span class="org-builtin">:as</span> 'af.attname 'fcolumn)
+                             <span class="org-builtin">:from</span>
+                             (<span class="org-builtin">:as</span> 'pg_attribute 'af)
+                             (<span class="org-builtin">:as</span> 'pg_attribute 'a)
+                             (<span class="org-builtin">:as</span> 'pg_class 'pgc)
+                             (<span class="org-builtin">:as</span> 'pg_class 'pgf)
+                             (<span class="org-builtin">:as</span>
+                              (<span class="org-builtin">:select</span> 'conname 'conrelid 'confrelid
+                                       (<span class="org-builtin">:as</span> (<span class="org-builtin">:[]</span> 'conkey 'i) 'conkey)
+                                       (<span class="org-builtin">:as</span> (<span class="org-builtin">:[]</span> 'confkey 'i) 'confkey)
+                                       <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:select</span> 'conname
+                                                           'conrelid 'confrelid
+                                                           'conkey 'confkey
+                                                           (<span class="org-builtin">:as</span>
+                                                            (<span class="org-builtin">:generate-series</span> '1
+                                                             <span class="org-builtin">:array-upper</span> 'conkey 1))
+                                                           'i)
+                                              <span class="org-builtin">:from</span> 'pg_constraint
+                                              <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'contype <span class="org-string">"f"</span> ))
+                                       'ss))
+                             'ss2)
+          <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'af.attnum 'confkey)
+                       (<span class="org-builtin">:=</span> 'af.attrelid 'confrelid)
+                       (<span class="org-builtin">:=</span> 'a.attnum 'conkey)
+                       (<span class="org-builtin">:=</span> 'a.attrelid 'conrelid)
+                       (<span class="org-builtin">:=</span> 'pgf.relfilenode 'confrelid)
+                       (<span class="org-builtin">:=</span> 'pgc.relfilenode 'conrelid)))
+         'ftabname 'fcolumn 'tabname 'columns))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-count" class="outline-2">
+<h2 id="count">Count</h2>
+<div class="outline-text-2" id="text-count">
+<p>
+The simplest use of count looks like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (query (<span class="org-builtin">:select</span> (<span class="org-builtin">:count</span> '*) <span class="org-builtin">:from</span> 'countries) <span class="org-builtin">:single</span>)
+
+202
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-create-composite-types" class="outline-2">
+<h2 id="create-composite-types">Create-Composite-Types</h2>
+<div class="outline-text-2" id="text-create-composite-types">
+<p>
+<a href="https://www.postgresql.org/docs/current/rowtypes.html">Composite types</a> can be created with the :create-composite-type operator. For example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-composite-type</span> 'inventory-item
+                               (name string)
+                               (df double-float)
+                               (count bigint)))
+
+(query (<span class="org-builtin">:create-composite-type</span> 'employee-type (name text) (salary numeric)))
+</pre>
+</div>
+<p>
+Those types can then be used in :create-table queries.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'distributors
+                      ((i <span class="org-builtin">:type</span> inventory-item)
+                       (e  <span class="org-builtin">:type</span> employee-type))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-create-index" class="outline-2">
+<h2 id="create-index">Create-Index</h2>
+<div class="outline-text-2" id="text-create-index">
+<p>
+** Basic
+</p>
+<p>
+:CUSTOM_ID: create-index-basic
+</p>
+<p>
+To create a B-tree index on the column title in the table films.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'films_idx <span class="org-builtin">:on</span> <span class="org-string">"films"</span> <span class="org-builtin">:fields</span> 'title))
+</pre>
+</div>
+</div>
+<div id="outline-container-create-index-multiple-columns" class="outline-3">
+<h3 id="create-index-multiple-columns">Multiple Columns</h3>
+<div class="outline-text-3" id="text-create-index-multiple-columns">
+<p>
+Multiple-column indexes:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'films-idx <span class="org-builtin">:on</span> <span class="org-string">"films"</span> <span class="org-builtin">:fields</span> 'title 'id))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-create-index-with-expression" class="outline-3">
+<h3 id="create-index-with-expression">Using Postgresql Expressions</h3>
+<div class="outline-text-3" id="text-create-index-with-expression">
+<p>
+To create an index on the postgresql expression lower so as to generate efficient case insensitive searches
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'films_idx <span class="org-builtin">:on</span> <span class="org-string">"films"</span> <span class="org-builtin">:fields</span> (<span class="org-builtin">:lower</span> 'title)))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-create-index-other-methods" class="outline-3">
+<h3 id="create-index-other-methods">GIN, GIST and other non-B-tree indexes</h3>
+<div class="outline-text-3" id="text-create-index-other-methods">
+<p>
+To create an index using e.g. GIN instead of a B-tree index, you need to provide a :using clause:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'films_idx <span class="org-builtin">:on</span> <span class="org-string">"films"</span> <span class="org-builtin">:using</span> 'gin <span class="org-builtin">:fields</span> 'title))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-create-index-opclasses" class="outline-3">
+<h3 id="create-index-opclasses">Indexes with opclass parameters</h3>
+<div class="outline-text-3" id="text-create-index-opclasses">
+<p>
+The following basic opclass parameters are supported:
+:asc, :desc, :nulls-first, :null-last, :nulls-distinct, :nulls-not-distinct, :array-ops, jsonb-ops, :jsonb-path-ops, :gin-trgm-ops, :tsvector-ops.
+</p>
+
+<p>
+To specify using an opclass parameter, you will need to enclose the specific field in its own form and use a keyword parameter. The second example shows a second field included in the index, but without an opclass parameter, so it does not need to be in its own form (although it can be):
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'items-idx <span class="org-builtin">:on</span> 'test-items <span class="org-builtin">:using</span> 'gin
+                 <span class="org-builtin">:fields</span> (<span class="org-builtin">:jsonb-path-ops</span> 'metadata)))
+
+(query (<span class="org-builtin">:create-index</span> 'films-idx <span class="org-builtin">:on</span> 'films <span class="org-builtin">:using</span> 'gin
+        <span class="org-builtin">:fields</span> (<span class="org-builtin">:nulls-first</span> 'customer-id ) 'order-date))
+
+(query (<span class="org-builtin">:create-index</span> 'films-idx <span class="org-builtin">:on</span> 'films <span class="org-builtin">:using</span> 'gin
+        <span class="org-builtin">:fields</span> (<span class="org-builtin">:nulls-first</span> 'customer-id ) (<span class="org-builtin">:asc</span> 'order-date)))
+</pre>
+</div>
+</div>
+<div id="outline-container-create-index-to-tsvector" class="outline-4">
+<h4 id="create-index-to-tsvector">To-Tsvector</h4>
+<div class="outline-text-4" id="text-create-index-to-tsvector">
+<p>
+to-tsvector is a bit of a special case:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'pgweb-idx <span class="org-builtin">:on</span> 'pgweb <span class="org-builtin">:using</span> 'gin
+         <span class="org-builtin">:fields</span> (<span class="org-builtin">:to-tsvector</span> <span class="org-string">"english"</span> 'body)))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-create-index-2-ary" class="outline-4">
+<h4 id="create-index-2-ary">2+-ary Operators</h4>
+<div class="outline-text-4" id="text-create-index-2-ary">
+<p>
+These operators have two operands. They need to be in their own form:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'test-idx <span class="org-builtin">:on</span> 'test <span class="org-builtin">:using</span> 'btree
+        <span class="org-builtin">:fields</span> (<span class="org-builtin">:-&gt;&gt;</span> 'data <span class="org-string">"field"</span>)
+
+(query (<span class="org-builtin">:create-index</span> 'pointloc0 <span class="org-builtin">:on</span> 'points <span class="org-builtin">:using</span> 'gist
+        <span class="org-builtin">:fields</span> (<span class="org-builtin">:box</span> 'location 'location)))
+
+(query (<span class="org-builtin">:create-index</span> 'pointloc2 <span class="org-builtin">:on</span> 'points <span class="org-builtin">:using</span> 'gist
+        <span class="org-builtin">:fields</span> (<span class="org-builtin">:asc</span> (<span class="org-builtin">:box</span> 'location 'location)) (<span class="org-builtin">:nulls-last</span> 'name)))
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-create-index-storage-parameters" class="outline-3">
+<h3 id="create-index-storage-parameters">Indexes with storage parameters</h3>
+<div class="outline-text-3" id="text-create-index-storage-parameters">
+<p>
+To specify storage parameters (e.g. fillfactor=70, deduplicate_items=on, fastupdate = off or similar), use a :with keyword parameter and a form containing := operators, the storage parameter and the value.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (query (<span class="org-builtin">:create-index</span> 'gin-idx <span class="org-builtin">:on</span> 'documents-table <span class="org-builtin">:using</span> gin
+        <span class="org-builtin">:fields</span> 'locations <span class="org-builtin">:with</span> (<span class="org-builtin">:=</span> 'fillfactor 70)))
+
+(query (<span class="org-builtin">:create-index</span> 'title-index <span class="org-builtin">:on</span> 'films <span class="org-builtin">:fields</span> title
+        <span class="org-builtin">:with</span> (<span class="org-builtin">:=</span> 'deduplicate-items 'off)))
+</pre>
+</div>
+<p>
+With multiple storage parameters:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'gin-idx <span class="org-builtin">:on</span> 'documents-table <span class="org-builtin">:using</span> gin
+        <span class="org-builtin">:fields</span> 'locations <span class="org-builtin">:with</span> (<span class="org-builtin">:=</span> 'deduplicate-items off) (<span class="org-builtin">:=</span> 'fillfactor 70)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-partial-indexes" class="outline-3">
+<h3 id="partial-indexes">Partial Indexes with where clauses</h3>
+<div class="outline-text-3" id="text-partial-indexes">
+<p>
+An example of a partial index:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'orders_unbilled_idx <span class="org-builtin">:on</span> 'orders <span class="org-builtin">:fields</span> 'order-nr
+                 <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:is-not-true</span> 'billed)
+                              (<span class="org-builtin">:&lt;</span> 'order_nr 1000)))))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-create-table" class="outline-2">
+<h2 id="create-table">Create-Table</h2>
+<div class="outline-text-2" id="text-create-table">
+<p>
+Here we are talking about the S-SQL operator :create-table, not the create-table function name in Postmodern. First, starting at a minimum level, the :create-table and :create-extended-table operator calls are exactly the same. Let's walk through a simple example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'films-at-eleven
+    ((code <span class="org-builtin">:type</span> (or (string 5) db-null) <span class="org-builtin">:constraint</span> 'firstkey
+           <span class="org-builtin">:primary-key</span> t)
+      (title <span class="org-builtin">:type</span> (varchar 40))
+      (did <span class="org-builtin">:type</span> integer)
+      (date-prod <span class="org-builtin">:type</span> (or date db-null))
+      (kind <span class="org-builtin">:type</span> (or (varchar 10) db-null))
+      (len <span class="org-builtin">:type</span> (or interval db-null) <span class="org-builtin">:interval</span> <span class="org-builtin">:hour-to-minute</span>))))
+
+</pre>
+</div>
+
+<p>
+The parameter specification is :create-table (name (&amp;rest columns) &amp;rest options)
+</p>
+
+<p>
+The first parameter is the name of the new table. You could make the name a quoted string, e.g. "films-at-eleven", but postmodern will handle either a string or the unquoted parameter provided above. Postmodern will also automatically handle the conversion of the hyphens so beloved by common lisp programmers to the underscores demanded by the sql specification.
+</p>
+
+<p>
+The next form contains subforms for each column in the table.
+</p>
+
+<p>
+The first parameter being the name of the column.
+</p>
+
+<p>
+As you know, postgresql will enforce the data type for the column. So, the next keyword specifies that type to follow. You can see several different types specified in this table. Look at the type for 'code'. It specifies that the data will be either NULL or a string with a maximum length of 5 characters.
+</p>
+
+<p>
+Compare that against the type specifiers for title or did. In both of those cases, the column entry is not allowed to be NULL, it must have a value. In this example the title must be a string with a length no greater than 40 characters. (For most purposes, you can treat a string specification the same as a varchar specification.
+</p>
+
+<p>
+The did type specification mandates an integer - trying to put a float in that column will trigger a database type error.
+</p>
+
+<p>
+The date-prod column obviously has a date data type and the len column has a interval data type, intervals being a period of time rather than a specific time.
+</p>
+
+<p>
+The code column also has a constraint - It is the primary key for indexing the table and that contraint has a name - in this case 'firstkey. If you do not name the constraint, the system will name it for you.
+</p>
+
+<p>
+The len column also has additional information. It is an interval of time; That could encompass years as well as seconds. The specification given here, :hour-to-minute means that the database will only keep the hours to minutes part of the potential time interval.
+</p>
+</div>
+
+<div id="outline-container-table-names-parameter" class="outline-3">
+<h3 id="table-names-parameter">Table Names Parameter</h3>
+<div class="outline-text-3" id="text-table-names-parameter">
+<p>
+The following discussion on table names is the same for both :create-table or :create-extended table.
+</p>
+
+<p>
+Create-table works with either the simple name for the table parameter or the name can be wrapped in a form. There are a few acceptable ways to pass the table-name parameters. We recommend a single quote as in the first example below, but for backwards compatibility, you can also provide the table-name with no quotes at all. The last example below shows the table name preceded by the desired schema name. e.g. 'public.tablename1.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">
+(query (<span class="org-builtin">:create-table</span> 'distributors-in-hell
+                      ((did <span class="org-builtin">:type</span> (or integer db-null)))))
+
+(query (<span class="org-builtin">:create-table</span> (distributors-in-hell)
+                      ((did <span class="org-builtin">:type</span> (or integer db-null)))))
+
+(query (<span class="org-builtin">:create-table</span> (<span class="org-string">"distributors-in-hell"</span>)
+                      ((did <span class="org-builtin">:type</span> (or integer db-null)))))
+
+(query (<span class="org-builtin">:create-table</span> 'public.distributors-in-hell
+                      ((did <span class="org-builtin">:type</span> (or integer db-null)))))
+
+</pre>
+</div>
+<p>
+Using the name wrapped in a form provides the opportunity to add additional qualifiers - if-not-exists, temp, and unlogged.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> (<span class="org-builtin">:if-not-exists</span> 'distributors-in-hell)
+
+                      ((did <span class="org-builtin">:type</span> (or integer db-null)))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-temp-tables" class="outline-3">
+<h3 id="temp-tables">Temporary and Unlogged Tables</h3>
+<div class="outline-text-3" id="text-temp-tables">
+<p>
+Temporary tables exists only for the duration of the session. To create them using s-sql in postmodern, the first parameter to :create-table should be a form where the first atom in the form is the keyword :temp. You can optionally use the :if-not-exists keyword, and then the name of the temporary table. E.g.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> (<span class="org-builtin">:temp</span> 'distributors-in-hell)
+                      ((did <span class="org-builtin">:type</span> (or integer db-null)))))
+
+(query (<span class="org-builtin">:create-table</span> (<span class="org-builtin">:temp</span> <span class="org-builtin">:if-not-exists</span> 'distributors-in-hell)
+                     ((did <span class="org-builtin">:type</span> (or integer db-null)))))
+
+</pre>
+</div>
+
+<p>
+Unlogged tables do not have their data written to the write-ahead log. As a result they are faster, but not crash safe. Any indexes created on an unlogged table are unlogged as well. The parameter signature is similar to a temporary table. E.g.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> (<span class="org-builtin">:unlogged</span> 'distributors-in-hell)
+                      ((did <span class="org-builtin">:type</span> (or integer db-null)))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-identity-columns" class="outline-3">
+<h3 id="identity-columns">Using Identity Columns</h3>
+<div class="outline-text-3" id="text-identity-columns">
+<p>
+Postgresql version 10 added identity columns. These are auto-incrementing columns that use the standard SQL syntax instead of the serial and bigserial datatypes which are still available, but are not SQL standard syntax. The serial and bigserial datatypes also generate sequences that may have different usage permissions which can be problematic if you need to make changes to the sequence.
+</p>
+
+<p>
+There are two keyword alternatives that need to be considered:
+</p>
+
+<ul class="org-ul">
+<li>:generated-as-identity-by-default (or more simply :identity-by-default)</li>
+<li>:generated-as-identity-always (or more simply :identity-always)</li>
+</ul>
+
+<p>
+The difference between the two alternatives is that if you try to insert or update a value in the column and the generated-always option is chosen, postgresql will raise an error. If you use the by-default option, postgresql will use your value rather than the automatically generated value.
+</p>
+
+<p>
+Note: The data type used for identity columns must be one of smallint, int, integer or bigint.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'color
+                      ((color-id <span class="org-builtin">:type</span> int <span class="org-builtin">:generated-as-identity-always</span> t)
+                       (color-name <span class="org-builtin">:type</span> varchar))))
+
+(query (<span class="org-builtin">:create-table</span> 'color
+                      ((color-id <span class="org-builtin">:type</span> int <span class="org-builtin">:generated-as-identity-by-default</span> t)
+                       (color-name <span class="org-builtin">:type</span> varchar))))
+
+(query (<span class="org-builtin">:create-table</span> 'color
+                      ((color-id <span class="org-builtin">:type</span> int <span class="org-builtin">:identity-always</span> t)
+                       (color-name <span class="org-builtin">:type</span> varchar))))
+
+(query (<span class="org-builtin">:create-table</span> 'color
+                      ((color-id <span class="org-builtin">:type</span> int <span class="org-builtin">:identity-by-default</span> t)
+                       (color-name <span class="org-builtin">:type</span> varchar))))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-arrayy-columns" class="outline-3">
+<h3 id="arrayy-columns">Array Columns</h3>
+<div class="outline-text-3" id="text-arrayy-columns">
+<p>
+The following shows the creation of a table with a two dimensional array
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'array-int
+                      ((vector <span class="org-builtin">:type</span> (or int[][] db-null)))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-check-constraints" class="outline-3">
+<h3 id="check-constraints">Check Constraints</h3>
+<div class="outline-text-3" id="text-check-constraints">
+<p>
+You can put a contraint on a table row that specifies values must meet certain requirements. In the following examples, the first puts a check constraint on a row, the second places at check constraint at the table level.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'distributors
+                      ((did <span class="org-builtin">:type</span> (or integer db-null) <span class="org-builtin">:check</span> (<span class="org-builtin">:&gt;</span> 'did 100))
+                       (name <span class="org-builtin">:type</span> (or (varchar 40) db-null)))))
+
+(query (<span class="org-builtin">:create-table</span> 'distributors
+                      ((did <span class="org-builtin">:type</span> (or integer db-null))
+                       (name <span class="org-builtin">:type</span> (or (varchar 40) db-null)))
+                      (<span class="org-builtin">:constraint</span> con1
+                       <span class="org-builtin">:check</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:&gt;</span> 'did 100)
+                                    (<span class="org-builtin">:&lt;&gt;</span> 'name <span class="org-string">""</span>)))))
+
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-unique-constraints" class="outline-3">
+<h3 id="unique-constraints">Unique Constraints</h3>
+<div class="outline-text-3" id="text-unique-constraints">
+<p>
+You can ensure that a column or a combination of columns is unique without making that column or columns the primary key for the table.
+</p>
+
+<p>
+The first example sets a unique constraint at the column level of email, the second example sets a unique constraint at the table level.
+</p>
+
+<p>
+Please note the need to set :unique to t in the column constraint version.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'person
+                      ((id <span class="org-builtin">:type</span> serial <span class="org-builtin">:primary-key</span> t)
+                       (first-name <span class="org-builtin">:type</span> (varchar 50))
+                       (last-name <span class="org-builtin">:type</span> (varchar 50))
+                       (email <span class="org-builtin">:type</span> (varchar 50) <span class="org-builtin">:unique</span> t))))
+
+(query (<span class="org-builtin">:create-table</span> 'films
+                      ((code <span class="org-builtin">:type</span> (or (string 5) db-null))
+                       (title <span class="org-builtin">:type</span> (or (varchar 40) db-null))
+                       (did <span class="org-builtin">:type</span> (or integer db-null))
+                       (date-prod <span class="org-builtin">:type</span> (or date db-null))
+                       (kind <span class="org-builtin">:type</span> (or (varchar 10) db-null))
+                       (len <span class="org-builtin">:type</span> (or interval db-null) <span class="org-builtin">:interval</span> <span class="org-builtin">:hour-to-minute</span>))
+                      (<span class="org-builtin">:constraint</span> production <span class="org-builtin">:unique</span> 'date-prod)))
+
+</pre>
+</div>
+
+<p>
+This can get more complex if so desired. See the following example from the postgresql documentation, translated into s-sql. This level of complexity, however, requires the :create-extended-table method.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-extended-table</span> 'distributors
+                               ((did <span class="org-builtin">:type</span> (or integer db-null))
+                                (name <span class="org-builtin">:type</span> (or (varchar 40) db-null)))
+                               ((<span class="org-builtin">:unique</span> did <span class="org-builtin">:with</span> (<span class="org-builtin">:=</span> 'fillfactor 70)))))
+
+</pre>
+</div>
+
+<p>
+In case you are wondering, fillfactor is a storage parameter described in the postgresql documentation as:
+</p>
+
+<p>
+"The fillfactor for a table is a percentage between 10 and 100. 100 (complete packing) is the default. When a smaller fillfactor is specified, INSERT operations pack table pages only to the indicated percentage; the remaining space on each page is reserved for updating rows on that page. This gives UPDATE a chance to place the updated copy of a row on the same page as the original, which is more efficient than placing it on a different page. For a table whose entries are never updated, complete packing is the best choice, but in heavily updated tables smaller fillfactors are appropriate. This parameter cannot be set for TOAST tables."
+</p>
+</div>
+</div>
+
+<div id="outline-container-timestamps" class="outline-3">
+<h3 id="timestamps">Timestamps with and without timezones</h3>
+<div class="outline-text-3" id="text-timestamps">
+<p>
+Ah, the bane of many programmers' existence - dates and times. At least the table creation is fairly straightforward.
+</p>
+
+<p>
+The following examples are fairly self explanatory.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'account-role
+                      ((user-id <span class="org-builtin">:type</span> integer)
+                       (role-id <span class="org-builtin">:type</span> integer)
+                       (grant-date <span class="org-builtin">:type</span> (or timestamp-without-time-zone db-null)))))
+
+(query (<span class="org-builtin">:create-table</span> 'account-role
+                      ((user-id <span class="org-builtin">:type</span> integer)
+                       (role-id <span class="org-builtin">:type</span> integer)
+                       (grant-date <span class="org-builtin">:type</span> (or timestamp-with-time-zone db-null)))))
+
+(query (<span class="org-builtin">:create-table</span> 'account-role
+                      ((user-id <span class="org-builtin">:type</span> integer)
+                       (role-id <span class="org-builtin">:type</span> integer)
+                       (grant-date <span class="org-builtin">:type</span> (or timestamptz db-null)))))
+
+(query (<span class="org-builtin">:create-table</span> 'account-role
+                      ((user-id <span class="org-builtin">:type</span> integer)
+                       (role-id <span class="org-builtin">:type</span> integer)
+                       (grant-date <span class="org-builtin">:type</span> (or timestamp db-null)))))
+
+(query (<span class="org-builtin">:create-table</span> 'account-role
+                      ((user-id <span class="org-builtin">:type</span> integer)
+                       (role-id <span class="org-builtin">:type</span> integer)
+                       (grant-date <span class="org-builtin">:type</span> (or time db-null)))))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-foreign-keys" class="outline-3">
+<h3 id="foreign-keys">Adding Foreign Keys</h3>
+<div class="outline-text-3" id="text-foreign-keys">
+<p>
+There are a few different ways to add foreign keys in postgresql when defining a table.
+</p>
+</div>
+
+<div id="outline-container-foreign-keys-at-column" class="outline-4">
+<h4 id="foreign-keys-at-column">Defining Foreign Keys at the Column Level</h4>
+<div class="outline-text-4" id="text-foreign-keys-at-column">
+<p>
+First with foreign key on the column. Use the keyword :references and specify the table name and the relevant column within the subform. You will see why the subform in a minute.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'so-items
+                      ((item-id <span class="org-builtin">:type</span> integer)
+                       (so-id <span class="org-builtin">:type</span> (or integer db-null)
+                              <span class="org-builtin">:references</span> ((so-headers id)))
+                       (product-id <span class="org-builtin">:type</span> (or integer db-null))
+                       (qty <span class="org-builtin">:type</span> (or integer db-null))
+                       (net-price <span class="org-builtin">:type</span> (or numeric db-null)))
+                      (<span class="org-builtin">:primary-key</span> item-id so-id)))
+
+</pre>
+</div>
+
+<p>
+If the foreign key references a group of columns in the foreign table, those fit into that same subform.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'so-items
+                      ((item-id <span class="org-builtin">:type</span> integer)
+                       (so-id <span class="org-builtin">:type</span> (or integer db-null)
+                              <span class="org-builtin">:references</span> ((so-headers id p1 p2)))
+                       (product-id <span class="org-builtin">:type</span> (or integer db-null))
+                       (qty <span class="org-builtin">:type</span> (or integer db-null))
+                       (net-price <span class="org-builtin">:type</span> (or numeric db-null)))
+                      (<span class="org-builtin">:primary-key</span> item-id so-id)))
+
+</pre>
+</div>
+
+<p>
+You can specify the actions to be taken if a row in the foreign table is deleted or updated. Per the postgresql documentation:
+</p>
+
+<p>
+"… when the data in the referenced columns is changed, certain actions are performed on the data in this table's columns. The ON DELETE clause specifies the action to perform when a referenced row in the referenced table is being deleted. Likewise, the ON UPDATE clause specifies the action to perform when a referenced column in the referenced table is being updated to a new value. If the row is updated, but the referenced column is not actually changed, no action is done. Referential actions other than the NO ACTION check cannot be deferred, even if the constraint is declared deferrable. There are the following possible actions for each clause:
+</p>
+
+<p>
+NO ACTION
+</p>
+
+<p>
+Produce an error indicating that the deletion or update would create a foreign key constraint violation. If the constraint is deferred, this error will be produced at constraint check time if there still exist any referencing rows. This is the default action in postgresql but the default in postmodern is restrict.
+</p>
+
+<p>
+RESTRICT
+</p>
+
+<p>
+Produce an error indicating that the deletion or update would create a foreign key constraint violation. This is the same as NO ACTION except that the check is not deferrable.
+</p>
+
+<p>
+CASCADE
+</p>
+
+<p>
+Delete any rows referencing the deleted row, or update the values of the referencing column(s) to the new values of the referenced columns, respectively.
+</p>
+
+<p>
+SET NULL
+</p>
+
+<p>
+Set the referencing column(s) to null.
+</p>
+
+<p>
+SET DEFAULT
+</p>
+
+<p>
+Set the referencing column(s) to their default values. (There must be a row in the referenced table matching the default values, if they are not null, or the operation will fail.)
+</p>
+
+<p>
+If the referenced column(s) are changed frequently, it might be wise to add an index to the referencing column(s) so that referential actions associated with the foreign key constraint can be performed more efficiently."
+</p>
+
+<p>
+So now examples with specifying the on-delete and on-update actions.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'so-items
+                      ((item-id <span class="org-builtin">:type</span> integer)
+                       (so-id <span class="org-builtin">:type</span> (or integer db-null)
+                              <span class="org-builtin">:references</span> ((so-headers id) <span class="org-builtin">:no-action</span> <span class="org-builtin">:no-action</span>))
+                       (product-id <span class="org-builtin">:type</span> (or integer db-null))
+                       (qty <span class="org-builtin">:type</span> (or integer db-null))
+                       (net-price <span class="org-builtin">:type</span> (or numeric db-null)))
+                      (<span class="org-builtin">:primary-key</span> item-id so-id)))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-foreign-keys-at-table" class="outline-4">
+<h4 id="foreign-keys-at-table">Defining Foreign Keys at the Table Level</h4>
+<div class="outline-text-4" id="text-foreign-keys-at-table">
+<p>
+Instead of specifying the foreign keys at the column level, you can specify them at the table level, but of course that means you have to additionally specify which column in the current table is a foreign key.
+</p>
+
+<p>
+The following example creates a named constraint and a foreign key at column role-id with a single column in the foreign table. The first example uses the default actions for on-delete and on-default. The second example shows non-default actions specified.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'account-role
+                      ((user-id <span class="org-builtin">:type</span> integer)
+                       (role-id <span class="org-builtin">:type</span> integer)
+                       (grant-date <span class="org-builtin">:type</span> (or timestamp-without-time-zone db-null)))
+                      (<span class="org-builtin">:primary-key</span> user-id role-id)
+                      (<span class="org-builtin">:constraint</span> account-role-role-id-fkey <span class="org-builtin">:foreign-key</span> (role-id) (role role-id))))
+
+(query (<span class="org-builtin">:create-table</span> 'account-role
+                      ((user-id <span class="org-builtin">:type</span> integer)
+                       (role-id <span class="org-builtin">:type</span> integer)
+                       (grant-date <span class="org-builtin">:type</span> (or timestamp-without-time-zone db-null)))
+                      (<span class="org-builtin">:primary-key</span> user-id role-id)
+                      (<span class="org-builtin">:constraint</span> account-role-role-id-fkey <span class="org-builtin">:foreign-key</span> (role-id) (role role-id) <span class="org-builtin">:no-action</span> <span class="org-builtin">:no-action</span>)))
+</pre>
+</div>
+<p>
+Additional foreign keys can easily be added:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 'account-role
+                      ((user-id <span class="org-builtin">:type</span> integer)
+                       (role-id <span class="org-builtin">:type</span> integer)
+                       (grant-date <span class="org-builtin">:type</span> (or timestamp-without-time-zone db-null)))
+                      (<span class="org-builtin">:primary-key</span> user-id role-id)
+                      (<span class="org-builtin">:constraint</span> account-role-role-id-fkey <span class="org-builtin">:foreign-key</span> (role-id) (role role-id))
+                      (<span class="org-builtin">:constraint</span> account-role-user-id-fkey <span class="org-builtin">:foreign-key</span> (user-id) (users user-id))))
+
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-generated-columns" class="outline-3">
+<h3 id="generated-columns">Generated Columns</h3>
+<div class="outline-text-3" id="text-generated-columns">
+<p>
+It is sometimes useful to have a <a href="https://www.postgresql.org/docs/current/ddl-generated-columns.html">generated column</a> that is computed from something else. An example would be a tsvector type column which might be generated as in this example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 't10
+                      ((title <span class="org-builtin">:type</span> (or text db-null))
+                       (body <span class="org-builtin">:type</span> (or text db-null))
+                       (tsv <span class="org-builtin">:type</span> (or tsvector db-null)
+                            <span class="org-builtin">:generated-always</span>
+                            (<span class="org-builtin">:to-tsvector</span> <span class="org-string">"english"</span> 'body)))))
+</pre>
+</div>
+<p>
+The following example uses a calculation from fields in the tuple:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 't1
+                      ((w <span class="org-builtin">:type</span> (or real db-null))
+                       (h <span class="org-builtin">:type</span> (or real db-null))
+                       (area <span class="org-builtin">:type</span> (or real db-null)
+                             <span class="org-builtin">:generated-always</span> (<span class="org-builtin">:*</span> 'w 'h)))))
+</pre>
+</div>
+<p>
+The final example uses a variable in the calculation of the generated column:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((fx-rate 0.8))
+       (query
+        (<span class="org-builtin">:create-table</span> 'cars
+                       ((car-id <span class="org-builtin">:type</span> (or int db-null))
+                        (brand-name <span class="org-builtin">:type</span> varchar)
+                        (price-in-dollar <span class="org-builtin">:type</span> (or numeric db-null)) (price-in-pound <span class="org-builtin">:type</span> (or numeric db-null) <span class="org-builtin">:generated-always</span> (<span class="org-builtin">:*</span> 'price-in-dollar fx-rate))))))
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

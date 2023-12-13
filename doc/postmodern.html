@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-02-11 Sat 09:29 -->
+<!-- 2023-12-12 Tue 18:30 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Postmodern Reference Manual</title>
@@ -193,27 +193,38 @@
 </style>
 <link rel="stylesheet" type="text/css" href="style.css" />
 <style>pre.src{background:#343131;color:white;} </style>
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        displayAlign: "center",
-        displayIndent: "0em",
-
-        "HTML-CSS": { scale: 100,
-                        linebreaks: { automatic: "false" },
-                        webFont: "TeX"
-                       },
-        SVG: {scale: 100,
-              linebreaks: { automatic: "false" },
-              font: "TeX"},
-        NativeMML: {scale: 100},
-        TeX: { equationNumbers: {autoNumber: "AMS"},
-               MultLineWidth: "85%",
-               TagSide: "right",
-               TagIndent: ".8em"
-             }
-});
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
 </head>
 <body>
 <div id="content" class="content">
@@ -328,7 +339,8 @@
 <li><a href="#function-list-available-collations">function list-available-collations ()</a></li>
 <li><a href="#list-available-extensions">function list-available-extensions ()</a></li>
 <li><a href="#function-list-installed-extensions">function list-installed-extensions ()</a></li>
-<li><a href="#function-load-uuid-extensin">function load-uuid-extension ()</a></li>
+<li><a href="#function-load-extension">function load-extension (extension)</a></li>
+<li><a href="#function-load-uuid-extension">function load-uuid-extension ()</a></li>
 <li><a href="#function-list-templates">function list-templates ()</a></li>
 <li><a href="#function-change-toplevel-database">function change-toplevel-database (new-database user password host)</a></li>
 <li><a href="#function-cache-hit-ratio">function cache-hit-ratio ()</a></li>
@@ -2631,10 +2643,18 @@ database.
 </p>
 </div>
 </div>
+<div id="outline-container-function-load-extension" class="outline-3">
+<h3 id="function-load-extension">function load-extension (extension)</h3>
+<div class="outline-text-3" id="text-function-load-extension">
+<p>
+Loads the Postgresql contrib module or extension provided as a parameter. The parameter provided must be a string. If the extension is not available, Postgresql will throw an error. It will be skipped if it is already loaded.
+</p>
+</div>
+</div>
 
-<div id="outline-container-function-load-uuid-extensin" class="outline-3">
-<h3 id="function-load-uuid-extensin">function load-uuid-extension ()</h3>
-<div class="outline-text-3" id="text-function-load-uuid-extensin">
+<div id="outline-container-function-load-uuid-extension" class="outline-3">
+<h3 id="function-load-uuid-extension">function load-uuid-extension ()</h3>
+<div class="outline-text-3" id="text-function-load-uuid-extension">
 <p>
 Loads the Postgresql uuid-ossp contrib module. Once loaded, you can call uuid
 generation functions such as uuid_generate_v4 within a query. E.g.

@@ -1,0 +1,85 @@
+#+TITLE: S-SQL Examples E
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+
+* Enum
+  :PROPERTIES:
+  :CUSTOM_ID: enum
+  :END:
+Per the postgresql documentation, Enumerated (enum) types are data types that comprise a static, ordered set of values. They are equivalent to the enum types supported in a number of programming languages. An example of an enum type might be the days of the week, or a set of status values for a piece of data. In this example, we are going to create an enumerated type "rainbow" with specific allowed colors.
+#+begin_src lisp
+  (query (:create-enum 'rainbow
+                       (list "red" "orange" "yellow" "green" "blue" "purple")))
+
+  (query (:create-table test26
+                        ((name :type text)
+                         (color :type rainbow))))
+
+  (query (:insert-into 'test26 :set 'name "Moe" 'current-color "yellow"))
+#+end_src
+
+Now if we try to insert an invalid type, we will trigger an error:
+#+begin_src lisp
+(query (:insert-into 'test26 :set 'name "Moe" 'current-color "chartreuse"))
+
+Database error 22P02: invalid input value for enum rainbow: "chartreuse" Query: insert into test26 values ('Moe', 'chartreuse')
+
+[Condition of type CL-POSTGRES-ERROR:DATA-EXCEPTION]
+#+end_src
+
+* Except
+  :PROPERTIES:
+  :CUSTOM_ID: except
+  :END:
+The sql except operator returns rows that are in the first selection but not in the second selection. Following on with our like example, assume we want all countries with "New" in their name, but not countries with "Zealand" in their names.
+#+begin_src lisp
+(query (:except (:select 'id 'name
+                         :from 'countries
+                         :where (:like 'name "%New%"))
+                (:select 'id 'name
+                         :from 'countries
+                         :where (:like 'name "%Zealand%"))))
+
+((108 "Papua New Guinea") (103 "New Caledonia"))
+
+#+end_src
+
+* Exists
+  :PROPERTIES:
+  :CUSTOM_ID: exists
+  :END:
+Exists is used to run one subquery when a second subquery returns at least one row. For example:
+#+begin_src lisp
+  (query (:select 'id 'name
+                :from 'regions
+                :where (:exists
+                        (:select 'region-id
+                                 :from 'countries
+                                 :where (:and
+                                         (:= 'countries.name "Costa Rica")
+                                         (:= 'regions.id 'countries.region-id))))))
+
+((3 "Central America"))
+
+#+end_src
+
+* Extract
+  :PROPERTIES:
+  :CUSTOM_ID: extract
+  :END:
+#+begin_src lisp
+  (query (:order-by (:select 'facid
+                           (:as (:extract 'month 'starttime) 'month)
+                           (:as (:sum 'slots) 'total-slots)
+                           :from 'cd.bookings
+                           :where (:and (:>= 'starttime "2012-01-01")
+                                        (:< 'starttime "2013-01-01"))
+                           :group-by 'facid 'month)
+                  'facid 'month))
+#+end_src

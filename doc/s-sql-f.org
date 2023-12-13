@@ -1,0 +1,50 @@
+#+TITLE: S-SQL Examples F
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Fetch
+  :PROPERTIES:
+  :CUSTOM_ID: fetch
+  :END:
+Fetch is a more efficient way to do pagination instead of using limit and
+offset. Fetch allows you to retrieve a limited set of rows, optionally offset
+by a specified number of rows. In order to ensure this works correctly, you
+should use the order-by clause. If the amount is not provided, it assumes
+you only want to return 1 row.
+https://www.postgresql.org/docs/current/sql-select.html
+
+Examples:
+#+BEGIN_SRC lisp
+(query (:fetch (:order-by (:select 'id :from 'historical-events) 'id) 5))
+
+((1) (2) (3) (4) (5))
+
+(query (:fetch (:order-by (:select 'id :from 'historical-events) 'id) 5 10))
+
+((11) (12) (13) (14) (15))
+#+END_SRC
+
+* Filter
+  :PROPERTIES:
+  :CUSTOM_ID: filter
+  :END:
+#+BEGIN_SRC lisp
+(query (:select (:as (:count '* :distinct) 'unfiltered)
+                (:as (:count '* :filter (:= 1 'bid))
+                     'filtered)
+                :from 'testtable))
+#+END_SRC
+Note that, if used, the filter must be last in the count args. If distinct
+is used, it must come before filter. Unlike standard sql, the word 'where'
+is not used inside the filter clause. E.g.
+#+BEGIN_SRC lisp
+(query (:select (:count '*)
+                (:count '* :filter (:= 1 'bid))
+                'id
+                :from 'pbbench-history))
+#+END_SRC

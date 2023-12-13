@@ -1,0 +1,122 @@
+#+TITLE: S-SQL Examples S
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Set
+  :PROPERTIES:
+  :CUSTOM_ID: set
+  :END:
+Often I need to get a list of results where a query is in a particular set. The following would be the syntax in postmodern sql where the set is a list. If you want to use a vector, then you need to use Any:
+
+The following are equivalent
+#+begin_src lisp
+  (query (:select 'name
+                  :from 'countries
+                  :where (:in 'id
+                              (:set 20 21 23))))
+
+(let ((x (list 20 21 23)))
+  (query (:select 'name
+                  :from 'countries
+                  :where (:in 'id
+                              (:set x)))))
+
+(query (:select 'name
+                :from 'countries
+                :where (:in 'id (:set (list 20 21 23)))))
+#+end_src
+** Quoted lists
+Replacing (list 20 21 23) with '(20 21 23) within the query will not work. Postgresql will throw a syntax error. (We have not worked out all the bugs).
+#+begin_src lisp
+  (query (:select 'name
+                  :from 'countries
+                  :where (:in 'id
+                              (:set '(20 21 23)))))
+
+  ERROR
+#+end_src
+Solution: Pass it in as a variable.
+#+begin_src lisp
+  (let ((ids '(20 21 23)))
+    (query (:select 'name
+                  :from 'countries
+                  :where (:in 'id
+                              (:set ids)))))
+#+end_src
+Now with selecting a dao
+#+begin_src lisp
+  (select-dao 'countries
+      (:in 'id
+           (:set (list 20 21 23))))
+
+  (#<COUNTRIES {1002B8C111}> #<COUNTRIES {1002B8C801}> #<COUNTRIES{1002B8D611}>)
+#+end_src
+
+Now with selecting from a vector. Note both the use of any* and := instead of :in.
+#+begin_srcbbbb lisp
+  (let ((x (vector 20 21 23)))
+    (query (:select 'name
+            :from 'countries
+            :where (:= 'id (:any* x)))))
+
+  (("Greece") ("US") ("UK"))
+#+end_src
+
+Note that the responses are still coming back in a list of lists
+
+* SQL-type-name
+  :PROPERTIES:
+  :CUSTOM_ID: sql-type-name
+  :END:
+sql-type-name is an exported generic method that allows you to define how some lisp type gets declared in sql terms that Postgresql can understand. Some examples for the built-in methods already provided will convert:
+
+| Lisp sample                  | SQL Conversion                |
+| 'float                       | "REAL"                        |
+| '(string "5")                | "(CHAR(5)"                    |
+| '(string 5)                  | "(CHAR(5)"                    |
+| 'double-float                | "DOUBLE PRECISION"            |
+| '(numeric 3 2)               | "NUMERIC(3, 2)"               |
+| 'some-symbol                 | "SOME_SYMBOL"                 |
+| 'timestamp-with-time-zone    | "TIMESTAMP WITH TIME ZONE"    |
+| 'timestamp-without-time-zone | "TIMESTAMP WITHOUT TIME ZONE" |
+
+This function gets called by other operators such :create-table and :alter-table. If you need to create a conversion for e.g. some custom type for a Postgresql extension, then your method might look something like this:
+#+begin_src lisp
+  (defmethod s-sql:sql-type-name ((lisp-type (eql 'pgvector)) &rest args)
+                 (cond (args (format nil "VECTOR(~{~A~^, ~})" args)))
+                       (t "VECTOR(1)")))
+#+end_src
+and then be called like this in a :create-table statement. We will use the sql function to show what the generated sql would look like:
+#+begin_src lisp
+  (pomo:sql (:create-table 'items ((id :type bigserial :primary-key t)
+                                 (embedding :type (pgvector 3)))))
+"CREATE TABLE items (id BIGSERIAL NOT NULL PRIMARY KEY , embedding VECTOR(3) NOT NULL)"
+#+end_src
+* String_agg
+  :PROPERTIES:
+  :CUSTOM_ID: string-agg
+  :END:
+String_agg returns a string containging the values returned, separated by a delimiter. In the following example, we are searching for the name of all the regions in the regions table and we want it all returned as a single string with a delimiting comma.
+#+begin_src lisp
+(query (:select (:string_agg 'name ",") :from 'regions))
+
+ (("Central America,Middle East,North America,South America,Central Asia,Pacific,Caribbean,Eastern Europe,Western Europe,EMEA,APAC,LATAM,Emerging,US,Canada,Africa,All,Asia,Eastern Africa,Middle Africa,Northern Africa,Southern Africa,Western Africa,Oceania,Northern Europe,Southern Europe,Eastern Asia,South Central Asia,South East Asia"))
+
+#+end_src
+
+* Sum
+  :PROPERTIES:
+  :CUSTOM_ID: sum
+  :END:
+Simple example for a sum:
+#+begin_src lisp
+  (query (:select (:sum 'population) :from 'countries)
+         :single)
+
+  14427958899
+#+end_src

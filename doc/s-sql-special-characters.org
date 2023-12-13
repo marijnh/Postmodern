@@ -1,0 +1,113 @@
+#+TITLE: S-SQL Special Characters
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+You can generally assume that most Postgresql operators will act similarly to the following:
+* := The Equal operator
+  :PROPERTIES:
+  :CUSTOM_ID: equal
+  :END:
+#+begin_src lisp
+  (query (:select 'id 'name :from 'regions :where (:= 'name "South America")))
+
+  ((7 "South America"))
+#+end_src
+
+* :+ The Plus operator
+  :PROPERTIES:
+  :CUSTOM_ID: plus
+  :END:
+#+begin_src lisp
+  (query (:select (:+ 'id 12) 'name
+                  :from 'regions
+                  :where (:= 'name "South America")))
+  ((19 "South America"))
+#+end_src
+
+* :<> The Not Equals or Greater or Lesser than operators
+  :PROPERTIES:
+  :CUSTOM_ID: not-equal
+  :END:
+The not equals operator
+#+begin_src lisp
+  (query (:select 'id 'name
+                  :from 'regions
+                  :where (:<> 'name "Africa")))
+
+  ((3 "Central America") (5 "Middle East") (6 "North America") (7 "SouthAmerica") (8 "Central Asia") (9 "Pacific") (10 "Caribbean") (11 "Eastern Europe") (4 "Western Europe")  (2 "Asia"))
+
+#+end_src
+
+* :| Concatenating Columns
+  :PROPERTIES:
+  :CUSTOM_ID: concate
+  :END:
+The concatenation operator combines two or more columns into a single column return. First, consider the query on a raw sql string:
+#+begin_src lisp
+  (query "(SELECT countries.id, (countries.name | '-' | regions.name)
+           FROM countries, regions
+           WHERE ((regions.id = countries.region_id)
+                 and (countries.name = 'US')))")
+
+  ((21 "US-North America"))
+
+#+end_src
+
+Now consider the result using s-sql.
+#+begin_src lisp
+  (query (:select 'countries.id (:| 'countries.name "-" 'regions.name)
+                  :from 'countries 'regions
+                  :where (:and (:= 'regions.id 'countries.region-id)
+                               (:= 'countries.name "US"))))
+
+  ((21 "US-North America"))
+
+#+end_src
+
+* :~, :!~, :~* Regex Match
+  :PROPERTIES:
+  :CUSTOM_ID: regex
+  :END:
+Regular expression matching operators. The exclamation mark means 'does not match',
+the asterisk makes the match case-insensitive.
+#+BEGIN_SRC lisp
+(query (:select (:regexp_match "foobarbequebaz" "bar.*que")) :single)
+
+#("barbeque")
+
+(query (:select (:regexp_match "foobarbequebaz" "bar.~que")) :single)
+
+:NULL
+
+(query (:select (:~ "foobarbequebaz" "bar.*que") ) :single)
+
+t
+
+(query (:select (:!~ "foobarbequebaz" "bar.*que") ) :single)
+
+nil
+
+(query (:select (:~ "foobarbequebaz" "barque") ) :single)
+
+nil
+
+(query (:select (:~ "foobarbequebaz" "barbeque") ) :single)
+
+t
+
+(query (:select (:~ "foobarBequebaz" "barbeque") ) :single)
+
+nil
+
+(query (:select (:~* "foobarBequebaz" "barbeque") ) :single)
+
+t
+
+(query (:select 'id 'text :from 'text-search :where (:~ 'text "sushi")))
+
+#+END_SRC

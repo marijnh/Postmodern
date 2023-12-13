@@ -1,0 +1,268 @@
+#+TITLE: Calling Postgresql Stored Functions and Procedures
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Postgresql Stored Functions and Procedures
+  :PROPERTIES:
+  :CUSTOM_ID: intro
+  :END:
+Postgresql (Not Postmodern) stored functions and procedures are confusing. We can start by setting up a very simple table t1 and insert a couple of values:
+#+begin_src lisp
+  (query (:create-table 't1
+                        ((id :type integer :primary-key t)
+                         (x :type integer))))
+
+  (query (:insert-rows-into 't1
+          :columns 'id 'x
+          :values '((1 1)(2 2)))
+ #+end_src
+
+* Overview of the differences between Postgresql Stored Functions and Postgresql Stored Procedures
+  :PROPERTIES:
+  :CUSTOM_ID: overview
+  :END:
+** Functions:
+  :PROPERTIES:
+  :CUSTOM_ID: functions
+  :END:
+1) can be called inside a query (select func() from foo)
+
+2) generally return a result
+
+3) must return a single set
+
+4) are scoped to a transaction
+
+5) cannot commit and rollback transactions
+
+6) are called using a select
+
+** Procedures:
+  :PROPERTIES:
+  :CUSTOM_ID: procedures
+  :END:
+1) can not be called inside a query
+
+2) typically don’t return results except for maybe error code. There is limited capabilities in Postgresql 13 to return values using INOUT parameters (more below).
+
+3) can commit and rollback transactions
+
+4) can flush the transaction (essentially a COMMIT; followed by a BEGIN;) within the procedure. This is the most important part; it allows for various kinds of things that are dangerous or impossible with functions (for example, a routine that never terminates..
+
+5) are called using call
+
+The rule of thumb: if you don't need to manage transactions from within, you probably want to use a function instead of a procedure.
+* Stored Functions
+  :PROPERTIES:
+  :CUSTOM_ID: stored-functions
+  :END:
+The Postgresql documentation for stored functions can be found [[https://www.postgresql.org/docs/current/sql-createfunction.html][here]]. Functions are atomic in Postgresql and automatically run inside their own transaction unless called within an outer transaction. They always run inside a single transaction and succeed or fail completely. Consequently, one cannot begin or commit transactions within the function. And commands like VACUUM, CREATE DATABASE, or CREATE INDEX CONCURRENTLY which do not run in a transaction context are not allowed.
+
+** Variation 1 with RETURNS SETOF T1
+  :PROPERTIES:
+  :CUSTOM_ID: variation-1
+  :END:
+First we create a postgresql stored function which updates a specified row and returns the id and x values for that row, then call that function, first in plain sql then in s-sql. Note that in this variation, the second line of the function specifies that it returns a setof t1. S-SQL does not have a sub-dialect for plpgsql, so we need to use the text version:
+#+begin_src lisp
+(query "CREATE OR REPLACE FUNCTION set_x_function1 (fromid INT, newx INT)
+         RETURNS setof t1 as $$
+         BEGIN
+         UPDATE t1 SET x=newx WHERE id=fromid;
+         RETURN QUERY select t1.id, t1.x from t1 where t1.id=fromid;
+         END;
+         $$ LANGUAGE plpgsql;")
+#+end_src
+*** Plain SQL
+  :PROPERTIES:
+  :CUSTOM_ID: variation-1-sql
+  :END:
+The plain sql call for the function would look like this:
+#+begin_src lisp
+  (query "SELECT id, x from set_x_function1(1, 3)")
+
+  ((1 3))
+
+  (query "select * from t1") ; confirming the change happened in the database
+
+  ((2 2) (1 3))
+#+end_src
+*** S-SQL Call
+  :PROPERTIES:
+  :CUSTOM_ID: variation-1-s-sql
+  :END:
+Now calling the function using the s-sql dsl. We will show two variations and then separately a third variation which has some issues between Postgresql and Postmodern.
+#+begin_src lisp
+  (query (:select 'id 'x :from (:set_x_function1 1 4)))
+
+  ((1 4))
+#+end_src
+
+** Variation 2 with RETURNS TABLE
+  :PROPERTIES:
+  :CUSTOM_ID: variation-2
+  :END:
+This is effectively the same as Variation 1's use of SETOF tablename, but declares the table structure inline instead of referencing an existing object, so joins and such will still work.
+
+We are going to vary the function slightly here, specifically in that second line, then call the function using a plain sql query and then an s-sql query. Also note that the calling query needs to be referencing the column names in the table being returned.:
+#+begin_src lisp
+  (query "CREATE OR REPLACE FUNCTION set_x_function2 (fromid INT, newx INT)
+        RETURNS table (tid int, tx int) as $$
+        BEGIN
+        UPDATE t1 SET x=newx WHERE id=fromid;
+        RETURN QUERY select t1.id, t1.x from t1 where t1.id=fromid;
+        END;
+        $$ LANGUAGE plpgsql;")
+
+(query "SELECT tid, tx from set_x_function2(1, 16)")
+
+((1 16))
+
+(query (:select 'tid 'tx :from (:set_x_function2 1 15)))
+
+((1 15))
+#+end_src
+
+Out of curiosity, what would happen if we just selected the calling function rather than specifying the columns that we want?
+#+begin_src lisp
+  (query (:select (:set_x_function 1 17)))
+
+  (("(1,17)"))
+#+end_src
+
+We got back a sublist containing a string rather sublist containing two integers, probably not what we wanted.
+
+Now consider the related but not quite the same Postgresql Stored Procedures.
+* Stored Procedures
+  :PROPERTIES:
+  :CUSTOM_ID: stored-procedures
+  :END:
+The Postgresql documentation for procedures is found here and you can notice that the format is slightly different.. SQL procedures can begin and end transactions.
+
+Similar to the stored function we just looked at, lets create a postgresql stored procedure which simply updates the x field in a specified row and we won't worry about getting a return value yet.
+** Example 1
+#+begin_src lisp
+  (query "CREATE OR REPLACE PROCEDURE set_x_procedure1 (fromid INT, newx INT)
+        LANGUAGE plpgsql
+        AS $$
+        BEGIN
+          UPDATE t1 SET x=newx WHERE id=fromid;
+          COMMIT;
+        END;
+        $$ ;")
+
+#+end_src
+
+If you were going to call this procedure from psql it would look like:
+#+begin_src sql
+    call set_x_procedure1(1,3);
+
+    select * from t1;
+
+     id | x
+
+    ----+---
+
+      2 | 2
+
+      1 | 3
+
+    (2 rows)
+
+#+end_src
+** Pre Postmodern version 1.33.10 (using plain SQL)
+  :PROPERTIES:
+  :CUSTOM_ID: stored-procedures-sql
+  :END:
+Postmodern has an s-sql :call operator as of version 1.33.10.
+Pre-version 1.33.10, you would simply use a sql string:
+#+begin_src lisp
+  (query "call set_x_procedure1(1,13)")
+
+  ((2 2) (1 13))
+#+end_src
+** Post Postmodern version 1.33.9 (:call operator)
+  :PROPERTIES:
+  :CUSTOM_ID: stored-procedures-s-sql
+  :END:
+As of version 1.33.10, you can use s-sql as you might expect:
+  #+BEGIN_SRC lisp
+    (query (:call 'set_x_procedure1 1 13))
+
+    ((2 2) (1 13))
+#+END_SRC
+or, using variables
+#+begin_src lisp
+  (let ((a 1) (b 2) (p 'set_x_procedure1))
+    (query (:call p a b 3)))
+
+  ((2 2) (1 13))
+#+end_src
+** Example 2
+  :PROPERTIES:
+  :CUSTOM_ID: stored-procedures-example-2
+  :END:
+We change the parameter list to the stored procedure slightly to make fromid as an inout parameter. Calling the procedure will now return all parameters with INOUT specified:
+#+begin_src lisp
+(query "CREATE OR REPLACE PROCEDURE set_x_procedure2 (INOUT fromid INT, newx INT)
+        LANGUAGE plpgsql
+        AS $$
+        BEGIN
+          UPDATE t1 SET x=newx WHERE id=fromid;
+          COMMIT;
+        END;
+        $$ ;")
+#+end_src
+*** Plain SQL call
+  :PROPERTIES:
+  :CUSTOM_ID: stored-procedures-example-2-sql
+  :END:
+#+begin_src lisp
+  (query "call set_x_procedure2(1,11)" :single)
+
+1
+#+end_src
+*** S-SQL with :call operator
+  :PROPERTIES:
+  :CUSTOM_ID: stored-procedures-example-2-s-sql
+  :END:
+#+begin_src lisp
+  (query (:call 'set_x_procedure2 1 11) :single)
+
+  1
+#+end_src
+
+In the following example, we demonstrate that you can apply INOUT to multiple parameters but since we are changing the return type of an existing function (the row type defined by the out parameters are different), we need to drop the procedure first.
+#+begin_src lisp
+  (query "DROP PROCEDURE set_x_procedure2(integer,integer)")
+  (query "CREATE OR REPLACE PROCEDURE set_x_procedure2 (INOUT fromid INT, INOUT    newx INT)
+          LANGUAGE plpgsql
+          AS $$
+          BEGIN
+            UPDATE t1 SET x=newx WHERE id=fromid;
+            COMMIT;
+          END;
+          $$ ;")
+#+end_src
+*** Plain SQL call
+  :PROPERTIES:
+  :CUSTOM_ID: stored-procedures-example-2a-sql
+  :END:
+#+begin_src lisp
+  (query "call set_x_procedure2(1,11)")
+
+((1 11))
+#+end_src
+*** S-SQL with :call operator
+  :PROPERTIES:
+  :CUSTOM_ID: stored-procedures-example-2a-s-sql
+  :END:
+#+begin_src lisp
+  (query (:call 'set_x_procedure2 1 13))
+
+  ((1 13))
+#+end_src

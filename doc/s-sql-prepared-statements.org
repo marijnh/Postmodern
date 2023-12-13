@@ -1,0 +1,26 @@
+#+TITLE: Prepared Statements
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Prepared Statements
+:PROPERTIES:
+:CUSTOM_ID: prepared-statements
+:END:
+The general rule of thumb on deciding whether to use prepared statements, is to use them unless you have sufficient reason not to. Prepared Statements are compiled before execution therefore lending to better performance, and increased security against SQL injection as the database server takes care of the encoding of special characters.
+
+        Preventing SQL injection attacks. This basically means automated sanitizing of inputs from external sources (web browser is external!) which are going to be saved to the database.
+        Batch processing. If you have a lot of data to enter into/modify in/remove from database at once, prepared statements can be used for that. In this case, prepared statements optimize away most of the overhead of such operations and allows you to write fast database batch code.
+#+begin_src lisp
+    (defprepared sovereign-of
+        (:select 'sovereign :from 'country :where (:= 'name '$1))
+        :single!)
+
+    (sovereign-of "The Netherlands");; => "Beatrix"
+
+#+end_src
+The bang at the end of the :single! keyword indicates throw an error if it returns more than one.

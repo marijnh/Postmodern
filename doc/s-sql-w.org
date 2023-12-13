@@ -1,0 +1,154 @@
+#+TITLE: S-SQL Examples W
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* When
+  :PROPERTIES:
+  :CUSTOM_ID: when
+  :END:
+#+begin_src lisp
+  (let ((param-latitude nil) (param-longitude t))
+    (query (:select 'id 'name
+                    (when param-latitude '0)
+                    (when param-longitude 'longitude)
+                    :from 'countries
+                    :where (:= 'id 20))))
+
+  ((20 "UK" NIL -2))
+#+end_src
+
+* Window
+  :PROPERTIES:
+  :CUSTOM_ID: window
+  :END:
+As stated in the postgresql documentation: "When a query involves multiple window functions, it is possible to write out each one with a separate OVER clause, but this is duplicative and error-prone if the same windowing behavior is wanted for several functions. Instead, each windowing behavior can be named in a WINDOW clause and then referenced in OVER". http://www.postgresql.org/docs/9.1/static/tutorial-window.html. They are available in postmodern as of the 29 October 2013 additions to the git repository.
+#+begin_src lisp
+  (query (:select (:over (:sum 'salary) 'w)
+                  (:over (:avg 'salary) 'w)
+                  :from 'empsalary :window
+                  (:as 'w (:partition-by 'depname :order-by (:desc 'salary)))))
+#+end_src
+
+* With
+  :PROPERTIES:
+  :CUSTOM_ID: with
+  :END:
+With queries are often referred to as Common Table Expressions. They are used as ways to write auxiliary statements for use in a larger query. The Postgresql documentation covers them at http://www.postgresql.org/docs/current/queries-with.html
+#+begin_src lisp
+  (query
+   (:with
+    (:as 'upd
+         (:parens
+          (:update 'employees
+           :set 'sales-count (:= 'sales-count 1)
+                   :where (:= 'id
+                              (:select 'sales-person
+                               :from 'accounts
+                               :where (:= 'name "Acme Corporation")))
+                   :returning '*)))
+    (:insert-into 'employees-log
+                  (:select '* 'current-timestamp
+                           :from
+                           'upd))))
+#+end_src
+
+* With-recursive
+  :PROPERTIES:
+  :CUSTOM_ID: with-recursive
+  :END:
+With-recursive allows the with auxiliary statement to refer to itself. These queries match the following template:
+#+begin_src text
+WITH RECURSIVE [temp table] [column list]
+AS (   [seed statement]
+UNION ALL   [recursive statement - effectively looping through the table] )
+
+[outer query which specifies the fields to be kept in the final result and throws away the intermediate results]
+
+#+end_src
+Testing with recursive. When working with recursive queries it is important to be sure that the recursive part of the query will eventually return no tuples, or else the query will loop indefinitely. Sometimes, using UNION instead of UNION ALL can accomplish this by discarding rows that duplicate previous output rows. However, often a cycle does not involve output rows that are completely duplicate: it may be necessary to check just one or a few fields to see if the same point has been reached before. The standard method for handling such situations is to compute an array of the already-visited values.
+
+A few postmodern samples follow which match up with the [[https://www.postgresql.org/docs/current/queries-with.html][postgresql documentation examples:]]
+#+begin_src lisp
+  (query
+   (:with-recursive
+       (:as (:t1 'n)
+            (:union-all (:values (:set 1))
+                        (:select (:+ 'n 1)
+                         :from 't1
+                         :where (:< 'n 100))))
+     (:select (:sum 'n) :from 't1))
+   :single))
+
+  (query
+   (:with-recursive
+       (:as (:included-parts 'sub-part 'part 'quantity)
+            (:union-all
+             (:select 'sub-part 'part 'quantity
+              :from 'parts
+              :where (:= 'part "our-product"))
+             (:select 'p.sub-part 'p.part 'p.quantity
+              :from (:as 'included-parts 'pr)
+                      (:as 'parts 'p)
+                      :where (:= 'p.part 'pr.sub-part))))
+     (:select 'sub-part (:as (:sum 'quantity) 'total-quantity)
+              :from 'included-parts
+              :group-by 'sub-part)))
+
+
+  (query
+   (:with-recursive
+       (:as (:search-graph 'id 'link 'data 'depth)
+            (:union-all
+             (:select 'g.id 'g.link 'g.data 1
+                      :from (:as 'graph 'g))
+             (:select 'g.id 'g.link 'g.data (:= 'sg.depth 1)
+                      :from (:as 'graph 'g) (:as 'search-graph 'sg)
+              :where (:= 'g.id 'sg.link))))
+     (:select '* :from 'search-graph)))
+
+  (query
+   (:with-recursive
+       (:as (:search-graph 'id 'link 'data'depth 'path 'cycle)
+            (:union-all
+             (:select 'g.id 'g.link 'g.data 1
+                      (:[] 'g.f1 'g.f2) nil
+                      :from (:as 'graph 'g))
+             (:select 'g.id 'g.link 'g.data (:= 'sg.depth 1)
+                      (:|| 'path (:row 'g.f1 'g.f2))
+                      (:= (:row 'g.f1 'g.f2)
+                          (:any* 'path))
+                      :from (:as 'graph 'g)
+                      (:as 'search-graph 'sg)
+              :where (:and (:= 'g.id 'sg.link)
+                           (:not 'cycle)))))
+     (:select '* :from 'search-graph)))
+
+#+end_src
+
+As a different example, consider a quicklisp dependency table where the fields are 'depends_on' and 'depended_on'. In other words library staple depends-on alexandria. So one record has "staple" in the depends_on column and "alexandria" in the depended_on column.
+
+A function to return a list of all the dependencies of a quicklisp library (assuming the data is in a table called "dependencies") could look like this:
+#+begin_src lisp
+(defun list-dependencies (lib-name)
+  "Returns a list of the names of the direct and indirect libraries depended-on by lib-name."
+  (sort (alexandria:flatten
+           (postmodern:query
+            (:with-recursive
+            (:as 'children
+                 (:union
+                  (:select 'depended-on
+                           :from 'dependencies
+                           :where (:= 'depends-on '$1))
+                  (:select 'a.depended-on
+                           :from (:as 'dependencies 'a)
+                           :inner-join (:as 'children 'b)
+                           :on (:= 'a.depends-on 'b.depended-on))))
+            (:select '* :from 'children))
+            lib-name))
+      #'string<)))
+#+end_src

@@ -1,0 +1,24 @@
+#+TITLE: S-SQL Examples H
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Having
+  :PROPERTIES:
+  :CUSTOM_ID: having
+  :END:
+  Postgresql documentation [[https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-GROUP][here]]
+#+begin_src lisp
+  (query (:select (:count 'c.id) 'r.name
+                :from (:as 'countries 'c)
+                :inner-join (:as 'regions 'r)
+                :on (:= 'c.region-id 'r.id)
+                :group-by 'r.name
+                :having (:< (:count 'c.id) 10)))
+
+((5 "Central Asia") (5 "North America") (6 "Central America"))
+#+end_src

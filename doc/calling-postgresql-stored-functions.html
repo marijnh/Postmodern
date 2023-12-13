@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-12-12 Tue 18:16 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calling Postgresql Stored Functions and Procedures</title>
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">Calling Postgresql Stored Functions and Procedures</h1>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#orgab2e037">S-SQL Examples Home Page</a></li>
+<li><a href="#intro">Postgresql Stored Functions and Procedures</a></li>
+<li><a href="#overview">Overview of the differences between Postgresql Stored Functions and Postgresql Stored Procedures</a>
+<ul>
+<li><a href="#functions">Functions:</a></li>
+<li><a href="#procedures">Procedures:</a></li>
+</ul>
+</li>
+<li><a href="#stored-functions">Stored Functions</a>
+<ul>
+<li><a href="#variation-1">Variation 1 with RETURNS SETOF T1</a>
+<ul>
+<li><a href="#variation-1-sql">Plain SQL</a></li>
+<li><a href="#variation-1-s-sql">S-SQL Call</a></li>
+</ul>
+</li>
+<li><a href="#variation-2">Variation 2 with RETURNS TABLE</a></li>
+</ul>
+</li>
+<li><a href="#stored-procedures">Stored Procedures</a>
+<ul>
+<li><a href="#orgea37928">Example 1</a></li>
+<li><a href="#stored-procedures-sql">Pre Postmodern version 1.33.10 (using plain SQL)</a></li>
+<li><a href="#stored-procedures-s-sql">Post Postmodern version 1.33.9 (:call operator)</a></li>
+<li><a href="#stored-procedures-example-2">Example 2</a>
+<ul>
+<li><a href="#stored-procedures-example-2-sql">Plain SQL call</a></li>
+<li><a href="#stored-procedures-example-2-s-sql">S-SQL with :call operator</a></li>
+<li><a href="#stored-procedures-example-2a-sql">Plain SQL call</a></li>
+<li><a href="#stored-procedures-example-2a-s-sql">S-SQL with :call operator</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-orgab2e037" class="outline-2">
+<h2 id="orgab2e037"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
+<div class="outline-text-2" id="text-orgab2e037">
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><a href="s-sql-a.html">A</a></td>
+<td class="org-left"><a href="s-sql-b.html">B</a></td>
+<td class="org-left"><a href="s-sql-c.html">C</a></td>
+<td class="org-left"><a href="s-sql-d.html">D</a></td>
+<td class="org-left"><a href="s-sql-e.html">E</a></td>
+<td class="org-left"><a href="s-sql-f.html">F</a></td>
+<td class="org-left"><a href="s-sql-g.html">G</a></td>
+<td class="org-left"><a href="s-sql-h.html">H</a></td>
+<td class="org-left"><a href="s-sql-i.html">I</a></td>
+<td class="org-left"><a href="s-sql-j.html">J</a></td>
+<td class="org-left"><a href="s-sql-k.html">K</a></td>
+<td class="org-left"><a href="s-sql-l.html">L</a></td>
+<td class="org-left"><a href="s-sql-m.html">M</a></td>
+<td class="org-left"><a href="s-sql-n.html">N</a></td>
+<td class="org-left"><a href="s-sql-o.html">O</a></td>
+<td class="org-left"><a href="s-sql-p.html">P</a></td>
+<td class="org-left"><a href="s-sql-r.html">R</a></td>
+<td class="org-left"><a href="s-sql-s.html">S</a></td>
+<td class="org-left"><a href="s-sql-t.html">T</a></td>
+<td class="org-left"><a href="s-sql-u.html">U</a></td>
+<td class="org-left"><a href="s-sql-v.html">V</a></td>
+<td class="org-left"><a href="s-sql-w.html">W</a></td>
+<td class="org-left"><a href="s-sql-special-characters.html">Special Characters</a></td>
+<td class="org-left"><a href="calling-postgresql-stored-functions.html">Calling Postgresql Stored Functions and Procedures</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-intro" class="outline-2">
+<h2 id="intro">Postgresql Stored Functions and Procedures</h2>
+<div class="outline-text-2" id="text-intro">
+<p>
+Postgresql (Not Postmodern) stored functions and procedures are confusing. We can start by setting up a very simple table t1 and insert a couple of values:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 't1
+                      ((id <span class="org-builtin">:type</span> integer <span class="org-builtin">:primary-key</span> t)
+                       (x <span class="org-builtin">:type</span> integer))))
+
+(query (<span class="org-builtin">:insert-rows-into</span> 't1
+        <span class="org-builtin">:columns</span> 'id 'x
+        <span class="org-builtin">:values</span> '((1 1)(2 2)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-overview" class="outline-2">
+<h2 id="overview">Overview of the differences between Postgresql Stored Functions and Postgresql Stored Procedures</h2>
+<div class="outline-text-2" id="text-overview">
+</div>
+<div id="outline-container-functions" class="outline-3">
+<h3 id="functions">Functions:</h3>
+<div class="outline-text-3" id="text-functions">
+<ol class="org-ol">
+<li>can be called inside a query (select func() from foo)</li>
+
+<li>generally return a result</li>
+
+<li>must return a single set</li>
+
+<li>are scoped to a transaction</li>
+
+<li>cannot commit and rollback transactions</li>
+
+<li>are called using a select</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-procedures" class="outline-3">
+<h3 id="procedures">Procedures:</h3>
+<div class="outline-text-3" id="text-procedures">
+<ol class="org-ol">
+<li>can not be called inside a query</li>
+
+<li>typically don’t return results except for maybe error code. There is limited capabilities in Postgresql 13 to return values using INOUT parameters (more below).</li>
+
+<li>can commit and rollback transactions</li>
+
+<li>can flush the transaction (essentially a COMMIT; followed by a BEGIN;) within the procedure. This is the most important part; it allows for various kinds of things that are dangerous or impossible with functions (for example, a routine that never terminates..</li>
+
+<li>are called using call</li>
+</ol>
+
+<p>
+The rule of thumb: if you don't need to manage transactions from within, you probably want to use a function instead of a procedure.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-stored-functions" class="outline-2">
+<h2 id="stored-functions">Stored Functions</h2>
+<div class="outline-text-2" id="text-stored-functions">
+<p>
+The Postgresql documentation for stored functions can be found <a href="https://www.postgresql.org/docs/current/sql-createfunction.html">here</a>. Functions are atomic in Postgresql and automatically run inside their own transaction unless called within an outer transaction. They always run inside a single transaction and succeed or fail completely. Consequently, one cannot begin or commit transactions within the function. And commands like VACUUM, CREATE DATABASE, or CREATE INDEX CONCURRENTLY which do not run in a transaction context are not allowed.
+</p>
+</div>
+
+<div id="outline-container-variation-1" class="outline-3">
+<h3 id="variation-1">Variation 1 with RETURNS SETOF T1</h3>
+<div class="outline-text-3" id="text-variation-1">
+<p>
+First we create a postgresql stored function which updates a specified row and returns the id and x values for that row, then call that function, first in plain sql then in s-sql. Note that in this variation, the second line of the function specifies that it returns a setof t1. S-SQL does not have a sub-dialect for plpgsql, so we need to use the text version:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span class="org-string">"CREATE OR REPLACE FUNCTION set_x_function1 (fromid INT, newx INT)</span>
+<span class="org-string">         RETURNS setof t1 as $$</span>
+<span class="org-string">         BEGIN</span>
+<span class="org-string">         UPDATE t1 SET x=newx WHERE id=fromid;</span>
+<span class="org-string">         RETURN QUERY select t1.id, t1.x from t1 where t1.id=fromid;</span>
+<span class="org-string">         END;</span>
+<span class="org-string">         $$ LANGUAGE plpgsql;"</span>)
+</pre>
+</div>
+</div>
+<div id="outline-container-variation-1-sql" class="outline-4">
+<h4 id="variation-1-sql">Plain SQL</h4>
+<div class="outline-text-4" id="text-variation-1-sql">
+<p>
+The plain sql call for the function would look like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span class="org-string">"SELECT id, x from set_x_function1(1, 3)"</span>)
+
+((1 3))
+
+(query <span class="org-string">"select * from t1"</span>) <span class="org-comment">; confirming the change happened in the database</span>
+
+((2 2) (1 3))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-variation-1-s-sql" class="outline-4">
+<h4 id="variation-1-s-sql">S-SQL Call</h4>
+<div class="outline-text-4" id="text-variation-1-s-sql">
+<p>
+Now calling the function using the s-sql dsl. We will show two variations and then separately a third variation which has some issues between Postgresql and Postmodern.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'x <span class="org-builtin">:from</span> (<span class="org-builtin">:set_x_function1</span> 1 4)))
+
+((1 4))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-variation-2" class="outline-3">
+<h3 id="variation-2">Variation 2 with RETURNS TABLE</h3>
+<div class="outline-text-3" id="text-variation-2">
+<p>
+This is effectively the same as Variation 1's use of SETOF tablename, but declares the table structure inline instead of referencing an existing object, so joins and such will still work.
+</p>
+
+<p>
+We are going to vary the function slightly here, specifically in that second line, then call the function using a plain sql query and then an s-sql query. Also note that the calling query needs to be referencing the column names in the table being returned.:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (query <span class="org-string">"CREATE OR REPLACE FUNCTION set_x_function2 (fromid INT, newx INT)</span>
+<span class="org-string">        RETURNS table (tid int, tx int) as $$</span>
+<span class="org-string">        BEGIN</span>
+<span class="org-string">        UPDATE t1 SET x=newx WHERE id=fromid;</span>
+<span class="org-string">        RETURN QUERY select t1.id, t1.x from t1 where t1.id=fromid;</span>
+<span class="org-string">        END;</span>
+<span class="org-string">        $$ LANGUAGE plpgsql;"</span>)
+
+(query <span class="org-string">"SELECT tid, tx from set_x_function2(1, 16)"</span>)
+
+((1 16))
+
+(query (<span class="org-builtin">:select</span> 'tid 'tx <span class="org-builtin">:from</span> (<span class="org-builtin">:set_x_function2</span> 1 15)))
+
+((1 15))
+</pre>
+</div>
+
+<p>
+Out of curiosity, what would happen if we just selected the calling function rather than specifying the columns that we want?
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:set_x_function</span> 1 17)))
+
+((<span class="org-string">"(1,17)"</span>))
+</pre>
+</div>
+
+<p>
+We got back a sublist containing a string rather sublist containing two integers, probably not what we wanted.
+</p>
+
+<p>
+Now consider the related but not quite the same Postgresql Stored Procedures.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-stored-procedures" class="outline-2">
+<h2 id="stored-procedures">Stored Procedures</h2>
+<div class="outline-text-2" id="text-stored-procedures">
+<p>
+The Postgresql documentation for procedures is found here and you can notice that the format is slightly different.. SQL procedures can begin and end transactions.
+</p>
+
+<p>
+Similar to the stored function we just looked at, lets create a postgresql stored procedure which simply updates the x field in a specified row and we won't worry about getting a return value yet.
+</p>
+</div>
+<div id="outline-container-orgea37928" class="outline-3">
+<h3 id="orgea37928">Example 1</h3>
+<div class="outline-text-3" id="text-orgea37928">
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span class="org-string">"CREATE OR REPLACE PROCEDURE set_x_procedure1 (fromid INT, newx INT)</span>
+<span class="org-string">      LANGUAGE plpgsql</span>
+<span class="org-string">      AS $$</span>
+<span class="org-string">      BEGIN</span>
+<span class="org-string">        UPDATE t1 SET x=newx WHERE id=fromid;</span>
+<span class="org-string">        COMMIT;</span>
+<span class="org-string">      END;</span>
+<span class="org-string">      $$ ;"</span>)
+
+</pre>
+</div>
+
+<p>
+If you were going to call this procedure from psql it would look like:
+</p>
+<div class="org-src-container">
+<pre class="src src-sql"><span class="org-keyword">call</span> set_x_procedure1(1,3);
+
+<span class="org-keyword">select</span> * <span class="org-keyword">from</span> t1;
+
+ id | x
+
+<span class="org-comment-delimiter">----</span><span class="org-comment">+---</span>
+
+  2 | 2
+
+  1 | 3
+
+(2 <span class="org-keyword">rows</span>)
+
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-stored-procedures-sql" class="outline-3">
+<h3 id="stored-procedures-sql">Pre Postmodern version 1.33.10 (using plain SQL)</h3>
+<div class="outline-text-3" id="text-stored-procedures-sql">
+<p>
+Postmodern has an s-sql :call operator as of version 1.33.10.
+Pre-version 1.33.10, you would simply use a sql string:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span class="org-string">"call set_x_procedure1(1,13)"</span>)
+
+((2 2) (1 13))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-stored-procedures-s-sql" class="outline-3">
+<h3 id="stored-procedures-s-sql">Post Postmodern version 1.33.9 (:call operator)</h3>
+<div class="outline-text-3" id="text-stored-procedures-s-sql">
+<p>
+As of version 1.33.10, you can use s-sql as you might expect:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:call</span> 'set_x_procedure1 1 13))
+
+((2 2) (1 13))
+</pre>
+</div>
+<p>
+or, using variables
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((a 1) (b 2) (p 'set_x_procedure1))
+  (query (<span class="org-builtin">:call</span> p a b 3)))
+
+((2 2) (1 13))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-stored-procedures-example-2" class="outline-3">
+<h3 id="stored-procedures-example-2">Example 2</h3>
+<div class="outline-text-3" id="text-stored-procedures-example-2">
+<p>
+We change the parameter list to the stored procedure slightly to make fromid as an inout parameter. Calling the procedure will now return all parameters with INOUT specified:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span class="org-string">"CREATE OR REPLACE PROCEDURE set_x_procedure2 (INOUT fromid INT, newx INT)</span>
+<span class="org-string">        LANGUAGE plpgsql</span>
+<span class="org-string">        AS $$</span>
+<span class="org-string">        BEGIN</span>
+<span class="org-string">          UPDATE t1 SET x=newx WHERE id=fromid;</span>
+<span class="org-string">          COMMIT;</span>
+<span class="org-string">        END;</span>
+<span class="org-string">        $$ ;"</span>)
+</pre>
+</div>
+</div>
+<div id="outline-container-stored-procedures-example-2-sql" class="outline-4">
+<h4 id="stored-procedures-example-2-sql">Plain SQL call</h4>
+<div class="outline-text-4" id="text-stored-procedures-example-2-sql">
+<div class="org-src-container">
+<pre class="src src-lisp">  (query <span class="org-string">"call set_x_procedure2(1,11)"</span> <span class="org-builtin">:single</span>)
+
+1
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-stored-procedures-example-2-s-sql" class="outline-4">
+<h4 id="stored-procedures-example-2-s-sql">S-SQL with :call operator</h4>
+<div class="outline-text-4" id="text-stored-procedures-example-2-s-sql">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:call</span> 'set_x_procedure2 1 11) <span class="org-builtin">:single</span>)
+
+1
+</pre>
+</div>
+
+<p>
+In the following example, we demonstrate that you can apply INOUT to multiple parameters but since we are changing the return type of an existing function (the row type defined by the out parameters are different), we need to drop the procedure first.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span class="org-string">"DROP PROCEDURE set_x_procedure2(integer,integer)"</span>)
+(query <span class="org-string">"CREATE OR REPLACE PROCEDURE set_x_procedure2 (INOUT fromid INT, INOUT    newx INT)</span>
+<span class="org-string">        LANGUAGE plpgsql</span>
+<span class="org-string">        AS $$</span>
+<span class="org-string">        BEGIN</span>
+<span class="org-string">          UPDATE t1 SET x=newx WHERE id=fromid;</span>
+<span class="org-string">          COMMIT;</span>
+<span class="org-string">        END;</span>
+<span class="org-string">        $$ ;"</span>)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-stored-procedures-example-2a-sql" class="outline-4">
+<h4 id="stored-procedures-example-2a-sql">Plain SQL call</h4>
+<div class="outline-text-4" id="text-stored-procedures-example-2a-sql">
+<div class="org-src-container">
+<pre class="src src-lisp">  (query <span class="org-string">"call set_x_procedure2(1,11)"</span>)
+
+((1 11))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-stored-procedures-example-2a-s-sql" class="outline-4">
+<h4 id="stored-procedures-example-2a-s-sql">S-SQL with :call operator</h4>
+<div class="outline-text-4" id="text-stored-procedures-example-2a-s-sql">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:call</span> 'set_x_procedure2 1 13))
+
+((1 13))
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -7,9 +7,14 @@
            #:numeric
            #:real
            #:double-precision
+           #:double-precision[]
            #:bytea
            #:text
            #:varchar
+           #:serial
+           #:serial8
+           #:timestamp-with-time-zone
+           #:timestamp-without-time-zone
            #:db-null
            #:sql-type-name
            #:*standard-sql-strings*

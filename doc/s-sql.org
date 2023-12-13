@@ -233,8 +233,8 @@ table (yes, I know this table is duplicated on other pages) shows the correspond
 
 Numeric and decimal are variable storage size numbers with user specified precision.
 Up to 131072 digits before the decimal point; up to 16383 digits after the decimal point.
-The syntax is numeric(precision, scale). Numeric columns with a specified scale will coerce input
-values to that scale. For more detail, see https://www.postgresql.org/docs/current/datatype-numeric.html
+
+The syntax is numeric(precision, scale). Numeric columns with a specified scale will coerce input values to that scale. For more detail, see https://www.postgresql.org/docs/current/datatype-numeric.html
 
 ** type db-null
    :PROPERTIES:
@@ -463,7 +463,7 @@ Here is a somewhat contrived example using a countries and regions table. We wan
   :END:
 The following operators are defined:
 
-** sql-op :+, :*, :%, :&, :|, :||, :and, :or, :=, :/, :!=, :<, :>, :<=, :>=, :^, :union, :union-all, :intersect, :intersect-all, :except, :except-all (&rest args)
+** sql-op :+, :*, :%, :&, :|, :||, :and, :or, :=, :/, :!=, :<, :>, :<=, :>=, :^, :union, :union-all, :call, :intersect, :intersect-all, :except, :except-all (&rest args)
    :PROPERTIES:
    :CUSTOM_ID: sql-op-misc
    :END:
@@ -476,6 +476,20 @@ should be queries (:select forms).
 Note that you'll have to escape pipe characters to enter them as keywords. S-SQL
 handles the empty keyword symbol (written :||) specially, and treats it like :\|\|,
 so that it can be written without escapes. With :\|, this doesn't work.
+
+We also have registered operators for Postgis, hstore and cube operations. See the following registration examples from the source code which might be useful if you need operators for other extensions:
+#+begin_src lisp
+  ;; PostGIS operators
+(register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :|@| :|\|&>|
+                        :|\|>>| :~= :|@>| :|@<|)
+
+;; hstore operators
+(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :|<@| :|#=| :unary :%% :%#)
+
+;; cube operators
+(register-sql-operators :2+-ary :&& :|@>| :|<@| :-> :~> :<-> :<#> :<=>)
+
+#+end_src
 ** sql-op :or
    :PROPERTIES:
    :CUSTOM_ID: sql-op-or
@@ -498,6 +512,19 @@ or using parameterized queries
                         (:= 'regions.id 'countries.region-id)))
   "North America" "Central America")
 #+END_SRC
+** sql-op :call
+   :PROPERTIES:
+   :CUSTOM_ID: sql-op-call
+   :END:
+:Call calls a Postgresql procedure. Remember that Postgresql procedures are not called within a select statement. The procedure name must be quoted  or be a variable with a value of a quoted procedure name. Assuming a procedure named set_x_procedure1 exists, an example of calling it with parameters would be:
+#+BEGIN_SRC lisp
+  (query (:call 'set_x_procedure1 1 13))
+
+  (let ((a 1) (b 2) (p 'my-proc))
+    (query (:call p a b 3)))
+#+END_SRC
+For more discussion, see [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]].
+
 ** sql-op :intersect
    :PROPERTIES:
    :CUSTOM_ID: sql-op-intersect
@@ -2508,15 +2535,41 @@ Example calls would be:
 
 Create an index on a table. After the name of the index the keyword :on should
 follow, with the table name after it. Then the keyword :fields, followed by
-one or more column names. Optionally, a :where clause with a condition can
-be added at the end to make a partial index.
+one or more column names. Other optional parameters are :using (to use index methods other than b-tree) :with (for storage parameters) or :where (for a condition can
+be added at the end to make a partial index). See [[file:s-sql-c.org][S-SQL-C]] for more examples.
 
 #+BEGIN_SRC lisp
-(sql (:create-index 'gin-idx :on "historical-events" :using gin :fields 'data))
+  (query (:create-index 'films_idx :on 'films :fields 'title))
 
-"CREATE INDEX gin_idx ON historical_events USING GIN (data)"
+  (query (:create-index 'films-idx :on "films" :fields 'title 'id))
+
+  (query (:create-index 'gin-idx :on "historical-events" :using 'gin :fields 'data))
 #+END_SRC
-
+Expressions can be used in the :fields specification:
+#+begin_src lisp
+  (query (:create-index 'films_idx :on "films" :fields (:lower 'title)))
+#+end_src
+Opclasses can be used within the fields specification:
+#+begin_src lisp
+  (query (:create-index 'pointloc2 :on 'points :using 'gist
+          :fields (:asc (:box 'location 'location)) (:nulls-last 'name)))
+#+end_src
+Storage parameters can be set using a :with clause:
+#+begin_src lisp
+  (query (:create-index 'gin-idx :on 'documents-table :using gin
+          :fields 'locations :with (:= 'deduplicate-items off) (:= 'fillfactor 70)))
+#+end_src
+Partial indexes can be set using a :where clause:
+#+begin_src lisp
+  (query (:create-index 'orders_unbilled_idx :on 'orders :fields 'order-nr
+          :where (:and (:is-not-true 'billed)
+                              (:< 'order_nr 1000)))))
+#+end_src
+Indexing a jsonb column named metadata:
+#+begin_src lisp
+  (query (:create-index 'items-idx :on 'test-items :using 'gin
+          :fields (:jsonb-path-ops 'metadata)))
+#+end_src
 
 ** sql-op :create-unique-index (name &rest args)
    :PROPERTIES:

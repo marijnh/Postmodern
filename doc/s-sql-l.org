@@ -1,0 +1,188 @@
+#+TITLE: S-SQL Examples L
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Lateral
+  :PROPERTIES:
+  :CUSTOM_ID: lateral
+  :END:
+Basically, the lateral keyword allows access to columns after the from statement and use them earlier in the query. Here is a sample vanilla sql query using lateral, borrowed from [[https://popsql.com/learn-sql/postgresql/how-to-use-lateral-joins-in-postgresql#data-set][https://popsql.com/learn-sql/postgresql/how-to-use-lateral-joins-in-postgresql#data-set]]
+#+begin_src lisp
+    (query
+     "select
+        pledged_usd,
+        avg_pledge_usd,
+        amt_from_goal,
+        duration,
+        (usd_from_goal / duration) as usd_needed_daily
+     from kickstarter_data,
+        lateral (select pledged / fx_rate as pledged_usd) pu
+        lateral (select pledged_usd / backers_count as avg_pledge_usd) apu
+        lateral (select goal / fx_rate as goal_usd) gu
+        lateral (select goal_usd - pledged_usd as usd_from_goal) ufg
+        lateral (select (deadline - launched_at)/86400.00 as duration) dr;")
+#+end_src
+And now how it would be written in s-sql
+#+begin_src lisp
+    (query
+     (:select 'pledged-usd 'avg-pledge-usd 'amt-from-goal 'duration
+              (:as (:/ 'usd-from-goal 'duration) 'usd-needed-daily)
+              :from 'kickstarter-data
+              :lateral (:as (:select (:as (:/ 'pledged 'fx-rate)
+                                          'pledged-usd))
+                            'pu)
+              :lateral (:as (:select (:as (:/ 'pledged-usd 'backers-count)
+                                          'avg-pledge-usd))
+                            'apu)
+              :lateral (:as (:select (:as (:/ 'goal 'fx-rate)
+                                          'goal-usd))
+                            'gu)
+              :lateral (:as (:select (:as (:- 'goal-usd 'pledged-usd)
+                                          'usd-from-goal))
+                            'ufg)
+              :lateral (:as (:select (:as (:/ (:- 'deadline 'launched-at) 86400.00)
+                                          'duration))
+                            'dr)))
+#+end_src
+Here is an example with :join-lateral
+#+begin_src lisp
+  (query
+     (:select '*
+      :from (:as 'tags 't1)
+      :join-lateral (:as
+                     (:fetch
+                      (:order-by
+                       (:select 'm.*
+                        :from (:as 'movies 'm)
+                        :where (:= 'm.tag-id 't1.id))
+                       (:desc 'm.created-at))
+                      2)
+                     'e1)
+      :on (:= 1 1)))
+#+end_src
+This one has an :inner-join-lateral
+#+begin_src lisp
+  (query
+        (:select '*
+         :from (:as 'tags 't1)
+         :inner-join-lateral (:as
+                              (:fetch
+                               (:order-by
+                                (:select 'm.*
+                                 :from (:as 'movies 'm)
+                                 :where (:= 'm.tag-id 't1.id))
+                                (:desc 'm.created-at))
+                               2)
+                              'e1)
+         :on 't))
+#+end_src
+A :cross-join-lateral
+#+begin_src lisp
+  (query
+     (:select '*
+      :from (:as 'tags 't1)
+      :cross-join-lateral (:as
+                           (:fetch
+                            (:order-by
+                             (:select 'm.*
+                              :from (:as 'movies 'm)
+                              :where (:= 'm.tag-id 't1.id))
+                             (:desc 'm.created-at))
+                            2)
+                           'e1)))
+
+    (query
+     (:select 'geo.zipcode 'geo.state 'movie.name
+      :from 'geo
+      :cross-join-lateral
+      (:as
+       (:limit
+        (:order-by
+         (:select 'movie-name
+          :from 'streams
+          :where (:= 'geo.zipcode 'streams.zipcode))
+         (:desc 'streams.country))
+        5)
+       (:movie 'name))))
+  #+end_src
+  And a :left-join-lateral
+  #+begin_src lisp
+  (query
+     (:select 'p.* (:as 'dads.id 'dad-id) (:as 'moms.id 'mom-id)
+      :from (:as 'people 'p)
+      :left-join-lateral (:as (:select '*
+                               :from 'people
+                               :where (:and (:= 'gender "m")
+                                            (:= 'surname-1 'p.surname-1)
+                                            (:<> 'pack-id 'p.pack-id)))
+                              'dads)
+      :on 't
+      :left-join-lateral (:as (:select '*
+                               :from 'people
+                               :where (:and (:= 'gender "f")
+                                            (:= 'surname-1 'p.surname-2)
+                                            (:<> 'pack-id 'p.pack-id)
+                                            (:<> 'pack-id 'dads.pack-id)))
+                              'moms)
+      :on 't))
+#+end_src
+* Like, ilike Example
+  :PROPERTIES:
+  :CUSTOM_ID: like
+  :END:
+The sql like operator provides a little bit of fuzzy string matching in a search. The following is a simple example using the sql like operator in s-sql.
+#+begin_src lisp
+(query (:select 'id 'name
+                :from 'countries
+                :where (:like 'name "%New%")))
+
+((103 "New Caledonia") (58 "New Zealand") (108 "Papua New Guinea"))
+
+#+end_src
+
+The sql ilike operator provides the same thing, but on a case insensitive basis. The following is a simple example using the sql ilike operator in s-sql.
+#+begin_src lisp
+(query (:select 'id 'name
+                :from 'countries
+                :where (:like 'name "%NEW%")))
+
+((103 "New Caledonia") (58 "New Zealand") (108 "Papua New Guinea"))
+
+#+end_src
+
+* Limit and offset
+  :PROPERTIES:
+  :CUSTOM_ID: limit
+  :END:
+Note that  :limit has 2 possible parameters, the limit and the offset. Note that the :order-by and :limit forms are wrapped around the :select form. The only difference between the two queries is the offset parameter.
+#+begin_src lisp
+  (let ((list-limit 2)
+        (offset 0))
+    (query
+     (:limit
+      (:order-by
+       (:select 'countries.id 'countries.name
+                :from 'countries)
+       'name)
+      '$1 '$2)
+     list-limit offset))
+
+  ((82 "Afghanistan") (130 "Albania"))
+
+  (let ((list-limit 2) (offset 2))
+    (query
+     (:limit
+      (:order-by
+       (:select 'countries.id 'countries.name
+                :from 'countries)
+       'name)
+      '$1 '$2)
+     list-limit offset))
+
+  ((140 "Algeria") (34 "All"))
+#+end_src

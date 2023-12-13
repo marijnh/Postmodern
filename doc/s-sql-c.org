@@ -1,0 +1,668 @@
+#+TITLE: S-SQL Examples C
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Call
+  :PROPERTIES:
+  :CUSTOM_ID: call
+  :END:
+Call is used to call a Postgresql Procedure. This cannot be used in a select clause. You can pass variables to the operator.
+#+begin_src lisp
+  (query (:call 'set_x_procedure 1 13))
+
+  (let ((a 1) (b 2))
+    (query (:call 'my-proc a b 3)))
+
+  (let ((a 1) (b 2) (p 'my-proc))
+    (query (:call p a b 3)))
+#+end_src
+* Case
+  :PROPERTIES:
+  :CUSTOM_ID: case
+  :END:
+As you know, case is a conditional expression that you can use to either search for rows in a table when a condition is true or compare a table field to a statement in the case expression. So consider the following where you only look at the first 10 rows in the countries table. The Case expression indicates that if the id is less than five, return the word "Low" and if the id is greater than five, return the word "high". Notice what happens when Denmark, with an id of exactly five, gets returned.
+#+begin_src lisp
+  (query (:select 'id 'name
+                (:case
+                 ((:< 'id 5) "Low")
+                 ((:> 'id 5) "High"))
+                :from 'countries
+                :where (:< 'id 10))))
+
+((1 "Austria" "Low") (2 "Belgium" "Low") (4 "Canada" "Low") (5 "Denmark" :NULL)
+ (8 "France" "High") (9 "Germany" "High") (7 "Finland" "High"))
+
+#+end_src
+
+* Cast
+  :PROPERTIES:
+  :CUSTOM_ID: cast
+  :END:
+There are two ways to cast in postmodern. First is the explicit use of cast as in:
+#+begin_src lisp
+(query (:select (:cast (:as "2018-04-19" 'date)) :from 'roadmap))
+#+end_src
+
+Then there is the use of the type operator which effectively translates into postgresql's :: casting shortcut.
+#+begin_src lisp
+(query (:select (:type "2018-04-19" date) :from 'roadmap))
+#+end_src
+
+Note that the targetted data type is quoted in the explicit use of cast and not quoted when using type.
+
+* Coalesce
+  :PROPERTIES:
+  :CUSTOM_ID: coalesce
+  :END:
+The COALESCE function in SQL returns the first non-NULL expression among its arguments.
+#+begin_src lisp
+  (query
+   (:order-by
+    (:select (:as 'countries.name  'country)
+             (:as (:coalesce 'countries.latitude  999)
+                  'latitude)
+             (:as (:coalesce 'countries.longitude 999)
+                  'longitude)
+     :from 'countries
+     :where (:and (:> 'countries.name '$1)
+                  (:< 'countries.name '$2)))
+    'country)
+   "D" "F")
+
+  (("Denmark" 56 10) ("Dominican Republic" 19 -352/5) ("EU" 999 999)
+                     ("East Timor" -17/2 2511/20)
+                     ("Ecuador" -2 -773/10) ("Egypt" 27 30)  ("El Salvador" 27/2 -1771/20) ("Estonia" 59 26) ("Ethiopia" 8 38))
+#+end_src
+
+* Constraints Examples
+  :PROPERTIES:
+  :CUSTOM_ID: constraints
+  :END:
+Suppose you want to find the constraints on a particular table. You try something like this:
+#+begin_src lisp
+  (query (:select '*
+                :from 'information-schema.table-constraints
+                :where (:= 'table-name "countries")))
+
+(("mydatabase" "public" "countries_pkey" "mydatabase" "public" "countries" "PRIMARY KEY" "NO" "NO")
+
+ ("mydatabase" "public" "country_name_uk" "mydatabase" "public" "countries" "UNIQUE" "NO" "NO")
+
+ ("mydatabase" "public" "country_name_unique" "mydatabase" "public" "countries" "UNIQUE" "NO" "NO")
+
+ ("mydatabase" "public" "2200_456618_1_not_null" "mydatabase" "public" "countries" "CHECK" "NO" "NO"))
+
+#+end_src
+
+Okay. That looks like it works. At a minimum, it is telling me that the countries table has a primary key named "countries_pkey". Also, for some strange reason, it has two unique constraints named "country_name_uk" and "country_name_unique".
+
+However consider table names with multiple words separated by underscores. If you are used to postmodern turning everything nicely into hyphens, you might try something like:
+#+begin_src lisp
+  (query (:select '* :from 'information-schema.table-constraints
+                   :where (:= 'table-name "countries-hyphenated-for-some-reason")))
+
+#+end_src
+
+That will not work. Remember that you have to provide the actual string name of the table. Because sql does not like hyphens and demands underscores, the correct query in postmodern would look like this:
+#+begin_src lisp
+  (query (:select '* :from 'information-schema.table-constraints
+          :where (:= 'table-name "countries_hyphenated_for_some_reason")))
+
+#+end_src
+
+Or you could use s-sql:to-sql-name like this:
+#+begin_src lisp
+  (query (:select '*
+                :from 'information-schema.table-constraints
+                :where (:= 'table-name '$1))
+       (s-sql:to-sql-name 'tasks-lists))
+
+#+end_src
+
+The query in this function generates information on the foreign key constraints in a database. Ignoring all the postgresql internal table names, while this looks complicated, the only additional items really here are :[] as the op for getting an array index, :generate-series, and :array-upper
+#+begin_src lisp
+  (defun describe-foreign-key-constraints ()
+    "Generates a list of lists of information on the foreign key constraints"
+    (query (:order-by (:select 'conname
+                               (:as 'conrelid 'table)
+                               (:as 'pgc.relname 'tabname)
+                               (:as 'a.attname 'columns)
+                               (:as 'confrelid 'foreign-table)
+                               (:as 'pgf.relname 'ftabname)
+                               (:as 'af.attname 'fcolumn)
+                               :from
+                               (:as 'pg_attribute 'af)
+                               (:as 'pg_attribute 'a)
+                               (:as 'pg_class 'pgc)
+                               (:as 'pg_class 'pgf)
+                               (:as
+                                (:select 'conname 'conrelid 'confrelid
+                                         (:as (:[] 'conkey 'i) 'conkey)
+                                         (:as (:[] 'confkey 'i) 'confkey)
+                                         :from (:as (:select 'conname
+                                                             'conrelid 'confrelid
+                                                             'conkey 'confkey
+                                                             (:as
+                                                              (:generate-series '1
+                                                               :array-upper 'conkey 1))
+                                                             'i)
+                                                :from 'pg_constraint
+                                                :where (:= 'contype "f" ))
+                                         'ss))
+                               'ss2)
+            :where (:and (:= 'af.attnum 'confkey)
+                         (:= 'af.attrelid 'confrelid)
+                         (:= 'a.attnum 'conkey)
+                         (:= 'a.attrelid 'conrelid)
+                         (:= 'pgf.relfilenode 'confrelid)
+                         (:= 'pgc.relfilenode 'conrelid)))
+           'ftabname 'fcolumn 'tabname 'columns))
+
+#+end_src
+
+* Count
+  :PROPERTIES:
+  :CUSTOM_ID: count
+  :END:
+The simplest use of count looks like this:
+#+begin_src lisp
+  (query (:select (:count '*) :from 'countries) :single)
+
+202
+#+end_src
+
+* Create-Composite-Types
+  :PROPERTIES:
+  :CUSTOM_ID: create-composite-types
+  :END:
+[[https://www.postgresql.org/docs/current/rowtypes.html][Composite types]] can be created with the :create-composite-type operator. For example:
+#+begin_src lisp
+  (query (:create-composite-type 'inventory-item
+                                 (name string)
+                                 (df double-float)
+                                 (count bigint)))
+
+  (query (:create-composite-type 'employee-type (name text) (salary numeric)))
+#+end_src
+Those types can then be used in :create-table queries.
+#+begin_src lisp
+      (query (:create-table 'distributors
+                            ((i :type inventory-item)
+                             (e  :type employee-type))))
+#+end_src
+
+* Create-Index
+  :PROPERTIES:
+  :CUSTOM_ID: create-index
+  :END:
+  ** Basic
+    :PROPERTIES:
+  :CUSTOM_ID: create-index-basic
+  :END:
+To create a B-tree index on the column title in the table films.
+#+begin_src lisp
+  (query (:create-index 'films_idx :on "films" :fields 'title))
+#+end_src
+** Multiple Columns
+  :PROPERTIES:
+  :CUSTOM_ID: create-index-multiple-columns
+  :END:
+Multiple-column indexes:
+#+begin_src lisp
+  (query (:create-index 'films-idx :on "films" :fields 'title 'id))
+#+end_src
+** Using Postgresql Expressions
+  :PROPERTIES:
+  :CUSTOM_ID: create-index-with-expression
+  :END:
+To create an index on the postgresql expression lower so as to generate efficient case insensitive searches
+#+begin_src lisp
+  (query (:create-index 'films_idx :on "films" :fields (:lower 'title)))
+#+end_src
+** GIN, GIST and other non-B-tree indexes
+  :PROPERTIES:
+  :CUSTOM_ID: create-index-other-methods
+  :END:
+To create an index using e.g. GIN instead of a B-tree index, you need to provide a :using clause:
+#+begin_src lisp
+  (query (:create-index 'films_idx :on "films" :using 'gin :fields 'title))
+#+end_src
+
+** Indexes with opclass parameters
+  :PROPERTIES:
+  :CUSTOM_ID: create-index-opclasses
+  :END:
+The following basic opclass parameters are supported:
+:asc, :desc, :nulls-first, :null-last, :nulls-distinct, :nulls-not-distinct, :array-ops, jsonb-ops, :jsonb-path-ops, :gin-trgm-ops, :tsvector-ops.
+
+To specify using an opclass parameter, you will need to enclose the specific field in its own form and use a keyword parameter. The second example shows a second field included in the index, but without an opclass parameter, so it does not need to be in its own form (although it can be):
+#+begin_src lisp
+  (query (:create-index 'items-idx :on 'test-items :using 'gin
+                   :fields (:jsonb-path-ops 'metadata)))
+
+  (query (:create-index 'films-idx :on 'films :using 'gin
+          :fields (:nulls-first 'customer-id ) 'order-date))
+
+  (query (:create-index 'films-idx :on 'films :using 'gin
+          :fields (:nulls-first 'customer-id ) (:asc 'order-date)))
+#+end_src
+*** To-Tsvector
+  :PROPERTIES:
+  :CUSTOM_ID: create-index-to-tsvector
+  :END:
+  to-tsvector is a bit of a special case:
+  #+begin_src lisp
+    (query (:create-index 'pgweb-idx :on 'pgweb :using 'gin
+             :fields (:to-tsvector "english" 'body)))
+  #+end_src
+*** 2+-ary Operators
+  :PROPERTIES:
+  :CUSTOM_ID: create-index-2-ary
+  :END:
+These operators have two operands. They need to be in their own form:
+#+begin_src lisp
+  (query (:create-index 'test-idx :on 'test :using 'btree
+          :fields (:->> 'data "field")
+
+  (query (:create-index 'pointloc0 :on 'points :using 'gist
+          :fields (:box 'location 'location)))
+
+  (query (:create-index 'pointloc2 :on 'points :using 'gist
+          :fields (:asc (:box 'location 'location)) (:nulls-last 'name)))
+#+end_src
+** Indexes with storage parameters
+  :PROPERTIES:
+  :CUSTOM_ID: create-index-storage-parameters
+  :END:
+To specify storage parameters (e.g. fillfactor=70, deduplicate_items=on, fastupdate = off or similar), use a :with keyword parameter and a form containing := operators, the storage parameter and the value.
+#+begin_src lisp
+    (query (:create-index 'gin-idx :on 'documents-table :using gin
+          :fields 'locations :with (:= 'fillfactor 70)))
+
+  (query (:create-index 'title-index :on 'films :fields title
+          :with (:= 'deduplicate-items 'off)))
+#+end_src
+With multiple storage parameters:
+#+begin_src lisp
+  (query (:create-index 'gin-idx :on 'documents-table :using gin
+          :fields 'locations :with (:= 'deduplicate-items off) (:= 'fillfactor 70)))
+#+end_src
+
+** Partial Indexes with where clauses
+  :PROPERTIES:
+  :CUSTOM_ID: partial-indexes
+  :END:
+  An example of a partial index:
+#+begin_src lisp
+  (query (:create-index 'orders_unbilled_idx :on 'orders :fields 'order-nr
+                   :where (:and (:is-not-true 'billed)
+                                (:< 'order_nr 1000)))))
+#+end_src
+
+* Create-Table
+:PROPERTIES:
+:CUSTOM_ID: create-table
+:END:
+Here we are talking about the S-SQL operator :create-table, not the create-table function name in Postmodern. First, starting at a minimum level, the :create-table and :create-extended-table operator calls are exactly the same. Let's walk through a simple example:
+#+begin_src lisp
+  (query (:create-table 'films-at-eleven
+      ((code :type (or (string 5) db-null) :constraint 'firstkey
+             :primary-key t)
+        (title :type (varchar 40))
+        (did :type integer)
+        (date-prod :type (or date db-null))
+        (kind :type (or (varchar 10) db-null))
+        (len :type (or interval db-null) :interval :hour-to-minute))))
+
+#+end_src
+
+The parameter specification is :create-table (name (&rest columns) &rest options)
+
+The first parameter is the name of the new table. You could make the name a quoted string, e.g. "films-at-eleven", but postmodern will handle either a string or the unquoted parameter provided above. Postmodern will also automatically handle the conversion of the hyphens so beloved by common lisp programmers to the underscores demanded by the sql specification.
+
+The next form contains subforms for each column in the table.
+
+The first parameter being the name of the column.
+
+As you know, postgresql will enforce the data type for the column. So, the next keyword specifies that type to follow. You can see several different types specified in this table. Look at the type for 'code'. It specifies that the data will be either NULL or a string with a maximum length of 5 characters.
+
+Compare that against the type specifiers for title or did. In both of those cases, the column entry is not allowed to be NULL, it must have a value. In this example the title must be a string with a length no greater than 40 characters. (For most purposes, you can treat a string specification the same as a varchar specification.
+
+The did type specification mandates an integer - trying to put a float in that column will trigger a database type error.
+
+The date-prod column obviously has a date data type and the len column has a interval data type, intervals being a period of time rather than a specific time.
+
+The code column also has a constraint - It is the primary key for indexing the table and that contraint has a name - in this case 'firstkey. If you do not name the constraint, the system will name it for you.
+
+The len column also has additional information. It is an interval of time; That could encompass years as well as seconds. The specification given here, :hour-to-minute means that the database will only keep the hours to minutes part of the potential time interval.
+
+** Table Names Parameter
+:PROPERTIES:
+:CUSTOM_ID: table-names-parameter
+:END:
+The following discussion on table names is the same for both :create-table or :create-extended table.
+
+Create-table works with either the simple name for the table parameter or the name can be wrapped in a form. There are a few acceptable ways to pass the table-name parameters. We recommend a single quote as in the first example below, but for backwards compatibility, you can also provide the table-name with no quotes at all. The last example below shows the table name preceded by the desired schema name. e.g. 'public.tablename1.
+#+begin_src lisp
+
+(query (:create-table 'distributors-in-hell
+                      ((did :type (or integer db-null)))))
+
+(query (:create-table (distributors-in-hell)
+                      ((did :type (or integer db-null)))))
+
+(query (:create-table ("distributors-in-hell")
+                      ((did :type (or integer db-null)))))
+
+(query (:create-table 'public.distributors-in-hell
+                      ((did :type (or integer db-null)))))
+
+#+end_src
+Using the name wrapped in a form provides the opportunity to add additional qualifiers - if-not-exists, temp, and unlogged.
+#+begin_src lisp
+(query (:create-table (:if-not-exists 'distributors-in-hell)
+
+                      ((did :type (or integer db-null)))))
+#+end_src
+
+** Temporary and Unlogged Tables
+:PROPERTIES:
+:CUSTOM_ID: temp-tables
+:END:
+Temporary tables exists only for the duration of the session. To create them using s-sql in postmodern, the first parameter to :create-table should be a form where the first atom in the form is the keyword :temp. You can optionally use the :if-not-exists keyword, and then the name of the temporary table. E.g.
+#+begin_src lisp
+(query (:create-table (:temp 'distributors-in-hell)
+                      ((did :type (or integer db-null)))))
+
+(query (:create-table (:temp :if-not-exists 'distributors-in-hell)
+                     ((did :type (or integer db-null)))))
+
+#+end_src
+
+Unlogged tables do not have their data written to the write-ahead log. As a result they are faster, but not crash safe. Any indexes created on an unlogged table are unlogged as well. The parameter signature is similar to a temporary table. E.g.
+#+begin_src lisp
+  (query (:create-table (:unlogged 'distributors-in-hell)
+                        ((did :type (or integer db-null)))))
+#+end_src
+
+** Using Identity Columns
+:PROPERTIES:
+:CUSTOM_ID: identity-columns
+:END:
+Postgresql version 10 added identity columns. These are auto-incrementing columns that use the standard SQL syntax instead of the serial and bigserial datatypes which are still available, but are not SQL standard syntax. The serial and bigserial datatypes also generate sequences that may have different usage permissions which can be problematic if you need to make changes to the sequence.
+
+There are two keyword alternatives that need to be considered:
+
+- :generated-as-identity-by-default (or more simply :identity-by-default)
+- :generated-as-identity-always (or more simply :identity-always)
+
+The difference between the two alternatives is that if you try to insert or update a value in the column and the generated-always option is chosen, postgresql will raise an error. If you use the by-default option, postgresql will use your value rather than the automatically generated value.
+
+Note: The data type used for identity columns must be one of smallint, int, integer or bigint.
+#+begin_src lisp
+(query (:create-table 'color
+                      ((color-id :type int :generated-as-identity-always t)
+                       (color-name :type varchar))))
+
+(query (:create-table 'color
+                      ((color-id :type int :generated-as-identity-by-default t)
+                       (color-name :type varchar))))
+
+(query (:create-table 'color
+                      ((color-id :type int :identity-always t)
+                       (color-name :type varchar))))
+
+(query (:create-table 'color
+                      ((color-id :type int :identity-by-default t)
+                       (color-name :type varchar))))
+
+#+end_src
+
+** Array Columns
+:PROPERTIES:
+:CUSTOM_ID: arrayy-columns
+:END:
+The following shows the creation of a table with a two dimensional array
+#+begin_src lisp
+  (query (:create-table 'array-int
+                        ((vector :type (or int[][] db-null)))))
+#+end_src
+
+** Check Constraints
+:PROPERTIES:
+:CUSTOM_ID: check-constraints
+:END:
+You can put a contraint on a table row that specifies values must meet certain requirements. In the following examples, the first puts a check constraint on a row, the second places at check constraint at the table level.
+#+begin_src lisp
+  (query (:create-table 'distributors
+                        ((did :type (or integer db-null) :check (:> 'did 100))
+                         (name :type (or (varchar 40) db-null)))))
+
+  (query (:create-table 'distributors
+                        ((did :type (or integer db-null))
+                         (name :type (or (varchar 40) db-null)))
+                        (:constraint con1
+                         :check (:and (:> 'did 100)
+                                      (:<> 'name "")))))
+
+#+end_src
+
+
+** Unique Constraints
+:PROPERTIES:
+:CUSTOM_ID: unique-constraints
+:END:
+You can ensure that a column or a combination of columns is unique without making that column or columns the primary key for the table.
+
+The first example sets a unique constraint at the column level of email, the second example sets a unique constraint at the table level.
+
+Please note the need to set :unique to t in the column constraint version.
+#+begin_src lisp
+(query (:create-table 'person
+                      ((id :type serial :primary-key t)
+                       (first-name :type (varchar 50))
+                       (last-name :type (varchar 50))
+                       (email :type (varchar 50) :unique t))))
+
+(query (:create-table 'films
+                      ((code :type (or (string 5) db-null))
+                       (title :type (or (varchar 40) db-null))
+                       (did :type (or integer db-null))
+                       (date-prod :type (or date db-null))
+                       (kind :type (or (varchar 10) db-null))
+                       (len :type (or interval db-null) :interval :hour-to-minute))
+                      (:constraint production :unique 'date-prod)))
+
+#+end_src
+
+This can get more complex if so desired. See the following example from the postgresql documentation, translated into s-sql. This level of complexity, however, requires the :create-extended-table method.
+#+begin_src lisp
+(query (:create-extended-table 'distributors
+                               ((did :type (or integer db-null))
+                                (name :type (or (varchar 40) db-null)))
+                               ((:unique did :with (:= 'fillfactor 70)))))
+
+#+end_src
+
+In case you are wondering, fillfactor is a storage parameter described in the postgresql documentation as:
+
+"The fillfactor for a table is a percentage between 10 and 100. 100 (complete packing) is the default. When a smaller fillfactor is specified, INSERT operations pack table pages only to the indicated percentage; the remaining space on each page is reserved for updating rows on that page. This gives UPDATE a chance to place the updated copy of a row on the same page as the original, which is more efficient than placing it on a different page. For a table whose entries are never updated, complete packing is the best choice, but in heavily updated tables smaller fillfactors are appropriate. This parameter cannot be set for TOAST tables."
+
+** Timestamps with and without timezones
+:PROPERTIES:
+:CUSTOM_ID: timestamps
+:END:
+Ah, the bane of many programmers' existence - dates and times. At least the table creation is fairly straightforward.
+
+The following examples are fairly self explanatory.
+#+begin_src lisp
+(query (:create-table 'account-role
+                      ((user-id :type integer)
+                       (role-id :type integer)
+                       (grant-date :type (or timestamp-without-time-zone db-null)))))
+
+(query (:create-table 'account-role
+                      ((user-id :type integer)
+                       (role-id :type integer)
+                       (grant-date :type (or timestamp-with-time-zone db-null)))))
+
+(query (:create-table 'account-role
+                      ((user-id :type integer)
+                       (role-id :type integer)
+                       (grant-date :type (or timestamptz db-null)))))
+
+(query (:create-table 'account-role
+                      ((user-id :type integer)
+                       (role-id :type integer)
+                       (grant-date :type (or timestamp db-null)))))
+
+(query (:create-table 'account-role
+                      ((user-id :type integer)
+                       (role-id :type integer)
+                       (grant-date :type (or time db-null)))))
+
+#+end_src
+
+** Adding Foreign Keys
+:PROPERTIES:
+:CUSTOM_ID: foreign-keys
+:END:
+There are a few different ways to add foreign keys in postgresql when defining a table.
+
+*** Defining Foreign Keys at the Column Level
+:PROPERTIES:
+:CUSTOM_ID: foreign-keys-at-column
+:END:
+First with foreign key on the column. Use the keyword :references and specify the table name and the relevant column within the subform. You will see why the subform in a minute.
+#+begin_src lisp
+  (query (:create-table 'so-items
+                        ((item-id :type integer)
+                         (so-id :type (or integer db-null)
+                                :references ((so-headers id)))
+                         (product-id :type (or integer db-null))
+                         (qty :type (or integer db-null))
+                         (net-price :type (or numeric db-null)))
+                        (:primary-key item-id so-id)))
+
+#+end_src
+
+If the foreign key references a group of columns in the foreign table, those fit into that same subform.
+#+begin_src lisp
+  (query (:create-table 'so-items
+                        ((item-id :type integer)
+                         (so-id :type (or integer db-null)
+                                :references ((so-headers id p1 p2)))
+                         (product-id :type (or integer db-null))
+                         (qty :type (or integer db-null))
+                         (net-price :type (or numeric db-null)))
+                        (:primary-key item-id so-id)))
+
+#+end_src
+
+You can specify the actions to be taken if a row in the foreign table is deleted or updated. Per the postgresql documentation:
+
+"… when the data in the referenced columns is changed, certain actions are performed on the data in this table's columns. The ON DELETE clause specifies the action to perform when a referenced row in the referenced table is being deleted. Likewise, the ON UPDATE clause specifies the action to perform when a referenced column in the referenced table is being updated to a new value. If the row is updated, but the referenced column is not actually changed, no action is done. Referential actions other than the NO ACTION check cannot be deferred, even if the constraint is declared deferrable. There are the following possible actions for each clause:
+
+        NO ACTION
+
+Produce an error indicating that the deletion or update would create a foreign key constraint violation. If the constraint is deferred, this error will be produced at constraint check time if there still exist any referencing rows. This is the default action in postgresql but the default in postmodern is restrict.
+
+        RESTRICT
+
+Produce an error indicating that the deletion or update would create a foreign key constraint violation. This is the same as NO ACTION except that the check is not deferrable.
+
+        CASCADE
+
+Delete any rows referencing the deleted row, or update the values of the referencing column(s) to the new values of the referenced columns, respectively.
+
+        SET NULL
+
+Set the referencing column(s) to null.
+
+        SET DEFAULT
+
+Set the referencing column(s) to their default values. (There must be a row in the referenced table matching the default values, if they are not null, or the operation will fail.)
+
+If the referenced column(s) are changed frequently, it might be wise to add an index to the referencing column(s) so that referential actions associated with the foreign key constraint can be performed more efficiently."
+
+So now examples with specifying the on-delete and on-update actions.
+#+begin_src lisp
+(query (:create-table 'so-items
+                      ((item-id :type integer)
+                       (so-id :type (or integer db-null)
+                              :references ((so-headers id) :no-action :no-action))
+                       (product-id :type (or integer db-null))
+                       (qty :type (or integer db-null))
+                       (net-price :type (or numeric db-null)))
+                      (:primary-key item-id so-id)))
+
+#+end_src
+
+*** Defining Foreign Keys at the Table Level
+:PROPERTIES:
+:CUSTOM_ID: foreign-keys-at-table
+:END:
+Instead of specifying the foreign keys at the column level, you can specify them at the table level, but of course that means you have to additionally specify which column in the current table is a foreign key.
+
+The following example creates a named constraint and a foreign key at column role-id with a single column in the foreign table. The first example uses the default actions for on-delete and on-default. The second example shows non-default actions specified.
+#+begin_src lisp
+(query (:create-table 'account-role
+                      ((user-id :type integer)
+                       (role-id :type integer)
+                       (grant-date :type (or timestamp-without-time-zone db-null)))
+                      (:primary-key user-id role-id)
+                      (:constraint account-role-role-id-fkey :foreign-key (role-id) (role role-id))))
+
+(query (:create-table 'account-role
+                      ((user-id :type integer)
+                       (role-id :type integer)
+                       (grant-date :type (or timestamp-without-time-zone db-null)))
+                      (:primary-key user-id role-id)
+                      (:constraint account-role-role-id-fkey :foreign-key (role-id) (role role-id) :no-action :no-action)))
+#+end_src
+Additional foreign keys can easily be added:
+#+begin_src lisp
+(query (:create-table 'account-role
+                      ((user-id :type integer)
+                       (role-id :type integer)
+                       (grant-date :type (or timestamp-without-time-zone db-null)))
+                      (:primary-key user-id role-id)
+                      (:constraint account-role-role-id-fkey :foreign-key (role-id) (role role-id))
+                      (:constraint account-role-user-id-fkey :foreign-key (user-id) (users user-id))))
+
+#+end_src
+** Generated Columns
+:PROPERTIES:
+:CUSTOM_ID: generated-columns
+:END:
+It is sometimes useful to have a [[https://www.postgresql.org/docs/current/ddl-generated-columns.html][generated column]] that is computed from something else. An example would be a tsvector type column which might be generated as in this example:
+#+begin_src lisp
+  (query (:create-table 't10
+                        ((title :type (or text db-null))
+                         (body :type (or text db-null))
+                         (tsv :type (or tsvector db-null)
+                              :generated-always
+                              (:to-tsvector "english" 'body)))))
+#+end_src
+The following example uses a calculation from fields in the tuple:
+#+begin_src lisp
+  (query (:create-table 't1
+                        ((w :type (or real db-null))
+                         (h :type (or real db-null))
+                         (area :type (or real db-null)
+                               :generated-always (:* 'w 'h)))))
+#+end_src
+The final example uses a variable in the calculation of the generated column:
+#+begin_src lisp
+  (let ((fx-rate 0.8))
+         (query
+          (:create-table 'cars
+                         ((car-id :type (or int db-null))
+                          (brand-name :type varchar)
+                          (price-in-dollar :type (or numeric db-null)) (price-in-pound :type (or numeric db-null) :generated-always (:* 'price-in-dollar fx-rate))))))
+#+end_src

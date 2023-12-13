@@ -1,0 +1,39 @@
+#+TITLE: S-SQL Examples B
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+
+* Between
+  :PROPERTIES:
+  :CUSTOM_ID: between
+  :END:
+#+begin_src lisp
+  (query (:select 'name
+                :from 'countries
+                :where (:between 'latitude -10 10))
+       :column)
+
+("Solomon Islands" "Benin" "Brazil" "Brunei" "Cameroon" "Congo"  "Costa Rica" "Ecuador" "Ethiopia" "Gabon" "Ghana"  "Guyana" "Indonesia" "Ivory Coast" "Kenya" "Kiribati" "Liberia"  "Malaysia" "Maldives" "Marshall Islands" "Micronesia" "Nauru" "Nigeria"  "Palau" "Panama" "Papua New Guinea" "Peru" "Rwanda" "Seychelles"  "Sierra Leone" "Singapore" "None" "Sri Lanka" "Suriname" "Tanzania"  "East Timor" "Togo" "Tuvalu" "Uganda" "Venezuela" "Colombia")
+#+end_src
+
+* Boolean Operators (:is-true, :is-false, :is-null)
+  :PROPERTIES:
+  :CUSTOM_ID: boolean
+  :END:
+** :Is-True
+#+begin_src lisp
+  (query (:select '* :from 'boolean-test :where (:is-true 'a)))
+#+end_src
+** :Is-False
+#+begin_src lisp
+  (sql (:select '* :from 'table1 :where (:is-false 'col)))
+#+end_src
+*** :Is-NULL
+#+begin_src lisp
+  (:select '* :from 'table1 :where (:is-false 'col))
+#+end_src

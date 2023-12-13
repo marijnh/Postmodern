@@ -1,0 +1,97 @@
+#+TITLE: S-SQL Examples R
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Random
+  :PROPERTIES:
+  :CUSTOM_ID: random
+  :END:
+#+begin_src lisp
+  (query (:limit
+          (:order-by
+           (:select 'id 'name
+                    :from 'countries)
+           (:random))
+          5))
+
+  ((54 "Israel") (62 "South Africa") (195 "Aruba") (79 "Costa Rica")(31 "OECD"))
+
+#+end_src
+
+* Raw SQL Statements
+  :PROPERTIES:
+  :CUSTOM_ID: raw-sql
+  :END:
+We've already seen that the postmodern:query function can take a raw sql string and that the postmodern:sql function can output an sql string. You can combine them if you need to go beyond what postmodern can already provide. Consider the following toy example which uses a part of the eventual query in the let and inserts it into the body.
+#+begin_src lisp
+  (let ((param-constraints (sql (:= 'name "Austria"))))
+    (query (:select 'id 'name
+                    :from 'countries
+                    :where (:raw param-constraints))))
+#+end_src
+
+Now consider this function where you have a conditional query based on the variables test1 and test2 passed into the function. In this toy example, if test1 is true then look for countries whose name is a fuzzy match for param1, if test2 is true, look for countries whose name is a fuzzy match for param2. If both are true, then the names need to be fuzzy matches for both param1 and param2. If neither test1 or test2 are true, then return all rows in the countries table.
+#+begin_src lisp
+  (defun test3 (test1 test2 param1 param2)
+    (query (:select '* :from 'countries
+            :where (:and
+                    (:raw (if test1
+                              (sql
+                               (:like 'name
+                                      (concatenate 'string "%" param1
+                                                   "%")))
+                              "'t'"))
+                    (:raw (if test2
+                              (sql (:like 'name
+                                          (concatenate 'string "%"
+                                                       param2
+                                                       "%")))
+                              "'t'"))))))
+
+  (test3 nil t "New" "gary")
+
+  ((10 "Hungary" 11 47 20 "GU" 1 "2005-09-11 00:15:40-07" "Forint" "HUF" 348))
+
+#+end_src
+
+* Returning the Primary Key
+  :PROPERTIES:
+  :CUSTOM_ID: returning-primary
+  :END:
+Suppose your table has a serial or identity key of id and you want the insert function to return the newly generated id for that new record.
+#+begin_src lisp
+  (query
+   (:insert-into 'categories :set 'name "test-cat3"
+                 :returning 'id)
+   :single)
+#+end_src
+The next example shows the same example using parameterized variables.
+#+begin_src lisp
+  (let ((name "test-cat4"))
+    (query
+     (:insert-into 'categories :set 'name '$1
+                   :returning 'id)
+     name :single))
+#+end_src
+
+* Rollup
+  :PROPERTIES:
+  :CUSTOM_ID: rollup
+  :END:
+Rollup was added to postgresql in version 9.5. See https://www.postgresql.org/docs/devel/static/queries-table-expressions.html#QUERIES-GROUPING-SETS  Sample usage:
+#+begin_src lisp
+  (query (:order-by
+          (:select 'facid
+                   (:as (:extract 'month 'starttime) 'month)
+                   (:as (:sum 'slots) 'slots)
+           :from 'cd.bookings
+           :where (:and (:>= 'starttime "2012-01-01")
+                        (:< 'starttime "2013-01-01"))
+           :group-by (:rollup 'facid 'month))
+          'facid 'month))
+#+end_src

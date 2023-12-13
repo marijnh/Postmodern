@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-12-12 Tue 18:58 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>S-SQL Examples O</title>
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">S-SQL Examples O</h1>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org0d474d8">S-SQL Examples Home Page</a></li>
+<li><a href="#on">On</a></li>
+<li><a href="#on-conflict">On Conflict</a></li>
+<li><a href="#or">Or</a></li>
+<li><a href="#order-by">Order-by</a>
+<ul>
+<li><a href="#order-by-with-limit">Order By with Limit and offset</a></li>
+<li><a href="#orge039a1d">Order-by within an aggregation operator</a></li>
+</ul>
+</li>
+<li><a href="#over">Over</a>
+<ul>
+<li><a href="#over-range-between">Over Range Between</a></li>
+<li><a href="#org7d20afb">Over Row Between</a>
+<ul>
+<li><a href="#preceding">Preceding</a></li>
+<li><a href="#current-row">Current-Row</a></li>
+<li><a href="#unbounded">Unbounded</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-org0d474d8" class="outline-2">
+<h2 id="org0d474d8"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
+<div class="outline-text-2" id="text-org0d474d8">
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><a href="s-sql-a.html">A</a></td>
+<td class="org-left"><a href="s-sql-b.html">B</a></td>
+<td class="org-left"><a href="s-sql-c.html">C</a></td>
+<td class="org-left"><a href="s-sql-d.html">D</a></td>
+<td class="org-left"><a href="s-sql-e.html">E</a></td>
+<td class="org-left"><a href="s-sql-f.html">F</a></td>
+<td class="org-left"><a href="s-sql-g.html">G</a></td>
+<td class="org-left"><a href="s-sql-h.html">H</a></td>
+<td class="org-left"><a href="s-sql-i.html">I</a></td>
+<td class="org-left"><a href="s-sql-j.html">J</a></td>
+<td class="org-left"><a href="s-sql-k.html">K</a></td>
+<td class="org-left"><a href="s-sql-l.html">L</a></td>
+<td class="org-left"><a href="s-sql-m.html">M</a></td>
+<td class="org-left"><a href="s-sql-n.html">N</a></td>
+<td class="org-left"><a href="s-sql-o.html">O</a></td>
+<td class="org-left"><a href="s-sql-p.html">P</a></td>
+<td class="org-left"><a href="s-sql-r.html">R</a></td>
+<td class="org-left"><a href="s-sql-s.html">S</a></td>
+<td class="org-left"><a href="s-sql-t.html">T</a></td>
+<td class="org-left"><a href="s-sql-u.html">U</a></td>
+<td class="org-left"><a href="s-sql-v.html">V</a></td>
+<td class="org-left"><a href="s-sql-w.html">W</a></td>
+<td class="org-left"><a href="s-sql-special-characters.html">Special Characters</a></td>
+<td class="org-left"><a href="calling-postgresql-stored-functions.html">Calling Postgresql Stored Functions and Procedures</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-on" class="outline-2">
+<h2 id="on">On</h2>
+<div class="outline-text-2" id="text-on">
+<p>
+On is used in the join clauses. See the example below which returns a list of lists showing various types of items inside a database.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">list-schema-table-type-owner</span> (relkind-type)
+  <span class="org-doc">"Returns a list of lists showing the schema, the name, the type and the ownerwhere relkind-type is a list of strings where the strings are: c,r,v,i,S,c,t or f"</span>
+  (query (<span class="org-builtin">:order-by</span> (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> 'n.nspname 'Schema)
+                             (<span class="org-builtin">:as</span> 'c.relname 'Name)
+                             (<span class="org-builtin">:as</span> (<span class="org-builtin">:case</span> ((<span class="org-builtin">:=</span> 'c.relkind <span class="org-string">"r"</span>) <span class="org-string">"Table"</span>)
+                                    ((<span class="org-builtin">:=</span> 'c.relkind <span class="org-string">"v"</span>) <span class="org-string">"view"</span>)
+                                    ((<span class="org-builtin">:=</span> 'c.relkind <span class="org-string">"i"</span>) <span class="org-string">"index"</span>)
+                                    ((<span class="org-builtin">:=</span> 'c.relkind <span class="org-string">"S"</span>) <span class="org-string">"sequence"</span>)
+                                    ((<span class="org-builtin">:=</span> 'c.relkind <span class="org-string">"c"</span>) <span class="org-string">"composite"</span>)
+                                    ((<span class="org-builtin">:=</span> 'c.relkind <span class="org-string">"t"</span>) <span class="org-string">"TOAST"</span>)
+                                    ((<span class="org-builtin">:=</span> 'c.relkind <span class="org-string">"f"</span>) <span class="org-string">"foreign"</span>))
+                                  'Type)
+                             (<span class="org-builtin">:as</span> 'u.usename 'Owner)
+                             (<span class="org-builtin">:as</span> (<span class="org-builtin">:/</span> (<span class="org-builtin">:pg_total_relation_size</span> 'c.oid) 1000) 'Size)
+                             (<span class="org-builtin">:as</span> 'c.reltuples 'Records)
+                             (<span class="org-builtin">:as</span> 'c.relhasindex 'Indexed)
+                             (<span class="org-builtin">:as</span> 'c.relchecks 'Constraints)
+                             (<span class="org-builtin">:as</span> 'c.relhastriggers 'Triggers)
+                             (<span class="org-builtin">:as</span> (<span class="org-builtin">:pg_size_pretty</span> (<span class="org-builtin">:pg_total_relation_size</span> 'c.oid)) 'Size)
+                             <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> 'pg-catalog.pg-class 'c)
+                             <span class="org-builtin">:left-join</span> (<span class="org-builtin">:as</span> 'pg-catalog.pg-user 'u)
+                             <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'u.usesysid  'c.relowner)
+                             <span class="org-builtin">:left-join</span> (<span class="org-builtin">:as</span> 'pg-catalog.pg-namespace  'n)
+                             <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'n.oid  'c.relnamespace)
+                             <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:in</span> 'c.relkind (<span class="org-builtin">:set</span> relkind-type <span class="org-string">""</span>))
+                                          (<span class="org-builtin">:not-in</span> 'n.nspname (<span class="org-builtin">:set</span> <span class="org-string">"pg_catalog"</span> <span class="org-string">"pg-toast"</span>))
+                                          (<span class="org-builtin">:pg-catalog.pg-table-is-visible</span> 'c.oid)))
+                    1 2)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-on-conflict" class="outline-2">
+<h2 id="on-conflict">On Conflict</h2>
+<div class="outline-text-2" id="text-on-conflict">
+<p>
+Some people use the term "upsert" for trying to insert a new row, but if that record already exists, then either update the row with new values or do nothing (as opposed to throwing an error).
+</p>
+
+<p>
+Beginning in postgresql versions 9.5 and above, it is possible to use what postgresql calls on-conflict. There are two versions - "on conflict do nothing" or "on conflict update". See below for sample call in postmodern for on-conflict-update.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-into</span> 'test-table <span class="org-builtin">:set</span> 'column-A '$1 'column-B '$2
+                     <span class="org-builtin">:on-conflict-update</span> 'column-A
+                     <span class="org-builtin">:update-set</span> 'column-B '$2
+                     <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'test-table.column-A '$1)) <span class="org-string"><span class="org-warning">"c"</span></span><span class="org-warning"> 37)</span>
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-or" class="outline-2">
+<h2 id="or">Or</h2>
+<div class="outline-text-2" id="text-or">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'countries.name <span class="org-builtin">:from</span> 'countries 'regions
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:or</span> (<span class="org-builtin">:=</span> 'regions.name <span class="org-string">"North America"</span>)
+                                  (<span class="org-builtin">:=</span> 'regions.name <span class="org-string">"Central America"</span>))
+                             (<span class="org-builtin">:=</span> 'regions.id 'countries.region-id))))
+
+((<span class="org-string">"Belize"</span>) (<span class="org-string">"Bermuda"</span>) (<span class="org-string">"Canada"</span>) (<span class="org-string">"Costa Rica"</span>) (<span class="org-string">"El Salvador"</span>) (<span class="org-string">"Greenland"</span>)  (<span class="org-string">"Guatemala"</span>) (<span class="org-string">"Mexico"</span>) (<span class="org-string">"Panama"</span>) (<span class="org-string">"US"</span>) (<span class="org-string">"Nicaragua"</span>))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-order-by" class="outline-2">
+<h2 id="order-by">Order-by</h2>
+<div class="outline-text-2" id="text-order-by">
+<p>
+Order-by does what it says on the label. It is important to note that there are two uses of order-by. First is a wrapper around a select statement, effectively sorting the data returned by the select statement.:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:order-by</span>
+        (<span class="org-builtin">:select</span> 'id 'name
+                 <span class="org-builtin">:from</span> 'countries
+                 <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;=</span> 'name <span class="org-string">"W"</span>))
+        'name))
+
+((115 <span class="org-string">"Wallis"</span>) (141 <span class="org-string">"Zambia"</span>) (142 <span class="org-string">"Zimbabwe"</span>))
+</pre>
+</div>
+
+<p>
+If you want to change the default from ascending to descending, then the relevant column name is enclosed in a :desc term like so:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:order-by</span>
+        (<span class="org-builtin">:select</span> 'id 'name
+                 <span class="org-builtin">:from</span> 'countries
+                 <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;=</span> 'name <span class="org-string">"W"</span>))
+        (<span class="org-builtin">:desc</span> 'name)))
+
+((142 <span class="org-string">"Zimbabwe"</span>) (141 <span class="org-string">"Zambia"</span>) (115 <span class="org-string">"Wallis"</span>) )
+</pre>
+</div>
+</div>
+
+<div id="outline-container-order-by-with-limit" class="outline-3">
+<h3 id="order-by-with-limit">Order By with Limit and offset</h3>
+<div class="outline-text-3" id="text-order-by-with-limit">
+<p>
+Note that :order-by has one or more parameters [Just one in this example] and :limit has 2 possible parameters, the limit and the offset. Note that the :order-by and :limit forms are wrapped around the :select form. The only difference between the two queries is the offset parameter.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((list-limit 2) (offset 0))
+  (query
+   (<span class="org-builtin">:limit</span>
+    (<span class="org-builtin">:order-by</span>
+     (<span class="org-builtin">:select</span> 'countries.id 'countries.name
+              <span class="org-builtin">:from</span> 'countries)
+     'name)
+    '$1 '$2)
+   list-limit offset))
+
+((82 <span class="org-string">"Afghanistan"</span>) (130 <span class="org-string">"Albania"</span>))
+
+(<span class="org-keyword">let</span> ((list-limit 2)
+      (offset 2))
+  (query
+   (<span class="org-builtin">:limit</span>
+    (<span class="org-builtin">:order-by</span>
+     (<span class="org-builtin">:select</span> 'countries.id 'countries.name
+              <span class="org-builtin">:from</span> 'countries)
+     'name)
+    '$1 '$2)
+   list-limit offset))
+
+((140 <span class="org-string">"Algeria"</span>) (34 <span class="org-string">"All"</span>))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge039a1d" class="outline-3">
+<h3 id="orge039a1d">Order-by within an aggregation operator</h3>
+<div class="outline-text-3" id="text-orge039a1d">
+<p>
+The second use of order-by is as a keyword parameter to an aggregation operator.
+</p>
+
+<p>
+Since it is part of the aggregation operator rather than sorting the result of the aggregation operator, it is not a wrap around form as seen above.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-over" class="outline-2">
+<h2 id="over">Over</h2>
+<div class="outline-text-2" id="text-over">
+<p>
+Over is a part of <a href="https://www.postgresql.org/docs/current/tutorial-window.html">Postgresql window functions</a>. "The OVER clause determines exactly how the rows of the query are split up for processing by the window function. The PARTITION BY clause within OVER divides the rows into groups, or partitions, that share the same values of the PARTITION BY expression(s). For each row, the window function is computed across the rows that fall into the same partition as the current row.
+</p>
+
+<p>
+You can also control the order in which rows are processed by window functions using ORDER BY within OVER. (The window ORDER BY does not even have to match the order in which the rows are output.)"  See also the examples for partition-by
+</p>
+
+<p>
+Here is an example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'salary (<span class="org-builtin">:over</span> (<span class="org-builtin">:sum</span> 'salary))
+              <span class="org-builtin">:from</span> 'empsalary))
+</pre>
+</div>
+
+<p>
+Consider briefly at what "over" generates"
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (sql (<span class="org-builtin">:over</span> 'x 'y))
+
+<span class="org-string">"(x OVER y)"</span>
+
+(sql (<span class="org-builtin">:over</span> 'x))
+
+<span class="org-string">"(x OVER ())"</span>
+
+(sql (<span class="org-builtin">:over</span> 'x 'y 'z))
+
+<span class="org-string">"(x OVER y, z)"</span>
+</pre>
+</div>
+
+<p>
+So, if you wanted an sql statement such as:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp"> (query <span class="org-string">"select x, array_agg(x) over (order by x) from generate_series(1, 3) as t(x);"</span>)
+
+((1 #(1)) (2 #(1 2)) (3 #(1 2 3)))
+</pre>
+</div>
+
+<p>
+The postmodern version would be:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp"> (query (<span class="org-builtin">:select</span> 'x
+                (<span class="org-builtin">:over</span> (<span class="org-builtin">:array-agg</span> 'x)
+                       (<span class="org-builtin">:order-by</span> 'x))
+                <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:generate-series</span> 1 3)
+                           (<span class="org-builtin">:t</span> 'x))))
+
+((1 #(1)) (2 #(1 2)) (3 #(1 2 3)))
+</pre>
+</div>
+</div>
+<div id="outline-container-over-range-between" class="outline-3">
+<h3 id="over-range-between">Over Range Between</h3>
+<div class="outline-text-3" id="text-over-range-between">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:limit</span>
+        (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> 'country 'country-name)
+                 (<span class="org-builtin">:as</span> 'population 'country-population)
+                 (<span class="org-builtin">:as</span> (<span class="org-builtin">:over</span> (<span class="org-builtin">:sum</span> 'population)
+                             (<span class="org-builtin">:range-between</span> <span class="org-builtin">:order-by</span> 'country <span class="org-builtin">:unbounded-preceding</span>
+                              <span class="org-builtin">:unbounded-following</span>))
+                      'global-population)
+         <span class="org-builtin">:from</span> 'population
+         <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:not-null</span> 'iso2)
+                      (<span class="org-builtin">:=</span> 'year 1976)))
+        5))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org7d20afb" class="outline-3">
+<h3 id="org7d20afb">Over Row Between</h3>
+<div class="outline-text-3" id="text-org7d20afb">
+</div>
+<div id="outline-container-preceding" class="outline-4">
+<h4 id="preceding">Preceding</h4>
+<div class="outline-text-4" id="text-preceding">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:limit</span>
+           (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> 'country 'country-name)
+                    (<span class="org-builtin">:as</span> 'population 'country-population)
+                    (<span class="org-builtin">:as</span> (<span class="org-builtin">:over</span> (<span class="org-builtin">:sum</span> 'population)
+                                (<span class="org-builtin">:rows-between</span> <span class="org-builtin">:order-by</span> 'country <span class="org-builtin">:preceding</span> 2
+                                               <span class="org-builtin">:following</span> 2))
+                         'global-population)
+                    <span class="org-builtin">:from</span> 'population
+                    <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:not-null</span> 'iso2)
+                                 (<span class="org-builtin">:=</span> 'year 1976)))
+           5))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-current-row" class="outline-4">
+<h4 id="current-row">Current-Row</h4>
+<div class="outline-text-4" id="text-current-row">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:limit</span>
+           (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> 'country 'country-name)
+                    (<span class="org-builtin">:as</span> 'population 'country-population)
+                    (<span class="org-builtin">:as</span> (<span class="org-builtin">:over</span> (<span class="org-builtin">:sum</span> 'population)
+                                (<span class="org-builtin">:rows-between</span> <span class="org-builtin">:order-by</span> 'country <span class="org-builtin">:current-row</span>
+                                 <span class="org-builtin">:following</span> 2))
+                         'global-population)
+                    <span class="org-builtin">:from</span> 'population
+                    <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:not-null</span> 'iso2)
+                                 (<span class="org-builtin">:=</span> 'year 1976)))
+           5))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-unbounded" class="outline-4">
+<h4 id="unbounded">Unbounded</h4>
+<div class="outline-text-4" id="text-unbounded">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:limit</span>
+           (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> 'population.country 'country-name)
+                    (<span class="org-builtin">:as</span> 'population 'country-population)
+                    'region-name
+                    (<span class="org-builtin">:as</span> (<span class="org-builtin">:over</span> (<span class="org-builtin">:sum</span> 'population)
+                                (<span class="org-builtin">:partition-by</span> 'region-name <span class="org-builtin">:order-by</span> 'population.country
+                                 <span class="org-builtin">:range-between</span> <span class="org-builtin">:unbounded-preceding</span> <span class="org-builtin">:current-row</span>))
+                         'regional-population)
+                    <span class="org-builtin">:from</span> 'population
+                    <span class="org-builtin">:inner-join</span> 'regions
+                    <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'population.iso3 'regions.iso3)
+                    <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:not-null</span> 'population.iso2)
+                                 (<span class="org-builtin">:=</span> 'year 1976)))
+           5))
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,257 @@
+#+TITLE: S-SQL Examples O
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* On
+  :PROPERTIES:
+  :CUSTOM_ID: on
+  :END:
+On is used in the join clauses. See the example below which returns a list of lists showing various types of items inside a database.
+#+begin_src lisp
+  (defun list-schema-table-type-owner (relkind-type)
+    "Returns a list of lists showing the schema, the name, the type and the ownerwhere relkind-type is a list of strings where the strings are: c,r,v,i,S,c,t or f"
+    (query (:order-by (:select (:as 'n.nspname 'Schema)
+                               (:as 'c.relname 'Name)
+                               (:as (:case ((:= 'c.relkind "r") "Table")
+                                      ((:= 'c.relkind "v") "view")
+                                      ((:= 'c.relkind "i") "index")
+                                      ((:= 'c.relkind "S") "sequence")
+                                      ((:= 'c.relkind "c") "composite")
+                                      ((:= 'c.relkind "t") "TOAST")
+                                      ((:= 'c.relkind "f") "foreign"))
+                                    'Type)
+                               (:as 'u.usename 'Owner)
+                               (:as (:/ (:pg_total_relation_size 'c.oid) 1000) 'Size)
+                               (:as 'c.reltuples 'Records)
+                               (:as 'c.relhasindex 'Indexed)
+                               (:as 'c.relchecks 'Constraints)
+                               (:as 'c.relhastriggers 'Triggers)
+                               (:as (:pg_size_pretty (:pg_total_relation_size 'c.oid)) 'Size)
+                               :from (:as 'pg-catalog.pg-class 'c)
+                               :left-join (:as 'pg-catalog.pg-user 'u)
+                               :on (:= 'u.usesysid  'c.relowner)
+                               :left-join (:as 'pg-catalog.pg-namespace  'n)
+                               :on (:= 'n.oid  'c.relnamespace)
+                               :where (:and (:in 'c.relkind (:set relkind-type ""))
+                                            (:not-in 'n.nspname (:set "pg_catalog" "pg-toast"))
+                                            (:pg-catalog.pg-table-is-visible 'c.oid)))
+                      1 2)))
+#+end_src
+
+* On Conflict
+  :PROPERTIES:
+  :CUSTOM_ID: on-conflict
+  :END:
+Some people use the term "upsert" for trying to insert a new row, but if that record already exists, then either update the row with new values or do nothing (as opposed to throwing an error).
+
+Beginning in postgresql versions 9.5 and above, it is possible to use what postgresql calls on-conflict. There are two versions - "on conflict do nothing" or "on conflict update". See below for sample call in postmodern for on-conflict-update.
+
+#+begin_src lisp
+(query (:insert-into 'test-table :set 'column-A '$1 'column-B '$2
+                     :on-conflict-update 'column-A
+                     :update-set 'column-B '$2
+                     :where (:= 'test-table.column-A '$1)) "c" 37)
+
+#+end_src
+
+* Or
+  :PROPERTIES:
+  :CUSTOM_ID: or
+  :END:
+#+begin_src lisp
+(query (:select 'countries.name :from 'countries 'regions
+                :where (:and (:or (:= 'regions.name "North America")
+                                  (:= 'regions.name "Central America"))
+                             (:= 'regions.id 'countries.region-id))))
+
+(("Belize") ("Bermuda") ("Canada") ("Costa Rica") ("El Salvador") ("Greenland")  ("Guatemala") ("Mexico") ("Panama") ("US") ("Nicaragua"))
+
+#+end_src
+
+* Order-by
+  :PROPERTIES:
+  :CUSTOM_ID: order-by
+  :END:
+Order-by does what it says on the label. It is important to note that there are two uses of order-by. First is a wrapper around a select statement, effectively sorting the data returned by the select statement.:
+#+begin_src lisp
+(query (:order-by
+        (:select 'id 'name
+                 :from 'countries
+                 :where (:>= 'name "W"))
+        'name))
+
+((115 "Wallis") (141 "Zambia") (142 "Zimbabwe"))
+#+end_src
+
+If you want to change the default from ascending to descending, then the relevant column name is enclosed in a :desc term like so:
+#+begin_src lisp
+(query (:order-by
+        (:select 'id 'name
+                 :from 'countries
+                 :where (:>= 'name "W"))
+        (:desc 'name)))
+
+((142 "Zimbabwe") (141 "Zambia") (115 "Wallis") )
+#+end_src
+
+** Order By with Limit and offset
+  :PROPERTIES:
+  :CUSTOM_ID: order-by-with-limit
+  :END:
+Note that :order-by has one or more parameters [Just one in this example] and :limit has 2 possible parameters, the limit and the offset. Note that the :order-by and :limit forms are wrapped around the :select form. The only difference between the two queries is the offset parameter.
+#+begin_src lisp
+  (let ((list-limit 2) (offset 0))
+    (query
+     (:limit
+      (:order-by
+       (:select 'countries.id 'countries.name
+                :from 'countries)
+       'name)
+      '$1 '$2)
+     list-limit offset))
+
+  ((82 "Afghanistan") (130 "Albania"))
+
+  (let ((list-limit 2)
+        (offset 2))
+    (query
+     (:limit
+      (:order-by
+       (:select 'countries.id 'countries.name
+                :from 'countries)
+       'name)
+      '$1 '$2)
+     list-limit offset))
+
+  ((140 "Algeria") (34 "All"))
+
+#+end_src
+
+** Order-by within an aggregation operator
+
+The second use of order-by is as a keyword parameter to an aggregation operator.
+
+Since it is part of the aggregation operator rather than sorting the result of the aggregation operator, it is not a wrap around form as seen above.
+* Over
+  :PROPERTIES:
+  :CUSTOM_ID: over
+  :END:
+Over is a part of [[https://www.postgresql.org/docs/current/tutorial-window.html][Postgresql window functions]]. "The OVER clause determines exactly how the rows of the query are split up for processing by the window function. The PARTITION BY clause within OVER divides the rows into groups, or partitions, that share the same values of the PARTITION BY expression(s). For each row, the window function is computed across the rows that fall into the same partition as the current row.
+
+You can also control the order in which rows are processed by window functions using ORDER BY within OVER. (The window ORDER BY does not even have to match the order in which the rows are output.)"  See also the examples for partition-by
+
+Here is an example:
+#+begin_src lisp
+  (query (:select 'salary (:over (:sum 'salary))
+                :from 'empsalary))
+#+end_src
+
+Consider briefly at what "over" generates"
+#+begin_src lisp
+  (sql (:over 'x 'y))
+
+"(x OVER y)"
+
+(sql (:over 'x))
+
+"(x OVER ())"
+
+(sql (:over 'x 'y 'z))
+
+"(x OVER y, z)"
+#+end_src
+
+So, if you wanted an sql statement such as:
+#+begin_src lisp
+ (query "select x, array_agg(x) over (order by x) from generate_series(1, 3) as t(x);")
+
+((1 #(1)) (2 #(1 2)) (3 #(1 2 3)))
+#+end_src
+
+The postmodern version would be:
+#+begin_src lisp
+ (query (:select 'x
+                (:over (:array-agg 'x)
+                       (:order-by 'x))
+                :from (:as (:generate-series 1 3)
+                           (:t 'x))))
+
+((1 #(1)) (2 #(1 2)) (3 #(1 2 3)))
+#+end_src
+** Over Range Between
+   :PROPERTIES:
+   :CUSTOM_ID: over-range-between
+   :END:
+#+begin_src lisp
+  (query (:limit
+          (:select (:as 'country 'country-name)
+                   (:as 'population 'country-population)
+                   (:as (:over (:sum 'population)
+                               (:range-between :order-by 'country :unbounded-preceding
+                                :unbounded-following))
+                        'global-population)
+           :from 'population
+           :where (:and (:not-null 'iso2)
+                        (:= 'year 1976)))
+          5))
+#+end_src
+** Over Row Between
+*** Preceding
+   :PROPERTIES:
+   :CUSTOM_ID: preceding
+   :END:
+#+begin_src lisp
+  (query (:limit
+             (:select (:as 'country 'country-name)
+                      (:as 'population 'country-population)
+                      (:as (:over (:sum 'population)
+                                  (:rows-between :order-by 'country :preceding 2
+                                                 :following 2))
+                           'global-population)
+                      :from 'population
+                      :where (:and (:not-null 'iso2)
+                                   (:= 'year 1976)))
+             5))
+#+end_src
+*** Current-Row
+   :PROPERTIES:
+   :CUSTOM_ID: current-row
+   :END:
+#+begin_src lisp
+  (query (:limit
+             (:select (:as 'country 'country-name)
+                      (:as 'population 'country-population)
+                      (:as (:over (:sum 'population)
+                                  (:rows-between :order-by 'country :current-row
+                                   :following 2))
+                           'global-population)
+                      :from 'population
+                      :where (:and (:not-null 'iso2)
+                                   (:= 'year 1976)))
+             5))
+#+end_src
+*** Unbounded
+   :PROPERTIES:
+   :CUSTOM_ID: unbounded
+   :END:
+#+begin_src lisp
+  (query (:limit
+             (:select (:as 'population.country 'country-name)
+                      (:as 'population 'country-population)
+                      'region-name
+                      (:as (:over (:sum 'population)
+                                  (:partition-by 'region-name :order-by 'population.country
+                                   :range-between :unbounded-preceding :current-row))
+                           'regional-population)
+                      :from 'population
+                      :inner-join 'regions
+                      :on (:= 'population.iso3 'regions.iso3)
+                      :where (:and (:not-null 'population.iso2)
+                                   (:= 'year 1976)))
+             5))
+#+end_src

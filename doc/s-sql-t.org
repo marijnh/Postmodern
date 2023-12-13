@@ -1,0 +1,316 @@
+#+TITLE: S-SQL Examples T
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Threads
+  :PROPERTIES:
+  :CUSTOM_ID: threads
+  :END:
+While postmodern is generally thread-safe, it is up to the developer to pay attention and remember that postgresql may be spinning off processes at the same time that you are creating threads in your application.
+
+Something like taking from the postmodern/tests.lisp:
+#+begin_src lisp
+(defclass test-data ()
+  ((id :col-type serial :initarg :id :accessor test-id)
+   (a :col-type (or (varchar 100) db-null) :initarg :a :accessor test-a)
+   (b :col-type boolean :col-default nil :initarg :b :accessor test-b)
+   (c :col-type integer :col-default 0 :initarg :c :accessor test-c))
+  (:metaclass dao-class)
+  (:table-name dao-test)
+  (:keys id))
+
+(execute (dao-table-definition 'test-data))
+
+(defvar *dao-update-lock* (bt:make-lock))
+
+(let ((item (make-instance 'test-data :a "SC" :b t :c 0)))
+  (with-test-connection (save-dao item))
+  (let ((id (test-id item)))
+    (loop for x from 1 to 50 do
+          (bt:make-thread
+           (lambda () (with-test-connection
+                       (loop repeat 1000 do (bt:with-lock-held (*dao-update-lock*)
+                                                               (incf (test-c item) 1))
+                             (save-dao item))
+                       (loop repeat 1000 do (bt:with-lock-held (*dao-update-lock*)
+                                                               (decf (test-c item) 1))
+                             (save-dao item))))))
+
+    (with-test-connection
+     (describe (get-dao 'test-data id)))))
+
+#+end_src
+
+may return to your control before all the processes are done. As a result, if you check for value of:
+#+begin_src lisp
+ (test-c (get-dao 'dao-test 1))
+#+end_src
+when the lisp code returns, you may be surprised that the answer is not 0. Check a few seconds, later and it may be a different number. If you call
+#+begin_src lisp
+(pomo:list-connections)
+#+end_src
+or
+#+begin_src lisp
+(query (:select '* :from 'pg-stat-activity))
+#+end_src
+you may notice that there are still outstanding connection - postgresql is still working its way through the processes you just created and it will get through all of them and you will notice that the value has been finally incremented and decremented down to 0.
+
+* Time Functions (now, current-timestamp, current-date, date-trunc, date-part)
+  :PROPERTIES:
+  :CUSTOM_ID: time-functions
+  :END:
+** Without using local-time or simple-date
+  :PROPERTIES:
+  :CUSTOM_ID: vanilla-time-functions
+  :END:
+*** Now
+#+begin_src lisp
+  (query (:select (:now)) :single)
+
+  3909564984
+#+end_src
+*** Current-Timestamp
+#+begin_src lisp
+  (query (:select (:current-timestamp)) :single)
+
+  3909564895
+#+end_src
+*** Current-Date
+#+begin_src lisp
+  (query (:select (:current-date)) :single)
+
+  3909513600
+#+end_src
+*** Date-Trunc
+#+begin_src lisp
+  (query (:select (:date-trunc "minute" (:now))) :single)
+
+  3909566160
+#+end_src
+
+*** Date-Part
+The date-part function may return a double-float, regardless of whether you are using s-sql or raw sql.
+#+begin_src lisp
+  (query (:select (:date-part "year" (:now)))
+         :single)
+
+  2023.0d0
+#+end_src
+*** Age
+Postgresql has an Age function which generates an interval. A simple example would be:
+#+begin_src lisp
+  (query "SELECT current_date,
+         AGE(timestamp '2000-01-01')")
+
+  ((3909513600 ((:MONTHS 286) (:DAYS 20) (:SECONDS 0) (:USECONDS 0))))
+#+end_src
+** Using Local-time library (recommended)
+  :PROPERTIES:
+  :CUSTOM_ID: local-time-time-functions
+  :END:
+To use local-time load cl-postgres+local-time and then set the appropriate readers. For example:
+#+begin_src lisp
+  (ql:quickload :cl-postgres+local-time)
+  (local-time:set-local-time-cl-postgres-readers)
+#+end_src
+*** Now
+#+begin_src lisp
+  (query (:select (:now)) :single)
+
+  @2023-11-21T09:18:50.623000-05:00
+
+  (query (:select (:to-char (:now) "DY (Day), Mon (month)")) :single)
+  "TUE (Tuesday  ), Nov (november )"
+#+end_src
+*** Current-Timestamp
+#+begin_src lisp
+  (query (:select (:current-timestamp)) :single)
+
+  @2023-11-21T09:20:07.254268-05:00
+#+end_src
+*** Current-Date
+#+begin_src lisp
+      (query (:select (:current-date)) :single)
+
+      @2023-11-20T19:00:00.000000-05:00
+
+      (query (:select (:current-date) (:type "now" :time)))
+
+      ((@2023-11-20T19:00:00.000000-05:00 @2000-03-01T09:21:15.756191-05:00))
+
+      (query (:select (:to-char (:current-date) "YYYY-MM-DD HH24:MI:SS"))
+             :single)
+
+      "2023-11-21 00:00:00"
+
+      (query (:select (:to-char (:current-date) "YYYY-MM-DD"))
+             :single)
+
+      "2023-11-21"
+
+#+end_src
+
+*** Date-trunc
+#+begin_src lisp
+(query (:select (:date-trunc "minute" (:now))) :single)
+
+@2023-11-21T09:31:00.000000-05:00
+#+end_src
+*** Date-part
+The date-part function may return a double-float, regardless of whether you are using s-sql or raw sql.
+#+begin_src lisp
+  (query (:select (:date-part "year" (:now)))
+        :single)
+
+  2023.0d0
+#+end_src
+*** Age
+Local-Time does not support intervals, so you could not use the Postgresql Age function with the local-time adjusted readtable.
+*** Misc
+#+begin_src lisp
+    (query (:select (:to-char
+                   (:type "yesterday" :timestamp)
+                   "FMMonth FMDDth"))
+         :single)
+
+  "November 20th"
+#+end_src
+** Simple-date library
+  :PROPERTIES:
+  :CUSTOM_ID: simple-date-time-functions
+  :END:
+To use simple-date with Postmodern, load the simple-date/postgres-glue library and reset the sql readtable. For example:
+#+begin_src lisp
+  (ql:quickload :simple-date/postgres-glue)
+
+(setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+            simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
+#+end_src
+*** Now
+#+begin_src lisp
+    (query (:select (:now)) :single)
+
+  #<SIMPLE-DATE:TIMESTAMP 21-11-2023T14:40:08,271>
+#+end_src
+*** Current-Timestamp
+#+begin_src lisp
+  (query (:select (:current-timestamp)) :single)
+
+#<SIMPLE-DATE:TIMESTAMP 21-11-2023T14:40:59,025>
+#+end_src
+*** Current-Date
+#+begin_src lisp
+          (query (:select (:current-date)) :single)
+
+        #<SIMPLE-DATE:DATE 21-11-2023>
+
+         (query (:select (:current-date) (:type "now" :time)))
+
+    ((#<SIMPLE-DATE:DATE 21-11-2023> #<SIMPLE-DATE:TIME-OF-DAY 14:42:59.149618>))
+
+      (query (:select (:to-char (:current-date) "YYYY-MM-DD HH24:MI:SS"))
+               :single)
+
+  "2023-11-21 00:00:00"
+
+    (query (:select (:to-char (:current-date) "YYYY-MM-DD"))
+             :single)
+"2023-11-21"
+
+#+end_src
+*** Date-Trunc
+#+begin_src lisp
+    (query (:select (:date-trunc "minute" (:now)))
+           :single)
+
+  #<SIMPLE-DATE:TIMESTAMP 21-11-2023T14:41:00>
+#+end_src
+
+*** Date-Part
+The date-part function may return a double-float, regardless of whether you are using s-sql or raw sql.
+#+begin_src lisp
+  (query (:select (:date-part "year" (:now)))
+         :single)
+
+2023.0d0
+#+end_src
+#+begin_src lisp
+(query (:select 'current-time (:type "now" :time)))
+#+end_src
+*** Age
+Simple-date does support intervals, so you can use the Postgresql Age function:
+#+begin_src lisp
+  (query "SELECT current_date,
+       AGE(timestamp '2000-01-01')")
+((#<SIMPLE-DATE:DATE 21-11-2023> #<SIMPLE-DATE:INTERVAL P23Y10M20D>))
+
+#+end_src
+*** Misc
+#+begin_src lisp
+    (query (:select (:to-char
+                   (:type "yesterday" :timestamp)
+                   "FMMonth FMDDth"))
+         :single)
+
+  "November 20th"
+#+end_src
+* To-Tsquery, To-Tsvector
+  :PROPERTIES:
+  :CUSTOM_ID: to-tsquery
+  :END:
+  First as used in creating a table:
+  #+begin_src lisp
+    (query (:create-table 't10
+                          ((title :type (or text db-null))
+                           (body :type (or text db-null))
+                           (tsv :type (or tsvector db-null)
+                                :generated-always
+                                (:to-tsvector "english" 'body)))))
+  #+end_src
+  Now in a where clause in a selection query, either specifying the language or not specifying the language.:
+  #+begin_src lisp
+    (query (:select 'title
+                   :from 'pgweb
+                   :where (:@@ (:to-tsvector "english" 'body)
+                               (:to-tsquery "english" "friend"))))
+
+        (query (:select 'title
+                   :from 'pgweb
+                   :where (:@@ (:to-tsvector 'body)
+                               (:to-tsquery "friend"))))
+  #+end_src
+  S-SQL does not currently have tsquery operators, so tsquery expressions have to be included in the search term:
+  #+begin_src lisp
+    (query (:select 'id 'body :from 't12
+                              :where (:@@ (:to-tsvector 'body)
+                                          (:to-tsquery "depend | loud"))))
+  #+end_src
+  Indexing the tsv column:
+  #+begin_src lisp
+    (query (:create-index 'textsearch11-idx :on 't11 :using 'gin :fields 'tsv))
+  #+end_src
+
+* Truncate
+  :PROPERTIES:
+  :CUSTOM_ID: truncate
+  :END:
+This query sql-op takes one or more table names and will truncate those tables (deleting all the rows. The following keyword parameters are optionally allowed and must be in this order.
+-  :only will truncate only this table and not descendent tables.
+-  :restart-identity will restart any sequences owned by the table.
+-  :continue-identity will continue sequences owned by the table.
+-  :cascade will cascade the truncation through tables using foreign keys.
+  #+begin_src lisp
+    (query (:truncate 'bigtable 'fattable))
+    (query (:truncate 'bigtable 'fattable :only))
+    (query (:truncate 'bigtable 'fattable :only :continue-identity))
+    (query (:truncate 'bigtable 'fattable :only :restart-identity))
+    (query (:truncate 'bigtable 'fattable :only :restart-identity :cascade ))
+    (query (:truncate 'bigtable 'fattable :only :continue-identity :cascade ))
+    (query (:truncate 'bigtable 'fattable :continue-identity :cascade ))
+  #+end_src

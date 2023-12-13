@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-12-12 Tue 18:55 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>S-SQL Examples J</title>
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">S-SQL Examples J</h1>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org993a58a">S-SQL Examples Home Page</a></li>
+<li><a href="#joins">Joins</a>
+<ul>
+<li><a href="#cross-join">Cross Join</a></li>
+<li><a href="#inner-join">Inner Join</a></li>
+<li><a href="#outer-join">Outer Join</a></li>
+<li><a href="#left-join">Left Join</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-org993a58a" class="outline-2">
+<h2 id="org993a58a"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
+<div class="outline-text-2" id="text-org993a58a">
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><a href="s-sql-a.html">A</a></td>
+<td class="org-left"><a href="s-sql-b.html">B</a></td>
+<td class="org-left"><a href="s-sql-c.html">C</a></td>
+<td class="org-left"><a href="s-sql-d.html">D</a></td>
+<td class="org-left"><a href="s-sql-e.html">E</a></td>
+<td class="org-left"><a href="s-sql-f.html">F</a></td>
+<td class="org-left"><a href="s-sql-g.html">G</a></td>
+<td class="org-left"><a href="s-sql-h.html">H</a></td>
+<td class="org-left"><a href="s-sql-i.html">I</a></td>
+<td class="org-left"><a href="s-sql-j.html">J</a></td>
+<td class="org-left"><a href="s-sql-k.html">K</a></td>
+<td class="org-left"><a href="s-sql-l.html">L</a></td>
+<td class="org-left"><a href="s-sql-m.html">M</a></td>
+<td class="org-left"><a href="s-sql-n.html">N</a></td>
+<td class="org-left"><a href="s-sql-o.html">O</a></td>
+<td class="org-left"><a href="s-sql-p.html">P</a></td>
+<td class="org-left"><a href="s-sql-r.html">R</a></td>
+<td class="org-left"><a href="s-sql-s.html">S</a></td>
+<td class="org-left"><a href="s-sql-t.html">T</a></td>
+<td class="org-left"><a href="s-sql-u.html">U</a></td>
+<td class="org-left"><a href="s-sql-v.html">V</a></td>
+<td class="org-left"><a href="s-sql-w.html">W</a></td>
+<td class="org-left"><a href="s-sql-special-characters.html">Special Characters</a></td>
+<td class="org-left"><a href="calling-postgresql-stored-functions.html">Calling Postgresql Stored Functions and Procedures</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+<div id="outline-container-joins" class="outline-2">
+<h2 id="joins">Joins</h2>
+<div class="outline-text-2" id="text-joins">
+<p>
+A long discussion of joins can be found here: <a href="http://www.gplivna.eu/papers/sql_join_types.htm">http://www.gplivna.eu/papers/sql_join_types.htm</a> (Oracle centric, but still useful). The postgresql documentation pages can be found here: <a href="http://www.postgresql.org/docs/9.3/static/sql-select.html#SQL-FROM">http://www.postgresql.org/docs/9.3/static/sql-select.html#SQL-FROM</a>
+</p>
+</div>
+
+<div id="outline-container-cross-join" class="outline-3">
+<h3 id="cross-join">Cross Join</h3>
+<div class="outline-text-3" id="text-cross-join">
+<p>
+From the postgresql documentation: "For every possible combination of rows from T1 and T2 (i.e., a Cartesian product), the joined table will contain a row consisting of all columns in T1 followed by all columns in T2. If the tables have N and M rows respectively, the joined table will have N * M rows."
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> '* from 'employee
+        <span class="org-builtin">:cross-join</span> 'compensation))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-inner-join" class="outline-3">
+<h3 id="inner-join">Inner Join</h3>
+<div class="outline-text-3" id="text-inner-join">
+<p>
+An inner join looks at two tables and creates a new result consisting of the selected elements in the rows from the two tables that match the specified conditions. You can simplistically think of it as the intersection of the two sets. In reality, it is creating a new set consisting of certain elements of the intersecting rows. An inner join is the default and need not be specified.
+</p>
+
+<p>
+A sample of standard sql on an inner join could look like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-sql">(<span class="org-keyword">SELECT</span> foo, bar, baz
+        <span class="org-keyword">FROM</span> (<span class="org-keyword">SELECT</span> foo <span class="org-keyword">FROM</span> x <span class="org-keyword">WHERE</span> <span class="org-keyword">some</span>-condition-here) <span class="org-keyword">AS</span> tmp1
+        <span class="org-keyword">INNER</span> <span class="org-keyword">JOIN</span>
+          (<span class="org-keyword">SELECT</span> bar <span class="org-keyword">FROM</span> x <span class="org-keyword">WHERE</span> <span class="org-keyword">some</span>-condition-here) <span class="org-keyword">AS</span> tmp2
+        <span class="org-keyword">ON</span> (tmp1.id = tmp2.id)
+        <span class="org-keyword">INNER</span> <span class="org-keyword">JOIN</span>
+          (<span class="org-keyword">SELECT</span> baz <span class="org-keyword">FROM</span> x <span class="org-keyword">WHERE</span> <span class="org-keyword">some</span>-condition-here) <span class="org-keyword">AS</span> tmp3
+        <span class="org-keyword">ON</span> (tmp2.id = tmp3.id))
+</pre>
+</div>
+
+<p>
+The same query could be expressed in s-sql as:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'foo 'bar 'baz
+        <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span>
+               (<span class="org-builtin">:select</span> 'foo
+                <span class="org-builtin">:from</span> 'x
+                <span class="org-builtin">:where</span> 'x)
+               'tmp1)
+        <span class="org-builtin">:inner-join</span> (<span class="org-builtin">:as</span>
+                     (<span class="org-builtin">:select</span> 'bar
+                      <span class="org-builtin">:from</span> 'x
+                      <span class="org-builtin">:where</span> 'x)
+                     'tmp2)
+        <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'tmp1.id 'tmp2.id)
+        <span class="org-builtin">:inner-join</span> (<span class="org-builtin">:as</span>
+                     (<span class="org-builtin">:select</span> 'baz
+                      <span class="org-builtin">:from</span> 'x
+                      <span class="org-builtin">:where</span> 'x)
+                     'tmp3)
+        <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'tmp2.id 'tmp3.id)))
+
+</pre>
+</div>
+
+<p>
+The normal pre-ansi shorthand example, using our countries and regions tables would look like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'countries.name
+                <span class="org-builtin">:from</span> 'countries 'regions
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'countries.region-id 'regions.id)
+                             (<span class="org-builtin">:=</span> 'regions.name <span class="org-string">"North America"</span>))))
+
+((<span class="org-string">"US"</span>) (<span class="org-string">"Canada"</span>) (<span class="org-string">"Mexico"</span>) (<span class="org-string">"Bermuda"</span>))
+
+</pre>
+</div>
+
+<p>
+The full portable ansi version, using inner join would look like this.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'tmp1.name
+        <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:select</span> 'name 'region-id
+                            <span class="org-builtin">:from</span> 'countries)
+                   'tmp1)
+                <span class="org-builtin">:inner-join</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:select</span> 'id
+                                  <span class="org-builtin">:from</span> 'regions
+                                  <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'name <span class="org-string">"North America"</span>))
+                                 'tmp2)
+        <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'tmp1.region-id 'tmp2.id)))
+
+((<span class="org-string">"US"</span>) (<span class="org-string">"Canada"</span>) (<span class="org-string">"Mexico"</span>) (<span class="org-string">"Bermuda"</span>))
+
+</pre>
+</div>
+
+<p>
+Some people argue that specifying the inner join allows separation of join criteria and, therefore is more readable. I leave that to you and your coding style.
+</p>
+</div>
+</div>
+
+<div id="outline-container-outer-join" class="outline-3">
+<h3 id="outer-join">Outer Join</h3>
+<div class="outline-text-3" id="text-outer-join">
+<p>
+An outer join not only generates an inner join, it also joins the rows from one table that matches the conditions and adds null values for the joined columns from the second table (which obviously did not match the condition.) Under Postgresql, a "left join", "right join" or "full join" all imply an outer join.
+</p>
+
+<p>
+A left join (or left outer join) looks at two tables, keeps the matched rows from both and the unmatched rows from the left table and drops the unmatched rows from the right table. A right outer join keeps the matched rows, the unmatched rows from the right table and drops the unmatched rows from the left table. A full outer join includes the rows that match from each table individually, with null values for the missing matching columns.
+</p>
+</div>
+</div>
+
+<div id="outline-container-left-join" class="outline-3">
+<h3 id="left-join">Left Join</h3>
+<div class="outline-text-3" id="text-left-join">
+<p>
+Example: Here we assume two tables. A countries table and a many-to-many linking table named countries-topics. (There is an implicit third table named topics.) We are looking for records from the countries table which do not have a match in the countries-topics table. In other words, where do we have a note, but not matched it to a topic?
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">notes-with-no-topics</span> ()
+  (query (<span class="org-builtin">:order-by</span>
+          (<span class="org-builtin">:select</span> 'countries.id 'countries.name
+                             <span class="org-builtin">:distinct</span>
+                             <span class="org-builtin">:from</span> 'countries
+                             <span class="org-builtin">:left-join</span> 'countries-topics
+                             <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'countries.id 'countries-topics.country-id)
+                             <span class="org-builtin">:where</span> (<span class="org-builtin">:is-null</span> 'countries-topics.country-id))
+                    'countries.id)))
+
+</pre>
+</div>
+
+<p>
+Here is a somewhat contrived example using our countries and regions table. We want to get the names of all the regions and also return the country names in one specified region. Assume that we only want the names of the countries in Central America, which happens to have a region-id of 3.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'tmp2.name 'tmp1.name
+                <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:select</span> 'id 'name
+                                    <span class="org-builtin">:from</span> 'regions)
+                           'tmp2)
+                <span class="org-builtin">:left-join</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:select</span> 'name 'region-id
+                                         <span class="org-builtin">:from</span> 'countries
+                                         <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'region-id 3))
+                                'tmp1)
+                <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 'tmp1.region-id 'tmp2.id)))
+
+((<span class="org-string">"Central America"</span> <span class="org-string">"Panama"</span>) (<span class="org-string">"Central America"</span> <span class="org-string">"Costa Rica"</span>) (<span class="org-string">"Central America"</span> <span class="org-string">"Guatemala"</span>)
+ (<span class="org-string">"Central America"</span> <span class="org-string">"Nicaragua"</span>) (<span class="org-string">"Central America"</span> <span class="org-string">"Belize"</span>) (<span class="org-string">"Central America"</span> <span class="org-string">"El Salvador"</span>)
+ (<span class="org-string">"Western Africa"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"Eastern Europe"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"APAC"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"Southern Europe"</span> <span class="org-builtin">:NULL</span>)
+ (<span class="org-string">"Caribbean"</span> <span class="org-builtin">:NULL</span>)  (<span class="org-string">"LATAM"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"Northern Africa"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"Eastern Africa"</span> <span class="org-builtin">:NULL</span>)
+ (<span class="org-string">"Asia"</span> <span class="org-builtin">:NULL</span>)  (<span class="org-string">"US"</span> <span class="org-builtin">:NULL</span>)  (<span class="org-string">"Middle East"</span> <span class="org-builtin">:NULL</span>)  (<span class="org-string">"South East Asia"</span> <span class="org-builtin">:NULL</span>)
+ (<span class="org-string">"Oceania"</span> <span class="org-builtin">:NULL</span>)  (<span class="org-string">"Northern Europe"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"Emerging"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"All"</span> <span class="org-builtin">:NULL</span>)
+ (<span class="org-string">"Central Asia"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"Eastern Asia"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"North America"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"EMEA"</span> <span class="org-builtin">:NULL</span>)
+ (<span class="org-string">"Middle Africa"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"Western Europe"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"Africa"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"South Central Asia"</span> <span class="org-builtin">:NULL</span>)
+ (<span class="org-string">"Southern Africa"</span> <span class="org-builtin">:NULL</span>)  (<span class="org-string">"Canada"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"Pacific"</span> <span class="org-builtin">:NULL</span>) (<span class="org-string">"South America"</span> <span class="org-builtin">:NULL</span>))
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

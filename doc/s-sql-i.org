@@ -1,0 +1,348 @@
+#+TITLE: S-SQL Examples I
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* ilike
+  :PROPERTIES:
+  :CUSTOM_ID: iloke
+  :END:
+See [[file:s-sql-l.org][s-sql-l (like, ilike, limit)]]
+
+* In
+  :PROPERTIES:
+  :CUSTOM_ID: in
+  :END:
+#+begin_src lisp
+  (query (:select 'name
+                :from 'countries
+                :where (:in 'id
+                            (:set 20 21 23))))
+#+end_src
+
+* Insert, Insert-into
+  :PROPERTIES:
+  :CUSTOM_ID: insert
+  :END:
+** First, without s-sql
+  :PROPERTIES:
+  :CUSTOM_ID: sql-insert
+  :END:
+#+begin_src lisp
+  (query "insert into 'countries values (920, 'Oz', 'Oz Dollars')")
+#+end_src
+
+** With s-sql
+  :PROPERTIES:
+  :CUSTOM_ID: s-sql-insert
+  :END:
+There are two ways to use s-sql with basic single row inserts. First, directly setting the columns, using the :set keyword and alternating column names and values. This means that the :insert-into clause expects the arguments to :set to be in multiples of two. Odd arguments will trigger an error.
+#+begin_src lisp
+  (query (:insert-into 'countries :set 'id 920 'name "Oz"
+                                     'currency "Oz Dollars"))
+#+end_src
+Notice that a list with two items is a single item, not a multiple of two. You can use sql-compile to deal with this. See this example from the mailing list.
+#+begin_src lisp
+  (sql-compile `(:insert-into 'kupci :set ,@(when t (list 'ime "a"))))
+#+end_src
+The second method, without the :set keyword, uses :select, followed by values.
+#+begin_src lisp
+  (query (:insert-into 'countries (:select "Oz" "Oz Dollars")))
+
+  (query (:insert-into 'test2 (:select '* :from 'test1)))
+#+end_src
+
+** Returning the Primary Key
+  :PROPERTIES:
+  :CUSTOM_ID: returning-primary
+  :END:
+Suppose your table has a serial key of id and you want the insert function to return the newly generated id for that new record.
+#+begin_src lisp
+  (query (:insert-into 'categories :set 'name "test-cat3" :returning 'id)
+       :single)
+#+end_src
+The next example shows the same example using parameterized variables.
+#+begin_src lisp
+  (let ((name "test-cat4"))
+    (query (:insert-into 'categories :set 'name '$1 :returning 'id)
+           name :single))
+#+end_src
+Note: This is a postgresql extension to the standard From the Documentation:
+
+INSERT conforms to the SQL standard, except that the RETURNING clause is a PostgreSQL extension, as is the ability to use WITH with INSERT, and the ability to specify an alternative action with ON CONFLICT. Also, the case in which a column name list is omitted, but not all the columns are filled from the VALUES clause or query, is disallowed by the standard.
+
+The SQL standard specifies that OVERRIDING SYSTEM VALUE can only be specified if an identity column that is generated always exists. PostgreSQL allows the clause in any case and ignores it if it is not applicable.
+With DAOs
+** Insert-DAO
+Postmodern has an update-dao and an insert-dao function. You could check and see if the dao that you are currently dealing with has its primary key set (in which case you are editing an existing object and need to use update-dao. If not, then you dealing with a brand new object and will need to set the primary key and use the insert-dao method, using something like this:
+#+begin_src lisp
+  (if (id item) (postmodern:update-dao item)
+      (progn (setf (id item) (get-next-id class-name))
+         (postmodern:insert-dao item)))
+#+end_src
+However, you could also just use upsert.
+#+begin_src lisp
+  (postmodern:upsert-dao item)
+#+end_src
+
+** Multiple Row Inserts
+  :PROPERTIES:
+  :CUSTOM_ID: multiple-row-inserts
+  :END:
+You can use s-sql to generate INSERT INTO clauses with multiple rows, e.g. "INSERT INTO \"table\" (a, b) VALUES (10, 20), (30, 40)". (This ability does not yet exist with respect to inserting multiple daos.
+
+First, without specifying columns:
+#+begin_src lisp
+  (query (:insert-rows-into 'my-table :values '((42 "foobar") (23 "foobaz"))))
+#+end_src
+Now with specifying columns:
+#+begin_src lisp
+  (query (:insert-rows-into 'table
+                   :columns 'a 'b
+                   :values '((10 20) (30 40))))
+
+  (query (:insert-rows-into 'cd.facilities
+                   :columns 'facid 'name 'membercost 'guestcost 'initialoutlay 'monthlymaintenance
+                   :values '((9 "Spa" 20 30 100000 800)
+                             (10 "Squash Court 2" 3.5 17.5 5000 80))))
+#+end_src
+Using a select statement:
+#+begin_src lisp
+  (query (:insert-rows-into 'cd.facilities
+                   :columns 'facid 'name 'membercost 'guestcost 'initialoutlay 'monthlymaintenance
+                   :values '(((:select (:+ (:select (:max 'facid)
+                                            :from 'cd.facilities)
+                                        1))
+                              "Spa" 20 30 100000 800))))
+#+end_src
+Overriding System Values:
+#+begin_src lisp
+  (query (:insert-rows-into 'table1
+          :columns 'c1 'c2
+          :overriding-system-value
+          :values '((1 "a") (2 "b"))))
+#+end_src
+** Insert-Rows-On-Conflict-Do-Nothing
+  :PROPERTIES:
+  :CUSTOM_ID: Insert-Rows-On-Conflict-Do-Nothing
+  :END:
+Inserting rows with on conflict do nothing
+#+begin_src lisp
+  (query (:insert-rows-into 'distributors
+                   :columns 'did 'dname
+                   :values '((7 "Readline GmbH"))
+                   :on-conflict-do-nothing))
+#+end_src
+:on-conflict with separate :do-nothing keyword
+#+begin_src lisp
+  (query (:insert-rows-into 'test :columns 'some-key 'some-val
+                                     :values '(("a" 5) ("b" 6) ("c" 7))
+                                     :on-conflict 'some-key
+                                     :do-nothing))
+#+end_src
+With where condition
+#+begin_src lisp
+  (query (:insert-rows-into 'distributors
+                   :columns 'did 'dname
+                   :values '((10 "Conrad International"))
+                   :on-conflict 'did
+                   :do-nothing
+                   :where 'is-active))
+#+end_src
+With returning
+#+begin_src lisp
+  (query (:insert-rows-into 'distributors
+          :columns 'did 'dname
+                            :values '((8 "Readline GmbH"))
+                            :on-conflict 'did 'dname
+          :do-nothing
+                            :returning 'id))
+#+end_src
+With on-conflict-on-constraint and do-nothing as a separate operator
+#+begin_src lisp
+  (query (:insert-rows-into 'distributors :columns 'did 'dname
+                            :values '((10 "Readline GmbH"))
+                            :on-conflict-on-constraint 'distributors-pkey
+                            :do-nothing
+          :returning 'id))
+#+end_src
+With on-conflict constraint with separate :do-nothing keyword and returning
+#+begin_src lisp
+  (sql (:insert-rows-into 'test :columns 'some-key 'some-val
+                          :values '(("a" 4) ("b" 6) ("c" 7))
+                          :on-conflict 'some-key
+                          :do-nothing
+        :returning '*))
+#+end_src
+multiple values basic :on-conflict-on-constraint with separate :do-nothing keyword and returning
+#+begin_src lisp
+  (query (:insert-rows-into 'test :columns 'some-key 'some-val
+                          :values '(("a" 3) ("b" 6) ("c" 7))
+                          :on-conflict-on-constraint 'somekey
+                          :do-nothing
+          :returning '*))
+#+end_src
+** Insert-Rows-On-Conflict-Update
+  :PROPERTIES:
+  :CUSTOM_ID: Insert-Rows-On-Conflict-update
+  :END:
+basic version single row
+#+begin_src lisp
+  (query (:insert-rows-into 'users
+          :values '(((:uuid-generate-v4) "Lucie" "Hawkins" "Lucie-Jones@gmail.com"))
+          :on-conflict-update 'email
+          :update-set 'first-name 'excluded.first-name 'last-name 'excluded.last-name))
+#+end_src
+Basic version multiple row and specified columns
+#+begin_src lisp
+  (query (:insert-rows-into 'distributors
+          :columns 'did 'dname
+                            :values '((5 "Gizmo Transglobal") (6 "Associated Computing Inc."))
+                            :on-conflict-update 'did
+                            :update-set 'dname 'excluded.dname))
+#+end_src
+With where clause
+#+begin_src lisp
+  (query (:insert-rows-into 'users
+          :values '(((:uuid-generate-v4) "Lucie" "Hawkins" "Lucie-Jones@gmail.com"))
+          :on-conflict-update 'email
+          :update-set 'first-name 'excluded.first-name 'last-name 'excluded.last-name
+                            :where (:<> 'u.first-name "Lucie")))
+#+end_src
+With an as clause at the table level
+#+begin_src lisp
+  (query (:insert-rows-into (:as 'users 'u)
+          :values '(((:uuid-generate-v4) "Lucie" "Jones" "Lucie-Jones@gmail.com"))
+          :on-conflict-update 'email
+          :update-set 'first-name 'excluded.first-name 'last-name 'excluded.last-name
+                            :where (:<> 'u.first-name "Lucie")))
+#+end_src
+With concatenation function in the update-set clause
+#+begin_src lisp
+  (query (:insert-rows-into (:as 'distributors 'd)
+          :columns 'did 'dname
+          :values '((8 "Anvil Distribution"))
+          :on-conflict-update 'did
+          :update-set 'dname (:|| 'excluded.dname  " (formerly " 'd.dname ")")
+          :where (:<> 'd.zipcode "21201")))
+#+end_src
+with on-conflict-on-constraint
+#+begin_src lisp
+  (query (:insert-rows-into 'test
+          :columns 'some-key 'some-val
+          :values '(("a" 5))
+          :on-conflict-on-constraint 'somekey
+          :update-set 'some-val 'excluded.some-val))
+#+end_src
+With on-conflict-on-constraint and returning clause
+#+begin_src lisp
+  (query (:insert-rows-into 'test
+          :columns 'some-key 'some-val
+          :values '(("a" 2) ("b" 6) ("c" 7))
+          :on-conflict-on-constraint 'somekey
+          :update-set 'some-val 'excluded.some-val
+          :returning '*))
+#+end_src
+With on-conflict-on-constraint with addition function in the update-set clause
+#+begin_src lisp
+  (queryl (:insert-rows-into 'test
+                   :columns 'some-key
+                   :values '(("a"))
+                   :on-conflict-on-constraint 'somekey
+                   :update-set 'some-val (:+ 'test.some-val 1)))
+#+end_src
+With select clause which returns a single row
+#+begin_src lisp
+  (query (:insert-rows-into 'attendence :columns 'event-id 'client-id 'attend-status
+          :values '(((:select 'id
+                      :from 'event
+                      :where (:= (:lower 'event-dt) "2020-01-11 17:00:00"))
+                     3
+                     "No Show"))
+          :on-conflict-on-constraint 'attendance-pkey
+          :update-set 'attend-status 'excluded.attend_status))
+#+end_src
+
+** Inserting from an alist
+  :PROPERTIES:
+  :CUSTOM_ID: insert-from-alist
+  :END:
+Assume that you have a list of alists and you want to insert the data. If the list of alists contain all the columns, then you do not need to specify the columns and simply loop across to get the total lists of values:
+#+begin_src lisp
+  (let ((alst '(((name . "John") (age . 34)) ((name . "Susan") (age . 37)))))
+    (query (:insert-rows-into 'table
+            :values (loop :for x :in alst
+                          :collect
+                          (loop :for y :in x
+                                :collect (cdr y))))))
+#+end_src
+If the alists only contain a subset of the columns, then you would need to specify the columns:
+#+begin_src lisp
+  (let ((alst '(((name . "John") (age . 34)) ((name . "Susan") (age . 37)))))
+    (query (:insert-rows-into 'table
+            :columns 'name 'age
+            :values (loop :for x :in alst
+                          :collect
+                          (loop :for y :in x
+                                :collect (cdr y))))))
+#+end_src
+** Inserting from a plist
+  :PROPERTIES:
+  :CUSTOM_ID: insert-from-plist
+  :END:
+What happens if you want to insert from a plist?
+
+Assume you have a plist where the keys are interned that you want to insert as a record. Consider the following:
+#+begin_src lisp
+  (query
+   (sql-compile
+    (append `(:insert-into ,table :set)
+            plst)))
+#+end_src
+
+That gives you the opportunity to generalize into something like this:
+#+begin_src lisp
+(defun insert-db-from-plist (table plst)
+  "Takes a table and a plist and inserts the plist into the table as a new record."
+  (when (stringp table)
+    (setf table (intern (string-upcase table))))
+     (with-connection (db)
+                      (query
+                       (sql-compile
+                        (append `(:insert-into ,table :set)
+                                  (loop for x in plst counting x into y collect
+                                        (if (oddp y)
+                                            (cond ((symbolp x)
+                                                   x)
+                                                  ((stringp x)
+                                                   (intern (string-upcase x)))
+                                                  (t nil))
+                                          x)))))))
+#+end_src
+
+* Intersect
+  :PROPERTIES:
+  :CUSTOM_ID: intersect
+  :END:
+Intersect produces a result that contain rows that appear on all the sub-selects.
+#+begin_src lisp
+  (query (:intersect (:select 'countries.name
+                            :from 'countries
+                            :where (:< 'latitude 16.44))
+                   (:select 'countries.name
+                            :from 'countries 'regions
+                            :where (:and (:= 'region-id 'regions.id)
+                                         (:= 'regions.name "Caribbean")))))
+
+(("Aruba") ("Netherlands Antilles") ("Grenada") ("Barbados") ("Trinidad and Tobago"))
+#+end_src
+
+* Intervals
+  :PROPERTIES:
+  :CUSTOM_ID: intervals
+  :END:
+See  [[file:interval-notes.html][Interval Notes]]

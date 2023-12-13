@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-10-18 Wed 08:18 -->
+<!-- 2023-12-12 Tue 18:28 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Postmodern</title>
@@ -202,6 +202,7 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
+<li><a href="#8993c7bd-4ba2-4080-8c5a-ff90de45eca5">Reference</a></li>
 <li><a href="#6887e7c3-c818-469a-b5f1-10a4b578b90b">Dependencies</a></li>
 <li><a href="#554e0dee-93b3-47b1-b808-3bd6c366b784">License</a></li>
 <li><a href="#6f05b344-12c2-42b0-b231-3aaced30afb8">Download and installation</a></li>
@@ -217,7 +218,6 @@
 </ul>
 </li>
 <li><a href="#b15533d8-efa3-43a9-b632-a3256cea261f">Authentication</a></li>
-<li><a href="#8993c7bd-4ba2-4080-8c5a-ff90de45eca5">Reference</a></li>
 <li><a href="#e2475974-6131-40ef-9ca3-54bf111a5dd0">Data Types</a>
 <ul>
 <li><a href="#b850ea6c-b61e-4601-8423-65a8a626cb58">Data Types</a></li>
@@ -228,8 +228,8 @@
 <ul>
 <li><a href="#e5c68251-0ca6-4f96-8d36-175cec626eeb">Timezones and Simple-Date and Local-Time</a>
 <ul>
-<li><a href="#orgfc9163d">Simple-Date Library Use</a></li>
-<li><a href="#orgd2cd72d">Local-Time Library Use</a></li>
+<li><a href="#simple-date-library-use">Simple-Date Library Use</a></li>
+<li><a href="#local-time-library-use">Local-Time Library Use</a></li>
 </ul>
 </li>
 <li><a href="#bdf9ddb0-5f95-4807-8862-8970b35bd142">Portability</a></li>
@@ -243,7 +243,7 @@
 </div>
 </nav>
 <p>
-Version 1.33.9
+Version 1.33.10
 </p>
 
 <p>
@@ -267,6 +267,41 @@ extensions like lispy SQL and database access objects in a quite different way.
 This library was written because the CLSQL approach did not really work for
 me. Your mileage may vary.
 </p>
+
+<div id="outline-container-8993c7bd-4ba2-4080-8c5a-ff90de45eca5" class="outline-2">
+<h2 id="8993c7bd-4ba2-4080-8c5a-ff90de45eca5">Reference</h2>
+<div class="outline-text-2" id="text-8993c7bd-4ba2-4080-8c5a-ff90de45eca5">
+<p>
+The reference manuals for the different components of Postmodern are kept
+in separate files. For using the library in the most straightforward way,
+you only really need to read the Postmodern reference and glance over the
+S-SQL reference. The simple-date reference explains the time-related data
+types included in Postmodern, and the CL-postgres reference might be useful
+if you just want a low-level library for talking to a PostgreSQL server.
+</p>
+
+<ul class="org-ul">
+<li><a href="postmodern.html">Postmodern</a></li>
+<li><a href="s-sql.html">S-SQL</a></li>
+<li><a href="simple-date.html">Simple-date</a></li>
+<li><a href="cl-postgres.html">CL-postgres</a></li>
+</ul>
+
+<p>
+Some specific topics in more detail
+</p>
+
+<ul class="org-ul">
+<li><a href="s-sql-examples.html">S-SQL Examples</a></li>
+<li><a href="array-notes.html">Array-Notes</a></li>
+<li><a href="create-tables.html">Creating Tables</a></li>
+<li><a href="dao-classes.html">Database Access Object (Dao) Classes</a></li>
+<li><a href="dynamic-queries.html">Dynamic Queries</a></li>
+<li><a href="interval-notes.html">Interval Notes</a></li>
+<li><a href="isolation-notes.html">Isolation Notes</a></li>
+</ul>
+</div>
+</div>
 
 <div id="outline-container-6887e7c3-c818-469a-b5f1-10a4b578b90b" class="outline-2">
 <h2 id="6887e7c3-c818-469a-b5f1-10a4b578b90b">Dependencies</h2>
@@ -949,40 +984,6 @@ is a authentication method that you believe should be considered.
 </div>
 </div>
 
-<div id="outline-container-8993c7bd-4ba2-4080-8c5a-ff90de45eca5" class="outline-2">
-<h2 id="8993c7bd-4ba2-4080-8c5a-ff90de45eca5">Reference</h2>
-<div class="outline-text-2" id="text-8993c7bd-4ba2-4080-8c5a-ff90de45eca5">
-<p>
-The reference manuals for the different components of Postmodern are kept
-in separate files. For using the library in the most straightforward way,
-you only really need to read the Postmodern reference and glance over the
-S-SQL reference. The simple-date reference explains the time-related data
-types included in Postmodern, and the CL-postgres reference might be useful
-if you just want a low-level library for talking to a PostgreSQL server.
-</p>
-
-<ul class="org-ul">
-<li><a href="postmodern.html">Postmodern</a></li>
-<li><a href="s-sql.html">S-SQL</a></li>
-<li><a href="simple-date.html">Simple-date</a></li>
-<li><a href="cl-postgres.html">CL-postgres</a></li>
-</ul>
-
-<p>
-Some specific topics in more detail
-</p>
-
-<ul class="org-ul">
-<li><a href="array-notes.html">Array-Notes</a></li>
-<li><a href="create-tables.html">Creating Tables</a></li>
-<li><a href="dao-classes.html">Database Access Object (Dao) Classes</a></li>
-<li><a href="dynamic-queries.html">Dynamic Queries</a></li>
-<li><a href="interval-notes.html">Interval Notes</a></li>
-<li><a href="isolation-notes.html">Isolation Notes</a></li>
-</ul>
-</div>
-</div>
-
 <div id="outline-container-e2475974-6131-40ef-9ca3-54bf111a5dd0" class="outline-2">
 <h2 id="e2475974-6131-40ef-9ca3-54bf111a5dd0">Data Types</h2>
 <div class="outline-text-2" id="text-e2475974-6131-40ef-9ca3-54bf111a5dd0">
@@ -1513,9 +1514,9 @@ Now the s-sql version:
 </pre>
 </div>
 </div>
-<div id="outline-container-orgfc9163d" class="outline-4">
-<h4 id="orgfc9163d">Simple-Date Library Use</h4>
-<div class="outline-text-4" id="text-orgfc9163d">
+<div id="outline-container-simple-date-library-use" class="outline-4">
+<h4 id="simple-date-library-use">Simple-Date Library Use</h4>
+<div class="outline-text-4" id="text-simple-date-library-use">
 <p>
 The Simple-date add-on library (not enabled by default)
 provides types (CLOS classes) for dates, timestamps, and intervals
@@ -1637,9 +1638,9 @@ used to convert it to proper UTC timestamp.
 </div>
 </div>
 
-<div id="outline-container-orgd2cd72d" class="outline-4">
-<h4 id="orgd2cd72d">Local-Time Library Use</h4>
-<div class="outline-text-4" id="text-orgd2cd72d">
+<div id="outline-container-local-time-library-use" class="outline-4">
+<h4 id="local-time-library-use">Local-Time Library Use</h4>
+<div class="outline-text-4" id="text-local-time-library-use">
 <p>
 For those who want to use local-time, to enable the local-time reader:
 </p>
@@ -1796,13 +1797,8 @@ words are:
 <h3 id="4ac8f5f4-d3b0-41c5-a222-fe3086049279">Things that should be implemented</h3>
 <div class="outline-text-3" id="text-4ac8f5f4-d3b0-41c5-a222-fe3086049279">
 <p>
-Postmodern is under active development so Issues and feature requests should
+Postmodern is under active maintenance so issues and feature requests should
 be flagged on <a href="https://github.com/marijnh/Postmodern">Postmodern's site on github</a>.
-</p>
-
-<p>
-Some areas that are currently under consideration can be found in the ROADMAP.md
-file.
 </p>
 </div>
 </div>

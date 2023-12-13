@@ -1,0 +1,61 @@
+#+TITLE: S-SQL Examples N
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Null
+  :PROPERTIES:
+  :CUSTOM_ID: null
+  :END:
+I have a few "groups of countries" in a countries table that should not have a latitude such as the EU. As a result so I would expect to be able to find them by looking for records with null in the latitude field. The second example is similar, looking for any countries with either a null latitude or null longitude. In my particular database, the only "country" matching that is the EU.
+#+begin_src lisp
+  (query (:select 'id 'name
+                  :from 'countries
+                  :where (:is-null 'latitude)))
+
+  ((6 "EU"))
+
+  (query (:select 'name :from 'countries
+          :where (:or (:is-null 'latitude)
+                      (:is-null 'longitude))))
+
+  (("EU"))
+#+end_src
+
+
+The next gives the number of records (without using the sql count operator) from countries where the currency field was both not null and did not consist of just a blank string.
+#+begin_src lisp
+  (length
+   (query (:select 'id
+           :from 'countries
+           :where (:and (:not (:= "" 'countries.currency))
+                        (:not (:is-null 'countries.currency))))))
+#+end_src
+
+* Not-Null
+  :PROPERTIES:
+  :CUSTOM_ID: not-null
+  :END:
+Similarly, you can use :not-null
+#+begin_src lisp
+(query (:select 'ta :from 'a :where (:not-null 'ta)))
+#+end_src
+
+* Nullif
+  :PROPERTIES:
+  :CUSTOM_ID: nullif
+  :END:
+Suppose you want to perform division, but do not know if the divisor could be zero. The following will handle that and return 0 in that case.
+#+begin_src lisp
+(let ((divisor 3))
+  (query (:select (:coalesce (:/ 12 (:nullif divisor 0 )) 0))
+         :single))
+
+(let ((divisor 0))
+  (query (:select (:coalesce (:/ 12 (:nullif divisor 0 )) 0))
+         :single))
+#+end_src

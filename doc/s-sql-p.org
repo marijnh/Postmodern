@@ -1,0 +1,120 @@
+#+TITLE: S-SQL Examples P
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Parameterized Statements
+  :PROPERTIES:
+  :CUSTOM_ID: parameterized
+  :END:
+Parameterized statements help protect against sql injection and some of the examples above have used parameterized statement forms. You can't parameterize table names, column names or sql keywords. So if you are getting those from the user, you definitely need to sanitize the input. Parameterized statements also don't protect against other things like cross-script attacks, so you still need to sanitize input.
+
+The following is a simple parameterized query and a prepared statement using parameters. First, the pure sql version
+#+begin_src lisp
+    (query "select name from countries where name=$1"
+           "France" :single)
+#+end_src
+
+Now the s-sql version:
+#+begin_src lisp
+    (query (:select 'id :from 'countries :where (:= 'name '$1))
+           "France" :single)
+#+end_src
+
+Now the simple prepared statement version in standard sql and s-sql:
+#+begin_src lisp
+(defprepared test21 "select name from countries where id=$1")
+
+(test21 5)
+
+("Denmark")
+#+end_src
+Now the s-sql version
+#+begin_src lisp
+(defprepared test22
+  (:select 'name
+           :from 'countries
+           :where (:= 'id '$1)))
+
+(test22 5)
+
+("Denmark")
+#+end_src
+Now let's change the simple version to one where you want to give it a list. We are going to use the :column parameter to indicate we just want a single list of all the country names found with the select statement.
+#+begin_src lisp
+  (defprepared test23 "select name from countries where id=any($1)"
+    :column)
+
+  (test23 '(21 6 5))
+
+  ("EU" "Denmark" "US")
+#+end_src
+You also get the same result if you pass a vector instead of a list.
+#+begin_src lisp
+  (test23
+   (vector 21 6 5))
+
+  ("EU" "Denmark" "US")
+#+end_src
+
+You cannot use a list or vector with the sql keyword "in". E.g.
+#+begin_src lisp
+(query "select name from countries where id in $1" '(21 20))
+
+Evaluation aborted on #<CL-POSTGRES-ERROR:SYNTAX-ERROR-OR-ACCESS-VIOLATION {100C262F31}>.
+
+#+end_src
+
+You can, however, use a list or a vector with the keyword any. E.g.
+#+begin_src lisp
+  (query "select name from countries where id = any($1)"
+         (coerce '(21 20) 'vector)
+         :column)
+
+  ("UK" "US")
+
+  (query "select name from countries where id = any($1)"
+       '(21 20) )
+
+      ("UK" "US")
+#+end_src
+
+Now the s-sql version. Note the change for any to any*
+#+begin_src lisp
+  (query (:select 'name
+                  :from 'countries
+                  :where (:= 'id (:any* '$1)))
+         '(21 20) :column)
+
+  ("UK" "US")
+
+  (query (:select 'name
+                :from 'countries
+                :where (:= 'id (:any* '$1)))
+       (vector 21 20) :column)
+
+("UK" "US")
+#+end_src
+
+* Partition-by
+  :PROPERTIES:
+  :CUSTOM_ID: partition-by
+  :END:
+Partition-by is not table partitioning. Rather it is a clause that allows you to set the range of records that will be used for each group within an over clause. Consider it a windowing function. Partition-by is available in Postmodern as of the Oct 29, 2013 git version.
+
+Important: Note use of :order-by without being the function call at the beginning of a form.
+#+begin_src lisp
+(query (:select 'depname 'empno 'salary
+                (:over (:avg 'salary)
+                       (:partition-by 'depname))
+                :from 'empsalary))
+
+(query (:select 'depname 'empno 'salary
+                (:over (:rank)
+                       (:partition-by 'depname :order-by (:desc 'salary)))
+                :from 'empsalary))
+#+end_src
