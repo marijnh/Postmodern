@@ -1,0 +1,144 @@
+#+TITLE: S-SQL Examples J
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+
+* Joins
+  :PROPERTIES:
+  :CUSTOM_ID: joins
+  :END:
+A long discussion of joins can be found here: http://www.gplivna.eu/papers/sql_join_types.htm (Oracle centric, but still useful). The postgresql documentation pages can be found here: http://www.postgresql.org/docs/9.3/static/sql-select.html#SQL-FROM
+
+** Cross Join
+  :PROPERTIES:
+  :CUSTOM_ID: cross-join
+  :END:
+From the postgresql documentation: "For every possible combination of rows from T1 and T2 (i.e., a Cartesian product), the joined table will contain a row consisting of all columns in T1 followed by all columns in T2. If the tables have N and M rows respectively, the joined table will have N * M rows."
+#+begin_src lisp
+  (query (:select '* from 'employee
+          :cross-join 'compensation))
+#+end_src
+
+** Inner Join
+  :PROPERTIES:
+  :CUSTOM_ID: inner-join
+  :END:
+An inner join looks at two tables and creates a new result consisting of the selected elements in the rows from the two tables that match the specified conditions. You can simplistically think of it as the intersection of the two sets. In reality, it is creating a new set consisting of certain elements of the intersecting rows. An inner join is the default and need not be specified.
+
+A sample of standard sql on an inner join could look like this:
+#+begin_src sql
+(SELECT foo, bar, baz
+        FROM (SELECT foo FROM x WHERE some-condition-here) AS tmp1
+        INNER JOIN
+          (SELECT bar FROM x WHERE some-condition-here) AS tmp2
+        ON (tmp1.id = tmp2.id)
+        INNER JOIN
+          (SELECT baz FROM x WHERE some-condition-here) AS tmp3
+        ON (tmp2.id = tmp3.id))
+#+end_src
+
+The same query could be expressed in s-sql as:
+#+begin_src lisp
+  (query (:select 'foo 'bar 'baz
+          :from (:as
+                 (:select 'foo
+                  :from 'x
+                  :where 'x)
+                 'tmp1)
+          :inner-join (:as
+                       (:select 'bar
+                        :from 'x
+                        :where 'x)
+                       'tmp2)
+          :on (:= 'tmp1.id 'tmp2.id)
+          :inner-join (:as
+                       (:select 'baz
+                        :from 'x
+                        :where 'x)
+                       'tmp3)
+          :on (:= 'tmp2.id 'tmp3.id)))
+
+#+end_src
+
+The normal pre-ansi shorthand example, using our countries and regions tables would look like this:
+#+begin_src lisp
+(query (:select 'countries.name
+                :from 'countries 'regions
+                :where (:and (:= 'countries.region-id 'regions.id)
+                             (:= 'regions.name "North America"))))
+
+(("US") ("Canada") ("Mexico") ("Bermuda"))
+
+#+end_src
+
+ The full portable ansi version, using inner join would look like this.
+#+begin_src lisp
+  (query (:select 'tmp1.name
+          :from (:as (:select 'name 'region-id
+                              :from 'countries)
+                     'tmp1)
+                  :inner-join (:as (:select 'id
+                                    :from 'regions
+                                    :where (:= 'name "North America"))
+                                   'tmp2)
+          :on (:= 'tmp1.region-id 'tmp2.id)))
+
+  (("US") ("Canada") ("Mexico") ("Bermuda"))
+
+#+end_src
+
+Some people argue that specifying the inner join allows separation of join criteria and, therefore is more readable. I leave that to you and your coding style.
+
+** Outer Join
+  :PROPERTIES:
+  :CUSTOM_ID: outer-join
+  :END:
+An outer join not only generates an inner join, it also joins the rows from one table that matches the conditions and adds null values for the joined columns from the second table (which obviously did not match the condition.) Under Postgresql, a "left join", "right join" or "full join" all imply an outer join.
+
+A left join (or left outer join) looks at two tables, keeps the matched rows from both and the unmatched rows from the left table and drops the unmatched rows from the right table. A right outer join keeps the matched rows, the unmatched rows from the right table and drops the unmatched rows from the left table. A full outer join includes the rows that match from each table individually, with null values for the missing matching columns.
+
+** Left Join
+  :PROPERTIES:
+  :CUSTOM_ID: left-join
+  :END:
+Example: Here we assume two tables. A countries table and a many-to-many linking table named countries-topics. (There is an implicit third table named topics.) We are looking for records from the countries table which do not have a match in the countries-topics table. In other words, where do we have a note, but not matched it to a topic?
+#+begin_src lisp
+  (defun notes-with-no-topics ()
+    (query (:order-by
+            (:select 'countries.id 'countries.name
+                               :distinct
+                               :from 'countries
+                               :left-join 'countries-topics
+                               :on (:= 'countries.id 'countries-topics.country-id)
+                               :where (:is-null 'countries-topics.country-id))
+                      'countries.id)))
+
+#+end_src
+
+Here is a somewhat contrived example using our countries and regions table. We want to get the names of all the regions and also return the country names in one specified region. Assume that we only want the names of the countries in Central America, which happens to have a region-id of 3.
+#+begin_src lisp
+(query (:select 'tmp2.name 'tmp1.name
+                :from (:as (:select 'id 'name
+                                    :from 'regions)
+                           'tmp2)
+                :left-join (:as (:select 'name 'region-id
+                                         :from 'countries
+                                         :where (:= 'region-id 3))
+                                'tmp1)
+                :on (:= 'tmp1.region-id 'tmp2.id)))
+
+(("Central America" "Panama") ("Central America" "Costa Rica") ("Central America" "Guatemala")
+ ("Central America" "Nicaragua") ("Central America" "Belize") ("Central America" "El Salvador")
+ ("Western Africa" :NULL) ("Eastern Europe" :NULL) ("APAC" :NULL) ("Southern Europe" :NULL)
+ ("Caribbean" :NULL)  ("LATAM" :NULL) ("Northern Africa" :NULL) ("Eastern Africa" :NULL)
+ ("Asia" :NULL)  ("US" :NULL)  ("Middle East" :NULL)  ("South East Asia" :NULL)
+ ("Oceania" :NULL)  ("Northern Europe" :NULL) ("Emerging" :NULL) ("All" :NULL)
+ ("Central Asia" :NULL) ("Eastern Asia" :NULL) ("North America" :NULL) ("EMEA" :NULL)
+ ("Middle Africa" :NULL) ("Western Europe" :NULL) ("Africa" :NULL) ("South Central Asia" :NULL)
+ ("Southern Africa" :NULL)  ("Canada" :NULL) ("Pacific" :NULL) ("South America" :NULL))
+#+end_src

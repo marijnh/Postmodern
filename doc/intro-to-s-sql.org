@@ -1,0 +1,468 @@
+#+TITLE: Intro to S-SQL
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Intro to S-SQL
+  :PROPERTIES:
+  :CUSTOM_ID: intro
+  :END:
+Postmodern can use any sql string in a query. It also has its own lispy syntax called s-sql. Various examples using postmodern will be given in both standard sql and s-sql. Note that not all of sql has been implemented in the s-sql syntax. Postmodern is fully capable of handling any sql string. It just looks a little ugly once you get used to looking at lisp type syntax.
+
+Consider the following database calls and the return. Note that all query functions are postmodern functions, after this next example, I'm going to shorten the function call and drop the "postmodern:".
+#+begin_src lisp
+  (postmodern:query "select id, name from countries where name=$1" "Vietnam")
+
+  ((68 "Vietnam"))
+
+#+end_src
+
+This can be rephrased in s-sql as:
+#+begin_src lisp
+(query (:select 'id 'name
+                :from 'countries
+                :where (:= 'name '$1))
+
+        "Vietnam")
+
+#+end_src
+
+You will notice that the commas have dropped out, columns and table names are inital-quoted and the sql operators have colons in from. It does look more "lispy" doesn't it?
+
+It can be handy to note that replacing "query" with "sql" returns the sql statement rather than trying to execute the query. This can be helpful in designing s-sql queries. Thus:
+#+begin_src lisp
+(sql (:select 'countries.name 'regions.name :distinct
+              :from 'regions 'countries
+              :where (:= 'regions.id 'countries.region_id)))
+
+ "(SELECT DISTINCT countries.name, regions.name FROM regions, countries WHERE (regions.id = countries.region_id))"
+
+#+end_src
+
+* Sql-escape, Sql-escape-string
+  :PROPERTIES:
+  :CUSTOM_ID: sql-escape
+  :END:
+Does what it says on the tin. It escapes a string so that you can safely include the string in an sql query.
+#+begin_src lisp
+(let ((x "\#udlsh29c#^"))
+   (sql-escape x))
+
+"E'#udlsh29c#^'"
+
+(sql-escape-string "\#udlsh29c#^")
+
+"E'#udlsh29c#^'"
+
+#+end_src
+
+* Sql-compile
+  :PROPERTIES:
+  :CUSTOM_ID: sql-compile
+  :END:
+
+sql-compile is the run-time version of the sql macro, which means that it converts a list into an sql query. See the following as an example. Note carefully the backquotes and commas.
+#+begin_src lisp
+(defun create-table1 (table-name-string &rest rest)
+  "Each of the parameters after the table-name must be in the form ofa two parameter list - the column name as a string and the type as a symbol. See the following as an example"
+  (query (postmodern:sql-compile
+          `(:create-table ,table-name-string ,(loop for y in rest collect
+                                                    (list (first y)
+                                                          :type (second y)))))))
+
+(create-table1 "test25" (list "name" 'string) (list "address" 'string))
+
+#+end_src
+
+You also can see how it is used in the following queries handling some insertions and updates in which plists were providing the source of columns and values.
+#+begin_src lisp
+  (query
+   (sql-compile
+    (append `(:insert-into ,table :set) plst)))
+
+  (query
+   (sql-compile
+    (append (append `(:update ,table :set)
+                    plst)
+            `(:where (:= 'id ,id)))))
+
+#+end_src
+
+
+Remember, if you are using sql-compile or any other method to create dynamic queries, you are responsible for ensuring the security. All user input should be sanitized.
+* Return Types
+  :PROPERTIES:
+  :CUSTOM_ID: return-types
+  :END:
+You can give postmodern various directions, using keywords, for way that values get returned. Some of these keywords will be used in various examples to follow.
+
+
+| :none	             | Ignore the result values.                                                                                                                                |
+| :lists, :rows       | 	Return a list of lists, each list containing the values for a row.                                                                                     |
+| :list, :row         | 	Return a single row as a list.                                                                                                                         |
+| :alists	           | Return a list of alists which map column names to values, with the names represented as keywords.                                                        |
+| :alist	            | Return a single row as an alist.                                                                                                                         |
+| :str-alists         | 	Like :alists, but use the original column names.                                                                                                       |
+| :str-alist	        | Return a single row as an alist, with strings for names.                                                                                                 |
+| :plists	           | Return a list of plists which map column names to values,with the names represented as keywords.                                                         |
+| :plist	            | Return a single row as a plist.                                                          |
+| :column	           | Return a single column as a list.                 |
+| :single	           | Return a single value. Will raise an error if the query returns more than one field. If the query returns more than one row, it returns the first row. |
+| :single!	          | Like :single except that it will throw an error when the number of selected rows is not equal to 1.  |
+| :vectors	    | Return a vector of vectors, each vector containing the values for a row. (This is only the plural) |
+| :array-hash         | Return an array of hashtables which map column names to hash table keys     |
+| :json-strs          | Return a list of strings where each row is a json object expressed as a string  |
+| :json-str           | Return a single string where the row returned is a json object expressed as a string           |
+| :json-array-str     | Return a string containing a json array, each element in the array is a selected row expressed as a json object |
+| (:dao type)	       | Return a list of DAOs of the given type. The names of the fields returned by the query must match slots in the DAO class the same way as with query-dao. |
+| (:dao type :single) | 	Return a single DAO of the given type. |
+
+Consider the following database calls, written in s-sql and the return, noting how the ending keywords affect the type of return:
+#+begin_src lisp
+  (query (:select 'name
+          :from 'countries
+          :where (:> 'latitude '$1))
+         60)
+
+  (("Faroe Islands") ("Finland") ("Greenland") ("Iceland") ("Norway") ("Sweden"))
+
+#+end_src
+
+** :none
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-none
+  :END:
+#+begin_src lisp
+(query (:select 'name
+                :from 'countries
+                :where (:> 'latitude '$1))
+       60 :none)
+
+NIL
+#+end_src
+
+** :lists
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-lists
+  :END:
+  Return a list of lists, each list containing the values for a row.
+#+begin_src lisp
+(query (:select 'name
+                :from 'countries
+                :where (:> 'latitude '$1))
+       60 :lists)
+
+(("Faroe Islands") ("Iceland") ("Greenland") ("Sweden") ("Norway") ("Finland"))
+
+#+end_src
+
+** :rows
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-rows
+  :END:
+  Same as lists - Return a list of lists, each list containing the values for a row.
+#+begin_src lisp
+  (query (:select 'name
+                  :from 'countries
+                  :where (:> 'latitude '$1))
+         60 :rows)
+
+  (("Faroe Islands") ("Iceland") ("Greenland") ("Sweden") ("Norway") ("Finland"))
+
+#+end_src
+
+** :alist
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-alist
+  :END:
+#+begin_src lisp
+  (query (:select 'name
+                  :from 'countries
+                  :where (:> 'latitude '$1))
+         60 :alist)
+
+  ((:NAME . "Faroe Islands"))
+#+end_src
+
+
+** :str-alist
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-str-alist
+  :END:
+#+begin_src lisp
+(query (:select 'name
+                :from 'countries
+                :where (:> 'latitude '$1))
+       60 :str-alist)
+
+(("name" . "Faroe Islands"))
+
+#+end_src
+
+** :alists
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-alists
+  :END:
+#+begin_src lisp
+(query (:select 'name
+                :from 'countries
+                :where (:> 'latitude '$1))
+       60 :alists)
+
+(((:NAME . "Faroe Islands")) ((:NAME . "Finland")) ((:NAME . "Greenland"))  ((:NAME . "Iceland")) ((:NAME . "Norway")) ((:NAME . "Sweden")))
+
+#+end_src
+
+** :str-alists
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-str-alists
+  :END:
+#+begin_src lisp
+(query (:select 'name
+                :from 'countries
+                :where (:> 'latitude '$1))
+       60 :str-alists)
+
+((("name" . "Faroe Islands")) (("name" . "Finland")) (("name" . "Greenland"))  (("name" . "Iceland")) (("name" . "Norway")) (("name" . "Sweden")))
+
+#+end_src
+
+** :plist
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-plist
+  :END:
+#+begin_src lisp
+(query (:select 'name
+                :from 'countries
+                :where (:> 'latitude '$1))
+       60 :plist)
+
+(:NAME "Faroe Islands")
+
+#+end_src
+
+** :plists
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-plists
+  :END:
+#+begin_src lisp
+(query (:select 'name
+                :from 'countries
+                :where (:> 'latitude '$1))
+       60 :plists)
+
+((:NAME "Faroe Islands") (:NAME "Iceland") (:NAME "Greenland")  (:NAME "Sweden") (:NAME "Norway") (:NAME "Finland"))
+
+#+end_src
+
+** :array-hash
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-array-hash
+  :END:
+#+begin_src lisp
+(query (:select 'name
+                :from 'countries
+                :where (:> 'latitude '$1))
+       60 :array-hash)
+
+#(#<HASH-TABLE :TEST EQUAL :COUNT 1 {1005DFB5A3}>   #<HASH-TABLE :TEST EQUAL :COUNT 1 {1005DFBB63}>   #<HASH-TABLE :TEST EQUAL :COUNT 1 {1005DFC123}>   #<HASH-TABLE :TEST EQUAL :COUNT 1 {1005DFC6E3}>   #<HASH-TABLE :TEST EQUAL :COUNT 1 {1005DFCCA3}>   #<HASH-TABLE :TEST EQUAL :COUNT 1 {1005DFD263}>   #<HASH-TABLE :TEST EQUAL :COUNT 1 {1005DFD823}>   #<HASH-TABLE :TEST EQUAL :COUNT 1 {1005DFDDE3}>   #<HASH-TABLE :TEST EQUAL :COUNT 1 {1005DFE3A3}>)
+
+#+end_src
+
+** :single
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-single
+  :END:
+  Returns a single value. Will raise an error if the query returns more than one field. If the query returns more than one row, it returns the first row.
+#+begin_src lisp
+(query (:select 'name
+                :from 'countries
+                :where (:> 'latitude '$1))
+       60 :single)
+
+"Faroe Islands"
+
+#+end_src
+
+** :single!
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-single-bang
+  :END:
+  Like :single except that it will throw an error when the number of selected rows is not equal to 1.
+#+begin_src lisp
+(query (:select 'name
+                :from 'countries
+                :where (:> 'latitude '$1))
+       60 :single!)
+
+; Evaluation aborted on #<CL-POSTGRES:DATABASE-ERROR {100E83B813}>. LISP-TAX-TEST> Database error: Query for a single row returned 6 rows.    [Condition of type DATABASE-ERROR]
+
+#+end_src
+
+** :column
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-column
+  :END
+  Returns a single column as a list. The first example shows the default value returned without the :column qualifier. The second example shows the result with the column qualifier. :
+#+begin_src lisp
+(query (:select 'name
+
+                :from 'countries
+
+                :where (:> 'latitude '$1))
+
+       60 :column)
+
+("Faroe Islands" "Finland" "Greenland" "Iceland" "Norway" "Sweden")
+#+end_src
+** :vectors
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-vector
+  :END
+  #+begin_src lisp
+    (query (:select 'id 'int4 'text :from 'test-data)
+           :vectors)
+    #(#(1 2147483645 "text one")
+      #(2 0 "text two")
+      #(3 3 "text three"))
+
+    (query (:select 'id 'int4 'text :from 'test-data :where (:< 'id 1))
+           :vectors)
+    #()
+  #+end_src
+** (:dao dao-type)
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-dao-type
+  :END:
+This assumes you have already created a class for this table.
+#+begin_src lisp
+  (query (:select '* :from 'countries)
+         (:dao country))
+
+  (#<COUNTRY {1004F1BAF3}> #<COUNTRY {1004F1BD73}> #<COUNTRY {1004F1BFF3}>)
+
+#+end_src
+
+** (:dao dao-type :single)
+  :PROPERTIES:
+  :CUSTOM_ID: return-type-dao-type-single
+  :END:
+#+begin_src lisp
+(query (:select '* :from 'countries :where (:= 'name "Iceland")
+       (:dao country))
+
+#<COUNTRY {1004F1BAF3}>
+
+#+end_src
+
+** Json-strs
+
+Return a list of strings where the row returned is a json object expressed as a string
+#+begin_src lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :json-strs)
+("{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}"
+ "{\"id\":2,\"int4\":0,\"text\":\"text two\"}")
+
+#+end_src
+
+This will also handle local-time timestamps and simple-date timestamps, time-of-day and date. E.g. (with a local-time timestamp)
+#+begin_src lisp
+(query (:select 'timestamp-with-time-zone
+        :from 'test-data
+        :where (:< 'id 3))
+       :json-strs)
+
+'("{\"timestampWithTimeZone\":\"{2019-12-30T13:30:54.000000-05:00}\"}"
+  "{\"timestampWithTimeZone\":\"{1919-12-30T13:30:54.000000-05:00}\"}")
+
+#+end_src
+
+The following is an example with a simple-date timestamp.
+#+begin_src lisp
+(query (:select 'timestamp-with-time-zone
+        :from 'test-data
+        :where (:< 'id 3)) :json-strs)
+'("{\"timestampWithTimeZone\":\"2019-12-30 18:30:54:0\"}"
+  "{\"timestampWithTimeZone\":\"1919-12-30 18:30:54:0\"}")
+
+#+end_src
+
+** Json-str
+
+Return a single string where the row returned is a json object expressed as a string
+#+begin_src lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:= 'id 3)) :json-str)
+"{\"id\":3,\"int4\":3,\"text\":\"text three\"}"
+
+#+end_src
+
+As with :json-strs, this will also work for either simple-date or local-time timestamps
+** Json-array-str
+
+Return a string containing a json array, each element in the array is a selected row expressed as a json object. NOTE: If there is no result, this will return a string with an empty json array.
+#+begin_src lisp
+(query (:select 'id 'int4 'text :from 'short-data-type-tests :where (:< 'id 3)) :json-array-str)
+"[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]"
+
+(query (:select 'id 'int4 'text :from 'test-data :where (:< 'id 1)) :json-array-str)
+"[]"
+
+#+end_src
+
+As with :json-strs, this will also work for either simple-date or local-time timestamps
+
+* As or Alias
+  :PROPERTIES:
+  :CUSTOM_ID: alias
+  :END:
+Suppose you want to return an identifier as a key with the value, but you don't want to use the column name. You can use the as keyword, or as you would expect having just seen a little s-sql, the :as keyword.
+#+begin_src lisp
+(first (query (:order-by
+               (:select (:as 'countries.name 'countryname)
+                        :from 'countries)
+               'countryname )
+              :alists))
+
+((:COUNTRYNAME . "Afghanistan"))
+
+#+end_src
+
+You can also do this with table names.
+#+begin_src lisp
+(first (query (:order-by
+               (:select 't1.name
+                        :from (:as 'countries 't1))
+               'name )
+              :alists))
+
+((:NAME . "Afghanistan"))
+
+#+end_src
+
+** :|| Concatenating Columns
+  :PROPERTIES:
+  :CUSTOM_ID: concatenate
+  :END:
+The concatenation operator combines two or more columns into a single column return. First, consider the query on a raw sql string:
+#+begin_src lisp
+(query "(SELECT countries.id, (countries.name || '-' || regions.name)
+         FROM countries, regions
+         WHERE ((regions.id = countries.region_id) and (countries.name = 'US')))")
+
+((21 "US-North America"))
+
+#+end_src
+
+Now consider the result using s-sql.
+#+begin_src lisp
+(query (:select 'countries.id (:|| 'countries.name "-" 'regions.name)
+                :from 'countries 'regions
+                :where (:and (:= 'regions.id 'countries.region-id)
+                             (:= 'countries.name "US"))))
+
+((21 "US-North America"))
+
+#+end_src

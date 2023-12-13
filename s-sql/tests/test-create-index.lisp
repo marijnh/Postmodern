@@ -127,7 +127,7 @@ that the table will need to be scanned twice. Everything is a trade-off."
   (is (equal
        (sql (:create-index 'pgweb-idx :on 'pgweb :using gin
              :fields (:to-tsvector "english" 'body)))
-       "CREATE INDEX pgweb_idx ON pgweb USING gin (to_tsvector E'english', body)")))
+       "CREATE INDEX pgweb_idx ON pgweb USING gin (to_tsvector (E'english', body))")))
 
 (test create-index-fields-box-operators
   (is (equal

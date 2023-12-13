@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-11-22 Wed 20:12 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>S-SQL Examples R</title>
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">S-SQL Examples R</h1>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#orge4f5208">S-SQL Examples Home Page</a></li>
+<li><a href="#random">Random</a></li>
+<li><a href="#raw-sql">Raw SQL Statements</a></li>
+<li><a href="#returning-primary">Returning the Primary Key</a></li>
+<li><a href="#rollup">Rollup</a></li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-orge4f5208" class="outline-2">
+<h2 id="orge4f5208"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
+<div class="outline-text-2" id="text-orge4f5208">
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><a href="s-sql-a.html">A</a></td>
+<td class="org-left"><a href="s-sql-b.html">B</a></td>
+<td class="org-left"><a href="s-sql-c.html">C</a></td>
+<td class="org-left"><a href="s-sql-d.html">D</a></td>
+<td class="org-left"><a href="s-sql-e.html">E</a></td>
+<td class="org-left"><a href="s-sql-f.html">F</a></td>
+<td class="org-left"><a href="s-sql-g.html">G</a></td>
+<td class="org-left"><a href="s-sql-h.html">H</a></td>
+<td class="org-left"><a href="s-sql-i.html">I</a></td>
+<td class="org-left"><a href="s-sql-j.html">J</a></td>
+<td class="org-left"><a href="s-sql-k.html">K</a></td>
+<td class="org-left"><a href="s-sql-l.html">L</a></td>
+<td class="org-left"><a href="s-sql-m.html">M</a></td>
+<td class="org-left"><a href="s-sql-n.html">N</a></td>
+<td class="org-left"><a href="s-sql-o.html">O</a></td>
+<td class="org-left"><a href="s-sql-p.html">P</a></td>
+<td class="org-left"><a href="s-sql-r.html">R</a></td>
+<td class="org-left"><a href="s-sql-s.html">S</a></td>
+<td class="org-left"><a href="s-sql-t.html">T</a></td>
+<td class="org-left"><a href="s-sql-u.html">U</a></td>
+<td class="org-left"><a href="s-sql-v.html">V</a></td>
+<td class="org-left"><a href="s-sql-w.html">W</a></td>
+<td class="org-left"><a href="s-sql-special-characters.html">Special Characters</a></td>
+<td class="org-left"><a href="calling-postgresql-stored-functions.html">Calling Postgresql Stored Functions and Procedures</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-random" class="outline-2">
+<h2 id="random">Random</h2>
+<div class="outline-text-2" id="text-random">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:limit</span>
+        (<span class="org-builtin">:order-by</span>
+         (<span class="org-builtin">:select</span> 'id 'name
+                  <span class="org-builtin">:from</span> 'countries)
+         (<span class="org-builtin">:random</span>))
+        5))
+
+((54 <span class="org-string">"Israel"</span>) (62 <span class="org-string">"South Africa"</span>) (195 <span class="org-string">"Aruba"</span>) (79 <span class="org-string">"Costa Rica"</span>)(31 <span class="org-string">"OECD"</span>))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-raw-sql" class="outline-2">
+<h2 id="raw-sql">Raw SQL Statements</h2>
+<div class="outline-text-2" id="text-raw-sql">
+<p>
+We've already seen that the postmodern:query function can take a raw sql string and that the postmodern:sql function can output an sql string. You can combine them if you need to go beyond what postmodern can already provide. Consider the following toy example which uses a part of the eventual query in the let and inserts it into the body.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((param-constraints (sql (<span class="org-builtin">:=</span> 'name <span class="org-string">"Austria"</span>))))
+  (query (<span class="org-builtin">:select</span> 'id 'name
+                  <span class="org-builtin">:from</span> 'countries
+                  <span class="org-builtin">:where</span> (<span class="org-builtin">:raw</span> param-constraints))))
+</pre>
+</div>
+
+<p>
+Now consider this function where you have a conditional query based on the variables test1 and test2 passed into the function. In this toy example, if test1 is true then look for countries whose name is a fuzzy match for param1, if test2 is true, look for countries whose name is a fuzzy match for param2. If both are true, then the names need to be fuzzy matches for both param1 and param2. If neither test1 or test2 are true, then return all rows in the countries table.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">test3</span> (test1 test2 param1 param2)
+  (query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'countries
+          <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span>
+                  (<span class="org-builtin">:raw</span> (<span class="org-keyword">if</span> test1
+                            (sql
+                             (<span class="org-builtin">:like</span> 'name
+                                    (concatenate 'string <span class="org-string">"%"</span> param1
+                                                 <span class="org-string">"%"</span>)))
+                            <span class="org-string">"'t'"</span>))
+                  (<span class="org-builtin">:raw</span> (<span class="org-keyword">if</span> test2
+                            (sql (<span class="org-builtin">:like</span> 'name
+                                        (concatenate 'string <span class="org-string">"%"</span>
+                                                     param2
+                                                     <span class="org-string">"%"</span>)))
+                            <span class="org-string">"'t'"</span>))))))
+
+(test3 nil t <span class="org-string">"New"</span> <span class="org-string">"gary"</span>)
+
+((10 <span class="org-string">"Hungary"</span> 11 47 20 <span class="org-string">"GU"</span> 1 <span class="org-string">"2005-09-11 00:15:40-07"</span> <span class="org-string">"Forint"</span> <span class="org-string">"HUF"</span> 348))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-returning-primary" class="outline-2">
+<h2 id="returning-primary">Returning the Primary Key</h2>
+<div class="outline-text-2" id="text-returning-primary">
+<p>
+Suppose your table has a serial or identity key of id and you want the insert function to return the newly generated id for that new record.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+ (<span class="org-builtin">:insert-into</span> 'categories <span class="org-builtin">:set</span> 'name <span class="org-string">"test-cat3"</span>
+               <span class="org-builtin">:returning</span> 'id)
+ <span class="org-builtin">:single</span>)
+</pre>
+</div>
+<p>
+The next example shows the same example using parameterized variables.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((name <span class="org-string">"test-cat4"</span>))
+  (query
+   (<span class="org-builtin">:insert-into</span> 'categories <span class="org-builtin">:set</span> 'name '$1
+                 <span class="org-builtin">:returning</span> 'id)
+   name <span class="org-builtin">:single</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-rollup" class="outline-2">
+<h2 id="rollup">Rollup</h2>
+<div class="outline-text-2" id="text-rollup">
+<p>
+Rollup was added to postgresql in version 9.5. See <a href="https://www.postgresql.org/docs/devel/static/queries-table-expressions.html#QUERIES-GROUPING-SETS">https://www.postgresql.org/docs/devel/static/queries-table-expressions.html#QUERIES-GROUPING-SETS</a>  Sample usage:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:order-by</span>
+        (<span class="org-builtin">:select</span> 'facid
+                 (<span class="org-builtin">:as</span> (<span class="org-builtin">:extract</span> 'month 'starttime) 'month)
+                 (<span class="org-builtin">:as</span> (<span class="org-builtin">:sum</span> 'slots) 'slots)
+         <span class="org-builtin">:from</span> 'cd.bookings
+         <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:&gt;=</span> 'starttime <span class="org-string">"2012-01-01"</span>)
+                      (<span class="org-builtin">:&lt;</span> 'starttime <span class="org-string">"2013-01-01"</span>))
+         <span class="org-builtin">:group-by</span> (<span class="org-builtin">:rollup</span> 'facid 'month))
+        'facid 'month))
+</pre>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

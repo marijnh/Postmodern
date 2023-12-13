@@ -100,6 +100,8 @@
    ;; Reduced S-SQL interface
    #:sql #:sql-compile
    #:smallint #:bigint #:numeric #:real #:double-precision
+   #:timestamp-with-time-zone
+   #:timestamp-without-time-zone
    #:serial #:serial8
    #:bytea #:text #:varchar
    #:*escape-sql-names-p*

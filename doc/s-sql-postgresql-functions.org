@@ -1,0 +1,132 @@
+#+TITLE: S-SQL and Postgresql Functions
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Postgresql Functions
+:PROPERTIES:
+:CUSTOM_ID: postgresql-functions
+:END:
+Postgresql functions are typically inserted into s-sql in their own form prefaced with : and their parameters are generally single quoted. Here are a few simple examples.
+
+** :avg
+:PROPERTIES:
+:CUSTOM_ID: avg
+:END:
+#+begin_src lisp
+  (froundn (query (:select (:avg 'latitude) :from 'countries) :single) 4)
+
+  18.4209
+#+end_src
+
+** :generate-series
+:PROPERTIES:
+:CUSTOM_ID: generate-series
+:END:
+Generate-series returns a list of of lists of numbers with a starting point of x, and ending point of y and an interval of z (defaulting to 1). Thus:
+#+begin_src lisp
+(query (:select '* :from (:generate-series 1 10)))
+
+((1) (2) (3) (4) (5) (6) (7) (8) (9) (10))
+
+(query (:select '* :from (:generate-series 1 30 5)))
+
+((1) (6) (11) (16) (21) (26))
+
+(query (:select '* :from (:generate-series 3 30 5)))
+
+((3) (8) (13) (18) (23) (28))
+
+#+end_src
+
+** :max
+:PROPERTIES:
+:CUSTOM_ID: max
+:END:
+#+begin_src lisp
+    (query (:select (:max 'latitude) :from 'countries)
+           :single)
+
+    72
+#+end_src
+
+** :min
+:PROPERTIES:
+:CUSTOM_ID: min
+:END:
+#+begin_src lisp
+    (query (:select (:min 'latitude) :from 'countries)
+           :single)
+
+    -1029/20
+
+#+end_src
+
+** :random
+:PROPERTIES:
+:CUSTOM_ID: random
+:END:
+#+begin_src lisp
+  (query (:limit
+          (:order-by
+           (:select 'id 'name :from 'countries)
+           (:random))
+   5))
+
+  ((54 "Israel") (62 "South Africa") (195 "Aruba") (79 "Costa Rica") (31 "OECD"))
+
+#+end_src
+
+** :string_agg
+:PROPERTIES:
+:CUSTOM_ID: string-agg
+:END:
+String_agg returns a string containging the values returned, separated by a delimiter. In the following example, we are searching for the name of all the regions in the regions table and we want it all returned as a single string with a delimiting comma.
+#+begin_src lisp
+  (query (:select (:string_agg 'name ",")
+          :from 'regions))
+
+   (("Central America,Middle East,North America,South America,Central Asia,Pacific,Caribbean,Eastern Europe,Western Europe,EMEA,APAC,LATAM,Emerging,US,Canada,Africa,All,Asia,Eastern Africa,Middle Africa,Northern Africa,Southern Africa,Western Africa,Oceania,Northern Europe,Southern Europe,Eastern Asia,South Central Asia,South East Asia"))
+
+#+end_src
+
+** :version
+:PROPERTIES:
+:CUSTOM_ID: version
+:END:
+#+begin_src lisp
+  (query (:select (:version)))
+
+  (("PostgreSQL 9.2 on x86_64-pc-linux-gnu, compiled by GCC x86_64"))
+
+#+end_src
+#+begin_src lisp
+  (defun table-size (table-name)
+    "Return the size of a postgresql table in k or m. Table-name can be either astring or quoted."
+    (when (symbolp table-name)
+      (setf table-name  (string-downcase (write-to-string table-name))))
+    (query (:select (:pg_size_pretty (:pg_total_relation_size '$1)))
+           :single
+           table-name))
+
+  (table-size 'countries)
+
+  "88 kB"
+
+#+end_src
+
+** Combining Postgresql Functions
+:PROPERTIES:
+:CUSTOM_ID: combining
+:END:
+#+begin_src lisp
+  (defun current-database-size-pretty ()
+    "Returns the current database size as a string in MB"
+    (query (:select (:pg_size_pretty
+                     (:pg_database_size (:current_database))))
+           :single))
+#+end_src

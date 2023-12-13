@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-12-12 Tue 18:55 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>S-SQL Examples L</title>
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">S-SQL Examples L</h1>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org33368f2">S-SQL Examples Home Page</a></li>
+<li><a href="#lateral">Lateral</a></li>
+<li><a href="#like">Like, ilike Example</a></li>
+<li><a href="#limit">Limit and offset</a></li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-org33368f2" class="outline-2">
+<h2 id="org33368f2"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
+<div class="outline-text-2" id="text-org33368f2">
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><a href="s-sql-a.html">A</a></td>
+<td class="org-left"><a href="s-sql-b.html">B</a></td>
+<td class="org-left"><a href="s-sql-c.html">C</a></td>
+<td class="org-left"><a href="s-sql-d.html">D</a></td>
+<td class="org-left"><a href="s-sql-e.html">E</a></td>
+<td class="org-left"><a href="s-sql-f.html">F</a></td>
+<td class="org-left"><a href="s-sql-g.html">G</a></td>
+<td class="org-left"><a href="s-sql-h.html">H</a></td>
+<td class="org-left"><a href="s-sql-i.html">I</a></td>
+<td class="org-left"><a href="s-sql-j.html">J</a></td>
+<td class="org-left"><a href="s-sql-k.html">K</a></td>
+<td class="org-left"><a href="s-sql-l.html">L</a></td>
+<td class="org-left"><a href="s-sql-m.html">M</a></td>
+<td class="org-left"><a href="s-sql-n.html">N</a></td>
+<td class="org-left"><a href="s-sql-o.html">O</a></td>
+<td class="org-left"><a href="s-sql-p.html">P</a></td>
+<td class="org-left"><a href="s-sql-r.html">R</a></td>
+<td class="org-left"><a href="s-sql-s.html">S</a></td>
+<td class="org-left"><a href="s-sql-t.html">T</a></td>
+<td class="org-left"><a href="s-sql-u.html">U</a></td>
+<td class="org-left"><a href="s-sql-v.html">V</a></td>
+<td class="org-left"><a href="s-sql-w.html">W</a></td>
+<td class="org-left"><a href="s-sql-special-characters.html">Special Characters</a></td>
+<td class="org-left"><a href="calling-postgresql-stored-functions.html">Calling Postgresql Stored Functions and Procedures</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-lateral" class="outline-2">
+<h2 id="lateral">Lateral</h2>
+<div class="outline-text-2" id="text-lateral">
+<p>
+Basically, the lateral keyword allows access to columns after the from statement and use them earlier in the query. Here is a sample vanilla sql query using lateral, borrowed from <a href="https://popsql.com/learn-sql/postgresql/how-to-use-lateral-joins-in-postgresql#data-set">https://popsql.com/learn-sql/postgresql/how-to-use-lateral-joins-in-postgresql#data-set</a>
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+ <span class="org-string">"select</span>
+<span class="org-string">    pledged_usd,</span>
+<span class="org-string">    avg_pledge_usd,</span>
+<span class="org-string">    amt_from_goal,</span>
+<span class="org-string">    duration,</span>
+<span class="org-string">    (usd_from_goal / duration) as usd_needed_daily</span>
+<span class="org-string"> from kickstarter_data,</span>
+<span class="org-string">    lateral (select pledged / fx_rate as pledged_usd) pu</span>
+<span class="org-string">    lateral (select pledged_usd / backers_count as avg_pledge_usd) apu</span>
+<span class="org-string">    lateral (select goal / fx_rate as goal_usd) gu</span>
+<span class="org-string">    lateral (select goal_usd - pledged_usd as usd_from_goal) ufg</span>
+<span class="org-string">    lateral (select (deadline - launched_at)/86400.00 as duration) dr;"</span>)
+</pre>
+</div>
+<p>
+And now how it would be written in s-sql
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+ (<span class="org-builtin">:select</span> 'pledged-usd 'avg-pledge-usd 'amt-from-goal 'duration
+          (<span class="org-builtin">:as</span> (<span class="org-builtin">:/</span> 'usd-from-goal 'duration) 'usd-needed-daily)
+          <span class="org-builtin">:from</span> 'kickstarter-data
+          <span class="org-builtin">:lateral</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:/</span> 'pledged 'fx-rate)
+                                      'pledged-usd))
+                        'pu)
+          <span class="org-builtin">:lateral</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:/</span> 'pledged-usd 'backers-count)
+                                      'avg-pledge-usd))
+                        'apu)
+          <span class="org-builtin">:lateral</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:/</span> 'goal 'fx-rate)
+                                      'goal-usd))
+                        'gu)
+          <span class="org-builtin">:lateral</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:-</span> 'goal-usd 'pledged-usd)
+                                      'usd-from-goal))
+                        'ufg)
+          <span class="org-builtin">:lateral</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:/</span> (<span class="org-builtin">:-</span> 'deadline 'launched-at) 86400.00)
+                                      'duration))
+                        'dr)))
+</pre>
+</div>
+<p>
+Here is an example with :join-lateral
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+   (<span class="org-builtin">:select</span> '*
+    <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> 'tags 't1)
+    <span class="org-builtin">:join-lateral</span> (<span class="org-builtin">:as</span>
+                   (<span class="org-builtin">:fetch</span>
+                    (<span class="org-builtin">:order-by</span>
+                     (<span class="org-builtin">:select</span> 'm.*
+                      <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> 'movies 'm)
+                      <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'm.tag-id 't1.id))
+                     (<span class="org-builtin">:desc</span> 'm.created-at))
+                    2)
+                   'e1)
+    <span class="org-builtin">:on</span> (<span class="org-builtin">:=</span> 1 1)))
+</pre>
+</div>
+<p>
+This one has an :inner-join-lateral
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+      (<span class="org-builtin">:select</span> '*
+       <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> 'tags 't1)
+       <span class="org-builtin">:inner-join-lateral</span> (<span class="org-builtin">:as</span>
+                            (<span class="org-builtin">:fetch</span>
+                             (<span class="org-builtin">:order-by</span>
+                              (<span class="org-builtin">:select</span> 'm.*
+                               <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> 'movies 'm)
+                               <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'm.tag-id 't1.id))
+                              (<span class="org-builtin">:desc</span> 'm.created-at))
+                             2)
+                            'e1)
+       <span class="org-builtin">:on</span> 't))
+</pre>
+</div>
+<p>
+A :cross-join-lateral
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+   (<span class="org-builtin">:select</span> '*
+    <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> 'tags 't1)
+    <span class="org-builtin">:cross-join-lateral</span> (<span class="org-builtin">:as</span>
+                         (<span class="org-builtin">:fetch</span>
+                          (<span class="org-builtin">:order-by</span>
+                           (<span class="org-builtin">:select</span> 'm.*
+                            <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> 'movies 'm)
+                            <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'm.tag-id 't1.id))
+                           (<span class="org-builtin">:desc</span> 'm.created-at))
+                          2)
+                         'e1)))
+
+  (query
+   (<span class="org-builtin">:select</span> 'geo.zipcode 'geo.state 'movie.name
+    <span class="org-builtin">:from</span> 'geo
+    <span class="org-builtin">:cross-join-lateral</span>
+    (<span class="org-builtin">:as</span>
+     (<span class="org-builtin">:limit</span>
+      (<span class="org-builtin">:order-by</span>
+       (<span class="org-builtin">:select</span> 'movie-name
+        <span class="org-builtin">:from</span> 'streams
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'geo.zipcode 'streams.zipcode))
+       (<span class="org-builtin">:desc</span> 'streams.country))
+      5)
+     (<span class="org-builtin">:movie</span> 'name))))
+</pre>
+</div>
+<p>
+And a :left-join-lateral
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+   (<span class="org-builtin">:select</span> 'p.* (<span class="org-builtin">:as</span> 'dads.id 'dad-id) (<span class="org-builtin">:as</span> 'moms.id 'mom-id)
+    <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> 'people 'p)
+    <span class="org-builtin">:left-join-lateral</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:select</span> '*
+                             <span class="org-builtin">:from</span> 'people
+                             <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'gender <span class="org-string">"m"</span>)
+                                          (<span class="org-builtin">:=</span> 'surname-1 'p.surname-1)
+                                          (<span class="org-builtin">:&lt;&gt;</span> 'pack-id 'p.pack-id)))
+                            'dads)
+    <span class="org-builtin">:on</span> 't
+    <span class="org-builtin">:left-join-lateral</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:select</span> '*
+                             <span class="org-builtin">:from</span> 'people
+                             <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'gender <span class="org-string">"f"</span>)
+                                          (<span class="org-builtin">:=</span> 'surname-1 'p.surname-2)
+                                          (<span class="org-builtin">:&lt;&gt;</span> 'pack-id 'p.pack-id)
+                                          (<span class="org-builtin">:&lt;&gt;</span> 'pack-id 'dads.pack-id)))
+                            'moms)
+    <span class="org-builtin">:on</span> 't))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-like" class="outline-2">
+<h2 id="like">Like, ilike Example</h2>
+<div class="outline-text-2" id="text-like">
+<p>
+The sql like operator provides a little bit of fuzzy string matching in a search. The following is a simple example using the sql like operator in s-sql.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:like</span> 'name <span class="org-string">"%New%"</span>)))
+
+((103 <span class="org-string">"New Caledonia"</span>) (58 <span class="org-string">"New Zealand"</span>) (108 <span class="org-string">"Papua New Guinea"</span>))
+
+</pre>
+</div>
+
+<p>
+The sql ilike operator provides the same thing, but on a case insensitive basis. The following is a simple example using the sql ilike operator in s-sql.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:like</span> 'name <span class="org-string">"%NEW%"</span>)))
+
+((103 <span class="org-string">"New Caledonia"</span>) (58 <span class="org-string">"New Zealand"</span>) (108 <span class="org-string">"Papua New Guinea"</span>))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-limit" class="outline-2">
+<h2 id="limit">Limit and offset</h2>
+<div class="outline-text-2" id="text-limit">
+<p>
+Note that  :limit has 2 possible parameters, the limit and the offset. Note that the :order-by and :limit forms are wrapped around the :select form. The only difference between the two queries is the offset parameter.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((list-limit 2)
+      (offset 0))
+  (query
+   (<span class="org-builtin">:limit</span>
+    (<span class="org-builtin">:order-by</span>
+     (<span class="org-builtin">:select</span> 'countries.id 'countries.name
+              <span class="org-builtin">:from</span> 'countries)
+     'name)
+    '$1 '$2)
+   list-limit offset))
+
+((82 <span class="org-string">"Afghanistan"</span>) (130 <span class="org-string">"Albania"</span>))
+
+(<span class="org-keyword">let</span> ((list-limit 2) (offset 2))
+  (query
+   (<span class="org-builtin">:limit</span>
+    (<span class="org-builtin">:order-by</span>
+     (<span class="org-builtin">:select</span> 'countries.id 'countries.name
+              <span class="org-builtin">:from</span> 'countries)
+     'name)
+    '$1 '$2)
+   list-limit offset))
+
+((140 <span class="org-string">"Algeria"</span>) (34 <span class="org-string">"All"</span>))
+</pre>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

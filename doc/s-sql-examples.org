@@ -1,0 +1,52 @@
+#+TITLE: S-SQL Examples
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* S-SQL examples
+   :PROPERTIES:
+   :CUSTOM_ID: s-sql-examples
+   :END:
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+- [[file:intro-to-s-sql.org][Intro to S-SQL]]
+- [[file:s-sql-a.org][a (and, alter-table, any and any*, as or alias, avg)]]
+- [[file:s-sql-b.org][b (Between, Boolean Operators)]]
+- [[file:s-sql-c.org][c (call, case, cast, coalesce, constraints, count, create-composite-types create-index, create-table)]]
+- [[file:s-sql-d.org][d (data types (numbers and timestamps), delete, desc, distinct, distinct-on, doquery)]]
+- [[file:s-sql-e.org][e (enum, except, exists, extract)]]
+- [[file:s-sql-f.org][f (fetch, filter)]]
+- [[file:s-sql-g.org][g (generate-series, group-by)]]
+- [[file:s-sql-h.org][h (having)]]
+- [[file:s-sql-i.org][i (insert, insert-into, intersect)]]
+- [[file:s-sql-j.org][j (Joins)]]
+- [[file:s-sql-l.org][l (lateral, like, ilike, limit)]]
+- [[file:s-sql-m.org][m (many-to-many)]]
+- [[file:s-sql-n.org][n (null, not-null, nullif)]]
+- [[file:s-sql-o.org][o (on, on-conflict, or, order-by, order-by with limit and offset, over)]]
+- [[file:s-sql-p.org][p (parameterized, partition-by)]]
+- [[file:s-sql-r.org][r (random, raw, returning primary key, rollup)]]
+- [[file:s-sql-s.org][s (Set, sql-type-name, string_agg, sum)]]
+- [[file:s-sql-t.org][t (threads, time functions, to-tsquery, to-tsvector, truncate)]]
+- [[file:s-sql-u.org][u (union, union-all, unique, update, upsert, using)]]
+- [[file:s-sql-v.org][v (create-view, variable parameters)]]
+- [[file:s-sql-w.org][w (when, window, with, with-recursive)]]
+
+- [[file:array-notes.html][Array-Notes]]
+- [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]
+- [[file:dao-classes.html][Database Access Object (Dao) Classes]]
+- [[file:interval-notes.html][Interval Notes]]
+- [[file:isolation-notes.html][Isolation Notes]]
+- [[file:s-sql-postgresql-functions.org][S-SQL and Postgresql Functions]]
+- [[file:s-sql-prepared-statements.org][S-SQL and Prepared Statements]]
+- [[file:s-sql-special-characters.org][Special Characters]]
+
+* References
+   :PROPERTIES:
+   :CUSTOM_ID: references
+   :END:
+- [[file:index.org][Documentation Index]]
+- [[file:s-sql.org][S-SQL Reference]]
+- [[file:postmodern.org][Postmodern Reference]]
+- [[file:cl-postgres.org][Cl-Postgres Reference]]

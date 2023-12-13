@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-12-12 Tue 18:30 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Intro to S-SQL</title>
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">Intro to S-SQL</h1>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#intro">Intro to S-SQL</a></li>
+<li><a href="#sql-escape">Sql-escape, Sql-escape-string</a></li>
+<li><a href="#sql-compile">Sql-compile</a></li>
+<li><a href="#return-types">Return Types</a>
+<ul>
+<li><a href="#return-type-none">:none</a></li>
+<li><a href="#return-type-lists">:lists</a></li>
+<li><a href="#return-type-rows">:rows</a></li>
+<li><a href="#return-type-alist">:alist</a></li>
+<li><a href="#return-type-str-alist">:str-alist</a></li>
+<li><a href="#return-type-alists">:alists</a></li>
+<li><a href="#return-type-str-alists">:str-alists</a></li>
+<li><a href="#return-type-plist">:plist</a></li>
+<li><a href="#return-type-plists">:plists</a></li>
+<li><a href="#return-type-array-hash">:array-hash</a></li>
+<li><a href="#return-type-single">:single</a></li>
+<li><a href="#return-type-single-bang">:single!</a></li>
+<li><a href="#org6ff4f48">:column</a></li>
+<li><a href="#org96aa55e">:vectors</a></li>
+<li><a href="#return-type-dao-type">(:dao dao-type)</a></li>
+<li><a href="#return-type-dao-type-single">(:dao dao-type :single)</a></li>
+<li><a href="#org15278fc">Json-strs</a></li>
+<li><a href="#orgf4eb7f0">Json-str</a></li>
+<li><a href="#org03deb44">Json-array-str</a></li>
+</ul>
+</li>
+<li><a href="#alias">As or Alias</a>
+<ul>
+<li><a href="#concatenate">:|| Concatenating Columns</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</nav>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><a href="s-sql-a.html">A</a></td>
+<td class="org-left"><a href="s-sql-b.html">B</a></td>
+<td class="org-left"><a href="s-sql-c.html">C</a></td>
+<td class="org-left"><a href="s-sql-d.html">D</a></td>
+<td class="org-left"><a href="s-sql-e.html">E</a></td>
+<td class="org-left"><a href="s-sql-f.html">F</a></td>
+<td class="org-left"><a href="s-sql-g.html">G</a></td>
+<td class="org-left"><a href="s-sql-h.html">H</a></td>
+<td class="org-left"><a href="s-sql-i.html">I</a></td>
+<td class="org-left"><a href="s-sql-j.html">J</a></td>
+<td class="org-left"><a href="s-sql-k.html">K</a></td>
+<td class="org-left"><a href="s-sql-l.html">L</a></td>
+<td class="org-left"><a href="s-sql-m.html">M</a></td>
+<td class="org-left"><a href="s-sql-n.html">N</a></td>
+<td class="org-left"><a href="s-sql-o.html">O</a></td>
+<td class="org-left"><a href="s-sql-p.html">P</a></td>
+<td class="org-left"><a href="s-sql-r.html">R</a></td>
+<td class="org-left"><a href="s-sql-s.html">S</a></td>
+<td class="org-left"><a href="s-sql-t.html">T</a></td>
+<td class="org-left"><a href="s-sql-u.html">U</a></td>
+<td class="org-left"><a href="s-sql-v.html">V</a></td>
+<td class="org-left"><a href="s-sql-w.html">W</a></td>
+<td class="org-left"><a href="s-sql-special-characters.html">Special Characters</a></td>
+<td class="org-left"><a href="calling-postgresql-stored-functions.html">Calling Postgresql Stored Functions and Procedures</a></td>
+</tr>
+</tbody>
+</table>
+
+<div id="outline-container-intro" class="outline-2">
+<h2 id="intro">Intro to S-SQL</h2>
+<div class="outline-text-2" id="text-intro">
+<p>
+Postmodern can use any sql string in a query. It also has its own lispy syntax called s-sql. Various examples using postmodern will be given in both standard sql and s-sql. Note that not all of sql has been implemented in the s-sql syntax. Postmodern is fully capable of handling any sql string. It just looks a little ugly once you get used to looking at lisp type syntax.
+</p>
+
+<p>
+Consider the following database calls and the return. Note that all query functions are postmodern functions, after this next example, I'm going to shorten the function call and drop the "postmodern:".
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(postmodern:query <span class="org-string">"select id, name from countries where name=$1"</span> <span class="org-string">"Vietnam"</span>)
+
+((68 <span class="org-string">"Vietnam"</span>))
+
+</pre>
+</div>
+
+<p>
+This can be rephrased in s-sql as:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'name '$1))
+
+        <span class="org-string">"Vietnam"</span>)
+
+</pre>
+</div>
+
+<p>
+You will notice that the commas have dropped out, columns and table names are inital-quoted and the sql operators have colons in from. It does look more "lispy" doesn't it?
+</p>
+
+<p>
+It can be handy to note that replacing "query" with "sql" returns the sql statement rather than trying to execute the query. This can be helpful in designing s-sql queries. Thus:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(sql (<span class="org-builtin">:select</span> 'countries.name 'regions.name <span class="org-builtin">:distinct</span>
+              <span class="org-builtin">:from</span> 'regions 'countries
+              <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'regions.id 'countries.region_id)))
+
+ <span class="org-string">"(SELECT DISTINCT countries.name, regions.name FROM regions, countries WHERE (regions.id = countries.region_id))"</span>
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sql-escape" class="outline-2">
+<h2 id="sql-escape">Sql-escape, Sql-escape-string</h2>
+<div class="outline-text-2" id="text-sql-escape">
+<p>
+Does what it says on the tin. It escapes a string so that you can safely include the string in an sql query.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((x <span class="org-string">"\#udlsh29c#^"</span>))
+   (sql-escape x))
+
+<span class="org-string">"E'#udlsh29c#^'"</span>
+
+(sql-escape-string <span class="org-string">"\#udlsh29c#^"</span>)
+
+<span class="org-string">"E'#udlsh29c#^'"</span>
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sql-compile" class="outline-2">
+<h2 id="sql-compile">Sql-compile</h2>
+<div class="outline-text-2" id="text-sql-compile">
+<p>
+sql-compile is the run-time version of the sql macro, which means that it converts a list into an sql query. See the following as an example. Note carefully the backquotes and commas.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">create-table1</span> (table-name-string <span class="org-type">&amp;rest</span> rest)
+  <span class="org-doc">"Each of the parameters after the table-name must be in the form ofa two parameter list - the column name as a string and the type as a symbol. See the following as an example"</span>
+  (query (postmodern:sql-compile
+          `(<span class="org-builtin">:create-table</span> ,table-name-string ,(<span class="org-keyword">loop</span> for y in rest collect
+                                                    (list (first y)
+                                                          <span class="org-builtin">:type</span> (second y)))))))
+
+(create-table1 <span class="org-string">"test25"</span> (list <span class="org-string">"name"</span> 'string) (list <span class="org-string">"address"</span> 'string))
+
+</pre>
+</div>
+
+<p>
+You also can see how it is used in the following queries handling some insertions and updates in which plists were providing the source of columns and values.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+ (sql-compile
+  (append `(<span class="org-builtin">:insert-into</span> ,table <span class="org-builtin">:set</span>) plst)))
+
+(query
+ (sql-compile
+  (append (append `(<span class="org-builtin">:update</span> ,table <span class="org-builtin">:set</span>)
+                  plst)
+          `(<span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id ,id)))))
+
+</pre>
+</div>
+
+
+<p>
+Remember, if you are using sql-compile or any other method to create dynamic queries, you are responsible for ensuring the security. All user input should be sanitized.
+</p>
+</div>
+</div>
+<div id="outline-container-return-types" class="outline-2">
+<h2 id="return-types">Return Types</h2>
+<div class="outline-text-2" id="text-return-types">
+<p>
+You can give postmodern various directions, using keywords, for way that values get returned. Some of these keywords will be used in various examples to follow.
+</p>
+
+
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">:none</td>
+<td class="org-left">Ignore the result values.</td>
+</tr>
+
+<tr>
+<td class="org-left">:lists, :rows</td>
+<td class="org-left">Return a list of lists, each list containing the values for a row.</td>
+</tr>
+
+<tr>
+<td class="org-left">:list, :row</td>
+<td class="org-left">Return a single row as a list.</td>
+</tr>
+
+<tr>
+<td class="org-left">:alists</td>
+<td class="org-left">Return a list of alists which map column names to values, with the names represented as keywords.</td>
+</tr>
+
+<tr>
+<td class="org-left">:alist</td>
+<td class="org-left">Return a single row as an alist.</td>
+</tr>
+
+<tr>
+<td class="org-left">:str-alists</td>
+<td class="org-left">Like :alists, but use the original column names.</td>
+</tr>
+
+<tr>
+<td class="org-left">:str-alist</td>
+<td class="org-left">Return a single row as an alist, with strings for names.</td>
+</tr>
+
+<tr>
+<td class="org-left">:plists</td>
+<td class="org-left">Return a list of plists which map column names to values,with the names represented as keywords.</td>
+</tr>
+
+<tr>
+<td class="org-left">:plist</td>
+<td class="org-left">Return a single row as a plist.</td>
+</tr>
+
+<tr>
+<td class="org-left">:column</td>
+<td class="org-left">Return a single column as a list.</td>
+</tr>
+
+<tr>
+<td class="org-left">:single</td>
+<td class="org-left">Return a single value. Will raise an error if the query returns more than one field. If the query returns more than one row, it returns the first row.</td>
+</tr>
+
+<tr>
+<td class="org-left">:single!</td>
+<td class="org-left">Like :single except that it will throw an error when the number of selected rows is not equal to 1.</td>
+</tr>
+
+<tr>
+<td class="org-left">:vectors</td>
+<td class="org-left">Return a vector of vectors, each vector containing the values for a row. (This is only the plural)</td>
+</tr>
+
+<tr>
+<td class="org-left">:array-hash</td>
+<td class="org-left">Return an array of hashtables which map column names to hash table keys</td>
+</tr>
+
+<tr>
+<td class="org-left">:json-strs</td>
+<td class="org-left">Return a list of strings where each row is a json object expressed as a string</td>
+</tr>
+
+<tr>
+<td class="org-left">:json-str</td>
+<td class="org-left">Return a single string where the row returned is a json object expressed as a string</td>
+</tr>
+
+<tr>
+<td class="org-left">:json-array-str</td>
+<td class="org-left">Return a string containing a json array, each element in the array is a selected row expressed as a json object</td>
+</tr>
+
+<tr>
+<td class="org-left">(:dao type)</td>
+<td class="org-left">Return a list of DAOs of the given type. The names of the fields returned by the query must match slots in the DAO class the same way as with query-dao.</td>
+</tr>
+
+<tr>
+<td class="org-left">(:dao type :single)</td>
+<td class="org-left">Return a single DAO of the given type.</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Consider the following database calls, written in s-sql and the return, noting how the ending keywords affect the type of return:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+        <span class="org-builtin">:from</span> 'countries
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60)
+
+((<span class="org-string">"Faroe Islands"</span>) (<span class="org-string">"Finland"</span>) (<span class="org-string">"Greenland"</span>) (<span class="org-string">"Iceland"</span>) (<span class="org-string">"Norway"</span>) (<span class="org-string">"Sweden"</span>))
+
+</pre>
+</div>
+</div>
+
+<div id="outline-container-return-type-none" class="outline-3">
+<h3 id="return-type-none">:none</h3>
+<div class="outline-text-3" id="text-return-type-none">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60 <span class="org-builtin">:none</span>)
+
+NIL
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-return-type-lists" class="outline-3">
+<h3 id="return-type-lists">:lists</h3>
+<div class="outline-text-3" id="text-return-type-lists">
+<p>
+Return a list of lists, each list containing the values for a row.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60 <span class="org-builtin">:lists</span>)
+
+((<span class="org-string">"Faroe Islands"</span>) (<span class="org-string">"Iceland"</span>) (<span class="org-string">"Greenland"</span>) (<span class="org-string">"Sweden"</span>) (<span class="org-string">"Norway"</span>) (<span class="org-string">"Finland"</span>))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-return-type-rows" class="outline-3">
+<h3 id="return-type-rows">:rows</h3>
+<div class="outline-text-3" id="text-return-type-rows">
+<p>
+Same as lists - Return a list of lists, each list containing the values for a row.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60 <span class="org-builtin">:rows</span>)
+
+((<span class="org-string">"Faroe Islands"</span>) (<span class="org-string">"Iceland"</span>) (<span class="org-string">"Greenland"</span>) (<span class="org-string">"Sweden"</span>) (<span class="org-string">"Norway"</span>) (<span class="org-string">"Finland"</span>))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-return-type-alist" class="outline-3">
+<h3 id="return-type-alist">:alist</h3>
+<div class="outline-text-3" id="text-return-type-alist">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60 <span class="org-builtin">:alist</span>)
+
+((<span class="org-builtin">:NAME</span> . <span class="org-string">"Faroe Islands"</span>))
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-return-type-str-alist" class="outline-3">
+<h3 id="return-type-str-alist">:str-alist</h3>
+<div class="outline-text-3" id="text-return-type-str-alist">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60 <span class="org-builtin">:str-alist</span>)
+
+((<span class="org-string">"name"</span> . <span class="org-string">"Faroe Islands"</span>))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-return-type-alists" class="outline-3">
+<h3 id="return-type-alists">:alists</h3>
+<div class="outline-text-3" id="text-return-type-alists">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60 <span class="org-builtin">:alists</span>)
+
+(((<span class="org-builtin">:NAME</span> . <span class="org-string">"Faroe Islands"</span>)) ((<span class="org-builtin">:NAME</span> . <span class="org-string">"Finland"</span>)) ((<span class="org-builtin">:NAME</span> . <span class="org-string">"Greenland"</span>))  ((<span class="org-builtin">:NAME</span> . <span class="org-string">"Iceland"</span>)) ((<span class="org-builtin">:NAME</span> . <span class="org-string">"Norway"</span>)) ((<span class="org-builtin">:NAME</span> . <span class="org-string">"Sweden"</span>)))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-return-type-str-alists" class="outline-3">
+<h3 id="return-type-str-alists">:str-alists</h3>
+<div class="outline-text-3" id="text-return-type-str-alists">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60 <span class="org-builtin">:str-alists</span>)
+
+(((<span class="org-string">"name"</span> . <span class="org-string">"Faroe Islands"</span>)) ((<span class="org-string">"name"</span> . <span class="org-string">"Finland"</span>)) ((<span class="org-string">"name"</span> . <span class="org-string">"Greenland"</span>))  ((<span class="org-string">"name"</span> . <span class="org-string">"Iceland"</span>)) ((<span class="org-string">"name"</span> . <span class="org-string">"Norway"</span>)) ((<span class="org-string">"name"</span> . <span class="org-string">"Sweden"</span>)))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-return-type-plist" class="outline-3">
+<h3 id="return-type-plist">:plist</h3>
+<div class="outline-text-3" id="text-return-type-plist">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60 <span class="org-builtin">:plist</span>)
+
+(<span class="org-builtin">:NAME</span> <span class="org-string">"Faroe Islands"</span>)
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-return-type-plists" class="outline-3">
+<h3 id="return-type-plists">:plists</h3>
+<div class="outline-text-3" id="text-return-type-plists">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60 <span class="org-builtin">:plists</span>)
+
+((<span class="org-builtin">:NAME</span> <span class="org-string">"Faroe Islands"</span>) (<span class="org-builtin">:NAME</span> <span class="org-string">"Iceland"</span>) (<span class="org-builtin">:NAME</span> <span class="org-string">"Greenland"</span>)  (<span class="org-builtin">:NAME</span> <span class="org-string">"Sweden"</span>) (<span class="org-builtin">:NAME</span> <span class="org-string">"Norway"</span>) (<span class="org-builtin">:NAME</span> <span class="org-string">"Finland"</span>))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-return-type-array-hash" class="outline-3">
+<h3 id="return-type-array-hash">:array-hash</h3>
+<div class="outline-text-3" id="text-return-type-array-hash">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60 <span class="org-builtin">:array-hash</span>)
+
+#(#&lt;HASH-TABLE <span class="org-builtin">:TEST</span> EQUAL <span class="org-builtin">:COUNT</span> 1 {1005DFB5A3}&gt;   #&lt;HASH-TABLE <span class="org-builtin">:TEST</span> EQUAL <span class="org-builtin">:COUNT</span> 1 {1005DFBB63}&gt;   #&lt;HASH-TABLE <span class="org-builtin">:TEST</span> EQUAL <span class="org-builtin">:COUNT</span> 1 {1005DFC123}&gt;   #&lt;HASH-TABLE <span class="org-builtin">:TEST</span> EQUAL <span class="org-builtin">:COUNT</span> 1 {1005DFC6E3}&gt;   #&lt;HASH-TABLE <span class="org-builtin">:TEST</span> EQUAL <span class="org-builtin">:COUNT</span> 1 {1005DFCCA3}&gt;   #&lt;HASH-TABLE <span class="org-builtin">:TEST</span> EQUAL <span class="org-builtin">:COUNT</span> 1 {1005DFD263}&gt;   #&lt;HASH-TABLE <span class="org-builtin">:TEST</span> EQUAL <span class="org-builtin">:COUNT</span> 1 {1005DFD823}&gt;   #&lt;HASH-TABLE <span class="org-builtin">:TEST</span> EQUAL <span class="org-builtin">:COUNT</span> 1 {1005DFDDE3}&gt;   #&lt;HASH-TABLE <span class="org-builtin">:TEST</span> EQUAL <span class="org-builtin">:COUNT</span> 1 {1005DFE3A3}&gt;)
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-return-type-single" class="outline-3">
+<h3 id="return-type-single">:single</h3>
+<div class="outline-text-3" id="text-return-type-single">
+<p>
+Returns a single value. Will raise an error if the query returns more than one field. If the query returns more than one row, it returns the first row.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60 <span class="org-builtin">:single</span>)
+
+<span class="org-string">"Faroe Islands"</span>
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-return-type-single-bang" class="outline-3">
+<h3 id="return-type-single-bang">:single!</h3>
+<div class="outline-text-3" id="text-return-type-single-bang">
+<p>
+Like :single except that it will throw an error when the number of selected rows is not equal to 1.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+                <span class="org-builtin">:from</span> 'countries
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+       60 <span class="org-builtin">:single!</span>)
+
+<span class="org-comment-delimiter">; </span><span class="org-comment">Evaluation aborted on #&lt;CL-POSTGRES:DATABASE-ERROR {100E83B813}&gt;. LISP-TAX-TEST&gt; Database error: Query for a single row returned 6 rows.    [Condition of type DATABASE-ERROR]</span>
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6ff4f48" class="outline-3">
+<h3 id="org6ff4f48">:column</h3>
+<div class="outline-text-3" id="text-org6ff4f48">
+<p>
+:PROPERTIES:
+:CUSTOM_ID: return-type-column
+:END
+Returns a single column as a list. The first example shows the default value returned without the :column qualifier. The second example shows the result with the column qualifier. :
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+
+                <span class="org-builtin">:from</span> 'countries
+
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;</span> 'latitude '$1))
+
+       60 <span class="org-builtin">:column</span>)
+
+(<span class="org-string">"Faroe Islands"</span> <span class="org-string">"Finland"</span> <span class="org-string">"Greenland"</span> <span class="org-string">"Iceland"</span> <span class="org-string">"Norway"</span> <span class="org-string">"Sweden"</span>)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org96aa55e" class="outline-3">
+<h3 id="org96aa55e">:vectors</h3>
+<div class="outline-text-3" id="text-org96aa55e">
+<p>
+:PROPERTIES:
+:CUSTOM_ID: return-type-vector
+:END
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'test-data)
+       <span class="org-builtin">:vectors</span>)
+#(#(1 2147483645 <span class="org-string">"text one"</span>)
+  #(2 0 <span class="org-string">"text two"</span>)
+  #(3 3 <span class="org-string">"text three"</span>))
+
+(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'test-data <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 1))
+       <span class="org-builtin">:vectors</span>)
+#()
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-return-type-dao-type" class="outline-3">
+<h3 id="return-type-dao-type">(:dao dao-type)</h3>
+<div class="outline-text-3" id="text-return-type-dao-type">
+<p>
+This assumes you have already created a class for this table.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'countries)
+       (<span class="org-builtin">:dao</span> country))
+
+(#&lt;COUNTRY {1004F1BAF3}&gt; #&lt;COUNTRY {1004F1BD73}&gt; #&lt;COUNTRY {1004F1BFF3}&gt;)
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-return-type-dao-type-single" class="outline-3">
+<h3 id="return-type-dao-type-single">(:dao dao-type :single)</h3>
+<div class="outline-text-3" id="text-return-type-dao-type-single">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'countries <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'name <span class="org-string">"Iceland"</span>)
+       (<span class="org-builtin">:dao</span> country))
+
+#&lt;COUNTRY {1004F1BAF3}&gt;
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org15278fc" class="outline-3">
+<h3 id="org15278fc">Json-strs</h3>
+<div class="outline-text-3" id="text-org15278fc">
+<p>
+Return a list of strings where the row returned is a json object expressed as a string
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin">:json-strs</span>)
+(<span class="org-string">"{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}"</span>
+ <span class="org-string">"{\"id\":2,\"int4\":0,\"text\":\"text two\"}"</span>)
+
+</pre>
+</div>
+
+<p>
+This will also handle local-time timestamps and simple-date timestamps, time-of-day and date. E.g. (with a local-time timestamp)
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'timestamp-with-time-zone
+        <span class="org-builtin">:from</span> 'test-data
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3))
+       <span class="org-builtin">:json-strs</span>)
+
+'(<span class="org-string">"{\"timestampWithTimeZone\":\"{2019-12-30T13:30:54.000000-05:00}\"}"</span>
+  <span class="org-string">"{\"timestampWithTimeZone\":\"{1919-12-30T13:30:54.000000-05:00}\"}"</span>)
+
+</pre>
+</div>
+
+<p>
+The following is an example with a simple-date timestamp.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'timestamp-with-time-zone
+        <span class="org-builtin">:from</span> 'test-data
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin"><span class="org-warning">:json-strs</span></span><span class="org-warning">)</span>
+'(<span class="org-string">"{\"timestampWithTimeZone\":\"2019-12-30 18:30:54:0\"}"</span>
+  <span class="org-string">"{\"timestampWithTimeZone\":\"1919-12-30 18:30:54:0\"}"</span>)
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf4eb7f0" class="outline-3">
+<h3 id="orgf4eb7f0">Json-str</h3>
+<div class="outline-text-3" id="text-orgf4eb7f0">
+<p>
+Return a single string where the row returned is a json object expressed as a string
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id 3)) <span class="org-builtin">:json-str</span>)
+<span class="org-string">"{\"id\":3,\"int4\":3,\"text\":\"text three\"}"</span>
+
+</pre>
+</div>
+
+<p>
+As with :json-strs, this will also work for either simple-date or local-time timestamps
+</p>
+</div>
+</div>
+<div id="outline-container-org03deb44" class="outline-3">
+<h3 id="org03deb44">Json-array-str</h3>
+<div class="outline-text-3" id="text-org03deb44">
+<p>
+Return a string containing a json array, each element in the array is a selected row expressed as a json object. NOTE: If there is no result, this will return a string with an empty json array.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'short-data-type-tests <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 3)) <span class="org-builtin">:json-array-str</span>)
+<span class="org-string">"[{\"id\":1,\"int4\":2147483645,\"text\":\"text one\"}, {\"id\":2,\"int4\":0,\"text\":\"text two\"}]"</span>
+
+(query (<span class="org-builtin">:select</span> 'id 'int4 'text <span class="org-builtin">:from</span> 'test-data <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'id 1)) <span class="org-builtin">:json-array-str</span>)
+<span class="org-string">"[]"</span>
+
+</pre>
+</div>
+
+<p>
+As with :json-strs, this will also work for either simple-date or local-time timestamps
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-alias" class="outline-2">
+<h2 id="alias">As or Alias</h2>
+<div class="outline-text-2" id="text-alias">
+<p>
+Suppose you want to return an identifier as a key with the value, but you don't want to use the column name. You can use the as keyword, or as you would expect having just seen a little s-sql, the :as keyword.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(first (query (<span class="org-builtin">:order-by</span>
+               (<span class="org-builtin">:select</span> (<span class="org-builtin">:as</span> 'countries.name 'countryname)
+                        <span class="org-builtin">:from</span> 'countries)
+               'countryname )
+              <span class="org-builtin">:alists</span>))
+
+((<span class="org-builtin">:COUNTRYNAME</span> . <span class="org-string">"Afghanistan"</span>))
+
+</pre>
+</div>
+
+<p>
+You can also do this with table names.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(first (query (<span class="org-builtin">:order-by</span>
+               (<span class="org-builtin">:select</span> 't1.name
+                        <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> 'countries 't1))
+               'name )
+              <span class="org-builtin">:alists</span>))
+
+((<span class="org-builtin">:NAME</span> . <span class="org-string">"Afghanistan"</span>))
+
+</pre>
+</div>
+</div>
+
+<div id="outline-container-concatenate" class="outline-3">
+<h3 id="concatenate">:|| Concatenating Columns</h3>
+<div class="outline-text-3" id="text-concatenate">
+<p>
+The concatenation operator combines two or more columns into a single column return. First, consider the query on a raw sql string:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span class="org-string">"(SELECT countries.id, (countries.name || '-' || regions.name)</span>
+<span class="org-string">         FROM countries, regions</span>
+<span class="org-string">         WHERE ((regions.id = countries.region_id) and (countries.name = 'US')))"</span>)
+
+((21 <span class="org-string">"US-North America"</span>))
+
+</pre>
+</div>
+
+<p>
+Now consider the result using s-sql.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'countries.id (:|| 'countries.name <span class="org-string">"-"</span> 'regions.name)
+                <span class="org-builtin">:from</span> 'countries 'regions
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'regions.id 'countries.region-id)
+                             (<span class="org-builtin">:=</span> 'countries.name <span class="org-string">"US"</span>))))
+
+((21 <span class="org-string">"US-North America"</span>))
+
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

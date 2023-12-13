@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-12-12 Tue 18:54 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>S-SQL Examples I</title>
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">S-SQL Examples I</h1>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org17213a8">S-SQL Examples Home Page</a></li>
+<li><a href="#iloke">ilike</a></li>
+<li><a href="#in">In</a></li>
+<li><a href="#insert">Insert, Insert-into</a>
+<ul>
+<li><a href="#sql-insert">First, without s-sql</a></li>
+<li><a href="#s-sql-insert">With s-sql</a></li>
+<li><a href="#returning-primary">Returning the Primary Key</a></li>
+<li><a href="#org648e288">Insert-DAO</a></li>
+<li><a href="#multiple-row-inserts">Multiple Row Inserts</a></li>
+<li><a href="#Insert-Rows-On-Conflict-Do-Nothing">Insert-Rows-On-Conflict-Do-Nothing</a></li>
+<li><a href="#Insert-Rows-On-Conflict-update">Insert-Rows-On-Conflict-Update</a></li>
+<li><a href="#insert-from-alist">Inserting from an alist</a></li>
+<li><a href="#insert-from-plist">Inserting from a plist</a></li>
+</ul>
+</li>
+<li><a href="#intersect">Intersect</a></li>
+<li><a href="#intervals">Intervals</a></li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-org17213a8" class="outline-2">
+<h2 id="org17213a8"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
+<div class="outline-text-2" id="text-org17213a8">
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><a href="s-sql-a.html">A</a></td>
+<td class="org-left"><a href="s-sql-b.html">B</a></td>
+<td class="org-left"><a href="s-sql-c.html">C</a></td>
+<td class="org-left"><a href="s-sql-d.html">D</a></td>
+<td class="org-left"><a href="s-sql-e.html">E</a></td>
+<td class="org-left"><a href="s-sql-f.html">F</a></td>
+<td class="org-left"><a href="s-sql-g.html">G</a></td>
+<td class="org-left"><a href="s-sql-h.html">H</a></td>
+<td class="org-left"><a href="s-sql-i.html">I</a></td>
+<td class="org-left"><a href="s-sql-j.html">J</a></td>
+<td class="org-left"><a href="s-sql-k.html">K</a></td>
+<td class="org-left"><a href="s-sql-l.html">L</a></td>
+<td class="org-left"><a href="s-sql-m.html">M</a></td>
+<td class="org-left"><a href="s-sql-n.html">N</a></td>
+<td class="org-left"><a href="s-sql-o.html">O</a></td>
+<td class="org-left"><a href="s-sql-p.html">P</a></td>
+<td class="org-left"><a href="s-sql-r.html">R</a></td>
+<td class="org-left"><a href="s-sql-s.html">S</a></td>
+<td class="org-left"><a href="s-sql-t.html">T</a></td>
+<td class="org-left"><a href="s-sql-u.html">U</a></td>
+<td class="org-left"><a href="s-sql-v.html">V</a></td>
+<td class="org-left"><a href="s-sql-w.html">W</a></td>
+<td class="org-left"><a href="s-sql-special-characters.html">Special Characters</a></td>
+<td class="org-left"><a href="calling-postgresql-stored-functions.html">Calling Postgresql Stored Functions and Procedures</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-iloke" class="outline-2">
+<h2 id="iloke">ilike</h2>
+<div class="outline-text-2" id="text-iloke">
+<p>
+See <a href="s-sql-l.html">s-sql-l (like, ilike, limit)</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-in" class="outline-2">
+<h2 id="in">In</h2>
+<div class="outline-text-2" id="text-in">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'name
+              <span class="org-builtin">:from</span> 'countries
+              <span class="org-builtin">:where</span> (<span class="org-builtin">:in</span> 'id
+                          (<span class="org-builtin">:set</span> 20 21 23))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-insert" class="outline-2">
+<h2 id="insert">Insert, Insert-into</h2>
+<div class="outline-text-2" id="text-insert">
+</div>
+<div id="outline-container-sql-insert" class="outline-3">
+<h3 id="sql-insert">First, without s-sql</h3>
+<div class="outline-text-3" id="text-sql-insert">
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span class="org-string">"insert into 'countries values (920, 'Oz', 'Oz Dollars')"</span>)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-s-sql-insert" class="outline-3">
+<h3 id="s-sql-insert">With s-sql</h3>
+<div class="outline-text-3" id="text-s-sql-insert">
+<p>
+There are two ways to use s-sql with basic single row inserts. First, directly setting the columns, using the :set keyword and alternating column names and values. This means that the :insert-into clause expects the arguments to :set to be in multiples of two. Odd arguments will trigger an error.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-into</span> 'countries <span class="org-builtin">:set</span> 'id 920 'name <span class="org-string">"Oz"</span>
+                                   'currency <span class="org-string">"Oz Dollars"</span>))
+</pre>
+</div>
+<p>
+Notice that a list with two items is a single item, not a multiple of two. You can use sql-compile to deal with this. See this example from the mailing list.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(sql-compile `(<span class="org-builtin">:insert-into</span> 'kupci <span class="org-builtin">:set</span> ,@(<span class="org-keyword">when</span> t (list 'ime <span class="org-string">"a"</span>))))
+</pre>
+</div>
+<p>
+The second method, without the :set keyword, uses :select, followed by values.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-into</span> 'countries (<span class="org-builtin">:select</span> <span class="org-string">"Oz"</span> <span class="org-string">"Oz Dollars"</span>)))
+
+(query (<span class="org-builtin">:insert-into</span> 'test2 (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'test1)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-returning-primary" class="outline-3">
+<h3 id="returning-primary">Returning the Primary Key</h3>
+<div class="outline-text-3" id="text-returning-primary">
+<p>
+Suppose your table has a serial key of id and you want the insert function to return the newly generated id for that new record.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-into</span> 'categories <span class="org-builtin">:set</span> 'name <span class="org-string">"test-cat3"</span> <span class="org-builtin">:returning</span> 'id)
+     <span class="org-builtin">:single</span>)
+</pre>
+</div>
+<p>
+The next example shows the same example using parameterized variables.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((name <span class="org-string">"test-cat4"</span>))
+  (query (<span class="org-builtin">:insert-into</span> 'categories <span class="org-builtin">:set</span> 'name '$1 <span class="org-builtin">:returning</span> 'id)
+         name <span class="org-builtin">:single</span>))
+</pre>
+</div>
+<p>
+Note: This is a postgresql extension to the standard From the Documentation:
+</p>
+
+<p>
+INSERT conforms to the SQL standard, except that the RETURNING clause is a PostgreSQL extension, as is the ability to use WITH with INSERT, and the ability to specify an alternative action with ON CONFLICT. Also, the case in which a column name list is omitted, but not all the columns are filled from the VALUES clause or query, is disallowed by the standard.
+</p>
+
+<p>
+The SQL standard specifies that OVERRIDING SYSTEM VALUE can only be specified if an identity column that is generated always exists. PostgreSQL allows the clause in any case and ignores it if it is not applicable.
+With DAOs
+</p>
+</div>
+</div>
+<div id="outline-container-org648e288" class="outline-3">
+<h3 id="org648e288">Insert-DAO</h3>
+<div class="outline-text-3" id="text-org648e288">
+<p>
+Postmodern has an update-dao and an insert-dao function. You could check and see if the dao that you are currently dealing with has its primary key set (in which case you are editing an existing object and need to use update-dao. If not, then you dealing with a brand new object and will need to set the primary key and use the insert-dao method, using something like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">if</span> (id item) (postmodern:update-dao item)
+    (<span class="org-keyword">progn</span> (setf (id item) (get-next-id class-name))
+       (postmodern:insert-dao item)))
+</pre>
+</div>
+<p>
+However, you could also just use upsert.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(postmodern:upsert-dao item)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-multiple-row-inserts" class="outline-3">
+<h3 id="multiple-row-inserts">Multiple Row Inserts</h3>
+<div class="outline-text-3" id="text-multiple-row-inserts">
+<p>
+You can use s-sql to generate INSERT INTO clauses with multiple rows, e.g. "INSERT INTO \"table\" (a, b) VALUES (10, 20), (30, 40)". (This ability does not yet exist with respect to inserting multiple daos.
+</p>
+
+<p>
+First, without specifying columns:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'my-table <span class="org-builtin">:values</span> '((42 <span class="org-string">"foobar"</span>) (23 <span class="org-string">"foobaz"</span>))))
+</pre>
+</div>
+<p>
+Now with specifying columns:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'table
+                 <span class="org-builtin">:columns</span> 'a 'b
+                 <span class="org-builtin">:values</span> '((10 20) (30 40))))
+
+(query (<span class="org-builtin">:insert-rows-into</span> 'cd.facilities
+                 <span class="org-builtin">:columns</span> 'facid 'name 'membercost 'guestcost 'initialoutlay 'monthlymaintenance
+                 <span class="org-builtin">:values</span> '((9 <span class="org-string">"Spa"</span> 20 30 100000 800)
+                           (10 <span class="org-string">"Squash Court 2"</span> 3.5 17.5 5000 80))))
+</pre>
+</div>
+<p>
+Using a select statement:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'cd.facilities
+                 <span class="org-builtin">:columns</span> 'facid 'name 'membercost 'guestcost 'initialoutlay 'monthlymaintenance
+                 <span class="org-builtin">:values</span> '(((<span class="org-builtin">:select</span> (<span class="org-builtin">:+</span> (<span class="org-builtin">:select</span> (<span class="org-builtin">:max</span> 'facid)
+                                          <span class="org-builtin">:from</span> 'cd.facilities)
+                                      1))
+                            <span class="org-string">"Spa"</span> 20 30 100000 800))))
+</pre>
+</div>
+<p>
+Overriding System Values:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'table1
+        <span class="org-builtin">:columns</span> 'c1 'c2
+        <span class="org-builtin">:overriding-system-value</span>
+        <span class="org-builtin">:values</span> '((1 <span class="org-string">"a"</span>) (2 <span class="org-string">"b"</span>))))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-Insert-Rows-On-Conflict-Do-Nothing" class="outline-3">
+<h3 id="Insert-Rows-On-Conflict-Do-Nothing">Insert-Rows-On-Conflict-Do-Nothing</h3>
+<div class="outline-text-3" id="text-Insert-Rows-On-Conflict-Do-Nothing">
+<p>
+Inserting rows with on conflict do nothing
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'distributors
+                 <span class="org-builtin">:columns</span> 'did 'dname
+                 <span class="org-builtin">:values</span> '((7 <span class="org-string">"Readline GmbH"</span>))
+                 <span class="org-builtin">:on-conflict-do-nothing</span>))
+</pre>
+</div>
+<p>
+:on-conflict with separate :do-nothing keyword
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'test <span class="org-builtin">:columns</span> 'some-key 'some-val
+                                   <span class="org-builtin">:values</span> '((<span class="org-string">"a"</span> 5) (<span class="org-string">"b"</span> 6) (<span class="org-string">"c"</span> 7))
+                                   <span class="org-builtin">:on-conflict</span> 'some-key
+                                   <span class="org-builtin">:do-nothing</span>))
+</pre>
+</div>
+<p>
+With where condition
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'distributors
+                 <span class="org-builtin">:columns</span> 'did 'dname
+                 <span class="org-builtin">:values</span> '((10 <span class="org-string">"Conrad International"</span>))
+                 <span class="org-builtin">:on-conflict</span> 'did
+                 <span class="org-builtin">:do-nothing</span>
+                 <span class="org-builtin">:where</span> 'is-active))
+</pre>
+</div>
+<p>
+With returning
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'distributors
+        <span class="org-builtin">:columns</span> 'did 'dname
+                          <span class="org-builtin">:values</span> '((8 <span class="org-string">"Readline GmbH"</span>))
+                          <span class="org-builtin">:on-conflict</span> 'did 'dname
+        <span class="org-builtin">:do-nothing</span>
+                          <span class="org-builtin">:returning</span> 'id))
+</pre>
+</div>
+<p>
+With on-conflict-on-constraint and do-nothing as a separate operator
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'distributors <span class="org-builtin">:columns</span> 'did 'dname
+                          <span class="org-builtin">:values</span> '((10 <span class="org-string">"Readline GmbH"</span>))
+                          <span class="org-builtin">:on-conflict-on-constraint</span> 'distributors-pkey
+                          <span class="org-builtin">:do-nothing</span>
+        <span class="org-builtin">:returning</span> 'id))
+</pre>
+</div>
+<p>
+With on-conflict constraint with separate :do-nothing keyword and returning
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(sql (<span class="org-builtin">:insert-rows-into</span> 'test <span class="org-builtin">:columns</span> 'some-key 'some-val
+                        <span class="org-builtin">:values</span> '((<span class="org-string">"a"</span> 4) (<span class="org-string">"b"</span> 6) (<span class="org-string">"c"</span> 7))
+                        <span class="org-builtin">:on-conflict</span> 'some-key
+                        <span class="org-builtin">:do-nothing</span>
+      <span class="org-builtin">:returning</span> '*))
+</pre>
+</div>
+<p>
+multiple values basic :on-conflict-on-constraint with separate :do-nothing keyword and returning
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'test <span class="org-builtin">:columns</span> 'some-key 'some-val
+                        <span class="org-builtin">:values</span> '((<span class="org-string">"a"</span> 3) (<span class="org-string">"b"</span> 6) (<span class="org-string">"c"</span> 7))
+                        <span class="org-builtin">:on-conflict-on-constraint</span> 'somekey
+                        <span class="org-builtin">:do-nothing</span>
+        <span class="org-builtin">:returning</span> '*))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-Insert-Rows-On-Conflict-update" class="outline-3">
+<h3 id="Insert-Rows-On-Conflict-update">Insert-Rows-On-Conflict-Update</h3>
+<div class="outline-text-3" id="text-Insert-Rows-On-Conflict-update">
+<p>
+basic version single row
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'users
+        <span class="org-builtin">:values</span> '(((<span class="org-builtin">:uuid-generate-v4</span>) <span class="org-string">"Lucie"</span> <span class="org-string">"Hawkins"</span> <span class="org-string">"Lucie-Jones@gmail.com"</span>))
+        <span class="org-builtin">:on-conflict-update</span> 'email
+        <span class="org-builtin">:update-set</span> 'first-name 'excluded.first-name 'last-name 'excluded.last-name))
+</pre>
+</div>
+<p>
+Basic version multiple row and specified columns
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'distributors
+        <span class="org-builtin">:columns</span> 'did 'dname
+                          <span class="org-builtin">:values</span> '((5 <span class="org-string">"Gizmo Transglobal"</span>) (6 <span class="org-string">"Associated Computing Inc."</span>))
+                          <span class="org-builtin">:on-conflict-update</span> 'did
+                          <span class="org-builtin">:update-set</span> 'dname 'excluded.dname))
+</pre>
+</div>
+<p>
+With where clause
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'users
+        <span class="org-builtin">:values</span> '(((<span class="org-builtin">:uuid-generate-v4</span>) <span class="org-string">"Lucie"</span> <span class="org-string">"Hawkins"</span> <span class="org-string">"Lucie-Jones@gmail.com"</span>))
+        <span class="org-builtin">:on-conflict-update</span> 'email
+        <span class="org-builtin">:update-set</span> 'first-name 'excluded.first-name 'last-name 'excluded.last-name
+                          <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;&gt;</span> 'u.first-name <span class="org-string">"Lucie"</span>)))
+</pre>
+</div>
+<p>
+With an as clause at the table level
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> (<span class="org-builtin">:as</span> 'users 'u)
+        <span class="org-builtin">:values</span> '(((<span class="org-builtin">:uuid-generate-v4</span>) <span class="org-string">"Lucie"</span> <span class="org-string">"Jones"</span> <span class="org-string">"Lucie-Jones@gmail.com"</span>))
+        <span class="org-builtin">:on-conflict-update</span> 'email
+        <span class="org-builtin">:update-set</span> 'first-name 'excluded.first-name 'last-name 'excluded.last-name
+                          <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;&gt;</span> 'u.first-name <span class="org-string">"Lucie"</span>)))
+</pre>
+</div>
+<p>
+With concatenation function in the update-set clause
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> (<span class="org-builtin">:as</span> 'distributors 'd)
+        <span class="org-builtin">:columns</span> 'did 'dname
+        <span class="org-builtin">:values</span> '((8 <span class="org-string">"Anvil Distribution"</span>))
+        <span class="org-builtin">:on-conflict-update</span> 'did
+        <span class="org-builtin">:update-set</span> 'dname (:|| 'excluded.dname  <span class="org-string">" (formerly "</span> 'd.dname <span class="org-string">")"</span>)
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;&gt;</span> 'd.zipcode <span class="org-string">"21201"</span>)))
+</pre>
+</div>
+<p>
+with on-conflict-on-constraint
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'test
+        <span class="org-builtin">:columns</span> 'some-key 'some-val
+        <span class="org-builtin">:values</span> '((<span class="org-string">"a"</span> 5))
+        <span class="org-builtin">:on-conflict-on-constraint</span> 'somekey
+        <span class="org-builtin">:update-set</span> 'some-val 'excluded.some-val))
+</pre>
+</div>
+<p>
+With on-conflict-on-constraint and returning clause
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'test
+        <span class="org-builtin">:columns</span> 'some-key 'some-val
+        <span class="org-builtin">:values</span> '((<span class="org-string">"a"</span> 2) (<span class="org-string">"b"</span> 6) (<span class="org-string">"c"</span> 7))
+        <span class="org-builtin">:on-conflict-on-constraint</span> 'somekey
+        <span class="org-builtin">:update-set</span> 'some-val 'excluded.some-val
+        <span class="org-builtin">:returning</span> '*))
+</pre>
+</div>
+<p>
+With on-conflict-on-constraint with addition function in the update-set clause
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(queryl (<span class="org-builtin">:insert-rows-into</span> 'test
+                 <span class="org-builtin">:columns</span> 'some-key
+                 <span class="org-builtin">:values</span> '((<span class="org-string">"a"</span>))
+                 <span class="org-builtin">:on-conflict-on-constraint</span> 'somekey
+                 <span class="org-builtin">:update-set</span> 'some-val (<span class="org-builtin">:+</span> 'test.some-val 1)))
+</pre>
+</div>
+<p>
+With select clause which returns a single row
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-rows-into</span> 'attendence <span class="org-builtin">:columns</span> 'event-id 'client-id 'attend-status
+        <span class="org-builtin">:values</span> '(((<span class="org-builtin">:select</span> 'id
+                    <span class="org-builtin">:from</span> 'event
+                    <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> (<span class="org-builtin">:lower</span> 'event-dt) <span class="org-string">"2020-01-11 17:00:00"</span>))
+                   3
+                   <span class="org-string">"No Show"</span>))
+        <span class="org-builtin">:on-conflict-on-constraint</span> 'attendance-pkey
+        <span class="org-builtin">:update-set</span> 'attend-status 'excluded.attend_status))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-insert-from-alist" class="outline-3">
+<h3 id="insert-from-alist">Inserting from an alist</h3>
+<div class="outline-text-3" id="text-insert-from-alist">
+<p>
+Assume that you have a list of alists and you want to insert the data. If the list of alists contain all the columns, then you do not need to specify the columns and simply loop across to get the total lists of values:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((alst '(((name . <span class="org-string">"John"</span>) (age . 34)) ((name . <span class="org-string">"Susan"</span>) (age . 37)))))
+  (query (<span class="org-builtin">:insert-rows-into</span> 'table
+          <span class="org-builtin">:values</span> (<span class="org-keyword">loop</span> <span class="org-builtin">:for</span> x <span class="org-builtin">:in</span> alst
+                        <span class="org-builtin">:collect</span>
+                        (<span class="org-keyword">loop</span> <span class="org-builtin">:for</span> y <span class="org-builtin">:in</span> x
+                              <span class="org-builtin">:collect</span> (cdr y))))))
+</pre>
+</div>
+<p>
+If the alists only contain a subset of the columns, then you would need to specify the columns:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">let</span> ((alst '(((name . <span class="org-string">"John"</span>) (age . 34)) ((name . <span class="org-string">"Susan"</span>) (age . 37)))))
+  (query (<span class="org-builtin">:insert-rows-into</span> 'table
+          <span class="org-builtin">:columns</span> 'name 'age
+          <span class="org-builtin">:values</span> (<span class="org-keyword">loop</span> <span class="org-builtin">:for</span> x <span class="org-builtin">:in</span> alst
+                        <span class="org-builtin">:collect</span>
+                        (<span class="org-keyword">loop</span> <span class="org-builtin">:for</span> y <span class="org-builtin">:in</span> x
+                              <span class="org-builtin">:collect</span> (cdr y))))))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-insert-from-plist" class="outline-3">
+<h3 id="insert-from-plist">Inserting from a plist</h3>
+<div class="outline-text-3" id="text-insert-from-plist">
+<p>
+What happens if you want to insert from a plist?
+</p>
+
+<p>
+Assume you have a plist where the keys are interned that you want to insert as a record. Consider the following:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+ (sql-compile
+  (append `(<span class="org-builtin">:insert-into</span> ,table <span class="org-builtin">:set</span>)
+          plst)))
+</pre>
+</div>
+
+<p>
+That gives you the opportunity to generalize into something like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">insert-db-from-plist</span> (table plst)
+  <span class="org-doc">"Takes a table and a plist and inserts the plist into the table as a new record."</span>
+  (<span class="org-keyword">when</span> (stringp table)
+    (setf table (intern (string-upcase table))))
+     (<span class="org-keyword">with-connection</span> (db)
+                      (query
+                       (sql-compile
+                        (append `(<span class="org-builtin">:insert-into</span> ,table <span class="org-builtin">:set</span>)
+                                  (<span class="org-keyword">loop</span> for x in plst counting x into y collect
+                                        (<span class="org-keyword">if</span> (oddp y)
+                                            (<span class="org-keyword">cond</span> ((symbolp x)
+                                                   x)
+                                                  ((stringp x)
+                                                   (intern (string-upcase x)))
+                                                  (t nil))
+                                          x)))))))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-intersect" class="outline-2">
+<h2 id="intersect">Intersect</h2>
+<div class="outline-text-2" id="text-intersect">
+<p>
+Intersect produces a result that contain rows that appear on all the sub-selects.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (query (<span class="org-builtin">:intersect</span> (<span class="org-builtin">:select</span> 'countries.name
+                            <span class="org-builtin">:from</span> 'countries
+                            <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;</span> 'latitude 16.44))
+                   (<span class="org-builtin">:select</span> 'countries.name
+                            <span class="org-builtin">:from</span> 'countries 'regions
+                            <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'region-id 'regions.id)
+                                         (<span class="org-builtin">:=</span> 'regions.name <span class="org-string">"Caribbean"</span>)))))
+
+((<span class="org-string">"Aruba"</span>) (<span class="org-string">"Netherlands Antilles"</span>) (<span class="org-string">"Grenada"</span>) (<span class="org-string">"Barbados"</span>) (<span class="org-string">"Trinidad and Tobago"</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-intervals" class="outline-2">
+<h2 id="intervals">Intervals</h2>
+<div class="outline-text-2" id="text-intervals">
+<p>
+See  <a href="interval-notes.html">Interval Notes</a>
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

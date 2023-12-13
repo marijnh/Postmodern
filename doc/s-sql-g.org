@@ -1,0 +1,47 @@
+#+TITLE: S-SQL Examples G
+#+OPTIONS: num:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
+#+OPTIONS: ^:nil
+
+* [[file:s-sql-examples.org][S-SQL Examples Home Page]]
+| [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
+
+* Generate-Series
+  :PROPERTIES:
+  :CUSTOM_ID: generate-series
+  :END:
+#+begin_src lisp
+  (query (:select 'x (:generate-series 0 'x)
+                             :from (:as (:values (:set 0) (:set 1) (:set 2))
+                                        (:t 'x))))
+
+  '((0 0) (1 0) (1 1) (2 0) (2 1) (2 2))
+#+end_src
+* Group-By
+  :PROPERTIES:
+  :CUSTOM_ID: group-by
+  :END:
+The following two examples use group-by. The first determines the number of countries in my table in each region and returns the list in region name order. The second determines the country with the maximum latitude for each region.
+
+#+begin_src lisp
+  (query (:order-by
+          (:select 'regions.name
+                   (:count 'regions.name)
+                   :from 'countries 'regions
+           :where (:= 'regions.id 'countries.region-id)
+           :group-by 'regions.name)
+          'regions.name))
+
+  (("Africa" 38) ("Asia" 27) ("Caribbean" 15) ("Central America" 6)("Central Asia" 5) ("Eastern Europe" 11)
+                 ("Middle East" 13) ("North America" 5)("Pacific" 24) ("South America" 14)
+                 ("Western Europe" 39))
+
+  (query (:select 'regions.name (:max 'latitude)
+                  :from 'countries 'regions
+          :where (:= 'regions.id 'region-id)
+          :group-by 'regions.name))
+
+  (("Pacific" 378/25) ("Western Europe" 65) ("Asia" 46) ("Central Asia" 48)("Caribbean" 483/20) ("Eastern Europe" 60)
+                      ("North America" 72) ("Middle East" 39)("Central America" 343/20) ("Africa" 34) ("South America" 15))
+#+end_src

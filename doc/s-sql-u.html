@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-12-12 Tue 19:00 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>S-SQL Examples U</title>
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">S-SQL Examples U</h1>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#orgf500c2c">S-SQL Examples Home Page</a></li>
+<li><a href="#union">Union, Union-all</a></li>
+<li><a href="#unique">Unique</a></li>
+<li><a href="#update">Update</a>
+<ul>
+<li><a href="#alternative-column-list">Alternative Column list Syntax</a></li>
+<li><a href="#single-value">Single New Value for Multiple Rows</a></li>
+<li><a href="#using-case">Using a Case Statement</a></li>
+<li><a href="#from-another-table">Pulling Updated Info From Another Table</a></li>
+</ul>
+</li>
+<li><a href="#upsert">Upsert or "On Conflict"</a></li>
+<li><a href="#using">Using</a></li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-orgf500c2c" class="outline-2">
+<h2 id="orgf500c2c"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
+<div class="outline-text-2" id="text-orgf500c2c">
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><a href="s-sql-a.html">A</a></td>
+<td class="org-left"><a href="s-sql-b.html">B</a></td>
+<td class="org-left"><a href="s-sql-c.html">C</a></td>
+<td class="org-left"><a href="s-sql-d.html">D</a></td>
+<td class="org-left"><a href="s-sql-e.html">E</a></td>
+<td class="org-left"><a href="s-sql-f.html">F</a></td>
+<td class="org-left"><a href="s-sql-g.html">G</a></td>
+<td class="org-left"><a href="s-sql-h.html">H</a></td>
+<td class="org-left"><a href="s-sql-i.html">I</a></td>
+<td class="org-left"><a href="s-sql-j.html">J</a></td>
+<td class="org-left"><a href="s-sql-k.html">K</a></td>
+<td class="org-left"><a href="s-sql-l.html">L</a></td>
+<td class="org-left"><a href="s-sql-m.html">M</a></td>
+<td class="org-left"><a href="s-sql-n.html">N</a></td>
+<td class="org-left"><a href="s-sql-o.html">O</a></td>
+<td class="org-left"><a href="s-sql-p.html">P</a></td>
+<td class="org-left"><a href="s-sql-r.html">R</a></td>
+<td class="org-left"><a href="s-sql-s.html">S</a></td>
+<td class="org-left"><a href="s-sql-t.html">T</a></td>
+<td class="org-left"><a href="s-sql-u.html">U</a></td>
+<td class="org-left"><a href="s-sql-v.html">V</a></td>
+<td class="org-left"><a href="s-sql-w.html">W</a></td>
+<td class="org-left"><a href="s-sql-special-characters.html">Special Characters</a></td>
+<td class="org-left"><a href="calling-postgresql-stored-functions.html">Calling Postgresql Stored Functions and Procedures</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-union" class="outline-2">
+<h2 id="union">Union, Union-all</h2>
+<div class="outline-text-2" id="text-union">
+<p>
+As you probably know, the union operation generally eliminates what it thinks are duplicate rows. The union-all operation preserves duplicate rows. The examples below use the union-all operator, but the syntax would be the same with union.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'name
+                <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:union-all</span>
+                            (<span class="org-builtin">:select</span> 'id 'name
+                                     <span class="org-builtin">:from</span> 'countries
+                                     <span class="org-builtin">:where</span> (<span class="org-builtin">:&lt;=</span> 'name <span class="org-string">"B"</span> ))
+                            (<span class="org-builtin">:select</span> 'id 'name
+                                     <span class="org-builtin">:from</span> 'countries
+                                     <span class="org-builtin">:where</span> (<span class="org-builtin">:&gt;=</span> 'name <span class="org-string">"V"</span> )))
+                           'a)))
+
+((140 <span class="org-string">"Algeria"</span>) (83 <span class="org-string">"American Samoa"</span>) (202 <span class="org-string">"Angola"</span>) (45 <span class="org-string">"Argentina"</span>)(195 <span class="org-string">"Aruba"</span>) (38 <span class="org-string">"Australia"</span>) (1 <span class="org-string">"Austria"</span>) (117 <span class="org-string">"Azerbaijan"</span>) (121 <span class="org-string">"Antigua"</span>) (34 <span class="org-string">"All"</span>) (130 <span class="org-string">"Albania"</span>) (127 <span class="org-string">"Armenia"</span>) (82 <span class="org-string">"Afghanistan"</span>) (142 <span class="org-string">"Zimbabwe"</span>) (43 <span class="org-string">"Worldwide"</span>) (66 <span class="org-string">"Venezuela"</span>) (111 <span class="org-string">"Vanuatu"</span>) (115 <span class="org-string">"Wallis"</span>) (141 <span class="org-string">"Zambia"</span>) (68 <span class="org-string">"Vietnam"</span>) (212 <span class="org-string">"Yemen"</span>)(215 <span class="org-string">"test6"</span>))
+
+(query (<span class="org-builtin">:select</span> 'a.id 'a.name 'a.region
+        <span class="org-builtin">:from</span> (<span class="org-builtin">:as</span> (<span class="org-builtin">:union-all</span>
+                    (<span class="org-builtin">:select</span> 'countries.id 'countries.name
+                             (<span class="org-builtin">:as</span> 'regions.name 'region)
+                     <span class="org-builtin">:from</span> 'countries 'regions
+                             <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span>
+                                     (<span class="org-builtin">:&lt;=</span> 'countries.name <span class="org-string">"B"</span>)
+                                     (<span class="org-builtin">:=</span> 'regions.id 'countries.region-id)))
+                    (<span class="org-builtin">:select</span> 'countries.id 'countries.name
+                             (<span class="org-builtin">:as</span> 'regions.name 'region)
+                     <span class="org-builtin">:from</span> 'countries 'regions
+                             <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span>
+                                     (<span class="org-builtin">:&gt;=</span> 'countries.name <span class="org-string">"V"</span>)
+                                     (<span class="org-builtin">:=</span> 'regions.id 'countries.region-id ))))
+                   'a)
+        <span class="org-builtin">:group-by</span> 'a.id 'a.region 'a.name))
+
+((140 <span class="org-string">"Algeria"</span> <span class="org-string">"Africa"</span>) (1 <span class="org-string">"Austria"</span> <span class="org-string">"Western Europe"</span>)   (68 <span class="org-string">"Vietnam"</span>  <span class="org-string">"Asia"</span>) (83 <span class="org-string">"American Samoa"</span> <span class="org-string">"Pacific"</span>)   (202 <span class="org-string">"Angola""Africa"</span>) (121  <span class="org-string">"Antigua"</span> <span class="org-string">"Caribbean"</span>)  (127 <span class="org-string">"Armenia"</span> <span class="org-string">"Eastern  Europe"</span>) (66 <span class="org-string">"Venezuela""South America"</span>)   (45  <span class="org-string">"Argentina"</span> <span class="org-string">"South  America"</span>) (195 <span class="org-string">"Aruba""Caribbean"</span>)   (38  <span class="org-string">"Australia"</span> <span class="org-string">"Pacific"</span>)(82 <span class="org-string">"Afghanistan"</span> <span class="org-string">"Asia"</span>)   (130 <span class="org-string">"Albania"</span> <span class="org-string">"Eastern Europe"</span>) (111 <span class="org-string">"Vanuatu"</span> <span class="org-string">"Pacific"</span>)  (212 <span class="org-string">"Yemen"</span> <span class="org-string">"Middle East"</span>) (115 <span class="org-string">"Wallis"</span>  <span class="org-string">"Pacific"</span>)   (142 <span class="org-string">"Zimbabwe"</span> <span class="org-string">"Africa"</span>)  (117 <span class="org-string">"Azerbaijan"</span> <span class="org-string">"Easter Europe"</span>)   (141 <span class="org-string">"Zambia"</span> <span class="org-string">"Africa"</span>))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-unique" class="outline-2">
+<h2 id="unique">Unique</h2>
+<div class="outline-text-2" id="text-unique">
+<p>
+Unique is a constraint used in creating tables. Note the use in the following query used to build the regions table.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> regions
+                      ((id <span class="org-builtin">:type</span> int4 <span class="org-builtin">:primary-key</span> t)
+                       (name <span class="org-builtin">:type</span> varchar <span class="org-builtin">:default</span> <span class="org-string">""</span> <span class="org-builtin">:unique</span> t))))
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-update" class="outline-2">
+<h2 id="update">Update</h2>
+<div class="outline-text-2" id="text-update">
+<p>
+In s-sql, updates operate the way you would expect them to, given what we have seen up above.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:update</span> 'countries <span class="org-builtin">:set</span> 'text '$1 <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id 284)) <span class="org-string">"now"</span>)
+</pre>
+</div>
+
+<p>
+Now temporarily assume that we do not have a normalized database and we have a field "region_name" in the countries table in the database and a slot accessor named region-name in the countries class.
+</p>
+
+<p>
+We could update a set of the countries rows to get the regional names for a particular set of countries, given a list of countries.id as follows:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+ (<span class="org-builtin">:update</span> 'countries
+  <span class="org-builtin">:set</span> 'region-name
+          (<span class="org-builtin">:select</span> 'name <span class="org-builtin">:from</span> 'regions
+           <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'countries.id 'country-id))
+          <span class="org-builtin">:where</span> (<span class="org-builtin">:in</span> 'countries.id
+                      (<span class="org-builtin">:set</span> 129 139 132 128 135 134 131 137 130 133 136))))
+
+</pre>
+</div>
+
+<p>
+Assume you wanted to update a record with id=5 and you had a plist of the the columns to be updated.
+</p>
+
+<p>
+Assuming you wanted to create something reusable, you could use a query like the following:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query
+ (sql-compile (append (append `(<span class="org-builtin">:update</span> ,table <span class="org-builtin">:set</span>)
+                              plst)
+                      `(<span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id ,id)))))
+</pre>
+</div>
+
+<p>
+You can use the RETURNING keyword to return all or parts of the updated entries.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (sql (<span class="org-builtin">:update</span> 'weather
+             <span class="org-builtin">:set</span> 'temp-lo (<span class="org-builtin">:+</span> 'temp-lo 1) 'temp-hi (<span class="org-builtin">:+</span> 'temp-lo 15) 'prcp <span class="org-builtin">:default</span>
+                     <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'city <span class="org-string">"San Francisco"</span>)
+                                  (<span class="org-builtin">:=</span> 'date <span class="org-string">"2003-07-03"</span>))
+                     <span class="org-builtin">:returning</span> 'temp-lo 'temp-hi 'prcp))
+</pre>
+</div>
+</div>
+
+<div id="outline-container-alternative-column-list" class="outline-3">
+<h3 id="alternative-column-list">Alternative Column list Syntax</h3>
+<div class="outline-text-3" id="text-alternative-column-list">
+<p>
+Use the alternative column-list syntax to do the same update:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:update</span> 'weather
+        <span class="org-builtin">:columns</span> 'temp-lo 'temp-hi 'prcp
+                (<span class="org-builtin">:set</span> (<span class="org-builtin">:+</span> 'temp-lo 1)  (<span class="org-builtin">:+</span> 'temp-lo 15)  <span class="org-builtin">:DEFAULT</span>)
+                <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'city <span class="org-string">"San Francisco"</span>)
+                             (<span class="org-builtin">:=</span> 'date <span class="org-string">"2003-07-03"</span>))))
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-single-value" class="outline-3">
+<h3 id="single-value">Single New Value for Multiple Rows</h3>
+<div class="outline-text-3" id="text-single-value">
+<p>
+When you need to update lots of rows, a single call to the database is often more efficient, but what that call looks like will depend on your data. If you have a single value that needs to be inserted into multiple rows, you just need to manage the condition clause. To create a silly example, suppose we want to change the intermediate_region_name in the regions table to "Too Close to the UK" instead of "Channel Islands". Here are three different ways to do that
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:update</span> 'regions
+        <span class="org-builtin">:set</span> 'intermediate-region-name <span class="org-string">"Too Close to the UK"</span>
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'intermediate-region-name <span class="org-string">"Channel Islands"</span>)))
+
+(query (<span class="org-builtin">:update</span> 'regions
+        <span class="org-builtin">:set</span> 'intermediate-region-name <span class="org-string">"Too Close to the UK"</span>
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:in</span> 'id (<span class="org-builtin">:set</span> 179 180))))
+
+(query (<span class="org-builtin">:update</span> 'regions
+        <span class="org-builtin">:set</span> 'intermediate-region-name <span class="org-string">"Too Close to the UK"</span>
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:or</span> (<span class="org-builtin">:=</span> 'country <span class="org-string">"Guernsey"</span>)
+                    (<span class="org-builtin">:=</span> 'country <span class="org-string">"Jersey"</span>))))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-using-case" class="outline-3">
+<h3 id="using-case">Using a Case Statement</h3>
+<div class="outline-text-3" id="text-using-case">
+<p>
+If you have a limited number of situations with a different value for each situation, you can reach for a case statement.
+</p>
+
+<p>
+Staying with silly renames of intermediate_region_names, suppose we want "Caribbean" to be "Warm Island Americas" (thus excluding Bermuda) and "Central America" to be "Connecting Bridge Americas". One form of the case statement accomplishing this could look like this:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:update</span> 'regions
+        <span class="org-builtin">:set</span> 'intermediate-region-name
+              (<span class="org-builtin">:case</span> ((<span class="org-builtin">:=</span> 'intermediate-region-name <span class="org-string">"Caribbean"</span>)
+                       <span class="org-string">"Warm Island Americas"</span>)
+                     ((<span class="org-builtin">:=</span> 'intermediate-region-name <span class="org-string">"Central America"</span>)
+                       <span class="org-string">"Connecting Bridge Americas"</span>))
+         <span class="org-builtin">:where</span> (<span class="org-builtin">:in</span> 'intermediate-region-name
+                   (<span class="org-builtin">:set</span> <span class="org-string">"Caribbean"</span> <span class="org-string">"Central America"</span>))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-from-another-table" class="outline-3">
+<h3 id="from-another-table">Pulling Updated Info From Another Table</h3>
+<div class="outline-text-3" id="text-from-another-table">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:update</span> 'geo
+        <span class="org-builtin">:set</span> 'iso3 'regions.iso3
+        <span class="org-builtin">:from</span> 'regions
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'regions.iso2 'geo.iso3)))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-upsert" class="outline-2">
+<h2 id="upsert">Upsert or "On Conflict"</h2>
+<div class="outline-text-2" id="text-upsert">
+<p>
+Some people use the term "upsert" for trying to insert a new row, but if that record already exists, then either update the row with new values or do nothing (as opposed to throwing an error).
+</p>
+
+<p>
+Beginning in Postgresql versions 9.5 and above, it is possible to use what Postgresql calls on-conflict. There are two versions - "on conflict do nothing" or "on conflict update". See below for sample call in postmodern for on-conflict-update.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-into</span> 'test-table <span class="org-builtin">:set</span> 'column-A '$1 'column-B '$2
+                     <span class="org-builtin">:on-conflict-update</span> 'column-A
+                     <span class="org-builtin">:update-set</span> 'column-B '$2
+                     <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'test-table.column-A '$1)) <span class="org-string"><span class="org-warning">"c"</span></span><span class="org-warning"> 37)</span>
+</pre>
+</div>
+
+<p>
+Or
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'countries.name <span class="org-builtin">:from</span> 'countries 'regions
+                               <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:or</span> (<span class="org-builtin">:=</span> 'regions.name <span class="org-string">"North America"</span>)
+                                            (<span class="org-builtin">:=</span> 'regions.name <span class="org-string">"Central America"</span>))
+                                             (<span class="org-builtin">:=</span> 'regions.id 'countries.region-id))))
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-using" class="outline-2">
+<h2 id="using">Using</h2>
+<div class="outline-text-2" id="text-using">
+<p>
+From the postgresql docs: "USING is a shorthand notation: it takes a comma-separated list of column names, which the joined tables must have in common, and forms a join condition specifying equality of each of these pairs of columns. Furthermore, the output of JOIN USING has one column for each of the equated pairs of input columns, followed by the remaining columns from each table. Thus, USING (a, b, c) is equivalent to ON (t1.a = t2.a AND t1.b = t2.b AND t1.c = t2.c) with the exception that if ON is used there will be two columns a, b, and c in the result, whereas with USING there will be only one of each (and they will appear first if SELECT * is used).
+</p>
+
+<p>
+Example: Sorry, real toy example here. We assume an additional table named "countries-topics" and that both countries-topics and countries have columns named country-id. We are looking for records from the countries table which do not have a match in the countries-topics table. In other words, where do we have a note, but not matched it to a topic? The difference between ":using" and ":on" is the requirement that both tables have columns with the same names. You could join using multiple columns, just adding them into the parenthetical following the keyword :using.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">countries-with-no-topics</span> ()
+  (query (<span class="org-builtin">:order-by</span>
+          (<span class="org-builtin">:select</span> 'countries.id 'countries.name
+                   <span class="org-builtin">:distinct</span>
+                   <span class="org-builtin">:from</span> 'countries
+                   <span class="org-builtin">:left-join</span> 'countries-topics
+                   <span class="org-builtin">:using</span> ('country-id)
+                   <span class="org-builtin">:where</span> (<span class="org-builtin">:is-null</span> 'countries-topics.country-id))
+          'countries.country-id)))
+</pre>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

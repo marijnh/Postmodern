@@ -5,6 +5,7 @@
 - Fixed bug in create-composite-type that disallowed certain multiword parameters
 - Fixed bug in to-type-name and sql-type-name that precluded custom types
 - Fixed bug in :create-table ability to create generated columns.
+- Fixed bug in to-tsvector calls
 
 - Added cube operators
 

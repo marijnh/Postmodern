@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-12-12 Tue 18:43 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>S-SQL Examples T</title>
+<meta name="author" content="Sabra Crolleton" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<style>pre.src{background:#343131;color:white;} </style>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">S-SQL Examples T</h1>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org668248c">S-SQL Examples Home Page</a></li>
+<li><a href="#threads">Threads</a></li>
+<li><a href="#time-functions">Time Functions (now, current-timestamp, current-date, date-trunc, date-part)</a>
+<ul>
+<li><a href="#vanilla-time-functions">Without using local-time or simple-date</a>
+<ul>
+<li><a href="#orge6009ad">Now</a></li>
+<li><a href="#org96034c2">Current-Timestamp</a></li>
+<li><a href="#org241d939">Current-Date</a></li>
+<li><a href="#orgac5551a">Date-Trunc</a></li>
+<li><a href="#org61ea9f7">Date-Part</a></li>
+<li><a href="#orgefad9ee">Age</a></li>
+</ul>
+</li>
+<li><a href="#local-time-time-functions">Using Local-time library (recommended)</a>
+<ul>
+<li><a href="#org0135d0d">Now</a></li>
+<li><a href="#org4c23c3d">Current-Timestamp</a></li>
+<li><a href="#org6dcba40">Current-Date</a></li>
+<li><a href="#org2cdba64">Date-trunc</a></li>
+<li><a href="#org7b93223">Date-part</a></li>
+<li><a href="#org47f6c81">Age</a></li>
+<li><a href="#org562c8af">Misc</a></li>
+</ul>
+</li>
+<li><a href="#simple-date-time-functions">Simple-date library</a>
+<ul>
+<li><a href="#org293d874">Now</a></li>
+<li><a href="#org9336ddb">Current-Timestamp</a></li>
+<li><a href="#orgcac7956">Current-Date</a></li>
+<li><a href="#org54822d9">Date-Trunc</a></li>
+<li><a href="#orgbdfe2e1">Date-Part</a></li>
+<li><a href="#org4833bc9">Age</a></li>
+<li><a href="#orgb7151e5">Misc</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#to-tsquery">To-Tsquery, To-Tsvector</a></li>
+<li><a href="#truncate">Truncate</a></li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-org668248c" class="outline-2">
+<h2 id="org668248c"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
+<div class="outline-text-2" id="text-org668248c">
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><a href="s-sql-a.html">A</a></td>
+<td class="org-left"><a href="s-sql-b.html">B</a></td>
+<td class="org-left"><a href="s-sql-c.html">C</a></td>
+<td class="org-left"><a href="s-sql-d.html">D</a></td>
+<td class="org-left"><a href="s-sql-e.html">E</a></td>
+<td class="org-left"><a href="s-sql-f.html">F</a></td>
+<td class="org-left"><a href="s-sql-g.html">G</a></td>
+<td class="org-left"><a href="s-sql-h.html">H</a></td>
+<td class="org-left"><a href="s-sql-i.html">I</a></td>
+<td class="org-left"><a href="s-sql-j.html">J</a></td>
+<td class="org-left"><a href="s-sql-k.html">K</a></td>
+<td class="org-left"><a href="s-sql-l.html">L</a></td>
+<td class="org-left"><a href="s-sql-m.html">M</a></td>
+<td class="org-left"><a href="s-sql-n.html">N</a></td>
+<td class="org-left"><a href="s-sql-o.html">O</a></td>
+<td class="org-left"><a href="s-sql-p.html">P</a></td>
+<td class="org-left"><a href="s-sql-r.html">R</a></td>
+<td class="org-left"><a href="s-sql-s.html">S</a></td>
+<td class="org-left"><a href="s-sql-t.html">T</a></td>
+<td class="org-left"><a href="s-sql-u.html">U</a></td>
+<td class="org-left"><a href="s-sql-v.html">V</a></td>
+<td class="org-left"><a href="s-sql-w.html">W</a></td>
+<td class="org-left"><a href="s-sql-special-characters.html">Special Characters</a></td>
+<td class="org-left"><a href="calling-postgresql-stored-functions.html">Calling Postgresql Stored Functions and Procedures</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-threads" class="outline-2">
+<h2 id="threads">Threads</h2>
+<div class="outline-text-2" id="text-threads">
+<p>
+While postmodern is generally thread-safe, it is up to the developer to pay attention and remember that postgresql may be spinning off processes at the same time that you are creating threads in your application.
+</p>
+
+<p>
+Something like taking from the postmodern/tests.lisp:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">test-data</span> ()
+  ((id <span class="org-builtin">:col-type</span> serial <span class="org-builtin">:initarg</span> <span class="org-builtin">:id</span> <span class="org-builtin">:accessor</span> test-id)
+   (a <span class="org-builtin">:col-type</span> (or (varchar 100) db-null) <span class="org-builtin">:initarg</span> <span class="org-builtin">:a</span> <span class="org-builtin">:accessor</span> test-a)
+   (b <span class="org-builtin">:col-type</span> boolean <span class="org-builtin">:col-default</span> nil <span class="org-builtin">:initarg</span> <span class="org-builtin">:b</span> <span class="org-builtin">:accessor</span> test-b)
+   (c <span class="org-builtin">:col-type</span> integer <span class="org-builtin">:col-default</span> 0 <span class="org-builtin">:initarg</span> <span class="org-builtin">:c</span> <span class="org-builtin">:accessor</span> test-c))
+  (<span class="org-builtin">:metaclass</span> dao-class)
+  (<span class="org-builtin">:table-name</span> dao-test)
+  (<span class="org-builtin">:keys</span> id))
+
+(execute (dao-table-definition 'test-data))
+
+(<span class="org-keyword">defvar</span> <span class="org-variable-name">*dao-update-lock*</span> (bt:make-lock))
+
+(<span class="org-keyword">let</span> ((item (make-instance 'test-data <span class="org-builtin">:a</span> <span class="org-string">"SC"</span> <span class="org-builtin">:b</span> t <span class="org-builtin">:c</span> 0)))
+  (<span class="org-keyword">with-test-connection</span> (save-dao item))
+  (<span class="org-keyword">let</span> ((id (test-id item)))
+    (<span class="org-keyword">loop</span> for x from 1 to 50 do
+          (bt:make-thread
+           (<span class="org-keyword">lambda</span> () (<span class="org-keyword">with-test-connection</span>
+                       (<span class="org-keyword">loop</span> repeat 1000 do (<span class="org-keyword">bt:with-lock-held</span> (*dao-update-lock*)
+                                                               (incf (test-c item) 1))
+                             (save-dao item))
+                       (<span class="org-keyword">loop</span> repeat 1000 do (<span class="org-keyword">bt:with-lock-held</span> (*dao-update-lock*)
+                                                               (decf (test-c item) 1))
+                             (save-dao item))))))
+
+    (<span class="org-keyword">with-test-connection</span>
+     (describe (get-dao 'test-data id)))))
+
+</pre>
+</div>
+
+<p>
+may return to your control before all the processes are done. As a result, if you check for value of:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(test-c (get-dao 'dao-test 1))
+</pre>
+</div>
+<p>
+when the lisp code returns, you may be surprised that the answer is not 0. Check a few seconds, later and it may be a different number. If you call
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(pomo:list-connections)
+</pre>
+</div>
+<p>
+or
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> '* <span class="org-builtin">:from</span> 'pg-stat-activity))
+</pre>
+</div>
+<p>
+you may notice that there are still outstanding connection - postgresql is still working its way through the processes you just created and it will get through all of them and you will notice that the value has been finally incremented and decremented down to 0.
+</p>
+</div>
+</div>
+
+<div id="outline-container-time-functions" class="outline-2">
+<h2 id="time-functions">Time Functions (now, current-timestamp, current-date, date-trunc, date-part)</h2>
+<div class="outline-text-2" id="text-time-functions">
+</div>
+<div id="outline-container-vanilla-time-functions" class="outline-3">
+<h3 id="vanilla-time-functions">Without using local-time or simple-date</h3>
+<div class="outline-text-3" id="text-vanilla-time-functions">
+</div>
+<div id="outline-container-orge6009ad" class="outline-4">
+<h4 id="orge6009ad">Now</h4>
+<div class="outline-text-4" id="text-orge6009ad">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:now</span>)) <span class="org-builtin">:single</span>)
+
+3909564984
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org96034c2" class="outline-4">
+<h4 id="org96034c2">Current-Timestamp</h4>
+<div class="outline-text-4" id="text-org96034c2">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:current-timestamp</span>)) <span class="org-builtin">:single</span>)
+
+3909564895
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org241d939" class="outline-4">
+<h4 id="org241d939">Current-Date</h4>
+<div class="outline-text-4" id="text-org241d939">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:current-date</span>)) <span class="org-builtin">:single</span>)
+
+3909513600
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgac5551a" class="outline-4">
+<h4 id="orgac5551a">Date-Trunc</h4>
+<div class="outline-text-4" id="text-orgac5551a">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:date-trunc</span> <span class="org-string">"minute"</span> (<span class="org-builtin">:now</span>))) <span class="org-builtin">:single</span>)
+
+3909566160
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org61ea9f7" class="outline-4">
+<h4 id="org61ea9f7">Date-Part</h4>
+<div class="outline-text-4" id="text-org61ea9f7">
+<p>
+The date-part function may return a double-float, regardless of whether you are using s-sql or raw sql.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:date-part</span> <span class="org-string">"year"</span> (<span class="org-builtin">:now</span>)))
+       <span class="org-builtin">:single</span>)
+
+2023.0d0
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgefad9ee" class="outline-4">
+<h4 id="orgefad9ee">Age</h4>
+<div class="outline-text-4" id="text-orgefad9ee">
+<p>
+Postgresql has an Age function which generates an interval. A simple example would be:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query <span class="org-string">"SELECT current_date,</span>
+<span class="org-string">       AGE(timestamp '2000-01-01')"</span>)
+
+((3909513600 ((<span class="org-builtin">:MONTHS</span> 286) (<span class="org-builtin">:DAYS</span> 20) (<span class="org-builtin">:SECONDS</span> 0) (<span class="org-builtin">:USECONDS</span> 0))))
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-local-time-time-functions" class="outline-3">
+<h3 id="local-time-time-functions">Using Local-time library (recommended)</h3>
+<div class="outline-text-3" id="text-local-time-time-functions">
+<p>
+To use local-time load cl-postgres+local-time and then set the appropriate readers. For example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(ql:quickload <span class="org-builtin">:cl-postgres+local-time</span>)
+(local-time:set-local-time-cl-postgres-readers)
+</pre>
+</div>
+</div>
+<div id="outline-container-org0135d0d" class="outline-4">
+<h4 id="org0135d0d">Now</h4>
+<div class="outline-text-4" id="text-org0135d0d">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:now</span>)) <span class="org-builtin">:single</span>)
+
+@2023-11-21T09:18:50.623000-05:00
+
+(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:to-char</span> (<span class="org-builtin">:now</span>) <span class="org-string">"DY (Day), Mon (month)"</span>)) <span class="org-builtin">:single</span>)
+<span class="org-string">"TUE (Tuesday  ), Nov (november )"</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org4c23c3d" class="outline-4">
+<h4 id="org4c23c3d">Current-Timestamp</h4>
+<div class="outline-text-4" id="text-org4c23c3d">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:current-timestamp</span>)) <span class="org-builtin">:single</span>)
+
+@2023-11-21T09:20:07.254268-05:00
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org6dcba40" class="outline-4">
+<h4 id="org6dcba40">Current-Date</h4>
+<div class="outline-text-4" id="text-org6dcba40">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:current-date</span>)) <span class="org-builtin">:single</span>)
+
+@2023-11-20T19:00:00.000000-05:00
+
+(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:current-date</span>) (<span class="org-builtin">:type</span> <span class="org-string">"now"</span> <span class="org-builtin">:time</span>)))
+
+((@2023-11-20T19:00:00.000000-05:00 @2000-03-01T09:21:15.756191-05:00))
+
+(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:to-char</span> (<span class="org-builtin">:current-date</span>) <span class="org-string">"YYYY-MM-DD HH24:MI:SS"</span>))
+       <span class="org-builtin">:single</span>)
+
+<span class="org-string">"2023-11-21 00:00:00"</span>
+
+(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:to-char</span> (<span class="org-builtin">:current-date</span>) <span class="org-string">"YYYY-MM-DD"</span>))
+       <span class="org-builtin">:single</span>)
+
+<span class="org-string">"2023-11-21"</span>
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2cdba64" class="outline-4">
+<h4 id="org2cdba64">Date-trunc</h4>
+<div class="outline-text-4" id="text-org2cdba64">
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:date-trunc</span> <span class="org-string">"minute"</span> (<span class="org-builtin">:now</span>))) <span class="org-builtin">:single</span>)
+
+@2023-11-21T09:31:00.000000-05:00
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org7b93223" class="outline-4">
+<h4 id="org7b93223">Date-part</h4>
+<div class="outline-text-4" id="text-org7b93223">
+<p>
+The date-part function may return a double-float, regardless of whether you are using s-sql or raw sql.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> (<span class="org-builtin">:date-part</span> <span class="org-string">"year"</span> (<span class="org-builtin">:now</span>)))
+      <span class="org-builtin">:single</span>)
+
+2023.0d0
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org47f6c81" class="outline-4">
+<h4 id="org47f6c81">Age</h4>
+<div class="outline-text-4" id="text-org47f6c81">
+<p>
+Local-Time does not support intervals, so you could not use the Postgresql Age function with the local-time adjusted readtable.
+</p>
+</div>
+</div>
+<div id="outline-container-org562c8af" class="outline-4">
+<h4 id="org562c8af">Misc</h4>
+<div class="outline-text-4" id="text-org562c8af">
+<div class="org-src-container">
+<pre class="src src-lisp">  (query (<span class="org-builtin">:select</span> (<span class="org-builtin">:to-char</span>
+                 (<span class="org-builtin">:type</span> <span class="org-string">"yesterday"</span> <span class="org-builtin">:timestamp</span>)
+                 <span class="org-string">"FMMonth FMDDth"</span>))
+       <span class="org-builtin">:single</span>)
+
+<span class="org-string">"November 20th"</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-simple-date-time-functions" class="outline-3">
+<h3 id="simple-date-time-functions">Simple-date library</h3>
+<div class="outline-text-3" id="text-simple-date-time-functions">
+<p>
+To use simple-date with Postmodern, load the simple-date/postgres-glue library and reset the sql readtable. For example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (ql:quickload <span class="org-builtin">:simple-date/postgres-glue</span>)
+
+(setf cl-postgres:*sql-readtable*
+        (cl-postgres:copy-sql-readtable
+            simple-date-cl-postgres-glue:*simple-date-sql-readtable*))
+</pre>
+</div>
+</div>
+<div id="outline-container-org293d874" class="outline-4">
+<h4 id="org293d874">Now</h4>
+<div class="outline-text-4" id="text-org293d874">
+<div class="org-src-container">
+<pre class="src src-lisp">  (query (<span class="org-builtin">:select</span> (<span class="org-builtin">:now</span>)) <span class="org-builtin">:single</span>)
+
+#&lt;SIMPLE-DATE:TIMESTAMP 21-11-2023T14:40:08,271&gt;
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org9336ddb" class="outline-4">
+<h4 id="org9336ddb">Current-Timestamp</h4>
+<div class="outline-text-4" id="text-org9336ddb">
+<div class="org-src-container">
+<pre class="src src-lisp">  (query (<span class="org-builtin">:select</span> (<span class="org-builtin">:current-timestamp</span>)) <span class="org-builtin">:single</span>)
+
+#&lt;SIMPLE-DATE:TIMESTAMP 21-11-2023T14:40:59,025&gt;
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgcac7956" class="outline-4">
+<h4 id="orgcac7956">Current-Date</h4>
+<div class="outline-text-4" id="text-orgcac7956">
+<div class="org-src-container">
+<pre class="src src-lisp">          (query (<span class="org-builtin">:select</span> (<span class="org-builtin">:current-date</span>)) <span class="org-builtin">:single</span>)
+
+        #&lt;SIMPLE-DATE:DATE 21-11-2023&gt;
+
+         (query (<span class="org-builtin">:select</span> (<span class="org-builtin">:current-date</span>) (<span class="org-builtin">:type</span> <span class="org-string">"now"</span> <span class="org-builtin">:time</span>)))
+
+    ((#&lt;SIMPLE-DATE:DATE 21-11-2023&gt; #&lt;SIMPLE-DATE:TIME-OF-DAY 14:42:59.149618&gt;))
+
+      (query (<span class="org-builtin">:select</span> (<span class="org-builtin">:to-char</span> (<span class="org-builtin">:current-date</span>) <span class="org-string">"YYYY-MM-DD HH24:MI:SS"</span>))
+               <span class="org-builtin">:single</span>)
+
+  <span class="org-string">"2023-11-21 00:00:00"</span>
+
+    (query (<span class="org-builtin">:select</span> (<span class="org-builtin">:to-char</span> (<span class="org-builtin">:current-date</span>) <span class="org-string">"YYYY-MM-DD"</span>))
+             <span class="org-builtin">:single</span>)
+<span class="org-string">"2023-11-21"</span>
+
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org54822d9" class="outline-4">
+<h4 id="org54822d9">Date-Trunc</h4>
+<div class="outline-text-4" id="text-org54822d9">
+<div class="org-src-container">
+<pre class="src src-lisp">  (query (<span class="org-builtin">:select</span> (<span class="org-builtin">:date-trunc</span> <span class="org-string">"minute"</span> (<span class="org-builtin">:now</span>)))
+         <span class="org-builtin">:single</span>)
+
+#&lt;SIMPLE-DATE:TIMESTAMP 21-11-2023T14:41:00&gt;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbdfe2e1" class="outline-4">
+<h4 id="orgbdfe2e1">Date-Part</h4>
+<div class="outline-text-4" id="text-orgbdfe2e1">
+<p>
+The date-part function may return a double-float, regardless of whether you are using s-sql or raw sql.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (query (<span class="org-builtin">:select</span> (<span class="org-builtin">:date-part</span> <span class="org-string">"year"</span> (<span class="org-builtin">:now</span>)))
+         <span class="org-builtin">:single</span>)
+
+2023.0d0
+</pre>
+</div>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'current-time (<span class="org-builtin">:type</span> <span class="org-string">"now"</span> <span class="org-builtin">:time</span>)))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org4833bc9" class="outline-4">
+<h4 id="org4833bc9">Age</h4>
+<div class="outline-text-4" id="text-org4833bc9">
+<p>
+Simple-date does support intervals, so you can use the Postgresql Age function:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">  (query <span class="org-string">"SELECT current_date,</span>
+<span class="org-string">       AGE(timestamp '2000-01-01')"</span>)
+((#&lt;SIMPLE-DATE:DATE 21-11-2023&gt; #&lt;SIMPLE-DATE:INTERVAL P23Y10M20D&gt;))
+
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgb7151e5" class="outline-4">
+<h4 id="orgb7151e5">Misc</h4>
+<div class="outline-text-4" id="text-orgb7151e5">
+<div class="org-src-container">
+<pre class="src src-lisp">  (query (<span class="org-builtin">:select</span> (<span class="org-builtin">:to-char</span>
+                 (<span class="org-builtin">:type</span> <span class="org-string">"yesterday"</span> <span class="org-builtin">:timestamp</span>)
+                 <span class="org-string">"FMMonth FMDDth"</span>))
+       <span class="org-builtin">:single</span>)
+
+<span class="org-string">"November 20th"</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-to-tsquery" class="outline-2">
+<h2 id="to-tsquery">To-Tsquery, To-Tsvector</h2>
+<div class="outline-text-2" id="text-to-tsquery">
+<p>
+First as used in creating a table:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-table</span> 't10
+                      ((title <span class="org-builtin">:type</span> (or text db-null))
+                       (body <span class="org-builtin">:type</span> (or text db-null))
+                       (tsv <span class="org-builtin">:type</span> (or tsvector db-null)
+                            <span class="org-builtin">:generated-always</span>
+                            (<span class="org-builtin">:to-tsvector</span> <span class="org-string">"english"</span> 'body)))))
+</pre>
+</div>
+<p>
+Now in a where clause in a selection query, either specifying the language or not specifying the language.:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'title
+               <span class="org-builtin">:from</span> 'pgweb
+               <span class="org-builtin">:where</span> (<span class="org-builtin">:@@</span> (<span class="org-builtin">:to-tsvector</span> <span class="org-string">"english"</span> 'body)
+                           (<span class="org-builtin">:to-tsquery</span> <span class="org-string">"english"</span> <span class="org-string">"friend"</span>))))
+
+    (query (<span class="org-builtin">:select</span> 'title
+               <span class="org-builtin">:from</span> 'pgweb
+               <span class="org-builtin">:where</span> (<span class="org-builtin">:@@</span> (<span class="org-builtin">:to-tsvector</span> 'body)
+                           (<span class="org-builtin">:to-tsquery</span> <span class="org-string">"friend"</span>))))
+</pre>
+</div>
+<p>
+S-SQL does not currently have tsquery operators, so tsquery expressions have to be included in the search term:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'body <span class="org-builtin">:from</span> 't12
+                          <span class="org-builtin">:where</span> (<span class="org-builtin">:@@</span> (<span class="org-builtin">:to-tsvector</span> 'body)
+                                      (<span class="org-builtin">:to-tsquery</span> <span class="org-string">"depend | loud"</span>))))
+</pre>
+</div>
+<p>
+Indexing the tsv column:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:create-index</span> 'textsearch11-idx <span class="org-builtin">:on</span> 't11 <span class="org-builtin">:using</span> 'gin <span class="org-builtin">:fields</span> 'tsv))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-truncate" class="outline-2">
+<h2 id="truncate">Truncate</h2>
+<div class="outline-text-2" id="text-truncate">
+<p>
+This query sql-op takes one or more table names and will truncate those tables (deleting all the rows. The following keyword parameters are optionally allowed and must be in this order.
+</p>
+<ul class="org-ul">
+<li>:only will truncate only this table and not descendent tables.</li>
+<li>:restart-identity will restart any sequences owned by the table.</li>
+<li>:continue-identity will continue sequences owned by the table.</li>
+<li><p>
+:cascade will cascade the truncation through tables using foreign keys.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:truncate</span> 'bigtable 'fattable))
+(query (<span class="org-builtin">:truncate</span> 'bigtable 'fattable <span class="org-builtin">:only</span>))
+(query (<span class="org-builtin">:truncate</span> 'bigtable 'fattable <span class="org-builtin">:only</span> <span class="org-builtin">:continue-identity</span>))
+(query (<span class="org-builtin">:truncate</span> 'bigtable 'fattable <span class="org-builtin">:only</span> <span class="org-builtin">:restart-identity</span>))
+(query (<span class="org-builtin">:truncate</span> 'bigtable 'fattable <span class="org-builtin">:only</span> <span class="org-builtin">:restart-identity</span> <span class="org-builtin">:cascade</span> ))
+(query (<span class="org-builtin">:truncate</span> 'bigtable 'fattable <span class="org-builtin">:only</span> <span class="org-builtin">:continue-identity</span> <span class="org-builtin">:cascade</span> ))
+(query (<span class="org-builtin">:truncate</span> 'bigtable 'fattable <span class="org-builtin">:continue-identity</span> <span class="org-builtin">:cascade</span> ))
+</pre>
+</div></li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

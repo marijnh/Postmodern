@@ -756,6 +756,9 @@ Now the s-sql version:
   "2020-10-30 19:30:54" "19:30:54" "2020-10-30"))
 #+END_SRC
 *** Simple-Date Library Use
+   :PROPERTIES:
+   :CUSTOM_ID: simple-date-library-use
+   :END:
 The Simple-date add-on library (not enabled by default)
 provides types (CLOS classes) for dates, timestamps, and intervals
 similar to the ones SQL databases use, in order to be able to store and read
@@ -816,6 +819,9 @@ information when using `timestamp with time zone`. Time zone information only
 used to convert it to proper UTC timestamp.
 
 *** Local-Time Library Use
+   :PROPERTIES:
+   :CUSTOM_ID: local-time-library-use
+   :END:
 For those who want to use local-time, to enable the local-time reader:
 #+BEGIN_SRC lisp
 (ql:quickload :cl-postgres+local-time)

@@ -233,8 +233,8 @@ table (yes, I know this table is duplicated on other pages) shows the correspond
 
 Numeric and decimal are variable storage size numbers with user specified precision.
 Up to 131072 digits before the decimal point; up to 16383 digits after the decimal point.
-The syntax is numeric(precision, scale). Numeric columns with a specified scale will coerce input
-values to that scale. For more detail, see https://www.postgresql.org/docs/current/datatype-numeric.html
+
+The syntax is numeric(precision, scale). Numeric columns with a specified scale will coerce input values to that scale. For more detail, see https://www.postgresql.org/docs/current/datatype-numeric.html
 
 ** type db-null
    :PROPERTIES:
@@ -476,6 +476,20 @@ should be queries (:select forms).
 Note that you'll have to escape pipe characters to enter them as keywords. S-SQL
 handles the empty keyword symbol (written :||) specially, and treats it like :\|\|,
 so that it can be written without escapes. With :\|, this doesn't work.
+
+We also have registered operators for Postgis, hstore and cube operations. See the following registration examples from the source code which might be useful if you need operators for other extensions:
+#+begin_src lisp
+  ;; PostGIS operators
+(register-sql-operators :2+-ary :&& :&< :|&<\|| :&> :<< :|<<\|| :>> :|@| :|\|&>|
+                        :|\|>>| :~= :|@>| :|@<|)
+
+;; hstore operators
+(register-sql-operators :2+-ary :-> :=> :? :?& :?\| :|<@| :|#=| :unary :%% :%#)
+
+;; cube operators
+(register-sql-operators :2+-ary :&& :|@>| :|<@| :-> :~> :<-> :<#> :<=>)
+
+#+end_src
 ** sql-op :or
    :PROPERTIES:
    :CUSTOM_ID: sql-op-or
@@ -502,13 +516,15 @@ or using parameterized queries
    :PROPERTIES:
    :CUSTOM_ID: sql-op-call
    :END:
-Call calls a Postgresql Procedure. Remember that Postgresql procedures are not called within a select statement. The procedure name must be quoted  or be a variable with a value of a quoted procedure name. Assuming a procedure named set_x_procedure1 exists, an example of calling it with parameters would be:
+:Call calls a Postgresql procedure. Remember that Postgresql procedures are not called within a select statement. The procedure name must be quoted  or be a variable with a value of a quoted procedure name. Assuming a procedure named set_x_procedure1 exists, an example of calling it with parameters would be:
 #+BEGIN_SRC lisp
   (query (:call 'set_x_procedure1 1 13))
 
   (let ((a 1) (b 2) (p 'my-proc))
     (query (:call p a b 3)))
 #+END_SRC
+For more discussion, see [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]].
+
 ** sql-op :intersect
    :PROPERTIES:
    :CUSTOM_ID: sql-op-intersect
