@@ -2471,6 +2471,64 @@ Everything is a trade-off."
 (def-sql-op :cascade (op)
   `(,@(sql-expand op) " CASCADE"))
 
+(defun analyze-option (option)
+  "Option must be a list of 1 or 2 members with the first member being a keyword of :buffer-usage-limit,
+ :verbose or :skip-locked. The second member (if it exists) and the first member is :verbose or :skip-locked 
+should be on of :on, :off, :true, :false, 0, 1,t, nil, \"true\" or \"false\". The check for the string 
+true or false is case insensitive. If the first member is :buffers-usage-limit, the second member should 
+be either a number or a string containing a number and a size parameter (e.g. kb, MB, GB, TB). 
+See https://www.postgresql.org/docs/current/sql-analyze.html for details."
+  (destructuring-bind (name value)
+      (if (= (length option) 2)
+          option
+        (list (car option) "TRUE"))
+    (append
+     (list (string-upcase (to-sql-name name nil t)))
+     (list " ")
+     (list (format nil "~:@(~a~)"
+                   (cond  ((and (eq name :buffer-usage-limit)
+                                (or (numberp value)
+                                    (parse-integer value :junk-allowed t)))
+                           (format nil "~a" value))
+                          ((and (or (eq name :verbose)
+                                    (eq name :skip-locked))
+                                (or (eq value :off)
+                                    (eq value :false)
+                                    (eq value 0)
+                                    (eq value nil)
+                                    (equalp value "false")
+                                    (equalp value "off")))
+                           "FALSE")
+                          ((and (or (eq name :verbose)
+                                    (eq name :skip-locked))
+                                (or (eq value :on)
+                                    (eq value :true)
+                                    (eq value 1)
+                                    (eq value t)
+                                    (equalp value "true")
+                                    (equalp value "on")))
+                           "TRUE")
+                          (t  (error (format nil "Invalid Analyze Option name ~a value ~a  type ~a type-v ~a"
+                                             name value (type-of name) (type-of value))))))))))
+
+(defun sql-expand-analyze-option (elts &optional (sep ", "))
+  "Expand a list of elements, adding a separator between them."
+  (setf elts elts)
+  (loop :for (elt . rest) :on elts
+        :append  (analyze-option elt)
+        :if rest :collect sep))
+
+(def-sql-op :analyze (&rest args)
+            (split-on-keywords ( (verbose - ?)(option * ?)(tables * ?))
+                               args
+                               `("ANALYZE "
+                                 ,@(when (and (not option) verbose)'("VERBOSE "))
+                                 ,@(when option
+                                     (append '("(")
+                                             (sql-expand-analyze-option option)
+                                             '(") ")))
+                                 ,@(sql-expand-list tables))))
+
 (defmacro def-drop-op (op-name word)
   "Def-drop-op accepts variables, strings or symbols as the identifier."
   `(def-sql-op ,op-name (&rest args)
