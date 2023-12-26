@@ -2514,7 +2514,19 @@ To sum the column len of all films and group the results by kind:"
        (sql (:delete-from 'cd.members
              :where (:not (:in 'memid (:select 'memid :from 'cd.bookings)))))
        "DELETE FROM cd.members WHERE (not (memid IN (SELECT memid FROM cd.bookings)))"))
-
+      (is (equal
+	   (sql (:delete-from 'members
+		 :using 'producers
+		 :where (:and (:= 'members.id 'producers.id)
+			      (:= 'members.name "Steve"))))
+	   "DELETE FROM members USING producers WHERE ((members.id = producers.id) and (members.name = E'Steve'))"))
+      (is (equal
+	   (sql (:delete-from 'members
+		 :using 'producers 'experts
+		 :where (:and (:= 'members.id 'producers.id)
+			      (:= 'members.id 'experts.id)
+			      (:= 'members.name "Steve"))))
+	   "DELETE FROM members USING producers, experts WHERE ((members.id = producers.id) and (members.id = experts.id) and (members.name = E'Steve'))"))
   (is (equal
        (sql (:delete-from (:as 'cd.members 'mems)
              :where (:not (:exists (:select 1
