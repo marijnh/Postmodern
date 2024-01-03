@@ -634,6 +634,28 @@ to strings \(which will form an SQL query when concatenated)."
   (is (equal (sql (:select 'ta :from 'a :where (:not-null 'ta)))
              "(SELECT ta FROM a WHERE (ta IS NOT NULL))")))
 
+(test analyse
+      (is (equal (sql (:analyze :option (:verbose t)  :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c)))
+		 "ANALYZE (VERBOSE TRUE) t1(t1c1, t1c2), t2(t2c1, t2c)"))
+      (is (equal (sql (:analyze :option (:verbose 1) (:skip-locked 0) (:buffer-usage-limit "70MB")  :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c)))
+		 "ANALYZE (VERBOSE TRUE, SKIP_LOCKED FALSE, BUFFER_USAGE_LIMIT 70MB) t1(t1c1, t1c2), t2(t2c1, t2c)"))
+      (is (equal (sql (:analyze :option (:verbose :off) (:skip-locked :on) (:buffer-usage-limit "70MB")  :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c)))
+		 "ANALYZE (VERBOSE FALSE, SKIP_LOCKED TRUE, BUFFER_USAGE_LIMIT 70MB) t1(t1c1, t1c2), t2(t2c1, t2c)"))
+      (is (equal (sql (:analyze :verbose :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c2 't2c3)))
+		 "ANALYZE VERBOSE t1(t1c1, t1c2), t2(t2c1, t2c2, t2c3)"))
+      (is (equal (sql (:analyze :verbose))
+		 "ANALYZE VERBOSE "))
+      (is (equal (sql (:analyze))
+		"ANALYZE "))
+      (is (equal (sql (:analyze :option (:verbose t) (:skip-locked nil) (:buffer-usage-limit "70MB")  :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c)))
+		 "ANALYZE (VERBOSE TRUE, SKIP_LOCKED FALSE, BUFFER_USAGE_LIMIT 70MB) t1(t1c1, t1c2), t2(t2c1, t2c)"))
+      (is (equal (sql (:analyze :option (:verbose t) (:skip-locked nil) (:buffer-usage-limit "70MB")  :tables (:t1 't1c1 't1c2)))
+		 "ANALYZE (VERBOSE TRUE, SKIP_LOCKED FALSE, BUFFER_USAGE_LIMIT 70MB) t1(t1c1, t1c2)"))
+      (is (equal (sql (:analyze :option (:verbose t) (:skip-locked nil) (:buffer-usage-limit "70MB")  :tables (:t1 't1c1 't1c2)))
+		 "ANALYZE (VERBOSE TRUE, SKIP_LOCKED FALSE, BUFFER_USAGE_LIMIT 70MB) t1(t1c1, t1c2)"))
+      (is (equal (sql (:analyze :verbose :option (:verbose t) (:skip-locked nil) (:buffer-usage-limit "70MB")  :tables (:t1 't1c1 't1c2)))
+		 "ANALYZE (VERBOSE TRUE, SKIP_LOCKED FALSE, BUFFER_USAGE_LIMIT 70MB) t1(t1c1, t1c2)")))
+      
 (test in-itself
   (is (equal (sql (:in 'id (:set (list 2 7 8))))
              "(id IN (2, 7, 8))"))
