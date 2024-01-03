@@ -1784,9 +1784,10 @@ to runtime. Used to create stored procedures."
 
 
 (def-sql-op :delete-from (table &rest args)
-  (split-on-keywords ((where ?) (returning ? *)) args
+  (split-on-keywords ((using ? *) (where ?) (returning ? *)) args
     `("DELETE FROM " ,@(sql-expand table)
-                     ,@(when where (cons " WHERE " (sql-expand (car where))))
+		     ,@(when using (cons " USING " (sql-expand-list using)))
+		     ,@(when where (cons " WHERE " (sql-expand (car where))))
                      ,@(when returning (cons " RETURNING "
                                              (sql-expand-list returning))))))
 
