@@ -2301,6 +2301,19 @@ expressions that should be returned for every deleted row.
 #+BEGIN_SRC lisp
 (query (:delete-from 'cd.bookings :where (:= 'id 5)))
 #+END_SRC
+The following more complicated version shows the application of the :using and :where clauses:
+#+begin_src lisp
+  (query (:delete-from 'members
+          :using 'producers
+          :where (:and (:= 'members.id 'producers.id)
+                       (:= 'members.name "Steve"))))
+
+  (sql (:delete-from 'members
+        :using 'producers 'films
+                     :where (:and (:= 'members.id 'producers.id)
+                                  (:= 'members.name "Steve")
+                                  (:= 'producers.films-id 'films.id)))
+#+end_src
 ** sql-op :create-table (name (&rest columns) &rest options)
    :PROPERTIES:
    :CUSTOM_ID: sql-op-create-table
@@ -2793,6 +2806,41 @@ tutorial:
 	  :segment-reject-limit 100 'ROWS))
 
 #+END_SRC
+* Analyze
+  :PROPERTIES:
+  :CUSTOM_ID: analyze
+  :END:
+  The [[https://www.postgresql.org/docs/current/sql-analyze.html][official Postgresql documents]] note that analyze collects statistics about a database and provides various options, whether you want specific tables and columns or the entire database, etc. The following is a series of examples of how it can be used in s-sql with increasing levels of complexity. Options can be set to true with t, 1 or :on and set to false with :nil 0 or off.
+#+begin_src lisp
+  (query (:analyze))
+
+  (query (:analyze :verbose))
+  ;; Now specifying just analyzing table t1
+  (query (:analyze :verbose :tables 't1))
+
+  (query (:analyze :verbose :tables :t1))
+  ;; Now specifying just analyzing tables t1 and t2
+  (query (:analyze :verbose :tables :t1 :t2))
+
+  (query (:analyze :verbose :tables 't1 't2))
+  ;; Now specifying columns in tables t1 and t2
+  (query (:analyze :verbose
+          :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c2 't2c3)))
+  ;; Alternative syntax for the columns
+  (query (:analyze :verbose :tables (:t1 :t1c1 :t1c2)))
+  ;; Starting to look at more specific options
+  (query (:analyze :option (:verbose t)
+                   :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c)))
+  ;; The following will set option verbose to true, skip-locked to false
+  ;; and buffer-usage-limit to 70MB
+  (query (:analyze :option (:verbose 1) (:skip-locked 0) (:buffer-usage-limit "70MB")
+                   :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c)))
+  ;; The following will set option verbose to true, skip-locked to false
+  ;; and buffer-usage-limit to 70MB
+  (query (:analyze :option (:verbose t) (:skip-locked nil) (:buffer-usage-limit "70MB")
+                   :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c)))
+
+#+end_src
 * Dynamic Queries, Composition and Parameterized Queries
   :PROPERTIES:
   :CUSTOM_ID: dynamic-queries-composition-and-parameterized-queries

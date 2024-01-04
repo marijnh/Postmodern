@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-12-12 Tue 18:58 -->
+<!-- 2024-01-04 Thu 08:58 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>S-SQL Examples D</title>
@@ -202,7 +202,7 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org16ed5fc">S-SQL Examples Home Page</a></li>
+<li><a href="#org9f48835">S-SQL Examples Home Page</a></li>
 <li><a href="#data-types">Data-types</a>
 <ul>
 <li><a href="#numbers">Numbers</a></li>
@@ -220,9 +220,9 @@
 </div>
 </nav>
 
-<div id="outline-container-org16ed5fc" class="outline-2">
-<h2 id="org16ed5fc"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
-<div class="outline-text-2" id="text-org16ed5fc">
+<div id="outline-container-org9f48835" class="outline-2">
+<h2 id="org9f48835"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
+<div class="outline-text-2" id="text-org9f48835">
 <table>
 
 
@@ -424,8 +424,10 @@ So, looking at a server that is set for PDT, for table test with fields id, date
 Using offset to explicitly offset 1 hour from UTC (e.g. Paris)
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span class="org-builtin">:insert-into</span> 'test <span class="org-builtin">:set</span> 'id 4 'text <span class="org-string">"offset 1 hour"</span>
-                         'date (local-time:encode-timestamp 0 0 0 12 01 01 2013 <span class="org-builtin">:offset</span> 3600)))
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-into</span> 'test
+        <span class="org-builtin">:set</span> 'id 4 'text <span class="org-string">"offset 1 hour"</span>
+                     'date (local-time:encode-timestamp 0 0 0 12 01 01 2013
+                                                        <span class="org-builtin">:offset</span> 3600)))
 
 2013-01-01 03:00:00-08
 </pre>
@@ -439,9 +441,10 @@ Using offset to explicitly offset 1 hour from UTC (e.g. Paris)
 Using timezone to explicitly set it for UTC
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">  (query (<span class="org-builtin">:insert-into</span> 'test
-                           <span class="org-builtin">:set</span> 'id 5 'text <span class="org-string">"insert here using timezone utc"</span>
-                           'date (local-time:encode-timestamp 0 0 0 12 01 01 2013 <span class="org-builtin">:timezone</span> local-time::+utc-zone+)))
+<pre class="src src-lisp">(query (<span class="org-builtin">:insert-into</span> 'test
+        <span class="org-builtin">:set</span> 'id 5 'text <span class="org-string">"insert here using timezone utc"</span>
+                     'date (local-time:encode-timestamp 0 0 0 12 01 01 2013
+                                                        <span class="org-builtin">:timezone</span> local-time::+utc-zone+)))
 
 2013-01-01 04:00:00-08
 </pre>
@@ -490,6 +493,22 @@ Slightly more complicated versions:
                                <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'memid 'mems.memid))))))
 </pre>
 </div>
+<p>
+The following example shows the application of the :using option:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:delete-from</span> 'members
+        <span class="org-builtin">:using</span> 'producers
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'members.id 'producers.id)
+                     (<span class="org-builtin">:=</span> 'members.name <span class="org-string">"Steve"</span>))))
+
+(sql (<span class="org-builtin">:delete-from</span> 'members
+      <span class="org-builtin">:using</span> 'producers 'films
+                   <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'members.id 'producers.id)
+                                (<span class="org-builtin">:=</span> 'members.name <span class="org-string">"Steve"</span>)
+                                (<span class="org-builtin">:=</span> 'producers.films-id 'films.id)))
+</pre>
+</div>
 </div>
 </div>
 
@@ -500,14 +519,14 @@ Slightly more complicated versions:
 Normally, the use of :order-by would order the results in ascending order. You can apply :desc to a column and :asc to another column to re-arrange how the order-by rules will work.
 </p>
 <div class="org-src-container">
-<pre class="src src-lisp">(query (<span class="org-builtin">:order-by</span>
-        (<span class="org-builtin">:select</span> 'id 'name <span class="org-builtin">:from</span> 'regions)
-        (<span class="org-builtin">:desc</span> 'id)))
+<pre class="src src-lisp">    (query (<span class="org-builtin">:order-by</span>
+            (<span class="org-builtin">:select</span> 'id 'name <span class="org-builtin">:from</span> 'regions)
+            (<span class="org-builtin">:desc</span> 'id)))
 
-((11 <span class="org-string">"Eastern Europe"</span>) (10 <span class="org-string">"Caribbean"</span>) (9 <span class="org-string">"Pacific"</span>) (8 <span class="org-string">"Central Asia"</span>)
-                       (7 <span class="org-string">"South America"</span>) (6 <span class="org-string">"North America"</span>) (5 <span class="org-string">"Middle East"</span>)
-                       (4 <span class="org-string">"Western Europe"</span>) (3 <span class="org-string">"Central America"</span>) (2 <span class="org-string">"Asia"</span>)
-                       (1 <span class="org-string">"Africa"</span>))
+((11 <span class="org-string">"Eastern Europe"</span>) (10 <span class="org-string">"Caribbean"</span>) (9 <span class="org-string">"Pacific"</span>)
+ (8 <span class="org-string">"Central Asia"</span>)(7 <span class="org-string">"South America"</span>) (6 <span class="org-string">"North America"</span>)
+ (5 <span class="org-string">"Middle East"</span>)(4 <span class="org-string">"Western Europe"</span>) (3 <span class="org-string">"Central America"</span>)
+ (2 <span class="org-string">"Asia"</span>) (1 <span class="org-string">"Africa"</span>))
 </pre>
 </div>
 </div>
@@ -549,9 +568,10 @@ The postmodern s-sql syntax would look like:
 <pre class="src src-lisp">(query (<span class="org-builtin">:select</span> 'id 'name 'region-id <span class="org-builtin">:distinct-on</span> 'region-id
         <span class="org-builtin">:from</span> 'countries))
 
-((165 <span class="org-string">"Gabon"</span> 1) (102 <span class="org-string">"Nepal"</span> 2) (73 <span class="org-string">"Nicaragua"</span> 3) (20 <span class="org-string">"UK"</span> 4) (51 <span class="org-string">"Egypt"</span> 5)
-                 (166 <span class="org-string">"Greenland"</span> 6) (75 <span class="org-string">"Honduras"</span> 7) (184 <span class="org-string">"Turkmenistan"</span> 8)(108 <span class="org-string">"Papua New Guinea"</span> 9)
-                 (121 <span class="org-string">"Antigua"</span> 10) (67 <span class="org-string">"Belarus"</span> 11))
+((165 <span class="org-string">"Gabon"</span> 1) (102 <span class="org-string">"Nepal"</span> 2) (73 <span class="org-string">"Nicaragua"</span> 3) (20 <span class="org-string">"UK"</span> 4)
+ (51 <span class="org-string">"Egypt"</span> 5) (166 <span class="org-string">"Greenland"</span> 6) (75 <span class="org-string">"Honduras"</span> 7)
+ (184 <span class="org-string">"Turkmenistan"</span> 8)(108 <span class="org-string">"Papua New Guinea"</span> 9)
+ (121 <span class="org-string">"Antigua"</span> 10) (67 <span class="org-string">"Belarus"</span> 11))
 
 (query (<span class="org-builtin">:order-by</span>
         (<span class="org-builtin">:select</span> 'location 'time 'report

@@ -11,7 +11,7 @@
 | [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
 
 - [[file:intro-to-s-sql.org][Intro to S-SQL]]
-- [[file:s-sql-a.org][a (and, alter-table, any and any*, as or alias, avg)]]
+- [[file:s-sql-a.org][a (alter-table, and, analyze, any and any*, as or alias, avg)]]
 - [[file:s-sql-b.org][b (Between, Boolean Operators)]]
 - [[file:s-sql-c.org][c (call, case, cast, coalesce, constraints, count, create-composite-types create-index, create-table)]]
 - [[file:s-sql-d.org][d (data types (numbers and timestamps), delete, desc, distinct, distinct-on, doquery)]]

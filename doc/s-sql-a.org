@@ -7,27 +7,6 @@
 * [[file:s-sql-examples.org][S-SQL Examples Home Page]]
 | [[file:s-sql-a.org][A]]| [[file:s-sql-b.org][B]]| [[file:s-sql-c.org][C]]| [[file:s-sql-d.org][D]]| [[file:s-sql-e.org][E]]| [[file:s-sql-f.org][F]]| [[file:s-sql-g.org][G]]| [[file:s-sql-h.org][H]]| [[file:s-sql-i.org][I]]| [[file:s-sql-j.org][J]]| [[file:s-sql-k.org][K]]| [[file:s-sql-l.org][L]]| [[file:s-sql-m.org][M]]| [[file:s-sql-n.org][N]]| [[file:s-sql-o.org][O]]| [[file:s-sql-p.org][P]]| [[file:s-sql-r.org][R]]| [[file:s-sql-s.org][S]]| [[file:s-sql-t.org][T]]| [[file:s-sql-u.org][U]]| [[file:s-sql-v.org][V]]| [[file:s-sql-w.org][W]]|  [[file:s-sql-special-characters.org][Special Characters]]                        |  [[file:calling-postgresql-stored-functions.org][Calling Postgresql Stored Functions and Procedures]]|
 
-* And
-  :PROPERTIES:
-  :CUSTOM_ID: and
-  :END:
-#+begin_src lisp
-      (query (:select 'countries.name
-                    :from 'countries 'regions
-                    :where (:and (:= 'regions.name "North America")
-                                 (:= 'regions.id 'countries.region-id))))
-
-    (("Bermuda") ("Canada") ("Greenland") ("Mexico") ("US"))
-
-    (query (:select 'countries.name
-                    :from 'countries 'regions
-                    :where (:and (:= 'region-id 'regions.id)
-                                 (:= 'regions.name "Central America")
-                                 (:< 'latitude 12))))
-
-  (("Costa Rica") ("Panama"))
-#+end_src
-
 * Alter Table
 :PROPERTIES:
 :CUSTOM_ID: alter-table
@@ -69,6 +48,62 @@ and you want to drop the not null constraint on the table. Either of the followi
 
 #+end_src
 
+* And
+  :PROPERTIES:
+  :CUSTOM_ID: and
+  :END:
+#+begin_src lisp
+      (query (:select 'countries.name
+                    :from 'countries 'regions
+                    :where (:and (:= 'regions.name "North America")
+                                 (:= 'regions.id 'countries.region-id))))
+
+    (("Bermuda") ("Canada") ("Greenland") ("Mexico") ("US"))
+
+    (query (:select 'countries.name
+                    :from 'countries 'regions
+                    :where (:and (:= 'region-id 'regions.id)
+                                 (:= 'regions.name "Central America")
+                                 (:< 'latitude 12))))
+
+  (("Costa Rica") ("Panama"))
+#+end_src
+
+* Analyze
+  :PROPERTIES:
+  :CUSTOM_ID: analyze
+  :END:
+  The [[https://www.postgresql.org/docs/current/sql-analyze.html][official Postgresql documents]] note that analyze collects statistics about a database and provides various options, whether you want specific tables and columns or the entire database, etc. The following is a series of examples of how it can be used in s-sql with increasing levels of complexity. Options can be set to true with t, 1 or :on and set to false with :nil 0 or off.
+#+begin_src lisp
+  (query (:analyze))
+
+  (query (:analyze :verbose))
+  ;; Now specifying just analyzing table t1
+  (query (:analyze :verbose :tables 't1))
+
+  (query (:analyze :verbose :tables :t1))
+  ;; Now specifying just analyzing tables t1 and t2
+  (query (:analyze :verbose :tables :t1 :t2))
+
+  (query (:analyze :verbose :tables 't1 't2))
+  ;; Now specifying columns in tables t1 and t2
+  (query (:analyze :verbose
+          :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c2 't2c3)))
+  ;; Alternative syntax for the columns
+  (query (:analyze :verbose :tables (:t1 :t1c1 :t1c2)))
+  ;; Starting to look at more specific options
+  (query (:analyze :option (:verbose t)
+                   :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c)))
+  ;; The following will set option verbose to true, skip-locked to false
+  ;; and buffer-usage-limit to 70MB
+  (query (:analyze :option (:verbose 1) (:skip-locked 0) (:buffer-usage-limit "70MB")
+                   :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c)))
+  ;; The following will set option verbose to true, skip-locked to false
+  ;; and buffer-usage-limit to 70MB
+  (query (:analyze :option (:verbose t) (:skip-locked nil) (:buffer-usage-limit "70MB")
+                   :tables (:t1 't1c1 't1c2) (:t2 't2c1 't2c)))
+
+#+end_src
 * Any, Any*
   :PROPERTIES:
   :CUSTOM_ID: any
@@ -131,7 +166,8 @@ Now using s-sql and keeping with the toy example, notice that using :any does no
             :where (:= 'id (:any '$1)))
            toy-query))
 
-  ;; Evaluation aborted on #<CL-POSTGRES-ERROR:SYNTAX-ERROR-OR-ACCESS-VIOLATION {10030AF6A1}>.
+  ;; Evaluation aborted on
+  ;; #<CL-POSTGRES-ERROR:SYNTAX-ERROR-OR-ACCESS-VIOLATION {10030AF6A1}>.
 
   (let ((toy-query '(21 22)))
     (query (:select 'name

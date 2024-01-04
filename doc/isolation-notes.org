@@ -265,12 +265,23 @@ handle the necessary repeats).
 
 We explain this table just below:
 
-| Isolation Level  | Dirty Read   | Nonrepeatable Read | Phantom Read                                       | Serialization Anomaly |
-|------------------+--------------+--------------------+----------------------------------------------------+-----------------------|
-| Read Uncommitted | Allowed      | Possible           | Possible                                           | Possible              |
-| Read Committed * | Not Possible | Possible           | Possible                                           | Possible              |
-| Repeatable Read  | Not Possible | Not Possible       | Allowed by SQL Standard, not allowed in Postgresql | Possible              |
-| Serializable     | Not Possible | Not Possible       | Not Possible                                       | Not Possible          |
++---------------+-----------+-----------------+------------+--------------------+
+|Isolation Level| Dirty Read|  Nonrepeatable  | Phantom    |   Serialization    |
+|               |           |      Read       |Read        |      Anomaly       |
+|               |           |                 |            |                    |
++---------------+-----------+-----------------+------------+--------------------+
+|     Read      | Allowed   | Possible        | Possible   | Possible           |
+|  Uncommitted  |           |                 |            |                    |
++---------------+-----------+-----------------+------------+--------------------+
+|Read Committed |    Not    | Possible        | Possible   | Possible           |
+|       *       | Possible  |                 |            |                    |
++---------------+-----------+-----------------+------------+--------------------+
+|Repeatable Read|    Not    | Not Possible    |   Not in   | Possible           |
+|               | Possible  |                 | Postgresql |                    |
++---------------+-----------+-----------------+------------+--------------------+
+| Serializable  |    Not    | Not Possible    | Not        | Not Possible       |
+|               | Possible  |                 |Possible    |                    |
++---------------+-----------+-----------------+------------+--------------------+
 
 ** Problem Explanation
    :PROPERTIES:
@@ -286,12 +297,24 @@ level, but Postgresql will internally just give you a “Read Committed”
 isolation level.
 
 Assume sales are 2100 at the beginning
-| Transaction 1                                    | Transaction 2                                                    |
-| BEGIN                                            | BEGIN                                                            |
-| (:select 'sales :from 'table1 :where (:= 'id 21) |                                                                  |
-|                                                  | (:update 'table1 :set 'sales 2200 :where (:= 'id 21)) ;no commit |
-| (:select 'sales :from 'table1 :where (:= 'id 21) |                                                                  |
-| END                                              | END                                                              |
+
++----------------------------------------+----------------------------------------------+
+| Transaction 1                          | Transaction 2                                |
++----------------------------------------+----------------------------------------------+
+| BEGIN                                  | BEGIN                                        |
++----------------------------------------+----------------------------------------------+
+|(:select 'sales :from 'table1 :where (:=|                                              |
+|                'id 21)                 |                                              |
++----------------------------------------+----------------------------------------------+
+|                                        | (:update 'table1 :set 'sales 2200 :where (:= |
+|                                        |                   'id 21))                   |
+|                                        |                  ;no commit                  |
++----------------------------------------+----------------------------------------------+
+|(:select 'sales :from 'table1 :where (:=|                                              |
+|                'id 21)                 |                                              |
++----------------------------------------+----------------------------------------------+
+| END                                    | END                                          |
++----------------------------------------+----------------------------------------------+
 
 The second select will read sales as 2200 even though Transaction 2 did not
 fully commit.
@@ -305,13 +328,27 @@ finds the data has been modified by another transaction that committed since
 the initial read.
 
 Assume sales are 2100 at the beginning
-| Transaction 1                                    | Transaction 2                                                    |
-| BEGIN                                            | BEGIN                                                            |
-| (:select 'sales :from 'table1 :where (:= 'id 21) |                                                                  |
-|                                                  | (:update 'table1 :set 'sales 2200 :where (:= 'id 21))            |
-|                                                  | COMMIT;                                                          |
-| (:select 'sales :from 'table1 :where (:= 'id 21) |                                                                  |
-| END                                              | END                                                              |
+
++-----------------------------------+-----------------------------------+
+| Transaction 1                     | Transaction 2                     |
++-----------------------------------+-----------------------------------+
+| BEGIN                             | BEGIN                             |
++-----------------------------------+-----------------------------------+
+|   (:select 'sales :from 'table1   |                                   |
+|            :where (:=             |                                   |
+|              'id 21)              |                                   |
++-----------------------------------+-----------------------------------+
+|                                   | (:update 'table1 :set 'sales 2200 |
+|                                   |        :where (:= 'id 21))        |
++-----------------------------------+-----------------------------------+
+|                                   | COMMIT;                           |
++-----------------------------------+-----------------------------------+
+|   (:select 'sales :from 'table1   |                                   |
+|            :where (:=             |                                   |
+|              'id 21)              |                                   |
++-----------------------------------+-----------------------------------+
+| END                               | END                               |
++-----------------------------------+-----------------------------------+
 
 The second select will read sales as 2200. At least transaction 2 actually
 committed first.
@@ -342,13 +379,25 @@ will not solve this problem.
 
 Assume first select returns 50:
 
-| Transaction 1                                             | Transaction 2                            |
-| BEGIN                                                     | BEGIN                                    |
-| (:select (:count '*) :from 'table1 :where (:= 'region 1)) |                                          |
-|                                                           | (:insert-into 'table1 :set 'sales 2200)) |
-|                                                           | COMMIT;                                  |
-| (:select (:count '*) :from 'table1 :where (:= 'region 1)) |                                          |
-| END                                                       | END                                      |
++---------------------------------------+------------------------------------------+
+| Transaction 1                         | Transaction 2                            |
++---------------------------------------+------------------------------------------+
+| BEGIN                                 | BEGIN                                    |
++---------------------------------------+------------------------------------------+
+|  (:select (:count '*) :from 'table1   |                                          |
+|                :where                 |                                          |
+|            (:= 'region 1))            |                                          |
++---------------------------------------+------------------------------------------+
+|                                       | (:insert-into 'table1 :set 'sales 2200)) |
++---------------------------------------+------------------------------------------+
+|                                       | COMMIT;                                  |
++---------------------------------------+------------------------------------------+
+|  (:select (:count '*) :from 'table1   |                                          |
+|                :where                 |                                          |
+|            (:= 'region 1))            |                                          |
++---------------------------------------+------------------------------------------+
+| END                                   | END                                      |
++---------------------------------------+------------------------------------------+
 
 The second select will return 51. Depending on what else might be happening in
 transaction 1, the difference between the number of rows at the beginning and
@@ -363,24 +412,47 @@ Now consider you have banking application A which runs in multiple sessions and
 does not use transactions and the user withdraws 100 from each of two sessions
 and the balance started at 300.
 
-| Session 1                                                 | Session 2                                                 |
-| (:select 'balance :from 'accounts :where (:= 'user-id 1)) |                                                           |
-|                                                           | (:select 'balance :from 'accounts :where (:= 'user-id 1)) |
-| Application calculates the balance should be 200          |                                                           |
-| (:update 'accounts :set 'balance 200)                     |                                                           |
-|                                                           | Application calculates the balance should be 200          |
-|                                                           | (:update 'accounts :set 'balance 200)                     |
++---------------------------------------+--------------------------------------------+
+|Session 1                              | Session 2                                  |
++---------------------------------------+--------------------------------------------+
+|   (:select 'balance :from 'accounts   |                                            |
+|        :where (:= 'user-id 1))        |                                            |
++---------------------------------------+--------------------------------------------+
+|                                       |(:select 'balance :from 'accounts :where (:=|
+|                                       |                'user-id 1))                |
++---------------------------------------+--------------------------------------------+
+| Application calculates the balance    |                                            |
+|should be 200                          |                                            |
++---------------------------------------+--------------------------------------------+
+| (:update 'accounts :set 'balance 200) |                                            |
++---------------------------------------+--------------------------------------------+
+|                                       | Application calculates the balance should  |
+|                                       |be 200                                      |
++---------------------------------------+--------------------------------------------+
+|                                       | (:update 'accounts :set 'balance 200)      |
++---------------------------------------+--------------------------------------------+
 
 At this point the application has subtracted 200 (100 in each session), but
 the account balance still shows 200. Transactions would not have made a
 difference.
 
 Now implemented slightly differently:
-| Session 1                                                 | Session 2                                                 |
-| (:select 'balance :from 'accounts :where (:= 'user-id 1)) |                                                           |
-|                                                           | (:select 'balance :from 'accounts :where (:= 'user-id 1)) |
-| (:update 'accounts :set 'balance (:- 'balance 100))       |                                                           |
-|                                                           | (:update 'accounts :set 'balance (:- 'balance 100))       |
+
++---------------------------------------+--------------------------------------------+
+| Session 1                             | Session 2                                  |
++---------------------------------------+--------------------------------------------+
+|   (:select 'balance :from 'accounts   |                                            |
+|        :where (:= 'user-id 1))        |                                            |
++---------------------------------------+--------------------------------------------+
+|                                       |(:select 'balance :from 'accounts :where (:=|
+|                                       |                'user-id 1))                |
++---------------------------------------+--------------------------------------------+
+| (:update 'accounts :set 'balance (:-  |                                            |
+|'balance 100))                         |                                            |
++---------------------------------------+--------------------------------------------+
+|                                       | (:update 'accounts :set 'balance (:-       |
+|                                       |'balance 100))                              |
++---------------------------------------+--------------------------------------------+
 
 Do you know what the balance is now? It should be 100 because you put the
 calculation back into the database where it belongs. But life gets more
@@ -423,16 +495,30 @@ on the new version of the row to determine whether it needs to be modified.
 Assume our banking problem using transactions at the Postgresql default
 isolation level of "read committed".
 
-| Session 1                                                 | Session 2                                                            |
-| BEGIN                                                     | BEGIN                                                                |
-| (:select 'balance :from 'accounts :where (:= 'user-id 1)) |                                                                      |
-|                                                           | ; Deferred (:select 'balance :from 'accounts :where (:= 'user-id 1)) |
-| Application calculates the balance should be 200          |                                                                      |
-| (:update 'accounts :set 'balance 200)                     |                                                                      |
-| COMMIT                                                    |                                                                      |
-|                                                           | Application calculates the balance should be 100                     |
-|                                                           | (:update 'accounts :set 'balance 100)                                |
-|                                                           | COMMIT                                                               |
++---------------------------------------+--------------------------------------------------+
+| Session 1                             | Session 2                                        |
++---------------------------------------+--------------------------------------------------+
+| BEGIN                                 | BEGIN                                            |
++---------------------------------------+--------------------------------------------------+
+|   (:select 'balance :from 'accounts   |                                                  |
+|        :where (:= 'user-id 1))        |                                                  |
++---------------------------------------+--------------------------------------------------+
+|                                       |   ; Deferred (:select 'balance :from 'accounts   |
+|                                       |             :where (:= 'user-id 1))              |
++---------------------------------------+--------------------------------------------------+
+| Application calculates the balance    |                                                  |
+|should be 200                          |                                                  |
++---------------------------------------+--------------------------------------------------+
+| (:update 'accounts :set 'balance 200) |                                                  |
++---------------------------------------+--------------------------------------------------+
+| COMMIT                                |                                                  |
++---------------------------------------+--------------------------------------------------+
+|                                       | Application calculates the balance should be 100 |
++---------------------------------------+--------------------------------------------------+
+|                                       | (:update 'accounts :set 'balance 100)            |
++---------------------------------------+--------------------------------------------------+
+|                                       | COMMIT                                           |
++---------------------------------------+--------------------------------------------------+
 
 The Session 2 select query notices that the row is already engaged and would be
 deferred until Transaction 1 is committed. At that point it reads the
