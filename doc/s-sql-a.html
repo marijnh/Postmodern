@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-12-12 Tue 18:32 -->
+<!-- 2024-01-04 Thu 08:37 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>S-SQL Examples A</title>
@@ -202,13 +202,14 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgf6f2b25">S-SQL Examples Home Page</a></li>
-<li><a href="#and">And</a></li>
+<li><a href="#orgc723a3e">S-SQL Examples Home Page</a></li>
 <li><a href="#alter-table">Alter Table</a>
 <ul>
 <li><a href="#alter-column">Altering Columns</a></li>
 </ul>
 </li>
+<li><a href="#and">And</a></li>
+<li><a href="#analyze">Analyze</a></li>
 <li><a href="#any">Any, Any*</a></li>
 <li><a href="#arrays">Arrays - see Array-Notes</a></li>
 <li><a href="#as">As (sometimes referred to as Alias)</a></li>
@@ -217,9 +218,9 @@
 </div>
 </nav>
 
-<div id="outline-container-orgf6f2b25" class="outline-2">
-<h2 id="orgf6f2b25"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
-<div class="outline-text-2" id="text-orgf6f2b25">
+<div id="outline-container-orgc723a3e" class="outline-2">
+<h2 id="orgc723a3e"><a href="s-sql-examples.html">S-SQL Examples Home Page</a></h2>
+<div class="outline-text-2" id="text-orgc723a3e">
 <table>
 
 
@@ -304,29 +305,6 @@
 </div>
 </div>
 
-<div id="outline-container-and" class="outline-2">
-<h2 id="and">And</h2>
-<div class="outline-text-2" id="text-and">
-<div class="org-src-container">
-<pre class="src src-lisp">    (query (<span class="org-builtin">:select</span> 'countries.name
-                  <span class="org-builtin">:from</span> 'countries 'regions
-                  <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'regions.name <span class="org-string">"North America"</span>)
-                               (<span class="org-builtin">:=</span> 'regions.id 'countries.region-id))))
-
-  ((<span class="org-string">"Bermuda"</span>) (<span class="org-string">"Canada"</span>) (<span class="org-string">"Greenland"</span>) (<span class="org-string">"Mexico"</span>) (<span class="org-string">"US"</span>))
-
-  (query (<span class="org-builtin">:select</span> 'countries.name
-                  <span class="org-builtin">:from</span> 'countries 'regions
-                  <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'region-id 'regions.id)
-                               (<span class="org-builtin">:=</span> 'regions.name <span class="org-string">"Central America"</span>)
-                               (<span class="org-builtin">:&lt;</span> 'latitude 12))))
-
-((<span class="org-string">"Costa Rica"</span>) (<span class="org-string">"Panama"</span>))
-</pre>
-</div>
-</div>
-</div>
-
 <div id="outline-container-alter-table" class="outline-2">
 <h2 id="alter-table">Alter Table</h2>
 <div class="outline-text-2" id="text-alter-table">
@@ -385,6 +363,68 @@ and you want to drop the not null constraint on the table. Either of the followi
 </div>
 </div>
 
+<div id="outline-container-and" class="outline-2">
+<h2 id="and">And</h2>
+<div class="outline-text-2" id="text-and">
+<div class="org-src-container">
+<pre class="src src-lisp">    (query (<span class="org-builtin">:select</span> 'countries.name
+                  <span class="org-builtin">:from</span> 'countries 'regions
+                  <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'regions.name <span class="org-string">"North America"</span>)
+                               (<span class="org-builtin">:=</span> 'regions.id 'countries.region-id))))
+
+  ((<span class="org-string">"Bermuda"</span>) (<span class="org-string">"Canada"</span>) (<span class="org-string">"Greenland"</span>) (<span class="org-string">"Mexico"</span>) (<span class="org-string">"US"</span>))
+
+  (query (<span class="org-builtin">:select</span> 'countries.name
+                  <span class="org-builtin">:from</span> 'countries 'regions
+                  <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'region-id 'regions.id)
+                               (<span class="org-builtin">:=</span> 'regions.name <span class="org-string">"Central America"</span>)
+                               (<span class="org-builtin">:&lt;</span> 'latitude 12))))
+
+((<span class="org-string">"Costa Rica"</span>) (<span class="org-string">"Panama"</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-analyze" class="outline-2">
+<h2 id="analyze">Analyze</h2>
+<div class="outline-text-2" id="text-analyze">
+<p>
+The <a href="https://www.postgresql.org/docs/current/sql-analyze.html">official Postgresql documents</a> note that analyze collects statistics about a database and provides various options, whether you want specific tables and columns or the entire database, etc. The following is a series of examples of how it can be used in s-sql with increasing levels of complexity. Options can be set to true with t, 1 or :on and set to false with :nil 0 or off.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:analyze</span>))
+
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span>))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">Now specifying just analyzing table t1</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span> <span class="org-builtin">:tables</span> 't1))
+
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span> <span class="org-builtin">:tables</span> <span class="org-builtin">:t1</span>))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">Now specifying just analyzing tables t1 and t2</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span> <span class="org-builtin">:tables</span> <span class="org-builtin">:t1</span> <span class="org-builtin">:t2</span>))
+
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span> <span class="org-builtin">:tables</span> 't1 't2))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">Now specifying columns in tables t1 and t2</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span>
+        <span class="org-builtin">:tables</span> (<span class="org-builtin">:t1</span> 't1c1 't1c2) (<span class="org-builtin">:t2</span> 't2c1 't2c2 't2c3)))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">Alternative syntax for the columns</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span> <span class="org-builtin">:tables</span> (<span class="org-builtin">:t1</span> <span class="org-builtin">:t1c1</span> <span class="org-builtin">:t1c2</span>)))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">Starting to look at more specific options</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:option</span> (<span class="org-builtin">:verbose</span> t)
+                 <span class="org-builtin">:tables</span> (<span class="org-builtin">:t1</span> 't1c1 't1c2) (<span class="org-builtin">:t2</span> 't2c1 't2c)))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">The following will set option verbose to true, skip-locked to false</span>
+<span class="org-comment-delimiter">;; </span><span class="org-comment">and buffer-usage-limit to 70MB</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:option</span> (<span class="org-builtin">:verbose</span> 1) (<span class="org-builtin">:skip-locked</span> 0) (<span class="org-builtin">:buffer-usage-limit</span> <span class="org-string">"70MB"</span>)
+                 <span class="org-builtin">:tables</span> (<span class="org-builtin">:t1</span> 't1c1 't1c2) (<span class="org-builtin">:t2</span> 't2c1 't2c)))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">The following will set option verbose to true, skip-locked to false</span>
+<span class="org-comment-delimiter">;; </span><span class="org-comment">and buffer-usage-limit to 70MB</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:option</span> (<span class="org-builtin">:verbose</span> t) (<span class="org-builtin">:skip-locked</span> nil) (<span class="org-builtin">:buffer-usage-limit</span> <span class="org-string">"70MB"</span>)
+                 <span class="org-builtin">:tables</span> (<span class="org-builtin">:t1</span> 't1c1 't1c2) (<span class="org-builtin">:t2</span> 't2c1 't2c)))
+
+</pre>
+</div>
+</div>
+</div>
 <div id="outline-container-any" class="outline-2">
 <h2 id="any">Any, Any*</h2>
 <div class="outline-text-2" id="text-any">
@@ -463,7 +503,8 @@ Now using s-sql and keeping with the toy example, notice that using :any does no
           <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id (<span class="org-builtin">:any</span> '$1)))
          toy-query))
 
-<span class="org-comment-delimiter">;; </span><span class="org-comment">Evaluation aborted on #&lt;CL-POSTGRES-ERROR:SYNTAX-ERROR-OR-ACCESS-VIOLATION {10030AF6A1}&gt;.</span>
+<span class="org-comment-delimiter">;; </span><span class="org-comment">Evaluation aborted on</span>
+<span class="org-comment-delimiter">;; </span><span class="org-comment">#&lt;CL-POSTGRES-ERROR:SYNTAX-ERROR-OR-ACCESS-VIOLATION {10030AF6A1}&gt;.</span>
 
 (<span class="org-keyword">let</span> ((toy-query '(21 22)))
   (query (<span class="org-builtin">:select</span> 'name

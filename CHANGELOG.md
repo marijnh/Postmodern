@@ -1,3 +1,9 @@
+# Changelog 1.33.11
+## Changes to S-SQL
+- Added :analyze operator
+- Added :using option for :delete-from
+- Additional S-SQL Documentation
+## Updated version numbers in the asd files
 # Changelog 1.33.10
 ## Changes to S-SQL
 - Added :call operator to s-sql (so that you can use the s-sql syntax to call a Postgresql procedure) and substantial more s-sql examples in the documentation.

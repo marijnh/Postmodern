@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-12-12 Tue 19:09 -->
+<!-- 2024-01-04 Thu 09:00 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>S-SQL Reference Manual</title>
@@ -362,14 +362,14 @@
 <li><a href="#sql-op-variance">sql-op :variance (&amp;rest args)</a></li>
 <li><a href="#sql-op-var-pop">sql-op :var-pop (&amp;rest args)</a></li>
 <li><a href="#sql-op-var-samp">sql-op :var-samp (&amp;rest args)</a></li>
-<li><a href="#orgeae7dce">sql-op :range-between (&amp;rest args)</a></li>
-<li><a href="#org7f89889">sql-op :rows-between (&amp;rest args)</a></li>
+<li><a href="#orgbb31242">sql-op :range-between (&amp;rest args)</a></li>
+<li><a href="#orgb700f34">sql-op :rows-between (&amp;rest args)</a></li>
 <li><a href="#sql-op-over">sql-op :over (form &amp;rest args)</a></li>
 <li><a href="#sql-op-partition-by">sql-op :partition-by (&amp;rest args)</a></li>
 <li><a href="#sql-op-window">sql-op :window (form)</a></li>
 <li><a href="#sql-op-with">sql-op :with (&amp;rest args)</a></li>
 <li><a href="#sql-op-with-recursive">sql-op :with-recursive (&amp;rest args)</a></li>
-<li><a href="#org6ccfaeb">sql-op :with-ordinality, :with-ordinality-as</a></li>
+<li><a href="#org595b5da">sql-op :with-ordinality, :with-ordinality-as</a></li>
 </ul>
 </li>
 <li><a href="#table-functions">Table Functions</a>
@@ -407,6 +407,7 @@
 <li><a href="#sql-op-copy">sql-op :copy (table &amp;rest args)</a></li>
 </ul>
 </li>
+<li><a href="#analyze">Analyze</a></li>
 <li><a href="#dynamic-queries-composition-and-parameterized-queries">Dynamic Queries, Composition and Parameterized Queries</a>
 <ul>
 <li><a href="#dynamic-queries-overview">Overview</a>
@@ -2828,9 +2829,9 @@ Window Functions
 </p>
 </div>
 </div>
-<div id="outline-container-orgeae7dce" class="outline-3">
-<h3 id="orgeae7dce">sql-op :range-between (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-orgeae7dce">
+<div id="outline-container-orgbb31242" class="outline-3">
+<h3 id="orgbb31242">sql-op :range-between (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgbb31242">
 <p>
 Range-between allows window functions to apply to different segments of a result set.
 It accepts the following keywords: :order-by, :rows-between, :range-between,
@@ -2858,9 +2859,9 @@ An example which calculates a running total could look like this:
 </div>
 </div>
 
-<div id="outline-container-org7f89889" class="outline-3">
-<h3 id="org7f89889">sql-op :rows-between (&amp;rest args)</h3>
-<div class="outline-text-3" id="text-org7f89889">
+<div id="outline-container-orgb700f34" class="outline-3">
+<h3 id="orgb700f34">sql-op :rows-between (&amp;rest args)</h3>
+<div class="outline-text-3" id="text-orgb700f34">
 <p>
 Rows-between allows window functions to apply to different segments of a result set.
 It accepts the following keywords:
@@ -3061,9 +3062,9 @@ Recursive modifier to a WITH statement, allowing the query to refer to its own o
 </div>
 </div>
 </div>
-<div id="outline-container-org6ccfaeb" class="outline-3">
-<h3 id="org6ccfaeb">sql-op :with-ordinality, :with-ordinality-as</h3>
-<div class="outline-text-3" id="text-org6ccfaeb">
+<div id="outline-container-org595b5da" class="outline-3">
+<h3 id="org595b5da">sql-op :with-ordinality, :with-ordinality-as</h3>
+<div class="outline-text-3" id="text-org595b5da">
 <p>
 Selects can use :with-ordinality or :with-ordinality-as parameters. Postgresql will give the new ordinality column the name of ordinality. :with-ordinality-as allows you to set different names for the columns in the result set.
 </p>
@@ -3397,6 +3398,22 @@ expressions that should be returned for every deleted row.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(query (<span class="org-builtin">:delete-from</span> 'cd.bookings <span class="org-builtin">:where</span> (<span class="org-builtin">:=</span> 'id 5)))
+</pre>
+</div>
+<p>
+The following more complicated version shows the application of the :using and :where clauses:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:delete-from</span> 'members
+        <span class="org-builtin">:using</span> 'producers
+        <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'members.id 'producers.id)
+                     (<span class="org-builtin">:=</span> 'members.name <span class="org-string">"Steve"</span>))))
+
+(sql (<span class="org-builtin">:delete-from</span> 'members
+      <span class="org-builtin">:using</span> 'producers 'films
+                   <span class="org-builtin">:where</span> (<span class="org-builtin">:and</span> (<span class="org-builtin">:=</span> 'members.id 'producers.id)
+                                (<span class="org-builtin">:=</span> 'members.name <span class="org-string">"Steve"</span>)
+                                (<span class="org-builtin">:=</span> 'producers.films-id 'films.id)))
 </pre>
 </div>
 </div>
@@ -4091,6 +4108,45 @@ tutorial:
 </div>
 </div>
 </div>
+<div id="outline-container-analyze" class="outline-2">
+<h2 id="analyze">Analyze</h2>
+<div class="outline-text-2" id="text-analyze">
+<p>
+The <a href="https://www.postgresql.org/docs/current/sql-analyze.html">official Postgresql documents</a> note that analyze collects statistics about a database and provides various options, whether you want specific tables and columns or the entire database, etc. The following is a series of examples of how it can be used in s-sql with increasing levels of complexity. Options can be set to true with t, 1 or :on and set to false with :nil 0 or off.
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(query (<span class="org-builtin">:analyze</span>))
+
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span>))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">Now specifying just analyzing table t1</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span> <span class="org-builtin">:tables</span> 't1))
+
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span> <span class="org-builtin">:tables</span> <span class="org-builtin">:t1</span>))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">Now specifying just analyzing tables t1 and t2</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span> <span class="org-builtin">:tables</span> <span class="org-builtin">:t1</span> <span class="org-builtin">:t2</span>))
+
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span> <span class="org-builtin">:tables</span> 't1 't2))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">Now specifying columns in tables t1 and t2</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span>
+        <span class="org-builtin">:tables</span> (<span class="org-builtin">:t1</span> 't1c1 't1c2) (<span class="org-builtin">:t2</span> 't2c1 't2c2 't2c3)))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">Alternative syntax for the columns</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:verbose</span> <span class="org-builtin">:tables</span> (<span class="org-builtin">:t1</span> <span class="org-builtin">:t1c1</span> <span class="org-builtin">:t1c2</span>)))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">Starting to look at more specific options</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:option</span> (<span class="org-builtin">:verbose</span> t)
+                 <span class="org-builtin">:tables</span> (<span class="org-builtin">:t1</span> 't1c1 't1c2) (<span class="org-builtin">:t2</span> 't2c1 't2c)))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">The following will set option verbose to true, skip-locked to false</span>
+<span class="org-comment-delimiter">;; </span><span class="org-comment">and buffer-usage-limit to 70MB</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:option</span> (<span class="org-builtin">:verbose</span> 1) (<span class="org-builtin">:skip-locked</span> 0) (<span class="org-builtin">:buffer-usage-limit</span> <span class="org-string">"70MB"</span>)
+                 <span class="org-builtin">:tables</span> (<span class="org-builtin">:t1</span> 't1c1 't1c2) (<span class="org-builtin">:t2</span> 't2c1 't2c)))
+<span class="org-comment-delimiter">;; </span><span class="org-comment">The following will set option verbose to true, skip-locked to false</span>
+<span class="org-comment-delimiter">;; </span><span class="org-comment">and buffer-usage-limit to 70MB</span>
+(query (<span class="org-builtin">:analyze</span> <span class="org-builtin">:option</span> (<span class="org-builtin">:verbose</span> t) (<span class="org-builtin">:skip-locked</span> nil) (<span class="org-builtin">:buffer-usage-limit</span> <span class="org-string">"70MB"</span>)
+                 <span class="org-builtin">:tables</span> (<span class="org-builtin">:t1</span> 't1c1 't1c2) (<span class="org-builtin">:t2</span> 't2c1 't2c)))
+
+</pre>
+</div>
+</div>
+</div>
 <div id="outline-container-dynamic-queries-composition-and-parameterized-queries" class="outline-2">
 <h2 id="dynamic-queries-composition-and-parameterized-queries">Dynamic Queries, Composition and Parameterized Queries</h2>
 <div class="outline-text-2" id="text-dynamic-queries-composition-and-parameterized-queries">
@@ -4177,8 +4233,8 @@ For purposes of this example, we will use the following employee table:
 <div class="outline-text-5" id="text-symbols-in-variables">
 </div>
 <ul class="org-ul">
-<li><a id="orga0bab45"></a>Select Statements<br>
-<div class="outline-text-6" id="text-orga0bab45">
+<li><a id="orgb593769"></a>Select Statements<br>
+<div class="outline-text-6" id="text-orgb593769">
 <p>
 Consider the following two toy examples where we determine the table and columns
 to be selected using symbols (either keyword or quoted) inside variables.
@@ -4202,8 +4258,8 @@ string constants in the middle of a select statement.
 </div>
 </li>
 
-<li><a id="org6780aaf"></a>Update Statements<br>
-<div class="outline-text-6" id="text-org6780aaf">
+<li><a id="orge226848"></a>Update Statements<br>
+<div class="outline-text-6" id="text-orge226848">
 <p>
 This works with update statements as well
 </p>
@@ -4216,8 +4272,8 @@ This works with update statements as well
 </div>
 </div>
 </li>
-<li><a id="org872ee8d"></a>Insert Statements<br>
-<div class="outline-text-6" id="text-org872ee8d">
+<li><a id="orgd0c7cfa"></a>Insert Statements<br>
+<div class="outline-text-6" id="text-orgd0c7cfa">
 <p>
 This works with insert-into statements as well
 </p>
@@ -4238,8 +4294,8 @@ This works with insert-into statements as well
 </li>
 </ul>
 </li>
-<li><a id="org6c1dc81"></a>Delete Statements<br>
-<div class="outline-text-5" id="text-org6c1dc81">
+<li><a id="orgb78c212"></a>Delete Statements<br>
+<div class="outline-text-5" id="text-orgb78c212">
 <p>
 This works with delete statements as well
 </p>

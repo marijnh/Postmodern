@@ -87,8 +87,10 @@ So, looking at a server that is set for PDT, for table test with fields id, date
 
 Using offset to explicitly offset 1 hour from UTC (e.g. Paris)
 #+begin_src lisp
-  (query (:insert-into 'test :set 'id 4 'text "offset 1 hour"
-                           'date (local-time:encode-timestamp 0 0 0 12 01 01 2013 :offset 3600)))
+  (query (:insert-into 'test
+          :set 'id 4 'text "offset 1 hour"
+                       'date (local-time:encode-timestamp 0 0 0 12 01 01 2013
+                                                          :offset 3600)))
 
   2013-01-01 03:00:00-08
 #+end_src
@@ -98,10 +100,11 @@ Using offset to explicitly offset 1 hour from UTC (e.g. Paris)
 Using timezone to explicitly set it for UTC
 #+begin_src lisp
   (query (:insert-into 'test
-                           :set 'id 5 'text "insert here using timezone utc"
-                           'date (local-time:encode-timestamp 0 0 0 12 01 01 2013 :timezone local-time::+utc-zone+)))
+          :set 'id 5 'text "insert here using timezone utc"
+                       'date (local-time:encode-timestamp 0 0 0 12 01 01 2013
+                                                          :timezone local-time::+utc-zone+)))
 
-2013-01-01 04:00:00-08
+  2013-01-01 04:00:00-08
 #+end_src
  (looking at the default timezone for the server, postgresql has kept the timezone as PDT - UTC less 8 hours - but set the time as 04:00:00, which is the time in UTC relative to the PDT time at the server.
 
@@ -132,6 +135,19 @@ Slightly more complicated versions:
                                  :from 'cd.bookings
                                  :where (:= 'memid 'mems.memid))))))
 #+end_src
+The following example shows the application of the :using option:
+#+begin_src lisp
+  (query (:delete-from 'members
+          :using 'producers
+          :where (:and (:= 'members.id 'producers.id)
+                       (:= 'members.name "Steve"))))
+
+  (sql (:delete-from 'members
+        :using 'producers 'films
+                     :where (:and (:= 'members.id 'producers.id)
+                                  (:= 'members.name "Steve")
+                                  (:= 'producers.films-id 'films.id)))
+#+end_src
 
 * Desc
   :PROPERTIES:
@@ -143,10 +159,10 @@ Normally, the use of :order-by would order the results in ascending order. You c
               (:select 'id 'name :from 'regions)
               (:desc 'id)))
 
-      ((11 "Eastern Europe") (10 "Caribbean") (9 "Pacific") (8 "Central Asia")
-                             (7 "South America") (6 "North America") (5 "Middle East")
-                             (4 "Western Europe") (3 "Central America") (2 "Asia")
-                             (1 "Africa"))
+  ((11 "Eastern Europe") (10 "Caribbean") (9 "Pacific")
+   (8 "Central Asia")(7 "South America") (6 "North America")
+   (5 "Middle East")(4 "Western Europe") (3 "Central America")
+   (2 "Asia") (1 "Africa"))
 #+end_src
 
 * Distinct
@@ -176,9 +192,10 @@ The postmodern s-sql syntax would look like:
   (query (:select 'id 'name 'region-id :distinct-on 'region-id
           :from 'countries))
 
-  ((165 "Gabon" 1) (102 "Nepal" 2) (73 "Nicaragua" 3) (20 "UK" 4) (51 "Egypt" 5)
-                   (166 "Greenland" 6) (75 "Honduras" 7) (184 "Turkmenistan" 8)(108 "Papua New Guinea" 9)
-                   (121 "Antigua" 10) (67 "Belarus" 11))
+  ((165 "Gabon" 1) (102 "Nepal" 2) (73 "Nicaragua" 3) (20 "UK" 4)
+   (51 "Egypt" 5) (166 "Greenland" 6) (75 "Honduras" 7)
+   (184 "Turkmenistan" 8)(108 "Papua New Guinea" 9)
+   (121 "Antigua" 10) (67 "Belarus" 11))
 
   (query (:order-by
           (:select 'location 'time 'report
