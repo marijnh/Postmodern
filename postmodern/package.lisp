@@ -52,6 +52,7 @@
    #:*current-logical-transaction*
    #:*isolation-level*
    #:with-transaction
+   #:begin-transaction
    #:commit-transaction
    #:commit-logical-transaction
    #:abort-transaction
