@@ -422,10 +422,12 @@ return ' DEFAULT' "
          (list `(sql-escape ,arg)))
         (t (list (sql-escape arg)))))
 
-(defun sql-expand-list (elts &optional (sep ", "))
+(defun sql-expand-list (elts &optional (sep ", ") (wrap nil))
   "Expand a list of elements, adding a separator between them."
   (loop :for (elt . rest) :on elts
+	:if wrap :collect "("
         :append (sql-expand elt)
+	:if wrap :collect ")"
         :if rest :collect sep))
 
 (defun sql-expand-names (names &optional (sep ", "))
@@ -537,12 +539,15 @@ strings and forms that evaluate to strings."
 (defun make-expander (arity name)
   "Generates an appropriate expander function for a given operator
 with a given arity."
-  (let ((with-spaces (strcat (list " " name " "))))
+  (let ((with-spaces (strcat (list " " name " ")))
+	(wrap-in-parens t))
     (flet ((check-unary (args)
              (when (or (not args) (cdr args))
                (sql-error "SQL operator ~A is unary." name)))
            (expand-n-ary (args)
-             `("(" ,@(sql-expand-list args with-spaces) ")")))
+             `("(" ,@(sql-expand-list args with-spaces) ")"))
+	   (expand-subqueries (args)
+             `("(" ,@(sql-expand-list args with-spaces wrap-in-parens) ")")))
       (ecase arity
         (:unary (lambda (args)
                   (check-unary args)
@@ -554,6 +559,10 @@ with a given arity."
                   (if (cdr args)
                       (expand-n-ary args)
                       (sql-expand (car args)))))
+	(:n-ary-subqueries (lambda (args)
+			     (if (cdr args)
+				 (expand-subqueries args)
+				 (sql-expand (car args)))))
         (:2+-ary (lambda (args)
                    (unless (cdr args)
                      (sql-error "SQL operator ~A takes at least two arguments."
@@ -574,7 +583,7 @@ case). After the arity follow any number of operators, either just a
 keyword, in which case the downcased symbol name is used as the
 operator, or a two-element list containing a keyword and a name
 string."
-  (declare (type (member :unary :unary-postfix :n-ary :n-or-unary :2+-ary)
+  (declare (type (member :unary :unary-postfix :n-ary :n-or-unary :n-ary-subqueries :2+-ary)
                  arity))
   (flet ((define-op (name)
            (let ((name (if (listp name)
@@ -587,8 +596,11 @@ string."
     `(progn ,@(mapcar #'define-op names))))
 
 (register-sql-operators :unary :not)
-(register-sql-operators :n-ary :+ :* :% :& :|\|| :|\|\|| :and :or :union
-                        (:union-all "union all"))
+
+(register-sql-operators :n-ary :+ :* :% :& :|\|| :|\|\|| :and :or)
+
+(register-sql-operators :n-ary-subqueries :union (:union-all "union all"))
+
 (register-sql-operators :n-or-unary :- :~)
 (register-sql-operators :2+-ary  := :/ :!= :<> :< :> :<= :>= :^ :~* :!~ :!~*
                                  :like :ilike :->> :|#>| :|#>>|
