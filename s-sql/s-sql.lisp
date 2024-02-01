@@ -1944,8 +1944,9 @@ Example:
   (let ((x (butlast args)) (y (last args)))
     `("WITH " ,@(sql-expand-list x) ,@(sql-expand (car y)))))
 
-(def-sql-op :with-recursive (form1 form2)
-  `("WITH RECURSIVE " ,@(sql-expand form1) ,@(sql-expand form2)))
+(def-sql-op :with-recursive (&rest args)
+  (let ((ctes (butlast args)) (query (last args)))
+    `("WITH RECURSIVE " ,@(sql-expand-list ctes) ,@(sql-expand (car query)))))
 
 (def-sql-op :window (form)
   `("WINDOW " ,@(sql-expand form)))
