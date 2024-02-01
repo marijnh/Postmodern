@@ -1240,7 +1240,7 @@ To sum the column len of all films and group the results by kind:"
                  :where (:and (:>= 'starttime "2012-01-01")
                               (:< 'starttime "2013-01-01"))))
                'facid 'month))
-             "(((SELECT facid, EXTRACT(month FROM starttime) AS month, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid, month) union all (SELECT facid, NULL, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid) union all (SELECT NULL, NULL, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')))) ORDER BY facid, month)")))
+             "((((SELECT facid, EXTRACT(month FROM starttime) AS month, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid, month)) union all ((SELECT facid, NULL, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')) GROUP BY facid)) union all ((SELECT NULL, NULL, SUM(slots) AS slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01'))))) ORDER BY facid, month)")))
 
 (test max-aggregation
   "Testing aggregation functions."
@@ -1468,9 +1468,9 @@ To sum the column len of all films and group the results by kind:"
   "testing basic union."
 ;;; https://www.postgresql.org/docs/current/static/typeconv-union-case.html
   (is (equal (sql (:union (:select (:as "a" 'text) ) (:select "b")))
-             "((SELECT E'a' AS text) union (SELECT E'b'))"))
-  (is (equal (sql (:union (:select (:as 1.2 "numeric")) (:select 1)))
-             "((SELECT 1.2 AS E'numeric') union (SELECT 1))"))
+              "(((SELECT E'a' AS text)) union ((SELECT E'b')))"))
+  (is (equal (sql (:union (:select (:as 1.2 'numeric)) (:select 1)))
+             "(((SELECT 1.2 AS numeric)) union ((SELECT 1)))"))
 
 
 ;;; This shows how to obtain the union of the tables distributors and actors, restricting the results to those that begin with the letter W in each table. Only distinct rows are wanted, so the key word ALL is omitted. https://www.postgresql.org/docs/current/static/sql-select.html
@@ -1481,14 +1481,16 @@ To sum the column len of all films and group the results by kind:"
                            (:select 'actors.name
                             :from 'actors
                             :where (:like 'actors.name "W%"))))
-             "((SELECT distributors.name FROM distributors WHERE (distributors.name like E'W%')) union (SELECT actors.name FROM actors WHERE (actors.name like E'W%')))"))
+             "(((SELECT distributors.name FROM distributors WHERE (distributors.name like E'W%'))) union ((SELECT actors.name FROM actors WHERE (actors.name like E'W%'))))"))
 
 ;;; Union-all with a simple with clause https://www.postgresql.org/docs/current/static/sql-select.html
-  (is (equal (sql (:union-all
-                   (:with (:as 't1 (:select (:as (:random) 'x)
-                                    :from (:generate-series 1 3)))
-                          (:select '* :from 't1)) (:select '* :from 't1)))
-             "(WITH t1 AS (SELECT random() AS x FROM generate_series(1, 3))(SELECT * FROM t1) union all (SELECT * FROM t1))")))
+  (is (equal
+       (sql (:with (:as 't1 (:select (:as (:random) 'x)
+		                         :from (:generate-series 1 3)))
+	                 (:union-all
+	                  (:select '* :from 't1)
+	                  (:select '* :from 't1))))
+"WITH t1 AS (SELECT random() AS x FROM generate_series(1, 3))(((SELECT * FROM t1)) union all ((SELECT * FROM t1)))")))
 
 (test with
   "Testing select having a CTE with function From https://www.pgexercises.com/questions/aggregates/fachours2.html"
@@ -1550,7 +1552,7 @@ To sum the column len of all films and group the results by kind:"
                                    (:select :null :null (:sum 'slots)
                                     :from 'bookings)))
                 'facid 'month))
-    "(WITH bookings AS (SELECT facid, EXTRACT(month FROM starttime) AS month, slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')))((SELECT facid, month, SUM(slots) FROM bookings GROUP BY facid, month) union all (SELECT facid, NULL, SUM(slots) FROM bookings GROUP BY facid) union all (SELECT NULL, NULL, SUM(slots) FROM bookings)) ORDER BY facid, month)"))
+    "(WITH bookings AS (SELECT facid, EXTRACT(month FROM starttime) AS month, slots FROM cd.bookings WHERE ((starttime >= E'2012-01-01') and (starttime < E'2013-01-01')))(((SELECT facid, month, SUM(slots) FROM bookings GROUP BY facid, month)) union all ((SELECT facid, NULL, SUM(slots) FROM bookings GROUP BY facid)) union all ((SELECT NULL, NULL, SUM(slots) FROM bookings))) ORDER BY facid, month)"))
 
   (is
    (equal
@@ -1845,7 +1847,7 @@ To sum the column len of all films and group the results by kind:"
                                             :from (:as 'graph 'g) (:as 'search-graph 'sg)
                                     :where (:= 'g.id 'sg.link))))
                 (:select '* :from 'search-graph)))
-             "WITH RECURSIVE search_graph(id, link, data, depth) AS ((SELECT g.id, g.link, g.data, 1 FROM graph AS g) union all (SELECT g.id, g.link, g.data, (sg.depth = 1) FROM graph AS g, search_graph AS sg WHERE (g.id = sg.link)))(SELECT * FROM search_graph)"))
+             "WITH RECURSIVE search_graph(id, link, data, depth) AS (((SELECT g.id, g.link, g.data, 1 FROM graph AS g)) union all ((SELECT g.id, g.link, g.data, (sg.depth = 1) FROM graph AS g, search_graph AS sg WHERE (g.id = sg.link))))(SELECT * FROM search_graph)"))
 
   ;;      Recursive queries are typically used to deal with hierarchical or tree-structured data. A useful example is this query to find all the direct and indirect sub-parts of a product, given only a table that shows immediate inclusions:
 
@@ -1863,7 +1865,7 @@ To sum the column len of all films and group the results by kind:"
                 (:select 'sub-part (:as (:sum 'quantity) 'total-quantity)
                          :from 'included-parts
                          :group-by 'sub-part)))
-             "WITH RECURSIVE included_parts(sub_part, part, quantity) AS ((SELECT sub_part, part, quantity FROM parts WHERE (part = E'our-product')) union all (SELECT p.sub_part, p.part, p.quantity FROM included_parts AS pr, parts AS p WHERE (p.part = pr.sub_part)))(SELECT sub_part, SUM(quantity) AS total_quantity FROM included_parts GROUP BY sub_part)"))
+       "WITH RECURSIVE included_parts(sub_part, part, quantity) AS (((SELECT sub_part, part, quantity FROM parts WHERE (part = E'our-product'))) union all ((SELECT p.sub_part, p.part, p.quantity FROM included_parts AS pr, parts AS p WHERE (p.part = pr.sub_part))))(SELECT sub_part, SUM(quantity) AS total_quantity FROM included_parts GROUP BY sub_part)"))
 
   ;; This query will loop if the link relationships contain cycles. Because we require a “depth” output, just changing UNION ALL to UNION would not eliminate the looping. Instead we need to recognize whether we have reached the same row again while following a particular path of links. We add two columns path and cycle to the loop-prone query:
 
@@ -1886,7 +1888,7 @@ To sum the column len of all films and group the results by kind:"
                    :where (:and (:= 'g.id 'sg.link)
                                 (:not 'cycle)))))
           (:select '* :from 'search-graph)))
-       "WITH RECURSIVE search_graph(id, link, data, depth, path, cycle) AS ((SELECT g.id, g.link, g.data, 1, (g.f1)[g.f2], false FROM graph AS g) union all (SELECT g.id, g.link, g.data, (sg.depth = 1), (path || row(g.f1, g.f2)), (row(g.f1, g.f2) = ANY(path)) FROM graph AS g, search_graph AS sg WHERE ((g.id = sg.link) and (not cycle))))(SELECT * FROM search_graph)"))
+      "WITH RECURSIVE search_graph(id, link, data, depth, path, cycle) AS (((SELECT g.id, g.link, g.data, 1, (g.f1)[g.f2], false FROM graph AS g)) union all ((SELECT g.id, g.link, g.data, (sg.depth = 1), (path || row(g.f1, g.f2)), (row(g.f1, g.f2) = ANY(path)) FROM graph AS g, search_graph AS sg WHERE ((g.id = sg.link) and (not cycle)))))(SELECT * FROM search_graph)"))
 
   ;; Aside from preventing cycles, the array value is often useful in its own right as representing the “path” taken to reach any particular row.
 
@@ -1899,7 +1901,7 @@ To sum the column len of all films and group the results by kind:"
                          :inner-join (:as 'children 'b)
                          :on (:= 'a.depends-on 'b.depended-on))))
                 (:select '* :from 'children)))
-             "WITH RECURSIVE children AS ((SELECT depended_on FROM dependencies WHERE (depends_on = $1)) union (SELECT a.depended_on FROM dependencies AS a INNER JOIN children AS b ON (a.depends_on = b.depended_on)))(SELECT * FROM children)"))
+       "WITH RECURSIVE children AS (((SELECT depended_on FROM dependencies WHERE (depends_on = $1))) union ((SELECT a.depended_on FROM dependencies AS a INNER JOIN children AS b ON (a.depends_on = b.depended_on))))(SELECT * FROM children)"))
 
 
   ;; https://www.postgresql.org/docs/current/static/sql-select.html
@@ -1914,7 +1916,7 @@ To sum the column len of all films and group the results by kind:"
                              :from (:as 'employee-recursive 'er) (:as 'employee 'e)
                                      :where (:= 'er.employee-name 'e.manager-name))))
                     (:select 'distance 'employee-name :from 'employee-recursive)))
-             "WITH RECURSIVE employee_recursive(distance, employee_name, manager_name) AS ((SELECT 1, employee_name, manager_name FROM employee WHERE (manager_name = E'Mary')) union all (SELECT (er.distance + 1), e.employee_name, e.manager_name FROM employee_recursive AS er, employee AS e WHERE (er.employee_name = e.manager_name)))(SELECT distance, employee_name FROM employee_recursive)")))
+     "WITH RECURSIVE employee_recursive(distance, employee_name, manager_name) AS (((SELECT 1, employee_name, manager_name FROM employee WHERE (manager_name = E'Mary'))) union all ((SELECT (er.distance + 1), e.employee_name, e.manager_name FROM employee_recursive AS er, employee AS e WHERE (er.employee_name = e.manager_name))))(SELECT distance, employee_name FROM employee_recursive)")))
 
 (test ordinality
   (with-test-connection
