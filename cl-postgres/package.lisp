@@ -93,6 +93,7 @@
            #:db-division-by-zero
            #:undefined-column
            #:undefined-table
+           #:unrecognized-configuration-parameter
            #:duplicate-column
            #:duplicate-cursor
            #:duplicate-database
