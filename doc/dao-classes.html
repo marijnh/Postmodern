@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-11-19 Sat 14:21 -->
+<!-- 2024-04-17 Wed 10:57 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DAO Classes</title>
@@ -205,9 +205,10 @@
 <li><a href="#daos">Overview</a></li>
 <li><a href="#class-dao-class">Metaclass dao-class</a>
 <ul>
-<li><a href="#org46f2b57">Basic Dao Definition Examples</a></li>
+<li><a href="#org1981690">Basic Dao Definition Examples</a></li>
 <li><a href="#class-dao-class-slots">Slot Options</a></li>
 <li><a href="#class-dao-class-slots-table-options">Table options</a></li>
+<li><a href="#orgc5e4642">Dao Class Inheritance</a></li>
 </ul>
 </li>
 <li><a href="#query-and-selection">Dao Query and Selection</a></li>
@@ -298,9 +299,9 @@ slots in these classes will refer to columns in the database.
 <h2 id="class-dao-class">Metaclass dao-class</h2>
 <div class="outline-text-2" id="text-class-dao-class">
 </div>
-<div id="outline-container-org46f2b57" class="outline-3">
-<h3 id="org46f2b57">Basic Dao Definition Examples</h3>
-<div class="outline-text-3" id="text-org46f2b57">
+<div id="outline-container-org1981690" class="outline-3">
+<h3 id="org1981690">Basic Dao Definition Examples</h3>
+<div class="outline-text-3" id="text-org1981690">
 <p>
 A simple dao definition could look like this:
 </p>
@@ -629,8 +630,95 @@ generating threads that create new instances of that class.
 </p>
 </div>
 </div>
+
+<div id="outline-container-orgc5e4642" class="outline-3">
+<h3 id="orgc5e4642">Dao Class Inheritance</h3>
+<div class="outline-text-3" id="text-orgc5e4642">
+<p>
+The following dao class is related to ruby active record with the slots updated-at and created-at. Both slots are initialized automatically. Updated-at is automatically updated every time you use insert-dao whereas created-at will remain the same even if you change entry data.
+</p>
+
+<p>
+This code is written with the local-time library, but simple-time should also work:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">timestamp-to-postgre-time</span> (timestamp)
+  (local-time:format-timestring nil timestamp))
+
+(<span class="org-keyword">defun</span> <span class="org-function-name">update-time</span> (old-time)
+  (<span class="org-keyword">declare</span> (ignore old-time))
+  (local-time:format-timestring nil (now)))
+
+(<span class="org-keyword">defclass</span> <span class="org-type">active-record</span> ()
+  ((created-at <span class="org-builtin">:col-type</span> timestamp
+               <span class="org-builtin">:accessor</span> created-at
+               <span class="org-builtin">:description</span> <span class="org-string">"The timestamp when the entry was created."</span>
+               <span class="org-builtin">:initform</span> (local-time:now)
+               <span class="org-builtin">:col-export</span> timestamp-to-postgre-time)
+   (updated-at <span class="org-builtin">:col-type</span> timestamp
+               <span class="org-builtin">:accessor</span> updated-at
+               <span class="org-builtin">:description</span> <span class="org-string">"The timestamp when the entry was last updated."</span>
+               <span class="org-builtin">:initform</span> (local-time:now)
+               <span class="org-builtin">:col-export</span> update-time))
+  (<span class="org-builtin">:metaclass</span> dao-class))
+</pre>
 </div>
 
+<p>
+By using active-record as superclass, subclasses inherit the same convenient features:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">user</span> (active-record)
+  ((user-id <span class="org-builtin">:col-type</span> bigint
+            <span class="org-builtin">:primary-key</span> t
+            <span class="org-builtin">:reader</span> user-id
+            <span class="org-builtin">:col-unique</span> t
+            <span class="org-builtin">:col-identity</span> t)
+   (name <span class="org-builtin">:col-type</span> (or db-null string)
+         <span class="org-builtin">:initarg</span> <span class="org-builtin">:last-name</span>
+         <span class="org-builtin">:col-default</span> <span class="org-builtin">:null</span>
+         <span class="org-builtin">:accessor</span> last-name)
+   (email <span class="org-builtin">:col-type</span> string
+          <span class="org-builtin">:col-unique</span> t
+          <span class="org-builtin">:initarg</span> <span class="org-builtin">:email</span>
+          <span class="org-builtin">:accessor</span> email))
+  (<span class="org-builtin">:metaclass</span> pomo:dao-class))
+</pre>
+</div>
+
+<p>
+Next is an example for using inheritance with foreign-keys.
+For that we define a dao-class (which will not be created as table)
+whereas the only column is the primary key user-id from the user table:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">user-id-foreign-key</span> ()
+  ((user-id <span class="org-builtin">:col-type</span> integer
+            <span class="org-builtin">:initarg</span> <span class="org-builtin">:user-id</span>
+            <span class="org-builtin">:reader</span> user-id
+            <span class="org-builtin">:col-references</span> ((user user-id))
+            <span class="org-builtin">:col-primary-key</span> t))
+  (<span class="org-builtin">:metaclass</span> pomo:dao-class))
+</pre>
+</div>
+
+<p>
+Now we can add user-id-foreign-key as superclass in tables where we want to use user-id as foreign key:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">defclass</span> <span class="org-type">user-credential</span> (user-id-foreign-key active-record)
+  ((password-hash <span class="org-builtin">:col-type</span> string
+                  <span class="org-builtin">:initarg</span> <span class="org-builtin">:password-hash</span>
+                  <span class="org-builtin">:accessor</span> password-hash)
+   (salt <span class="org-builtin">:col-type</span> integer
+         <span class="org-builtin">:initarg</span> <span class="org-builtin">:salt</span>
+         <span class="org-builtin">:accessor</span> salt))
+  (<span class="org-builtin">:metaclass</span> pomo:dao-class))
+</pre>
+</div>
+</div>
+</div>
+</div>
 
 <div id="outline-container-query-and-selection" class="outline-2">
 <h2 id="query-and-selection">Dao Query and Selection</h2>
