@@ -929,3 +929,26 @@ own queries to add them, in which case look to s-sql's create-table function."
                                            `(:default ,(column-default slot)))))
                    ,@(when (and (dao-keys table) (not (find-primary-key-column table)))
                        `((:primary-key ,@(dao-keys table)))))))
+
+(defmacro define-dao-class (name direct-superclasses direct-slots &rest options)
+  "Like defclass except two postmodern specific changes:
+1. The dao-class metaclass options is automatically added.
+2. If second value in a slot is not a keyword, it is assumed to be col-type.
+
+Example:
+(define-dao-class id-class ()
+  ((id integer :initarg :id :accessor test-id)
+   (email :col-type text :initarg :email :accessor email))
+  (:keys id))"
+  (flet ((expand-slot (rest)
+	   (let ((second
+		   (second rest)))
+	     (if (keywordp second)
+		 rest
+		 (cons (first rest)
+		       (append (list :col-type second)
+			       (cddr rest)))))))
+    (list* 'defclass name direct-superclasses
+	   (mapcar #'expand-slot direct-slots)
+	   (list :metaclass 'dao-class)
+	   options)))
