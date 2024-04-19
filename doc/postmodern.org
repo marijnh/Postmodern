@@ -1121,6 +1121,12 @@ Drop the specified database. The database parameter can be a string or a
 symbol. Note: Only the owner of a database (or superuser) can drop a database
 and there cannot be any current connections to the database.
 [[#database-information][See Database information below for information specific functions]
+* Database Access Objects (DAOs)
+  :PROPERTIES:
+  :CUSTOM_ID: database-access-objects
+  :END:
+
+See detailed information on DAO classes is found here: [[file:dao-classes.html][Database Access Object (Dao) Classes]]
 
 * Table definition and creation using a dao
   :PROPERTIES:

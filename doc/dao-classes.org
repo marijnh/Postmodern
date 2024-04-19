@@ -352,6 +352,20 @@ Now we can add user-id-foreign-key as superclass in tables where we want to use 
            :accessor salt))
     (:metaclass pomo:dao-class))
 #+end_src
+* Define-Dao-Class Macro (New to version 1.33.12)
+   :PROPERTIES:
+   :CUSTOM_ID: postmodern-define-dao-class-macro
+   :END:
+New to Postmodern version 1.33.12 (thank you Killianmh) is a macro that makes defining a dao class slightly easier. It is like defclass except two postmodern specific changes:
+1. The dao-class metaclass options is automatically added.
+2. If second value in a slot is not a keyword, it is assumed to be col-type.
+Example:
+#+begin_src lisp
+  (define-dao-class id-class ()
+  ((id integer :initarg :id :accessor test-id)
+   (email :col-type text :initarg :email :accessor email))
+  (:keys id))
+#+end_src
 
 * Dao Query and Selection
 :PROPERTIES:

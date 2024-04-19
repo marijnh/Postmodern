@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2024-04-17 Wed 10:57 -->
+<!-- 2024-04-19 Fri 10:19 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DAO Classes</title>
@@ -205,12 +205,13 @@
 <li><a href="#daos">Overview</a></li>
 <li><a href="#class-dao-class">Metaclass dao-class</a>
 <ul>
-<li><a href="#org1981690">Basic Dao Definition Examples</a></li>
+<li><a href="#org0498c7c">Basic Dao Definition Examples</a></li>
 <li><a href="#class-dao-class-slots">Slot Options</a></li>
 <li><a href="#class-dao-class-slots-table-options">Table options</a></li>
-<li><a href="#orgc5e4642">Dao Class Inheritance</a></li>
+<li><a href="#orgfbfe67a">Dao Class Inheritance</a></li>
 </ul>
 </li>
+<li><a href="#postmodern-define-dao-class-macro">Define-Dao-Class Macro (New to version 1.33.12)</a></li>
 <li><a href="#query-and-selection">Dao Query and Selection</a></li>
 <li><a href="#dao-reference">Dao Reference</a>
 <ul>
@@ -299,9 +300,9 @@ slots in these classes will refer to columns in the database.
 <h2 id="class-dao-class">Metaclass dao-class</h2>
 <div class="outline-text-2" id="text-class-dao-class">
 </div>
-<div id="outline-container-org1981690" class="outline-3">
-<h3 id="org1981690">Basic Dao Definition Examples</h3>
-<div class="outline-text-3" id="text-org1981690">
+<div id="outline-container-org0498c7c" class="outline-3">
+<h3 id="org0498c7c">Basic Dao Definition Examples</h3>
+<div class="outline-text-3" id="text-org0498c7c">
 <p>
 A simple dao definition could look like this:
 </p>
@@ -631,9 +632,9 @@ generating threads that create new instances of that class.
 </div>
 </div>
 
-<div id="outline-container-orgc5e4642" class="outline-3">
-<h3 id="orgc5e4642">Dao Class Inheritance</h3>
-<div class="outline-text-3" id="text-orgc5e4642">
+<div id="outline-container-orgfbfe67a" class="outline-3">
+<h3 id="orgfbfe67a">Dao Class Inheritance</h3>
+<div class="outline-text-3" id="text-orgfbfe67a">
 <p>
 The following dao class is related to ruby active record with the slots updated-at and created-at. Both slots are initialized automatically. Updated-at is automatically updated every time you use insert-dao whereas created-at will remain the same even if you change entry data.
 </p>
@@ -716,6 +717,28 @@ Now we can add user-id-foreign-key as superclass in tables where we want to use 
   (<span class="org-builtin">:metaclass</span> pomo:dao-class))
 </pre>
 </div>
+</div>
+</div>
+</div>
+<div id="outline-container-postmodern-define-dao-class-macro" class="outline-2">
+<h2 id="postmodern-define-dao-class-macro">Define-Dao-Class Macro (New to version 1.33.12)</h2>
+<div class="outline-text-2" id="text-postmodern-define-dao-class-macro">
+<p>
+New to Postmodern version 1.33.12 (thank you Killianmh) is a macro that makes defining a dao class slightly easier. It is like defclass except two postmodern specific changes:
+</p>
+<ol class="org-ol">
+<li>The dao-class metaclass options is automatically added.</li>
+<li>If second value in a slot is not a keyword, it is assumed to be col-type.</li>
+</ol>
+<p>
+Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">define-dao-class</span> id-class ()
+((id integer <span class="org-builtin">:initarg</span> <span class="org-builtin">:id</span> <span class="org-builtin">:accessor</span> test-id)
+ (email <span class="org-builtin">:col-type</span> text <span class="org-builtin">:initarg</span> <span class="org-builtin">:email</span> <span class="org-builtin">:accessor</span> email))
+(<span class="org-builtin">:keys</span> id))
+</pre>
 </div>
 </div>
 </div>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2024-01-04 Thu 09:03 -->
+<!-- 2024-04-19 Fri 08:49 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Postmodern</title>
@@ -208,6 +208,19 @@
 <li><a href="#6f05b344-12c2-42b0-b231-3aaced30afb8">Download and installation</a></li>
 <li><a href="#b5bb7222-8134-4dcb-83b7-f764b7f2bb33">Quickstart</a>
 <ul>
+<li><a href="#postmodern-connections">Connections</a>
+<ul>
+<li><a href="#postmodern-connections-single-long-life">Single Long Life Connections With No Multi-threading or Executable Creation</a></li>
+<li><a href="#postmodern-connections-multiples">Multiple Connections, Multi-threading or Executable Creation</a></li>
+<li><a href="#postmodern-connections-pooling">Pooling Connections</a></li>
+</ul>
+</li>
+<li><a href="#postmodern-basic-queries">Basic Queries</a></li>
+<li><a href="#postmodern-dao-classes">DAO Classes</a>
+<ul>
+<li><a href="#postmodern-define-dao-class-macro">Define-Dao-Class Macro (New to version 1.33.12)</a></li>
+</ul>
+</li>
 <li><a href="#eccad49e-8df8-4451-89ff-4987b103c9dd">Table Creation</a>
 <ul>
 <li><a href="#7629810d-8ccb-4236-b540-6aff596a042f">With SQL or S-SQL</a></li>
@@ -243,7 +256,7 @@
 </div>
 </nav>
 <p>
-Version 1.33.11
+Version 1.33.12
 </p>
 
 <p>
@@ -392,13 +405,19 @@ Assuming you have already installed quicklisp, load postmodern.
 (use-package <span class="org-builtin">:postmodern</span>)
 </pre>
 </div>
+</div>
 
+<div id="outline-container-postmodern-connections" class="outline-3">
+<h3 id="postmodern-connections">Connections</h3>
+<div class="outline-text-3" id="text-postmodern-connections">
+</div>
+<div id="outline-container-postmodern-connections-single-long-life" class="outline-4">
+<h4 id="postmodern-connections-single-long-life">Single Long Life Connections With No Multi-threading or Executable Creation</h4>
+<div class="outline-text-4" id="text-postmodern-connections-single-long-life">
 <p>
-If you have a PostgreSQL server running on localhost, with a database called 'testdb'
-on it, which is accessible for user 'foucault' with password 'surveiller', there are
-two basic ways to connect to a database. If your role/application/database(s) looks
-like a 1:1 relationship and you are not using threads, you can connect like this:
+If you have a PostgreSQL server running on localhost, with a database called 'testdb' on it, which is accessible for user 'foucault' with password 'surveiller', there are two basic ways to connect to a database. If your role/application/database(s) looks like a 1:1 relationship and you are not using threads and you are not going to create an executable, you can connect like this:
 </p>
+
 <div class="org-src-container">
 <pre class="src src-lisp">(connect-toplevel <span class="org-string">"testdb"</span> <span class="org-string">"foucault"</span> <span class="org-string">"surveiller"</span> <span class="org-string">"localhost"</span>)
 </pre>
@@ -407,11 +426,11 @@ like a 1:1 relationship and you are not using threads, you can connect like this
 <p>
 This will establish a connection to be used by all code, except for that wrapped
 in a with-connection form, which takes the same arguments but only establishes
-the connection within that lexical scope.
+the connection within that lexical scope. This method is often used in development or debugging.
 </p>
 
 <p>
-Connect-toplevel will maintain a single connection for the life of the session.
+Connect-toplevel will maintain a single connection for the life of your running lisp instance.
 </p>
 
 <p>
@@ -448,16 +467,26 @@ pass :no, :try, :require, :yes, or :full
 When using ssl, you can set the cl-postgres exported variables <code>*ssl-certificate-file*</code>,  <code>*ssl-key-file*</code> and  <code>*ssl-root-ca-file*</code> to provide client key, certificate files
 and root ca files. They can be either NIL, for no file, or a pathname.
 </p>
+</div>
+</div>
 
+<div id="outline-container-postmodern-connections-multiples" class="outline-4">
+<h4 id="postmodern-connections-multiples">Multiple Connections, Multi-threading or Executable Creation</h4>
+<div class="outline-text-4" id="text-postmodern-connections-multiples">
 <p>
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
-many:1, (in other words, changing connections) or you are using threads (each thread must have its own connection) then with Postmodern you can use the <code>with-connection</code> form which establishes a connection with a lexical scope is more appropriate.
+many:1, (in other words, changing connections) or you are using threads (each thread must have its own connection) or you are going to create an executable, then you can use the <code>with-connection</code> form which establishes a connection with a lexical scope is more appropriate.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(<span class="org-keyword">with-connection</span> '(<span class="org-string">"testdb"</span> <span class="org-string">"foucault"</span> <span class="org-string">"surveiller"</span> <span class="org-string">"localhost"</span>)
   ...)
 </pre>
 </div>
+
+<p>
+The same additional parameters apply to specifying ports or establishing an ssl connection
+</p>
+
 <p>
 For other connection options, please see <a href="https://marijnhaverbeke.nl/postmodern.html#function-connection">https://marijnhaverbeke.nl/postmodern.html#function-connection</a>
 </p>
@@ -465,9 +494,7 @@ For other connection options, please see <a href="https://marijnhaverbeke.nl/pos
 <p>
 If you are creating a database, you need to have established a connection
 to a currently existing database (typically "postgres"). Assuming the foucault role
-is a superuser and you want to stay in a development connection with your new database
-afterwards, you would first use with-connection to connect to postgres, create the
-database and then switch to connect-toplevel for development ease.
+is a superuser and you want to stay in a development connection with your new database afterwards, you would first use with-connection to connect to postgres, create the database and then switch to connect-toplevel for development ease.
 </p>
 <div class="org-src-container">
 <pre class="src src-lisp">(<span class="org-keyword">with-connection</span> '(<span class="org-string">"postgres"</span> <span class="org-string">"foucault"</span> <span class="org-string">"surveiller"</span> <span class="org-string">"localhost"</span>)
@@ -482,12 +509,15 @@ Note: (create-database) functionality is new to postmodern v. 1.32. Setting the
 :limit-public-access parameter to t will block connections to that database from
 anyone who you have not explicitly given permission (except other superusers).
 </p>
+</div>
+</div>
 
+<div id="outline-container-postmodern-connections-pooling" class="outline-4">
+<h4 id="postmodern-connections-pooling">Pooling Connections</h4>
+<div class="outline-text-4" id="text-postmodern-connections-pooling">
 <p>
 A word about Postgresql connections. Postgresql connections are not lightweight
-threads. They actually consume about 10 MB of memory per connection. In addition, any connections
-which require security (ssl or scram authentication) will take additiona time and create
-more overhead.
+threads. They actually consume about 10 MB of memory per connection. In addition, any connections which require security (ssl or scram authentication) will take additiona time and create more overhead.
 </p>
 
 <p>
@@ -518,6 +548,16 @@ To use postmodern's simple connection pooler, the <code>with-connection</code> c
 The maximum number of connections in the pool is set in the special variable
 <code>*max-pool-size*</code>, which defaults to nil (no maximum).
 </p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-postmodern-basic-queries" class="outline-3">
+<h3 id="postmodern-basic-queries">Basic Queries</h3>
+<div class="outline-text-3" id="text-postmodern-basic-queries">
+<p>
+Now for a basic sanity test which does not need a database connection at all:
+</p>
 
 <div class="org-src-container">
 <pre class="src src-lisp">(<span class="org-keyword">with-connection</span> '(<span class="org-string">"testdb"</span> <span class="org-string">"foucault"</span> <span class="org-string">"surveiller"</span> <span class="org-string">"localhost"</span>)
@@ -526,7 +566,7 @@ The maximum number of connections in the pool is set in the special variable
 </pre>
 </div>
 <p>
-Qquery is the basic way to send queries to the database. Please see <a href="postmodern.html#querying">the documentation for query</a> for details on return types, parameterized queries, etc.
+Query is the basic way to send queries to the database. Please see <a href="postmodern.html#querying">the documentation for query</a> for details on return types, parameterized queries, etc.
 </p>
 
 <p>
@@ -571,7 +611,12 @@ also iterate over it with the doquery macro:
   (format t <span class="org-string">"On this row, x = ~A and y = ~A.~%"</span> x y))
 </pre>
 </div>
+</div>
+</div>
 
+<div id="outline-container-postmodern-dao-classes" class="outline-3">
+<h3 id="postmodern-dao-classes">DAO Classes</h3>
+<div class="outline-text-3" id="text-postmodern-dao-classes">
 <p>
 You can work directly with the database or you can use a simple
 database-access-class (aka dao) which would cover all the fields in a row.
@@ -678,9 +723,36 @@ Now you can see why the double parens.
 </p>
 
 <p>
-We also specify that the table name is not "country" but "countries". (Some style guides
-recommend that table names be plural and references to rows be singular.)
+We also specify that the table name is not "country" but "countries". (Some style guides recommend that table names be plural and references to rows be singular.)
 </p>
+
+<p>
+More detailed information on DAO classes is found here: <a href="dao-classes.html">Database Access Object (Dao) Classes</a>
+</p>
+</div>
+
+<div id="outline-container-postmodern-define-dao-class-macro" class="outline-4">
+<h4 id="postmodern-define-dao-class-macro">Define-Dao-Class Macro (New to version 1.33.12)</h4>
+<div class="outline-text-4" id="text-postmodern-define-dao-class-macro">
+<p>
+New to Postmodern version 1.33.12 (thank you Killianmh) is a macro that makes defining a dao class slightly easier. It is like defclass except two postmodern specific changes:
+</p>
+<ol class="org-ol">
+<li>The dao-class metaclass options is automatically added.</li>
+<li>If second value in a slot is not a keyword, it is assumed to be col-type.</li>
+</ol>
+<p>
+Example:
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span class="org-keyword">define-dao-class</span> id-class ()
+((id integer <span class="org-builtin">:initarg</span> <span class="org-builtin">:id</span> <span class="org-builtin">:accessor</span> test-id)
+ (email <span class="org-builtin">:col-type</span> text <span class="org-builtin">:initarg</span> <span class="org-builtin">:email</span> <span class="org-builtin">:accessor</span> email))
+(<span class="org-builtin">:keys</span> id))
+</pre>
+</div>
+</div>
+</div>
 </div>
 
 <div id="outline-container-eccad49e-8df8-4451-89ff-4987b103c9dd" class="outline-3">

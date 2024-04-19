@@ -4,7 +4,7 @@
 #+HTML_HEAD: <style>pre.src{background:#343131;color:white;} </style>
 #+OPTIONS: ^:nil
 
-Version 1.33.11
+Version 1.33.12
 
 Postmodern is a Common Lisp library for interacting with [[https://postgresql.org][PostgreSQL databases]].
 Features are:
@@ -110,19 +110,25 @@ Assuming you have already installed quicklisp, load postmodern.
 (use-package :postmodern)
 #+END_SRC
 
-If you have a PostgreSQL server running on localhost, with a database called 'testdb'
-on it, which is accessible for user 'foucault' with password 'surveiller', there are
-two basic ways to connect to a database. If your role/application/database(s) looks
-like a 1:1 relationship and you are not using threads, you can connect like this:
+** Connections
+  :PROPERTIES:
+  :CUSTOM_ID: postmodern-connections
+  :END:
+*** Single Long Life Connections With No Multi-threading or Executable Creation
+  :PROPERTIES:
+  :CUSTOM_ID: postmodern-connections-single-long-life
+  :END:
+If you have a PostgreSQL server running on localhost, with a database called 'testdb' on it, which is accessible for user 'foucault' with password 'surveiller', there are two basic ways to connect to a database. If your role/application/database(s) looks like a 1:1 relationship and you are not using threads and you are not going to create an executable, you can connect like this:
+
 #+BEGIN_SRC lisp
 (connect-toplevel "testdb" "foucault" "surveiller" "localhost")
 #+END_SRC
 
 This will establish a connection to be used by all code, except for that wrapped
 in a with-connection form, which takes the same arguments but only establishes
-the connection within that lexical scope.
+the connection within that lexical scope. This method is often used in development or debugging.
 
-Connect-toplevel will maintain a single connection for the life of the session.
+Connect-toplevel will maintain a single connection for the life of your running lisp instance.
 
 If the server is not on localhost, replace that string with a string containing the ip address of the server:
 #+BEGIN_SRC lisp
@@ -147,19 +153,24 @@ pass :no, :try, :require, :yes, or :full
 When using ssl, you can set the cl-postgres exported variables =*ssl-certificate-file*=,  =*ssl-key-file*= and  =*ssl-root-ca-file*= to provide client key, certificate files
 and root ca files. They can be either NIL, for no file, or a pathname.
 
+*** Multiple Connections, Multi-threading or Executable Creation
+  :PROPERTIES:
+  :CUSTOM_ID: postmodern-connections-multiples
+  :END:
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
-many:1, (in other words, changing connections) or you are using threads (each thread must have its own connection) then with Postmodern you can use the =with-connection= form which establishes a connection with a lexical scope is more appropriate.
+many:1, (in other words, changing connections) or you are using threads (each thread must have its own connection) or you are going to create an executable, then you can use the =with-connection= form which establishes a connection with a lexical scope is more appropriate.
 #+BEGIN_SRC lisp
 (with-connection '("testdb" "foucault" "surveiller" "localhost")
   ...)
 #+END_SRC
+
+The same additional parameters apply to specifying ports or establishing an ssl connection
+
 For other connection options, please see [[https://marijnhaverbeke.nl/postmodern.html#function-connection][https://marijnhaverbeke.nl/postmodern.html#function-connection]]
 
 If you are creating a database, you need to have established a connection
 to a currently existing database (typically "postgres"). Assuming the foucault role
-is a superuser and you want to stay in a development connection with your new database
-afterwards, you would first use with-connection to connect to postgres, create the
-database and then switch to connect-toplevel for development ease.
+is a superuser and you want to stay in a development connection with your new database afterwards, you would first use with-connection to connect to postgres, create the database and then switch to connect-toplevel for development ease.
 #+BEGIN_SRC lisp
 (with-connection '("postgres" "foucault" "surveiller" "localhost")
   (create-database 'testdb :limit-public-access t
@@ -171,10 +182,12 @@ Note: (create-database) functionality is new to postmodern v. 1.32. Setting the
 :limit-public-access parameter to t will block connections to that database from
 anyone who you have not explicitly given permission (except other superusers).
 
+*** Pooling Connections
+  :PROPERTIES:
+  :CUSTOM_ID: postmodern-connections-pooling
+  :END:
 A word about Postgresql connections. Postgresql connections are not lightweight
-threads. They actually consume about 10 MB of memory per connection. In addition, any connections
-which require security (ssl or scram authentication) will take additiona time and create
-more overhead.
+threads. They actually consume about 10 MB of memory per connection. In addition, any connections which require security (ssl or scram authentication) will take additiona time and create more overhead.
 
 Postgresql can be tuned to limit the number of connections allowed at any one time. It defaults to 100. The parameter is set in the postgresql.conf file. Depending on the size of your server and what you are doing, the sweet spot generally seems to be between 200-400 connections before you need to bring in connection pooling.
 
@@ -194,12 +207,18 @@ To use postmodern's simple connection pooler, the =with-connection= call would l
 The maximum number of connections in the pool is set in the special variable
 =*max-pool-size*=, which defaults to nil (no maximum).
 
+** Basic Queries
+  :PROPERTIES:
+  :CUSTOM_ID: postmodern-basic-queries
+  :END:
+Now for a basic sanity test which does not need a database connection at all:
+
 #+BEGIN_SRC lisp
   (with-connection '("testdb" "foucault" "surveiller" "localhost")
       (query "select 22, 'Folie et déraison', 4.5"))
   ;; => ((22 "Folie et déraison" 9/2))
 #+END_SRC
-Qquery is the basic way to send queries to the database. Please see [[file:postmodern.html#querying][the documentation for query]] for details on return types, parameterized queries, etc.
+Query is the basic way to send queries to the database. Please see [[file:postmodern.html#querying][the documentation for query]] for details on return types, parameterized queries, etc.
 
 The same query can be expressed in s-sql like this:
 #+BEGIN_SRC lisp
@@ -233,6 +252,10 @@ also iterate over it with the doquery macro:
   (format t "On this row, x = ~A and y = ~A.~%" x y))
 #+END_SRC
 
+** DAO Classes
+  :PROPERTIES:
+  :CUSTOM_ID: postmodern-dao-classes
+  :END:
 You can work directly with the database or you can use a simple
 database-access-class (aka dao) which would cover all the fields in a row.
 This is what a database-access class looks like:
@@ -314,8 +337,24 @@ regions are deleted, that column would be specified as:
 
 Now you can see why the double parens.
 
-We also specify that the table name is not "country" but "countries". (Some style guides
-recommend that table names be plural and references to rows be singular.)
+We also specify that the table name is not "country" but "countries". (Some style guides recommend that table names be plural and references to rows be singular.)
+
+More detailed information on DAO classes is found here: [[file:dao-classes.html][Database Access Object (Dao) Classes]]
+
+*** Define-Dao-Class Macro (New to version 1.33.12)
+   :PROPERTIES:
+   :CUSTOM_ID: postmodern-define-dao-class-macro
+   :END:
+New to Postmodern version 1.33.12 (thank you Killianmh) is a macro that makes defining a dao class slightly easier. It is like defclass except two postmodern specific changes:
+1. The dao-class metaclass options is automatically added.
+2. If second value in a slot is not a keyword, it is assumed to be col-type.
+Example:
+#+begin_src lisp
+  (define-dao-class id-class ()
+  ((id integer :initarg :id :accessor test-id)
+   (email :col-type text :initarg :email :accessor email))
+  (:keys id))
+#+end_src
 
 ** Table Creation
    :PROPERTIES:
