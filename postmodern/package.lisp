@@ -8,6 +8,7 @@
   #+postmodern-use-mop
   (:export
    #:dao-class #:dao-exists-p #:dao-keys #:query-dao #:select-dao #:get-dao
+   #:define-dao-class
    #:fetch-defaults
    #:do-query-dao #:do-select-dao
    #:with-column-writers

@@ -1570,3 +1570,31 @@ Note that you need to handle :NULLs."
       (fiveam:is (equal
                   (pomo::field-name-to-slot-name (find-class 'postmodern-tests::listy) "r-list")
                   'postmodern-tests::r-list)))
+
+(define-dao-class test-define-dao-class ()
+  ((id integer :initarg :id :accessor test-id)
+   (a :col-type text :initarg :a :accessor test-a))
+  (:table-name test-define-dao-class)
+  (:documentation "test-codumentation")
+  (:keys id))
+
+(test define-dao-class
+  (is (equal (macroexpand-1
+	      '(define-dao-class test-define-dao-class ()
+		((id integer :initarg :id :accessor test-id)
+		 (a :col-type text :initarg :a :accessor test-a))
+		(:table-name test-define-dao-class)
+		(:keys id)))
+	     '(defclass test-define-dao-class nil
+	       ((id :col-type integer :initarg :id :accessor test-id)
+		(a :col-type text :initarg :a :accessor test-a))
+	       (:metaclass dao-class) (:table-name test-define-dao-class)
+	       (:keys id))))
+  (let ((class
+	  (class-of (make-instance 'test-define-dao-class))))
+    (is (eq (pomo::find-col-type class 'id)
+	    'integer))
+    (is (eq (pomo::find-col-type class 'a)
+	    'text))
+    (is (equal (dao-keys class)
+	       (list 'id)))))
