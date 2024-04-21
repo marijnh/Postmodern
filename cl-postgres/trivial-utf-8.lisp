@@ -54,7 +54,7 @@ encoded form of that character."
 
 (defun string-to-utf-8-bytes (string &key null-terminate)
   "Convert a string into an array of unsigned bytes containing its
-utf-8 representation."
+utf-8 representation. If NULL-TERMINATE, add an extra 0 byte at the end."
   (declare (type string string)
            #.*optimize*)
   (let ((buffer (make-array (+ (the fixnum (utf-8-byte-length string))
