@@ -1,3 +1,8 @@
+# Changelog 1.33.12
+## Changes to Postmodern
+- Added :define-dao-class macro (including docs and tests)
+- Added more documentation on connections (use with-connection rather than toplevel-connect if creating an executable.
+## Minor additions to cl-postgres tests
 # Changelog 1.33.11
 ## Changes to S-SQL
 - Added :analyze operator

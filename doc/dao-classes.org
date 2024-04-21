@@ -283,6 +283,89 @@ lock. However, any time you are using threads and a class that inherits from
 other classes, you should ensure that classes are finalized before you start
 generating threads that create new instances of that class.
 
+** Dao Class Inheritance
+The following dao class is related to ruby active record with the slots updated-at and created-at. Both slots are initialized automatically. Updated-at is automatically updated every time you use insert-dao whereas created-at will remain the same even if you change entry data.
+
+This code is written with the local-time library, but simple-time should also work:
+#+begin_src lisp
+  (defun timestamp-to-postgre-time (timestamp)
+    (local-time:format-timestring nil timestamp))
+
+  (defun update-time (old-time)
+    (declare (ignore old-time))
+    (local-time:format-timestring nil (now)))
+
+  (defclass active-record ()
+    ((created-at :col-type timestamp
+                 :accessor created-at
+                 :description "The timestamp when the entry was created."
+                 :initform (local-time:now)
+                 :col-export timestamp-to-postgre-time)
+     (updated-at :col-type timestamp
+                 :accessor updated-at
+                 :description "The timestamp when the entry was last updated."
+                 :initform (local-time:now)
+                 :col-export update-time))
+    (:metaclass dao-class))
+#+end_src
+
+By using active-record as superclass, subclasses inherit the same convenient features:
+#+begin_src lisp
+  (defclass user (active-record)
+    ((user-id :col-type bigint
+              :primary-key t
+              :reader user-id
+              :col-unique t
+              :col-identity t)
+     (name :col-type (or db-null string)
+           :initarg :last-name
+           :col-default :null
+           :accessor last-name)
+     (email :col-type string
+            :col-unique t
+            :initarg :email
+            :accessor email))
+    (:metaclass pomo:dao-class))
+  #+end_src
+
+Next is an example for using inheritance with foreign-keys.
+For that we define a dao-class (which will not be created as table)
+whereas the only column is the primary key user-id from the user table:
+#+begin_src lisp
+  (defclass user-id-foreign-key ()
+    ((user-id :col-type integer
+              :initarg :user-id
+              :reader user-id
+              :col-references ((user user-id))
+              :col-primary-key t))
+    (:metaclass pomo:dao-class))
+#+end_src
+
+Now we can add user-id-foreign-key as superclass in tables where we want to use user-id as foreign key:
+#+begin_src lisp
+  (defclass user-credential (user-id-foreign-key active-record)
+    ((password-hash :col-type string
+                    :initarg :password-hash
+                    :accessor password-hash)
+     (salt :col-type integer
+           :initarg :salt
+           :accessor salt))
+    (:metaclass pomo:dao-class))
+#+end_src
+* Define-Dao-Class Macro (New to version 1.33.12)
+   :PROPERTIES:
+   :CUSTOM_ID: postmodern-define-dao-class-macro
+   :END:
+New to Postmodern version 1.33.12 (thank you Killianmh) is a macro that makes defining a dao class slightly easier. It is like defclass except two postmodern specific changes:
+1. The dao-class metaclass options is automatically added.
+2. If second value in a slot is not a keyword, it is assumed to be col-type.
+Example:
+#+begin_src lisp
+  (define-dao-class id-class ()
+  ((id integer :initarg :id :accessor test-id)
+   (email :col-type text :initarg :email :accessor email))
+  (:keys id))
+#+end_src
 
 * Dao Query and Selection
 :PROPERTIES:

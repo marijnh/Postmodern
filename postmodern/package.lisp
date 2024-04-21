@@ -208,6 +208,7 @@
    #:table-description
    #:table-description-plus
    #:table-description-menu
+   #:table-schema-names
    #:list-table-sizes
    #:table-size
    #:list-tables-in-schema

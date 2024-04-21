@@ -4,7 +4,7 @@ A Common Lisp PostgreSQL programming interface
 
 ---
 
-Version 1.33.11
+Version 1.33.12
 
 Postmodern is a Common Lisp library for interacting with [PostgreSQL](http://www.postgresql.org) databases. It is under active development. Features are:
 
@@ -103,17 +103,17 @@ Assuming you have already installed it, first load and use the system:
 (use-package :postmodern)
 ```
 
-If you have a PostgreSQL server running on localhost, with a database called 'testdb' on it, which is accessible for user 'foucault' with password 'surveiller', there are two basic ways to connect
-to a database. If your role/application/database(s) looks like a 1:1 relationship and you are not using threads, you can connect like this:
+### Connections
+#### Single Long Life Connections With No Multi-threading or Executable Creation
+If you have a PostgreSQL server running on localhost, with a database called 'testdb' on it, which is accessible for user 'foucault' with password 'surveiller', there are two basic ways to connect to a database. If your role/application/database(s) looks like a 1:1 relationship and you are not using threads and you are not going to create an executable, you can connect like this:
 
 ```lisp
 (connect-toplevel "testdb" "foucault" "surveiller" "localhost")
 ```
 
-Which will establish a connection to be used by all code, except for that wrapped in a with-connection form, which takes the same arguments but only establishes the connection within
-that lexical scope.
+This will establish a connection to be used by all code, except for that wrapped in a with-connection form, which takes the same arguments but only establishes the connection within that lexical scope. This method is often used in development or debugging.
 
-Connect-toplevel will maintain a single connection for the life of the session.
+Connect-toplevel will maintain a single connection for the life of your running lisp instance.
 
 If the Postgresql server is running on a port other than 5432, you would also pass the appropriate keyword port parameter. E.g.:
 
@@ -132,13 +132,16 @@ Ssl connections would similarly use the keyword parameter :use-ssl and pass :yes
 When using ssl, you can set the cl-postgres exported variables \*ssl-certificate-file\*,  \*ssl-key-file\* and  \*ssl-root-ca-file\* to provide client key, certificate files
 and root ca files. They can be either NIL, for no file, or a pathname.
 
+#### Multiple Connections, Multi-threading or Executable Creation
 If you have multiple roles connecting to one or more databases, i.e. 1:many or
-many:1, (in other words, changing connections) or you are using threads (each thread will need to have its own connection) then with-connection form which establishes a connection with a lexical scope is more appropriate.
+many:1, (in other words, changing connections) or you are using threads (each thread will need to have its own connection) or you are going to create an executable, then with-connection form which establishes a connection with a lexical scope is more appropriate.
 
 ```lisp
 (with-connection '("testdb" "foucault" "surveiller" "localhost")
     ...)
 ```
+
+The same additional parameters apply to specifying ports or establishing an ssl connection.
 
 If you are creating a database, you need to have established a connection
 to a currently existing database (typically "postgres"). Assuming the foucault role
@@ -158,6 +161,7 @@ Note: (create-database) functionality is new to postmodern v. 1.32. Setting the
 :limit-public-access parameter to t will block connections to that database from
 anyone who you have not explicitly given permission (except other superusers).
 
+#### Pooling Connections
 A word about Postgresql connections. Postgresql connections are not lightweight
 threads. They actually consume about 10 MB of memory per connection.  In
 addition, any connections which require security (ssl or scram authentication)
@@ -182,6 +186,7 @@ To use postmodern's simple connection pooler, the with-connection call would loo
 The maximum number of connections in the pool is set in the special variable
 \*max-pool-size\*, which defaults to nil (no maximum).
 
+### Basic Queries
 Now for a basic sanity test which does not need a database connection at all:
 
 ```lisp
@@ -214,6 +219,7 @@ You do not have to pull in the whole result of a query at once, you can also ite
     (format t "On this row, x = ~A and y = ~A.~%" x y))
 ```
 
+### DAO Classes
 You can work directly with the database or you can use a simple [database-access-class](https://marijnhaverbeke.nl/postmodern/dao-classes.html) (aka dao) which would cover all the columns in a row. This is what a database-access class looks like:
 
 ```lisp
@@ -295,6 +301,20 @@ Now you can see why the double parens.
 We also specify that the table name is not "country" but "countries". (Some style guides
 recommend that table names be plural and references to rows be singular.)
 
+### Define-Dao-Class Macro (New to version 1.33.12)
+New to Postmodern version 1.33.12 (thank you Killianmh) is a macro that makes defining a dao class slightly easier. It is like defclass except two postmodern specific changes:
+
+1. The dao-class metaclass options is automatically added.
+2. If second value in a slot is not a keyword, it is assumed to be col-type.
+Example:
+
+```lisp
+(define-dao-class id-class ()
+   ((id integer :initarg :id :accessor test-id)
+    (email :col-type text :initarg :email :accessor email))
+   (:keys id))
+```
+
 ### Table Creation
 
 You can create tables directly without the need to define a class, and in more
@@ -373,7 +393,7 @@ described above. Using the slightly more complicated version of the country dao 
 
 This defines our table in the database. execute works like query, but does not expect any results back.
 
-See [Introduction to Multi-table dao class objects](doc/dao-classes.html#multi-table-dao-class-object) in the postmodern.org or postmodern.html manual for a further discussion of multi-table use of daos.
+See [Introduction to Multi-table dao class objects](https://marijnhaverbeke.nl/postmodern/dao-classes.html#multi-table-dao-class-object) in the postmodern.org or postmodern.html manual for a further discussion of multi-table use of daos.
 
 ### Inserting Data
 
