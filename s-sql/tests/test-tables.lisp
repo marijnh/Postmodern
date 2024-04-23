@@ -535,6 +535,33 @@
                2))
     (execute (:drop-table 'color))))
 
+(test create-table-as-duplicate
+  "Testing create table as a duplicate of another table with/without data."
+  (is (equal (sql (:create-table duplicate :as (:table original)))
+	     "CREATE TABLE duplicate AS TABLE original WITH DATA"))
+  (is (equal (sql (:create-table duplicate :as (:table original) :with-data))
+	     "CREATE TABLE duplicate AS TABLE original WITH DATA"))
+  (is (equal (sql (:create-table duplicate :as (:table original) :with-no-data))
+	     "CREATE TABLE duplicate AS TABLE original WITH NO DATA")))
+
+(test create-table-as-query
+  "Testing create table as the result set of a query."
+  (is (equal (sql (:create-table filtered :as (:select '* :from 'original :where (:= 'flag t))))
+	     "CREATE TABLE filtered AS ((SELECT * FROM original WHERE (flag = true)))"))
+  (is (equal (sql (:create-table (:temporary filtered) :as (:select '* :from 'original :where (:= 'flag t))))
+	     "CREATE TEMP TABLE filtered AS ((SELECT * FROM original WHERE (flag = true)))"))
+  (is (equal (sql (:create-table complex-filter :as
+				 (:with (:as 'data
+					     (:parens
+					      (:select '*
+						:from 'original
+						:where (:= 'flag t))))
+					(:select '*
+					  :from 'others
+					  :inner-join 'data
+					  :on (:= 'others.id 'data.id)
+					  :where (:= 'flag t)))))
+	     "CREATE TABLE complex_filter AS (WITH data AS  ((SELECT * FROM original WHERE (flag = true))) (SELECT * FROM others INNER JOIN data ON (others.id = data.id) WHERE (flag = true)))")))
 
 ;;; CREATE EXTENDED TABLE TESTS
 
