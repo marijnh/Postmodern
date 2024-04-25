@@ -535,6 +535,33 @@
                2))
     (execute (:drop-table 'color))))
 
+(test create-table-as-duplicate
+  "Testing create table as a duplicate of another table with/without data."
+  (is (equal (sql (:create-table duplicate :as (:table original)))
+	     "CREATE TABLE duplicate AS TABLE original"))
+  (is (equal (sql (:create-table duplicate :as (:table original :with-data)))
+	     "CREATE TABLE duplicate AS TABLE original WITH DATA"))
+  (is (equal (sql (:create-table duplicate :as (:table original :with-no-data)))
+	     "CREATE TABLE duplicate AS TABLE original WITH NO DATA")))
+
+(test create-table-as-query
+  "Testing create table as the result set of a query."
+  (is (equal (sql (:create-table filtered :as (:select '* :from 'original :where (:= 'flag t))))
+	     "CREATE TABLE filtered AS ((SELECT * FROM original WHERE (flag = true)))"))
+  (is (equal (sql (:create-table (:temporary filtered) :as (:select '* :from 'original :where (:= 'flag t))))
+	     "CREATE TEMP TABLE filtered AS ((SELECT * FROM original WHERE (flag = true)))"))
+  (is (equal (sql (:create-table complex-filter :as
+				 (:with (:as 'data
+					     (:parens
+					      (:select '*
+						:from 'original
+						:where (:= 'flag t))))
+					(:select '*
+					  :from 'others
+					  :inner-join 'data
+					  :on (:= 'others.id 'data.id)
+					  :where (:= 'flag t)))))
+	     "CREATE TABLE complex_filter AS (WITH data AS  ((SELECT * FROM original WHERE (flag = true))) (SELECT * FROM others INNER JOIN data ON (others.id = data.id) WHERE (flag = true)))")))
 
 ;;; CREATE EXTENDED TABLE TESTS
 
@@ -574,7 +601,24 @@
 
       (is (equal (sql (:create-extended-table (:unlogged distributors-in-hell)
                                           ((did :type (or integer db-null)))))
-                 "CREATE UNLOGGED TABLE distributors_in_hell (did INTEGER)")))
+                 "CREATE UNLOGGED TABLE distributors_in_hell (did INTEGER)"))
+
+      ;; temporary tables behavior on commit
+      (is (equal (sql (:create-extended-table (:temporary distributors-in-hell)
+					      ((did :type (or integer db-null)))
+					      ()
+					      ((:on-commit :drop))))
+		 "CREATE TEMP TABLE distributors_in_hell (did INTEGER) ON COMMIT DROP"))
+      (is (equal (sql (:create-extended-table (:temporary distributors-in-hell)
+					      ((did :type (or integer db-null)))
+					      ()
+					      ((:on-commit :delete-rows))))
+                 "CREATE TEMP TABLE distributors_in_hell (did INTEGER) ON COMMIT DELETE ROWS"))
+      (is (equal (sql (:create-extended-table (:temporary distributors-in-hell)
+					      ((did :type (or integer db-null)))
+					      ()
+					      ((:on-commit :preserve-rows))))
+		 "CREATE TEMP TABLE distributors_in_hell (did INTEGER) ON COMMIT PRESERVE ROWS")))
 
 (test create-extended-table-basic
   "Testing Create Table. Replicating from https://www.postgresql.org/docs/10/static/sql-createtable.html"
@@ -776,6 +820,126 @@
 
 
       )
+
+
+(test create-extended-temp-tables
+  "Testing create table with temp, unlogged or normal"
+  ;;;; Testing global-temporary etc
+;;;; Temporary tables are automatically dropped at the end of a session
+;;;;
+      ;; Note the syntax is temporary or unlogged qualifiers first, then if-not-exists, then table name
+      ;; You can use temp or temporary
+      ;;version with just table name
+      (is (equal (sql (:create-extended-table distributors-in-hell
+                          ((did :type (or integer db-null)))))
+                 "CREATE TABLE distributors_in_hell (did INTEGER)"))
+
+      ;; version with just table name in form
+      (is (equal (sql (:create-extended-table (distributors-in-hell)
+                                    ((did :type (or integer db-null)))))
+          "CREATE TABLE distributors_in_hell (did INTEGER)"))
+
+      ;; version with :temp and table name in form
+      (is (equal (sql (:create-extended-table (:temp distributors-in-hell)
+                                          ((did :type (or integer db-null)))))
+                 "CREATE TEMP TABLE distributors_in_hell (did INTEGER)"))
+
+      ;; version with temp, if-not-exists and tablename in form
+      (is (equal (sql (:create-extended-table (:temp (:if-not-exists distributors-in-hell))
+                                          ((did :type (or integer db-null)))))
+                 "CREATE TEMP TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
+      ;; version with if-not-exists and table name in form
+      (is (equal (sql (:create-extended-table (:if-not-exists distributors-in-hell)
+                                          ((did :type (or integer db-null)))))
+                "CREATE TABLE IF NOT EXISTS distributors_in_hell (did INTEGER)"))
+
+      ;;;; unlogged tables do not have their data written to the write-ahead log. As a result they are faster,
+      ;;; but not crash safe. Any indexes created on an unlogged table are unlogged as well.
+
+      (is (equal (sql (:create-extended-table (:unlogged distributors-in-hell)
+                                          ((did :type (or integer db-null)))))
+                 "CREATE UNLOGGED TABLE distributors_in_hell (did INTEGER)"))
+
+      ;; temporary tables behavior on commit
+      (is (equal (sql (:create-extended-table (:temporary distributors-in-hell)
+					      ((did :type (or integer db-null)))
+					      ()
+					      ((:on-commit :drop))))
+		 "CREATE TEMP TABLE distributors_in_hell (did INTEGER) ON COMMIT DROP"))
+      (is (equal (sql (:create-extended-table (:temporary distributors-in-hell)
+					      ((did :type (or integer db-null)))
+					      ()
+					      ((:on-commit :delete-rows))))
+                 "CREATE TEMP TABLE distributors_in_hell (did INTEGER) ON COMMIT DELETE ROWS"))
+      (is (equal (sql (:create-extended-table (:temporary distributors-in-hell)
+					      ((did :type (or integer db-null)))
+					      ()
+					      ((:on-commit :preserve-rows))))
+		 "CREATE TEMP TABLE distributors_in_hell (did INTEGER) ON COMMIT PRESERVE ROWS")))
+
+(test create-extended-table-as
+      ;; creates a table as the result of a query, with control over what happens on commit
+      (is (equal (sql (:create-extended-table distributors
+					      :as
+					      (:select '*
+						:from 'businesses
+						:where (:= 'type "distribution"))))
+                 "CREATE TABLE distributors AS ((SELECT * FROM businesses WHERE (type = E'distribution')))"))
+
+      (is (equal (sql (:create-extended-table (:temporary distributors)
+					      :as
+					      (:select '*
+						:from 'businesses
+						:where (:= 'type "distribution"))))
+                 "CREATE TEMP TABLE distributors AS ((SELECT * FROM businesses WHERE (type = E'distribution')))"))
+      (is (equal (sql (:create-extended-table (:temporary distributors)
+					      :as
+					      (:select '*
+						:from 'businesses
+						:where (:= 'type "distribution"))
+					      ((:on-commit :drop))))
+                 "CREATE TEMP TABLE distributors ON COMMIT DROP AS ((SELECT * FROM businesses WHERE (type = E'distribution')))"))
+      (is (equal (sql (:create-extended-table (:temporary distributors)
+					      :as
+					      (:select '*
+						:from 'businesses
+						:where (:= 'type "distribution"))
+					      ((:on-commit :delete-rows))))
+                 "CREATE TEMP TABLE distributors ON COMMIT DELETE ROWS AS ((SELECT * FROM businesses WHERE (type = E'distribution')))"))
+      (is (equal (sql (:create-extended-table (:temporary distributors)
+					      :as
+					      (:select '*
+						:from 'businesses
+						:where (:= 'type "distribution"))
+					      ((:on-commit :preserve-rows)))
+                 "CREATE TEMP TABLE distributors ON COMMIT PRESERVE ROWS AS ((SELECT * FROM businesses WHERE (type = E'distribution')))"))
+
+      ;; creates a table as a duplicate of another with and without data and with control over what happens on commit
+      (is (equal (sql (:create-extended-table distributors
+					      :as
+					      (:table 'distrs :with-no-data)))
+                 "CREATE TABLE distributors AS TABLE distrs WITH NO DATA"))
+
+      (is (equal (sql (:create-extended-table (:temporary distributors)
+					      :as
+					      (:table 'distrs :with-data)))
+                 "CREATE TEMP TABLE distributors AS TABLE distrs WITH DATA"))
+      (is (equal (sql (:create-extended-table (:temporary distributors)
+					      :as
+					      (:table 'distrs :with-data)
+					      ((:on-commit :drop))))
+                 "CREATE TEMP TABLE distributors ON COMMIT DROP AS TABLE distrs WITH DATA"))
+      (is (equal (sql (:create-extended-table (:temporary distributors)
+					      :as
+					      (:table 'distrs :with-no-data)
+					      ((:on-commit :delete-rows))))
+                 "CREATE TEMP TABLE distributors ON COMMIT DELETE ROWS AS TABLE distrs WITH NO DATA"))
+      (is (equal (sql (:create-extended-table (:temporary distributors)
+					      :as
+					      (:table 'distrs)
+					      ((:on-commit :preserve-rows))))
+                 "CREATE TEMP TABLE distributors ON COMMIT PRESERVE ROWS AS TABLE distrs")))
+
 
 (test create-extended-table-with-constraint-and-foreign-keys
   "Testing creating a table with contraints and foreign keys and actions. Note constraint must come first."
