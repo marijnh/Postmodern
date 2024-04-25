@@ -2119,7 +2119,12 @@ definition."
     (:partition-of `(" PARTITION OF " ,(to-sql-name (car args))
                                       " DEFAULT "))  ;postgresql version 11 required
     (:partition-by-list `(" PARTITION BY RANGE (" ,@(sql-expand (car args))
-                                                  ")"))))
+                                                  ")"))
+    (:on-commit `(" ON COMMIT " ,(let ((action (car args)))
+				   (ecase action
+				     (:drop "DROP")
+				     (:preserve-rows "PRESERVE ROWS")
+				     (:delete-rows "DELETE ROWS")))))))
 
 (defun expand-identity (keywd)
   (cond ((eq keywd :identity-by-default)
@@ -2285,17 +2290,19 @@ or
 "
   `("CREATE " ,@(list (expand-table-name name))
 	      ,@(if (eq (car details) :as)
-		    (expand-create-table-as (cadr details) (eq :with-no-data (caddr details)))
+		    (expand-create-table-as (cadr details))
 		    (expand-create-table name details))))
 
-(defun expand-create-table-as (details &optional (with-no-data nil))
+
+(defun expand-create-table-as (details)
   `(" AS "
     ,@(if (and (listp details)
 	       (eq (car details) :table))
-	  (list (expand-table-name (cdr details))
-		(if with-no-data
-		    " WITH NO DATA"
-		    " WITH DATA"))
+	  (list (expand-table-name (cadr details))
+		(when (cddr details)
+		  (ecase (caddr details)
+		    (:with-data " WITH DATA")
+		    (:with-no-data " WITH NO DATA"))))
 	  (append (list "(")
 		  (sql-expand details)
 		  (list ")")))))
@@ -2316,24 +2323,35 @@ or
 	      :if rest :collect ", ")
       ")")))
 
-(def-sql-op :create-extended-table (name (&rest columns) &optional
-                                         table-constraints
-                                         extended-table-constraints)
+(def-sql-op :create-extended-table (name &rest details)
   "Create a table with more complete syntax where table-constraints and
 extended-table-constraints are lists. Note that with extended tables you can
 have tables without columns that are inherited or partitioned."
-  `("CREATE " ,@(list (expand-table-name name)) " ("
-              ,@(loop :for ((column-name . args) . rest) :on columns
-                      :append (expand-table-column column-name args)
-                      :if rest :collect ", ")
-              ,@(loop for constraint in table-constraints
-                      :for i from (length table-constraints) downto 0
-                      :append (expand-table-constraint-sok constraint)
-                                        ;if (> i 0) collect ", "
-                      )
-              ")"
-              ,@(loop :for ((constraint . args)) :on extended-table-constraints
-                      :append (expand-extended-table-constraint constraint args))))
+  `("CREATE " ,@(list (expand-table-name name))
+	      ,@(if (eq (car details) :as)
+		    (destructuring-bind (query-or-table &optional extended-table-constraints)
+			(cdr details)
+		      (append
+		       (loop :for ((constraint . args)) :on extended-table-constraints
+			     :append (expand-extended-table-constraint constraint args))
+		       (expand-create-table-as query-or-table)))
+		    (destructuring-bind (columns &optional
+						   table-constraints
+						   extended-table-constraints)
+			details
+		      (expand-create-extended-table columns table-constraints extended-table-constraints)))))
+
+(defun expand-create-extended-table (columns table-constraints extended-table-constraints)
+  `(" ("
+    ,@(loop :for ((column-name . args) . rest) :on columns
+	    :append (expand-table-column column-name args)
+	    :if rest :collect ", ")
+    ,@(loop for constraint in table-constraints
+	    :for i from (length table-constraints) downto 0
+	    :append (expand-table-constraint-sok constraint))
+    ")"
+    ,@(loop :for ((constraint . args)) :on extended-table-constraints
+	    :append (expand-extended-table-constraint constraint args))))
 
 (defun alter-table-column (column-name args)
   "Generates the sql string for the portion of altering a column."
