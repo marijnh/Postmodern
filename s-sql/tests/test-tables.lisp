@@ -911,7 +911,7 @@
 					      (:select '*
 						:from 'businesses
 						:where (:= 'type "distribution"))
-					      ((:on-commit :preserve-rows)))
+					      ((:on-commit :preserve-rows))))
                  "CREATE TEMP TABLE distributors ON COMMIT PRESERVE ROWS AS ((SELECT * FROM businesses WHERE (type = E'distribution')))"))
 
       ;; creates a table as a duplicate of another with and without data and with control over what happens on commit
