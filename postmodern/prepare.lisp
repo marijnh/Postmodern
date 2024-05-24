@@ -24,11 +24,18 @@ name. Reminder that the meta info is a list of query, params."
           (setf (gethash id meta) (list query params))
           (prepare-query connection id query params)))))
 
-(let ((next-id 0))
+(let ((next-id 0)
+      #+postmodern-thread-safe (lock (bordeaux-threads:make-lock "statement-id-lock")))
   (defun next-statement-id ()
     "Provide unique statement names."
-    (incf next-id)
-    (with-standard-io-syntax (format nil "STATEMENT_~A" next-id))))
+    #-postmodern-thread-safe
+    (progn
+      (incf next-id)
+      (with-standard-io-syntax (format nil "STATEMENT_~A" next-id)))
+    #+postmodern-thread-safe
+    (bordeaux-threads:with-lock-held (lock)
+      (incf next-id)
+      (with-standard-io-syntax (format nil "STATEMENT_~A" next-id)))))
 
 (defun generate-prepared (function-form name query format)
   "Helper function for the following two macros. Note that it will attempt to
