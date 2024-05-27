@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-12-12 Tue 18:30 -->
+<!-- 2024-04-27 Sat 08:02 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Postmodern Reference Manual</title>
@@ -302,6 +302,7 @@
 <li><a href="#function-drop-database">function drop-database (database)</a></li>
 </ul>
 </li>
+<li><a href="#database-access-objects">Database Access Objects (DAOs)</a></li>
 <li><a href="#table-definition">Table definition and creation using a dao</a></li>
 <li><a href="#roles">Roles</a>
 <ul>
@@ -512,7 +513,7 @@ Some specific topics in more detail
 <ul class="org-ul">
 <li><a href="array-notes.html">Array-Notes</a></li>
 <li><a href="create-tables.html">Creating Tables</a> (sql, s-sql and using dao classes)</li>
-<li><a href="dao-classes.html#table-definition">Creating Tables using dao classes</a></li>
+<li><a href="dao-classes.html">Dao Classes, queries and table creation using dao classes</a></li>
 <li><a href="dynamic-queries.html">Dynamic Queries</a></li>
 <li><a href="interval-notes.html">Interval Notes</a></li>
 <li><a href="isolation-notes.html">Isolation Notes</a></li>
@@ -2053,9 +2054,18 @@ specific data.
 Drop the specified database. The database parameter can be a string or a
 symbol. Note: Only the owner of a database (or superuser) can drop a database
 and there cannot be any current connections to the database.
-[[#database-information][See Database information below for information specific functions]
+<a href="#database-information">See Database information below for information specific functions</a>
 </p>
 </div>
+</div>
+</div>
+
+<div id="outline-container-database-access-objects" class="outline-2">
+<h2 id="database-access-objects">Database Access Objects (DAOs)</h2>
+<div class="outline-text-2" id="text-database-access-objects">
+<p>
+See: <a href="dao-classes.html#class-dao-class">Dao Classes</a>
+</p>
 </div>
 </div>
 
