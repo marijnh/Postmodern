@@ -2170,12 +2170,15 @@ definition."
                        (when value
                          `(" GENERATED ALWAYS AS ("
                            ,@(sql-expand value) ") STORED")))
-                      (:primary-key (cond ((and value (stringp value))
-                                           `(" PRIMARY KEY " ,value))
-                                          ((and value (keywordp value))
-                                           `(" PRIMARY KEY "
-                                             ,@(expand-identity value)))
-                                          (t '(" PRIMARY KEY "))))
+                      (:primary-key (cond
+                                      ((null value)
+                                           '())
+                                      ((stringp value)
+                                       `(" PRIMARY KEY " ,value))
+                                      ((keywordp value)
+                                       `(" PRIMARY KEY "
+                                         ,@(expand-identity value)))
+                                      (t '(" PRIMARY KEY "))))
                       (:constraint (when value `(" CONSTRAINT "
                                                  ,@(sql-expand value))))
                       (:collate (when value `(" COLLATE \"" ,value "\"")))
