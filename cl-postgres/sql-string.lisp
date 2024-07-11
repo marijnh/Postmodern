@@ -73,6 +73,14 @@ the loss of precision and offering to continue or reset
      (write-char ch out))
   (write-char #\" out))
 
+(defun write-float-to-string (x)
+  (with-standard-io-syntax
+   (let* ((*read-default-float-format* (type-of x))
+          (rep (string-upcase (write-to-string x))))
+     (if (find #\E rep)
+         rep
+         (concatenate 'string rep "E+0")))))
+
 (defgeneric to-sql-string (arg)
   (:documentation "Convert a Lisp value to its textual unescaped SQL
 representation. Returns a second value indicating whether this value should be
@@ -92,23 +100,27 @@ different from s-sql::to-s-sql-string only in the handling of cons lists.")
         (values
          (with-output-to-string (out)
            (write-char #\{  out)
-           (loop :for sep := "" :then #\, :for x :across arg :do
-              (princ sep out)
-              (multiple-value-bind (string escape) (to-sql-string x)
-              (if escape (write-quoted string out) (write-string string out))))
+           (loop :for sep := "" :then #\,
+                 :for x :across arg
+                 :do
+             (princ sep out)
+             (multiple-value-bind (string escape) (to-sql-string x)
+               (if escape (write-quoted string out) (write-string string out))))
            (write-char #\} out))
          t)))
   (:method ((arg cons))                 ;lists, but not nil
     (if (alexandria:proper-list-p arg)
         (values
-            (with-output-to-string (out)
-              (write-char #\{  out)
-              (loop :for sep := "" :then #\, :for x :in arg :do
-                (princ sep out)
-                (multiple-value-bind (string escape) (to-sql-string x)
-                  (if escape (write-quoted string out) (write-string string out))))
-              (write-char #\} out))
-            t)
+         (with-output-to-string (out)
+           (write-char #\{  out)
+           (loop :for sep := "" :then #\,
+                 :for x :in arg
+                 :do
+             (princ sep out)
+             (multiple-value-bind (string escape) (to-sql-string x)
+               (if escape (write-quoted string out) (write-string string out))))
+           (write-char #\} out))
+         t)
         (error "Value ~S can not be converted to an SQL literal." arg)))
   (:method ((arg array))
     (values
@@ -118,16 +130,18 @@ different from s-sql::to-s-sql-string only in the handling of cons lists.")
                   (if (cdr dims)
                       (let ((factor (reduce #'* (cdr dims))))
                         (loop :for i :below (car dims) :for sep := ""
-                                :then #\, :do
-                           (princ sep out)
-                           (recur (cdr dims) (+ off (* factor i)))))
+                                :then #\,
+                              :do
+                                 (princ sep out)
+                                 (recur (cdr dims) (+ off (* factor i)))))
                       (loop :for sep := "" :then #\, :for i :from off
-                              :below (+ off (car dims)) :do
-                         (princ sep out)
-                         (multiple-value-bind (string escape)
-                             (to-sql-string (row-major-aref arg i))
-                           (if escape (write-quoted string out)
-                               (write-string string out)))))
+                              :below (+ off (car dims))
+                            :do
+                               (princ sep out)
+                               (multiple-value-bind (string escape)
+                                   (to-sql-string (row-major-aref arg i))
+                                 (if escape (write-quoted string out)
+                                     (write-string string out)))))
                   (write-char #\} out)))
          (recur (array-dimensions arg) 0)))
      t))
@@ -136,7 +150,7 @@ different from s-sql::to-s-sql-string only in the handling of cons lists.")
   (:method ((arg float))
     (format nil "~f" arg))
   #-clisp (:method ((arg double-float)) ;; CLISP doesn't allow methods on double-float
-            (format nil "~,,,,,,'EE" arg))
+            (write-float-to-string arg))
   (:method ((arg ratio))
     ;; Possible optimization: we could probably build up the same binary
     ;; structure postgres sends us instead of sending it as a string. See
