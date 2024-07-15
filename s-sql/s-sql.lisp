@@ -154,7 +154,12 @@ You can define to-s-sql-string methods for your own datatypes.")
   (:method ((arg float))
     (format nil "~f" arg))
   #-clisp (:method ((arg double-float)) ;; CLISP doesn't allow methods on double-float
-            (format nil "~,,,,,,'EE" arg))
+            (with-standard-io-syntax
+              (let* ((*read-default-float-format* (type-of arg))
+                     (rep (string-upcase (write-to-string arg))))
+                (if (find #\E rep)
+                    rep
+                    (concatenate 'string rep "E+0")))))
   (:method ((arg ratio))
     (with-output-to-string (result)
       ;; PostgreSQL happily handles 200+ decimal digits, but the SQL standard

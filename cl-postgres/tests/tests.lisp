@@ -150,6 +150,12 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
                "{1.3,-2.83}"))
   (is (string= (cl-postgres:to-sql-string 1/3)
                "0.3333333333333333333333333333333333333"))
+  (is (string= (cl-postgres:to-sql-string 14.0d0)
+               "14.0E+0"))
+  (is (string= (cl-postgres:to-sql-string 14.1d0)
+               "14.1E+0"))
+  (is (string= (cl-postgres:to-sql-string '(1 11.0 11.373 14.0d0 34.1d0))
+               "{1,11.0,11.373,14.0E+0,34.1E+0}"))
   (is (string= (cl-postgres:to-sql-string #(#(1 2) #(1.3 -2.83)))
                "{\"{1,2}\",\"{1.3,-2.83}\"}")))
 

@@ -120,13 +120,17 @@
 (test salting-password
   (let* ((salt-in-hex "74172b96cd9d296b497b")
          (password "pencil")
-         (go-hex-string-password "b58fb579cae2a50591a06a807bc0535106f8e1c725ea5ce3b6eb70ca4e2aeb99")
+         (go-hex-string-password-octets
+           #(181 143 181 121 202 226 165 5 145 160 106 128 123 192 83 81
+             6 248 225 199 37 234 92 227 182 235 112 202 78 42 235 153))
          (salt-as-byte-array (ironclad:hex-string-to-byte-array salt-in-hex)))
-    (is (equal (ironclad:byte-array-to-hex-string
-                (cl-postgres::gen-salted-password password salt-in-hex 4096 :digest :sha256 :salt-type :hex))
-           go-hex-string-password))
+    (is (equalp (coerce salt-as-byte-array 'simple-vector)
+               #(116 23 43 150 205 157 41 107 73 123)))
+    (is (equalp (cl-postgres::gen-salted-password password salt-in-hex 4096
+                                                        :digest :sha256 :salt-type :hex)
+                      go-hex-string-password-octets))   
     (is (equalp salt-as-byte-array
-               #(116 23 43 150 205 157 41 107 73 123)))))
+                #(116 23 43 150 205 157 41 107 73 123)))))
 
 (test computing-client-proof
   (let* ((salt-in-hex "31f2b148ca94a7e64554")
