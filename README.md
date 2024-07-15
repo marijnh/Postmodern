@@ -210,7 +210,7 @@ In many contexts, query strings and lists starting with keywords can be used int
 ;; => 1234
 ```
 
-That last argument, :single, indicates that we want the result not as a list of lists (for the result rows), but as a single value, since we know that we are only selecting one value. Some other options are :rows, :row, :column, :alists, and :none. Their precise effect is documented in the reference manual.
+That last argument, :single, indicates that we want the result not as a list of lists (for the result rows), but as a single value, since we know that we are only selecting one value. Some other options are :rows, :row, :column, :alists, :plists, :array-hash, :json-strs, :json-str, :json-array-str, :dao, :vectors and :none. Their precise effect is documented in the Postmodern reference manual.
 
 You do not have to pull in the whole result of a query at once, you can also iterate over it with the doquery macro:
 
