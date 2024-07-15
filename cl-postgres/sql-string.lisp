@@ -73,14 +73,6 @@ the loss of precision and offering to continue or reset
      (write-char ch out))
   (write-char #\" out))
 
-(defun write-float-to-string (x)
-  (with-standard-io-syntax
-   (let* ((*read-default-float-format* (type-of x))
-          (rep (string-upcase (write-to-string x))))
-     (if (find #\E rep)
-         rep
-         (concatenate 'string rep "E+0")))))
-
 (defgeneric to-sql-string (arg)
   (:documentation "Convert a Lisp value to its textual unescaped SQL
 representation. Returns a second value indicating whether this value should be
@@ -150,7 +142,12 @@ different from s-sql::to-s-sql-string only in the handling of cons lists.")
   (:method ((arg float))
     (format nil "~f" arg))
   #-clisp (:method ((arg double-float)) ;; CLISP doesn't allow methods on double-float
-            (write-float-to-string arg))
+            (with-standard-io-syntax
+              (let* ((*read-default-float-format* (type-of arg))
+                     (rep (string-upcase (write-to-string arg))))
+                (if (find #\E rep)
+                    rep
+                    (concatenate 'string rep "E+0")))))
   (:method ((arg ratio))
     ;; Possible optimization: we could probably build up the same binary
     ;; structure postgres sends us instead of sending it as a string. See

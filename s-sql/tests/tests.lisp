@@ -354,6 +354,8 @@ name."
              "(1,2,3,4)"))
   (is (equal (s-sql::to-s-sql-string #("alpha" "beta" "ceta" "Tau"))
              "{\"alpha\",\"beta\",\"ceta\",\"Tau\"}"))
+  (is (equal (s-sql::to-s-sql-string '(1 11.0 11.373 14.0d0 34.1d0))
+             "(1,11.0,11.373,14.0E+0,34.1E+0)"))
   (build-employee-table)
   (with-test-connection
     (is (equal (query (:select 'name 'salary
