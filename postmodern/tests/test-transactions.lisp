@@ -258,3 +258,21 @@
                          '((0) (1))))))
         (is (equal (query "select * from test_data")
                    '((0) (1))))))))
+
+(test transaction-with-prepared-statement
+  (with-test-connection
+    (let ((one-fn (prepare "select 1" :single)))
+      (with-transaction ()
+        (is (equal (funcall one-fn) 1))))
+    (let ((one-fn (prepare "select 1" :single)))
+      (with-logical-transaction ()
+        (is (equal (funcall one-fn) 1))))
+    (let ((one-fn (prepare "select 1" :single)))
+      (with-logical-transaction ()
+        (is (equal (funcall one-fn) 1))
+        (is (equal (funcall one-fn) 1)))))
+  (defprepared 'dp3 "select 3" :single)
+  (with-test-connection 
+    (with-transaction ()
+      (is (equal (funcall 'dp3)
+                 3)))))
