@@ -70,7 +70,9 @@ overwrite unless postgresql throws a duplicate-prepared-statement error."
                                        #'pomo:reset-prepared-statement))
                                   (cond (overwrite
                                          (setf overwrite nil)
-                                         (drop-prepared-statement statement-id :remove-function nil)
+                                         (when (prepared-statement-exists-p statement-id)
+                                             (drop-prepared-statement statement-id
+                                                                      :remove-function nil))
                                          (ensure-prepared *database* statement-id
                                                           query t params))
                                         ((not (connection-use-binary *database*))
