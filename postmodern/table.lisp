@@ -236,7 +236,8 @@ such a class)."
     (error "Class ~A has a key that is not also a slot." (class-name class)))
   (when (not (dao-keys class))
     (setf (slot-value class 'effective-keys)
-          (list (find-primary-key-column class))))
+          (let ((primary-key (find-primary-key-column class)))
+            (when primary-key (list primary-key)))))
   (build-dao-methods class))
 
 
