@@ -89,6 +89,11 @@
   (:metaclass dao-class)
   (:table-name users1))
 
+(defclass test-data-no-keys ()
+  ((username :col-type text :initarg :username :accessor username)
+   (department-id :col-type integer :initarg :department-id :accessor department-id))
+  (:metaclass dao-class))
+
 (defclass test-data-col-identity-with-references ()
   ((id :col-type integer :col-identity t :accessor id)
    (username :col-type text :col-unique t :initarg :username :accessor username)
@@ -221,6 +226,9 @@
                  "boolean test dao 1"))
       (is (equal (test-a (first (select-dao 'test-data (:is-false 'b))))
                  "boolean test dao 2")))))
+
+(test dao-class-no-keys
+  (finalize-inheritance (find-class 'test-data-no-keys)))  ;; should not raise an error
 
 (defclass test-data-nil ()
   ((id :col-type serial :initarg :id :accessor test-id)
