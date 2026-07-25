@@ -390,6 +390,17 @@ for notifications."
                                          (postgresql-notification-pid c))))))
         (message-case (connection-socket connection))))))
 
+(defun exec-copy-out (connection query line-handler)
+  "Runs QUERY — a COPY ... TO STDOUT statement — on CONNECTION,
+calling LINE-HANDLER once per copied row with the row's text
+(trailing newline removed). Text format only. Returns the number of
+rows copied."
+  (check-type query string)
+  (with-reconnect-restart connection
+    (using-connection connection
+      (send-copy-out-query (connection-socket connection) query
+                           line-handler))))
+
 (defun exec-query (connection query &optional (row-reader 'ignore-row-reader))
   "Sends the given query to the given connection, and interprets the results
  (if there are any) with the given row-reader. If the database returns

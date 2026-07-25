@@ -26,6 +26,7 @@
            #:close-database
            #:wait-for-notification
            #:exec-query
+           #:exec-copy-out
            #:prepare-query
            #:unprepare-query
            #:exec-prepared

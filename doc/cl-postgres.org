@@ -613,6 +613,27 @@ row-data is a list of Lisp objects, one for each column included when
 opening the writer. Arrays (the elements of which must all be the same type)
 will be serialized into their PostgreSQL representation before being written
 into the DB.
+** function exec-copy-out (connection query line-handler)
+   :PROPERTIES:
+   :CUSTOM_ID: function-exec-copy-out
+   :END:
+
+Runs query — which must be a COPY ... TO STDOUT statement — on
+connection and streams the copied rows to line-handler, which is
+called once per row with the row's text (trailing newline removed;
+text format only, columns tab-separated as PostgreSQL emits them).
+Rows are processed incrementally, so result sets of any size are
+copied in constant memory. Returns the number of rows copied. This is
+the counterpart of the bulk writer above for getting large amounts of
+data out of PostgreSQL efficiently, the same mechanism pg_dump uses:
+
+#+BEGIN_SRC lisp
+(with-open-file (out "/tmp/rows.ndjson" :direction :output)
+  (exec-copy-out connection
+                 "COPY (SELECT row_to_json(t)::text FROM big_table t) TO STDOUT"
+                 (lambda (line) (write-line line out))))
+#+END_SRC
+
 * Normalization
   :PROPERTIES:
   :CUSTOM_ID: normalization
