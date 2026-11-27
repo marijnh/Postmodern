@@ -849,3 +849,34 @@ variables:~:{~%  ~A: ~(~A~), ~:[defaults to \"~A\"~;~:*provided \"~A\"~]~}~%"
                   (cl-postgres::write-ratio-as-floating-point (/ 1321 7) s 5))
                 "188.71"))
     (setf cl-postgres:*silently-truncate-ratios* old-silently-truncate)))
+
+(test copy-out
+  "COPY ... TO STDOUT streaming via exec-copy-out: row count, line
+content, connection reuse after success and after an error."
+  (with-test-connection
+    (exec-query connection "create temporary table test_copy_out (a int, b text)")
+    (exec-query connection
+                "insert into test_copy_out select i, 'row-' || i from generate_series(1, 100) i")
+    (let ((lines '()))
+      (is (= 100 (exec-copy-out connection "COPY test_copy_out TO STDOUT"
+                                (lambda (line) (push line lines)))))
+      (is (= 100 (length lines)))
+      ;; text format: tab-separated columns, rows in insertion order
+      (is (string= (format nil "1~arow-1" #\Tab) (first (last lines))))
+      (is (string= (format nil "100~arow-100" #\Tab) (first lines))))
+    ;; query form, and the connection stays usable afterwards
+    (let ((n 0))
+      (is (= 50 (exec-copy-out connection
+                               "COPY (SELECT b FROM test_copy_out WHERE a <= 50) TO STDOUT"
+                               (lambda (line) (declare (ignore line)) (incf n)))))
+      (is (= 50 n)))
+    (is (equal '((100))
+               (exec-query connection "select count(*) from test_copy_out"
+                           'list-row-reader)))
+    ;; an error inside COPY surfaces as database-error and leaves the
+    ;; connection synchronized
+    (signals database-error
+      (exec-copy-out connection
+                     "COPY (SELECT * FROM nonexistent_table_for_copy_out) TO STDOUT"
+                     (lambda (line) line)))
+    (is (equal '((1)) (exec-query connection "select 1" 'list-row-reader)))))

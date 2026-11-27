@@ -528,6 +528,75 @@ results."
                          ;; ReadyForQuery, skipping transaction status
                          (#\Z (read-uint1 socket))))))))
 
+(defun send-copy-out-query (socket query line-handler)
+  "Send QUERY — which must be a COPY ... TO STDOUT statement — using
+the simple query protocol, calling LINE-HANDLER once per copied row
+with the row's text (trailing newline removed). Text format only.
+Returns the number of rows copied.
+
+Wire sequence handled: CopyOutResponse (H), CopyData (d) repeated,
+CopyDone (c), CommandComplete (C), ReadyForQuery (Z). CopyData
+payloads are newline-terminated rows but a row may span message
+boundaries, so partial lines are carried between messages."
+  (declare (type stream socket)
+           (type string query)
+           #.*optimize*)
+  (with-syncing
+      (with-query (query)
+        (query-message socket query)
+        (force-output socket)
+        ;; the simple query protocol always ends with ReadyForQuery —
+        ;; even on error — so the resync path must only consume it,
+        ;; not send an extended-protocol Sync (which would elicit a
+        ;; second ReadyForQuery and desynchronize the next query)
+        (setf sync-sent t)
+        (message-case socket
+                      ;; CopyOutResponse: overall format + per-column
+                      ;; format codes; text format is all we accept
+                      (#\H (let ((format (read-uint1 socket)))
+                             (skip-bytes socket (* 2 (read-uint2 socket)))
+                             (unless (zerop format)
+                               (error 'database-error
+                                      :message "copy-out: only text format is supported")))))
+        (let ((rows 0)
+              (tail nil))
+          (declare (type fixnum rows))
+          (loop
+            (let ((done nil))
+              (message-case socket :length-sym size
+                            ;; CopyData
+                            (#\d (let* ((chunk (read-bytes socket size))
+                                        (data (if tail
+                                                  (concatenate
+                                                   '(simple-array (unsigned-byte 8) (*))
+                                                   tail chunk)
+                                                  chunk))
+                                        (start 0))
+                                   (loop :for nl = (position 10 data :start start)
+                                         :while nl
+                                         :do (funcall line-handler
+                                                      (clp-utf8:utf-8-bytes-to-string
+                                                       data :start start :end nl))
+                                             (incf rows)
+                                             (setf start (1+ nl)))
+                                   (setf tail (when (< start (length data))
+                                                (subseq data start)))))
+                            ;; CopyDone
+                            (#\c (setf done t)))
+              (when done (return))))
+          (when (and tail (plusp (length tail)))
+            ;; a final row without trailing newline (not produced by
+            ;; text-format COPY, but don't lose data if it appears)
+            (funcall line-handler (clp-utf8:utf-8-bytes-to-string tail))
+            (incf rows))
+          (message-case socket
+                        ;; CommandComplete
+                        (#\C (read-str socket)))
+          (message-case socket
+                        ;; ReadyForQuery, skipping transaction status
+                        (#\Z (read-uint1 socket)))
+          rows))))
+
 (defun send-parse (socket name query parameters binary-parameters-p)
   "Send a parse command to the server, giving it a name."
   (declare (type stream socket)
